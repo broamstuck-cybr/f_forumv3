@@ -446,6 +446,8 @@ export interface SecretScanResult {
 export interface AIChatRequest {
   projectId: string;
   prompt: string;
+  model?: string;
+  agentMode?: string;
   files: Array<{ path: string; content: string }>;
   attachedItems?: AttachedContextItem[];
   history?: Array<{ role: 'user' | 'assistant'; content: string }>;

@@ -47,10 +47,12 @@ const AGENT_MODES: Array<{ id: AgentExecutionMode; label: string; description: s
 ];
 
 const MODEL_OPTIONS = [
-  { id: 'auto', name: 'Auto (Gateway)', note: 'Dùng cấu hình Gateway mặc định' },
-  { id: 'gpt-4o-mini', name: 'GPT-4o Mini', note: 'Phản hồi nhanh đa tệp' },
-  { id: 'claude-3-7-sonnet', name: 'Claude Sonnet', note: 'Tối ưu kiến trúc & UI' },
-  { id: 'gemini-2.5-pro', name: 'Gemini 2.5 Pro', note: 'Phân tích hệ thống chuyên sâu' },
+  { id: 'auto', name: 'Auto (9Router Smart)', note: 'Dùng cấu hình Gateway 9Router mặc định' },
+  { id: 'studio-smart-route', name: 'Studio Smart Route', note: 'Cân bằng tốc độ và chất lượng' },
+  { id: 'studio-heavy-route', name: 'Studio Heavy Route', note: 'Tối ưu kiến trúc phức tạp' },
+  { id: 'ag/gemini-3.8-flash-low', name: 'Gemini 3.8 Flash (Fast)', note: 'Phản hồi siêu nhanh đa tệp' },
+  { id: 'ag/gemini-4-argon-high', name: 'Gemini 4 Argon', note: 'Phân tích hệ thống chuyên sâu' },
+  { id: 'ag/claude-sonnet-5-5-medium', name: 'Claude Sonnet 5.5', note: 'Thiết kế UI & logic tinh gọn' },
 ];
 
 export const WorkspaceView: React.FC = () => {
@@ -154,7 +156,7 @@ export const WorkspaceView: React.FC = () => {
     if (!raw || isGenerating) return;
     setComposerValue('');
     const taggedPrompt = `[Mode: ${agentMode}] ${raw}`;
-    await sendWorkspacePrompt(taggedPrompt);
+    await sendWorkspacePrompt(taggedPrompt, { model: selectedModel, agentMode });
   };
 
   const handleExportZip = async () => {

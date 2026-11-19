@@ -110,6 +110,8 @@ export async function handleAiChat(req: Request, res: Response): Promise<void> {
   const chatReq: AIChatRequest = {
     projectId: typeof body.projectId === 'string' ? body.projectId : 'default-project',
     prompt,
+    model: typeof body.model === 'string' ? body.model.trim() : undefined,
+    agentMode: typeof body.agentMode === 'string' ? body.agentMode.trim() : undefined,
     files: Array.isArray(body.files) ? body.files : [],
     attachedItems: Array.isArray(body.attachedItems) ? body.attachedItems : [],
     history: Array.isArray(body.history) ? body.history : [],

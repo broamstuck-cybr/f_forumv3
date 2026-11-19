@@ -1,6 +1,9 @@
 import test, { describe, before, after } from 'node:test';
 import assert from 'node:assert/strict';
-import { execFileSync, spawn } from 'node:child_process';
+import { execFile, execFileSync, spawn } from 'node:child_process';
+import { promisify } from 'node:util';
+
+const execFileAsync = promisify(execFile);
 import net from 'node:net';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -718,6 +721,68 @@ describe('F-FORUM v3 Core Verification Suite', () => {
       assert.equal(parsed.loginResult.ok, true);
       assert.equal(parsed.loginResult.user.role, 'admin');
       assert.equal(parsed.loginResult.user.email, 'Admin.Owner@Example.com');
+    });
+
+    test('parses 9Router SSE stream responses and respects requested model via resolveAIConfig', async () => {
+      const http = await import('node:http');
+      const mockServer = http.createServer((req, res) => {
+        if (req.url === '/v1/chat/completions' && req.method === 'POST') {
+          let body = '';
+          req.on('data', (chunk) => {
+            body += chunk;
+          });
+          req.on('end', () => {
+            const parsedReq = JSON.parse(body);
+            assert.equal(parsedReq.model, 'ag/gemini-3.8-flash-low');
+            assert.equal(parsedReq.stream, true);
+            const payload = JSON.stringify({
+              message: 'Generated via mock 9Router SSE',
+              files: [
+                { path: 'index.html', content: '<!doctype html><html><body>OK</body></html>', summary: 'html' },
+                { path: 'styles.css', content: 'body{margin:0}', summary: 'css' },
+                { path: 'app.js', content: 'console.log(1)', summary: 'js' },
+              ],
+              checksHint: ['SSE verified'],
+            });
+            const half = Math.floor(payload.length / 2);
+            res.writeHead(200, { 'content-type': 'text/event-stream' });
+            res.write(`data: ${JSON.stringify({ choices: [{ delta: { content: payload.slice(0, half) } }] })}\n\n`);
+            res.write(`data: ${JSON.stringify({ choices: [{ delta: { content: payload.slice(half) } }] })}\n\n`);
+            res.write('data: [DONE]\n\n');
+            res.end();
+          });
+          return;
+        }
+        res.writeHead(404).end();
+      });
+
+      await new Promise((resolve) => mockServer.listen(0, '127.0.0.1', resolve));
+      const { port } = mockServer.address();
+      try {
+        const script = [
+          "import { runAIGeneration } from './server/aiEngine.ts';",
+          '(async () => {',
+          `  process.env.AI_BASE_URL = 'http://127.0.0.1:${port}/v1';`,
+          "  process.env.AI_API_KEY = 'sk-mock-9router';",
+          "  process.env.AI_PROTOCOL = 'openai-compatible';",
+          "  process.env.AI_MODEL = 'studio-smart-route';",
+          "  const out = await runAIGeneration({ projectId: 'sse-test', prompt: 'Build test', model: 'ag/gemini-3.8-flash-low' }, {});",
+          "  console.log(JSON.stringify(out));",
+          '})();',
+        ].join('\n');
+
+        const { stdout } = await execFileAsync('npx', ['tsx', '-e', script], {
+          cwd: projectRoot,
+          encoding: 'utf8',
+        });
+        const parsed = JSON.parse(stdout.trim());
+        assert.equal(parsed.fallback, false);
+        assert.equal(parsed.modelUsed, 'ag/gemini-3.8-flash-low');
+        assert.equal(parsed.files.length, 3);
+        assert.equal(parsed.message, 'Generated via mock 9Router SSE');
+      } finally {
+        mockServer.close();
+      }
     });
   });
 });

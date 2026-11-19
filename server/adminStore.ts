@@ -50,7 +50,7 @@ function getDefaultGateway(): AdminGatewayOverride {
     enabled: false,
     protocol,
     baseUrl: (process.env.AI_BASE_URL || 'https://api.openai.com/v1').trim(),
-    model: (process.env.AI_MODEL || 'gpt-4o-mini').trim(),
+    model: (process.env.AI_MODEL || 'studio-smart-route').trim(),
     apiKey: '',
     hasCustomApiKey: false,
     systemPromptSuffix: '',

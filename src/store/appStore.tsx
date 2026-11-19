@@ -53,7 +53,7 @@ const DEFAULT_SETTINGS: SettingsState = {
     enabled: false,
     protocol: 'openai-compatible',
     baseUrl: 'https://api.openai.com/v1',
-    model: 'gpt-4o-mini',
+    model: 'studio-smart-route',
     apiKey: '',
   },
 };
@@ -457,7 +457,10 @@ export interface AppStoreContextValue {
   attachItemToWorkspace: (item: AttachedContextItem, navigateToWorkspace?: boolean) => void;
   detachItemFromWorkspace: (itemId: string) => void;
   launchPromptToWorkspace: (prompt: string, attached?: AttachedContextItem[]) => Promise<void>;
-  sendWorkspacePrompt: (prompt: string) => Promise<void>;
+  sendWorkspacePrompt: (
+    prompt: string,
+    options?: { model?: string; agentMode?: string }
+  ) => Promise<void>;
   runChecksOnActiveProject: () => ChecksReport;
   createProjectSnapshot: (label?: string) => void;
   restoreProjectSnapshot: (snapshotId: string) => void;
@@ -967,7 +970,7 @@ export const AppStoreProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   }, [activeProject.files, updateActiveProject]);
 
   const sendWorkspacePrompt = useCallback(
-    async (prompt: string) => {
+    async (prompt: string, options?: { model?: string; agentMode?: string }) => {
       const trimmed = prompt.trim();
       if (!trimmed) return;
 
@@ -1005,6 +1008,8 @@ export const AppStoreProvider: React.FC<{ children: React.ReactNode }> = ({ chil
           {
             projectId: activeProject.id,
             prompt: trimmed,
+            model: options?.model,
+            agentMode: options?.agentMode,
             files: activeProject.files.map((f) => ({ path: f.path, content: f.content })),
             attachedItems: activeProject.attachedItems,
             history: activeProject.messages

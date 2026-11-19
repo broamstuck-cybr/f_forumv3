@@ -39,13 +39,16 @@ function normalizeProtocol(val: string | undefined): AIProtocol {
   return 'openai-compatible';
 }
 
-export function resolveAIConfig(headers: IncomingHttpHeaders): EffectiveAIConfig {
+export function resolveAIConfig(
+  headers: IncomingHttpHeaders,
+  requestedModel?: string
+): EffectiveAIConfig {
   ensureLocalEnvLoaded();
   const adminOverride = getInternalGatewayOverride();
 
   let protocol: AIProtocol = normalizeProtocol(process.env.AI_PROTOCOL);
   let baseUrl = (process.env.AI_BASE_URL || 'https://api.openai.com/v1').trim();
-  let model = (process.env.AI_MODEL || 'gpt-4o-mini').trim();
+  let model = (process.env.AI_MODEL || 'studio-smart-route').trim();
   let apiKey = (process.env.AI_API_KEY || '').trim();
   let systemPromptSuffix = '';
 
@@ -57,6 +60,11 @@ export function resolveAIConfig(headers: IncomingHttpHeaders): EffectiveAIConfig
       apiKey = adminOverride.apiKey;
     }
     systemPromptSuffix = adminOverride.systemPromptSuffix || '';
+  }
+
+  const cleanRequested = (requestedModel || '').trim();
+  if (cleanRequested && cleanRequested !== 'auto' && !adminOverride.enabled) {
+    model = cleanRequested;
   }
 
   const byokKey = typeof headers['x-ff-byok-key'] === 'string' ? headers['x-ff-byok-key'].trim() : '';
@@ -90,6 +98,7 @@ function buildSystemInstruction(suffix: string): string {
     '2. Never include emojis or marketing hype.',
     '3. Ensure index.html includes <meta name="viewport" content="width=device-width, initial-scale=1.0">, links styles.css, and loads app.js.',
     '4. Use semantic HTML5, accessible aria attributes, and clean 8px spatial rhythm.',
+    '5. Keep code concise, modular, and free of comments so the JSON response completes quickly.',
   ].join('\n');
   return suffix ? `${base}\n${suffix}` : base;
 }
@@ -460,16 +469,50 @@ body.compact-density .module-card {
   };
 }
 
+async function readOpenAICompatibleText(resp: Response): Promise<string> {
+  const raw = await resp.text();
+  const trimmed = raw.trim();
+  if (!trimmed) return '';
+
+  if (trimmed.startsWith('data:') || trimmed.includes('\ndata:')) {
+    let assembled = '';
+    for (const line of trimmed.split(/\r?\n/)) {
+      const clean = line.trim();
+      if (!clean.startsWith('data:')) continue;
+      const payload = clean.slice(5).trim();
+      if (!payload || payload === '[DONE]') continue;
+      try {
+        const chunk = JSON.parse(payload) as {
+          choices?: Array<{ delta?: { content?: string }; message?: { content?: string } }>;
+        };
+        const delta = chunk.choices?.[0]?.delta?.content ?? chunk.choices?.[0]?.message?.content ?? '';
+        if (delta) assembled += delta;
+      } catch {
+        continue;
+      }
+    }
+    return assembled;
+  }
+
+  const data = JSON.parse(trimmed) as {
+    choices?: Array<{ message?: { content?: string }; text?: string }>;
+  };
+  return data.choices?.[0]?.message?.content || data.choices?.[0]?.text || '';
+}
+
 function parseStructuredLLMResponse(
   rawText: string,
   config: EffectiveAIConfig
 ): AIGenerationOutput | null {
-  const trimmed = rawText.trim();
-  const jsonStart = trimmed.indexOf('{');
-  const jsonEnd = trimmed.lastIndexOf('}');
+  const unfenced = rawText
+    .replace(/```json\s*/gi, '')
+    .replace(/```\s*/g, '')
+    .trim();
+  const jsonStart = unfenced.indexOf('{');
+  const jsonEnd = unfenced.lastIndexOf('}');
   if (jsonStart < 0 || jsonEnd <= jsonStart) return null;
   try {
-    const parsed = JSON.parse(trimmed.slice(jsonStart, jsonEnd + 1)) as {
+    const parsed = JSON.parse(unfenced.slice(jsonStart, jsonEnd + 1)) as {
       message?: string;
       files?: Array<{ path?: string; content?: string; summary?: string }>;
       checksHint?: string[];
@@ -486,7 +529,7 @@ function parseStructuredLLMResponse(
       }));
     if (validFiles.length === 0) return null;
     return {
-      message: String(parsed.message || 'Da cap nhat ma nguon Workspace.'),
+      message: String(parsed.message || 'Đã cập nhật mã nguồn Workspace.'),
       files: validFiles,
       checksHint: Array.isArray(parsed.checksHint)
         ? parsed.checksHint.map(String)
@@ -504,7 +547,7 @@ export async function runAIGeneration(
   req: AIChatRequest,
   headers: IncomingHttpHeaders
 ): Promise<AIGenerationOutput> {
-  const config = resolveAIConfig(headers);
+  const config = resolveAIConfig(headers, req.model);
   if (!config.apiKey) {
     return buildDeterministicFallback(
       req,
@@ -516,7 +559,7 @@ export async function runAIGeneration(
   const systemInstruction = buildSystemInstruction(config.systemPromptSuffix);
   const userContent = buildUserContextPrompt(req);
   const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 14000);
+  const timeout = setTimeout(() => controller.abort(), 50000);
 
   try {
     let responseText = '';
@@ -577,6 +620,8 @@ export async function runAIGeneration(
         },
         body: JSON.stringify({
           model: config.model,
+          stream: true,
+          max_tokens: 4096,
           messages: [
             { role: 'system', content: systemInstruction },
             { role: 'user', content: userContent },
@@ -589,10 +634,7 @@ export async function runAIGeneration(
         const errBody = await resp.text();
         throw new Error(`OpenAI-Compatible HTTP ${resp.status}: ${sanitizeErrorText(errBody)}`);
       }
-      const data = (await resp.json()) as {
-        choices?: Array<{ message?: { content?: string } }>;
-      };
-      responseText = data.choices?.[0]?.message?.content || '';
+      responseText = await readOpenAICompatibleText(resp);
     }
 
     const structured = parseStructuredLLMResponse(responseText, config);

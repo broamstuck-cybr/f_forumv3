@@ -645,10 +645,12 @@ export const SettingsView: React.FC = () => {
                       color: 'var(--ink-primary)',
                     }}
                   >
-                    <option value="auto">Auto Gateway (Recommended)</option>
-                    <option value="gemini-2.5-pro">Gemini 2.5 Pro</option>
-                    <option value="claude-sonnet">Claude Sonnet</option>
-                    <option value="gpt-4o-mini">GPT-4o Mini</option>
+                    <option value="auto">Auto (9Router Gateway)</option>
+                    <option value="studio-smart-route">Studio Smart Route</option>
+                    <option value="studio-heavy-route">Studio Heavy Route</option>
+                    <option value="ag/gemini-3.8-flash-low">Gemini 3.8 Flash (Fast)</option>
+                    <option value="ag/gemini-4-argon-high">Gemini 4 Argon</option>
+                    <option value="ag/claude-sonnet-5-5-medium">Claude Sonnet 5.5</option>
                   </select>
                 </div>
 
@@ -698,7 +700,7 @@ export const SettingsView: React.FC = () => {
                     type="text"
                     value={settings.byok.model}
                     onChange={(e) => updateByok({ model: e.target.value })}
-                    placeholder="gpt-4o-mini"
+                    placeholder="studio-smart-route"
                     className="h-10 w-full rounded-[12px] border px-3 font-mono text-xs outline-none"
                     style={{
                       backgroundColor: 'var(--bg-panel)',
