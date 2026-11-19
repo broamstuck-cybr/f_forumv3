@@ -1,0 +1,2302 @@
+[
+  {
+    "id": "component/presence-cards",
+    "title": "Presence Cards",
+    "sourceLibrary": "pinui",
+    "category": "Components",
+    "subcategory": "component",
+    "tags": [
+      "component",
+      "react",
+      "tailwind",
+      "shadcn"
+    ],
+    "runtime": "React, Tailwind CSS, TypeScript",
+    "style": "Shadcn Modern",
+    "license": "MIT (c) Rachit Thakur / Shadcn Labs",
+    "officialUrl": "https://www.pinui.xyz/components/presence-cards",
+    "archivePath": "sources/pinui/registry/presence-cards",
+    "description": "Two cards on a shared canvas, worked on live by four people at once."
+  },
+  {
+    "id": "component/theme-switch",
+    "title": "Theme Switch",
+    "sourceLibrary": "pinui",
+    "category": "Components",
+    "subcategory": "component",
+    "tags": [
+      "component",
+      "react",
+      "tailwind",
+      "shadcn"
+    ],
+    "runtime": "React, Tailwind CSS, TypeScript",
+    "style": "Shadcn Modern",
+    "license": "MIT (c) Rachit Thakur / Shadcn Labs",
+    "officialUrl": "https://www.pinui.xyz/components/theme-switch",
+    "archivePath": "sources/pinui/registry/theme-switch",
+    "description": "A theme toggle that rains, drips or sets off fireworks to change the theme."
+  },
+  {
+    "id": "component/reader-card",
+    "title": "Reader Card",
+    "sourceLibrary": "pinui",
+    "category": "Components",
+    "subcategory": "component",
+    "tags": [
+      "component",
+      "react",
+      "tailwind",
+      "shadcn"
+    ],
+    "runtime": "React, Tailwind CSS, TypeScript",
+    "style": "Shadcn Modern",
+    "license": "MIT (c) Rachit Thakur / Shadcn Labs",
+    "officialUrl": "https://www.pinui.xyz/components/reader-card",
+    "archivePath": "sources/pinui/registry/reader-card",
+    "description": "A story card that scrolls in place and morphs into a liquid-glass reader."
+  },
+  {
+    "id": "component/search-card",
+    "title": "Search Card",
+    "sourceLibrary": "pinui",
+    "category": "Components",
+    "subcategory": "component",
+    "tags": [
+      "component",
+      "react",
+      "tailwind",
+      "shadcn"
+    ],
+    "runtime": "React, Tailwind CSS, TypeScript",
+    "style": "Shadcn Modern",
+    "license": "MIT (c) Rachit Thakur / Shadcn Labs",
+    "officialUrl": "https://www.pinui.xyz/components/search-card",
+    "archivePath": "sources/pinui/registry/search-card",
+    "description": "A centred search bar that rises and morphs open into a card of recent searches."
+  },
+  {
+    "id": "component/selection-list",
+    "title": "Selection List",
+    "sourceLibrary": "pinui",
+    "category": "Components",
+    "subcategory": "component",
+    "tags": [
+      "component",
+      "react",
+      "tailwind",
+      "shadcn"
+    ],
+    "runtime": "React, Tailwind CSS, TypeScript",
+    "style": "Shadcn Modern",
+    "license": "MIT (c) Rachit Thakur / Shadcn Labs",
+    "officialUrl": "https://www.pinui.xyz/components/selection-list",
+    "archivePath": "sources/pinui/registry/selection-list",
+    "description": "A single-choice list whose halves snap together like magnets."
+  },
+  {
+    "id": "component/desk-computer",
+    "title": "Desk Computer",
+    "sourceLibrary": "pinui",
+    "category": "Components",
+    "subcategory": "component",
+    "tags": [
+      "component",
+      "react",
+      "tailwind",
+      "shadcn"
+    ],
+    "runtime": "React, Tailwind CSS, TypeScript",
+    "style": "Shadcn Modern",
+    "license": "MIT (c) Rachit Thakur / Shadcn Labs",
+    "officialUrl": "https://www.pinui.xyz/components/desk-computer",
+    "archivePath": "sources/pinui/registry/desk-computer",
+    "description": "A late-90s desk computer in true isometric that you can actually use."
+  },
+  {
+    "id": "component/liquid-voice",
+    "title": "Liquid Voice",
+    "sourceLibrary": "pinui",
+    "category": "Components",
+    "subcategory": "component",
+    "tags": [
+      "component",
+      "react",
+      "tailwind",
+      "shadcn"
+    ],
+    "runtime": "React, Tailwind CSS, TypeScript",
+    "style": "Shadcn Modern",
+    "license": "MIT (c) Rachit Thakur / Shadcn Labs",
+    "officialUrl": "https://www.pinui.xyz/components/liquid-voice",
+    "archivePath": "sources/pinui/registry/liquid-voice",
+    "description": "A voice-input pill of real liquid glass that stretches into a recorder."
+  },
+  {
+    "id": "component/file-box",
+    "title": "File Box",
+    "sourceLibrary": "pinui",
+    "category": "Components",
+    "subcategory": "component",
+    "tags": [
+      "component",
+      "react",
+      "tailwind",
+      "shadcn"
+    ],
+    "runtime": "React, Tailwind CSS, TypeScript",
+    "style": "Shadcn Modern",
+    "license": "MIT (c) Rachit Thakur / Shadcn Labs",
+    "officialUrl": "https://www.pinui.xyz/components/file-box",
+    "archivePath": "sources/pinui/registry/file-box",
+    "description": "A cardboard file box whose folders lift out by their tabs."
+  },
+  {
+    "id": "component/copy-paste-pad",
+    "title": "Copy Paste Pad",
+    "sourceLibrary": "pinui",
+    "category": "Components",
+    "subcategory": "component",
+    "tags": [
+      "component",
+      "react",
+      "tailwind",
+      "shadcn"
+    ],
+    "runtime": "React, Tailwind CSS, TypeScript",
+    "style": "Shadcn Modern",
+    "license": "MIT (c) Rachit Thakur / Shadcn Labs",
+    "officialUrl": "https://www.pinui.xyz/components/copy-paste-pad",
+    "archivePath": "sources/pinui/registry/copy-paste-pad",
+    "description": "A 3-D aluminium macro pad whose ⌘C and ⌘V copy and paste the theme."
+  },
+  {
+    "id": "component/task-card",
+    "title": "Task Card",
+    "sourceLibrary": "pinui",
+    "category": "Components",
+    "subcategory": "component",
+    "tags": [
+      "component",
+      "react",
+      "tailwind",
+      "shadcn"
+    ],
+    "runtime": "React, Tailwind CSS, TypeScript",
+    "style": "Shadcn Modern",
+    "license": "MIT (c) Rachit Thakur / Shadcn Labs",
+    "officialUrl": "https://www.pinui.xyz/components/task-card",
+    "archivePath": "sources/pinui/registry/task-card",
+    "description": "A task with subtasks on a connector tree, progress, priority and status."
+  },
+  {
+    "id": "component/magnify",
+    "title": "Magnify",
+    "sourceLibrary": "pinui",
+    "category": "Components",
+    "subcategory": "component",
+    "tags": [
+      "component",
+      "react",
+      "tailwind",
+      "shadcn"
+    ],
+    "runtime": "React, Tailwind CSS, TypeScript",
+    "style": "Shadcn Modern",
+    "license": "MIT (c) Rachit Thakur / Shadcn Labs",
+    "officialUrl": "https://www.pinui.xyz/components/magnify",
+    "archivePath": "sources/pinui/registry/magnify",
+    "description": "A type specimen you inspect with a real magnifying glass."
+  },
+  {
+    "id": "component/progress-image",
+    "title": "Progress Image",
+    "sourceLibrary": "pinui",
+    "category": "Components",
+    "subcategory": "component",
+    "tags": [
+      "component",
+      "react",
+      "tailwind",
+      "shadcn"
+    ],
+    "runtime": "React, Tailwind CSS, TypeScript",
+    "style": "Shadcn Modern",
+    "license": "MIT (c) Rachit Thakur / Shadcn Labs",
+    "officialUrl": "https://www.pinui.xyz/components/progress-image",
+    "archivePath": "sources/pinui/registry/progress-image",
+    "description": "A rollout card whose photograph is the progress bar."
+  },
+  {
+    "id": "component/prompt-composer",
+    "title": "Prompt Composer",
+    "sourceLibrary": "pinui",
+    "category": "Components",
+    "subcategory": "component",
+    "tags": [
+      "component",
+      "react",
+      "tailwind",
+      "shadcn"
+    ],
+    "runtime": "React, Tailwind CSS, TypeScript",
+    "style": "Shadcn Modern",
+    "license": "MIT (c) Rachit Thakur / Shadcn Labs",
+    "officialUrl": "https://www.pinui.xyz/components/prompt-composer",
+    "archivePath": "sources/pinui/registry/prompt-composer",
+    "description": "An assistant's field with its quick actions fanned out behind it."
+  },
+  {
+    "id": "component/calendar-card",
+    "title": "Calendar",
+    "sourceLibrary": "pinui",
+    "category": "Components",
+    "subcategory": "component",
+    "tags": [
+      "component",
+      "react",
+      "tailwind",
+      "shadcn"
+    ],
+    "runtime": "React, Tailwind CSS, TypeScript",
+    "style": "Shadcn Modern",
+    "license": "MIT (c) Rachit Thakur / Shadcn Labs",
+    "officialUrl": "https://www.pinui.xyz/components/calendar-card",
+    "archivePath": "sources/pinui/registry/calendar-card",
+    "description": "A month card where the selected day glides from date to date."
+  },
+  {
+    "id": "component/chat-room",
+    "title": "Chat Room",
+    "sourceLibrary": "pinui",
+    "category": "Components",
+    "subcategory": "component",
+    "tags": [
+      "component",
+      "react",
+      "tailwind",
+      "shadcn"
+    ],
+    "runtime": "React, Tailwind CSS, TypeScript",
+    "style": "Shadcn Modern",
+    "license": "MIT (c) Rachit Thakur / Shadcn Labs",
+    "officialUrl": "https://www.pinui.xyz/components/chat-room",
+    "archivePath": "sources/pinui/registry/chat-room",
+    "description": "A stack of faces that morphs into a voice chat card, and back."
+  },
+  {
+    "id": "component/dynamic-drop-zone",
+    "title": "Dynamic Drop Zone",
+    "sourceLibrary": "pinui",
+    "category": "Components",
+    "subcategory": "component",
+    "tags": [
+      "component",
+      "react",
+      "tailwind",
+      "shadcn"
+    ],
+    "runtime": "React, Tailwind CSS, TypeScript",
+    "style": "Shadcn Modern",
+    "license": "MIT (c) Rachit Thakur / Shadcn Labs",
+    "officialUrl": "https://www.pinui.xyz/components/dynamic-drop-zone",
+    "archivePath": "sources/pinui/registry/dynamic-drop-zone",
+    "description": "A file drop zone that turns into a magnetic black hole."
+  },
+  {
+    "id": "component/swap-card",
+    "title": "Swap Card",
+    "sourceLibrary": "pinui",
+    "category": "Components",
+    "subcategory": "component",
+    "tags": [
+      "component",
+      "react",
+      "tailwind",
+      "shadcn"
+    ],
+    "runtime": "React, Tailwind CSS, TypeScript",
+    "style": "Shadcn Modern",
+    "license": "MIT (c) Rachit Thakur / Shadcn Labs",
+    "officialUrl": "https://www.pinui.xyz/components/swap-card",
+    "archivePath": "sources/pinui/registry/swap-card",
+    "description": "A token swap card where every number rolls and the button is liquid."
+  },
+  {
+    "id": "component/liquid-tabs",
+    "title": "Liquid Tabs",
+    "sourceLibrary": "pinui",
+    "category": "Components",
+    "subcategory": "component",
+    "tags": [
+      "component",
+      "react",
+      "tailwind",
+      "shadcn"
+    ],
+    "runtime": "React, Tailwind CSS, TypeScript",
+    "style": "Shadcn Modern",
+    "license": "MIT (c) Rachit Thakur / Shadcn Labs",
+    "officialUrl": "https://www.pinui.xyz/components/liquid-tabs",
+    "archivePath": "sources/pinui/registry/liquid-tabs",
+    "description": "A notifications card whose active tab is liquid, flowing from tab to tab."
+  },
+  {
+    "id": "component/thermal-dial",
+    "title": "Thermal Dial",
+    "sourceLibrary": "pinui",
+    "category": "Components",
+    "subcategory": "component",
+    "tags": [
+      "component",
+      "react",
+      "tailwind",
+      "shadcn"
+    ],
+    "runtime": "React, Tailwind CSS, TypeScript",
+    "style": "Shadcn Modern",
+    "license": "MIT (c) Rachit Thakur / Shadcn Labs",
+    "officialUrl": "https://www.pinui.xyz/components/thermal-dial",
+    "archivePath": "sources/pinui/registry/thermal-dial",
+    "description": "A thermal dial that undulates with heat and rolls through the seasons."
+  },
+  {
+    "id": "component/lamp-switch",
+    "title": "Lamp Switch",
+    "sourceLibrary": "pinui",
+    "category": "Components",
+    "subcategory": "component",
+    "tags": [
+      "component",
+      "react",
+      "tailwind",
+      "shadcn"
+    ],
+    "runtime": "React, Tailwind CSS, TypeScript",
+    "style": "Shadcn Modern",
+    "license": "MIT (c) Rachit Thakur / Shadcn Labs",
+    "officialUrl": "https://www.pinui.xyz/components/lamp-switch",
+    "archivePath": "sources/pinui/registry/lamp-switch",
+    "description": "A hanging ceramic lamp that swings on a cord and toggles with a liquid switch."
+  },
+  {
+    "id": "component/joystick",
+    "title": "Joystick",
+    "sourceLibrary": "pinui",
+    "category": "Components",
+    "subcategory": "component",
+    "tags": [
+      "component",
+      "react",
+      "tailwind",
+      "shadcn"
+    ],
+    "runtime": "React, Tailwind CSS, TypeScript",
+    "style": "Shadcn Modern",
+    "license": "MIT (c) Rachit Thakur / Shadcn Labs",
+    "officialUrl": "https://www.pinui.xyz/components/joystick",
+    "archivePath": "sources/pinui/registry/joystick",
+    "description": "A pixel-art arcade stick you can grab, push to the gate and let snap back."
+  },
+  {
+    "id": "component/weather",
+    "title": "Weather",
+    "sourceLibrary": "pinui",
+    "category": "Components",
+    "subcategory": "component",
+    "tags": [
+      "component",
+      "react",
+      "tailwind",
+      "shadcn"
+    ],
+    "runtime": "React, Tailwind CSS, TypeScript",
+    "style": "Shadcn Modern",
+    "license": "MIT (c) Rachit Thakur / Shadcn Labs",
+    "officialUrl": "https://www.pinui.xyz/components/weather",
+    "archivePath": "sources/pinui/registry/weather",
+    "description": "A weather square that opens out into a five-day forecast."
+  },
+  {
+    "id": "component/recorder",
+    "title": "Recorder",
+    "sourceLibrary": "pinui",
+    "category": "Components",
+    "subcategory": "component",
+    "tags": [
+      "component",
+      "react",
+      "tailwind",
+      "shadcn"
+    ],
+    "runtime": "React, Tailwind CSS, TypeScript",
+    "style": "Shadcn Modern",
+    "license": "MIT (c) Rachit Thakur / Shadcn Labs",
+    "officialUrl": "https://www.pinui.xyz/components/recorder",
+    "archivePath": "sources/pinui/registry/recorder",
+    "description": "A voice recorder with a waveform that scrolls under the playhead."
+  },
+  {
+    "id": "component/taxi",
+    "title": "Taxi",
+    "sourceLibrary": "pinui",
+    "category": "Components",
+    "subcategory": "component",
+    "tags": [
+      "component",
+      "react",
+      "tailwind",
+      "shadcn"
+    ],
+    "runtime": "React, Tailwind CSS, TypeScript",
+    "style": "Shadcn Modern",
+    "license": "MIT (c) Rachit Thakur / Shadcn Labs",
+    "officialUrl": "https://www.pinui.xyz/components/taxi",
+    "archivePath": "sources/pinui/registry/taxi",
+    "description": "Hail a cab in one tap, and ride the whole trip on one card."
+  },
+  {
+    "id": "component/chips",
+    "title": "Chips",
+    "sourceLibrary": "pinui",
+    "category": "Components",
+    "subcategory": "component",
+    "tags": [
+      "component",
+      "react",
+      "tailwind",
+      "shadcn"
+    ],
+    "runtime": "React, Tailwind CSS, TypeScript",
+    "style": "Shadcn Modern",
+    "license": "MIT (c) Rachit Thakur / Shadcn Labs",
+    "officialUrl": "https://www.pinui.xyz/components/chips",
+    "archivePath": "sources/pinui/registry/chips",
+    "description": "A selection list of 3D chips that press into the surface."
+  },
+  {
+    "id": "component/otp-input",
+    "title": "Egg OTP",
+    "sourceLibrary": "pinui",
+    "category": "Components",
+    "subcategory": "component",
+    "tags": [
+      "component",
+      "react",
+      "tailwind",
+      "shadcn"
+    ],
+    "runtime": "React, Tailwind CSS, TypeScript",
+    "style": "Shadcn Modern",
+    "license": "MIT (c) Rachit Thakur / Shadcn Labs",
+    "officialUrl": "https://www.pinui.xyz/components/otp-input",
+    "archivePath": "sources/pinui/registry/otp-input",
+    "description": "A one-time-code field made of eggs that crack on a wrong code."
+  },
+  {
+    "id": "component/add-member",
+    "title": "Add Member",
+    "sourceLibrary": "pinui",
+    "category": "Components",
+    "subcategory": "component",
+    "tags": [
+      "component",
+      "react",
+      "tailwind",
+      "shadcn"
+    ],
+    "runtime": "React, Tailwind CSS, TypeScript",
+    "style": "Shadcn Modern",
+    "license": "MIT (c) Rachit Thakur / Shadcn Labs",
+    "officialUrl": "https://www.pinui.xyz/components/add-member",
+    "archivePath": "sources/pinui/registry/add-member",
+    "description": "Pick people for a project, and watch their faces fly into the stack."
+  },
+  {
+    "id": "component/session-list",
+    "title": "Count down",
+    "sourceLibrary": "pinui",
+    "category": "Components",
+    "subcategory": "component",
+    "tags": [
+      "component",
+      "react",
+      "tailwind",
+      "shadcn"
+    ],
+    "runtime": "React, Tailwind CSS, TypeScript",
+    "style": "Shadcn Modern",
+    "license": "MIT (c) Rachit Thakur / Shadcn Labs",
+    "officialUrl": "https://www.pinui.xyz/components/session-list",
+    "archivePath": "sources/pinui/registry/session-list",
+    "description": "A session broken into blocks, counting down in real time."
+  },
+  {
+    "id": "component/balance-card",
+    "title": "Balance Card",
+    "sourceLibrary": "pinui",
+    "category": "Components",
+    "subcategory": "component",
+    "tags": [
+      "component",
+      "react",
+      "tailwind",
+      "shadcn"
+    ],
+    "runtime": "React, Tailwind CSS, TypeScript",
+    "style": "Shadcn Modern",
+    "license": "MIT (c) Rachit Thakur / Shadcn Labs",
+    "officialUrl": "https://www.pinui.xyz/components/balance-card",
+    "archivePath": "sources/pinui/registry/balance-card",
+    "description": "A counting balance, a liquid currency selector and a drawer that settles."
+  },
+  {
+    "id": "component/cart-card",
+    "title": "Add To Cart",
+    "sourceLibrary": "pinui",
+    "category": "Components",
+    "subcategory": "component",
+    "tags": [
+      "component",
+      "react",
+      "tailwind",
+      "shadcn"
+    ],
+    "runtime": "React, Tailwind CSS, TypeScript",
+    "style": "Shadcn Modern",
+    "license": "MIT (c) Rachit Thakur / Shadcn Labs",
+    "officialUrl": "https://www.pinui.xyz/components/cart-card",
+    "archivePath": "sources/pinui/registry/cart-card",
+    "description": "A product card that is only a photo until you open it."
+  },
+  {
+    "id": "blocx/storybook-hero",
+    "title": "Storybook Hero",
+    "sourceLibrary": "pinui",
+    "category": "Blocx",
+    "subcategory": "blocx",
+    "tags": [
+      "blocx",
+      "react",
+      "tailwind",
+      "shadcn"
+    ],
+    "runtime": "React, Tailwind CSS, TypeScript",
+    "style": "Shadcn Modern",
+    "license": "MIT (c) Rachit Thakur / Shadcn Labs",
+    "officialUrl": "https://www.pinui.xyz/blocx/storybook-hero",
+    "archivePath": "sources/pinui/blocx/storybook-hero",
+    "description": "Hero Section block. A parchment hero with a glowing cottage in an arch."
+  },
+  {
+    "id": "blocx/partylabs-hero",
+    "title": "iPartyLabs Hero",
+    "sourceLibrary": "pinui",
+    "category": "Blocx",
+    "subcategory": "blocx",
+    "tags": [
+      "blocx",
+      "react",
+      "tailwind",
+      "shadcn"
+    ],
+    "runtime": "React, Tailwind CSS, TypeScript",
+    "style": "Shadcn Modern",
+    "license": "MIT (c) Rachit Thakur / Shadcn Labs",
+    "officialUrl": "https://www.pinui.xyz/blocx/partylabs-hero",
+    "archivePath": "sources/pinui/blocx/partylabs-hero",
+    "description": "Hero Section block. A headline floating in a field of party photos."
+  },
+  {
+    "id": "blocx/luna-hero",
+    "title": "Luna Hero",
+    "sourceLibrary": "pinui",
+    "category": "Blocx",
+    "subcategory": "blocx",
+    "tags": [
+      "blocx",
+      "react",
+      "tailwind",
+      "shadcn"
+    ],
+    "runtime": "React, Tailwind CSS, TypeScript",
+    "style": "Shadcn Modern",
+    "license": "MIT (c) Rachit Thakur / Shadcn Labs",
+    "officialUrl": "https://www.pinui.xyz/blocx/luna-hero",
+    "archivePath": "sources/pinui/blocx/luna-hero",
+    "description": "Hero Section block. Pixel storefront hero with a floating mega menu."
+  },
+  {
+    "id": "blocx/orbit-hero",
+    "title": "Orbit Hero",
+    "sourceLibrary": "pinui",
+    "category": "Blocx",
+    "subcategory": "blocx",
+    "tags": [
+      "blocx",
+      "react",
+      "tailwind",
+      "shadcn"
+    ],
+    "runtime": "React, Tailwind CSS, TypeScript",
+    "style": "Shadcn Modern",
+    "license": "MIT (c) Rachit Thakur / Shadcn Labs",
+    "officialUrl": "https://www.pinui.xyz/blocx/orbit-hero",
+    "archivePath": "sources/pinui/blocx/orbit-hero",
+    "description": "Hero Section block. Space hero with a live, turning WebGL Earth."
+  },
+  {
+    "id": "blocx/odometer-pricing",
+    "title": "Odometer Pricing",
+    "sourceLibrary": "pinui",
+    "category": "Blocx",
+    "subcategory": "blocx",
+    "tags": [
+      "blocx",
+      "react",
+      "tailwind",
+      "shadcn"
+    ],
+    "runtime": "React, Tailwind CSS, TypeScript",
+    "style": "Shadcn Modern",
+    "license": "MIT (c) Rachit Thakur / Shadcn Labs",
+    "officialUrl": "https://www.pinui.xyz/blocx/odometer-pricing",
+    "archivePath": "sources/pinui/blocx/odometer-pricing",
+    "description": "Pricing block. Prices roll like an odometer on billing."
+  },
+  {
+    "id": "blocx/caremetric-footer",
+    "title": "CareMetric Footer",
+    "sourceLibrary": "pinui",
+    "category": "Blocx",
+    "subcategory": "blocx",
+    "tags": [
+      "blocx",
+      "react",
+      "tailwind",
+      "shadcn"
+    ],
+    "runtime": "React, Tailwind CSS, TypeScript",
+    "style": "Shadcn Modern",
+    "license": "MIT (c) Rachit Thakur / Shadcn Labs",
+    "officialUrl": "https://www.pinui.xyz/blocx/caremetric-footer",
+    "archivePath": "sources/pinui/blocx/caremetric-footer",
+    "description": "Footer block. Green link columns over a giant, bleeding mark."
+  },
+  {
+    "id": "blocx/smart-pricing",
+    "title": "Smart Pricing",
+    "sourceLibrary": "pinui",
+    "category": "Blocx",
+    "subcategory": "blocx",
+    "tags": [
+      "blocx",
+      "react",
+      "tailwind",
+      "shadcn"
+    ],
+    "runtime": "React, Tailwind CSS, TypeScript",
+    "style": "Shadcn Modern",
+    "license": "MIT (c) Rachit Thakur / Shadcn Labs",
+    "officialUrl": "https://www.pinui.xyz/blocx/smart-pricing",
+    "archivePath": "sources/pinui/blocx/smart-pricing",
+    "description": "Pricing block. Lime plans with a yearly switch and rolling prices."
+  },
+  {
+    "id": "blocx/contact-form",
+    "title": "Contact Form",
+    "sourceLibrary": "pinui",
+    "category": "Blocx",
+    "subcategory": "blocx",
+    "tags": [
+      "blocx",
+      "react",
+      "tailwind",
+      "shadcn"
+    ],
+    "runtime": "React, Tailwind CSS, TypeScript",
+    "style": "Shadcn Modern",
+    "license": "MIT (c) Rachit Thakur / Shadcn Labs",
+    "officialUrl": "https://www.pinui.xyz/blocx/contact-form",
+    "archivePath": "sources/pinui/blocx/contact-form",
+    "description": "Contact block. Black tiles, a reaching hand and a real form."
+  },
+  {
+    "id": "blocx/synais-footer",
+    "title": "Synais Footer",
+    "sourceLibrary": "pinui",
+    "category": "Blocx",
+    "subcategory": "blocx",
+    "tags": [
+      "blocx",
+      "react",
+      "tailwind",
+      "shadcn"
+    ],
+    "runtime": "React, Tailwind CSS, TypeScript",
+    "style": "Shadcn Modern",
+    "license": "MIT (c) Rachit Thakur / Shadcn Labs",
+    "officialUrl": "https://www.pinui.xyz/blocx/synais-footer",
+    "archivePath": "sources/pinui/blocx/synais-footer",
+    "description": "Footer block. Dark link columns over a giant cream wordmark."
+  },
+  {
+    "id": "blocx/halo-sign-in",
+    "title": "Halo Sign In",
+    "sourceLibrary": "pinui",
+    "category": "Blocx",
+    "subcategory": "blocx",
+    "tags": [
+      "blocx",
+      "react",
+      "tailwind",
+      "shadcn"
+    ],
+    "runtime": "React, Tailwind CSS, TypeScript",
+    "style": "Shadcn Modern",
+    "license": "MIT (c) Rachit Thakur / Shadcn Labs",
+    "officialUrl": "https://www.pinui.xyz/blocx/halo-sign-in",
+    "archivePath": "sources/pinui/blocx/halo-sign-in",
+    "description": "Auth block. A soft card in a tray, its mark in turning dots."
+  },
+  {
+    "id": "blocx/pixelkit-sign-in",
+    "title": "Pixelkit Sign In",
+    "sourceLibrary": "pinui",
+    "category": "Blocx",
+    "subcategory": "blocx",
+    "tags": [
+      "blocx",
+      "react",
+      "tailwind",
+      "shadcn"
+    ],
+    "runtime": "React, Tailwind CSS, TypeScript",
+    "style": "Shadcn Modern",
+    "license": "MIT (c) Rachit Thakur / Shadcn Labs",
+    "officialUrl": "https://www.pinui.xyz/blocx/pixelkit-sign-in",
+    "archivePath": "sources/pinui/blocx/pixelkit-sign-in",
+    "description": "Auth block. A lime tile, three providers and a magic link."
+  },
+  {
+    "id": "three-js-365-tetrahedron",
+    "title": "365 Shapes Three.js Component",
+    "sourceLibrary": "threeui",
+    "category": "Three.js",
+    "subcategory": "",
+    "tags": [
+      "three.js",
+      "webgl",
+      "3d",
+      "interactive"
+    ],
+    "runtime": "Raw WebGL 2",
+    "style": "Interactive 3D / WebGL",
+    "license": "catalogue metadata; source files behind ThreeUI Pro MCP",
+    "officialUrl": "https://threeui.com/three-js/365-tetrahedron",
+    "archivePath": "sources/threeui/items/three-js/365-tetrahedron.md",
+    "description": "365 Shapes: Four monochrome 365 studies pairing a tumbling refractive solid with its matching pixel-built shape word, bloom, radial light shafts, and tactile…"
+  },
+  {
+    "id": "three-js-3d-paper",
+    "title": "3D Paper Three.js Component",
+    "sourceLibrary": "threeui",
+    "category": "Three.js",
+    "subcategory": "",
+    "tags": [
+      "three.js",
+      "webgl",
+      "3d",
+      "interactive"
+    ],
+    "runtime": "Bundled Three.js r149 + custom GLSL + CanvasTexture",
+    "style": "Interactive 3D / WebGL",
+    "license": "catalogue metadata; source files behind ThreeUI Pro MCP",
+    "officialUrl": "https://threeui.com/three-js/3d-paper",
+    "archivePath": "sources/threeui/items/three-js/3d-paper.md",
+    "description": "3D Paper: Four translucent 3D paper certificates that bend like suspended glass, spanning the original Nocturne edition, Site of the Year, Japanese…"
+  },
+  {
+    "id": "three-js-halftone-keyboard-keyboard",
+    "title": "60% Board Three.js Component — Halftone Keyboard",
+    "sourceLibrary": "threeui",
+    "category": "Three.js",
+    "subcategory": "halftone-keyboard",
+    "tags": [
+      "three.js",
+      "webgl",
+      "3d",
+      "interactive"
+    ],
+    "runtime": "Three.js r149 + custom postprocessing",
+    "style": "Interactive 3D / WebGL",
+    "license": "catalogue metadata; source files behind ThreeUI Pro MCP",
+    "officialUrl": "https://threeui.com/three-js/halftone-keyboard/keyboard",
+    "archivePath": "sources/threeui/items/three-js/halftone-keyboard/keyboard.md",
+    "description": "Halftone Keyboard — 60% Board: The authored scene: a backlit 60% board with procedural key legends, automatic typing, keys that light as the cursor passes…"
+  },
+  {
+    "id": "three-js-retro-metallic-agent-selector",
+    "title": "Agent Selector Three.js Component — Retro Metallic",
+    "sourceLibrary": "threeui",
+    "category": "Three.js",
+    "subcategory": "retro-metallic",
+    "tags": [
+      "three.js",
+      "webgl",
+      "3d",
+      "interactive"
+    ],
+    "runtime": "Three.js r149 + custom postprocessing",
+    "style": "Interactive 3D / WebGL",
+    "license": "catalogue metadata; source files behind ThreeUI Pro MCP",
+    "officialUrl": "https://threeui.com/three-js/retro-metallic/agent-selector",
+    "archivePath": "sources/threeui/items/three-js/retro-metallic/agent-selector.md",
+    "description": "Retro Metallic — Agent Selector: A milled shift gate that routes its chrome lever between Luna, Terra, and Sol model stops and five effort levels, lighting…"
+  },
+  {
+    "id": "three-js-app-orbit",
+    "title": "App Orbit Three.js Component",
+    "sourceLibrary": "threeui",
+    "category": "Three.js",
+    "subcategory": "",
+    "tags": [
+      "three.js",
+      "webgl",
+      "3d",
+      "interactive"
+    ],
+    "runtime": "Bundled Three.js r149 + procedural CanvasTextures + DOM/CSS",
+    "style": "Interactive 3D / WebGL",
+    "license": "catalogue metadata; source files behind ThreeUI Pro MCP",
+    "officialUrl": "https://threeui.com/three-js/app-orbit",
+    "archivePath": "sources/threeui/items/three-js/app-orbit.md",
+    "description": "App Orbit: Fourteen sculpted app icons orbit through liquid glass, satin ceramic, and precision aluminum, with a macOS-inspired dock, direct focus, tactile…"
+  },
+  {
+    "id": "three-js-ashen-press",
+    "title": "Ashen Press Three.js Component",
+    "sourceLibrary": "threeui",
+    "category": "Three.js",
+    "subcategory": "",
+    "tags": [
+      "three.js",
+      "webgl",
+      "3d",
+      "interactive"
+    ],
+    "runtime": "Three.js r181 + custom GLSL + CanvasTexture",
+    "style": "Interactive 3D / WebGL",
+    "license": "catalogue metadata; source files behind ThreeUI Pro MCP",
+    "officialUrl": "https://threeui.com/three-js/ashen-press",
+    "archivePath": "sources/threeui/items/three-js/ashen-press.md",
+    "description": "Ashen Press: A tactile 3D art-book shelf with ten clothbound volumes, embedded illustrated plates, reflective oak furniture, a torn-paper detail reveal, and…"
+  },
+  {
+    "id": "three-js-woven-cloth-atelier",
+    "title": "Atelier Flag Three.js Component — Woven Cloth",
+    "sourceLibrary": "threeui",
+    "category": "Three.js",
+    "subcategory": "woven-cloth",
+    "tags": [
+      "three.js",
+      "webgl",
+      "3d",
+      "interactive"
+    ],
+    "runtime": "Three.js r160",
+    "style": "Interactive 3D / WebGL",
+    "license": "catalogue metadata; source files behind ThreeUI Pro MCP",
+    "officialUrl": "https://threeui.com/three-js/woven-cloth/atelier",
+    "archivePath": "sources/threeui/items/three-js/woven-cloth/atelier.md",
+    "description": "Woven Cloth — Atelier Flag: The same sheet cut and sewn: three linen panels joined by flat-felled seams and topstitching, an indigo heading tape on the hoist…"
+  },
+  {
+    "id": "three-js-sunset-valley-aurora",
+    "title": "Aurora Night Three.js Component — Sunset Valley",
+    "sourceLibrary": "threeui",
+    "category": "Three.js",
+    "subcategory": "sunset-valley",
+    "tags": [
+      "three.js",
+      "webgl",
+      "3d",
+      "interactive"
+    ],
+    "runtime": "Three.js r149",
+    "style": "Interactive 3D / WebGL",
+    "license": "catalogue metadata; source files behind ThreeUI Pro MCP",
+    "officialUrl": "https://threeui.com/three-js/sunset-valley/aurora",
+    "archivePath": "sources/threeui/items/three-js/sunset-valley/aurora.md",
+    "description": "Sunset Valley — Aurora Night: A deep blue starlit night beneath five folded borealis curtains, green along their sharp lower border and violet in the crown."
+  },
+  {
+    "id": "three-js-noema-bloom-bloom",
+    "title": "Bloom Three.js Component — Noema Bloom",
+    "sourceLibrary": "threeui",
+    "category": "Three.js",
+    "subcategory": "noema-bloom",
+    "tags": [
+      "three.js",
+      "webgl",
+      "3d",
+      "interactive"
+    ],
+    "runtime": "Three.js r149",
+    "style": "Interactive 3D / WebGL",
+    "license": "catalogue metadata; source files behind ThreeUI Pro MCP",
+    "officialUrl": "https://threeui.com/three-js/noema-bloom/bloom",
+    "archivePath": "sources/threeui/items/three-js/noema-bloom/bloom.md",
+    "description": "Noema Bloom — Bloom: The packaged scene: fifty-five petals in five whorls furl into a bud and open again on a seventeen-second cycle, deep indigo through…"
+  },
+  {
+    "id": "three-js-sunset-valley-blue-hour",
+    "title": "Blue Hour Three.js Component — Sunset Valley",
+    "sourceLibrary": "threeui",
+    "category": "Three.js",
+    "subcategory": "sunset-valley",
+    "tags": [
+      "three.js",
+      "webgl",
+      "3d",
+      "interactive"
+    ],
+    "runtime": "Three.js r149",
+    "style": "Interactive 3D / WebGL",
+    "license": "catalogue metadata; source files behind ThreeUI Pro MCP",
+    "officialUrl": "https://threeui.com/three-js/sunset-valley/blue-hour",
+    "archivePath": "sources/threeui/items/three-js/sunset-valley/blue-hour.md",
+    "description": "Sunset Valley — Blue Hour: The half hour after the sun has gone: an indigo sky over one ember of afterglow, the river turned to a pale mirror, and the same…"
+  },
+  {
+    "id": "three-js-book-of-tea",
+    "title": "Book of Japan Three.js Component",
+    "sourceLibrary": "threeui",
+    "category": "Three.js",
+    "subcategory": "",
+    "tags": [
+      "three.js",
+      "webgl",
+      "3d",
+      "interactive"
+    ],
+    "runtime": "Three.js r160 + custom page-curl GLSL + CanvasTexture typesetting",
+    "style": "Interactive 3D / WebGL",
+    "license": "catalogue metadata; source files behind ThreeUI Pro MCP",
+    "officialUrl": "https://threeui.com/three-js/book-of-tea",
+    "archivePath": "sources/threeui/items/three-js/book-of-tea.md",
+    "description": "Book of Japan: A dark hardbound reader for an original seven-chapter essay on Japan, with responsive typesetting, light-ink brush plates, richly textured…"
+  },
+  {
+    "id": "three-js-bookshelf",
+    "title": "Bookshelf Three.js Component",
+    "sourceLibrary": "threeui",
+    "category": "Three.js",
+    "subcategory": "",
+    "tags": [
+      "three.js",
+      "webgl",
+      "3d",
+      "interactive"
+    ],
+    "runtime": "Three.js r165",
+    "style": "Interactive 3D / WebGL",
+    "license": "catalogue metadata; source files behind ThreeUI Pro MCP",
+    "officialUrl": "https://threeui.com/three-js/bookshelf",
+    "archivePath": "sources/threeui/items/three-js/bookshelf.md",
+    "description": "Bookshelf: The exact seven-volume Bookshelf collection with its authored room, carousel shelf, individual cover artwork, foil, pages, inspection, opening, and…"
+  },
+  {
+    "id": "three-js-isometric-illustration-browser",
+    "title": "Browser Three.js Component — Isometric Illustration",
+    "sourceLibrary": "threeui",
+    "category": "Three.js",
+    "subcategory": "isometric-illustration",
+    "tags": [
+      "three.js",
+      "webgl",
+      "3d",
+      "interactive"
+    ],
+    "runtime": "Three.js r149",
+    "style": "Interactive 3D / WebGL",
+    "license": "catalogue metadata; source files behind ThreeUI Pro MCP",
+    "officialUrl": "https://threeui.com/three-js/isometric-illustration/browser",
+    "archivePath": "sources/threeui/items/three-js/isometric-illustration/browser.md",
+    "description": "Isometric Illustration — Browser: A window standing where the dock&#39;s lid did: a load bar sweeps its divider, content pops in block by block, and a pointer…"
+  },
+  {
+    "id": "three-js-japanese-tower-cambodia",
+    "title": "Cambodia Three.js Component — Country Towers",
+    "sourceLibrary": "threeui",
+    "category": "Three.js",
+    "subcategory": "japanese-tower",
+    "tags": [
+      "three.js",
+      "webgl",
+      "3d",
+      "interactive"
+    ],
+    "runtime": "Three.js r149 + Canvas 2D",
+    "style": "Interactive 3D / WebGL",
+    "license": "catalogue metadata; source files behind ThreeUI Pro MCP",
+    "officialUrl": "https://threeui.com/three-js/japanese-tower/cambodia",
+    "archivePath": "sources/threeui/items/three-js/japanese-tower/cambodia.md",
+    "description": "Country Towers — Cambodia: A Khmer prasat on laterite terraces with a redented sanctuary and diminishing sandstone tiers."
+  },
+  {
+    "id": "three-js-iso-mail-lightshafts-camera-drone",
+    "title": "Camera + Drone Three.js Component — Isometric Mail…",
+    "sourceLibrary": "threeui",
+    "category": "Three.js",
+    "subcategory": "iso-mail-lightshafts",
+    "tags": [
+      "three.js",
+      "webgl",
+      "3d",
+      "interactive"
+    ],
+    "runtime": "Canvas 2D",
+    "style": "Interactive 3D / WebGL",
+    "license": "catalogue metadata; source files behind ThreeUI Pro MCP",
+    "officialUrl": "https://threeui.com/three-js/iso-mail-lightshafts/camera-drone",
+    "archivePath": "sources/threeui/items/three-js/iso-mail-lightshafts/camera-drone.md",
+    "description": "Isometric Mail Light Shafts — Camera + Drone: A mirrorless camera with a deep animated lens and a compact four-rotor drone holding station above it."
+  },
+  {
+    "id": "three-js-3d-paper-certificate",
+    "title": "Certificate Three.js Component — 3D Paper",
+    "sourceLibrary": "threeui",
+    "category": "Three.js",
+    "subcategory": "3d-paper",
+    "tags": [
+      "three.js",
+      "webgl",
+      "3d",
+      "interactive"
+    ],
+    "runtime": "Bundled Three.js r149 + custom GLSL + CanvasTexture",
+    "style": "Interactive 3D / WebGL",
+    "license": "catalogue metadata; source files behind ThreeUI Pro MCP",
+    "officialUrl": "https://threeui.com/three-js/3d-paper/certificate",
+    "archivePath": "sources/threeui/items/three-js/3d-paper/certificate.md",
+    "description": "3D Paper — Certificate: A formal typographic certificate edition with recipient signatures, structured award details, glass-like reflections, and the original…"
+  },
+  {
+    "id": "three-js-wood-icons-chair",
+    "title": "Chair Three.js Component — Wood Icons",
+    "sourceLibrary": "threeui",
+    "category": "Three.js",
+    "subcategory": "wood-icons",
+    "tags": [
+      "three.js",
+      "webgl",
+      "3d",
+      "interactive"
+    ],
+    "runtime": "Three.js r149",
+    "style": "Interactive 3D / WebGL",
+    "license": "catalogue metadata; source files behind ThreeUI Pro MCP",
+    "officialUrl": "https://threeui.com/three-js/wood-icons/chair",
+    "archivePath": "sources/threeui/items/three-js/wood-icons/chair.md",
+    "description": "Wood Icons — Chair: A turned timber side chair with five glass slats set into its raked back over one solid seat board, and a warm slat at the centre that…"
+  },
+  {
+    "id": "three-js-grid-illustrations-charts",
+    "title": "Charts Three.js Component — Grid Illustrations",
+    "sourceLibrary": "threeui",
+    "category": "Three.js",
+    "subcategory": "grid-illustrations",
+    "tags": [
+      "three.js",
+      "webgl",
+      "3d",
+      "interactive"
+    ],
+    "runtime": "Three.js r149",
+    "style": "Interactive 3D / WebGL",
+    "license": "catalogue metadata; source files behind ThreeUI Pro MCP",
+    "officialUrl": "https://threeui.com/three-js/grid-illustrations/charts",
+    "archivePath": "sources/threeui/items/three-js/grid-illustrations/charts.md",
+    "description": "Grid Illustrations — Charts: An analytics board resolved as a dimensional isometric grid: a two-row column field, a pair of line series floating on dropped…"
+  },
+  {
+    "id": "three-js-japanese-tower-china",
+    "title": "China Three.js Component — Country Towers",
+    "sourceLibrary": "threeui",
+    "category": "Three.js",
+    "subcategory": "japanese-tower",
+    "tags": [
+      "three.js",
+      "webgl",
+      "3d",
+      "interactive"
+    ],
+    "runtime": "Three.js r149 + Canvas 2D",
+    "style": "Interactive 3D / WebGL",
+    "license": "catalogue metadata; source files behind ThreeUI Pro MCP",
+    "officialUrl": "https://threeui.com/three-js/japanese-tower/china",
+    "archivePath": "sources/threeui/items/three-js/japanese-tower/china.md",
+    "description": "Country Towers — China: A Chinese pagoda in vermilion lacquer and green glaze beneath a gilt finial."
+  },
+  {
+    "id": "three-js-isometric-motion-grid-contact",
+    "title": "Contact Three.js Component — Isometric Motion Grid",
+    "sourceLibrary": "threeui",
+    "category": "Three.js",
+    "subcategory": "isometric-motion-grid",
+    "tags": [
+      "three.js",
+      "webgl",
+      "3d",
+      "interactive"
+    ],
+    "runtime": "SVG + JavaScript",
+    "style": "Interactive 3D / WebGL",
+    "license": "catalogue metadata; source files behind ThreeUI Pro MCP",
+    "officialUrl": "https://threeui.com/three-js/isometric-motion-grid/contact",
+    "archivePath": "sources/threeui/items/three-js/isometric-motion-grid/contact.md",
+    "description": "Isometric Motion Grid — Contact: A hairline contact form beside a dispatch dock, where the dock and keypad sit apart on one deck and the outgoing message and…"
+  },
+  {
+    "id": "three-js-japanese-tower",
+    "title": "Country Towers Three.js Component",
+    "sourceLibrary": "threeui",
+    "category": "Three.js",
+    "subcategory": "",
+    "tags": [
+      "three.js",
+      "webgl",
+      "3d",
+      "interactive"
+    ],
+    "runtime": "Three.js r149 + Canvas 2D",
+    "style": "Interactive 3D / WebGL",
+    "license": "catalogue metadata; source files behind ThreeUI Pro MCP",
+    "officialUrl": "https://threeui.com/three-js/japanese-tower",
+    "archivePath": "sources/threeui/items/three-js/japanese-tower.md",
+    "description": "Country Towers: Six country-specific towers assembling above a procedural landscape: Japanese, Chinese, Vietnamese, Thai, Khmer, and Ottoman."
+  },
+  {
+    "id": "three-js-halftone-keyboard-crt",
+    "title": "CRT Three.js Component — Halftone Keyboard",
+    "sourceLibrary": "threeui",
+    "category": "Three.js",
+    "subcategory": "halftone-keyboard",
+    "tags": [
+      "three.js",
+      "webgl",
+      "3d",
+      "interactive"
+    ],
+    "runtime": "Three.js r149 + custom postprocessing",
+    "style": "Interactive 3D / WebGL",
+    "license": "catalogue metadata; source files behind ThreeUI Pro MCP",
+    "officialUrl": "https://threeui.com/three-js/halftone-keyboard/crt",
+    "archivePath": "sources/threeui/items/three-js/halftone-keyboard/crt.md",
+    "description": "Halftone Keyboard — CRT: A chunky monitor running a terminal session on a real spherical-cap tube, with scanlines, an aperture grille, barrel distortion and a…"
+  },
+  {
+    "id": "three-js-retro-metallic-crt",
+    "title": "CRT-14 Three.js Component — Retro Metallic",
+    "sourceLibrary": "threeui",
+    "category": "Three.js",
+    "subcategory": "retro-metallic",
+    "tags": [
+      "three.js",
+      "webgl",
+      "3d",
+      "interactive"
+    ],
+    "runtime": "Three.js r149 + custom postprocessing",
+    "style": "Interactive 3D / WebGL",
+    "license": "catalogue metadata; source files behind ThreeUI Pro MCP",
+    "officialUrl": "https://threeui.com/three-js/retro-metallic/crt",
+    "archivePath": "sources/threeui/items/three-js/retro-metallic/crt.md",
+    "description": "Retro Metallic — CRT-14: A pedestal CRT with milled bezel and knurled controls that blooms from a power-on line into boot text, colour bars, and oscilloscope…"
+  },
+  {
+    "id": "three-js-365-tetrahedron-cube",
+    "title": "Cube Three.js Component — 365 Shapes",
+    "sourceLibrary": "threeui",
+    "category": "Three.js",
+    "subcategory": "365-tetrahedron",
+    "tags": [
+      "three.js",
+      "webgl",
+      "3d",
+      "interactive"
+    ],
+    "runtime": "Raw WebGL 2",
+    "style": "Interactive 3D / WebGL",
+    "license": "catalogue metadata; source files behind ThreeUI Pro MCP",
+    "officialUrl": "https://threeui.com/three-js/365-tetrahedron/cube",
+    "archivePath": "sources/threeui/items/three-js/365-tetrahedron/cube.md",
+    "description": "365 Shapes — Cube: The original six-plane glass cube paired with a pixel-built CUBE wordmark."
+  },
+  {
+    "id": "three-js-structure-flow-data-field",
+    "title": "Data Field Three.js Component — Structure Flow",
+    "sourceLibrary": "threeui",
+    "category": "Three.js",
+    "subcategory": "structure-flow",
+    "tags": [
+      "three.js",
+      "webgl",
+      "3d",
+      "interactive"
+    ],
+    "runtime": "Three.js r128–r160",
+    "style": "Interactive 3D / WebGL",
+    "license": "catalogue metadata; source files behind ThreeUI Pro MCP",
+    "officialUrl": "https://threeui.com/three-js/structure-flow/data-field",
+    "archivePath": "sources/threeui/items/three-js/structure-flow/data-field.md",
+    "description": "Structure Flow — Data Field: A global-data Three.js network visual isolated from its dashboard frame."
+  },
+  {
+    "id": "three-js-wood-icons-desk",
+    "title": "Desk Three.js Component — Wood Icons",
+    "sourceLibrary": "threeui",
+    "category": "Three.js",
+    "subcategory": "wood-icons",
+    "tags": [
+      "three.js",
+      "webgl",
+      "3d",
+      "interactive"
+    ],
+    "runtime": "Three.js r149",
+    "style": "Interactive 3D / WebGL",
+    "license": "catalogue metadata; source files behind ThreeUI Pro MCP",
+    "officialUrl": "https://threeui.com/three-js/wood-icons/desk",
+    "archivePath": "sources/threeui/items/three-js/wood-icons/desk.md",
+    "description": "Wood Icons — Desk: A writing desk with a light table glazed into its top, a single drawer behind a smoked glass front that latches open on a spring, and a…"
+  },
+  {
+    "id": "three-js-structure-flow-dimensional-field",
+    "title": "Dimensional Field Three.js Component — Structure…",
+    "sourceLibrary": "threeui",
+    "category": "Three.js",
+    "subcategory": "structure-flow",
+    "tags": [
+      "three.js",
+      "webgl",
+      "3d",
+      "interactive"
+    ],
+    "runtime": "Three.js r128–r160",
+    "style": "Interactive 3D / WebGL",
+    "license": "catalogue metadata; source files behind ThreeUI Pro MCP",
+    "officialUrl": "https://threeui.com/three-js/structure-flow/dimensional-field",
+    "archivePath": "sources/threeui/items/three-js/structure-flow/dimensional-field.md",
+    "description": "Structure Flow — Dimensional Field: Dimensional architecture composed from two authored ShaderMaterials."
+  },
+  {
+    "id": "three-js-structure-flow-dot-matrix",
+    "title": "Dot Matrix Three.js Component — Structure Flow",
+    "sourceLibrary": "threeui",
+    "category": "Three.js",
+    "subcategory": "structure-flow",
+    "tags": [
+      "three.js",
+      "webgl",
+      "3d",
+      "interactive"
+    ],
+    "runtime": "Three.js r128–r160",
+    "style": "Interactive 3D / WebGL",
+    "license": "catalogue metadata; source files behind ThreeUI Pro MCP",
+    "officialUrl": "https://threeui.com/three-js/structure-flow/dot-matrix",
+    "archivePath": "sources/threeui/items/three-js/structure-flow/dot-matrix.md",
+    "description": "Structure Flow — Dot Matrix: A cyan breathing dot matrix with radial depth fade and smoothed pointer drift."
+  },
+  {
+    "id": "three-js-structure-flow-ember-storm",
+    "title": "Ember Storm Three.js Component — Structure Flow",
+    "sourceLibrary": "threeui",
+    "category": "Three.js",
+    "subcategory": "structure-flow",
+    "tags": [
+      "three.js",
+      "webgl",
+      "3d",
+      "interactive"
+    ],
+    "runtime": "Three.js r128–r160",
+    "style": "Interactive 3D / WebGL",
+    "license": "catalogue metadata; source files behind ThreeUI Pro MCP",
+    "officialUrl": "https://threeui.com/three-js/structure-flow/ember-storm",
+    "archivePath": "sources/threeui/items/three-js/structure-flow/ember-storm.md",
+    "description": "Structure Flow — Ember Storm: A 12,000-particle ember vortex with additive heat grading and flicker."
+  },
+  {
+    "id": "three-js-structure-flow-emerald-horizon",
+    "title": "Emerald Horizon Three.js Component — Structure Flow",
+    "sourceLibrary": "threeui",
+    "category": "Three.js",
+    "subcategory": "structure-flow",
+    "tags": [
+      "three.js",
+      "webgl",
+      "3d",
+      "interactive"
+    ],
+    "runtime": "Three.js r128–r160",
+    "style": "Interactive 3D / WebGL",
+    "license": "catalogue metadata; source files behind ThreeUI Pro MCP",
+    "officialUrl": "https://threeui.com/three-js/structure-flow/emerald-horizon",
+    "archivePath": "sources/threeui/items/three-js/structure-flow/emerald-horizon.md",
+    "description": "Structure Flow — Emerald Horizon: A deep emerald shader glow rising from an organic moving horizon."
+  },
+  {
+    "id": "ai-workflow",
+    "title": "AI Workflow Hero",
+    "sourceLibrary": "motionsites",
+    "category": "Hero",
+    "subcategory": "hero",
+    "tags": [
+      "motion",
+      "layout",
+      "landing-page",
+      "hero"
+    ],
+    "runtime": "HTML, CSS, GSAP / Framer Motion",
+    "style": "Cinematic Motion Layout",
+    "license": "MotionSites Creative Spec",
+    "officialUrl": "https://motionsites.com/prompts/ai-workflow",
+    "archivePath": "sources/motionsites/prompts/hero/ai-workflow.md",
+    "description": "Cấu trúc bố cục và đặc tả hiệu ứng chuyển động AI Workflow Hero (Hero)."
+  },
+  {
+    "id": "audio-showcase",
+    "title": "Audio Showcase",
+    "sourceLibrary": "motionsites",
+    "category": "Hero",
+    "subcategory": "hero",
+    "tags": [
+      "motion",
+      "layout",
+      "landing-page",
+      "hero"
+    ],
+    "runtime": "HTML, CSS, GSAP / Framer Motion",
+    "style": "Cinematic Motion Layout",
+    "license": "MotionSites Creative Spec",
+    "officialUrl": "https://motionsites.com/prompts/audio-showcase",
+    "archivePath": "sources/motionsites/prompts/hero/audio-showcase.md",
+    "description": "Cấu trúc bố cục và đặc tả hiệu ứng chuyển động Audio Showcase (Hero)."
+  },
+  {
+    "id": "bold-studio",
+    "title": "Bold Studio",
+    "sourceLibrary": "motionsites",
+    "category": "Hero",
+    "subcategory": "hero",
+    "tags": [
+      "motion",
+      "layout",
+      "landing-page",
+      "hero"
+    ],
+    "runtime": "HTML, CSS, GSAP / Framer Motion",
+    "style": "Cinematic Motion Layout",
+    "license": "MotionSites Creative Spec",
+    "officialUrl": "https://motionsites.com/prompts/bold-studio",
+    "archivePath": "sources/motionsites/prompts/hero/bold-studio.md",
+    "description": "Cấu trúc bố cục và đặc tả hiệu ứng chuyển động Bold Studio (Hero)."
+  },
+  {
+    "id": "camper-overnight",
+    "title": "Camper Overnight",
+    "sourceLibrary": "motionsites",
+    "category": "Hero",
+    "subcategory": "hero",
+    "tags": [
+      "motion",
+      "layout",
+      "landing-page",
+      "hero"
+    ],
+    "runtime": "HTML, CSS, GSAP / Framer Motion",
+    "style": "Cinematic Motion Layout",
+    "license": "MotionSites Creative Spec",
+    "officialUrl": "https://motionsites.com/prompts/camper-overnight",
+    "archivePath": "sources/motionsites/prompts/hero/camper-overnight.md",
+    "description": "Cấu trúc bố cục và đặc tả hiệu ứng chuyển động Camper Overnight (Hero)."
+  },
+  {
+    "id": "contact-cybernetic",
+    "title": "Contact Cybernetic",
+    "sourceLibrary": "motionsites",
+    "category": "Hero",
+    "subcategory": "hero",
+    "tags": [
+      "motion",
+      "layout",
+      "landing-page",
+      "hero"
+    ],
+    "runtime": "HTML, CSS, GSAP / Framer Motion",
+    "style": "Cinematic Motion Layout",
+    "license": "MotionSites Creative Spec",
+    "officialUrl": "https://motionsites.com/prompts/contact-cybernetic",
+    "archivePath": "sources/motionsites/prompts/hero/contact-cybernetic.md",
+    "description": "Cấu trúc bố cục và đặc tả hiệu ứng chuyển động Contact Cybernetic (Hero)."
+  },
+  {
+    "id": "cozypaws",
+    "title": "CozyPaws",
+    "sourceLibrary": "motionsites",
+    "category": "Hero",
+    "subcategory": "hero",
+    "tags": [
+      "motion",
+      "layout",
+      "landing-page",
+      "hero"
+    ],
+    "runtime": "HTML, CSS, GSAP / Framer Motion",
+    "style": "Cinematic Motion Layout",
+    "license": "MotionSites Creative Spec",
+    "officialUrl": "https://motionsites.com/prompts/cozypaws",
+    "archivePath": "sources/motionsites/prompts/hero/cozypaws.md",
+    "description": "Cấu trúc bố cục và đặc tả hiệu ứng chuyển động CozyPaws (Hero)."
+  },
+  {
+    "id": "creative-portfolio",
+    "title": "Creative Portfolio",
+    "sourceLibrary": "motionsites",
+    "category": "Hero",
+    "subcategory": "hero",
+    "tags": [
+      "motion",
+      "layout",
+      "landing-page",
+      "hero"
+    ],
+    "runtime": "HTML, CSS, GSAP / Framer Motion",
+    "style": "Cinematic Motion Layout",
+    "license": "MotionSites Creative Spec",
+    "officialUrl": "https://motionsites.com/prompts/creative-portfolio",
+    "archivePath": "sources/motionsites/prompts/hero/creative-portfolio.md",
+    "description": "Cấu trúc bố cục và đặc tả hiệu ứng chuyển động Creative Portfolio (Hero)."
+  },
+  {
+    "id": "cyberpunk-reveal",
+    "title": "Cyberpunk Reveal",
+    "sourceLibrary": "motionsites",
+    "category": "Hero",
+    "subcategory": "hero",
+    "tags": [
+      "motion",
+      "layout",
+      "landing-page",
+      "hero"
+    ],
+    "runtime": "HTML, CSS, GSAP / Framer Motion",
+    "style": "Cinematic Motion Layout",
+    "license": "MotionSites Creative Spec",
+    "officialUrl": "https://motionsites.com/prompts/cyberpunk-reveal",
+    "archivePath": "sources/motionsites/prompts/hero/cyberpunk-reveal.md",
+    "description": "Cấu trúc bố cục và đặc tả hiệu ứng chuyển động Cyberpunk Reveal (Hero)."
+  },
+  {
+    "id": "cybersecurity-hero",
+    "title": "Cybersecurity Hero",
+    "sourceLibrary": "motionsites",
+    "category": "Hero",
+    "subcategory": "hero",
+    "tags": [
+      "motion",
+      "layout",
+      "landing-page",
+      "hero"
+    ],
+    "runtime": "HTML, CSS, GSAP / Framer Motion",
+    "style": "Cinematic Motion Layout",
+    "license": "MotionSites Creative Spec",
+    "officialUrl": "https://motionsites.com/prompts/cybersecurity-hero",
+    "archivePath": "sources/motionsites/prompts/hero/cybersecurity-hero.md",
+    "description": "Cấu trúc bố cục và đặc tả hiệu ứng chuyển động Cybersecurity Hero (Hero)."
+  },
+  {
+    "id": "equilibrium",
+    "title": "Equilibrium",
+    "sourceLibrary": "motionsites",
+    "category": "Hero",
+    "subcategory": "hero",
+    "tags": [
+      "motion",
+      "layout",
+      "landing-page",
+      "hero"
+    ],
+    "runtime": "HTML, CSS, GSAP / Framer Motion",
+    "style": "Cinematic Motion Layout",
+    "license": "MotionSites Creative Spec",
+    "officialUrl": "https://motionsites.com/prompts/equilibrium",
+    "archivePath": "sources/motionsites/prompts/hero/equilibrium.md",
+    "description": "Cấu trúc bố cục và đặc tả hiệu ứng chuyển động Equilibrium (Hero)."
+  },
+  {
+    "id": "immersive-ocean",
+    "title": "Immersive Ocean",
+    "sourceLibrary": "motionsites",
+    "category": "Hero",
+    "subcategory": "hero",
+    "tags": [
+      "motion",
+      "layout",
+      "landing-page",
+      "hero"
+    ],
+    "runtime": "HTML, CSS, GSAP / Framer Motion",
+    "style": "Cinematic Motion Layout",
+    "license": "MotionSites Creative Spec",
+    "officialUrl": "https://motionsites.com/prompts/immersive-ocean",
+    "archivePath": "sources/motionsites/prompts/hero/immersive-ocean.md",
+    "description": "Cấu trúc bố cục và đặc tả hiệu ứng chuyển động Immersive Ocean (Hero)."
+  },
+  {
+    "id": "impact-ventures",
+    "title": "Impact Ventures",
+    "sourceLibrary": "motionsites",
+    "category": "Hero",
+    "subcategory": "hero",
+    "tags": [
+      "motion",
+      "layout",
+      "landing-page",
+      "hero"
+    ],
+    "runtime": "HTML, CSS, GSAP / Framer Motion",
+    "style": "Cinematic Motion Layout",
+    "license": "MotionSites Creative Spec",
+    "officialUrl": "https://motionsites.com/prompts/impact-ventures",
+    "archivePath": "sources/motionsites/prompts/hero/impact-ventures.md",
+    "description": "Cấu trúc bố cục và đặc tả hiệu ứng chuyển động Impact Ventures (Hero)."
+  },
+  {
+    "id": "intelligentx",
+    "title": "IntelligentX",
+    "sourceLibrary": "motionsites",
+    "category": "Hero",
+    "subcategory": "hero",
+    "tags": [
+      "motion",
+      "layout",
+      "landing-page",
+      "hero"
+    ],
+    "runtime": "HTML, CSS, GSAP / Framer Motion",
+    "style": "Cinematic Motion Layout",
+    "license": "MotionSites Creative Spec",
+    "officialUrl": "https://motionsites.com/prompts/intelligentx",
+    "archivePath": "sources/motionsites/prompts/hero/intelligentx.md",
+    "description": "Cấu trúc bố cục và đặc tả hiệu ứng chuyển động IntelligentX (Hero)."
+  },
+  {
+    "id": "interactive-discovery",
+    "title": "Interactive Discovery",
+    "sourceLibrary": "motionsites",
+    "category": "Hero",
+    "subcategory": "hero",
+    "tags": [
+      "motion",
+      "layout",
+      "landing-page",
+      "hero"
+    ],
+    "runtime": "HTML, CSS, GSAP / Framer Motion",
+    "style": "Cinematic Motion Layout",
+    "license": "MotionSites Creative Spec",
+    "officialUrl": "https://motionsites.com/prompts/interactive-discovery",
+    "archivePath": "sources/motionsites/prompts/hero/interactive-discovery.md",
+    "description": "Cấu trúc bố cục và đặc tả hiệu ứng chuyển động Interactive Discovery (Hero)."
+  },
+  {
+    "id": "network-hero",
+    "title": "Network Hero",
+    "sourceLibrary": "motionsites",
+    "category": "Hero",
+    "subcategory": "hero",
+    "tags": [
+      "motion",
+      "layout",
+      "landing-page",
+      "hero"
+    ],
+    "runtime": "HTML, CSS, GSAP / Framer Motion",
+    "style": "Cinematic Motion Layout",
+    "license": "MotionSites Creative Spec",
+    "officialUrl": "https://motionsites.com/prompts/network-hero",
+    "archivePath": "sources/motionsites/prompts/hero/network-hero.md",
+    "description": "Cấu trúc bố cục và đặc tả hiệu ứng chuyển động Network Hero (Hero)."
+  },
+  {
+    "id": "organic-odyssey",
+    "title": "Organic Odyssey",
+    "sourceLibrary": "motionsites",
+    "category": "Hero",
+    "subcategory": "hero",
+    "tags": [
+      "motion",
+      "layout",
+      "landing-page",
+      "hero"
+    ],
+    "runtime": "HTML, CSS, GSAP / Framer Motion",
+    "style": "Cinematic Motion Layout",
+    "license": "MotionSites Creative Spec",
+    "officialUrl": "https://motionsites.com/prompts/organic-odyssey",
+    "archivePath": "sources/motionsites/prompts/hero/organic-odyssey.md",
+    "description": "Cấu trúc bố cục và đặc tả hiệu ứng chuyển động Organic Odyssey (Hero)."
+  },
+  {
+    "id": "portal",
+    "title": "Portal",
+    "sourceLibrary": "motionsites",
+    "category": "Hero",
+    "subcategory": "hero",
+    "tags": [
+      "motion",
+      "layout",
+      "landing-page",
+      "hero"
+    ],
+    "runtime": "HTML, CSS, GSAP / Framer Motion",
+    "style": "Cinematic Motion Layout",
+    "license": "MotionSites Creative Spec",
+    "officialUrl": "https://motionsites.com/prompts/portal",
+    "archivePath": "sources/motionsites/prompts/hero/portal.md",
+    "description": "Cấu trúc bố cục và đặc tả hiệu ứng chuyển động Portal (Hero)."
+  },
+  {
+    "id": "prosthetics-hero",
+    "title": "Prosthetics Hero",
+    "sourceLibrary": "motionsites",
+    "category": "Hero",
+    "subcategory": "hero",
+    "tags": [
+      "motion",
+      "layout",
+      "landing-page",
+      "hero"
+    ],
+    "runtime": "HTML, CSS, GSAP / Framer Motion",
+    "style": "Cinematic Motion Layout",
+    "license": "MotionSites Creative Spec",
+    "officialUrl": "https://motionsites.com/prompts/prosthetics-hero",
+    "archivePath": "sources/motionsites/prompts/hero/prosthetics-hero.md",
+    "description": "Cấu trúc bố cục và đặc tả hiệu ứng chuyển động Prosthetics Hero (Hero)."
+  },
+  {
+    "id": "retro-futurist",
+    "title": "Retro-Futurist",
+    "sourceLibrary": "motionsites",
+    "category": "Hero",
+    "subcategory": "hero",
+    "tags": [
+      "motion",
+      "layout",
+      "landing-page",
+      "hero"
+    ],
+    "runtime": "HTML, CSS, GSAP / Framer Motion",
+    "style": "Cinematic Motion Layout",
+    "license": "MotionSites Creative Spec",
+    "officialUrl": "https://motionsites.com/prompts/retro-futurist",
+    "archivePath": "sources/motionsites/prompts/hero/retro-futurist.md",
+    "description": "Cấu trúc bố cục và đặc tả hiệu ứng chuyển động Retro-Futurist (Hero)."
+  },
+  {
+    "id": "stillmind",
+    "title": "Stillmind",
+    "sourceLibrary": "motionsites",
+    "category": "Hero",
+    "subcategory": "hero",
+    "tags": [
+      "motion",
+      "layout",
+      "landing-page",
+      "hero"
+    ],
+    "runtime": "HTML, CSS, GSAP / Framer Motion",
+    "style": "Cinematic Motion Layout",
+    "license": "MotionSites Creative Spec",
+    "officialUrl": "https://motionsites.com/prompts/stillmind",
+    "archivePath": "sources/motionsites/prompts/hero/stillmind.md",
+    "description": "Cấu trúc bố cục và đặc tả hiệu ứng chuyển động Stillmind (Hero)."
+  },
+  {
+    "id": "001",
+    "title": "Liquid glass button",
+    "sourceLibrary": "lucianlabs",
+    "category": "Buttons",
+    "subcategory": "interface",
+    "tags": [
+      "button",
+      "glass",
+      "loading",
+      "success",
+      "magnetic"
+    ],
+    "runtime": "Vanilla HTML, CSS Custom Properties, JS",
+    "style": "Glassmorphism & Micro-Interactions",
+    "license": "MIT",
+    "officialUrl": "https://lucianlabs.dev/en/uxui-prompt/#001",
+    "archivePath": "sources/lucianlabs/prompts/interface/001-liquid-glass-button.md",
+    "description": "Thành phần giao diện chuẩn tokens Liquid glass button với micro-motion và hệ thống token đồng bộ."
+  },
+  {
+    "id": "002",
+    "title": "Magnetic arrow button",
+    "sourceLibrary": "lucianlabs",
+    "category": "Buttons",
+    "subcategory": "interface",
+    "tags": [
+      "button",
+      "magnetic",
+      "cta",
+      "hover",
+      "arrow"
+    ],
+    "runtime": "Vanilla HTML, CSS Custom Properties, JS",
+    "style": "Glassmorphism & Micro-Interactions",
+    "license": "MIT",
+    "officialUrl": "https://lucianlabs.dev/en/uxui-prompt/#002",
+    "archivePath": "sources/lucianlabs/prompts/interface/002-magnetic-letter-button.md",
+    "description": "Thành phần giao diện chuẩn tokens Magnetic arrow button với micro-motion và hệ thống token đồng bộ."
+  },
+  {
+    "id": "003",
+    "title": "Hold to delete",
+    "sourceLibrary": "lucianlabs",
+    "category": "Buttons",
+    "subcategory": "interface",
+    "tags": [
+      "button",
+      "hold",
+      "destructive",
+      "confirm",
+      "undo"
+    ],
+    "runtime": "Vanilla HTML, CSS Custom Properties, JS",
+    "style": "Glassmorphism & Micro-Interactions",
+    "license": "MIT",
+    "officialUrl": "https://lucianlabs.dev/en/uxui-prompt/#003",
+    "archivePath": "sources/lucianlabs/prompts/interface/003-hold-to-confirm.md",
+    "description": "Thành phần giao diện chuẩn tokens Hold to delete với micro-motion và hệ thống token đồng bộ."
+  },
+  {
+    "id": "004",
+    "title": "Progress download button",
+    "sourceLibrary": "lucianlabs",
+    "category": "Buttons",
+    "subcategory": "interface",
+    "tags": [
+      "button",
+      "download",
+      "progress",
+      "success",
+      "cancel"
+    ],
+    "runtime": "Vanilla HTML, CSS Custom Properties, JS",
+    "style": "Glassmorphism & Micro-Interactions",
+    "license": "MIT",
+    "officialUrl": "https://lucianlabs.dev/en/uxui-prompt/#004",
+    "archivePath": "sources/lucianlabs/prompts/interface/004-fill-progress-download.md",
+    "description": "Thành phần giao diện chuẩn tokens Progress download button với micro-motion và hệ thống token đồng bộ."
+  },
+  {
+    "id": "005",
+    "title": "Paper plane send button",
+    "sourceLibrary": "lucianlabs",
+    "category": "Buttons",
+    "subcategory": "interface",
+    "tags": [
+      "button",
+      "send",
+      "paper-plane",
+      "offset-path",
+      "chat"
+    ],
+    "runtime": "Vanilla HTML, CSS Custom Properties, JS",
+    "style": "Glassmorphism & Micro-Interactions",
+    "license": "MIT",
+    "officialUrl": "https://lucianlabs.dev/en/uxui-prompt/#005",
+    "archivePath": "sources/lucianlabs/prompts/interface/005-paper-plane-send.md",
+    "description": "Thành phần giao diện chuẩn tokens Paper plane send button với micro-motion và hệ thống token đồng bộ."
+  },
+  {
+    "id": "006",
+    "title": "Ink ripple subscribe button",
+    "sourceLibrary": "lucianlabs",
+    "category": "Buttons",
+    "subcategory": "interface",
+    "tags": [
+      "button",
+      "ripple",
+      "subscribe",
+      "toggle",
+      "counter"
+    ],
+    "runtime": "Vanilla HTML, CSS Custom Properties, JS",
+    "style": "Glassmorphism & Micro-Interactions",
+    "license": "MIT",
+    "officialUrl": "https://lucianlabs.dev/en/uxui-prompt/#006",
+    "archivePath": "sources/lucianlabs/prompts/interface/006-ink-ripple-button.md",
+    "description": "Thành phần giao diện chuẩn tokens Ink ripple subscribe button với micro-motion và hệ thống token đồng bộ."
+  },
+  {
+    "id": "007",
+    "title": "Play–pause morph",
+    "sourceLibrary": "lucianlabs",
+    "category": "Buttons",
+    "subcategory": "interface",
+    "tags": [
+      "button",
+      "play",
+      "pause",
+      "morph",
+      "audio",
+      "progress"
+    ],
+    "runtime": "Vanilla HTML, CSS Custom Properties, JS",
+    "style": "Glassmorphism & Micro-Interactions",
+    "license": "MIT",
+    "officialUrl": "https://lucianlabs.dev/en/uxui-prompt/#007",
+    "archivePath": "sources/lucianlabs/prompts/interface/007-play-pause-morph.md",
+    "description": "Thành phần giao diện chuẩn tokens Play–pause morph với micro-motion và hệ thống token đồng bộ."
+  },
+  {
+    "id": "008",
+    "title": "Copy button that turns into a check",
+    "sourceLibrary": "lucianlabs",
+    "category": "Buttons",
+    "subcategory": "interface",
+    "tags": [
+      "button",
+      "copy",
+      "clipboard",
+      "tooltip",
+      "code"
+    ],
+    "runtime": "Vanilla HTML, CSS Custom Properties, JS",
+    "style": "Glassmorphism & Micro-Interactions",
+    "license": "MIT",
+    "officialUrl": "https://lucianlabs.dev/en/uxui-prompt/#008",
+    "archivePath": "sources/lucianlabs/prompts/interface/008-copy-to-check.md",
+    "description": "Thành phần giao diện chuẩn tokens Copy button that turns into a check với micro-motion và hệ thống token đồng bộ."
+  },
+  {
+    "id": "009",
+    "title": "Rolling label button",
+    "sourceLibrary": "lucianlabs",
+    "category": "Buttons",
+    "subcategory": "interface",
+    "tags": [
+      "button",
+      "hover",
+      "stagger",
+      "typography",
+      "toggle"
+    ],
+    "runtime": "Vanilla HTML, CSS Custom Properties, JS",
+    "style": "Glassmorphism & Micro-Interactions",
+    "license": "MIT",
+    "officialUrl": "https://lucianlabs.dev/en/uxui-prompt/#009",
+    "archivePath": "sources/lucianlabs/prompts/interface/009-rolling-label-button.md",
+    "description": "Thành phần giao diện chuẩn tokens Rolling label button với micro-motion và hệ thống token đồng bộ."
+  },
+  {
+    "id": "010",
+    "title": "Split action button",
+    "sourceLibrary": "lucianlabs",
+    "category": "Buttons",
+    "subcategory": "interface",
+    "tags": [
+      "button",
+      "split",
+      "menu",
+      "deploy",
+      "progress"
+    ],
+    "runtime": "Vanilla HTML, CSS Custom Properties, JS",
+    "style": "Glassmorphism & Micro-Interactions",
+    "license": "MIT",
+    "officialUrl": "https://lucianlabs.dev/en/uxui-prompt/#010",
+    "archivePath": "sources/lucianlabs/prompts/interface/010-split-action-button.md",
+    "description": "Thành phần giao diện chuẩn tokens Split action button với micro-motion và hệ thống token đồng bộ."
+  },
+  {
+    "id": "011",
+    "title": "Radial floating button",
+    "sourceLibrary": "lucianlabs",
+    "category": "Buttons",
+    "subcategory": "interface",
+    "tags": [
+      "button",
+      "fab",
+      "radial",
+      "menu",
+      "stagger"
+    ],
+    "runtime": "Vanilla HTML, CSS Custom Properties, JS",
+    "style": "Glassmorphism & Micro-Interactions",
+    "license": "MIT",
+    "officialUrl": "https://lucianlabs.dev/en/uxui-prompt/#011",
+    "archivePath": "sources/lucianlabs/prompts/interface/011-fab-radial-menu.md",
+    "description": "Thành phần giao diện chuẩn tokens Radial floating button với micro-motion và hệ thống token đồng bộ."
+  },
+  {
+    "id": "012",
+    "title": "Bookmark ribbon",
+    "sourceLibrary": "lucianlabs",
+    "category": "Buttons",
+    "subcategory": "interface",
+    "tags": [
+      "button",
+      "bookmark",
+      "toggle",
+      "burst",
+      "counter"
+    ],
+    "runtime": "Vanilla HTML, CSS Custom Properties, JS",
+    "style": "Glassmorphism & Micro-Interactions",
+    "license": "MIT",
+    "officialUrl": "https://lucianlabs.dev/en/uxui-prompt/#012",
+    "archivePath": "sources/lucianlabs/prompts/interface/012-bookmark-ribbon.md",
+    "description": "Thành phần giao diện chuẩn tokens Bookmark ribbon với micro-motion và hệ thống token đồng bộ."
+  },
+  {
+    "id": "203",
+    "title": "Leader-lined product hotspots",
+    "sourceLibrary": "lucianlabs",
+    "category": "Commerce & Pricing",
+    "subcategory": "animation",
+    "tags": [
+      "hotspot",
+      "annotation",
+      "product",
+      "color-swatch",
+      "headphones"
+    ],
+    "runtime": "Vanilla HTML, CSS Custom Properties, JS",
+    "style": "Glassmorphism & Micro-Interactions",
+    "license": "MIT",
+    "officialUrl": "https://lucianlabs.dev/en/uxui-prompt/#203",
+    "archivePath": "sources/lucianlabs/prompts/animation/203-product-hotspots.md",
+    "description": "Thành phần giao diện chuẩn tokens Leader-lined product hotspots với micro-motion và hệ thống token đồng bộ."
+  },
+  {
+    "id": "217",
+    "title": "Plan comparison with differences only",
+    "sourceLibrary": "lucianlabs",
+    "category": "Commerce & Pricing",
+    "subcategory": "animation",
+    "tags": [
+      "pricing",
+      "comparison-table",
+      "sticky-header",
+      "filter",
+      "saas"
+    ],
+    "runtime": "Vanilla HTML, CSS Custom Properties, JS",
+    "style": "Glassmorphism & Micro-Interactions",
+    "license": "MIT",
+    "officialUrl": "https://lucianlabs.dev/en/uxui-prompt/#217",
+    "archivePath": "sources/lucianlabs/prompts/animation/217-plan-compare-table.md",
+    "description": "Thành phần giao diện chuẩn tokens Plan comparison with differences only với micro-motion và hệ thống token đồng bộ."
+  },
+  {
+    "id": "221",
+    "title": "Sticky buy bar with option sheet",
+    "sourceLibrary": "lucianlabs",
+    "category": "Commerce & Pricing",
+    "subcategory": "animation",
+    "tags": [
+      "sticky-cta",
+      "bottom-sheet",
+      "product-page",
+      "ecommerce",
+      "options"
+    ],
+    "runtime": "Vanilla HTML, CSS Custom Properties, JS",
+    "style": "Glassmorphism & Micro-Interactions",
+    "license": "MIT",
+    "officialUrl": "https://lucianlabs.dev/en/uxui-prompt/#221",
+    "archivePath": "sources/lucianlabs/prompts/animation/221-sticky-buy-sheet.md",
+    "description": "Thành phần giao diện chuẩn tokens Sticky buy bar with option sheet với micro-motion và hệ thống token đồng bộ."
+  },
+  {
+    "id": "components/css-buttons/css-add-to-cart-button",
+    "title": "CSS Add to Cart Button",
+    "sourceLibrary": "codefronts",
+    "category": "CSS Buttons",
+    "subcategory": "UI Components",
+    "tags": [
+      "css",
+      "ui-snippet",
+      "css-buttons"
+    ],
+    "runtime": "HTML, CSS, JS",
+    "style": "Pure CSS / Tailwind Snippet",
+    "license": "Public Specification",
+    "officialUrl": "https://codefronts.com/components/css-buttons/css-add-to-cart-button/",
+    "archivePath": "sources/codefronts/components/css-buttons/css-add-to-cart-button.md",
+    "description": "The single most-measured button in e-commerce: press it and a cart glyph arcs into a badge, the badge digit bumps, and the label swaps to \"Added\" before…"
+  },
+  {
+    "id": "components/css-buttons/css-aged-brass-subway-token-button",
+    "title": "CSS Aged Brass Subway Token Button",
+    "sourceLibrary": "codefronts",
+    "category": "CSS Buttons",
+    "subcategory": "UI Components",
+    "tags": [
+      "css",
+      "ui-snippet",
+      "css-buttons"
+    ],
+    "runtime": "HTML, Modern CSS",
+    "style": "Pure CSS / Tailwind Snippet",
+    "license": "Public Specification",
+    "officialUrl": "https://codefronts.com/components/css-buttons/css-aged-brass-subway-token-button/",
+    "archivePath": "sources/codefronts/components/css-buttons/css-aged-brass-subway-token-button.md",
+    "description": "A 1953 transit token: milled rim, tarnished brass, and a knocked-out letter you can see the background through — a mask-composite cut, not a coloured glyph."
+  },
+  {
+    "id": "components/css-buttons/css-aged-copper-coin-button",
+    "title": "CSS Aged Copper Coin Button",
+    "sourceLibrary": "codefronts",
+    "category": "CSS Buttons",
+    "subcategory": "UI Components",
+    "tags": [
+      "css",
+      "ui-snippet",
+      "css-buttons"
+    ],
+    "runtime": "HTML, Modern CSS",
+    "style": "Pure CSS / Tailwind Snippet",
+    "license": "Public Specification",
+    "officialUrl": "https://codefronts.com/components/css-buttons/css-aged-copper-coin-button/",
+    "archivePath": "sources/codefronts/components/css-buttons/css-aged-copper-coin-button.md",
+    "description": "A struck copper coin with a milled edge, verdigris patina blooming in the low spots, and a real 3D flip to its reverse face on click."
+  },
+  {
+    "id": "components/css-buttons/css-airline-boarding-pass-button",
+    "title": "CSS Airline Boarding Pass Button",
+    "sourceLibrary": "codefronts",
+    "category": "CSS Buttons",
+    "subcategory": "UI Components",
+    "tags": [
+      "css",
+      "ui-snippet",
+      "css-buttons"
+    ],
+    "runtime": "HTML, Modern CSS",
+    "style": "Pure CSS / Tailwind Snippet",
+    "license": "Public Specification",
+    "officialUrl": "https://codefronts.com/components/css-buttons/css-airline-boarding-pass-button/",
+    "archivePath": "sources/codefronts/components/css-buttons/css-airline-boarding-pass-button.md",
+    "description": "A boarding pass with a genuinely perforated seam: a mask punches half-circles down the divide, the stub tears away and rotates on hover, and a barcode is…"
+  },
+  {
+    "id": "components/css-buttons/css-bakelite-radio-dial-toggle-button",
+    "title": "CSS Bakelite Radio Dial Toggle Button",
+    "sourceLibrary": "codefronts",
+    "category": "CSS Buttons",
+    "subcategory": "UI Components",
+    "tags": [
+      "css",
+      "ui-snippet",
+      "css-buttons"
+    ],
+    "runtime": "HTML, Modern CSS",
+    "style": "Pure CSS / Tailwind Snippet",
+    "license": "Public Specification",
+    "officialUrl": "https://codefronts.com/components/css-buttons/css-bakelite-radio-dial-toggle-button/",
+    "archivePath": "sources/codefronts/components/css-buttons/css-bakelite-radio-dial-toggle-button.md",
+    "description": "A bakelite rotary switch that turns 132° from OFF to ON, with a knurled grip, a chamfered pointer, engraved tick marks around the bezel, and a warm indicator…"
+  },
+  {
+    "id": "components/css-buttons/css-brass-periscope-lens-button",
+    "title": "CSS Brass Periscope Lens Button",
+    "sourceLibrary": "codefronts",
+    "category": "CSS Buttons",
+    "subcategory": "UI Components",
+    "tags": [
+      "css",
+      "ui-snippet",
+      "css-buttons"
+    ],
+    "runtime": "HTML, Modern CSS",
+    "style": "Pure CSS / Tailwind Snippet",
+    "license": "Public Specification",
+    "officialUrl": "https://codefronts.com/components/css-buttons/css-brass-periscope-lens-button/",
+    "archivePath": "sources/codefronts/components/css-buttons/css-brass-periscope-lens-button.md",
+    "description": "A brass periscope objective: a knurled bezel, an engraved focus scale, and a six-blade iris that irises open on hover to reveal the glass — each blade a…"
+  },
+  {
+    "id": "components/css-buttons/css-brushed-brass-plate-button",
+    "title": "CSS Brushed Brass Plate Button",
+    "sourceLibrary": "codefronts",
+    "category": "CSS Buttons",
+    "subcategory": "UI Components",
+    "tags": [
+      "css",
+      "ui-snippet",
+      "css-buttons"
+    ],
+    "runtime": "HTML, Modern CSS",
+    "style": "Pure CSS / Tailwind Snippet",
+    "license": "Public Specification",
+    "officialUrl": "https://codefronts.com/components/css-buttons/css-brushed-brass-plate-button/",
+    "archivePath": "sources/codefronts/components/css-buttons/css-brushed-brass-plate-button.md",
+    "description": "A machined brass nameplate: horizontal brush grain from stacked repeating gradients, four countersunk screws, engraved letterforms cut with a two-shadow…"
+  },
+  {
+    "id": "components/css-buttons/css-brutalist-concrete-slab-button",
+    "title": "CSS Brutalist Concrete Slab Button",
+    "sourceLibrary": "codefronts",
+    "category": "CSS Buttons",
+    "subcategory": "UI Components",
+    "tags": [
+      "css",
+      "ui-snippet",
+      "css-buttons"
+    ],
+    "runtime": "HTML, Modern CSS",
+    "style": "Pure CSS / Tailwind Snippet",
+    "license": "Public Specification",
+    "officialUrl": "https://codefronts.com/components/css-buttons/css-brutalist-concrete-slab-button/",
+    "archivePath": "sources/codefronts/components/css-buttons/css-brutalist-concrete-slab-button.md",
+    "description": "Board-formed concrete: horizontal shutter lines from the timber mould, aggregate speckle scattered through the mix, chipped corners cut by clip-path, and a…"
+  },
+  {
+    "id": "components/css-buttons/css-brutalist-glitch-button",
+    "title": "CSS Brutalist Glitch Button",
+    "sourceLibrary": "codefronts",
+    "category": "CSS Buttons",
+    "subcategory": "UI Components",
+    "tags": [
+      "css",
+      "ui-snippet",
+      "css-buttons"
+    ],
+    "runtime": "HTML, Modern CSS",
+    "style": "Pure CSS / Tailwind Snippet",
+    "license": "Public Specification",
+    "officialUrl": "https://codefronts.com/components/css-buttons/css-brutalist-glitch-button/",
+    "archivePath": "sources/codefronts/components/css-buttons/css-brutalist-glitch-button.md",
+    "description": "Neo-brutalist slab with a hard offset shadow that snaps flat when pressed, and a hover glitch built from two duplicate labels sliced by clip-path and pushed…"
+  },
+  {
+    "id": "components/css-buttons/css-button-group-component-segmented-radio-like",
+    "title": "CSS Button Group Component (Segmented Radio-Like)",
+    "sourceLibrary": "codefronts",
+    "category": "CSS Buttons",
+    "subcategory": "UI Components",
+    "tags": [
+      "css",
+      "ui-snippet",
+      "css-buttons"
+    ],
+    "runtime": "HTML, Modern CSS",
+    "style": "Pure CSS / Tailwind Snippet",
+    "license": "Public Specification",
+    "officialUrl": "https://codefronts.com/components/css-buttons/css-button-group-component-segmented-radio-like/",
+    "archivePath": "sources/codefronts/components/css-buttons/css-button-group-component-segmented-radio-like.md",
+    "description": "A segmented control built on real radio inputs, so arrow-key navigation, roving focus and form serialisation come from the platform rather than from JavaScript."
+  },
+  {
+    "id": "components/css-buttons/css-cassette-mixtape-label-button",
+    "title": "CSS Cassette Mixtape Label Button",
+    "sourceLibrary": "codefronts",
+    "category": "CSS Buttons",
+    "subcategory": "UI Components",
+    "tags": [
+      "css",
+      "ui-snippet",
+      "css-buttons"
+    ],
+    "runtime": "HTML, Modern CSS",
+    "style": "Pure CSS / Tailwind Snippet",
+    "license": "Public Specification",
+    "officialUrl": "https://codefronts.com/components/css-buttons/css-cassette-mixtape-label-button/",
+    "archivePath": "sources/codefronts/components/css-buttons/css-cassette-mixtape-label-button.md",
+    "description": "A Type-II cassette with a hand-written label: both reels turn while you hover, the tape between them shifts from one hub to the other, and clicking flips the…"
+  },
+  {
+    "id": "components/css-buttons/css-chalkboard-menu-button",
+    "title": "CSS Chalkboard Menu Button",
+    "sourceLibrary": "codefronts",
+    "category": "CSS Buttons",
+    "subcategory": "UI Components",
+    "tags": [
+      "css",
+      "ui-snippet",
+      "css-buttons"
+    ],
+    "runtime": "HTML, Modern CSS",
+    "style": "Pure CSS / Tailwind Snippet",
+    "license": "Public Specification",
+    "officialUrl": "https://codefronts.com/components/css-buttons/css-chalkboard-menu-button/",
+    "archivePath": "sources/codefronts/components/css-buttons/css-chalkboard-menu-button.md",
+    "description": "Slate with real chalk behaviour: a dusty, slightly uneven board, a hand-drawn double border, letterforms that sit in the tooth of the surface via a soft…"
+  },
+  {
+    "id": "components/css-buttons/css-clay-press-button",
+    "title": "CSS Clay Press Button",
+    "sourceLibrary": "codefronts",
+    "category": "CSS Buttons",
+    "subcategory": "UI Components",
+    "tags": [
+      "css",
+      "ui-snippet",
+      "css-buttons"
+    ],
+    "runtime": "HTML, Modern CSS",
+    "style": "Pure CSS / Tailwind Snippet",
+    "license": "Public Specification",
+    "officialUrl": "https://codefronts.com/components/css-buttons/css-clay-press-button/",
+    "archivePath": "sources/codefronts/components/css-buttons/css-clay-press-button.md",
+    "description": "Fat, matte, extruded clay: two inner shadows carve the highlight and the shade, an outer shadow grounds it, and pressing squashes the shape on both axes so…"
+  },
+  {
+    "id": "components/css-buttons/css-confirm-delete-button",
+    "title": "CSS Confirm Delete Button",
+    "sourceLibrary": "codefronts",
+    "category": "CSS Buttons",
+    "subcategory": "UI Components",
+    "tags": [
+      "css",
+      "ui-snippet",
+      "css-buttons"
+    ],
+    "runtime": "HTML, Modern CSS",
+    "style": "Pure CSS / Tailwind Snippet",
+    "license": "Public Specification",
+    "officialUrl": "https://codefronts.com/components/css-buttons/css-confirm-delete-button/",
+    "archivePath": "sources/codefronts/components/css-buttons/css-confirm-delete-button.md",
+    "description": "A destructive action that asks once, inline, without a modal: the delete button expands to reveal \"Cancel / Yes, delete\" with the confirm option deliberately…"
+  },
+  {
+    "id": "components/css-buttons/css-disabled-button-state-full-state-reference",
+    "title": "CSS Disabled Button State (Full State Reference)",
+    "sourceLibrary": "codefronts",
+    "category": "CSS Buttons",
+    "subcategory": "UI Components",
+    "tags": [
+      "css",
+      "ui-snippet",
+      "css-buttons"
+    ],
+    "runtime": "HTML, Modern CSS",
+    "style": "Pure CSS / Tailwind Snippet",
+    "license": "Public Specification",
+    "officialUrl": "https://codefronts.com/components/css-buttons/css-disabled-button-state-full-state-reference/",
+    "archivePath": "sources/codefronts/components/css-buttons/css-disabled-button-state-full-state-reference.md",
+    "description": "Every button state side by side in one row — rest, hover, focus, pressed, truly disabled, and aria-disabled (focusable, explains itself, refuses activation)."
+  }
+]

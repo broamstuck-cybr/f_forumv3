@@ -1,0 +1,478 @@
+[
+  {
+    "id": "res-cursor-ide",
+    "title": "Cursor AI IDE",
+    "group": "AI Tools",
+    "category": "IDE / Editor",
+    "tags": [
+      "platform:Cursor",
+      "tech:TypeScript",
+      "level:Intermediate",
+      "cost:Freemium"
+    ],
+    "officialUrl": "https://www.cursor.com",
+    "license": "Proprietary",
+    "compatibility": "Cross-platform (macOS, Linux, Windows)",
+    "lastVerified": "2026-11-19",
+    "status": "verified_tested",
+    "description": "Trình biên tập mã nguồn tích hợp mô hình ngôn ngữ lớn hỗ trợ lập trình tác tử và lập chỉ mục codebase."
+  },
+  {
+    "id": "res-opencode-cli",
+    "title": "OpenCode AI Terminal Agent",
+    "group": "Dev Tools",
+    "category": "Agent Orchestration",
+    "tags": [
+      "platform:Terminal",
+      "tech:TypeScript",
+      "level:Advanced",
+      "cost:Free"
+    ],
+    "officialUrl": "https://github.com/anomalyco/opencode",
+    "license": "MIT",
+    "compatibility": "Linux, macOS, POSIX Shell",
+    "lastVerified": "2026-11-19",
+    "status": "verified_tested",
+    "description": "Môi trường điều phối tác tử lập trình đa mô hình chạy trên dòng lệnh với quy trình kiểm soát mã nguồn tự động."
+  },
+  {
+    "id": "res-shadcn-ui",
+    "title": "shadcn/ui Component Registry",
+    "group": "UI/UX",
+    "category": "Component Library",
+    "tags": [
+      "platform:Web",
+      "tech:React",
+      "tech:Tailwind",
+      "tech:TypeScript",
+      "level:Intermediate",
+      "cost:Free"
+    ],
+    "officialUrl": "https://ui.shadcn.com",
+    "license": "MIT",
+    "compatibility": "Next.js, Vite, Remix",
+    "lastVerified": "2026-11-19",
+    "status": "verified_tested",
+    "description": "Tập hợp component React tái sử dụng với Tailwind CSS và Radix UI primitives sở hữu hoàn toàn trong mã nguồn."
+  },
+  {
+    "id": "res-tailwind-css",
+    "title": "Tailwind CSS v4",
+    "group": "UI/UX",
+    "category": "CSS Framework",
+    "tags": [
+      "platform:Web",
+      "tech:Tailwind",
+      "level:Beginner",
+      "cost:Free"
+    ],
+    "officialUrl": "https://tailwindcss.com",
+    "license": "MIT",
+    "compatibility": "Modern Browsers, PostCSS, Vite",
+    "lastVerified": "2026-11-19",
+    "status": "verified_tested",
+    "description": "Framework CSS tiện ích hiệu năng cao với bộ biên dịch Oxide viết bằng Rust và CSS cascade layers."
+  },
+  {
+    "id": "res-threejs-core",
+    "title": "Three.js 3D WebGL Engine",
+    "group": "UI/UX",
+    "category": "3D Graphics",
+    "tags": [
+      "platform:Web",
+      "tech:TypeScript",
+      "level:Advanced",
+      "cost:Free"
+    ],
+    "officialUrl": "https://threejs.org",
+    "license": "MIT",
+    "compatibility": "WebGL 2.0, WebGPU",
+    "lastVerified": "2026-11-19",
+    "status": "verified_tested",
+    "description": "Thư viện đồ họa 3D tiêu chuẩn công nghiệp cho trình duyệt với hệ sinh thái shader và mesh phong phú."
+  },
+  {
+    "id": "res-framer-motion",
+    "title": "Motion for React",
+    "group": "UI/UX",
+    "category": "Animation Library",
+    "tags": [
+      "platform:Web",
+      "tech:React",
+      "tech:TypeScript",
+      "level:Intermediate",
+      "cost:Free"
+    ],
+    "officialUrl": "https://motion.dev",
+    "license": "MIT",
+    "compatibility": "React 18, React 19",
+    "lastVerified": "2026-11-19",
+    "status": "verified_tested",
+    "description": "Bộ máy chuyển động vật lý lò xo và layout animation mượt mà tối ưu GPU cho hệ sinh thái React."
+  },
+  {
+    "id": "res-lucide-icons",
+    "title": "Lucide Icons",
+    "group": "UI/UX",
+    "category": "Iconography",
+    "tags": [
+      "platform:Web",
+      "tech:React",
+      "tech:TypeScript",
+      "level:Beginner",
+      "cost:Free"
+    ],
+    "officialUrl": "https://lucide.dev",
+    "license": "ISC",
+    "compatibility": "Cross-framework",
+    "lastVerified": "2026-11-19",
+    "status": "verified_tested",
+    "description": "Bộ biểu tượng vector 24px tối giản, sắc nét, tối ưu tree-shaking và tùy biến độ dày nét vẽ."
+  },
+  {
+    "id": "res-system-prompts-directory",
+    "title": "Production Agentic System Prompts",
+    "group": "Prompts",
+    "category": "System Instructions",
+    "tags": [
+      "platform:Cursor",
+      "platform:Web",
+      "level:Advanced",
+      "cost:Free"
+    ],
+    "officialUrl": "https://github.com/broamstuck-cybr/SOURCEOFKNOWLEDGFORAI",
+    "license": "MIT",
+    "compatibility": "LLM Systems (Claude, GPT, Gemini)",
+    "lastVerified": "2026-11-19",
+    "status": "verified_tested",
+    "description": "Kho prompt hệ thống đặc tả nghiêm ngặt, loại bỏ khuôn mẫu sáo rỗng và thiết lập cơ chế chống hồi quy."
+  },
+  {
+    "id": "res-rag-prompt-templates",
+    "title": "RAG Synthesis & Grounding Prompts",
+    "group": "Prompts",
+    "category": "Retrieval Prompts",
+    "tags": [
+      "platform:Web",
+      "tech:Python",
+      "level:Intermediate",
+      "cost:Free"
+    ],
+    "officialUrl": "https://github.com/broamstuck-cybr/SOURCEOFKNOWLEDGFORAI",
+    "license": "Apache-2.0",
+    "compatibility": "LangChain, LlamaIndex",
+    "lastVerified": "2026-11-19",
+    "status": "verified_info",
+    "description": "Mẫu prompt trích xuất thông tin theo cấu trúc JSON Schema giữ nguyên nguồn bằng chứng xác thực."
+  },
+  {
+    "id": "res-sourceofknowledge-repo",
+    "title": "Source of Knowledge for AI Core Repo",
+    "group": "GitHub Repositories",
+    "category": "Knowledge Base",
+    "tags": [
+      "platform:GitHub",
+      "tech:TypeScript",
+      "level:Intermediate",
+      "cost:Free"
+    ],
+    "officialUrl": "https://github.com/broamstuck-cybr/SOURCEOFKNOWLEDGFORAI",
+    "license": "MIT",
+    "compatibility": "Git, Markdown Readers",
+    "lastVerified": "2026-11-19",
+    "status": "verified_tested",
+    "description": "Kho lưu trữ 6.770 thành phần giao diện từ 5 thư viện lớn phục vụ tác tử AI truy vấn và tái tạo UI."
+  },
+  {
+    "id": "res-nextjs-repo",
+    "title": "Next.js Framework Repository",
+    "group": "GitHub Repositories",
+    "category": "Web Framework",
+    "tags": [
+      "platform:GitHub",
+      "tech:Next.js",
+      "tech:React",
+      "tech:TypeScript",
+      "level:Advanced",
+      "cost:Free"
+    ],
+    "officialUrl": "https://github.com/vercel/next.js",
+    "license": "MIT",
+    "compatibility": "Node.js 18+, Edge Runtime",
+    "lastVerified": "2026-11-19",
+    "status": "verified_tested",
+    "description": "Khung phát triển web React hỗ trợ Server Components, Server Actions và tối ưu hóa tài nguyên tự động."
+  },
+  {
+    "id": "res-clean-logic-skill",
+    "title": "Clean Logic Core Skill Specification",
+    "group": "Skills & Rules",
+    "category": "Agent Skill",
+    "tags": [
+      "platform:Agent",
+      "tech:TypeScript",
+      "level:Intermediate",
+      "cost:Free"
+    ],
+    "officialUrl": "https://github.com/broamstuck-cybr/SOURCEOFKNOWLEDGFORAI",
+    "license": "MIT",
+    "compatibility": "Cursor, OpenCode, Agent Systems",
+    "lastVerified": "2026-11-19",
+    "status": "verified_tested",
+    "description": "Bộ tiêu chuẩn lập trình logic phòng vệ lỗi tối đa, kiểu dữ liệu chặt chẽ và giữ vững nguyên tắc chống hồi quy."
+  },
+  {
+    "id": "res-uiux-promax-skill",
+    "title": "UI/UX Pro Max Architecture Rules",
+    "group": "Skills & Rules",
+    "category": "Design Rule",
+    "tags": [
+      "platform:Agent",
+      "tech:Tailwind",
+      "level:Advanced",
+      "cost:Free"
+    ],
+    "officialUrl": "https://github.com/broamstuck-cybr/SOURCEOFKNOWLEDGFORAI",
+    "license": "MIT",
+    "compatibility": "Cursor, OpenCode, Agent Systems",
+    "lastVerified": "2026-11-19",
+    "status": "verified_tested",
+    "description": "Tập hợp quy tắc thiết kế giao diện hiện đại với bảng mã màu chuyên sâu và hệ thống tỷ lệ không gian 8px."
+  },
+  {
+    "id": "res-web-standards-doc",
+    "title": "MDN Web Docs Architecture",
+    "group": "Documentation",
+    "category": "Web Reference",
+    "tags": [
+      "platform:Web",
+      "tech:TypeScript",
+      "level:Beginner",
+      "cost:Free"
+    ],
+    "officialUrl": "https://developer.mozilla.org",
+    "license": "CC-BY-SA-2.5",
+    "compatibility": "All Modern Browsers",
+    "lastVerified": "2026-11-19",
+    "status": "verified_tested",
+    "description": "Tài liệu tham chiếu quy chuẩn web chính thức về HTML, CSS, Web APIs và JavaScript tiêu chuẩn."
+  },
+  {
+    "id": "res-react-docs",
+    "title": "React Official Documentation",
+    "group": "Documentation",
+    "category": "Framework Docs",
+    "tags": [
+      "platform:Web",
+      "tech:React",
+      "tech:TypeScript",
+      "level:Beginner",
+      "cost:Free"
+    ],
+    "officialUrl": "https://react.dev",
+    "license": "CC-BY-4.0",
+    "compatibility": "React 19",
+    "lastVerified": "2026-11-19",
+    "status": "verified_tested",
+    "description": "Hướng dẫn lập trình React chính thức với kiến trúc hướng hook, bất biến dữ liệu và cơ chế reconciliation."
+  },
+  {
+    "id": "res-fullstack-deep-dive",
+    "title": "Full Stack Open Curriculum",
+    "group": "Learning",
+    "category": "Courseware",
+    "tags": [
+      "platform:Web",
+      "tech:React",
+      "tech:TypeScript",
+      "level:Intermediate",
+      "cost:Free"
+    ],
+    "officialUrl": "https://fullstackopen.com",
+    "license": "CC-BY-NC-SA-4.0",
+    "compatibility": "Modern Web Stack",
+    "lastVerified": "2026-11-19",
+    "status": "verified_info",
+    "description": "Khóa học lập trình toàn diện về React, Redux, Node.js, GraphQL, TypeScript và kiểm thử tự động."
+  },
+  {
+    "id": "res-ai-engineering-handbook",
+    "title": "AI Engineering Patterns Handbook",
+    "group": "Learning",
+    "category": "Reference Book",
+    "tags": [
+      "platform:Web",
+      "tech:Python",
+      "level:Advanced",
+      "cost:Free"
+    ],
+    "officialUrl": "https://github.com/broamstuck-cybr/SOURCEOFKNOWLEDGFORAI",
+    "license": "MIT",
+    "compatibility": "Python 3.11+",
+    "lastVerified": "2026-11-19",
+    "status": "verified_info",
+    "description": "Cẩm nang thiết kế hệ thống tác tử, quản lý bộ nhớ ngữ cảnh và tối ưu độ trễ suy luận LLM."
+  },
+  {
+    "id": "res-vite-bundler",
+    "title": "Vite Next Generation Frontend Tooling",
+    "group": "Dev Tools",
+    "category": "Build Tool",
+    "tags": [
+      "platform:Web",
+      "tech:TypeScript",
+      "level:Intermediate",
+      "cost:Free"
+    ],
+    "officialUrl": "https://vitejs.dev",
+    "license": "MIT",
+    "compatibility": "Node.js 18+, Rollup, esbuild",
+    "lastVerified": "2026-11-19",
+    "status": "verified_tested",
+    "description": "Trình dựng dự án tốc độ cao dựa trên native ES Modules và bộ gom mã nguồn cục bộ bằng esbuild."
+  },
+  {
+    "id": "res-playwright-test",
+    "title": "Playwright End-to-End Testing",
+    "group": "Dev Tools",
+    "category": "Testing Framework",
+    "tags": [
+      "platform:Web",
+      "tech:TypeScript",
+      "level:Intermediate",
+      "cost:Free"
+    ],
+    "officialUrl": "https://playwright.dev",
+    "license": "Apache-2.0",
+    "compatibility": "Chromium, Firefox, WebKit",
+    "lastVerified": "2026-11-19",
+    "status": "verified_tested",
+    "description": "Framework kiểm thử tự động hóa giao diện trình duyệt xuyên nền tảng với độ tin cậy cao."
+  },
+  {
+    "id": "res-mattpocock-skills",
+    "title": "Matt Pocock Agent Skills",
+    "group": "Skills & Rules",
+    "category": "Agent Skill",
+    "tags": [
+      "platform:Agent",
+      "tech:TypeScript",
+      "level:Advanced",
+      "cost:Free"
+    ],
+    "officialUrl": "https://github.com/mattpocock/skills",
+    "license": "MIT",
+    "compatibility": "Claude Code, Cursor, OpenCode",
+    "lastVerified": "2026-11-19",
+    "status": "verified_tested",
+    "description": "Tập hợp kỹ năng tác tử đặc tả quy trình kỹ thuật phần mềm chuẩn mực dành cho hệ thống AI."
+  },
+  {
+    "id": "res-obra-superpowers",
+    "title": "Superpowers Agent Framework",
+    "group": "Skills & Rules",
+    "category": "Skill Framework",
+    "tags": [
+      "platform:Agent",
+      "tech:Shell",
+      "level:Advanced",
+      "cost:Free"
+    ],
+    "officialUrl": "https://github.com/obra/superpowers",
+    "license": "MIT",
+    "compatibility": "Subagent Development, POSIX Shell",
+    "lastVerified": "2026-11-19",
+    "status": "verified_tested",
+    "description": "Khung năng lực mở rộng cho phép tác tử tự chủ thực thi quy trình phát triển phần mềm có kiểm chứng."
+  },
+  {
+    "id": "res-affaan-m-ecc",
+    "title": "ECC Agent Harness Optimization",
+    "group": "Skills & Rules",
+    "category": "Agent Optimization",
+    "tags": [
+      "platform:Agent",
+      "tech:JavaScript",
+      "level:Advanced",
+      "cost:Free"
+    ],
+    "officialUrl": "https://github.com/affaan-m/ECC",
+    "license": "MIT",
+    "compatibility": "Claude Code, Cursor, OpenCode, Codex",
+    "lastVerified": "2026-11-19",
+    "status": "verified_tested",
+    "description": "Hệ thống tối ưu hóa harness cho tác tử AI bao gồm quản lý ngữ cảnh, cổng bảo mật và kiểm định tự động."
+  },
+  {
+    "id": "res-anomalyco-opencode",
+    "title": "OpenCode CLI Coding Agent",
+    "group": "AI Tools",
+    "category": "CLI Agent",
+    "tags": [
+      "platform:Terminal",
+      "tech:TypeScript",
+      "level:Intermediate",
+      "cost:Free"
+    ],
+    "officialUrl": "https://github.com/anomalyco/opencode",
+    "license": "MIT",
+    "compatibility": "Terminal, POSIX, Linux, macOS",
+    "lastVerified": "2026-11-19",
+    "status": "verified_tested",
+    "description": "Tác tử lập trình mã nguồn mở chạy trên terminal điều phối luồng phát triển dự án tự động."
+  },
+  {
+    "id": "res-anthropics-skills",
+    "title": "Anthropic Official Agent Skills",
+    "group": "Skills & Rules",
+    "category": "Agent Skill",
+    "tags": [
+      "platform:Claude",
+      "tech:TypeScript",
+      "level:Intermediate",
+      "cost:Free"
+    ],
+    "officialUrl": "https://github.com/anthropics/skills",
+    "license": "MIT",
+    "compatibility": "Claude API, Claude Code",
+    "lastVerified": "2026-11-19",
+    "status": "verified_tested",
+    "description": "Kho đặc tả kỹ năng tiêu chuẩn từ Anthropic cho các quy trình tương tác và thực thi công cụ."
+  },
+  {
+    "id": "res-awesome-cursorrules",
+    "title": "Awesome Cursorrules Directory",
+    "group": "Skills & Rules",
+    "category": "IDE Rules",
+    "tags": [
+      "platform:Cursor",
+      "tech:TypeScript",
+      "level:Beginner",
+      "cost:Free"
+    ],
+    "officialUrl": "https://github.com/PatrickJS/awesome-cursorrules",
+    "license": "MIT",
+    "compatibility": "Cursor AI, VS Code",
+    "lastVerified": "2026-11-19",
+    "status": "verified_tested",
+    "description": "Thư viện quy tắc .cursorrules được cộng đồng biên soạn cho hàng chục ngôn ngữ và framework."
+  },
+  {
+    "id": "res-mcp-servers",
+    "title": "Model Context Protocol Reference Servers",
+    "group": "Dev Tools",
+    "category": "Protocol Server",
+    "tags": [
+      "platform:MCP",
+      "tech:TypeScript",
+      "level:Advanced",
+      "cost:Free"
+    ],
+    "officialUrl": "https://github.com/modelcontextprotocol/servers",
+    "license": "MIT",
+    "compatibility": "Claude Desktop, Cursor, MCP Clients",
+    "lastVerified": "2026-11-19",
+    "status": "verified_tested",
+    "description": "Tập hợp các MCP server tiêu chuẩn kết nối tác tử AI với hệ thống tệp, Git, SQLite và web."
+  }
+]

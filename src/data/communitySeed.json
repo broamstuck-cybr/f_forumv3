@@ -1,0 +1,211 @@
+{
+  "channels": {
+    "qa": [
+      {
+        "id": "qa-01",
+        "title": "Cách xử lý giảm re-render khi hiển thị danh sách lớn với Tailwind và React?",
+        "author": {
+          "id": "user-dev-01",
+          "name": "Nguyễn Văn Minh",
+          "handle": "minh_dev",
+          "avatarUrl": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80",
+          "role": "Thành viên"
+        },
+        "category": "React / Frontend",
+        "tags": [
+          "react",
+          "performance",
+          "tailwind",
+          "virtualization"
+        ],
+        "createdAt": "2026-11-18T10:15:00Z",
+        "votes": 8,
+        "answersCount": 2,
+        "isAccepted": true,
+        "body": "Tôi đang gặp vấn đề khi hiển thị danh sách trên 500 phần tử trong thành phần Dashboard. Tốc độ cuộn bị giật và khung hình tụt xuống 35 FPS. Nên áp dụng virtualization hay tối ưu lại useMemo cho từng thẻ?",
+        "acceptedAnswer": {
+          "id": "ans-01",
+          "author": {
+            "id": "user-senior-02",
+            "name": "Trần Hoàng Nam",
+            "handle": "nam_core",
+            "avatarUrl": "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&auto=format&fit=crop&q=80",
+            "role": "Kiến trúc sư"
+          },
+          "createdAt": "2026-11-18T11:00:00Z",
+          "votes": 11,
+          "content": "Với trên 500 phần tử, virtualization là giải pháp chuẩn nhất. Bạn có thể sử dụng `@tanstack/react-virtual` để chỉ render các DOM node nằm trong khung nhìn. Đồng thời, nên kiểm tra các lớp CSS phức tạp như `backdrop-blur` trên từng thẻ vì chúng gây nặng GPU khi cuộn."
+        }
+      },
+      {
+        "id": "qa-02",
+        "title": "Cấu hình CSS Custom Properties như thế nào để đồng bộ giữa LucianLabs và Pin UI?",
+        "author": {
+          "id": "user-dev-03",
+          "name": "Lê Quang Huy",
+          "handle": "huy_ui",
+          "avatarUrl": "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&auto=format&fit=crop&q=80",
+          "role": "UI Engineer"
+        },
+        "category": "UI/UX & Tokens",
+        "tags": [
+          "css-tokens",
+          "lucianlabs",
+          "pinui",
+          "design-system"
+        ],
+        "createdAt": "2026-11-17T14:20:00Z",
+        "votes": 6,
+        "answersCount": 1,
+        "isAccepted": true,
+        "body": "LucianLabs sử dụng quy ước `--ux-*` cho chuyển động và bo góc, trong khi Pin UI dựa trên biến gốc của shadcn như `--primary`, `--radius`. Làm sao để ánh xạ hai hệ thống này mà không bị xung đột?",
+        "acceptedAnswer": {
+          "id": "ans-02",
+          "author": {
+            "id": "user-senior-04",
+            "name": "Phạm Thị Hương",
+            "handle": "huong_ui",
+            "avatarUrl": "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&auto=format&fit=crop&q=80",
+            "role": "Design Technologist"
+          },
+          "createdAt": "2026-11-17T15:10:00Z",
+          "votes": 7,
+          "content": "Bạn khai báo một lớp cầu nối token tại `:root`. Ví dụ: `--ux-radius-md: var(--radius);` và `--ux-surface-1: var(--bg-surface);`. Khi đó các hiệu ứng micro-motion của LucianLabs sẽ tự động kế thừa bản sắc thiết kế của Pin UI."
+        }
+      }
+    ],
+    "showcase": [
+      {
+        "id": "sc-01",
+        "title": "Liquid Glass Button Component with Spring Physics",
+        "author": {
+          "id": "user-senior-04",
+          "name": "Phạm Thị Hương",
+          "handle": "huong_ui",
+          "avatarUrl": "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&auto=format&fit=crop&q=80",
+          "role": "Design Technologist"
+        },
+        "category": "Components",
+        "tags": [
+          "css",
+          "motion",
+          "glassmorphism"
+        ],
+        "createdAt": "2026-11-16T09:00:00Z",
+        "likes": 14,
+        "views": 280,
+        "demoSnippet": {
+          "html": "<button class=\"ux-liquid-btn\"><span class=\"ux-btn-glow\"></span><span class=\"ux-btn-label\">Xác nhận giao dịch</span></button>",
+          "css": ".ux-liquid-btn { position: relative; padding: 10px 22px; border-radius: 999px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.18); backdrop-filter: blur(12px); color: #fff; font-size: 14px; font-weight: 500; cursor: pointer; transition: transform 0.2s cubic-bezier(0.2,0.8,0.2,1); } .ux-liquid-btn:hover { transform: translateY(-1px); border-color: rgba(255,255,255,0.32); }"
+        },
+        "description": "Thành phần nút bấm chất liệu kính lỏng tối ưu bo góc không để lại vệt mờ hình chữ nhật, tích hợp hiệu ứng phản quang nhẹ khi rê chuột."
+      },
+      {
+        "id": "sc-02",
+        "title": "Bento Grid Dashboard Card with Radial Spotlight",
+        "author": {
+          "id": "user-senior-02",
+          "name": "Trần Hoàng Nam",
+          "handle": "nam_core",
+          "avatarUrl": "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&auto=format&fit=crop&q=80",
+          "role": "Kiến trúc sư"
+        },
+        "category": "Layouts",
+        "tags": [
+          "bento",
+          "spotlight",
+          "dashboard"
+        ],
+        "createdAt": "2026-11-15T16:30:00Z",
+        "likes": 12,
+        "views": 215,
+        "demoSnippet": {
+          "html": "<div class=\"ff-spotlight-card\"><div class=\"ff-card-header\"><span class=\"ff-badge\">Realtime</span><h4>Hiệu năng hệ thống</h4></div><p class=\"ff-card-body\">Tài nguyên CPU giữ mức ổn định dưới 12%.</p></div>",
+          "css": ".ff-spotlight-card { padding: 24px; border-radius: 16px; background: #12141a; border: 1px solid rgba(255,255,255,0.08); color: #e2e8f0; position: relative; overflow: hidden; } .ff-badge { font-size: 11px; padding: 2px 8px; border-radius: 999px; background: rgba(34,197,94,0.15); color: #4ade80; }"
+        },
+        "description": "Khối hiển thị thông số bảng điều khiển theo phong cách bất đối xứng tối giản, phản ánh chính xác chỉ số vận hành thực."
+      }
+    ],
+    "drops": [
+      {
+        "id": "drop-01",
+        "title": "F-FORUM Clean Logic Rule for Agent Workflows",
+        "author": {
+          "id": "user-admin-00",
+          "name": "Staff Architect",
+          "handle": "sys_architect",
+          "avatarUrl": "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&auto=format&fit=crop&q=80",
+          "role": "Điều hành"
+        },
+        "category": "Agent Rules",
+        "tags": [
+          "agent-rules",
+          "clean-code",
+          "zero-defect",
+          "typescript"
+        ],
+        "createdAt": "2026-11-18T08:00:00Z",
+        "forks": 9,
+        "fileType": "markdown",
+        "payload": "# Clean Logic Standard\n- Zero-Defect Typing: Không sử dụng kiểu `any` tùy tiện.\n- Defensive Boundary: Bắt lỗi rõ ràng tại biên I/O, không nuốt lỗi âm thầm.\n- Zero-Regression: Giữ nguyên giao diện và logic cũ đang hoạt động ổn định."
+      },
+      {
+        "id": "drop-02",
+        "title": "Strict Tailwind Color Clamping Prompt",
+        "author": {
+          "id": "user-senior-04",
+          "name": "Phạm Thị Hương",
+          "handle": "huong_ui",
+          "avatarUrl": "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&auto=format&fit=crop&q=80",
+          "role": "Design Technologist"
+        },
+        "category": "Prompts",
+        "tags": [
+          "tailwind",
+          "color-palette",
+          "design-tokens"
+        ],
+        "createdAt": "2026-11-17T11:45:00Z",
+        "forks": 5,
+        "fileType": "text",
+        "payload": "Khi tạo giao diện, chỉ sử dụng tối đa 2 màu nhấn (hổ phách/ngọc bích), nền trung tính đen/xám tối (#06080d, #0c1018), tuyệt đối không dùng dải màu tím-xanh khuôn mẫu."
+      }
+    ],
+    "clubs": [
+      {
+        "id": "club-01",
+        "name": "Frontend Performance & UI Systems",
+        "slug": "frontend-perf",
+        "lead": "Trần Hoàng Nam",
+        "membersCount": 14,
+        "description": "Chuyên đề về tối ưu hóa Core Web Vitals, virtualization danh sách lớn và xây dựng hệ thống thiết kế chuẩn token.",
+        "activeDossier": {
+          "projectTitle": "Chuẩn hóa bộ Design Tokens cho F-FORUM v3",
+          "handoverNotes": "Đã hoàn tất ánh xạ biến màu giữa Obsidian Foundry (Dark) và Editorial Stone (Light). Tiếp tục kiểm tra độ tương phản trên 3 khung hình.",
+          "nextMilestones": [
+            "Hoàn tất đồng bộ danh mục template",
+            "Tối ưu CSS Custom Properties cho chế độ Sáng/Tối",
+            "Kiểm thử đa khung hình 390px / 768px / 1440px"
+          ]
+        }
+      },
+      {
+        "id": "club-02",
+        "name": "AI Agent Protocols & Tooling",
+        "slug": "agent-tooling",
+        "lead": "Staff Architect",
+        "membersCount": 9,
+        "description": "Nghiên cứu và thử nghiệm các giao thức điều phối tác tử đa mô hình, tiêu chuẩn kiểm định tĩnh và chống rò rỉ khóa bí mật.",
+        "activeDossier": {
+          "projectTitle": "Kiểm soát quy trình tổng hợp mã nguồn Work space",
+          "handoverNotes": "Đã bổ sung trình quét secret tự động trước khi nén ZIP và chế độ sandbox iframe cô lập CSP.",
+          "nextMilestones": [
+            "Mở rộng kiểm tra khả năng truy cập WCAG",
+            "Bổ sung bộ kiểm thử hồi quy đa giao thức AI",
+            "Nghiệm thu toàn diện trước khi triển khai Vercel"
+          ]
+        }
+      }
+    ]
+  }
+}
