@@ -16,6 +16,7 @@ flowchart LR
   API --> Quota["quotaStore (15-Turn Cap / Admin Bypass)"]
   API --> AIEngine["aiEngine (OpenAI / Anthropic / Gemini + Deterministic Fallback)"]
   API --> Community["communityStore (Q&A, Showcase, Drops, Club Hub)"]
+  API --> Persistence["Persistence: Supabase PostgreSQL or local JSON fallback"]
 ```
 
 - **Frontend (`./src`)**: React 19, TypeScript, Tailwind CSS v4, Motion, Lucide icons, and JSZip.
@@ -24,6 +25,7 @@ flowchart LR
   - `src/features/workspace/`: 3-column Build Workspace (`WorkspaceView.tsx`, `LivePreviewFrame.tsx`, `DiffViewer.tsx`, `ChecksPanel.tsx`, `AiProjectSetupDrawer.tsx`).
   - `src/features/community/CommunityView.tsx` & `src/features/admin/AdminView.tsx`: 4-channel Source of Knowledge hub (`qa`, `showcase`, `drops`, `clubs`) and unlimited `/admin` control plane.
 - **Backend (`./server` & `./api`)**: Shared TypeScript core in `./server` mounted by Express for local development and wrapped by Vercel Serverless handlers in `./api` for cloud deployment.
+- **Persistence**: Optional Supabase PostgreSQL (`supabase/schema.sql`, 8 tables with RLS) stores users, quotas, community content, audit logs, changelog and per-user workspace projects. When `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` are unset, the server falls back to a local JSON store in `./data`. Guest workspaces stay in browser `localStorage`; signed-in users sync projects through `/api/projects/*`.
 - **Design System**: Adaptive Dark (`Obsidian Foundry`) and Light (`Editorial Stone`) token palettes built on non-grid spatial layouts and traceable to the five libraries in `broamstuck-cybr/SOURCEOFKNOWLEDGFORAI`.
 
 ## Prerequisites
@@ -61,6 +63,9 @@ npm test
 
 # Build production assets into ./dist
 npm run build
+
+# Confirm Supabase tables and RLS (requires SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY)
+node scripts/verify-supabase.mjs
 ```
 
 ## Configuration
@@ -77,6 +82,8 @@ All runtime secrets and gateway parameters are read from environment variables. 
 | `ADMIN_USERNAME` | Yes | `admin` | Dedicated administrator login identifier |
 | `ADMIN_PASSWORD_HASH` | Prod | empty | Scrypt password hash (`salt:hash`) for production administrator login |
 | `ADMIN_BOOTSTRAP_PASSWORD` | Dev only | empty | Local development bootstrap password when `ADMIN_PASSWORD_HASH` is unset |
+| `SUPABASE_URL` | No | empty | Supabase project URL; enables PostgreSQL persistence (server-only) |
+| `SUPABASE_SERVICE_ROLE_KEY` | No | empty | Supabase `service_role` key used by the server (never expose to the client) |
 | `PORT` | No | `8787` | Local Express API listening port |
 
 ## Documentation

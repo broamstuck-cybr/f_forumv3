@@ -12,13 +12,16 @@ import type {
 import { listAllUsers, toggleUserRole } from './authEngine';
 import { getCommunityState, resolveModerationReport } from './communityStore';
 import {
+  enqueueWrite,
   ensureLocalEnvLoaded,
-  listAllQuotaEntries,
-  MAX_STANDARD_TURNS,
-  readPersistedSection,
-  resetSubjectQuota,
-  writePersistedSection,
-} from './quotaStore';
+  isSupabaseEnabled,
+  readLocalSection,
+  registerHydrator,
+  sbSelect,
+  sbUpsert,
+  writeLocalSection,
+} from './persistence';
+import { listAllQuotaEntries, MAX_STANDARD_TURNS, resetSubjectQuota } from './quotaStore';
 
 ensureLocalEnvLoaded();
 
@@ -57,15 +60,8 @@ function getDefaultGateway(): AdminGatewayOverride {
   };
 }
 
-function ensureAdminData(): PersistedAdminData {
-  if (memoryAdmin) return memoryAdmin;
-  const persisted = readPersistedSection<PersistedAdminData | null>('adminStore', null);
-  if (persisted && persisted.gateway && persisted.telemetryCounters) {
-    memoryAdmin = persisted;
-    return memoryAdmin;
-  }
-
-  memoryAdmin = {
+function buildDefaultAdminData(): PersistedAdminData {
+  return {
     gateway: getDefaultGateway(),
     telemetryCounters: {
       totalAiRequests: 0,
@@ -96,13 +92,130 @@ function ensureAdminData(): PersistedAdminData {
       },
     ],
   };
-  writePersistedSection('adminStore', memoryAdmin);
+}
+
+function toChangelogRow(entry: AdminChangelogEntry): Record<string, unknown> {
+  return {
+    id: entry.id,
+    version: entry.version,
+    title: entry.title,
+    notes: entry.notes,
+    published_at: entry.publishedAt,
+    author: entry.author,
+  };
+}
+
+function fromChangelogRow(row: Record<string, unknown>): AdminChangelogEntry {
+  return {
+    id: String(row.id),
+    version: String(row.version || '3.0.0'),
+    title: String(row.title || 'System Update'),
+    notes: String(row.notes || ''),
+    publishedAt: String(row.published_at || new Date().toISOString()),
+    author: String(row.author || 'System Administrator'),
+  };
+}
+
+function fromAuditRow(row: Record<string, unknown>): AdminAuditLogEntry {
+  return {
+    id: String(row.id),
+    timestamp: String(row.timestamp || new Date().toISOString()),
+    actor: String(row.actor || 'system'),
+    action: String(row.action || ''),
+    target: String(row.target || ''),
+    detail: String(row.detail || ''),
+  };
+}
+
+registerHydrator('admin', async () => {
+  const [configRows, auditRows, changelogRows] = await Promise.all([
+    sbSelect<Record<string, unknown>>('ff_admin_config', 'select=*'),
+    sbSelect<Record<string, unknown>>('ff_audit_logs', 'select=*&order=timestamp.desc&limit=200'),
+    sbSelect<Record<string, unknown>>('ff_changelog', 'select=*&order=published_at.desc'),
+  ]);
+
+  const defaults = buildDefaultAdminData();
+  let gateway = defaults.gateway;
+  let telemetryCounters = defaults.telemetryCounters;
+  let hasGateway = false;
+  let hasTelemetry = false;
+
+  for (const row of configRows) {
+    if (row.key === 'gateway' && row.value && typeof row.value === 'object') {
+      gateway = { ...defaults.gateway, ...(row.value as Partial<AdminGatewayOverride>) };
+      hasGateway = true;
+    } else if (row.key === 'telemetryCounters' && row.value && typeof row.value === 'object') {
+      telemetryCounters = {
+        ...defaults.telemetryCounters,
+        ...(row.value as Partial<PersistedAdminData['telemetryCounters']>),
+      };
+      hasTelemetry = true;
+    }
+  }
+
+  const configSeedRows: Array<Record<string, unknown>> = [];
+  if (!hasGateway) {
+    configSeedRows.push({
+      key: 'gateway',
+      value: gateway,
+      updated_at: new Date().toISOString(),
+    });
+  }
+  if (!hasTelemetry) {
+    configSeedRows.push({
+      key: 'telemetryCounters',
+      value: telemetryCounters,
+      updated_at: new Date().toISOString(),
+    });
+  }
+  if (configSeedRows.length > 0) {
+    await sbUpsert('ff_admin_config', configSeedRows, 'key');
+  }
+
+  let auditLogs: AdminAuditLogEntry[];
+  if (auditRows.length === 0) {
+    auditLogs = defaults.auditLogs;
+    await sbUpsert('ff_audit_logs', auditLogs, 'id');
+  } else {
+    auditLogs = auditRows.map(fromAuditRow);
+  }
+
+  let changelog: AdminChangelogEntry[];
+  if (changelogRows.length === 0) {
+    changelog = defaults.changelog;
+    await sbUpsert('ff_changelog', changelog.map(toChangelogRow), 'id');
+  } else {
+    changelog = changelogRows.map(fromChangelogRow);
+  }
+
+  memoryAdmin = {
+    gateway,
+    telemetryCounters,
+    auditLogs,
+    changelog,
+  };
+});
+
+function ensureAdminData(): PersistedAdminData {
+  if (memoryAdmin) return memoryAdmin;
+  if (!isSupabaseEnabled()) {
+    const persisted = readLocalSection<PersistedAdminData | null>('adminStore', null);
+    if (persisted && persisted.gateway && persisted.telemetryCounters) {
+      memoryAdmin = persisted;
+      return memoryAdmin;
+    }
+  }
+
+  memoryAdmin = buildDefaultAdminData();
+  if (!isSupabaseEnabled()) {
+    writeLocalSection('adminStore', memoryAdmin);
+  }
   return memoryAdmin;
 }
 
 function saveAdminData(): void {
   if (!memoryAdmin) return;
-  writePersistedSection('adminStore', memoryAdmin);
+  writeLocalSection('adminStore', memoryAdmin);
 }
 
 export function appendAuditLog(actor: string, action: string, target: string, detail: string): AdminAuditLogEntry {
@@ -119,7 +232,11 @@ export function appendAuditLog(actor: string, action: string, target: string, de
   if (store.auditLogs.length > 200) {
     store.auditLogs = store.auditLogs.slice(0, 200);
   }
-  saveAdminData();
+  if (isSupabaseEnabled()) {
+    enqueueWrite(sbUpsert('ff_audit_logs', [entry], 'id'));
+  } else {
+    saveAdminData();
+  }
   return entry;
 }
 
@@ -134,7 +251,23 @@ export function recordAiTelemetry(event: 'success' | 'fallback' | 'quota_blocked
   } else if (event === 'quota_blocked') {
     store.telemetryCounters.quotaBlockedRequests += 1;
   }
-  saveAdminData();
+  if (isSupabaseEnabled()) {
+    enqueueWrite(
+      sbUpsert(
+        'ff_admin_config',
+        [
+          {
+            key: 'telemetryCounters',
+            value: store.telemetryCounters,
+            updated_at: new Date().toISOString(),
+          },
+        ],
+        'key'
+      )
+    );
+  } else {
+    saveAdminData();
+  }
 }
 
 export function getInternalGatewayOverride(): AdminGatewayOverride {
@@ -178,7 +311,23 @@ export function updateGatewayOverride(
     current.guestSandboxEnabled = input.guestSandboxEnabled;
   }
   current.updatedAt = new Date().toISOString();
-  saveAdminData();
+  if (isSupabaseEnabled()) {
+    enqueueWrite(
+      sbUpsert(
+        'ff_admin_config',
+        [
+          {
+            key: 'gateway',
+            value: current,
+            updated_at: current.updatedAt,
+          },
+        ],
+        'key'
+      )
+    );
+  } else {
+    saveAdminData();
+  }
 
   appendAuditLog(
     actor,
@@ -285,7 +434,11 @@ export function adminAddChangelog(
     author: actor,
   };
   store.changelog.unshift(entry);
-  saveAdminData();
+  if (isSupabaseEnabled()) {
+    enqueueWrite(sbUpsert('ff_changelog', [toChangelogRow(entry)], 'id'));
+  } else {
+    saveAdminData();
+  }
   appendAuditLog(actor, 'PUBLISH_CHANGELOG', entry.version, `Dang tải changelog ${entry.version}: ${entry.title}`);
   return entry;
 }

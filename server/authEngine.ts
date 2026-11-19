@@ -1,7 +1,16 @@
 import crypto from 'node:crypto';
 import type { IncomingMessage, ServerResponse } from 'node:http';
 import type { User } from '../src/types/index';
-import { ensureLocalEnvLoaded, readPersistedSection, writePersistedSection } from './quotaStore';
+import {
+  enqueueWrite,
+  ensureLocalEnvLoaded,
+  isSupabaseEnabled,
+  readLocalSection,
+  registerHydrator,
+  sbSelect,
+  sbUpsert,
+  writeLocalSection,
+} from './persistence';
 
 ensureLocalEnvLoaded();
 
@@ -27,23 +36,73 @@ interface PersistedAuthData {
 const memoryUsers: Record<string, StoredUserRecord> = {};
 const fallbackEphemeralSecret = crypto.randomBytes(32).toString('hex');
 
+function toUserRow(rec: StoredUserRecord): Record<string, unknown> {
+  return {
+    id: rec.id,
+    username: rec.username,
+    name: rec.name,
+    email: rec.email,
+    password_hash: rec.passwordHash,
+    role: rec.role,
+    bio: rec.bio,
+    created_at: rec.createdAt,
+  };
+}
+
+function fromUserRow(row: Record<string, unknown>): StoredUserRecord | null {
+  const id = typeof row.id === 'string' ? row.id.trim() : '';
+  const username = typeof row.username === 'string' ? row.username.trim() : '';
+  const email = typeof row.email === 'string' ? row.email.trim() : '';
+  const passwordHash = typeof row.password_hash === 'string' ? row.password_hash : '';
+  if (!id || !username || !email || !passwordHash) return null;
+  return {
+    id,
+    username,
+    name: typeof row.name === 'string' && row.name.trim() ? row.name.trim() : username,
+    email,
+    passwordHash,
+    role: row.role === 'admin' ? 'admin' : 'user',
+    bio: typeof row.bio === 'string' ? row.bio : '',
+    createdAt:
+      typeof row.created_at === 'string' && row.created_at
+        ? row.created_at
+        : new Date().toISOString(),
+  };
+}
+
+registerHydrator('users', async () => {
+  const rows = await sbSelect<Record<string, unknown>>('ff_users', 'select=*');
+  for (const row of rows) {
+    const parsed = fromUserRow(row);
+    if (parsed) {
+      memoryUsers[parsed.id] = parsed;
+    }
+  }
+});
+
 function getSessionSecret(): string {
   ensureLocalEnvLoaded();
   return process.env.SESSION_SECRET || fallbackEphemeralSecret;
 }
 
 function getUsersMap(): Record<string, StoredUserRecord> {
-  const persisted = readPersistedSection<PersistedAuthData>('authStore', { users: {} });
-  for (const [id, rec] of Object.entries(persisted.users || {})) {
-    if (!memoryUsers[id]) {
-      memoryUsers[id] = rec;
+  if (!isSupabaseEnabled()) {
+    const persisted = readLocalSection<PersistedAuthData>('authStore', { users: {} });
+    for (const [id, rec] of Object.entries(persisted.users || {})) {
+      if (!memoryUsers[id]) {
+        memoryUsers[id] = rec;
+      }
     }
   }
   return memoryUsers;
 }
 
-function saveUsersMap(): void {
-  writePersistedSection<PersistedAuthData>('authStore', { users: memoryUsers });
+function saveUserRecord(record: StoredUserRecord): void {
+  if (isSupabaseEnabled()) {
+    enqueueWrite(sbUpsert('ff_users', [toUserRow(record)], 'id'));
+    return;
+  }
+  writeLocalSection<PersistedAuthData>('authStore', { users: memoryUsers });
 }
 
 export function hashPassword(password: string, existingSalt?: string): string {
@@ -192,7 +251,7 @@ export function getEnvAdminUser(): User {
     id: 'sys-admin-root',
     username: adminUsername,
     name: 'System Administrator',
-    email: `${adminUsername}@fforum.local`,
+    email: adminUsername.includes('@') ? adminUsername : `${adminUsername}@fforum.local`,
     role: 'admin',
     bio: 'System Administrator & Runtime Controller',
     createdAt: '2026-11-19T00:00:00.000Z',
@@ -272,7 +331,7 @@ export function registerStandardUser(input: {
     createdAt: new Date().toISOString(),
   };
   users[id] = record;
-  saveUsersMap();
+  saveUserRecord(record);
 
   return { ok: true, user: toPublicUser(record) };
 }
@@ -309,7 +368,7 @@ export function loginAdminUser(input: {
   const configuredHash = (process.env.ADMIN_PASSWORD_HASH || '').trim();
   const bootstrapPassword = (process.env.ADMIN_BOOTSTRAP_PASSWORD || '').trim();
 
-  if (expectedUsername && username === expectedUsername) {
+  if (expectedUsername && username.toLowerCase() === expectedUsername.toLowerCase()) {
     if (configuredHash && verifyPasswordHash(password, configuredHash)) {
       return { ok: true, user: getEnvAdminUser() };
     }
@@ -346,6 +405,6 @@ export function toggleUserRole(userId: string): User | null {
   const target = users[userId];
   if (!target) return null;
   target.role = target.role === 'admin' ? 'user' : 'admin';
-  saveUsersMap();
+  saveUserRecord(target);
   return toPublicUser(target);
 }

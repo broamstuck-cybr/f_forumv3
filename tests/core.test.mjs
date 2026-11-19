@@ -1,6 +1,6 @@
 import test, { describe, before, after } from 'node:test';
 import assert from 'node:assert/strict';
-import { spawn } from 'node:child_process';
+import { execFileSync, spawn } from 'node:child_process';
 import net from 'node:net';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -45,6 +45,8 @@ describe('F-FORUM v3 Core Verification Suite', () => {
       ADMIN_USERNAME: 'admin',
       ADMIN_BOOTSTRAP_PASSWORD: 'fforum-admin-local-dev',
       AI_API_KEY: '',
+      SUPABASE_URL: '',
+      SUPABASE_SERVICE_ROLE_KEY: '',
     };
 
     serverProcess = spawn('npx', ['tsx', 'server/index.ts'], {
@@ -539,6 +541,183 @@ describe('F-FORUM v3 Core Verification Suite', () => {
         !/\/home\/[A-Za-z0-9_-]+/.test(storyCssText),
         'story.css must have 0 /home/ path leaks'
       );
+    });
+  });
+
+  describe('(e) Project Sync & Supabase Schema Readiness', () => {
+    test('reports local-json persistence on GET /api/health when Supabase env vars are unset', async () => {
+      const res = await fetch(`${baseUrl}/api/health`);
+      assert.equal(res.status, 200);
+      const data = await res.json();
+      assert.equal(data.status, 'ok');
+      assert.equal(data.persistence, 'local-json');
+    });
+
+    test('blocks Guest project sync with 401 and returns empty unauthenticated project list', async () => {
+      const listRes = await fetch(`${baseUrl}/api/projects/list`);
+      assert.equal(listRes.status, 200);
+      const listData = await listRes.json();
+      assert.equal(listData.authenticated, false);
+      assert.deepEqual(listData.projects, []);
+
+      const syncRes = await fetch(`${baseUrl}/api/projects/sync`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          project: {
+            id: 'guest-attempt-1',
+            name: 'Guest Sync Attempt',
+            files: [],
+          },
+        }),
+      });
+      assert.equal(syncRes.status, 401);
+    });
+
+    test('syncs, lists scoped to authenticated user, and deletes projects cleanly', async () => {
+      const uniqueSuffix = `${Date.now().toString().slice(-6)}_sync`;
+      const regRes = await fetch(`${baseUrl}/api/auth/register`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          username: `syncuser_${uniqueSuffix}`,
+          email: `syncuser_${uniqueSuffix}@fforum.test`,
+          password: 'TestPassword123!',
+          name: 'Project Sync Tester',
+        }),
+      });
+      assert.equal(regRes.status, 201);
+      const userCookie = parseCookieHeader(regRes);
+      assert.ok(userCookie);
+
+      const testProjectId = `proj-sync-${uniqueSuffix}`;
+      const syncRes = await fetch(`${baseUrl}/api/projects/sync`, {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+          cookie: userCookie,
+        },
+        body: JSON.stringify({
+          project: {
+            id: testProjectId,
+            name: 'Synced Cloud Workspace',
+            description: 'End-to-end project sync verification',
+            activeFilePath: 'index.html',
+            pinned: true,
+            archived: false,
+            files: [
+              {
+                path: 'index.html',
+                language: 'html',
+                content: '<!doctype html><html><body>Synced</body></html>',
+              },
+            ],
+            messages: [],
+            attachedItems: [],
+            snapshots: [],
+            processes: [],
+          },
+        }),
+      });
+      assert.equal(syncRes.status, 200);
+      const syncData = await syncRes.json();
+      assert.equal(syncData.ok, true);
+      assert.equal(syncData.project.id, testProjectId);
+      assert.equal(syncData.project.name, 'Synced Cloud Workspace');
+
+      const listRes = await fetch(`${baseUrl}/api/projects/list`, {
+        headers: { cookie: userCookie },
+      });
+      assert.equal(listRes.status, 200);
+      const listData = await listRes.json();
+      assert.equal(listData.authenticated, true);
+      assert.ok(Array.isArray(listData.projects));
+      const matched = listData.projects.find((p) => p.id === testProjectId);
+      assert.ok(matched, 'Synced project must appear in user project list');
+      assert.equal(matched.name, 'Synced Cloud Workspace');
+      assert.equal(matched.pinned, true);
+
+      const deleteRes = await fetch(`${baseUrl}/api/projects/delete`, {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+          cookie: userCookie,
+        },
+        body: JSON.stringify({ projectId: testProjectId }),
+      });
+      assert.equal(deleteRes.status, 200);
+      const deleteData = await deleteRes.json();
+      assert.equal(deleteData.ok, true);
+
+      const listAfterRes = await fetch(`${baseUrl}/api/projects/list`, {
+        headers: { cookie: userCookie },
+      });
+      const listAfterData = await listAfterRes.json();
+      assert.equal(
+        listAfterData.projects.some((p) => p.id === testProjectId),
+        false,
+        'Deleted project must no longer appear in user project list'
+      );
+    });
+
+    test('validates supabase/schema.sql defines all 8 tables with RLS enabled and 0 public anon policies', () => {
+      const schemaPath = path.join(projectRoot, 'supabase', 'schema.sql');
+      assert.ok(fs.existsSync(schemaPath), 'supabase/schema.sql must exist');
+      const sql = fs.readFileSync(schemaPath, 'utf8');
+
+      const requiredTables = [
+        'ff_users',
+        'ff_quotas',
+        'ff_community_posts',
+        'ff_community_reports',
+        'ff_admin_config',
+        'ff_audit_logs',
+        'ff_changelog',
+        'ff_projects',
+      ];
+
+      for (const table of requiredTables) {
+        const createRegex = new RegExp(`CREATE\\s+TABLE\\s+IF\\s+NOT\\s+EXISTS\\s+${table}\\b`, 'i');
+        const rlsRegex = new RegExp(
+          `ALTER\\s+TABLE\\s+${table}\\s+ENABLE\\s+ROW\\s+LEVEL\\s+SECURITY`,
+          'i'
+        );
+        assert.ok(createRegex.test(sql), `Missing CREATE TABLE IF NOT EXISTS for ${table}`);
+        assert.ok(rlsRegex.test(sql), `Missing ENABLE ROW LEVEL SECURITY for ${table}`);
+      }
+
+      assert.equal(
+        /\bCREATE\s+POLICY\b/i.test(sql),
+        false,
+        'schema.sql must have 0 public/anon policies'
+      );
+      assert.equal(/\banon\b/i.test(sql), false, 'schema.sql must not grant access to anon role');
+    });
+
+    test('supports email-style ADMIN_USERNAME with case-insensitive login and scrypt ADMIN_PASSWORD_HASH', () => {
+      const script = [
+        "import { getEnvAdminUser, hashPassword, loginAdminUser } from './server/authEngine.ts';",
+        "const testAdminEmail = 'Admin.Owner@Example.com';",
+        "const testAdminPass = 'UltraSecretAdminPass!2026';",
+        "process.env.ADMIN_USERNAME = testAdminEmail;",
+        "process.env.ADMIN_PASSWORD_HASH = hashPassword(testAdminPass);",
+        "process.env.ADMIN_BOOTSTRAP_PASSWORD = '';",
+        "const envAdmin = getEnvAdminUser();",
+        "const loginResult = loginAdminUser({ username: 'admin.owner@example.com', password: testAdminPass });",
+        "console.log(JSON.stringify({ envAdmin, loginResult }));",
+      ].join('\n');
+
+      const stdout = execFileSync('npx', ['tsx', '-e', script], {
+        cwd: projectRoot,
+        encoding: 'utf8',
+      });
+      const parsed = JSON.parse(stdout.trim());
+
+      assert.equal(parsed.envAdmin.email, 'Admin.Owner@Example.com');
+      assert.ok(!parsed.envAdmin.email.endsWith('@fforum.local'));
+      assert.equal(parsed.loginResult.ok, true);
+      assert.equal(parsed.loginResult.user.role, 'admin');
+      assert.equal(parsed.loginResult.user.email, 'Admin.Owner@Example.com');
     });
   });
 });

@@ -4,6 +4,7 @@ import React, {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from 'react';
 import JSZip from 'jszip';
@@ -316,6 +317,34 @@ function createInitialProject(
   };
 }
 
+const PROJECT_SYNC_DEBOUNCE_MS = 900;
+
+function isUntouchedStarter(project: WorkspaceProject): boolean {
+  return project.createdAt === project.updatedAt && project.attachedItems.length === 0;
+}
+
+function mergeRemoteProjects(
+  local: WorkspaceProject[],
+  remote: WorkspaceProject[]
+): WorkspaceProject[] {
+  if (remote.length === 0) return local;
+  const localById = new Map(local.map((p) => [p.id, p]));
+  const merged = remote.map((remoteProject) => {
+    const localProject = localById.get(remoteProject.id);
+    if (!localProject) return remoteProject;
+    return Date.parse(localProject.updatedAt) > Date.parse(remoteProject.updatedAt)
+      ? localProject
+      : remoteProject;
+  });
+  const remoteIds = new Set(remote.map((p) => p.id));
+  const localOnly = local.filter((p) => !remoteIds.has(p.id));
+  const keptLocal =
+    localOnly.length === 1 && local.length === 1 && isUntouchedStarter(localOnly[0])
+      ? []
+      : localOnly;
+  return [...merged, ...keptLocal];
+}
+
 function parseRouteFromPathname(pathname: string): AppRoute {
   const clean = pathname.replace(/\/+$/, '') || '/';
   if (clean === '/') return 'landing';
@@ -553,6 +582,8 @@ export const AppStoreProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     buildFallbackSeedChannels()
   );
   const [toasts, setToasts] = useState<ToastItem[]>([]);
+  const syncedProjectsRef = useRef<Map<string, WorkspaceProject>>(new Map());
+  const hydratedUserIdRef = useRef<string | null>(null);
 
   const activeProject = useMemo(() => {
     const found = projects.find((p) => p.id === activeProjectId);
@@ -676,6 +707,46 @@ export const AppStoreProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     void refreshCommunity();
   }, [refreshAuthAndQuota, refreshCommunity]);
 
+  const currentUserId = currentUser ? currentUser.id : null;
+
+  useEffect(() => {
+    syncedProjectsRef.current = new Map();
+    hydratedUserIdRef.current = null;
+    if (!currentUserId) return;
+    let cancelled = false;
+    apiClient
+      .fetchUserProjects()
+      .then((data) => {
+        if (cancelled || !data.authenticated) return;
+        const remote = Array.isArray(data.projects) ? data.projects : [];
+        syncedProjectsRef.current = new Map(remote.map((p) => [p.id, p]));
+        hydratedUserIdRef.current = currentUserId;
+        setProjects((prev) => mergeRemoteProjects(prev, remote));
+      })
+      .catch(() => {
+        syncedProjectsRef.current = new Map();
+        hydratedUserIdRef.current = null;
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [currentUserId]);
+
+  useEffect(() => {
+    if (!currentUserId || hydratedUserIdRef.current !== currentUserId) return;
+    const timer = window.setTimeout(() => {
+      const synced = syncedProjectsRef.current;
+      for (const project of projects) {
+        if (synced.get(project.id) === project) continue;
+        synced.set(project.id, project);
+        apiClient.syncUserProject(project).catch(() => {
+          if (synced.get(project.id) === project) synced.delete(project.id);
+        });
+      }
+    }, PROJECT_SYNC_DEBOUNCE_MS);
+    return () => window.clearTimeout(timer);
+  }, [projects, currentUserId]);
+
   const toggleSavedItem = useCallback((id: string) => {
     setSavedItemIds((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
   }, []);
@@ -717,8 +788,11 @@ export const AppStoreProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         const remaining = prev.filter((p) => p.id !== projectId);
         return remaining.length > 0 ? remaining : [createInitialProject()];
       });
+      if (!currentUserId) return;
+      syncedProjectsRef.current.delete(projectId);
+      apiClient.deleteUserProject(projectId).catch(() => undefined);
     },
-    []
+    [currentUserId]
   );
 
   const renameProject = useCallback((projectId: string, name: string) => {

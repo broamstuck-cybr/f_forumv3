@@ -11,7 +11,15 @@ import type {
   ModerationReport,
   ModerationReportStatus,
 } from '../src/types/index';
-import { readPersistedSection, writePersistedSection } from './quotaStore';
+import {
+  enqueueWrite,
+  isSupabaseEnabled,
+  readLocalSection,
+  registerHydrator,
+  sbSelect,
+  sbUpsert,
+  writeLocalSection,
+} from './persistence';
 
 interface PersistedCommunityData {
   channels: CommunityChannelsData;
@@ -86,35 +94,8 @@ function loadSeedChannels(): CommunityChannelsData {
   return { qa: [], showcase: [], drops: [], clubs: [] };
 }
 
-function ensureCommunityStore(): PersistedCommunityData {
-  if (memoryCommunity && memoryCommunity.initialized) {
-    const totalCount =
-      memoryCommunity.channels.qa.length +
-      memoryCommunity.channels.showcase.length +
-      memoryCommunity.channels.drops.length +
-      memoryCommunity.channels.clubs.length;
-    if (totalCount > 0) {
-      return memoryCommunity;
-    }
-  }
-
-  const persisted = readPersistedSection<PersistedCommunityData | null>('communityStore', null);
-  if (
-    persisted &&
-    persisted.initialized &&
-    persisted.channels &&
-    persisted.channels.qa.length +
-      persisted.channels.showcase.length +
-      persisted.channels.drops.length +
-      persisted.channels.clubs.length >
-      0
-  ) {
-    memoryCommunity = persisted;
-    return memoryCommunity;
-  }
-
-  const seededChannels = loadSeedChannels();
-  const initialReports: ModerationReport[] = [
+function buildInitialReports(seededChannels: CommunityChannelsData): ModerationReport[] {
+  return [
     {
       id: 'rep-seed-01',
       targetId: seededChannels.qa[0]?.id || 'qa-01',
@@ -127,19 +108,242 @@ function ensureCommunityStore(): PersistedCommunityData {
       createdAt: '2026-11-18T16:00:00Z',
     },
   ];
+}
+
+function toCommunityPostRow(post: CommunityPost): Record<string, unknown> {
+  return {
+    id: post.id,
+    channel: post.channel,
+    title: post.title,
+    author: post.author,
+    category: post.category,
+    tags: Array.isArray(post.tags) ? post.tags : [],
+    votes: typeof post.votes === 'number' ? post.votes : 0,
+    upvoted_by: Array.isArray(post.upvotedBy) ? post.upvotedBy : [],
+    body: post.body || '',
+    description: post.description || '',
+    answers_count:
+      typeof post.answersCount === 'number'
+        ? post.answersCount
+        : Array.isArray(post.answers)
+          ? post.answers.length
+          : 0,
+    is_accepted: Boolean(post.isAccepted),
+    accepted_answer: post.acceptedAnswer ?? null,
+    answers: Array.isArray(post.answers) ? post.answers : [],
+    likes: typeof post.likes === 'number' ? post.likes : (post.votes ?? 0),
+    views: typeof post.views === 'number' ? post.views : 0,
+    demo_snippet: post.demoSnippet ?? null,
+    forks: typeof post.forks === 'number' ? post.forks : 0,
+    file_type: post.fileType ?? null,
+    payload: post.payload ?? null,
+    name: post.name ?? post.title,
+    slug: post.slug ?? null,
+    lead: post.lead ?? post.author.name,
+    members_count: typeof post.membersCount === 'number' ? post.membersCount : null,
+    active_dossier: post.activeDossier ?? null,
+    hidden: Boolean(post.hidden),
+    created_at: post.createdAt,
+  };
+}
+
+function fromCommunityPostRow(row: Record<string, unknown>): CommunityPost {
+  const rawChannel = String(row.channel || 'qa');
+  const channel: CommunityChannel =
+    rawChannel === 'showcase' || rawChannel === 'drops' || rawChannel === 'clubs'
+      ? rawChannel
+      : 'qa';
+  return normalizeSeedItem(
+    {
+      id: row.id,
+      channel,
+      title: row.title,
+      author: row.author,
+      category: row.category,
+      tags: row.tags,
+      createdAt: row.created_at,
+      votes: row.votes,
+      upvotedBy: row.upvoted_by,
+      body: row.body,
+      description: row.description,
+      answersCount: row.answers_count,
+      isAccepted: row.is_accepted,
+      acceptedAnswer: row.accepted_answer ?? undefined,
+      answers: row.answers,
+      likes: row.likes,
+      views: row.views,
+      demoSnippet: row.demo_snippet ?? undefined,
+      forks: row.forks,
+      fileType: row.file_type ?? undefined,
+      payload: row.payload ?? undefined,
+      name: row.name ?? undefined,
+      slug: row.slug ?? undefined,
+      lead: row.lead ?? undefined,
+      membersCount: typeof row.members_count === 'number' ? row.members_count : undefined,
+      activeDossier: row.active_dossier ?? undefined,
+      hidden: Boolean(row.hidden),
+    },
+    channel
+  );
+}
+
+function toCommunityReportRow(rep: ModerationReport): Record<string, unknown> {
+  return {
+    id: rep.id,
+    target_id: rep.targetId,
+    target_channel: rep.targetChannel,
+    target_title: rep.targetTitle,
+    reason: rep.reason,
+    reporter_id: rep.reporterId,
+    reporter_name: rep.reporterName,
+    status: rep.status,
+    resolved_at: rep.resolvedAt ?? null,
+    resolved_by: rep.resolvedBy ?? null,
+    created_at: rep.createdAt,
+  };
+}
+
+function fromCommunityReportRow(row: Record<string, unknown>): ModerationReport {
+  const rawChannel = String(row.target_channel || 'qa');
+  const targetChannel: CommunityChannel =
+    rawChannel === 'showcase' || rawChannel === 'drops' || rawChannel === 'clubs'
+      ? rawChannel
+      : 'qa';
+  const rawStatus = String(row.status || 'pending');
+  const status: ModerationReportStatus =
+    rawStatus === 'approved' || rawStatus === 'hidden' || rawStatus === 'dismissed'
+      ? rawStatus
+      : 'pending';
+  return {
+    id: String(row.id),
+    targetId: String(row.target_id || ''),
+    targetChannel,
+    targetTitle: String(row.target_title || ''),
+    reason: String(row.reason || ''),
+    reporterId: String(row.reporter_id || ''),
+    reporterName: String(row.reporter_name || ''),
+    status,
+    createdAt: String(row.created_at || new Date().toISOString()),
+    resolvedAt: typeof row.resolved_at === 'string' ? row.resolved_at : undefined,
+    resolvedBy: typeof row.resolved_by === 'string' ? row.resolved_by : undefined,
+  };
+}
+
+registerHydrator('community', async () => {
+  const [postRows, reportRows] = await Promise.all([
+    sbSelect<Record<string, unknown>>('ff_community_posts', 'select=*&order=created_at.desc'),
+    sbSelect<Record<string, unknown>>('ff_community_reports', 'select=*&order=created_at.desc'),
+  ]);
+
+  if (postRows.length === 0) {
+    const seededChannels = loadSeedChannels();
+    const initialReports = buildInitialReports(seededChannels);
+    const allSeedPosts = [
+      ...seededChannels.qa,
+      ...seededChannels.showcase,
+      ...seededChannels.drops,
+      ...seededChannels.clubs,
+    ];
+    await sbUpsert(
+      'ff_community_posts',
+      allSeedPosts.map(toCommunityPostRow),
+      'id'
+    );
+    if (reportRows.length === 0) {
+      await sbUpsert(
+        'ff_community_reports',
+        initialReports.map(toCommunityReportRow),
+        'id'
+      );
+    }
+    memoryCommunity = {
+      channels: seededChannels,
+      reports:
+        reportRows.length > 0 ? reportRows.map(fromCommunityReportRow) : initialReports,
+      initialized: true,
+    };
+    return;
+  }
+
+  const channels: CommunityChannelsData = {
+    qa: [],
+    showcase: [],
+    drops: [],
+    clubs: [],
+  };
+  for (const row of postRows) {
+    const post = fromCommunityPostRow(row);
+    channels[post.channel].push(post);
+  }
+  memoryCommunity = {
+    channels,
+    reports: reportRows.map(fromCommunityReportRow),
+    initialized: true,
+  };
+});
+
+function ensureCommunityStore(): PersistedCommunityData {
+  if (memoryCommunity && memoryCommunity.initialized) {
+    const totalCount =
+      memoryCommunity.channels.qa.length +
+      memoryCommunity.channels.showcase.length +
+      memoryCommunity.channels.drops.length +
+      memoryCommunity.channels.clubs.length;
+    if (totalCount > 0) {
+      return memoryCommunity;
+    }
+  }
+
+  if (!isSupabaseEnabled()) {
+    const persisted = readLocalSection<PersistedCommunityData | null>('communityStore', null);
+    if (
+      persisted &&
+      persisted.initialized &&
+      persisted.channels &&
+      persisted.channels.qa.length +
+        persisted.channels.showcase.length +
+        persisted.channels.drops.length +
+        persisted.channels.clubs.length >
+        0
+    ) {
+      memoryCommunity = persisted;
+      return memoryCommunity;
+    }
+  }
+
+  const seededChannels = loadSeedChannels();
+  const initialReports = buildInitialReports(seededChannels);
 
   memoryCommunity = {
     channels: seededChannels,
     reports: initialReports,
     initialized: true,
   };
-  writePersistedSection('communityStore', memoryCommunity);
+  if (!isSupabaseEnabled()) {
+    writeLocalSection('communityStore', memoryCommunity);
+  }
   return memoryCommunity;
 }
 
-function saveCommunityStore(): void {
+function savePostMutation(post: CommunityPost): void {
+  if (isSupabaseEnabled()) {
+    enqueueWrite(sbUpsert('ff_community_posts', [toCommunityPostRow(post)], 'id'));
+    return;
+  }
   if (!memoryCommunity) return;
-  writePersistedSection('communityStore', memoryCommunity);
+  writeLocalSection('communityStore', memoryCommunity);
+}
+
+function saveReportMutation(report: ModerationReport, updatedPost?: CommunityPost | null): void {
+  if (isSupabaseEnabled()) {
+    enqueueWrite(sbUpsert('ff_community_reports', [toCommunityReportRow(report)], 'id'));
+    if (updatedPost) {
+      enqueueWrite(sbUpsert('ff_community_posts', [toCommunityPostRow(updatedPost)], 'id'));
+    }
+    return;
+  }
+  if (!memoryCommunity) return;
+  writeLocalSection('communityStore', memoryCommunity);
 }
 
 export function getCommunityState(includeHidden = false): {
@@ -214,7 +418,7 @@ export function createCommunityPost(input: {
     hidden: false,
   };
   store.channels[channel].unshift(post);
-  saveCommunityStore();
+  savePostMutation(post);
   return post;
 }
 
@@ -240,7 +444,7 @@ export function upvoteCommunityPost(postId: string, actorId: string): CommunityP
   }
   post.upvotedBy = Array.from(voters);
   post.likes = post.votes;
-  saveCommunityStore();
+  savePostMutation(post);
   return post;
 }
 
@@ -263,7 +467,7 @@ export function addCommunityAnswer(
   }
   post.answers.push(answer);
   post.answersCount = post.answers.length;
-  saveCommunityStore();
+  savePostMutation(post);
   return post;
 }
 
@@ -280,7 +484,7 @@ export function acceptCommunityAnswer(postId: string, answerId: string): Communi
   }
   post.acceptedAnswer = target;
   post.isAccepted = true;
-  saveCommunityStore();
+  savePostMutation(post);
   return post;
 }
 
@@ -288,7 +492,7 @@ export function forkCommunityItem(postId: string): CommunityPost | null {
   const post = findPostById(postId);
   if (!post) return null;
   post.forks = (post.forks || 0) + 1;
-  saveCommunityStore();
+  savePostMutation(post);
   return post;
 }
 
@@ -306,7 +510,7 @@ export function updateClubDossier(
     ownerHandle: dossier.ownerHandle?.trim(),
     updatedAt: new Date().toISOString(),
   };
-  saveCommunityStore();
+  savePostMutation(post);
   return post;
 }
 
@@ -330,7 +534,7 @@ export function submitModerationReport(input: {
     createdAt: new Date().toISOString(),
   };
   store.reports.unshift(report);
-  saveCommunityStore();
+  saveReportMutation(report);
   return report;
 }
 
@@ -354,6 +558,6 @@ export function resolveModerationReport(
       post.hidden = false;
     }
   }
-  saveCommunityStore();
+  saveReportMutation(report, post);
   return report;
 }

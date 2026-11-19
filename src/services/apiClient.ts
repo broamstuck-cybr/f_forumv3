@@ -13,6 +13,7 @@ import type {
   ModerationReportStatus,
   QuotaState,
   User,
+  WorkspaceProject,
 } from '../types/index';
 
 const GUEST_ID_STORAGE_KEY = 'fforum_v3_guest_sid';
@@ -66,7 +67,13 @@ async function requestJson<T>(
 }
 
 export const apiClient = {
-  fetchHealth(): Promise<{ status: string; service: string; version: string; timestamp: string }> {
+  fetchHealth(): Promise<{
+    status: string;
+    service: string;
+    version: string;
+    timestamp: string;
+    persistence?: 'supabase' | 'local-json';
+  }> {
     return requestJson('/api/health', { method: 'GET' });
   },
 
@@ -287,5 +294,23 @@ export const apiClient = {
 
   fetchPublicChangelog(): Promise<{ changelog: AdminChangelogEntry[] }> {
     return requestJson('/api/admin/changelog', { method: 'GET' });
+  },
+
+  fetchUserProjects(): Promise<{ authenticated: boolean; projects: WorkspaceProject[] }> {
+    return requestJson('/api/projects/list', { method: 'GET' });
+  },
+
+  syncUserProject(project: WorkspaceProject): Promise<{ ok: boolean; project: WorkspaceProject }> {
+    return requestJson('/api/projects/sync', {
+      method: 'POST',
+      body: JSON.stringify({ project }),
+    });
+  },
+
+  deleteUserProject(projectId: string): Promise<{ ok: boolean }> {
+    return requestJson('/api/projects/delete', {
+      method: 'POST',
+      body: JSON.stringify({ projectId }),
+    });
   },
 };

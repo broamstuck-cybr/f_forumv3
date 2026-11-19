@@ -1,6 +1,20 @@
-import fs from 'node:fs';
-import path from 'node:path';
 import type { QuotaState, User } from '../src/types/index';
+import {
+  enqueueWrite,
+  ensureLocalEnvLoaded,
+  isSupabaseEnabled,
+  readLocalSection,
+  registerHydrator,
+  sbSelect,
+  sbUpsert,
+  writeLocalSection,
+} from './persistence';
+
+export {
+  ensureLocalEnvLoaded,
+  readLocalSection as readPersistedSection,
+  writeLocalSection as writePersistedSection,
+};
 
 export const MAX_STANDARD_TURNS = 15;
 
@@ -16,85 +30,65 @@ interface PersistedQuotaMap {
 }
 
 const memoryQuotas: Record<string, StoredQuotaEntry> = {};
-let envLoaded = false;
-
-export function ensureLocalEnvLoaded(): void {
-  if (envLoaded) return;
-  envLoaded = true;
-  try {
-    const envPath = path.resolve(process.cwd(), '.env');
-    if (!fs.existsSync(envPath)) return;
-    const raw = fs.readFileSync(envPath, 'utf8');
-    for (const line of raw.split(/\r?\n/)) {
-      const trimmed = line.trim();
-      if (!trimmed || trimmed.startsWith('#')) continue;
-      const eqIdx = trimmed.indexOf('=');
-      if (eqIdx <= 0) continue;
-      const key = trimmed.slice(0, eqIdx).trim();
-      const val = trimmed.slice(eqIdx + 1).trim().replace(/^['"]|['"]$/g, '');
-      if (key && process.env[key] === undefined) {
-        process.env[key] = val;
-      }
-    }
-  } catch {
-    return;
-  }
-}
 
 ensureLocalEnvLoaded();
 
-function getRuntimeFilePath(): string {
-  return path.resolve(process.cwd(), 'data', 'runtime-state.json');
+function toQuotaRow(entry: StoredQuotaEntry): Record<string, unknown> {
+  return {
+    subject_id: entry.subjectId,
+    subject_type: entry.subjectType,
+    used: entry.used,
+    updated_at: entry.updatedAt,
+  };
 }
 
-export function readPersistedSection<T>(sectionKey: string, fallback: T): T {
-  try {
-    const filePath = getRuntimeFilePath();
-    if (!fs.existsSync(filePath)) return fallback;
-    const parsed = JSON.parse(fs.readFileSync(filePath, 'utf8')) as Record<string, unknown>;
-    if (parsed && typeof parsed === 'object' && sectionKey in parsed) {
-      return parsed[sectionKey] as T;
-    }
-    return fallback;
-  } catch {
-    return fallback;
-  }
+function fromQuotaRow(row: Record<string, unknown>): StoredQuotaEntry | null {
+  const subjectId = typeof row.subject_id === 'string' ? row.subject_id.trim() : '';
+  if (!subjectId) return null;
+  const rawType = row.subject_type;
+  const subjectType: 'guest' | 'user' | 'admin' =
+    rawType === 'admin' ? 'admin' : rawType === 'user' ? 'user' : 'guest';
+  const used = typeof row.used === 'number' ? row.used : Number(row.used || 0);
+  const updatedAt =
+    typeof row.updated_at === 'string' && row.updated_at
+      ? row.updated_at
+      : new Date().toISOString();
+  return {
+    subjectId,
+    subjectType,
+    used: Number.isFinite(used) ? Math.max(0, used) : 0,
+    updatedAt,
+  };
 }
 
-export function writePersistedSection<T>(sectionKey: string, value: T): void {
-  try {
-    const filePath = getRuntimeFilePath();
-    const dir = path.dirname(filePath);
-    if (!fs.existsSync(dir)) {
-      fs.mkdirSync(dir, { recursive: true });
+registerHydrator('quotas', async () => {
+  const rows = await sbSelect<Record<string, unknown>>('ff_quotas', 'select=*');
+  for (const row of rows) {
+    const parsed = fromQuotaRow(row);
+    if (parsed) {
+      memoryQuotas[parsed.subjectId] = parsed;
     }
-    let existing: Record<string, unknown> = {};
-    if (fs.existsSync(filePath)) {
-      try {
-        existing = JSON.parse(fs.readFileSync(filePath, 'utf8')) as Record<string, unknown>;
-      } catch {
-        existing = {};
-      }
-    }
-    existing[sectionKey] = value;
-    fs.writeFileSync(filePath, JSON.stringify(existing, null, 2), 'utf8');
-  } catch {
-    return;
   }
-}
+});
 
 function getQuotaMap(): Record<string, StoredQuotaEntry> {
-  const persisted = readPersistedSection<PersistedQuotaMap>('quotaStore', { quotas: {} });
-  for (const [k, v] of Object.entries(persisted.quotas || {})) {
-    if (!memoryQuotas[k]) {
-      memoryQuotas[k] = v;
+  if (!isSupabaseEnabled()) {
+    const persisted = readLocalSection<PersistedQuotaMap>('quotaStore', { quotas: {} });
+    for (const [k, v] of Object.entries(persisted.quotas || {})) {
+      if (!memoryQuotas[k]) {
+        memoryQuotas[k] = v;
+      }
     }
   }
   return memoryQuotas;
 }
 
-function saveQuotaMap(): void {
-  writePersistedSection<PersistedQuotaMap>('quotaStore', { quotas: memoryQuotas });
+function saveQuotaEntry(entry: StoredQuotaEntry): void {
+  if (isSupabaseEnabled()) {
+    enqueueWrite(sbUpsert('ff_quotas', [toQuotaRow(entry)], 'subject_id'));
+    return;
+  }
+  writeLocalSection<PersistedQuotaMap>('quotaStore', { quotas: memoryQuotas });
 }
 
 export function resolveSubjectKey(user: User | null, guestSessionId: string): {
@@ -156,13 +150,14 @@ export function consumeQuotaTurn(
   const quotas = getQuotaMap();
   const nextUsed = current.used + 1;
   const now = new Date().toISOString();
-  quotas[current.subjectId] = {
+  const entry: StoredQuotaEntry = {
     subjectId: current.subjectId,
     subjectType: current.subjectType,
     used: nextUsed,
     updatedAt: now,
   };
-  saveQuotaMap();
+  quotas[current.subjectId] = entry;
+  saveQuotaEntry(entry);
 
   return {
     allowed: true,
@@ -181,13 +176,14 @@ export function resetSubjectQuota(subjectId: string): QuotaState {
         ? 'user'
         : 'guest';
   const now = new Date().toISOString();
-  quotas[subjectId] = {
+  const entry: StoredQuotaEntry = {
     subjectId,
     subjectType,
     used: 0,
     updatedAt: now,
   };
-  saveQuotaMap();
+  quotas[subjectId] = entry;
+  saveQuotaEntry(entry);
 
   if (subjectType === 'admin') {
     return {

@@ -6,6 +6,7 @@ import type {
   CommunityAuthor,
   CommunityChannel,
   ModerationReportStatus,
+  WorkspaceProject,
 } from '../src/types/index';
 import {
   adminAddChangelog,
@@ -38,7 +39,14 @@ import {
   updateClubDossier,
   upvoteCommunityPost,
 } from './communityStore';
-import { consumeQuotaTurn, ensureLocalEnvLoaded, getQuotaState } from './quotaStore';
+import {
+  ensureHydrated,
+  ensureLocalEnvLoaded,
+  flushSupabaseWrites,
+  isSupabaseEnabled,
+} from './persistence';
+import { deleteUserProject, listUserProjects, syncUserProject } from './projectStore';
+import { consumeQuotaTurn, getQuotaState } from './quotaStore';
 
 ensureLocalEnvLoaded();
 
@@ -57,11 +65,13 @@ export function handleHealth(_req: Request, res: Response): void {
     status: 'ok',
     service: 'f-forum-v3-api',
     version: '3.0.0',
+    persistence: isSupabaseEnabled() ? 'supabase' : 'local-json',
     timestamp: new Date().toISOString(),
   });
 }
 
-export function handleAiQuota(req: Request, res: Response): void {
+export async function handleAiQuota(req: Request, res: Response): Promise<void> {
+  await ensureHydrated();
   const user = getAuthenticatedUser(req);
   const guestId = resolveGuestSessionId(req, res);
   const quota = getQuotaState(user, guestId);
@@ -72,6 +82,7 @@ export function handleAiQuota(req: Request, res: Response): void {
 }
 
 export async function handleAiChat(req: Request, res: Response): Promise<void> {
+  await ensureHydrated();
   const user = getAuthenticatedUser(req);
   const guestId = resolveGuestSessionId(req, res);
   const body = (req.body || {}) as Partial<AIChatRequest>;
@@ -87,6 +98,7 @@ export async function handleAiChat(req: Request, res: Response): Promise<void> {
   const turnResult = consumeQuotaTurn(user, guestId);
   if (!turnResult.allowed) {
     recordAiTelemetry('quota_blocked');
+    await flushSupabaseWrites();
     res.status(429).json({
       error:
         'Đã đạt giới hạn 15 lượt sử dụng AI cho phiên tiêu chuẩn. Vui lòng đăng nhập tài khoản Admin để sử dụng không giới hạn.',
@@ -105,6 +117,7 @@ export async function handleAiChat(req: Request, res: Response): Promise<void> {
 
   const generated = await runAIGeneration(chatReq, req.headers);
   recordAiTelemetry(generated.fallback ? 'fallback' : 'success');
+  await flushSupabaseWrites();
 
   res.status(200).json({
     ...generated,
@@ -112,7 +125,12 @@ export async function handleAiChat(req: Request, res: Response): Promise<void> {
   });
 }
 
-export function handleAuthAction(req: Request, res: Response, explicitAction?: string): void {
+export async function handleAuthAction(
+  req: Request,
+  res: Response,
+  explicitAction?: string
+): Promise<void> {
+  await ensureHydrated();
   const action = (explicitAction || req.params.action || '').toLowerCase();
   const guestId = resolveGuestSessionId(req, res);
 
@@ -150,6 +168,7 @@ export function handleAuthAction(req: Request, res: Response, explicitAction?: s
     }
     setAuthCookies(res, result.user);
     appendAuditLog(result.user.username, 'USER_REGISTER', result.user.id, 'Dang ky tai khoan moi');
+    await flushSupabaseWrites();
     const quota = getQuotaState(result.user, guestId);
     res.status(201).json({ user: result.user, quota });
     return;
@@ -162,6 +181,7 @@ export function handleAuthAction(req: Request, res: Response, explicitAction?: s
     if (adminAttempt.ok) {
       setAuthCookies(res, adminAttempt.user);
       appendAuditLog(adminAttempt.user.username, 'ADMIN_LOGIN', adminAttempt.user.id, 'Dang nhap Admin');
+      await flushSupabaseWrites();
       const quota = getQuotaState(adminAttempt.user, guestId);
       res.status(200).json({ user: adminAttempt.user, quota });
       return;
@@ -174,6 +194,7 @@ export function handleAuthAction(req: Request, res: Response, explicitAction?: s
     }
     setAuthCookies(res, stdAttempt.user);
     appendAuditLog(stdAttempt.user.username, 'USER_LOGIN', stdAttempt.user.id, 'Dang nhap thanh cong');
+    await flushSupabaseWrites();
     const quota = getQuotaState(stdAttempt.user, guestId);
     res.status(200).json({ user: stdAttempt.user, quota });
     return;
@@ -189,6 +210,7 @@ export function handleAuthAction(req: Request, res: Response, explicitAction?: s
     }
     setAuthCookies(res, result.user);
     appendAuditLog(result.user.username, 'ADMIN_LOGIN', result.user.id, 'Dang nhap Admin Console');
+    await flushSupabaseWrites();
     const quota = getQuotaState(result.user, guestId);
     res.status(200).json({ user: result.user, quota });
     return;
@@ -197,7 +219,12 @@ export function handleAuthAction(req: Request, res: Response, explicitAction?: s
   res.status(404).json({ error: `Unknown auth action: ${action}` });
 }
 
-export function handleAdminAction(req: Request, res: Response, explicitAction?: string): void {
+export async function handleAdminAction(
+  req: Request,
+  res: Response,
+  explicitAction?: string
+): Promise<void> {
+  await ensureHydrated();
   const action = (explicitAction || req.params.action || '').toLowerCase();
 
   if (action === 'changelog' && req.method === 'GET') {
@@ -247,6 +274,7 @@ export function handleAdminAction(req: Request, res: Response, explicitAction?: 
       },
       user.username
     );
+    await flushSupabaseWrites();
     res.status(200).json({ gateway, state: getAdminStateSnapshot() });
     return;
   }
@@ -258,6 +286,7 @@ export function handleAdminAction(req: Request, res: Response, explicitAction?: 
       return;
     }
     adminResetQuota(subjectId, user.username);
+    await flushSupabaseWrites();
     res.status(200).json({ state: getAdminStateSnapshot() });
     return;
   }
@@ -269,6 +298,7 @@ export function handleAdminAction(req: Request, res: Response, explicitAction?: 
       return;
     }
     adminToggleUserRole(userId, user.username);
+    await flushSupabaseWrites();
     res.status(200).json({ state: getAdminStateSnapshot() });
     return;
   }
@@ -281,6 +311,7 @@ export function handleAdminAction(req: Request, res: Response, explicitAction?: 
       return;
     }
     adminModerateReport(reportId, statusRaw, user.username);
+    await flushSupabaseWrites();
     res.status(200).json({ state: getAdminStateSnapshot() });
     return;
   }
@@ -294,6 +325,7 @@ export function handleAdminAction(req: Request, res: Response, explicitAction?: 
       return;
     }
     const entry = adminAddChangelog({ version, title, notes }, user.username);
+    await flushSupabaseWrites();
     res.status(201).json({ entry, state: getAdminStateSnapshot() });
     return;
   }
@@ -301,7 +333,12 @@ export function handleAdminAction(req: Request, res: Response, explicitAction?: 
   res.status(404).json({ error: `Unknown admin action: ${action}` });
 }
 
-export function handleCommunityAction(req: Request, res: Response, explicitAction?: string): void {
+export async function handleCommunityAction(
+  req: Request,
+  res: Response,
+  explicitAction?: string
+): Promise<void> {
+  await ensureHydrated();
   const action = (explicitAction || req.params.action || 'list').toLowerCase();
   const user = getAuthenticatedUser(req);
   const guestId = resolveGuestSessionId(req, res);
@@ -348,6 +385,7 @@ export function handleCommunityAction(req: Request, res: Response, explicitActio
       fileType: typeof body.fileType === 'string' ? body.fileType : undefined,
       activeDossier: body.activeDossier as ClubHandoverDossier | undefined,
     });
+    await flushSupabaseWrites();
     res.status(201).json({ post, ...getCommunityState(false) });
     return;
   }
@@ -359,6 +397,7 @@ export function handleCommunityAction(req: Request, res: Response, explicitActio
       res.status(404).json({ error: 'Khong tim thay bai viet.' });
       return;
     }
+    await flushSupabaseWrites();
     res.status(200).json({ post, ...getCommunityState(false) });
     return;
   }
@@ -375,6 +414,7 @@ export function handleCommunityAction(req: Request, res: Response, explicitActio
       res.status(404).json({ error: 'Khong tim thay cau hoi.' });
       return;
     }
+    await flushSupabaseWrites();
     res.status(200).json({ post, ...getCommunityState(false) });
     return;
   }
@@ -387,6 +427,7 @@ export function handleCommunityAction(req: Request, res: Response, explicitActio
       res.status(404).json({ error: 'Khong tim thay cau hoi hoac cau tra loi.' });
       return;
     }
+    await flushSupabaseWrites();
     res.status(200).json({ post, ...getCommunityState(false) });
     return;
   }
@@ -398,6 +439,7 @@ export function handleCommunityAction(req: Request, res: Response, explicitActio
       res.status(404).json({ error: 'Khong tim thay tai nguyen de fork.' });
       return;
     }
+    await flushSupabaseWrites();
     res.status(200).json({ post, ...getCommunityState(false) });
     return;
   }
@@ -425,6 +467,7 @@ export function handleCommunityAction(req: Request, res: Response, explicitActio
       res.status(404).json({ error: 'Khong tim thay Club.' });
       return;
     }
+    await flushSupabaseWrites();
     res.status(200).json({ post, ...getCommunityState(false) });
     return;
   }
@@ -442,6 +485,7 @@ export function handleCommunityAction(req: Request, res: Response, explicitActio
       reporterId: actorAuthor.id,
       reporterName: actorAuthor.name,
     });
+    await flushSupabaseWrites();
     res.status(201).json({ report, ...getCommunityState(false) });
     return;
   }
@@ -449,20 +493,90 @@ export function handleCommunityAction(req: Request, res: Response, explicitActio
   res.status(404).json({ error: `Unknown community action: ${action}` });
 }
 
+export async function handleProjectsAction(
+  req: Request,
+  res: Response,
+  explicitAction?: string
+): Promise<void> {
+  await ensureHydrated();
+  const action = (explicitAction || req.params.action || 'list').toLowerCase();
+  const user = getAuthenticatedUser(req);
+
+  if (action === 'list') {
+    if (req.method !== 'GET') {
+      res.status(405).json({ error: 'Method not allowed' });
+      return;
+    }
+    if (!user) {
+      res.status(200).json({ authenticated: false, projects: [] });
+      return;
+    }
+    const projects = await listUserProjects(user.id);
+    res.status(200).json({ authenticated: true, projects });
+    return;
+  }
+
+  if (req.method !== 'POST') {
+    res.status(405).json({ error: 'Method not allowed' });
+    return;
+  }
+
+  if (!user) {
+    res.status(401).json({ error: 'Yêu cầu đăng nhập để đồng bộ dự án.' });
+    return;
+  }
+
+  const body = (req.body || {}) as Record<string, unknown>;
+
+  if (action === 'sync') {
+    const rawProject = (
+      body.project && typeof body.project === 'object' ? body.project : body
+    ) as Partial<WorkspaceProject>;
+    const project = await syncUserProject(user.id, rawProject);
+    if (!project) {
+      res.status(400).json({ error: 'Dữ liệu dự án không hợp lệ.' });
+      return;
+    }
+    res.status(200).json({ ok: true, project });
+    return;
+  }
+
+  if (action === 'delete') {
+    const projectId = String(body.projectId || body.id || '').trim();
+    if (!projectId) {
+      res.status(400).json({ error: 'Thiếu projectId.' });
+      return;
+    }
+    await deleteUserProject(user.id, projectId);
+    res.status(200).json({ ok: true });
+    return;
+  }
+
+  res.status(404).json({ error: `Unknown projects action: ${action}` });
+}
+
 app.get('/api/health', handleHealth);
-app.get('/api/ai/quota', handleAiQuota);
+app.get('/api/ai/quota', (req, res) => {
+  void handleAiQuota(req, res);
+});
 app.post('/api/ai/chat', (req, res) => {
   void handleAiChat(req, res);
 });
 app.all('/api/auth/:action', (req, res) => {
-  handleAuthAction(req, res);
+  void handleAuthAction(req, res);
 });
 app.all('/api/admin/:action', (req, res) => {
-  handleAdminAction(req, res);
+  void handleAdminAction(req, res);
 });
 app.all('/api/community/:action', (req, res) => {
-  handleCommunityAction(req, res);
+  void handleCommunityAction(req, res);
 });
 app.get('/api/community', (req, res) => {
-  handleCommunityAction(req, res, 'list');
+  void handleCommunityAction(req, res, 'list');
+});
+app.all('/api/projects/:action', (req, res) => {
+  void handleProjectsAction(req, res);
+});
+app.get('/api/projects', (req, res) => {
+  void handleProjectsAction(req, res, 'list');
 });
