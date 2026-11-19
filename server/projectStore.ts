@@ -7,7 +7,7 @@ import type {
   WorkspaceProject,
   WorkspaceSnapshot,
 } from '../src/types/index';
-import { computeWorkspaceDiffs } from '../src/services/diffEngine';
+import { computeWorkspaceDiffs } from '../src/services/diffEngine.js';
 import {
   isSupabaseEnabled,
   readLocalSection,
@@ -15,7 +15,7 @@ import {
   sbSelect,
   sbUpsert,
   writeLocalSection,
-} from './persistence';
+} from './persistence.js';
 
 interface PersistedProjectsMap {
   byUser: Record<string, Record<string, WorkspaceProject>>;

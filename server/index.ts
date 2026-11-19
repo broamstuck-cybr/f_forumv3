@@ -1,5 +1,5 @@
-import { app } from './app';
-import { ensureLocalEnvLoaded } from './quotaStore';
+import { app } from './app.js';
+import { ensureLocalEnvLoaded } from './quotaStore.js';
 
 ensureLocalEnvLoaded();
 

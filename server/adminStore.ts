@@ -9,8 +9,8 @@ import type {
   AIProtocol,
   ModerationReportStatus,
 } from '../src/types/index';
-import { listAllUsers, toggleUserRole } from './authEngine';
-import { getCommunityState, resolveModerationReport } from './communityStore';
+import { listAllUsers, toggleUserRole } from './authEngine.js';
+import { getCommunityState, resolveModerationReport } from './communityStore.js';
 import {
   enqueueWrite,
   ensureLocalEnvLoaded,
@@ -20,8 +20,8 @@ import {
   sbSelect,
   sbUpsert,
   writeLocalSection,
-} from './persistence';
-import { listAllQuotaEntries, MAX_STANDARD_TURNS, resetSubjectQuota } from './quotaStore';
+} from './persistence.js';
+import { listAllQuotaEntries, MAX_STANDARD_TURNS, resetSubjectQuota } from './quotaStore.js';
 
 ensureLocalEnvLoaded();
 

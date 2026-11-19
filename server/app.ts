@@ -18,8 +18,8 @@ import {
   getPublicChangelog,
   recordAiTelemetry,
   updateGatewayOverride,
-} from './adminStore';
-import { runAIGeneration } from './aiEngine';
+} from './adminStore.js';
+import { runAIGeneration } from './aiEngine.js';
 import {
   clearAuthCookies,
   getAuthenticatedUser,
@@ -28,7 +28,7 @@ import {
   registerStandardUser,
   resolveGuestSessionId,
   setAuthCookies,
-} from './authEngine';
+} from './authEngine.js';
 import {
   acceptCommunityAnswer,
   addCommunityAnswer,
@@ -38,15 +38,15 @@ import {
   submitModerationReport,
   updateClubDossier,
   upvoteCommunityPost,
-} from './communityStore';
+} from './communityStore.js';
 import {
   ensureHydrated,
   ensureLocalEnvLoaded,
   flushSupabaseWrites,
   isSupabaseEnabled,
-} from './persistence';
-import { deleteUserProject, listUserProjects, syncUserProject } from './projectStore';
-import { consumeQuotaTurn, getQuotaState } from './quotaStore';
+} from './persistence.js';
+import { deleteUserProject, listUserProjects, syncUserProject } from './projectStore.js';
+import { consumeQuotaTurn, getQuotaState } from './quotaStore.js';
 
 ensureLocalEnvLoaded();
 

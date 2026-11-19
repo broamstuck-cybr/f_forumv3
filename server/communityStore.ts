@@ -19,7 +19,7 @@ import {
   sbSelect,
   sbUpsert,
   writeLocalSection,
-} from './persistence';
+} from './persistence.js';
 
 interface PersistedCommunityData {
   channels: CommunityChannelsData;

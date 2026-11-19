@@ -1,7 +1,7 @@
 import type { IncomingHttpHeaders } from 'node:http';
 import type { AIChatRequest, AIProtocol, AttachedContextItem } from '../src/types/index';
-import { getInternalGatewayOverride } from './adminStore';
-import { ensureLocalEnvLoaded } from './quotaStore';
+import { getInternalGatewayOverride } from './adminStore.js';
+import { ensureLocalEnvLoaded } from './quotaStore.js';
 
 ensureLocalEnvLoaded();
 
