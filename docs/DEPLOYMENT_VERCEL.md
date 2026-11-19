@@ -11,10 +11,10 @@ F-FORUM v3 is engineered to run identically in local development and on Vercel:
   - `api/health.ts` -> `GET /api/health`
   - `api/ai/chat.ts` -> `POST /api/ai/chat`
   - `api/ai/quota.ts` -> `GET /api/ai/quota`
-  - `api/auth/[action].ts` -> `POST /api/auth/login`, `POST /api/auth/register`, `POST /api/auth/admin-login`, `POST /api/auth/logout`, `GET /api/auth/session`
-  - `api/admin/[action].ts` -> `GET|POST /api/admin/state`, `POST /api/admin/config`, `POST /api/admin/moderate`, `POST /api/admin/quota-reset`, `POST /api/admin/changelog`
-  - `api/community/[action].ts` -> `GET /api/community/list`, `POST /api/community/create`, `POST /api/community/upvote`, `POST /api/community/accept`, `POST /api/community/report`
-- **Routing & Headers (`./vercel.json`)**: Routes `/api/*` requests to the serverless handlers and rewrites all other application paths (`/`, `/app`, `/explore`, `/work`, `/community`, `/settings`, `/admin`) to `/index.html` with strict security headers (`X-Content-Type-Options: nosniff`, `X-Frame-Options: SAMEORIGIN`, `Referrer-Policy: strict-origin-when-cross-origin`).
+  - `api/auth/[action].ts` -> `GET /api/auth/me`, `POST /api/auth/login`, `POST /api/auth/register`, `POST /api/auth/admin-login`, `POST /api/auth/logout`
+  - `api/admin/[action].ts` -> `GET /api/admin/state`, `GET|POST /api/admin/changelog`, `POST /api/admin/gateway`, `POST /api/admin/moderate`, `POST /api/admin/reset-quota`, `POST /api/admin/toggle-role`
+  - `api/community/[action].ts` -> `GET /api/community/list`, `POST /api/community/create`, `POST /api/community/upvote`, `POST /api/community/answer`, `POST /api/community/accept`, `POST /api/community/fork`, `POST /api/community/dossier`, `POST /api/community/report`
+- **Routing & Headers (`./vercel.json`)**: Routes `/api/*` requests to the serverless handlers and rewrites all other application paths (`/`, `/home`, `/explore`, `/workspace`, `/community`, `/settings`, `/admin`) to `/index.html` with strict security headers (`X-Content-Type-Options: nosniff`, `X-Frame-Options: SAMEORIGIN`, `Referrer-Policy: strict-origin-when-cross-origin`).
 
 ## 2. Step-by-Step Deployment to a New Vercel Project (`fforum`)
 
@@ -32,7 +32,7 @@ Verify that `.env` and `data/` are excluded by `.gitignore` and that `git status
 
 ### Step 2.2 — Push to the Target GitHub Repository
 
-Initialize or push the verified repository to your clean GitHub remote (for example `https://github.com/broamstuck-cybr/fforum.git`):
+Initialize or push the verified repository to your clean GitHub remote (`https://github.com/broamstuck-cybr/f_forumv3.git`):
 
 ```bash
 git remote -v
@@ -42,7 +42,7 @@ git push -u origin main
 ### Step 2.3 — Create the `fforum` Project in Vercel
 
 1. Sign in to the target Vercel account and click **Add New... -> Project**.
-2. Import the `broamstuck-cybr/fforum` GitHub repository.
+2. Import the `broamstuck-cybr/f_forumv3` GitHub repository.
 3. Set the **Project Name** explicitly to `fforum` (creating an isolated project that does not touch any legacy project or domain).
 4. Confirm the build settings (auto-detected from `package.json` and `vercel.json`):
    - **Framework Preset**: `Vite`
@@ -76,7 +76,7 @@ curl -s https://fforum.vercel.app/api/ai/quota
 
 3. Open `https://fforum.vercel.app/` in a browser and confirm:
    - `/` renders the Legacy Editorial Landing Page.
-   - `/app`, `/explore`, `/work`, and `/community` load the 4-tab application shell with zero console errors.
+   - `/home`, `/explore`, `/workspace`, and `/community` load the 4-tab application shell with zero console errors.
    - Standard Guest / User sessions display a `15` turn limit (`15 / 15`).
    - Signing in at `/admin` with `ADMIN_USERNAME` and the production admin password unlocks `UNLIMITED` quota mode and the Admin Control Plane.
 
@@ -102,4 +102,4 @@ console.log("SESSION_SECRET=" + crypto.randomBytes(32).toString("hex"));
 - [ ] **Server-Only Secrets**: Confirm that no environment variable containing a secret is prefixed with `VITE_`.
 - [ ] **Disable Bootstrap Password in Production**: Leave `ADMIN_BOOTSTRAP_PASSWORD` unset in Vercel Production environment variables; rely exclusively on `ADMIN_PASSWORD_HASH`.
 - [ ] **Cookie Security**: In production (`NODE_ENV=production` or `VERCEL=1`), `authEngine.ts` sets `HttpOnly; SameSite=Lax; Secure` on session cookies.
-- [ ] **Export Secret Scanning**: Verify in `/work` that attempting to export a file containing a test token triggers `secretScanner.ts` before creating the ZIP archive.
+- [ ] **Export Secret Scanning**: Verify in `/workspace` that attempting to export a file containing a test token triggers `secretScanner.ts` before creating the ZIP archive.
