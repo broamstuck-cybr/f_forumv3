@@ -1,57 +1,63 @@
 import React, { useMemo, useState } from 'react';
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
-import {
-  ArrowRight,
-  ArrowUpRight,
-  Clock,
-  FolderGit2,
-  GitBranch,
-  SlidersHorizontal,
-  Sparkles,
-  Trophy,
-} from 'lucide-react';
+import { ArrowUpRight } from 'lucide-react';
 import { useAppStore } from '../../store/appStore';
-import { PromptComposer, SynaisFooter, type PromptComposerAction } from '../../components/pinui';
+import {
+  PromptComposer,
+  SynaisFooter,
+  type PromptComposerAction,
+  type PromptComposerModel,
+} from '../../components/pinui';
 import { AmbientGlyphCanvas } from '../../components/launchpad/AmbientGlyphCanvas';
 import { SvgGlassFilter } from '../../components/launchpad/SvgGlassFilter';
 import { ScrollStoryEngine } from '../../components/launchpad/ScrollStoryEngine';
 
 export interface HomeViewProps {
   onOpenNotice?: () => void;
-  onOpenCommandPalette?: () => void;
 }
 
 const HOME_ACTIONS: PromptComposerAction[] = [
   {
     id: 'landing',
-    label: 'Landing Page',
-    placeholder: 'Mô tả sản phẩm, tông màu và CTA chính cho trang Landing...',
+    label: 'Trang đích',
+    placeholder: 'Mô tả sản phẩm, nhịp cuộn và điểm nhấn cho trang giới thiệu...',
     accent: 'var(--accent-primary)',
+    kind: 'image',
   },
   {
     id: 'dashboard',
-    label: 'Dashboard',
-    placeholder: 'Mô tả hệ thống chỉ số, biểu đồ và bộ lọc cho Dashboard...',
+    label: 'Dữ liệu',
+    placeholder: 'Mô tả bảng chỉ số, bộ lọc và độ tương phản cần thiết...',
     accent: 'var(--accent-verdigris)',
+    kind: 'note',
   },
   {
     id: 'club-hub',
-    label: 'Club Hub',
-    placeholder: 'Mô tả không gian CLB, lịch sự kiện và Hồ sơ chuyển giao...',
+    label: 'Hội nhóm',
+    placeholder: 'Mô tả không gian câu lạc bộ và hồ sơ bàn giao dự án...',
     accent: 'var(--accent-jade)',
+    kind: 'event',
   },
   {
     id: 'quiz-tools',
-    label: 'Quiz & Tools',
-    placeholder: 'Mô tả công cụ luyện tập, quiz hoặc bộ đếm học tập...',
+    label: 'Phản biện',
+    placeholder: 'Mô tả công cụ luyện tập tư duy phản biện hoặc trắc nghiệm...',
     accent: 'var(--accent-copper)',
+    kind: 'voice',
   },
   {
     id: 'design-code',
-    label: 'Design to Code',
-    placeholder: 'Dán bố cục hoặc mô tả giao diện cần chuyển sang HTML/CSS/JS...',
+    label: 'Mã nguồn',
+    placeholder: 'Dán đặc tả giao diện cần chuyển sang HTML/CSS/JS sạch...',
     accent: 'var(--accent-primary)',
+    kind: 'docs',
   },
+];
+
+const HOME_MODELS: PromptComposerModel[] = [
+  { id: 'auto', name: 'Định tuyến', note: 'Tự động chọn mô hình phù hợp' },
+  { id: 'fast', name: 'Nhanh gọn', note: 'Phản hồi nhanh cho bản phác' },
+  { id: 'architect', name: 'Chuyên sâu', note: 'Ưu tiên kiến trúc và kiểm định' },
 ];
 
 const BLUEPRINT_OPTIONS: Record<
@@ -64,48 +70,45 @@ const BLUEPRINT_OPTIONS: Record<
   }
 > = {
   landing: {
-    title: 'Landing Page Blueprint',
-    styles: ['Obsidian Foundry Dark', 'Editorial Stone Light', 'High-Contrast Print'],
-    layouts: ['Asymmetric Split Hero', 'Scroll Narrative', 'Stage & Proof'],
-    features: ['Interactive Preview Stage', 'Pricing Comparison', 'Accordion FAQ'],
+    title: 'Trang đích',
+    styles: ['Obsidian Tối giản', 'Giấy Ấm Editorial', 'Độ tương phản cao'],
+    layouts: ['Chia tỷ lệ Bất đối xứng', 'Kể chuyện theo Cuộn', 'Sân khấu Trưng bày'],
+    features: ['Live View cô lập', 'Hỏi đáp Gấp mở', 'So sánh Minh bạch'],
   },
   dashboard: {
-    title: 'Dashboard Blueprint',
-    styles: ['Technical Slate', 'Editorial Stone', 'Compact Telemetry'],
-    layouts: ['Sidebar + KPI Rail', 'Split 60/40 Workbench', 'Tabbed Matrix'],
-    features: ['Filterable Data Ledger', 'Status Checks Panel', 'Export Summary'],
+    title: 'Dữ liệu',
+    styles: ['Bảng Kỹ thuật', 'Báo cáo Biên tập', 'Nhịp đo Cô đọng'],
+    layouts: ['Thanh bên + Chỉ số', 'Chia 60/40', 'Thẻ Chuyển đổi'],
+    features: ['Bảng Lọc Thực tế', 'Kiểm định Tự động', 'Xuất Tệp Sạch'],
   },
   'club-hub': {
-    title: 'Club Hub Blueprint',
-    styles: ['Editorial Campus', 'Obsidian Dark', 'Warm Paper'],
-    layouts: ['Handover Dossier + Feed', 'Timeline Showcase', 'Dual Column Roster'],
-    features: ['Member Presence Roster', 'Milestone Checklist', 'Recruitment Form'],
+    title: 'Hội nhóm',
+    styles: ['Học đường Biên tập', 'Obsidian Đêm', 'Giấy Ngà'],
+    layouts: ['Hồ sơ Bàn giao', 'Dòng Thời gian', 'Hai Cột Thành viên'],
+    features: ['Danh sách Hiện diện', 'Cột mốc Tiếp nối', 'Biểu mẫu Đăng ký'],
   },
   'quiz-tools': {
-    title: 'Quiz & Tools Blueprint',
-    styles: ['Focus Minimal', 'Tactile Cards', 'Obsidian Study'],
-    layouts: ['Centered Stage', 'Split Question + Notes', 'Step Wizard'],
-    features: ['Instant Answer Review', 'Countdown Timer', 'Score Breakdown'],
+    title: 'Phản biện',
+    styles: ['Tập trung Tối giản', 'Thẻ Xúc giác', 'Nghiên cứu Chuyên sâu'],
+    layouts: ['Sân khấu Trung tâm', 'Câu hỏi + Ghi chú', 'Từng Bước Rõ ràng'],
+    features: ['Đối chiếu Đáp án', 'Bộ Đếm Thời gian', 'Phân tích Lập luận'],
   },
   'design-code': {
-    title: 'Design to Code Blueprint',
-    styles: ['Semantic CSS Tokens', 'Liquid Glass Surface', 'Clean Brutalist'],
-    layouts: ['Responsive 390/768/1440', 'Asymmetric Bento', 'Split Inspector'],
-    features: ['Zero-Dependency HTML/CSS/JS', 'Accessible Focus States', 'Dark/Light Tokens'],
+    title: 'Mã nguồn',
+    styles: ['Token CSS Chuẩn', 'Kính Mờ Liquid', 'In Ấn Sắc nét'],
+    layouts: ['Chuẩn 390/768/1440', 'Bento Bất đối xứng', 'Thanh Soi Diff'],
+    features: ['Không Thư viện Ngoài', 'Focus Chuẩn A11y', 'Đồng bộ Sáng Tối'],
   },
 };
 
 function getTimeGreeting(): string {
   const hour = new Date().getHours();
-  if (hour < 12) return 'Chào buổi sáng';
-  if (hour < 18) return 'Chào buổi chiều';
-  return 'Chào buổi tối';
+  if (hour < 12) return 'Buổi sáng tốt lành';
+  if (hour < 18) return 'Buổi chiều tĩnh tại';
+  return 'Buổi tối tập trung';
 }
 
-export const HomeView: React.FC<HomeViewProps> = ({
-  onOpenNotice,
-  onOpenCommandPalette,
-}) => {
+export const HomeView: React.FC<HomeViewProps> = ({ onOpenNotice }) => {
   const {
     currentUser,
     projects,
@@ -120,14 +123,14 @@ export const HomeView: React.FC<HomeViewProps> = ({
   const reduced = Boolean(useReducedMotion());
   const [promptText, setPromptText] = useState('');
   const [selectedAction, setSelectedAction] = useState<string | null>(null);
-  const [selectedModel, setSelectedModel] = useState('Auto Router');
+  const [selectedModel, setSelectedModel] = useState(HOME_MODELS[0].name);
   const [bpStyleIdx, setBpStyleIdx] = useState(0);
   const [bpLayoutIdx, setBpLayoutIdx] = useState(0);
   const [bpFeatureIdx, setBpFeatureIdx] = useState(0);
 
   const greeting = useMemo(() => {
     const prefix = getTimeGreeting();
-    const who = currentUser?.name ? currentUser.name : 'Maker';
+    const who = currentUser?.name ? currentUser.name : 'bạn';
     return `${prefix}, ${who}`;
   }, [currentUser?.name]);
 
@@ -140,7 +143,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
     const layout = bp.layouts[lIdx] ?? bp.layouts[0];
     const feature = bp.features[fIdx] ?? bp.features[0];
     setPromptText(
-      `Xây dựng ${bp.title.replace(' Blueprint', '')} theo phong cách ${style}, bố cục ${layout}, tích hợp ${feature} và tương thích 390px/768px/1440px.`
+      `Xây dựng ${bp.title} theo phong cách ${style}, bố cục ${layout}, tích hợp ${feature}, tương thích 390px/768px/1440px.`
     );
   };
 
@@ -188,20 +191,12 @@ export const HomeView: React.FC<HomeViewProps> = ({
     window.dispatchEvent(new CustomEvent('fforum:open-notice'));
   };
 
-  const triggerCommand = () => {
-    if (onOpenCommandPalette) {
-      onOpenCommandPalette();
-      return;
-    }
-    window.dispatchEvent(new CustomEvent('fforum:open-command-palette'));
-  };
-
   return (
     <div className="relative w-full">
       <SvgGlassFilter />
 
       <section
-        aria-label="Home Launchpad"
+        aria-label="Không gian khởi tạo F-Forum"
         className="relative w-full overflow-hidden border-b"
         style={{
           minHeight: 'calc(100svh - var(--navbar-h))',
@@ -219,49 +214,52 @@ export const HomeView: React.FC<HomeViewProps> = ({
           aria-hidden="true"
         />
 
-        <div className="ff-container relative z-10 flex min-h-[calc(100svh-var(--navbar-h))] flex-col items-center justify-center py-8 md:py-10">
+        <div className="ff-container relative z-10 flex min-h-[calc(100svh-var(--navbar-h))] flex-col items-center justify-center py-8 md:py-12">
           <motion.div
             initial={reduced ? false : { opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
-            className="w-full max-w-[820px] flex flex-col items-center text-center"
+            className="w-full max-w-[840px] flex flex-col items-center text-center"
           >
             <div
-              className="ff-liquid-surface w-full rounded-[28px] px-4 py-6 sm:px-9 sm:py-9"
+              className="ff-liquid-surface w-full rounded-[32px] px-4 py-7 sm:px-10 sm:py-10"
               style={{ borderColor: 'var(--border-strong)' }}
             >
               <div className="relative z-10 flex flex-col items-center">
                 <span
-                  className="inline-flex items-center gap-2 rounded-full border px-3.5 py-1 text-[12px] font-medium"
+                  className="inline-flex items-center rounded-full border px-4 py-1 text-[12px] font-mono"
                   style={{
                     background: 'var(--bg-panel)',
                     borderColor: 'var(--border-subtle)',
-                    color: 'var(--ink-secondary)',
+                    color: 'var(--accent-primary)',
                   }}
                 >
-                  <Sparkles className="h-3.5 w-3.5" style={{ color: 'var(--accent-primary)' }} aria-hidden="true" />
-                  <span>{greeting}</span>
+                  {greeting}
                 </span>
 
                 <h1
-                  className="mt-4 font-bold tracking-tight text-balance"
+                  className="mt-5 font-semibold tracking-tight text-balance"
                   style={{
-                    fontSize: 'clamp(1.85rem, 1.35rem + 2vw, 3.1rem)',
+                    fontFamily: 'var(--font-serif)',
+                    fontSize: 'clamp(2rem, 1.5rem + 2.2vw, 3.35rem)',
                     lineHeight: 1.08,
                     color: 'var(--ink-primary)',
                   }}
                 >
-                  Bạn muốn kiến tạo giao diện nào hôm nay?
+                  <span className="ornate-cap" style={{ color: 'var(--accent-primary)' }}>
+                    B
+                  </span>
+                  ạn muốn kiểm chứng ý tưởng nào hôm nay?
                 </h1>
 
                 <p
                   className="mt-3 max-w-xl text-[14.5px] sm:text-[15.5px]"
                   style={{ color: 'var(--ink-secondary)' }}
                 >
-                  Chọn 1 trong 5 thẻ tác vụ để lập Prompt Blueprint 0-token, hoặc nhập ý tưởng để mở thẳng vào Work space.
+                  Chọn một thẻ PinUI để dựng nhanh đặc tả không tốn lượt, hoặc mô tả trực tiếp để mở vào Workspace với Live View và Diff &amp; Check.
                 </p>
 
-                <div className="mt-5 w-full">
+                <div className="mt-6 w-full text-left">
                   <PromptComposer
                     layoutId="ff-prompt-composer"
                     value={promptText}
@@ -271,6 +269,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
                     selectedModel={selectedModel}
                     onSelectModel={setSelectedModel}
                     actions={HOME_ACTIONS}
+                    models={HOME_MODELS}
                     onSend={handleLaunch}
                     onAttachClick={() => navigate('explore')}
                   />
@@ -284,16 +283,15 @@ export const HomeView: React.FC<HomeViewProps> = ({
                       animate={{ opacity: 1, y: 0 }}
                       exit={reduced ? { opacity: 0 } : { opacity: 0, y: -6 }}
                       transition={{ type: 'spring', visualDuration: 0.34, bounce: 0.14 }}
-                      className="mt-4 w-full rounded-2xl border p-4 text-left overflow-hidden"
+                      className="mt-5 w-full rounded-2xl border p-4 sm:p-5 text-left overflow-hidden"
                       style={{
                         background: 'var(--bg-panel)',
                         borderColor: 'var(--border-accent)',
                       }}
                     >
                       <div className="flex items-center justify-between gap-2 mb-3">
-                        <div className="inline-flex items-center gap-2 text-[12.5px] font-semibold" style={{ color: 'var(--ink-primary)' }}>
-                          <SlidersHorizontal className="h-3.5 w-3.5" style={{ color: 'var(--accent-primary)' }} aria-hidden="true" />
-                          <span>{activeBlueprint.title} · 0-token Builder</span>
+                        <div className="text-[12.5px] font-mono" style={{ color: 'var(--accent-primary)' }}>
+                          Cấu trúc 0-token · {activeBlueprint.title}
                         </div>
                         <button
                           type="button"
@@ -360,7 +358,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
 
                         <div>
                           <div className="text-[11.5px] font-medium mb-1.5" style={{ color: 'var(--ink-muted)' }}>
-                            Tính năng lõi
+                            Tính năng
                           </div>
                           <div className="flex flex-wrap gap-1.5">
                             {activeBlueprint.features.map((opt, idx) => (
@@ -399,29 +397,31 @@ export const HomeView: React.FC<HomeViewProps> = ({
         onOpenLeaderboard={openExploreLeaderboard}
       />
 
-      <section aria-label="Dự án Work space gần đây" className="py-14 sm:py-16 border-b" style={{ borderColor: 'var(--border-subtle)' }}>
+      <section aria-label="Dự án gần đây" className="py-16 border-b" style={{ borderColor: 'var(--border-subtle)' }}>
         <div className="ff-container">
           <div className="flex flex-wrap items-end justify-between gap-4 mb-6">
             <div>
-              <h2 className="text-[22px] sm:text-[26px] font-bold tracking-tight">
-                Timeline dự án Work space gần đây
+              <h2
+                className="text-[24px] sm:text-[30px] font-semibold tracking-tight m-0"
+                style={{ fontFamily: 'var(--font-serif)' }}
+              >
+                Dòng thời gian Workspace
               </h2>
-              <p className="mt-1 text-[14px]" style={{ color: 'var(--ink-secondary)' }}>
-                Khôi phục toàn bộ tệp, diff và lịch sử hội thoại chỉ với 1 cú bấm.
+              <p className="mt-1 m-0 text-[14px]" style={{ color: 'var(--ink-secondary)' }}>
+                Khôi phục toàn bộ tệp, Diff &amp; Check và lịch sử hội thoại.
               </p>
             </div>
             <button
               type="button"
               onClick={() => navigate('workspace')}
-              className="inline-flex items-center gap-1.5 rounded-full border px-4 py-2 text-[13px] font-medium cursor-pointer"
+              className="rounded-full border px-4 py-2 text-[13px] font-medium cursor-pointer"
               style={{
                 background: 'var(--bg-surface)',
                 borderColor: 'var(--border-strong)',
                 color: 'var(--ink-primary)',
               }}
             >
-              <span>Mở Work space</span>
-              <ArrowUpRight className="h-3.5 w-3.5" aria-hidden="true" />
+              Workspace
             </button>
           </div>
 
@@ -432,7 +432,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
               return (
                 <article
                   key={proj.id}
-                  className="snap-start shrink-0 w-[300px] sm:w-[340px] rounded-[20px] border p-5 flex flex-col justify-between gap-4 overflow-hidden"
+                  className="snap-start shrink-0 w-[300px] sm:w-[340px] rounded-[22px] border p-5 flex flex-col justify-between gap-4 overflow-hidden"
                   style={{
                     background: 'var(--bg-surface)',
                     borderColor: 'var(--border-subtle)',
@@ -440,14 +440,8 @@ export const HomeView: React.FC<HomeViewProps> = ({
                 >
                   <div>
                     <div className="flex items-center justify-between gap-2 text-[11.5px] font-mono" style={{ color: 'var(--ink-muted)' }}>
-                      <span className="inline-flex items-center gap-1.5">
-                        <FolderGit2 className="h-3.5 w-3.5" style={{ color: 'var(--accent-primary)' }} aria-hidden="true" />
-                        <span>{proj.files.length} tệp</span>
-                      </span>
-                      <span className="inline-flex items-center gap-1">
-                        <Clock className="h-3 w-3" aria-hidden="true" />
-                        <span>{new Date(proj.updatedAt).toLocaleDateString('vi-VN')}</span>
-                      </span>
+                      <span>{proj.files.length} tệp</span>
+                      <span>{new Date(proj.updatedAt).toLocaleDateString('vi-VN')}</span>
                     </div>
 
                     <h3 className="mt-3 text-[16px] font-semibold truncate" style={{ color: 'var(--ink-primary)' }}>
@@ -468,15 +462,14 @@ export const HomeView: React.FC<HomeViewProps> = ({
                         selectProject(proj.id);
                         navigate('workspace');
                       }}
-                      className="inline-flex items-center gap-1 rounded-full px-3 py-1.5 text-[12px] font-semibold border cursor-pointer"
+                      className="rounded-full px-3.5 py-1.5 text-[12px] font-semibold border cursor-pointer"
                       style={{
                         background: 'var(--accent-soft)',
                         borderColor: 'var(--border-accent)',
                         color: 'var(--accent-primary)',
                       }}
                     >
-                      <span>Khôi phục</span>
-                      <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
+                      Khôi phục
                     </button>
                   </div>
                 </article>
@@ -486,36 +479,37 @@ export const HomeView: React.FC<HomeViewProps> = ({
         </div>
       </section>
 
-      <section aria-label="Top Verified Repos & Skills" className="py-14 sm:py-16 border-b" style={{ borderColor: 'var(--border-subtle)' }}>
+      <section aria-label="Kho mã nguồn và kỹ năng xác thực" className="py-16 border-b" style={{ borderColor: 'var(--border-subtle)' }}>
         <div className="ff-container">
           <div className="flex flex-wrap items-end justify-between gap-4 mb-6">
             <div>
-              <h2 className="text-[22px] sm:text-[26px] font-bold tracking-tight">
-                Top Verified Repos &amp; Skills
+              <h2
+                className="text-[24px] sm:text-[30px] font-semibold tracking-tight m-0"
+                style={{ fontFamily: 'var(--font-serif)' }}
+              >
+                Kho mã và kỹ năng xác thực
               </h2>
-              <p className="mt-1 text-[14px]" style={{ color: 'var(--ink-secondary)' }}>
-                Các kho mã nguồn mở, agent skills và bộ rules được xác thực trực tiếp qua GitHub API.
+              <p className="mt-1 m-0 text-[14px]" style={{ color: 'var(--ink-secondary)' }}>
+                Tổng hợp tài nguyên có nguồn gốc rõ ràng và bản quyền công khai.
               </p>
             </div>
             <button
               type="button"
               onClick={openExploreLeaderboard}
-              className="inline-flex items-center gap-1.5 rounded-full px-4 py-2 text-[13px] font-semibold border-0 cursor-pointer"
+              className="rounded-full px-5 py-2 text-[13px] font-semibold border-0 cursor-pointer"
               style={{
                 background: 'var(--accent-gradient)',
                 color: 'var(--ink-inverse)',
               }}
             >
-              <Trophy className="h-3.5 w-3.5" aria-hidden="true" />
-              <span>Mở Bảng Xếp Hạng</span>
-              <ArrowUpRight className="h-3.5 w-3.5" aria-hidden="true" />
+              Xếp hạng
             </button>
           </div>
 
           <div className="grid gap-4 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)]">
             {verifiedRepoTeasers[0] && (
               <article
-                className="rounded-[22px] border p-6 flex flex-col justify-between gap-5 overflow-hidden"
+                className="rounded-[24px] border p-6 flex flex-col justify-between gap-5 overflow-hidden"
                 style={{
                   background: 'var(--bg-surface)',
                   borderColor: 'var(--border-strong)',
@@ -531,7 +525,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
                     </span>
                     <span style={{ color: 'var(--ink-muted)' }}>{verifiedRepoTeasers[0].license}</span>
                   </div>
-                  <h3 className="mt-3.5 text-[20px] font-bold tracking-tight" style={{ color: 'var(--ink-primary)' }}>
+                  <h3 className="mt-3.5 text-[20px] font-semibold tracking-tight" style={{ color: 'var(--ink-primary)' }}>
                     {verifiedRepoTeasers[0].title}
                   </h3>
                   <p className="mt-2 text-[14px] leading-relaxed" style={{ color: 'var(--ink-secondary)' }}>
@@ -555,24 +549,22 @@ export const HomeView: React.FC<HomeViewProps> = ({
                         true
                       )
                     }
-                    className="inline-flex items-center gap-1.5 rounded-full border px-3.5 py-1.5 text-[12.5px] font-semibold cursor-pointer"
+                    className="rounded-full border px-4 py-1.5 text-[12.5px] font-semibold cursor-pointer"
                     style={{
                       background: 'var(--accent-soft)',
                       borderColor: 'var(--border-accent)',
                       color: 'var(--accent-primary)',
                     }}
                   >
-                    <GitBranch className="h-3.5 w-3.5" aria-hidden="true" />
-                    <span>Dùng trong Work space</span>
+                    Dùng ngay
                   </button>
                   <button
                     type="button"
                     onClick={openExploreLeaderboard}
-                    className="inline-flex items-center gap-1 text-[12.5px] font-medium bg-transparent border-0 cursor-pointer"
+                    className="text-[12.5px] font-medium bg-transparent border-0 cursor-pointer"
                     style={{ color: 'var(--accent-verdigris)' }}
                   >
-                    <span>Xem bảng xếp hạng</span>
-                    <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
+                    Xếp hạng
                   </button>
                 </div>
               </article>
@@ -600,7 +592,8 @@ export const HomeView: React.FC<HomeViewProps> = ({
                   <button
                     type="button"
                     onClick={openExploreLeaderboard}
-                    aria-label={`Xem ${item.title} trong Bảng Xếp Hạng`}
+                    aria-label={`Xem ${item.title}`}
+                    title={`Xem ${item.title}`}
                     className="inline-grid place-items-center h-9 w-9 shrink-0 rounded-xl border cursor-pointer"
                     style={{
                       background: 'var(--bg-panel)',
@@ -621,29 +614,31 @@ export const HomeView: React.FC<HomeViewProps> = ({
         <div className="ff-container">
           <div className="flex flex-wrap items-end justify-between gap-4 mb-6">
             <div>
-              <h2 className="text-[22px] sm:text-[26px] font-bold tracking-tight">
-                Nhịp đập Source of Knowledge
+              <h2
+                className="text-[24px] sm:text-[30px] font-semibold tracking-tight m-0"
+                style={{ fontFamily: 'var(--font-serif)' }}
+              >
+                Nhịp đập Tri thức
               </h2>
-              <p className="mt-1 text-[14px]" style={{ color: 'var(--ink-secondary)' }}>
-                Thảo luận kỹ thuật, Showcase và Drops nổi bật được chọn lọc từ cộng đồng.
+              <p className="mt-1 m-0 text-[14px]" style={{ color: 'var(--ink-secondary)' }}>
+                Thảo luận phản biện, mẫu dựng và hồ sơ bàn giao từ cộng đồng.
               </p>
             </div>
             <button
               type="button"
               onClick={() => navigate('community')}
-              className="inline-flex items-center gap-1.5 rounded-full border px-4 py-2 text-[13px] font-medium cursor-pointer"
+              className="rounded-full border px-4 py-2 text-[13px] font-medium cursor-pointer"
               style={{
                 background: 'var(--bg-surface)',
                 borderColor: 'var(--border-strong)',
                 color: 'var(--ink-primary)',
               }}
             >
-              <span>Vào Source of Knowledge</span>
-              <ArrowUpRight className="h-3.5 w-3.5" aria-hidden="true" />
+              Tri thức
             </button>
           </div>
 
-          <div className="divide-y rounded-[22px] border overflow-hidden" style={{ background: 'var(--bg-surface)', borderColor: 'var(--border-subtle)' }}>
+          <div className="divide-y rounded-[24px] border overflow-hidden" style={{ background: 'var(--bg-surface)', borderColor: 'var(--border-subtle)' }}>
             {recentHighlights.map((post) => (
               <div
                 key={post.id}
@@ -667,20 +662,19 @@ export const HomeView: React.FC<HomeViewProps> = ({
 
                 <div className="flex items-center gap-3 shrink-0">
                   <span className="text-[12px] font-mono" style={{ color: 'var(--ink-muted)' }}>
-                    {post.votes} votes
+                    {post.votes} tán thành
                   </span>
                   <button
                     type="button"
                     onClick={() => navigate('community')}
-                    className="inline-flex items-center gap-1 rounded-full border px-3 py-1.5 text-[12px] font-medium cursor-pointer"
+                    className="rounded-full border px-3.5 py-1.5 text-[12px] font-medium cursor-pointer"
                     style={{
                       background: 'var(--bg-panel)',
                       borderColor: 'var(--border-subtle)',
                       color: 'var(--ink-primary)',
                     }}
                   >
-                    <span>Mở</span>
-                    <ArrowRight className="h-3 w-3" aria-hidden="true" />
+                    Mở xem
                   </button>
                 </div>
               </div>
@@ -689,11 +683,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
         </div>
       </section>
 
-      <SynaisFooter
-        onNavigate={navigate}
-        onOpenNotice={triggerNotice}
-        onOpenCommandPalette={triggerCommand}
-      />
+      <SynaisFooter onNavigate={navigate} onOpenNotice={triggerNotice} />
     </div>
   );
 };

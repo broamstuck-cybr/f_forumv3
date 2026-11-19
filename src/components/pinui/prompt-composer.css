@@ -1,0 +1,617 @@
+.pcmp {
+  --pcmp-bar-h: 50px;
+  --pcmp-ink: var(--ink-primary);
+  --pcmp-quiet: var(--ink-muted);
+  --pcmp-bar: var(--bg-surface);
+  --pcmp-bar-edge: var(--border-strong);
+  --pcmp-bar-shadow: var(--shadow-md);
+  --pcmp-tool: var(--ink-secondary);
+  --pcmp-tool-hover: var(--accent-soft);
+  --pcmp-card: var(--bg-panel);
+  --pcmp-card-foot: var(--bg-surface);
+  --pcmp-card-edge: var(--border-subtle);
+  --pcmp-card-shine: rgba(255, 255, 255, 0.08);
+  --pcmp-card-shadow: var(--shadow-sm);
+  --pcmp-card-lift: var(--shadow-md);
+  --pcmp-label: var(--ink-secondary);
+  --pcmp-art: var(--border-strong);
+  --pcmp-art-deep: var(--accent-primary);
+  --pcmp-pill: var(--bg-panel);
+  --pcmp-pill-ink: var(--ink-secondary);
+  --pcmp-send: var(--bg-panel);
+  --pcmp-send-ink: var(--ink-muted);
+  --pcmp-send-ready: var(--accent-primary);
+  --pcmp-send-ready-ink: var(--ink-inverse);
+  --pcmp-menu: var(--bg-surface);
+  --pcmp-menu-shadow: 0 0 0 1px var(--border-strong), var(--shadow-lg);
+  --pcmp-option-hover: var(--accent-soft);
+  --pcmp-rec: #d93a55;
+  --pcmp-rec-soft: rgba(217, 58, 85, 0.16);
+
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: 780px;
+  margin-inline: auto;
+  color: var(--pcmp-ink);
+  font-family: var(--font-sans);
+  container: pcmp / inline-size;
+}
+
+.pcmp__row {
+  display: flex;
+  align-items: flex-end;
+  gap: 12px;
+  width: 100%;
+  margin: 0;
+}
+
+.pcmp__side {
+  flex: none;
+  display: flex;
+  align-items: center;
+  height: var(--pcmp-bar-h);
+}
+
+.pcmp__fieldWrap {
+  flex: 1;
+  min-width: 0;
+  container-type: inline-size;
+}
+
+.pcmp__model {
+  position: relative;
+}
+
+.pcmp__pill {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  height: 36px;
+  padding: 0 12px;
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--border-subtle);
+  background: var(--pcmp-pill);
+  color: var(--pcmp-pill-ink);
+  font-family: var(--font-sans);
+  font-size: 12.5px;
+  font-weight: 500;
+  white-space: nowrap;
+  transition: background-color var(--dur-base) ease, color var(--dur-fast) ease, border-color var(--dur-fast) ease;
+}
+
+.pcmp__pill:hover {
+  color: var(--pcmp-ink);
+  border-color: var(--border-strong);
+}
+
+.pcmp__pillBtn {
+  display: inline-flex;
+  align-items: center;
+  border: 0;
+  padding: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+
+.pcmp__pillBtn::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+}
+
+.pcmp__petals {
+  width: 14px;
+  height: 14px;
+  color: var(--accent-primary);
+  flex: none;
+}
+
+.pcmp__pillNameWrap {
+  display: inline-flex;
+  overflow: hidden;
+  max-width: 144px;
+}
+
+.pcmp__pillName {
+  display: inline-block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pcmp__caret {
+  flex: none;
+  width: 12px;
+  height: 12px;
+  opacity: 0.72;
+}
+
+.pcmp__menu {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 0;
+  z-index: 45;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 224px;
+  padding: 6px;
+  border-radius: var(--radius-md);
+  background: var(--pcmp-menu);
+  box-shadow: var(--pcmp-menu-shadow);
+  overflow: hidden;
+}
+
+.pcmp__option {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  width: 100%;
+  padding: 8px 10px;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--pcmp-ink);
+  text-align: left;
+  cursor: pointer;
+  z-index: 1;
+}
+
+.pcmp__optionLabel {
+  color: var(--ink-primary);
+}
+
+.pcmp__option[aria-selected='true'] {
+  background: var(--accent-soft);
+}
+
+.pcmp__option[aria-selected='true'] .pcmp__optionLabel {
+  color: var(--accent-primary);
+  font-weight: 600;
+}
+
+.pcmp__option[aria-selected='true']::after {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: 9999px;
+  background: var(--accent-primary);
+  flex: none;
+}
+
+.pcmp__optionHover {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: var(--pcmp-option-hover);
+  z-index: -1;
+}
+
+.pcmp__optionCheck {
+  display: inline-grid;
+  place-items: center;
+  color: var(--accent-primary);
+}
+
+.pcmp__field {
+  --pcmp-card-w: min(18.6cqw, 124px);
+  --pcmp-card-h: min(21cqw, 134px);
+  --pcmp-tuck: min(4cqw, 24px);
+  position: relative;
+}
+
+.pcmp__field--with-fan {
+  padding-top: calc(var(--pcmp-card-h) - var(--pcmp-tuck) + 6px);
+}
+
+.pcmp__fan {
+  position: absolute;
+  top: 2px;
+  right: 0;
+  left: 0;
+  height: var(--pcmp-card-h);
+  clip-path: inset(-90px -60px calc(var(--pcmp-tuck) - var(--pcmp-bar-h) / 2) -60px);
+}
+
+.pcmp__card {
+  position: absolute;
+  top: 0;
+  width: var(--pcmp-card-w);
+  height: var(--pcmp-card-h);
+  padding: 0;
+  border: 0;
+  border-radius: 14px;
+  background: transparent;
+  box-shadow: var(--pcmp-card-shadow);
+  transform-origin: 50% 100%;
+  will-change: transform;
+}
+
+.pcmp__cardTrigger {
+  display: block;
+  width: 100%;
+  margin-top: 2px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--ink-primary);
+  font-family: inherit;
+  font-size: clamp(10px, 1.45cqw, 12px);
+  font-weight: 600;
+  line-height: 1.2;
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  cursor: pointer;
+}
+
+.pcmp__cardTrigger::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+}
+
+.pcmp__cardFace {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 6px;
+  padding: 11px 9px 18px;
+  overflow: hidden;
+  border-radius: inherit;
+  border: 1px solid var(--pcmp-card-edge);
+  background: linear-gradient(180deg, var(--pcmp-card) 0%, var(--pcmp-card-foot) 100%);
+  box-shadow: inset 0 1px 0 var(--pcmp-card-shine);
+}
+
+.pcmp__card--docs .pcmp__cardFace {
+  --pcmp-peel-size: calc(var(--pcmp-card-w) * 0.2 * var(--pcmp-peel, 1));
+  -webkit-mask-image: linear-gradient(
+    225deg,
+    transparent calc(var(--pcmp-peel-size) * 0.7071),
+    #000 calc(var(--pcmp-peel-size) * 0.7071 + 0.6px)
+  );
+  mask-image: linear-gradient(
+    225deg,
+    transparent calc(var(--pcmp-peel-size) * 0.7071),
+    #000 calc(var(--pcmp-peel-size) * 0.7071 + 0.6px)
+  );
+}
+
+.pcmp__peel {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: var(--pcmp-peel-size, 22px);
+  height: var(--pcmp-peel-size, 22px);
+  background: linear-gradient(225deg, transparent 48%, var(--border-strong) 50%, var(--bg-elevated) 100%);
+  clip-path: polygon(0 0, 0 100%, 100% 100%);
+  pointer-events: none;
+}
+
+.pcmp__cardBand {
+  position: absolute;
+  top: 0;
+  right: 0;
+  left: 0;
+  height: 3px;
+}
+
+.pcmp__label {
+  display: block;
+  margin-top: 2px;
+  color: var(--ink-primary);
+  font-size: clamp(10px, 1.45cqw, 12px);
+  font-weight: 600;
+  line-height: 1.2;
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.pcmp__bar {
+  position: relative;
+  z-index: 20;
+  min-height: var(--pcmp-bar-h);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--pcmp-bar-edge);
+  background: var(--pcmp-bar);
+  box-shadow: var(--shadow-specular), var(--pcmp-bar-shadow);
+  overflow: hidden;
+}
+
+.pcmp__typer {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  min-height: var(--pcmp-bar-h);
+  padding: 5px 10px 5px 14px;
+}
+
+.pcmp__chip {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 30px;
+  padding: 0 4px 0 10px;
+  border: 1px solid var(--border-accent);
+  border-radius: var(--radius-sm);
+  background: var(--accent-soft);
+  color: var(--accent-primary);
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.pcmp__chipClose {
+  display: inline-grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  border: 0;
+  border-radius: 9999px;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+}
+
+.pcmp__chipClose:hover {
+  background: var(--accent-soft);
+}
+
+.pcmp__inputWrap {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+}
+
+.pcmp__input {
+  width: 100%;
+  min-height: 36px;
+  border: 0;
+  outline: none;
+  background: transparent;
+  color: var(--pcmp-ink);
+  font-family: var(--font-sans);
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+.pcmp__input::placeholder {
+  color: var(--pcmp-quiet);
+}
+
+.pcmp__tools {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.pcmp__tool {
+  display: inline-grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--pcmp-tool);
+  cursor: pointer;
+  transition: background-color var(--dur-fast) ease, color var(--dur-fast) ease;
+}
+
+.pcmp__tool:hover:not(:disabled) {
+  background: var(--pcmp-tool-hover);
+  color: var(--pcmp-ink);
+}
+
+.pcmp__send {
+  display: inline-grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border: 0;
+  border-radius: 9999px;
+  background: var(--pcmp-send);
+  color: var(--pcmp-send-ink);
+  cursor: pointer;
+  transition: background-color var(--dur-fast) ease, color var(--dur-fast) ease, transform var(--dur-fast) ease;
+}
+
+.pcmp__send[data-ready='true'] {
+  background: var(--accent-gradient);
+  color: var(--pcmp-send-ready-ink);
+}
+
+html.light .pcmp__send[data-ready='true'],
+html[data-theme='light'] .pcmp__send[data-ready='true'] {
+  background: linear-gradient(135deg, #8a6020 0%, #7a541a 55%, #5c3d10 100%);
+  color: #fbfbfa;
+}
+
+html.light .pcmp__chip,
+html[data-theme='light'] .pcmp__chip {
+  color: #724d14;
+}
+
+.pcmp__send:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.pcmp__recorder {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-height: var(--pcmp-bar-h);
+  padding: 6px 10px 6px 14px;
+}
+
+.pcmp__recStatus {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  flex: none;
+}
+
+.pcmp__recDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 9999px;
+  background: var(--pcmp-rec);
+  animation: pcmp-pulse 1.1s ease-in-out infinite;
+}
+
+.pcmp__recClock {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  color: var(--pcmp-ink);
+}
+
+.pcmp__wave {
+  flex: 1;
+  min-width: 0;
+  height: 26px;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  overflow: hidden;
+  -webkit-mask-image: linear-gradient(to right, transparent 0%, #000 18%, #000 100%);
+  mask-image: linear-gradient(to right, transparent 0%, #000 18%, #000 100%);
+}
+
+.pcmp__waveBar {
+  flex: 1;
+  min-width: 2px;
+  height: 100%;
+  border-radius: 9999px;
+  background: var(--accent-primary);
+  transform-origin: 50% 50%;
+  transform: scaleY(0.18);
+  transition: transform 70ms linear;
+}
+
+.pcmp__stop {
+  position: relative;
+  flex: none;
+  display: inline-grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border: 0;
+  border-radius: 9999px;
+  background: var(--pcmp-rec-soft);
+  color: var(--pcmp-rec);
+  cursor: pointer;
+}
+
+.pcmp__ring {
+  position: absolute;
+  inset: -3px;
+  border-radius: inherit;
+  border: 1px solid var(--pcmp-rec);
+  opacity: 0.45;
+  animation: pcmp-ring 1.4s ease-out infinite;
+  pointer-events: none;
+}
+
+@keyframes pcmp-pulse {
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.45;
+    transform: scale(0.85);
+  }
+}
+
+@keyframes pcmp-ring {
+  0% {
+    transform: scale(0.92);
+    opacity: 0.55;
+  }
+  100% {
+    transform: scale(1.26);
+    opacity: 0;
+  }
+}
+
+@container pcmp (max-width: 560px) {
+  .pcmp {
+    --pcmp-bar-h: 46px;
+  }
+
+  .pcmp__row {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    grid-template-areas:
+      'field field'
+      'pill .';
+    gap: 8px;
+  }
+
+  .pcmp__fieldWrap {
+    grid-area: field;
+  }
+
+  .pcmp__side {
+    grid-area: pill;
+    height: auto;
+  }
+
+  .pcmp__field--with-fan {
+    padding-top: 88px;
+  }
+
+  .pcmp__field {
+    --pcmp-card-w: 19cqw;
+    --pcmp-card-h: 92px;
+    --pcmp-tuck: 16px;
+  }
+
+  .pcmp__fan {
+    clip-path: inset(-44px -10px calc(var(--pcmp-tuck) - var(--pcmp-bar-h) / 2) -10px);
+  }
+
+  .pcmp__cardFace {
+    padding: 7px 5px 12px;
+  }
+
+  .pcmp__label,
+  .pcmp__cardTrigger {
+    font-size: 9.5px;
+    line-height: 1.15;
+    white-space: normal;
+    text-wrap: balance;
+    overflow: visible;
+    text-overflow: clip;
+  }
+
+  .pcmp__chip > span {
+    display: none;
+  }
+
+  .pcmp__menu {
+    bottom: calc(100% + 8px);
+  }
+}

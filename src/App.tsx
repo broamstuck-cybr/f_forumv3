@@ -5,7 +5,6 @@ import { AppNavbar } from './components/layout/AppNavbar';
 import { LandingPage } from './components/landing/LandingPage';
 import { SynaisFooter } from './components/pinui';
 import { AuthModal } from './components/public/AuthModal';
-import { CommandPalette } from './components/public/CommandPalette';
 import { NoticeStatusModal } from './components/public/NoticeStatusModal';
 import { Skybridge404 } from './components/public/Skybridge404';
 import { ToastStack } from './components/public/ToastStack';
@@ -13,6 +12,7 @@ import { AdminView } from './features/admin/AdminView';
 import { CommunityView } from './features/community/CommunityView';
 import { ExploreView } from './features/explore/ExploreView';
 import { HomeView } from './features/launchpad/HomeView';
+import { ProfileView } from './features/profile/ProfileView';
 import { SettingsView } from './features/settings/SettingsView';
 import { WorkspaceView } from './features/workspace/WorkspaceView';
 
@@ -26,13 +26,13 @@ const AppShell: React.FC = () => {
     reducedMotion,
   } = useAppStore();
 
-  const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
   const [noticeModalOpen, setNoticeModalOpen] = useState(false);
 
   const showNavbar = currentRoute !== 'landing' && currentRoute !== 'not-found';
   const showFooter =
     currentRoute === 'explore' ||
     currentRoute === 'community' ||
+    currentRoute === 'profile' ||
     currentRoute === 'settings';
 
   return (
@@ -45,12 +45,7 @@ const AppShell: React.FC = () => {
           }}
           className="min-h-screen w-full flex flex-col overflow-x-clip"
         >
-          {showNavbar && (
-            <AppNavbar
-              onOpenCommandPalette={() => setCommandPaletteOpen(true)}
-              onOpenNotice={() => setNoticeModalOpen(true)}
-            />
-          )}
+          {showNavbar && <AppNavbar onOpenNotice={() => setNoticeModalOpen(true)} />}
 
           <div className="flex-1 min-w-0 flex flex-col">
             {currentRoute === 'landing' && (
@@ -64,15 +59,13 @@ const AppShell: React.FC = () => {
             )}
 
             {currentRoute === 'home' && (
-              <HomeView
-                onOpenNotice={() => setNoticeModalOpen(true)}
-                onOpenCommandPalette={() => setCommandPaletteOpen(true)}
-              />
+              <HomeView onOpenNotice={() => setNoticeModalOpen(true)} />
             )}
 
             {currentRoute === 'explore' && <ExploreView />}
             {currentRoute === 'workspace' && <WorkspaceView />}
             {currentRoute === 'community' && <CommunityView />}
+            {currentRoute === 'profile' && <ProfileView />}
             {currentRoute === 'settings' && <SettingsView />}
             {currentRoute === 'admin' && <AdminView />}
             {currentRoute === 'not-found' && <Skybridge404 onNavigate={navigate} />}
@@ -82,17 +75,10 @@ const AppShell: React.FC = () => {
             <SynaisFooter
               onNavigate={navigate}
               onOpenNotice={() => setNoticeModalOpen(true)}
-              onOpenCommandPalette={() => setCommandPaletteOpen(true)}
             />
           )}
 
           <AuthModal open={authModalOpen} onClose={() => setAuthModalOpen(false)} />
-
-          <CommandPalette
-            open={commandPaletteOpen}
-            onOpenChange={setCommandPaletteOpen}
-            onOpenNotice={() => setNoticeModalOpen(true)}
-          />
 
           <NoticeStatusModal
             open={noticeModalOpen}

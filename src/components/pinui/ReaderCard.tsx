@@ -1,0 +1,252 @@
+import React, { useEffect, useRef, useState } from 'react';
+import { AnimatePresence, motion, useReducedMotion, type Transition } from 'motion/react';
+import { X } from 'lucide-react';
+import { glassSheet, liquidGlass } from './reader-card-glass';
+import './reader-card.css';
+
+export interface ReaderCardProps {
+  title?: string;
+  subtitle?: string;
+  excerptLines?: string[];
+  paragraphs?: string[];
+  openLabel?: string;
+  theme?: 'light' | 'dark';
+  onOpenChange?: (open: boolean) => void;
+  className?: string;
+}
+
+const SIZES = [16, 17.5, 19, 21, 23];
+
+function splitOrnateParagraph(text: string): { prefix: string; cap: string; rest: string } | null {
+  const trimmedStart = text.trimStart();
+  if (!trimmedStart) return null;
+  const leadMatch = trimmedStart.match(/^([\p{P}\p{S}\s]+)/u);
+  const prefix = leadMatch ? leadMatch[1] : '';
+  const body = trimmedStart.slice(prefix.length);
+  if (!body) return null;
+  let firstGrapheme = '';
+  if (typeof Intl !== 'undefined' && 'Segmenter' in Intl) {
+    const seg = new Intl.Segmenter('vi', { granularity: 'grapheme' });
+    const first = seg.segment(body)[Symbol.iterator]().next().value;
+    firstGrapheme = first ? first.segment : '';
+  } else {
+    const match = body.match(/^[\p{L}\p{N}]\p{M}*/u);
+    firstGrapheme = match ? match[0] : body.slice(0, 1);
+  }
+  if (!firstGrapheme || !/\p{L}/u.test(firstGrapheme)) return null;
+  const rest = body.slice(firstGrapheme.length);
+  if (!rest) return null;
+  return { prefix, cap: firstGrapheme, rest };
+}
+
+const DEFAULT_PARAGRAPHS = [
+  'Một giao diện có giá trị không phô trương bằng hàng chục khối thẻ giống hệt nhau. Nó dẫn dắt ánh nhìn đi qua khoảng trống có chủ đích, nơi từng đường viền mảnh và độ tương phản vừa đủ tạo nên nhịp thở tĩnh tại.',
+  'Khi đọc sâu vào kiến trúc từ SOURCEOFKNOWLEDGFORAI hay bản giải phẫu Shopify Winter, điều còn lại không phải là hiệu ứng hào nhoáng, mà là kỷ luật tỷ lệ, tốc độ phản hồi và sự chính xác của từng dữ liệu.',
+  'Người thiết kế có tư duy phản biện luôn tự hỏi: phần tử này tồn tại để giải quyết vấn đề gì, hay chỉ để lấp đầy khoảng trống của khung lưới mặc định.',
+  'Trong không gian F-Forum, mỗi mẫu giao diện đều có thể mở trực tiếp trên sân khấu kiểm định, đối chiếu từng dòng Diff & Check trước khi xuất bản.',
+];
+
+const morphOpen: Transition = { type: 'spring', visualDuration: 0.52, bounce: 0.16 };
+const morphClose: Transition = { type: 'spring', visualDuration: 0.4, bounce: 0 };
+
+export const ReaderCard: React.FC<ReaderCardProps> = ({
+  title = 'Kỷ luật của Khoảng trống',
+  subtitle = 'Tiểu luận Thiết kế · 2027',
+  excerptLines,
+  paragraphs = DEFAULT_PARAGRAPHS,
+  openLabel = 'Đọc sâu',
+  theme,
+  onOpenChange,
+  className = '',
+}) => {
+  const reduced = Boolean(useReducedMotion());
+  const [open, setOpen] = useState(false);
+  const [sizeIdx, setSizeIdx] = useState(1);
+  const [progress, setProgress] = useState(0);
+  const [flashIdx, setFlashIdx] = useState<number | null>(null);
+  const pillRef = useRef<HTMLButtonElement>(null);
+  const sheetRef = useRef<HTMLDivElement>(null);
+  const excerptRef = useRef<HTMLDivElement>(null);
+  const bodyRef = useRef<HTMLDivElement>(null);
+
+  const previewText = excerptLines?.join(' ') ?? paragraphs[0] ?? '';
+
+  const toggleOpen = (next: boolean) => {
+    setOpen(next);
+    onOpenChange?.(next);
+  };
+
+  useEffect(() => {
+    if (!pillRef.current) return;
+    const handle = liquidGlass(pillRef.current, { ior: 1.42, thickness: 14, blur: 10 });
+    return () => handle.destroy();
+  }, []);
+
+  useEffect(() => {
+    if (!open || !sheetRef.current) return;
+    const handle = glassSheet(sheetRef.current, { blur: 22, saturate: 1.6 });
+    return () => handle.destroy();
+  }, [open]);
+
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        toggleOpen(false);
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    const ratio = excerptRef.current
+      ? Math.min(paragraphs.length - 1, Math.floor((excerptRef.current.scrollTop / 180) * paragraphs.length))
+      : 0;
+    setFlashIdx(ratio);
+    const timer = window.setTimeout(() => setFlashIdx(null), 1100);
+    return () => {
+      window.removeEventListener('keydown', onKey);
+      window.clearTimeout(timer);
+    };
+  }, [open, paragraphs.length]);
+
+  const handleScrollBody = () => {
+    const el = bodyRef.current;
+    if (!el) return;
+    const max = Math.max(1, el.scrollHeight - el.clientHeight);
+    setProgress(Math.min(1, Math.max(0, el.scrollTop / max)));
+  };
+
+  return (
+    <div className={`prc ${className}`} data-open={open ? 'true' : undefined} data-theme={theme}>
+      <div className="prc__card">
+        <div className="prc__orbs" aria-hidden="true">
+          <span className="prc__orb prc__orb--a" />
+          <span className="prc__orb prc__orb--b" />
+          <span className="prc__orb prc__orb--c" />
+        </div>
+
+        <div className="prc__pblur prc__pblur--top" aria-hidden="true" />
+        <div className="prc__pblur prc__pblur--bottom" aria-hidden="true" />
+
+        <div className="prc__header">
+          <div className="prc__kicker">{subtitle}</div>
+          <h3 className="prc__title">{title}</h3>
+        </div>
+
+        <div ref={excerptRef} className="prc__excerpt">
+          <p className="m-0">{previewText}</p>
+        </div>
+
+        <button
+          ref={pillRef}
+          type="button"
+          className="prc__openPill"
+          onClick={() => toggleOpen(true)}
+        >
+          {openLabel}
+        </button>
+      </div>
+
+      <AnimatePresence>
+        {open && (
+          <motion.div
+            className="prc__scrim"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={reduced ? { duration: 0.01 } : { duration: 0.2 }}
+            onClick={() => toggleOpen(false)}
+          >
+            <motion.div
+              ref={sheetRef}
+              role="dialog"
+              aria-modal="true"
+              aria-label={title}
+              className="prc__sheet"
+              initial={
+                reduced
+                  ? { opacity: 0 }
+                  : { opacity: 0, clipPath: 'inset(12% 18% 12% 18% round 40px)' }
+              }
+              animate={{ opacity: 1, clipPath: 'inset(0% 0% 0% 0% round 32px)' }}
+              exit={
+                reduced
+                  ? { opacity: 0 }
+                  : { opacity: 0, clipPath: 'inset(14% 20% 14% 20% round 40px)' }
+              }
+              transition={reduced ? { duration: 0.01 } : open ? morphOpen : morphClose}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="prc__progress">
+                <div
+                  className="prc__progressFill"
+                  style={{ transform: `scaleX(${Math.max(0.08, progress)})` }}
+                />
+              </div>
+
+              <div className="prc__toolbar">
+                <div>
+                  <div className="prc__kicker">{subtitle}</div>
+                  <h3 className="m-0 text-[18px] font-semibold" style={{ fontFamily: 'var(--font-serif)', color: 'var(--ink-primary)' }}>
+                    {title}
+                  </h3>
+                </div>
+
+                <div className="flex items-center gap-3">
+                  <div className="prc__sizes" role="group" aria-label="Cỡ chữ">
+                    {SIZES.map((sz, idx) => (
+                      <button
+                        key={sz}
+                        type="button"
+                        className="prc__sizeBtn"
+                        data-active={sizeIdx === idx}
+                        aria-label={`Cỡ ${sz}`}
+                        onClick={() => setSizeIdx(idx)}
+                      >
+                        {Math.round(sz)}
+                      </button>
+                    ))}
+                  </div>
+                  <button
+                    type="button"
+                    className="prc__close"
+                    aria-label="Đóng"
+                    title="Đóng"
+                    onClick={() => toggleOpen(false)}
+                  >
+                    <X className="h-4 w-4" aria-hidden="true" />
+                  </button>
+                </div>
+              </div>
+
+              <div ref={bodyRef} className="prc__body" onScroll={handleScrollBody}>
+                <div className="space-y-5" style={{ fontSize: `${SIZES[sizeIdx]}px` }}>
+                  {paragraphs.map((p, idx) => {
+                    const ornate = idx === 0 ? splitOrnateParagraph(p) : null;
+                    return (
+                      <p
+                        key={idx}
+                        className={`m-0 prc__resume ${flashIdx === idx ? 'is-flash' : ''}`}
+                      >
+                        {ornate ? (
+                          <>
+                            {ornate.prefix}
+                            <span className="ornate-cap">{ornate.cap}</span>
+                            {ornate.rest}
+                          </>
+                        ) : (
+                          p
+                        )}
+                      </p>
+                    );
+                  })}
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+};
+
+export default ReaderCard;

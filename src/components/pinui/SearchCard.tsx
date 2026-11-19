@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
-import { Clock, Search, X } from 'lucide-react';
+import { Search, X } from 'lucide-react';
 
 export interface SearchCardProps {
   value: string;
@@ -77,6 +77,7 @@ export const SearchCard: React.FC<SearchCardProps> = ({
               inputRef.current?.focus();
             }}
             aria-label="Xóa từ khóa tìm kiếm"
+            title="Xóa"
             className="inline-grid place-items-center h-6 w-6 rounded-full cursor-pointer"
             style={{ color: 'var(--ink-muted)', background: 'var(--bg-panel)' }}
           >
@@ -102,7 +103,7 @@ export const SearchCard: React.FC<SearchCardProps> = ({
                 <li key={item}>
                   <button
                     type="button"
-                    className="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-[13px] cursor-pointer transition-colors"
+                    className="flex w-full items-center rounded-lg px-2.5 py-2 text-left text-[13px] cursor-pointer transition-colors"
                     style={{ color: 'var(--ink-primary)' }}
                     onMouseDown={(e) => e.preventDefault()}
                     onClick={() => {
@@ -111,7 +112,6 @@ export const SearchCard: React.FC<SearchCardProps> = ({
                       setOpen(false);
                     }}
                   >
-                    <Clock className="h-3.5 w-3.5 shrink-0" style={{ color: 'var(--ink-muted)' }} aria-hidden="true" />
                     <span className="truncate">{item}</span>
                   </button>
                 </li>

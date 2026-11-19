@@ -3,20 +3,13 @@ import {
   Bookmark,
   BookmarkCheck,
   Check,
-  Clock,
   Copy,
   ExternalLink,
-  GitFork,
-  RotateCcw,
-  ShieldCheck,
-  Star,
-  Terminal,
-  Trophy,
 } from 'lucide-react';
 import repoLeaderboardJson from '../../data/repoLeaderboard.json';
+import { BROAMSTUCK_REPOS } from '../../data/realShowcaseData';
 import type { ResourceItem } from '../../types/index';
 import { useAppStore } from '../../store/appStore';
-import { Chips } from '../../components/pinui';
 
 export interface RepoLeaderboardItem {
   id: string;
@@ -44,6 +37,7 @@ export interface RepoLeaderboardDataset {
 interface RepoLeaderboardProps {
   searchQuery: string;
   onResetSearch?: () => void;
+  onOpenGitHubShowcase?: () => void;
 }
 
 type LeaderboardSort = 'stars' | 'forks' | 'recent';
@@ -52,14 +46,21 @@ const LEADERBOARD_DATA = repoLeaderboardJson as RepoLeaderboardDataset;
 
 const CATEGORY_OPTIONS = [
   { id: 'all', label: 'Tất cả' },
-  { id: 'Skills, Rules & Prompts', label: 'Skills, Rules & Prompts' },
-  { id: 'AI Agents & CLI', label: 'AI Agents & CLI' },
-  { id: 'UI/UX & Motion', label: 'UI/UX & Motion' },
-  { id: 'Local LLM & DevTools', label: 'Local LLM & DevTools' },
+  { id: 'Skills, Rules & Prompts', label: 'Skills' },
+  { id: 'AI Agents & CLI', label: 'Agents' },
+  { id: 'UI/UX & Motion', label: 'UI/UX' },
+  { id: 'Local LLM & DevTools', label: 'Local LLM' },
+];
+
+const CATEGORY_ORDER = [
+  'Skills, Rules & Prompts',
+  'AI Agents & CLI',
+  'UI/UX & Motion',
+  'Local LLM & DevTools',
 ];
 
 function formatNumber(value: number): string {
-  return new Intl.NumberFormat('en-US').format(value);
+  return new Intl.NumberFormat('vi-VN').format(value);
 }
 
 function formatDateIso(iso: string): string {
@@ -84,9 +85,9 @@ function adaptRepoToResource(repo: RepoLeaderboardItem): ResourceItem {
     group: normalizedGroup,
     category: repo.category,
     tags: [
-      `platform:GitHub`,
+      'platform:GitHub',
       `tech:${repo.language || 'OpenSource'}`,
-      `cost:Free`,
+      'cost:Free',
       ...repo.topics.slice(0, 4),
     ],
     officialUrl: repo.htmlUrl,
@@ -102,6 +103,7 @@ function adaptRepoToResource(repo: RepoLeaderboardItem): ResourceItem {
 export const RepoLeaderboard: React.FC<RepoLeaderboardProps> = ({
   searchQuery,
   onResetSearch,
+  onOpenGitHubShowcase,
 }) => {
   const { savedItemIds, toggleSavedItem, attachItemToWorkspace, addToast } = useAppStore();
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
@@ -134,27 +136,23 @@ export const RepoLeaderboard: React.FC<RepoLeaderboardProps> = ({
     return sorted;
   }, [selectedCategory, sortBy, searchQuery]);
 
-  const handleCategoryToggle = (id: string) => {
-    setSelectedCategory(id);
-  };
-
-  const handleCopyUrl = async (repo: RepoLeaderboardItem) => {
+  const handleCopyUrl = async (id: string, fullName: string, htmlUrl: string) => {
     try {
-      await navigator.clipboard.writeText(repo.htmlUrl);
-      setCopiedId(repo.id);
+      await navigator.clipboard.writeText(htmlUrl);
+      setCopiedId(id);
       addToast({
         type: 'success',
-        title: 'Đã sao chép Repo URL',
-        message: repo.fullName,
+        title: 'Đã sao chép liên kết',
+        message: fullName,
       });
       window.setTimeout(() => {
-        setCopiedId((prev) => (prev === repo.id ? null : prev));
+        setCopiedId((prev) => (prev === id ? null : prev));
       }, 1800);
     } catch {
       addToast({
         type: 'warning',
         title: 'Không thể sao chép tự động',
-        message: repo.htmlUrl,
+        message: htmlUrl,
       });
     }
   };
@@ -182,415 +180,242 @@ export const RepoLeaderboard: React.FC<RepoLeaderboardProps> = ({
 
   const topOne = filteredRepos[0] || null;
   const podiumRunners = filteredRepos.slice(1, 3);
-  const ledgerRepos = filteredRepos.slice(3);
+  const rankMap = useMemo(() => {
+    const map = new Map<string, number>();
+    filteredRepos.forEach((item, index) => map.set(item.id, index + 1));
+    return map;
+  }, [filteredRepos]);
+
+  const categoryRibbons = useMemo(() => {
+    const remaining = filteredRepos.slice(3);
+    const categories = selectedCategory === 'all' ? CATEGORY_ORDER : [selectedCategory];
+    return categories
+      .map((cat) => ({
+        category: cat,
+        items: remaining.filter((item) => item.category === cat),
+      }))
+      .filter((group) => group.items.length > 0);
+  }, [filteredRepos, selectedCategory]);
 
   return (
-    <section aria-label="Bảng Xếp Hạng Repo và Skills" className="space-y-6">
+    <section aria-label="Bảng xếp hạng Kho lưu trữ" className="space-y-10">
       <div
-        className="flex flex-col gap-3 overflow-hidden rounded-[20px] border px-5 py-4 lg:flex-row lg:items-center lg:justify-between"
-        style={{
-          backgroundColor: 'var(--bg-surface)',
-          borderColor: 'var(--border-strong)',
-        }}
-      >
-        <div className="flex flex-wrap items-center gap-2.5 text-xs">
-          <span
-            className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 font-semibold"
-            style={{
-              backgroundColor: 'color-mix(in srgb, var(--accent-jade) 15%, transparent)',
-              color: 'var(--accent-jade)',
-            }}
-          >
-            <ShieldCheck className="h-3.5 w-3.5" aria-hidden="true" />
-            <span>Open-source community index / Verified via GitHub API</span>
-          </span>
-          <span
-            className="inline-flex items-center gap-1.5 rounded-full border px-3 py-1 font-mono"
-            style={{
-              backgroundColor: 'var(--bg-panel)',
-              borderColor: 'var(--border-subtle)',
-              color: 'var(--ink-secondary)',
-            }}
-          >
-            <Clock className="h-3 w-3" aria-hidden="true" />
-            <span>Cập nhật: {formatDateIso(LEADERBOARD_DATA.generatedAt)}</span>
-          </span>
-        </div>
-
-        <div className="flex flex-wrap items-center gap-2 text-xs">
-          <span
-            className="rounded-full border px-3 py-1 font-mono font-semibold"
-            style={{
-              backgroundColor: 'var(--bg-panel)',
-              borderColor: 'var(--border-subtle)',
-              color: 'var(--accent-primary)',
-            }}
-          >
-            {LEADERBOARD_DATA.items.length} repo đã xác minh
-          </span>
-          <span className="font-mono" style={{ color: 'var(--ink-muted)' }}>
-            Hiển thị {filteredRepos.length} kết quả
-          </span>
-        </div>
-      </div>
-
-      <div
-        className="flex flex-col gap-3 rounded-[20px] border p-4 xl:flex-row xl:items-center xl:justify-between"
+        className="flex flex-col gap-4 rounded-[22px] border p-4 sm:p-5 lg:flex-row lg:items-center lg:justify-between"
         style={{
           backgroundColor: 'var(--bg-surface)',
           borderColor: 'var(--border-subtle)',
         }}
       >
-        <div className="min-w-0 flex-1">
-          <Chips
-            items={CATEGORY_OPTIONS}
-            selectedIds={[selectedCategory]}
-            onToggle={handleCategoryToggle}
-            multi={false}
-          />
+        <div className="flex flex-wrap items-center gap-2">
+          {CATEGORY_OPTIONS.map((opt) => {
+            const active = selectedCategory === opt.id;
+            return (
+              <button
+                key={opt.id}
+                type="button"
+                onClick={() => setSelectedCategory(opt.id)}
+                className="rounded-full border px-3.5 py-1.5 text-xs font-medium cursor-pointer transition-colors"
+                style={{
+                  backgroundColor: active ? 'var(--accent-primary)' : 'var(--bg-panel)',
+                  borderColor: active ? 'var(--accent-primary)' : 'var(--border-subtle)',
+                  color: active ? 'var(--ink-inverse)' : 'var(--ink-secondary)',
+                }}
+              >
+                {opt.label}
+              </button>
+            );
+          })}
         </div>
 
-        <div className="flex shrink-0 flex-wrap items-center gap-2">
-          <span className="text-xs font-medium" style={{ color: 'var(--ink-muted)' }}>
-            Xếp theo:
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="font-mono text-[11px]" style={{ color: 'var(--ink-muted)' }}>
+            {filteredRepos.length} / {LEADERBOARD_DATA.items.length} kho · {formatDateIso(LEADERBOARD_DATA.generatedAt)}
           </span>
           {(
             [
-              { id: 'stars', label: 'Real Stars' },
-              { id: 'forks', label: 'Forks' },
-              { id: 'recent', label: 'Mới cập nhật' },
+              { id: 'stars', label: 'Số sao' },
+              { id: 'forks', label: 'Nhánh' },
+              { id: 'recent', label: 'Mới nhất' },
             ] as const
-          ).map((opt) => (
-            <button
-              key={opt.id}
-              type="button"
-              onClick={() => setSortBy(opt.id)}
-              className="rounded-full border px-3.5 py-1.5 text-xs font-semibold focus-visible:outline-2 focus-visible:outline-offset-2"
-              style={{
-                backgroundColor:
-                  sortBy === opt.id
-                    ? 'color-mix(in srgb, var(--accent-verdigris) 16%, transparent)'
-                    : 'var(--bg-panel)',
-                borderColor: sortBy === opt.id ? 'var(--accent-verdigris)' : 'var(--border-subtle)',
-                color: sortBy === opt.id ? 'var(--accent-verdigris)' : 'var(--ink-secondary)',
-              }}
-            >
-              {opt.label}
-            </button>
-          ))}
+          ).map((opt) => {
+            const active = sortBy === opt.id;
+            return (
+              <button
+                key={opt.id}
+                type="button"
+                onClick={() => setSortBy(opt.id)}
+                className="rounded-full border px-3.5 py-1.5 text-xs font-medium cursor-pointer transition-colors"
+                style={{
+                  backgroundColor: active ? 'var(--accent-verdigris-soft)' : 'var(--bg-panel)',
+                  borderColor: active ? 'var(--accent-verdigris)' : 'var(--border-subtle)',
+                  color: active ? 'var(--accent-verdigris)' : 'var(--ink-secondary)',
+                }}
+              >
+                {opt.label}
+              </button>
+            );
+          })}
         </div>
       </div>
 
       {filteredRepos.length === 0 ? (
         <div
-          className="rounded-[24px] border p-12 text-center"
+          className="rounded-[24px] border p-12 text-center space-y-3"
           style={{
             backgroundColor: 'var(--bg-surface)',
             borderColor: 'var(--border-subtle)',
           }}
         >
-          <p className="text-base font-semibold" style={{ color: 'var(--ink-primary)' }}>
-            Không tìm thấy repository nào khớp điều kiện lọc
+          <p className="text-lg font-semibold" style={{ fontFamily: 'var(--font-serif)', color: 'var(--ink-primary)' }}>
+            Không tìm thấy kho lưu trữ phù hợp
           </p>
-          <p className="mt-1 text-sm" style={{ color: 'var(--ink-secondary)' }}>
-            Thử chuyển danh mục hoặc đặt lại từ khóa tìm kiếm trong thanh lệnh.
+          <p className="text-sm" style={{ color: 'var(--ink-secondary)' }}>
+            Điều chỉnh danh mục hoặc xóa từ khóa tìm kiếm để khôi phục bảng xếp hạng.
           </p>
           <button
             type="button"
             onClick={handleResetAll}
-            className="mt-4 inline-flex h-10 items-center gap-2 rounded-full px-5 text-xs font-semibold"
+            className="h-10 rounded-full px-5 text-xs font-semibold cursor-pointer"
             style={{
               backgroundColor: 'var(--accent-primary)',
-              color: '#06080d',
+              color: 'var(--ink-inverse)',
             }}
           >
-            <RotateCcw className="h-3.5 w-3.5" aria-hidden="true" />
-            <span>Xem toàn bộ {LEADERBOARD_DATA.items.length} repo</span>
+            Đặt lại
           </button>
         </div>
       ) : (
         <>
           {topOne ? (
-            <div className="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1.38fr)_minmax(0,1fr)]">
+            <div className="grid grid-cols-1 gap-5 lg:grid-cols-12">
               <article
-                className="flex flex-col justify-between gap-6 overflow-hidden rounded-[24px] border p-6 sm:p-7"
+                className="lg:col-span-7 flex flex-col justify-between gap-6 rounded-[26px] border p-6 sm:p-8"
                 style={{
                   backgroundColor: 'var(--bg-surface)',
-                  borderColor: 'var(--accent-primary)',
-                  boxShadow: '0 22px 52px -32px rgba(0, 0, 0, 0.65)',
+                  borderColor: 'var(--border-accent)',
+                  boxShadow: 'var(--shadow-md)',
                 }}
               >
-                <div>
-                  <div className="flex flex-wrap items-center justify-between gap-2">
-                    <div className="flex flex-wrap items-center gap-2">
+                <div className="space-y-4">
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <div className="flex items-center gap-3">
                       <span
-                        className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 font-mono text-xs font-bold"
-                        style={{
-                          backgroundColor: 'var(--accent-primary)',
-                          color: '#06080d',
-                        }}
+                        className="text-3xl font-semibold leading-none"
+                        style={{ fontFamily: 'var(--font-serif)', color: 'var(--accent-primary)' }}
                       >
-                        <Trophy className="h-3.5 w-3.5" aria-hidden="true" />
-                        <span>#01</span>
+                        #01
                       </span>
-                      <span
-                        className="rounded-full px-2.5 py-1 text-xs font-medium"
-                        style={{
-                          backgroundColor: 'var(--bg-panel)',
-                          color: 'var(--ink-secondary)',
-                        }}
-                      >
+                      <span className="font-mono text-xs" style={{ color: 'var(--ink-muted)' }}>
                         {topOne.category}
                       </span>
                     </div>
-
-                    <div className="flex items-center gap-3 font-mono text-xs font-semibold">
-                      <span className="inline-flex items-center gap-1" style={{ color: 'var(--accent-primary)' }}>
-                        <Star className="h-3.5 w-3.5" aria-hidden="true" />
-                        {formatNumber(topOne.stars)}
-                      </span>
-                      <span className="inline-flex items-center gap-1" style={{ color: 'var(--ink-secondary)' }}>
-                        <GitFork className="h-3.5 w-3.5" aria-hidden="true" />
-                        {formatNumber(topOne.forks)}
-                      </span>
+                    <div className="flex items-center gap-4 font-mono text-xs">
+                      <span style={{ color: 'var(--accent-primary)' }}>{formatNumber(topOne.stars)} sao</span>
+                      <span style={{ color: 'var(--ink-secondary)' }}>{formatNumber(topOne.forks)} nhánh</span>
                     </div>
                   </div>
 
-                  <h2
-                    className="mt-4 break-words font-mono text-xl font-semibold tracking-tight sm:text-2xl"
-                    style={{ color: 'var(--ink-primary)' }}
+                  <h3
+                    className="text-2xl font-semibold tracking-tight break-words sm:text-3xl"
+                    style={{ fontFamily: 'var(--font-serif)', color: 'var(--ink-primary)' }}
                   >
                     {topOne.fullName}
-                  </h2>
+                  </h3>
 
-                  <p className="mt-2.5 text-sm leading-relaxed" style={{ color: 'var(--ink-secondary)' }}>
+                  <p className="text-[15px] leading-relaxed" style={{ color: 'var(--ink-secondary)' }}>
                     {topOne.description}
                   </p>
 
                   <div
-                    className="mt-4 rounded-[16px] border p-3.5 text-xs leading-relaxed"
+                    className="rounded-[16px] border p-4 text-xs leading-relaxed"
                     style={{
                       backgroundColor: 'var(--bg-panel)',
                       borderColor: 'var(--border-subtle)',
                       color: 'var(--ink-primary)',
                     }}
                   >
-                    <span className="font-mono text-[11px] font-semibold" style={{ color: 'var(--accent-verdigris)' }}>
-                      Engineering Note:
-                    </span>{' '}
                     {topOne.aiNote}
-                  </div>
-
-                  <div className="mt-4 flex flex-wrap items-center gap-1.5">
-                    <span
-                      className="rounded-full border px-2.5 py-0.5 font-mono text-[11px] font-medium"
-                      style={{
-                        backgroundColor: 'var(--bg-panel)',
-                        borderColor: 'var(--border-subtle)',
-                        color: 'var(--ink-primary)',
-                      }}
-                    >
-                      {topOne.language}
-                    </span>
-                    <span
-                      className="rounded-full border px-2.5 py-0.5 font-mono text-[11px]"
-                      style={{
-                        borderColor: 'var(--border-subtle)',
-                        color: 'var(--ink-muted)',
-                      }}
-                    >
-                      {topOne.license}
-                    </span>
-                    <span
-                      className="rounded-full border px-2.5 py-0.5 font-mono text-[11px]"
-                      style={{
-                        borderColor: 'var(--border-subtle)',
-                        color: 'var(--ink-muted)',
-                      }}
-                    >
-                      Push: {formatDateIso(topOne.pushedAt)}
-                    </span>
-                    {topOne.topics.slice(0, 5).map((topic) => (
-                      <span
-                        key={topic}
-                        className="rounded-full border px-2 py-0.5 font-mono text-[11px]"
-                        style={{
-                          borderColor: 'var(--border-subtle)',
-                          color: 'var(--ink-secondary)',
-                        }}
-                      >
-                        #{topic}
-                      </span>
-                    ))}
                   </div>
                 </div>
 
-                <div className="mt-auto space-y-4">
-                  <div
-                    className="rounded-[18px] border p-4"
-                    style={{
-                      backgroundColor: 'var(--bg-panel)',
-                      borderColor: 'var(--border-subtle)',
-                    }}
-                  >
-                    <div className="flex flex-wrap items-center justify-between gap-2 text-xs">
-                      <span className="font-mono text-[11px] font-semibold" style={{ color: 'var(--ink-secondary)' }}>
-                        TELEMETRY & SIGNAL RATIO
-                      </span>
-                      <span className="font-mono text-xs font-semibold" style={{ color: 'var(--accent-jade)' }}>
-                        Tỷ lệ Stars / Forks: {Math.max(1, Math.round(topOne.stars / Math.max(1, topOne.forks)))}:1
-                      </span>
-                    </div>
-
-                    <div className="mt-3 flex flex-wrap gap-2.5">
-                      <div
-                        className="min-w-[110px] flex-[1.2_1_110px] rounded-[12px] border px-3 py-2"
-                        style={{
-                          backgroundColor: 'var(--bg-surface)',
-                          borderColor: 'var(--border-subtle)',
-                        }}
-                      >
-                        <span className="block text-[11px]" style={{ color: 'var(--ink-muted)' }}>
-                          Real Stars
-                        </span>
-                        <strong className="mt-0.5 block font-mono text-sm" style={{ color: 'var(--accent-primary)' }}>
-                          {formatNumber(topOne.stars)}
-                        </strong>
-                      </div>
-                      <div
-                        className="min-w-[100px] flex-[1_1_100px] rounded-[12px] border px-3 py-2"
-                        style={{
-                          backgroundColor: 'var(--bg-surface)',
-                          borderColor: 'var(--border-subtle)',
-                        }}
-                      >
-                        <span className="block text-[11px]" style={{ color: 'var(--ink-muted)' }}>
-                          Active Forks
-                        </span>
-                        <strong className="mt-0.5 block font-mono text-sm" style={{ color: 'var(--ink-primary)' }}>
-                          {formatNumber(topOne.forks)}
-                        </strong>
-                      </div>
-                      <div
-                        className="min-w-[110px] flex-[1.1_1_110px] rounded-[12px] border px-3 py-2"
-                        style={{
-                          backgroundColor: 'var(--bg-surface)',
-                          borderColor: 'var(--border-subtle)',
-                        }}
-                      >
-                        <span className="block text-[11px]" style={{ color: 'var(--ink-muted)' }}>
-                          Ngôn ngữ chính
-                        </span>
-                        <strong className="mt-0.5 block truncate font-mono text-sm" style={{ color: 'var(--accent-verdigris)' }}>
-                          {topOne.language}
-                        </strong>
-                      </div>
-                      <div
-                        className="min-w-[100px] flex-[1_1_100px] rounded-[12px] border px-3 py-2"
-                        style={{
-                          backgroundColor: 'var(--bg-surface)',
-                          borderColor: 'var(--border-subtle)',
-                        }}
-                      >
-                        <span className="block text-[11px]" style={{ color: 'var(--ink-muted)' }}>
-                          Giấy phép
-                        </span>
-                        <strong className="mt-0.5 block truncate font-mono text-sm" style={{ color: 'var(--ink-primary)' }}>
-                          {topOne.license}
-                        </strong>
-                      </div>
-                    </div>
-
-                    <div className="mt-3 space-y-1.5">
-                      <div className="flex items-center justify-between font-mono text-[11px]" style={{ color: 'var(--ink-muted)' }}>
-                        <span>Chỉ số dẫn đầu danh mục ({topOne.category})</span>
-                        <span style={{ color: 'var(--ink-primary)' }}>100% Verified Benchmark</span>
-                      </div>
-                      <div
-                        className="h-2 w-full overflow-hidden rounded-full"
-                        style={{ backgroundColor: 'var(--bg-surface)' }}
-                      >
-                        <div
-                          className="h-full w-full rounded-full"
-                          style={{
-                            background: 'linear-gradient(90deg, var(--accent-primary), var(--accent-verdigris))',
-                            transform: 'scaleX(0.94)',
-                            transformOrigin: 'left center',
-                          }}
-                        />
-                      </div>
-                    </div>
+                <div className="space-y-4">
+                  <div className="flex flex-wrap items-center gap-3 font-mono text-[11px]" style={{ color: 'var(--ink-muted)' }}>
+                    <span>{topOne.language}</span>
+                    <span>{topOne.license}</span>
+                    <span>{formatDateIso(topOne.pushedAt)}</span>
                   </div>
 
                   <div className="flex flex-wrap items-center gap-2 border-t pt-4" style={{ borderColor: 'var(--border-subtle)' }}>
                     <button
                       type="button"
                       onClick={() => handleUseInProject(topOne)}
-                      className="inline-flex h-10 items-center gap-1.5 rounded-full px-4 text-xs font-semibold focus-visible:outline-2 focus-visible:outline-offset-2"
+                      className="h-10 rounded-full px-5 text-xs font-semibold cursor-pointer"
                       style={{
                         backgroundColor: 'var(--accent-primary)',
-                        color: '#06080d',
+                        color: 'var(--ink-inverse)',
                       }}
                     >
-                      <Terminal className="h-3.5 w-3.5" aria-hidden="true" />
-                      <span>Use in Project</span>
+                      Workspace
                     </button>
 
                     <button
                       type="button"
                       onClick={() => toggleSavedItem(`repo-${topOne.id}`)}
-                      className="inline-flex h-10 items-center gap-1.5 rounded-full border px-3.5 text-xs font-semibold focus-visible:outline-2 focus-visible:outline-offset-2"
+                      aria-label={savedItemIds.includes(`repo-${topOne.id}`) ? `Bỏ lưu ${topOne.fullName}` : `Lưu ${topOne.fullName}`}
+                      title={savedItemIds.includes(`repo-${topOne.id}`) ? 'Bỏ lưu' : 'Lưu'}
+                      className="inline-flex h-10 w-10 items-center justify-center rounded-full border cursor-pointer"
                       style={{
                         backgroundColor: 'var(--bg-panel)',
-                        borderColor: savedItemIds.includes(`repo-${topOne.id}`)
-                          ? 'var(--accent-jade)'
-                          : 'var(--border-subtle)',
-                        color: savedItemIds.includes(`repo-${topOne.id}`)
-                          ? 'var(--accent-jade)'
-                          : 'var(--ink-primary)',
+                        borderColor: savedItemIds.includes(`repo-${topOne.id}`) ? 'var(--accent-jade)' : 'var(--border-subtle)',
+                        color: savedItemIds.includes(`repo-${topOne.id}`) ? 'var(--accent-jade)' : 'var(--ink-secondary)',
                       }}
                     >
                       {savedItemIds.includes(`repo-${topOne.id}`) ? (
-                        <BookmarkCheck className="h-3.5 w-3.5" aria-hidden="true" />
+                        <BookmarkCheck className="h-4 w-4" aria-hidden="true" />
                       ) : (
-                        <Bookmark className="h-3.5 w-3.5" aria-hidden="true" />
+                        <Bookmark className="h-4 w-4" aria-hidden="true" />
                       )}
-                      <span>{savedItemIds.includes(`repo-${topOne.id}`) ? 'Đã lưu' : 'Save'}</span>
                     </button>
 
                     <button
                       type="button"
-                      onClick={() => void handleCopyUrl(topOne)}
-                      className="inline-flex h-10 items-center gap-1.5 rounded-full border px-3.5 text-xs font-medium focus-visible:outline-2 focus-visible:outline-offset-2"
+                      onClick={() => void handleCopyUrl(topOne.id, topOne.fullName, topOne.htmlUrl)}
+                      aria-label={`Sao chép liên kết ${topOne.fullName}`}
+                      title="Sao chép liên kết"
+                      className="inline-flex h-10 w-10 items-center justify-center rounded-full border cursor-pointer"
                       style={{
                         backgroundColor: 'var(--bg-panel)',
                         borderColor: 'var(--border-subtle)',
-                        color: 'var(--ink-secondary)',
+                        color: copiedId === topOne.id ? 'var(--accent-jade)' : 'var(--ink-secondary)',
                       }}
                     >
                       {copiedId === topOne.id ? (
-                        <Check className="h-3.5 w-3.5" style={{ color: 'var(--accent-jade)' }} aria-hidden="true" />
+                        <Check className="h-4 w-4" aria-hidden="true" />
                       ) : (
-                        <Copy className="h-3.5 w-3.5" aria-hidden="true" />
+                        <Copy className="h-4 w-4" aria-hidden="true" />
                       )}
-                      <span>{copiedId === topOne.id ? 'Đã copy' : 'Copy Repo URL'}</span>
                     </button>
 
                     <a
                       href={topOne.htmlUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="ml-auto inline-flex h-10 items-center gap-1 text-xs font-semibold hover:underline"
-                      style={{ color: 'var(--accent-verdigris)' }}
+                      aria-label={`Mở ${topOne.fullName} trên GitHub`}
+                      title="Mở trên GitHub"
+                      className="ml-auto inline-flex h-10 w-10 items-center justify-center rounded-full border"
+                      style={{
+                        backgroundColor: 'var(--bg-panel)',
+                        borderColor: 'var(--border-subtle)',
+                        color: 'var(--accent-verdigris)',
+                      }}
                     >
-                      <span>GitHub</span>
-                      <ExternalLink className="h-3.5 w-3.5" aria-hidden="true" />
+                      <ExternalLink className="h-4 w-4" aria-hidden="true" />
                     </a>
                   </div>
                 </div>
               </article>
 
-              <div className="flex flex-col gap-4">
+              <div className="lg:col-span-5 flex flex-col gap-5">
                 {podiumRunners.map((repo, idx) => {
                   const rankNum = idx + 2;
                   const savedKey = `repo-${repo.id}`;
@@ -598,108 +423,62 @@ export const RepoLeaderboard: React.FC<RepoLeaderboardProps> = ({
                   return (
                     <article
                       key={repo.id}
-                      className="flex flex-1 flex-col justify-between gap-4 overflow-hidden rounded-[22px] border p-5"
+                      className="flex flex-1 flex-col justify-between gap-4 rounded-[24px] border p-5 sm:p-6"
                       style={{
                         backgroundColor: 'var(--bg-surface)',
                         borderColor: 'var(--border-strong)',
                       }}
                     >
-                      <div>
-                        <div className="flex flex-wrap items-center justify-between gap-2">
-                          <div className="flex items-center gap-2">
+                      <div className="space-y-2.5">
+                        <div className="flex items-center justify-between gap-2">
+                          <div className="flex items-center gap-2.5">
                             <span
-                              className="rounded-full px-2.5 py-0.5 font-mono text-xs font-bold"
+                              className="text-xl font-semibold leading-none"
                               style={{
-                                backgroundColor:
-                                  rankNum === 2
-                                    ? 'color-mix(in srgb, var(--accent-verdigris) 18%, transparent)'
-                                    : 'color-mix(in srgb, var(--accent-copper) 18%, transparent)',
+                                fontFamily: 'var(--font-serif)',
                                 color: rankNum === 2 ? 'var(--accent-verdigris)' : 'var(--accent-copper)',
                               }}
                             >
                               #0{rankNum}
                             </span>
-                            <span className="text-xs" style={{ color: 'var(--ink-muted)' }}>
-                              {repo.category}
+                            <span className="font-mono text-[11px]" style={{ color: 'var(--ink-muted)' }}>
+                              {repo.language}
                             </span>
                           </div>
-
-                          <div className="flex items-center gap-2.5 font-mono text-xs font-semibold">
-                            <span className="inline-flex items-center gap-1" style={{ color: 'var(--accent-primary)' }}>
-                              <Star className="h-3 w-3" aria-hidden="true" />
-                              {formatNumber(repo.stars)}
-                            </span>
-                            <span className="inline-flex items-center gap-1" style={{ color: 'var(--ink-muted)' }}>
-                              <GitFork className="h-3 w-3" aria-hidden="true" />
-                              {formatNumber(repo.forks)}
-                            </span>
-                          </div>
+                          <span className="font-mono text-xs" style={{ color: 'var(--accent-primary)' }}>
+                            {formatNumber(repo.stars)} sao
+                          </span>
                         </div>
 
-                        <h3
-                          className="mt-2.5 break-words font-mono text-base font-semibold"
-                          style={{ color: 'var(--ink-primary)' }}
+                        <h4
+                          className="break-words text-lg font-semibold"
+                          style={{ fontFamily: 'var(--font-display)', color: 'var(--ink-primary)' }}
                         >
                           {repo.fullName}
-                        </h3>
-                        <p className="mt-1 line-clamp-2 text-xs leading-relaxed" style={{ color: 'var(--ink-secondary)' }}>
+                        </h4>
+                        <p className="line-clamp-2 text-[13px] leading-relaxed" style={{ color: 'var(--ink-secondary)' }}>
                           {repo.description}
                         </p>
-                        <p className="mt-1.5 line-clamp-2 text-xs" style={{ color: 'var(--ink-muted)' }}>
-                          {repo.aiNote}
-                        </p>
-
-                        <div className="mt-3 flex flex-wrap gap-1.5 text-[11px] font-mono">
-                          <span
-                            className="rounded-full px-2 py-0.5"
-                            style={{
-                              backgroundColor: 'var(--bg-panel)',
-                              color: 'var(--ink-primary)',
-                            }}
-                          >
-                            {repo.language}
-                          </span>
-                          <span
-                            className="rounded-full border px-2 py-0.5"
-                            style={{
-                              borderColor: 'var(--border-subtle)',
-                              color: 'var(--ink-muted)',
-                            }}
-                          >
-                            {repo.license}
-                          </span>
-                          {repo.topics.slice(0, 3).map((topic) => (
-                            <span
-                              key={topic}
-                              className="rounded-full border px-2 py-0.5"
-                              style={{
-                                borderColor: 'var(--border-subtle)',
-                                color: 'var(--ink-secondary)',
-                              }}
-                            >
-                              #{topic}
-                            </span>
-                          ))}
-                        </div>
                       </div>
 
-                      <div className="flex flex-wrap items-center gap-2 border-t pt-3" style={{ borderColor: 'var(--border-subtle)' }}>
+                      <div className="flex items-center gap-2 border-t pt-3" style={{ borderColor: 'var(--border-subtle)' }}>
                         <button
                           type="button"
                           onClick={() => handleUseInProject(repo)}
-                          className="inline-flex h-8 items-center gap-1.5 rounded-full px-3.5 text-xs font-semibold"
+                          className="h-9 rounded-full px-4 text-xs font-semibold cursor-pointer"
                           style={{
                             backgroundColor: 'var(--accent-primary)',
-                            color: '#06080d',
+                            color: 'var(--ink-inverse)',
                           }}
                         >
-                          <Terminal className="h-3 w-3" aria-hidden="true" />
-                          <span>Use in Project</span>
+                          Workspace
                         </button>
                         <button
                           type="button"
                           onClick={() => toggleSavedItem(savedKey)}
-                          className="inline-flex h-8 items-center gap-1 rounded-full border px-3 text-xs font-medium"
+                          aria-label={isSaved ? `Bỏ lưu ${repo.fullName}` : `Lưu ${repo.fullName}`}
+                          title={isSaved ? 'Bỏ lưu' : 'Lưu'}
+                          className="inline-flex h-9 w-9 items-center justify-center rounded-full border cursor-pointer"
                           style={{
                             backgroundColor: 'var(--bg-panel)',
                             borderColor: isSaved ? 'var(--accent-jade)' : 'var(--border-subtle)',
@@ -707,209 +486,36 @@ export const RepoLeaderboard: React.FC<RepoLeaderboardProps> = ({
                           }}
                         >
                           {isSaved ? (
-                            <BookmarkCheck className="h-3 w-3" aria-hidden="true" />
+                            <BookmarkCheck className="h-3.5 w-3.5" aria-hidden="true" />
                           ) : (
-                            <Bookmark className="h-3 w-3" aria-hidden="true" />
+                            <Bookmark className="h-3.5 w-3.5" aria-hidden="true" />
                           )}
-                          <span>{isSaved ? 'Đã lưu' : 'Save'}</span>
                         </button>
                         <button
                           type="button"
-                          onClick={() => void handleCopyUrl(repo)}
-                          aria-label={`Sao chép URL ${repo.fullName}`}
-                          className="inline-flex h-8 items-center gap-1 rounded-full border px-2.5 text-xs"
+                          onClick={() => void handleCopyUrl(repo.id, repo.fullName, repo.htmlUrl)}
+                          aria-label={`Sao chép liên kết ${repo.fullName}`}
+                          title="Sao chép liên kết"
+                          className="inline-flex h-9 w-9 items-center justify-center rounded-full border cursor-pointer"
                           style={{
                             backgroundColor: 'var(--bg-panel)',
                             borderColor: 'var(--border-subtle)',
-                            color: 'var(--ink-secondary)',
+                            color: copiedId === repo.id ? 'var(--accent-jade)' : 'var(--ink-secondary)',
                           }}
                         >
                           {copiedId === repo.id ? (
-                            <Check className="h-3 w-3" style={{ color: 'var(--accent-jade)' }} aria-hidden="true" />
+                            <Check className="h-3.5 w-3.5" aria-hidden="true" />
                           ) : (
-                            <Copy className="h-3 w-3" aria-hidden="true" />
+                            <Copy className="h-3.5 w-3.5" aria-hidden="true" />
                           )}
                         </button>
-                        <a
-                          href={repo.htmlUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="ml-auto inline-flex h-8 items-center gap-1 text-xs font-medium hover:underline"
-                          style={{ color: 'var(--accent-verdigris)' }}
-                        >
-                          <span>GitHub</span>
-                          <ExternalLink className="h-3 w-3" aria-hidden="true" />
-                        </a>
-                      </div>
-                    </article>
-                  );
-                })}
-              </div>
-            </div>
-          ) : null}
-
-          {ledgerRepos.length > 0 ? (
-            <div
-              className="overflow-hidden rounded-[22px] border"
-              style={{
-                backgroundColor: 'var(--bg-surface)',
-                borderColor: 'var(--border-subtle)',
-              }}
-            >
-              <div
-                className="flex flex-wrap items-center justify-between gap-2 border-b px-5 py-3.5 text-xs font-semibold"
-                style={{
-                  backgroundColor: 'var(--bg-panel)',
-                  borderColor: 'var(--border-subtle)',
-                  color: 'var(--ink-secondary)',
-                }}
-              >
-                <span>Bảng xếp hạng chi tiết (Hạng #04 trở đi)</span>
-                <span className="font-mono">{ledgerRepos.length} repositories</span>
-              </div>
-
-              <div className="divide-y" style={{ borderColor: 'var(--border-subtle)' }}>
-                {ledgerRepos.map((repo, idx) => {
-                  const rank = idx + 4;
-                  const rankLabel = `#${String(rank).padStart(2, '0')}`;
-                  const savedKey = `repo-${repo.id}`;
-                  const isSaved = savedItemIds.includes(savedKey);
-                  return (
-                    <article
-                      key={repo.id}
-                      className="flex flex-col gap-4 px-5 py-4 xl:flex-row xl:items-center xl:justify-between"
-                      style={{ borderColor: 'var(--border-subtle)' }}
-                    >
-                      <div className="flex min-w-0 flex-1 items-start gap-4">
-                        <span
-                          className="mt-0.5 inline-flex h-8 w-11 shrink-0 items-center justify-center rounded-[10px] border font-mono text-xs font-bold"
-                          style={{
-                            backgroundColor: 'var(--bg-panel)',
-                            borderColor: 'var(--border-subtle)',
-                            color: 'var(--ink-secondary)',
-                          }}
-                        >
-                          {rankLabel}
-                        </span>
-
-                        <div className="min-w-0 flex-1">
-                          <div className="flex flex-wrap items-center gap-2">
-                            <a
-                              href={repo.htmlUrl}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="break-all font-mono text-sm font-semibold hover:underline"
-                              style={{ color: 'var(--ink-primary)' }}
-                            >
-                              {repo.fullName}
-                            </a>
-                            <span
-                              className="rounded-full px-2 py-0.5 text-[11px] font-medium"
-                              style={{
-                                backgroundColor: 'var(--bg-panel)',
-                                color: 'var(--ink-secondary)',
-                              }}
-                            >
-                              {repo.category}
-                            </span>
-                            <span
-                              className="rounded-full border px-2 py-0.5 font-mono text-[11px]"
-                              style={{
-                                borderColor: 'var(--border-subtle)',
-                                color: 'var(--accent-verdigris)',
-                              }}
-                            >
-                              {repo.language}
-                            </span>
-                            <span
-                              className="rounded-full border px-2 py-0.5 font-mono text-[11px]"
-                              style={{
-                                borderColor: 'var(--border-subtle)',
-                                color: 'var(--ink-muted)',
-                              }}
-                            >
-                              {repo.license}
-                            </span>
-                          </div>
-
-                          <p className="mt-1 text-xs leading-relaxed" style={{ color: 'var(--ink-secondary)' }}>
-                            {repo.description}
-                          </p>
-                          <p className="mt-1 text-xs" style={{ color: 'var(--ink-muted)' }}>
-                            {repo.aiNote}
-                          </p>
-
-                          <div className="mt-2 flex flex-wrap items-center gap-2 text-[11px]">
-                            <span className="inline-flex items-center gap-1 font-mono font-semibold" style={{ color: 'var(--accent-primary)' }}>
-                              <Star className="h-3 w-3" aria-hidden="true" />
-                              {formatNumber(repo.stars)}
-                            </span>
-                            <span className="inline-flex items-center gap-1 font-mono" style={{ color: 'var(--ink-secondary)' }}>
-                              <GitFork className="h-3 w-3" aria-hidden="true" />
-                              {formatNumber(repo.forks)}
-                            </span>
-                            <span className="font-mono" style={{ color: 'var(--ink-muted)' }}>
-                              Push: {formatDateIso(repo.pushedAt)}
-                            </span>
-                            {repo.topics.slice(0, 4).map((topic) => (
-                              <span
-                                key={topic}
-                                className="rounded-full border px-2 py-0.5 font-mono text-[10px]"
-                                style={{
-                                  borderColor: 'var(--border-subtle)',
-                                  color: 'var(--ink-muted)',
-                                }}
-                              >
-                                #{topic}
-                              </span>
-                            ))}
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="flex shrink-0 flex-wrap items-center gap-2 pl-0 xl:pl-4">
-                        <button
-                          type="button"
-                          onClick={() => void handleCopyUrl(repo)}
-                          className="inline-flex h-8 items-center gap-1.5 rounded-full border px-3 text-xs font-medium"
-                          style={{
-                            backgroundColor: 'var(--bg-panel)',
-                            borderColor: 'var(--border-subtle)',
-                            color: 'var(--ink-secondary)',
-                          }}
-                        >
-                          {copiedId === repo.id ? (
-                            <Check className="h-3 w-3" style={{ color: 'var(--accent-jade)' }} aria-hidden="true" />
-                          ) : (
-                            <Copy className="h-3 w-3" aria-hidden="true" />
-                          )}
-                          <span>{copiedId === repo.id ? 'Copied' : 'Copy Repo URL'}</span>
-                        </button>
-
-                        <button
-                          type="button"
-                          onClick={() => toggleSavedItem(savedKey)}
-                          className="inline-flex h-8 items-center gap-1 rounded-full border px-3 text-xs font-medium"
-                          style={{
-                            backgroundColor: 'var(--bg-panel)',
-                            borderColor: isSaved ? 'var(--accent-jade)' : 'var(--border-subtle)',
-                            color: isSaved ? 'var(--accent-jade)' : 'var(--ink-secondary)',
-                          }}
-                        >
-                          {isSaved ? (
-                            <BookmarkCheck className="h-3 w-3" aria-hidden="true" />
-                          ) : (
-                            <Bookmark className="h-3 w-3" aria-hidden="true" />
-                          )}
-                          <span>{isSaved ? 'Đã lưu' : 'Save'}</span>
-                        </button>
-
                         <a
                           href={repo.htmlUrl}
                           target="_blank"
                           rel="noopener noreferrer"
                           aria-label={`Mở ${repo.fullName} trên GitHub`}
-                          className="inline-flex h-8 w-8 items-center justify-center rounded-full border"
+                          title="Mở trên GitHub"
+                          className="ml-auto inline-flex h-9 w-9 items-center justify-center rounded-full border"
                           style={{
                             backgroundColor: 'var(--bg-panel)',
                             borderColor: 'var(--border-subtle)',
@@ -918,19 +524,6 @@ export const RepoLeaderboard: React.FC<RepoLeaderboardProps> = ({
                         >
                           <ExternalLink className="h-3.5 w-3.5" aria-hidden="true" />
                         </a>
-
-                        <button
-                          type="button"
-                          onClick={() => handleUseInProject(repo)}
-                          className="inline-flex h-8 items-center gap-1.5 rounded-full px-3.5 text-xs font-semibold"
-                          style={{
-                            backgroundColor: 'var(--accent-primary)',
-                            color: '#06080d',
-                          }}
-                        >
-                          <Terminal className="h-3 w-3" aria-hidden="true" />
-                          <span>Use in Project</span>
-                        </button>
                       </div>
                     </article>
                   );
@@ -938,8 +531,249 @@ export const RepoLeaderboard: React.FC<RepoLeaderboardProps> = ({
               </div>
             </div>
           ) : null}
+
+          <div className="space-y-4">
+            <div className="flex items-end justify-between gap-4 border-b pb-3" style={{ borderColor: 'var(--border-subtle)' }}>
+              <div>
+                <span className="font-mono text-[11px]" style={{ color: 'var(--accent-primary)' }}>
+                  TÂM ĐIỂM BROAMSTUCK-CYBR
+                </span>
+                <h3
+                  className="mt-0.5 text-xl font-semibold"
+                  style={{ fontFamily: 'var(--font-serif)', color: 'var(--ink-primary)' }}
+                >
+                  Kho lưu trữ Nền tảng F-Forum
+                </h3>
+              </div>
+              {onOpenGitHubShowcase ? (
+                <button
+                  type="button"
+                  onClick={onOpenGitHubShowcase}
+                  className="rounded-full border px-4 py-1.5 text-xs font-medium cursor-pointer"
+                  style={{
+                    backgroundColor: 'var(--bg-panel)',
+                    borderColor: 'var(--border-accent)',
+                    color: 'var(--accent-primary)',
+                  }}
+                >
+                  Mở GitHub
+                </button>
+              ) : null}
+            </div>
+
+            <div className="flex gap-5 overflow-x-auto pb-4 snap-x ff-scrollbar">
+              {BROAMSTUCK_REPOS.map((repo) => {
+                const isSaved = savedItemIds.includes(repo.id);
+                return (
+                  <article
+                    key={repo.id}
+                    className="min-w-[300px] max-w-[330px] shrink-0 snap-start rounded-[22px] border p-5 flex flex-col justify-between gap-4"
+                    style={{
+                      backgroundColor: 'var(--bg-surface)',
+                      borderColor: 'var(--border-subtle)',
+                    }}
+                  >
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between gap-2 font-mono text-[11px]">
+                        <span style={{ color: 'var(--accent-primary)' }}>{repo.language}</span>
+                        <span style={{ color: 'var(--ink-muted)' }}>{repo.stars} sao</span>
+                      </div>
+                      <h4 className="truncate text-base font-semibold" style={{ color: 'var(--ink-primary)' }}>
+                        {repo.name}
+                      </h4>
+                      <p className="line-clamp-2 text-[13px] leading-relaxed" style={{ color: 'var(--ink-secondary)' }}>
+                        {repo.summaryVi}
+                      </p>
+                    </div>
+
+                    <div className="flex items-center gap-2 border-t pt-3" style={{ borderColor: 'var(--border-subtle)' }}>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          attachItemToWorkspace(
+                            {
+                              id: repo.id,
+                              kind: 'blueprint',
+                              title: repo.fullName,
+                              summary: repo.summaryVi,
+                              payload: `${repo.htmlUrl}\n${repo.keyPaths.join(', ')}`,
+                              tags: [repo.language, 'broamstuck-cybr'],
+                            },
+                            true
+                          )
+                        }
+                        className="h-9 rounded-full px-4 text-xs font-semibold cursor-pointer"
+                        style={{
+                          backgroundColor: 'var(--accent-primary)',
+                          color: 'var(--ink-inverse)',
+                        }}
+                      >
+                        Workspace
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => toggleSavedItem(repo.id)}
+                        aria-label={isSaved ? `Bỏ lưu ${repo.name}` : `Lưu ${repo.name}`}
+                        title={isSaved ? 'Bỏ lưu' : 'Lưu'}
+                        className="inline-flex h-9 w-9 items-center justify-center rounded-full border cursor-pointer"
+                        style={{
+                          backgroundColor: 'var(--bg-panel)',
+                          borderColor: isSaved ? 'var(--accent-jade)' : 'var(--border-subtle)',
+                          color: isSaved ? 'var(--accent-jade)' : 'var(--ink-secondary)',
+                        }}
+                      >
+                        {isSaved ? (
+                          <BookmarkCheck className="h-3.5 w-3.5" aria-hidden="true" />
+                        ) : (
+                          <Bookmark className="h-3.5 w-3.5" aria-hidden="true" />
+                        )}
+                      </button>
+                      <a
+                        href={repo.htmlUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        aria-label={`Mở ${repo.fullName} trên GitHub`}
+                        title="Mở trên GitHub"
+                        className="ml-auto inline-flex h-9 w-9 items-center justify-center rounded-full border"
+                        style={{
+                          backgroundColor: 'var(--bg-panel)',
+                          borderColor: 'var(--border-subtle)',
+                          color: 'var(--accent-verdigris)',
+                        }}
+                      >
+                        <ExternalLink className="h-3.5 w-3.5" aria-hidden="true" />
+                      </a>
+                    </div>
+                  </article>
+                );
+              })}
+            </div>
+          </div>
+
+          {categoryRibbons.map((group) => (
+            <div key={group.category} className="space-y-4">
+              <div className="flex items-end justify-between gap-4 border-b pb-3" style={{ borderColor: 'var(--border-subtle)' }}>
+                <h3
+                  className="text-xl font-semibold"
+                  style={{ fontFamily: 'var(--font-serif)', color: 'var(--ink-primary)' }}
+                >
+                  {group.category}
+                </h3>
+                <span className="font-mono text-xs" style={{ color: 'var(--ink-muted)' }}>
+                  {group.items.length} kho
+                </span>
+              </div>
+
+              <div className="flex gap-5 overflow-x-auto pb-4 snap-x ff-scrollbar">
+                {group.items.map((repo) => {
+                  const rank = rankMap.get(repo.id) ?? 4;
+                  const rankLabel = `#${String(rank).padStart(2, '0')}`;
+                  const savedKey = `repo-${repo.id}`;
+                  const isSaved = savedItemIds.includes(savedKey);
+                  return (
+                    <article
+                      key={repo.id}
+                      className="min-w-[310px] max-w-[345px] shrink-0 snap-start rounded-[22px] border p-5 flex flex-col justify-between gap-4"
+                      style={{
+                        backgroundColor: 'var(--bg-surface)',
+                        borderColor: 'var(--border-subtle)',
+                      }}
+                    >
+                      <div className="space-y-2.5">
+                        <div className="flex items-center justify-between gap-2 font-mono text-xs">
+                          <span style={{ color: 'var(--accent-primary)' }}>{rankLabel}</span>
+                          <span style={{ color: 'var(--ink-secondary)' }}>
+                            {formatNumber(repo.stars)} sao · {repo.language}
+                          </span>
+                        </div>
+                        <h4
+                          className="truncate text-base font-semibold"
+                          style={{ fontFamily: 'var(--font-display)', color: 'var(--ink-primary)' }}
+                        >
+                          {repo.fullName}
+                        </h4>
+                        <p className="line-clamp-2 text-[13px] leading-relaxed" style={{ color: 'var(--ink-secondary)' }}>
+                          {repo.description}
+                        </p>
+                        <p className="line-clamp-2 text-xs" style={{ color: 'var(--ink-muted)' }}>
+                          {repo.aiNote}
+                        </p>
+                      </div>
+
+                      <div className="flex items-center gap-2 border-t pt-3" style={{ borderColor: 'var(--border-subtle)' }}>
+                        <button
+                          type="button"
+                          onClick={() => handleUseInProject(repo)}
+                          className="h-9 rounded-full px-4 text-xs font-semibold cursor-pointer"
+                          style={{
+                            backgroundColor: 'var(--accent-primary)',
+                            color: 'var(--ink-inverse)',
+                          }}
+                        >
+                          Workspace
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => toggleSavedItem(savedKey)}
+                          aria-label={isSaved ? `Bỏ lưu ${repo.fullName}` : `Lưu ${repo.fullName}`}
+                          title={isSaved ? 'Bỏ lưu' : 'Lưu'}
+                          className="inline-flex h-9 w-9 items-center justify-center rounded-full border cursor-pointer"
+                          style={{
+                            backgroundColor: 'var(--bg-panel)',
+                            borderColor: isSaved ? 'var(--accent-jade)' : 'var(--border-subtle)',
+                            color: isSaved ? 'var(--accent-jade)' : 'var(--ink-secondary)',
+                          }}
+                        >
+                          {isSaved ? (
+                            <BookmarkCheck className="h-3.5 w-3.5" aria-hidden="true" />
+                          ) : (
+                            <Bookmark className="h-3.5 w-3.5" aria-hidden="true" />
+                          )}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => void handleCopyUrl(repo.id, repo.fullName, repo.htmlUrl)}
+                          aria-label={`Sao chép liên kết ${repo.fullName}`}
+                          title="Sao chép liên kết"
+                          className="inline-flex h-9 w-9 items-center justify-center rounded-full border cursor-pointer"
+                          style={{
+                            backgroundColor: 'var(--bg-panel)',
+                            borderColor: 'var(--border-subtle)',
+                            color: copiedId === repo.id ? 'var(--accent-jade)' : 'var(--ink-secondary)',
+                          }}
+                        >
+                          {copiedId === repo.id ? (
+                            <Check className="h-3.5 w-3.5" aria-hidden="true" />
+                          ) : (
+                            <Copy className="h-3.5 w-3.5" aria-hidden="true" />
+                          )}
+                        </button>
+                        <a
+                          href={repo.htmlUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          aria-label={`Mở ${repo.fullName} trên GitHub`}
+                          title="Mở trên GitHub"
+                          className="ml-auto inline-flex h-9 w-9 items-center justify-center rounded-full border"
+                          style={{
+                            backgroundColor: 'var(--bg-panel)',
+                            borderColor: 'var(--border-subtle)',
+                            color: 'var(--accent-verdigris)',
+                          }}
+                        >
+                          <ExternalLink className="h-3.5 w-3.5" aria-hidden="true" />
+                        </a>
+                      </div>
+                    </article>
+                  );
+                })}
+              </div>
+            </div>
+          ))}
         </>
       )}
     </section>
   );
 };
+
+export default RepoLeaderboard;

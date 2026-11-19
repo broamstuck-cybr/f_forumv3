@@ -20,11 +20,11 @@ export interface TaskCardProps {
 }
 
 const STATUS_META: Record<TaskStatus, { label: string; color: string; bg: string }> = {
-  completed: { label: 'Completed', color: 'var(--accent-jade)', bg: 'var(--accent-jade-soft)' },
-  running: { label: 'Running', color: 'var(--accent-primary)', bg: 'var(--accent-soft)' },
-  waiting: { label: 'Waiting', color: 'var(--ink-muted)', bg: 'var(--bg-panel)' },
-  failed: { label: 'Failed', color: 'var(--accent-danger)', bg: 'var(--accent-danger-soft)' },
-  approval: { label: 'Needs approval', color: 'var(--accent-verdigris)', bg: 'var(--accent-verdigris-soft)' },
+  completed: { label: 'Hoàn tất', color: 'var(--accent-jade)', bg: 'var(--accent-jade-soft)' },
+  running: { label: 'Đang chạy', color: 'var(--accent-primary)', bg: 'var(--accent-soft)' },
+  waiting: { label: 'Đang chờ', color: 'var(--ink-muted)', bg: 'var(--bg-panel)' },
+  failed: { label: 'Thất bại', color: 'var(--accent-danger)', bg: 'var(--accent-danger-soft)' },
+  approval: { label: 'Cần duyệt', color: 'var(--accent-verdigris)', bg: 'var(--accent-verdigris-soft)' },
 };
 
 function StatusIcon({ status }: { status: TaskStatus }) {

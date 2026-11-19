@@ -70,6 +70,7 @@ const ToastRow: React.FC<{ toast: ToastItem; onDismiss: (id: string) => void }> 
         type="button"
         onClick={() => onDismiss(toast.id)}
         aria-label="Đóng thông báo"
+        title="Đóng"
         className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full focus-visible:outline-2 focus-visible:outline-offset-2"
         style={{ color: 'var(--ink-muted)' }}
       >

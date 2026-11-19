@@ -924,7 +924,7 @@
       "owner": "broamstuck-cybr",
       "category": "Skills, Rules & Prompts",
       "htmlUrl": "https://github.com/broamstuck-cybr/SOURCEOFKNOWLEDGFORAI",
-      "description": "Resource and project",
+      "description": "Curated catalog of 6,770 UI components, prompts, and tokens from CodeFronts, ThreeUI, LucianLabs, MotionSites, and PinUI.",
       "stars": 2,
       "forks": 0,
       "language": "HTML",
@@ -932,6 +932,114 @@
       "pushedAt": "2026-11-19T08:38:50Z",
       "topics": [],
       "aiNote": "Verified knowledge base containing 6,770 UI components across 5 major design libraries and prompt catalog."
+    },
+    {
+      "id": "shadcn-labs-pin-ui",
+      "fullName": "shadcn-labs/pin-ui",
+      "name": "pin-ui",
+      "owner": "shadcn-labs",
+      "category": "UI/UX & Motion",
+      "htmlUrl": "https://github.com/shadcn-labs/pin-ui",
+      "description": "Tactile, physics-driven interactive React components and blocx registry.",
+      "stars": 232,
+      "forks": 9,
+      "language": "TypeScript",
+      "license": "MIT",
+      "pushedAt": "2026-11-18T12:00:00Z",
+      "topics": [
+        "react",
+        "motion",
+        "components",
+        "ui",
+        "pin-ui"
+      ],
+      "aiNote": "Primary interactive physics component reference for PromptComposer, ThemeSwitch, ReaderCard, Magnify, and LiquidTabs."
+    },
+    {
+      "id": "broamstuck-cybr-edunext-fe",
+      "fullName": "broamstuck-cybr/Edunext_fe",
+      "name": "Edunext_fe",
+      "owner": "broamstuck-cybr",
+      "category": "AI Agents & CLI",
+      "htmlUrl": "https://github.com/broamstuck-cybr/Edunext_fe",
+      "description": "Verified userscript workflow suite with SHA256 integrity manifest.",
+      "stars": 3,
+      "forks": 0,
+      "language": "JavaScript",
+      "license": "Open Source",
+      "pushedAt": "2026-11-18T06:35:58Z",
+      "topics": [
+        "edunext",
+        "userscript",
+        "automation"
+      ],
+      "aiNote": "Student academic automation toolkit with cryptographic checksum verification."
+    },
+    {
+      "id": "broamstuck-cybr-f-forum",
+      "fullName": "broamstuck-cybr/f-forum",
+      "name": "f-forum",
+      "owner": "broamstuck-cybr",
+      "category": "UI/UX & Motion",
+      "htmlUrl": "https://github.com/broamstuck-cybr/f-forum",
+      "description": "F-Forum React 19 + Tailwind CSS v4 student and designer collaboration platform.",
+      "stars": 2,
+      "forks": 0,
+      "language": "HTML",
+      "license": "Open Source",
+      "pushedAt": "2026-11-18T03:16:00Z",
+      "topics": [
+        "education",
+        "forum",
+        "fpt",
+        "react",
+        "student",
+        "tailwindcss",
+        "typescript",
+        "vercel",
+        "vietnamese",
+        "vite"
+      ],
+      "aiNote": "Production predecessor of f_forumv3 deployed at f-forum.vercel.app."
+    },
+    {
+      "id": "broamstuck-cybr-edunext-legacy",
+      "fullName": "broamstuck-cybr/edunext-legacy",
+      "name": "edunext-legacy",
+      "owner": "broamstuck-cybr",
+      "category": "Local LLM & DevTools",
+      "htmlUrl": "https://github.com/broamstuck-cybr/edunext-legacy",
+      "description": "Archive of Edunext browser extensions and helper scripts.",
+      "stars": 6,
+      "forks": 0,
+      "language": "JavaScript",
+      "license": "Open Source",
+      "pushedAt": "2026-11-18T02:56:54Z",
+      "topics": [
+        "edunext",
+        "javascript",
+        "devtools"
+      ],
+      "aiNote": "Legacy student tooling archive maintained under broamstuck-cybr."
+    },
+    {
+      "id": "broamstuck-cybr-resourcepack",
+      "fullName": "broamstuck-cybr/resourcepack",
+      "name": "resourcepack",
+      "owner": "broamstuck-cybr",
+      "category": "Local LLM & DevTools",
+      "htmlUrl": "https://github.com/broamstuck-cybr/resourcepack",
+      "description": "Curated study asset bundles and edunext question bank packages.",
+      "stars": 1,
+      "forks": 0,
+      "language": "Unknown",
+      "license": "Open Source",
+      "pushedAt": "2026-11-18T02:55:49Z",
+      "topics": [
+        "resources",
+        "education"
+      ],
+      "aiNote": "Packaged academic study assets and reference bundles."
     }
   ]
 }

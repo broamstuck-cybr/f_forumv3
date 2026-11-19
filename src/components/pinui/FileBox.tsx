@@ -43,7 +43,7 @@ export const FileBox: React.FC<FileBoxProps> = ({
           </h4>
         </div>
         <span className="text-[11px] font-mono" style={{ color: 'var(--ink-muted)' }}>
-          {tabs.length} tabs
+          {tabs.length} thẻ
         </span>
       </div>
 
@@ -83,6 +83,7 @@ export const FileBox: React.FC<FileBoxProps> = ({
                     type="button"
                     onClick={tab.onOpen}
                     aria-label={`Mở ${tab.label}`}
+                    title={`Mở ${tab.label}`}
                     className="inline-grid place-items-center h-7 w-7 rounded-lg border shrink-0 cursor-pointer transition-colors"
                     style={{
                       borderColor: 'var(--border-subtle)',

@@ -23,7 +23,7 @@ export const DEFAULT_CLUB_COVER =
       </defs>
       <rect width="800" height="450" fill="url(#coverBg)"/>
       <circle cx="400" cy="225" r="88" fill="#121722" stroke="#f59e0b" stroke-width="3"/>
-      <text x="400" y="235" font-family="Inter, sans-serif" font-size="30" font-weight="bold" fill="#f59e0b" text-anchor="middle">F-FORUM</text>
+      <text x="400" y="235" font-family="'Be Vietnam Pro', 'Manrope', sans-serif" font-size="30" font-weight="bold" fill="#c89b54" text-anchor="middle">F-FORUM</text>
     </svg>`
   );
 

@@ -1,0 +1,23 @@
+.sy-footer {
+  position: relative;
+  width: 100%;
+  border-top: 1px solid var(--border-subtle);
+  background: var(--bg-surface);
+  overflow: hidden;
+}
+
+.sy-wordmark {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+  margin: 20px 0 -0.22em;
+  font-family: var(--font-kanit);
+  font-size: clamp(4rem, 16vw, 13rem);
+  font-weight: 800;
+  letter-spacing: -0.04em;
+  line-height: 0.88;
+  color: var(--ink-primary);
+  opacity: 0.08;
+  user-select: none;
+  pointer-events: none;
+}

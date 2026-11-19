@@ -1,6 +1,6 @@
 import React, { useId, useState, type FormEvent } from 'react';
 import { motion, useReducedMotion } from 'motion/react';
-import { Eye, EyeOff, Loader2, Lock, Mail, Shield, User } from 'lucide-react';
+import { Eye, EyeOff, Lock, Mail, User } from 'lucide-react';
 import { KineticLogo } from '../brand/KineticLogo';
 
 export interface HaloSignInPayload {
@@ -89,7 +89,7 @@ export const HaloSignIn: React.FC<HaloSignInProps> = ({
           </h2>
           <p className="mt-1 text-[13px]" style={{ color: 'var(--ink-secondary)' }}>
             {mode === 'login'
-              ? 'Đồng bộ dự án Work space, bộ sưu tập đã lưu và lượt AI.'
+              ? 'Đồng bộ dự án Workspace, bộ sưu tập đã lưu và lượt AI.'
               : 'Bắt đầu kiến tạo giao diện với 15 lượt AI miễn phí và kho tài nguyên mở.'}
           </p>
         </header>
@@ -233,6 +233,7 @@ export const HaloSignIn: React.FC<HaloSignInProps> = ({
                 type="button"
                 onClick={() => setShowPassword((prev) => !prev)}
                 aria-label={showPassword ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}
+                title={showPassword ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}
                 className="inline-grid place-items-center h-7 w-7 rounded-lg cursor-pointer bg-transparent border-0"
                 style={{ color: 'var(--ink-muted)' }}
               >
@@ -244,14 +245,13 @@ export const HaloSignIn: React.FC<HaloSignInProps> = ({
           <button
             type="submit"
             disabled={loading}
-            className="mt-2 flex h-11 w-full items-center justify-center gap-2 rounded-xl border-0 text-[13.5px] font-semibold cursor-pointer transition-opacity disabled:opacity-60"
+            className="mt-2 flex h-11 w-full items-center justify-center rounded-xl border-0 text-[13.5px] font-semibold cursor-pointer transition-opacity disabled:opacity-60"
             style={{
               background: 'var(--accent-gradient)',
               color: 'var(--ink-inverse)',
             }}
           >
-            {loading && <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />}
-            <span>{mode === 'login' ? 'Đăng nhập' : 'Tạo tài khoản'}</span>
+            <span>{loading ? 'Đang xử lý' : mode === 'login' ? 'Đăng nhập' : 'Đăng ký'}</span>
           </button>
         </form>
       </div>
@@ -265,7 +265,7 @@ export const HaloSignIn: React.FC<HaloSignInProps> = ({
             className="bg-transparent border-0 p-0 font-semibold cursor-pointer"
             style={{ color: 'var(--accent-primary)' }}
           >
-            {mode === 'login' ? 'Đăng ký ngay' : 'Đăng nhập'}
+            {mode === 'login' ? 'Đăng ký' : 'Đăng nhập'}
           </button>
         </span>
 
@@ -273,11 +273,10 @@ export const HaloSignIn: React.FC<HaloSignInProps> = ({
           <button
             type="button"
             onClick={onAdminLink}
-            className="inline-flex items-center gap-1 bg-transparent border-0 p-0 font-mono text-[11px] cursor-pointer"
+            className="inline-flex items-center bg-transparent border-0 p-0 font-mono text-[11px] cursor-pointer"
             style={{ color: 'var(--ink-muted)' }}
           >
-            <Shield className="h-3 w-3" aria-hidden="true" />
-            <span>Cổng Quản trị</span>
+            <span>Quản trị</span>
           </button>
         )}
       </div>

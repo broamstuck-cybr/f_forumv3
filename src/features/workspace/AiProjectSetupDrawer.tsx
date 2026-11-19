@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { Check, Copy, FilePlus2, Layers, X } from 'lucide-react';
+import { Layers, X } from 'lucide-react';
 import type { ProjectSetupTarget, WorkspaceProject } from '../../types/index';
 import { generateProjectSetupBundle } from '../../services/projectSetupGenerator';
 
@@ -94,11 +94,12 @@ export const AiProjectSetupDrawer: React.FC<AiProjectSetupDrawerProps> = ({
           <button
             type="button"
             onClick={onClose}
-            aria-label="Close setup drawer"
+            aria-label="Đóng"
+            title="Đóng"
             style={{ color: 'var(--ink-secondary)' }}
-            className="p-2 rounded-lg hover:opacity-80"
+            className="p-2 rounded-lg hover:opacity-80 cursor-pointer"
           >
-            <X className="w-4 h-4" />
+            <X className="w-4 h-4" aria-hidden="true" />
           </button>
         </header>
 
@@ -113,12 +114,12 @@ export const AiProjectSetupDrawer: React.FC<AiProjectSetupDrawerProps> = ({
               aria-pressed={target === 'antigravity'}
               style={{
                 background: target === 'antigravity' ? 'var(--accent-primary)' : 'var(--bg-panel)',
-                color: target === 'antigravity' ? '#0b0d12' : 'var(--ink-primary)',
+                color: target === 'antigravity' ? 'var(--ink-inverse)' : 'var(--ink-primary)',
                 borderColor: 'var(--border-subtle)',
               }}
-              className="px-3 py-1.5 rounded-lg border text-xs font-semibold"
+              className="px-3 py-1.5 rounded-lg border text-xs font-semibold cursor-pointer"
             >
-              Antigravity Target
+              Antigravity
             </button>
             <button
               type="button"
@@ -126,12 +127,12 @@ export const AiProjectSetupDrawer: React.FC<AiProjectSetupDrawerProps> = ({
               aria-pressed={target === 'cursor'}
               style={{
                 background: target === 'cursor' ? 'var(--accent-primary)' : 'var(--bg-panel)',
-                color: target === 'cursor' ? '#0b0d12' : 'var(--ink-primary)',
+                color: target === 'cursor' ? 'var(--ink-inverse)' : 'var(--ink-primary)',
                 borderColor: 'var(--border-subtle)',
               }}
-              className="px-3 py-1.5 rounded-lg border text-xs font-semibold"
+              className="px-3 py-1.5 rounded-lg border text-xs font-semibold cursor-pointer"
             >
-              Cursor Target
+              Cursor
             </button>
           </div>
 
@@ -140,22 +141,12 @@ export const AiProjectSetupDrawer: React.FC<AiProjectSetupDrawerProps> = ({
             onClick={handleAddAllToWorkspace}
             style={{
               background: injected ? 'var(--accent-jade)' : 'var(--bg-panel)',
-              color: injected ? '#0b0d12' : 'var(--ink-primary)',
+              color: injected ? 'var(--ink-inverse)' : 'var(--ink-primary)',
               borderColor: 'var(--border-strong)',
             }}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-semibold"
+            className="px-3 py-1.5 rounded-lg border text-xs font-semibold cursor-pointer"
           >
-            {injected ? (
-              <>
-                <Check className="w-3.5 h-3.5" />
-                Đã thêm 5 tệp vào Workspace
-              </>
-            ) : (
-              <>
-                <FilePlus2 className="w-3.5 h-3.5" />
-                Thêm 5 tệp vào cây dự án
-              </>
-            )}
+            {injected ? 'Đã nạp' : 'Nạp tệp'}
           </button>
         </div>
 
@@ -180,7 +171,7 @@ export const AiProjectSetupDrawer: React.FC<AiProjectSetupDrawerProps> = ({
                     borderColor: selected ? 'var(--border-strong)' : 'transparent',
                     color: selected ? 'var(--accent-primary)' : 'var(--ink-secondary)',
                   }}
-                  className="text-left px-2.5 py-2 rounded-lg border font-mono text-xs shrink-0"
+                  className="text-left px-2.5 py-2 rounded-lg border font-mono text-xs shrink-0 cursor-pointer"
                 >
                   {doc.path}
                 </button>
@@ -200,21 +191,11 @@ export const AiProjectSetupDrawer: React.FC<AiProjectSetupDrawerProps> = ({
                 style={{
                   background: 'var(--bg-panel)',
                   borderColor: 'var(--border-subtle)',
-                  color: 'var(--ink-primary)',
+                  color: copiedPath === currentDoc?.path ? 'var(--accent-jade)' : 'var(--ink-primary)',
                 }}
-                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg border text-xs"
+                className="px-2.5 py-1 rounded-lg border text-xs font-medium cursor-pointer"
               >
-                {copiedPath === currentDoc?.path ? (
-                  <>
-                    <Check className="w-3.5 h-3.5" />
-                    Đã sao chép
-                  </>
-                ) : (
-                  <>
-                    <Copy className="w-3.5 h-3.5" />
-                    Sao chép
-                  </>
-                )}
+                {copiedPath === currentDoc?.path ? 'Đã chép' : 'Sao chép'}
               </button>
             </div>
             <pre

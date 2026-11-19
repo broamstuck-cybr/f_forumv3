@@ -37,6 +37,17 @@ kbd,
   font-family: var(--font-mono);
 }
 
+.ornate-cap {
+  font-family: var(--font-script);
+  font-weight: 500;
+  font-style: normal;
+  font-size: 1.42em;
+  line-height: 0.92;
+  display: inline-block;
+  padding-right: 0.06em;
+  vertical-align: baseline;
+}
+
 :where(a, button, input, textarea, select, summary, [tabindex]):focus-visible {
   outline: 2px solid var(--accent-primary);
   outline-offset: 2px;
@@ -73,7 +84,7 @@ kbd,
     145deg,
     rgba(255, 255, 255, 0.08) 0%,
     rgba(255, 255, 255, 0) 38%,
-    rgba(245, 158, 11, 0.04) 100%
+    rgba(200, 155, 84, 0.04) 100%
   );
   pointer-events: none;
 }

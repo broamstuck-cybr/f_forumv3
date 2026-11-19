@@ -1,9 +1,11 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { ArrowRight, BookOpenCheck, LogIn, Menu, X } from 'lucide-react';
+import React, { useCallback, useEffect, useState } from 'react';
+import { motion, useScroll, useSpring } from 'motion/react';
+import { Menu, X } from 'lucide-react';
 import type { User } from '../../types/index';
 import { DEFAULT_AVATAR, handleImageError } from '../../utils/mediaFallback';
 import { KineticLogo } from '../brand/KineticLogo';
-import { scrollToSection } from './useLandingMotion';
+import { LANDING_CHAPTERS } from './landingContent';
+import { scrollToSection, useActiveChapter, usePrefersReducedMotion } from './useLandingMotion';
 
 export interface LandingNavProps {
   currentUser: User | null;
@@ -12,12 +14,7 @@ export interface LandingNavProps {
   onEnterApp: () => void;
 }
 
-const NAV_LINKS: { id: string; label: string }[] = [
-  { id: 'top', label: 'Trang chủ' },
-  { id: 'kham-pha', label: 'Khám phá' },
-  { id: 'bang-gia', label: 'Chi phí' },
-  { id: 'faq', label: 'Hỏi đáp' },
-];
+const CHAPTER_IDS = LANDING_CHAPTERS.map((c) => c.id);
 
 export const LandingNav: React.FC<LandingNavProps> = ({
   currentUser,
@@ -25,36 +22,35 @@ export const LandingNav: React.FC<LandingNavProps> = ({
   onOpenRegister,
   onEnterApp,
 }) => {
+  const reduced = usePrefersReducedMotion();
   const [scrolled, setScrolled] = useState(false);
-  const progressBarRef = useRef<HTMLDivElement | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
-  const [activeSection, setActiveSection] = useState<string>('');
+  const activeSection = useActiveChapter(CHAPTER_IDS);
+
+  const { scrollYProgress } = useScroll();
+  const smoothProgress = useSpring(scrollYProgress, {
+    stiffness: 240,
+    damping: 34,
+    restDelta: 0.001,
+  });
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
     let rafId = 0;
-    const syncScroll = () => {
+    const sync = () => {
       rafId = 0;
       const y = window.scrollY || 0;
-      setScrolled((prev) => (prev ? y > 14 : y > 28));
-      if (progressBarRef.current) {
-        const doc = document.documentElement;
-        const max = Math.max(1, doc.scrollHeight - window.innerHeight);
-        const pct = Math.min(1, Math.max(0, y / max));
-        progressBarRef.current.style.transform = `scaleX(${pct.toFixed(4)})`;
-      }
+      setScrolled((prev) => (prev ? y > 16 : y > 32));
     };
     const onScroll = () => {
       if (rafId) return;
-      rafId = requestAnimationFrame(syncScroll);
+      rafId = requestAnimationFrame(sync);
     };
-    syncScroll();
+    sync();
     window.addEventListener('scroll', onScroll, { passive: true });
-    window.addEventListener('resize', onScroll, { passive: true });
     return () => {
       if (rafId) cancelAnimationFrame(rafId);
       window.removeEventListener('scroll', onScroll);
-      window.removeEventListener('resize', onScroll);
     };
   }, []);
 
@@ -77,77 +73,68 @@ export const LandingNav: React.FC<LandingNavProps> = ({
     };
   }, [menuOpen]);
 
-  useEffect(() => {
-    if (typeof IntersectionObserver === 'undefined') return;
-    const observer = new IntersectionObserver(
-      (entries) => {
-        const visible = entries
-          .filter((entry) => entry.isIntersecting)
-          .sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0];
-        if (visible) setActiveSection(visible.target.id);
-      },
-      { rootMargin: '-45% 0px -45% 0px', threshold: [0.01, 0.2, 0.5] }
-    );
-    NAV_LINKS.forEach((link) => {
-      const el = document.getElementById(link.id);
-      if (el) observer.observe(el);
-    });
-    return () => observer.disconnect();
-  }, []);
-
   return (
     <header className="fixed inset-x-0 top-0 z-50 transform-gpu">
-      <div className="h-[3px] w-full bg-transparent overflow-hidden" aria-hidden="true">
-        <div
-          ref={progressBarRef}
-          className="h-full w-full origin-left bg-gradient-to-r from-amber-200 via-amber-400 to-orange-500 will-change-transform"
-          style={{ transform: 'scaleX(0)' }}
+      <div className="h-[2px] w-full bg-transparent overflow-hidden" aria-hidden="true">
+        <motion.div
+          className="h-full w-full origin-left"
+          style={{
+            scaleX: reduced ? scrollYProgress : smoothProgress,
+            background: 'linear-gradient(90deg, #e5c384 0%, #c89b54 60%, #2dd4bf 100%)',
+          }}
         />
       </div>
 
-      <div className="relative mx-auto flex max-w-[1360px] items-center justify-between gap-3 px-4 py-3 sm:px-6">
+      <div className="relative mx-auto flex max-w-[1380px] items-center justify-between gap-4 px-4 py-3.5 sm:px-8">
         <div
-          className={`pointer-events-none absolute inset-0 -z-10 backdrop-blur-md transition-colors duration-300 ease-out ${
+          className={`pointer-events-none absolute inset-0 -z-10 backdrop-blur-xl transition-colors duration-300 ${
             scrolled
-              ? 'bg-[var(--ff-bg)]/92 border-b border-[var(--ff-border)]'
+              ? 'bg-[var(--ff-bg)]/88 border-b border-[var(--ff-border)]'
               : 'bg-transparent border-b border-transparent'
           }`}
           aria-hidden="true"
         />
 
-        <button
-          type="button"
-          onClick={() => {
-            setMenuOpen(false);
-            onEnterApp();
-          }}
-          className="group flex shrink-0 items-center gap-2.5 cursor-pointer bg-transparent border-0 p-0"
-          aria-label="Vào ứng dụng F-Forum"
-        >
-          <KineticLogo size={32} />
-          <span className="ff-brand-serif whitespace-nowrap bg-gradient-to-r from-amber-200 via-amber-400 to-yellow-500 bg-clip-text text-xl text-transparent">
+        <div className="flex shrink-0 items-center gap-2.5">
+          <button
+            type="button"
+            onClick={() => {
+              setMenuOpen(false);
+              onEnterApp();
+            }}
+            className="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-transparent border-0 p-0 cursor-pointer"
+            aria-label="F-Forum"
+            title="F-Forum"
+          >
+            <KineticLogo size={30} showWordmark={false} />
+          </button>
+          <span
+            className="text-[19px] font-semibold tracking-tight whitespace-nowrap select-none"
+            style={{ fontFamily: 'var(--font-serif)', color: 'var(--ff-amber-ink)' }}
+          >
             F-Forum
           </span>
-        </button>
+        </div>
 
-        <nav aria-label="Điều hướng chính" className="hidden items-center gap-1 lg:flex">
-          {NAV_LINKS.map((link) => {
-            const active = activeSection === link.id;
+        <nav aria-label="Điều hướng chương" className="hidden items-center gap-1 lg:flex">
+          {LANDING_CHAPTERS.map((chapter) => {
+            const active = activeSection === chapter.id;
             return (
               <button
-                key={link.id}
+                key={chapter.id}
                 type="button"
-                onClick={() => goToSection(link.id)}
+                onClick={() => goToSection(chapter.id)}
                 aria-current={active ? 'true' : undefined}
-                className={`relative whitespace-nowrap rounded-full px-3.5 py-2 text-[13px] font-medium bg-transparent border-0 cursor-pointer transition-colors duration-300 ${
+                className={`relative whitespace-nowrap rounded-full px-4 py-2 text-[13px] font-medium bg-transparent border-0 cursor-pointer transition-colors duration-200 ${
                   active ? 'text-[var(--ff-text)]' : 'text-[var(--ff-text-soft)] hover:text-[var(--ff-text)]'
                 }`}
               >
-                {link.label}
+                {chapter.label}
                 <span
-                  className={`absolute inset-x-3 -bottom-0.5 h-[2px] origin-left rounded-full bg-gradient-to-r from-amber-300 to-amber-500 transition-transform duration-300 ${
+                  className={`absolute inset-x-4 bottom-1 h-[1.5px] origin-left rounded-full transition-transform duration-300 ${
                     active ? 'scale-x-100' : 'scale-x-0'
                   }`}
+                  style={{ background: 'var(--ff-amber)' }}
                   aria-hidden="true"
                 />
               </button>
@@ -155,35 +142,35 @@ export const LandingNav: React.FC<LandingNavProps> = ({
           })}
         </nav>
 
-        <div className="hidden items-center gap-2 lg:flex">
+        <div className="hidden items-center gap-2.5 lg:flex">
           {currentUser ? (
             <>
-              <span className="ff-chip px-3 py-1.5">
+              <span className="inline-flex items-center gap-2 rounded-full border border-[var(--ff-border)] bg-[var(--ff-surface)] px-3 py-1.5 text-[12.5px]">
                 <img
                   src={currentUser.avatar || DEFAULT_AVATAR}
-                  alt={currentUser.name || 'User Avatar'}
+                  alt={currentUser.name || 'Hồ sơ'}
                   onError={(e) => handleImageError(e, DEFAULT_AVATAR)}
                   loading="lazy"
                   decoding="async"
                   width={20}
                   height={20}
-                  className="h-5 w-5 rounded-full object-cover ring-1 ring-amber-400/60"
+                  className="h-5 w-5 rounded-full object-cover"
                 />
                 <span className="max-w-[110px] truncate font-medium text-[var(--ff-text)]">
                   {currentUser.name}
                 </span>
               </span>
-              <button type="button" onClick={onEnterApp} className="ff-btn ff-btn-primary px-5 py-2.5 text-sm">
-                Vào ứng dụng <ArrowRight className="h-4 w-4" aria-hidden="true" />
+              <button type="button" onClick={onEnterApp} className="ff-btn ff-btn-primary px-5 py-2.5 text-[13px]">
+                Bắt đầu
               </button>
             </>
           ) : (
             <>
-              <button type="button" onClick={onOpenLogin} className="ff-btn ff-btn-ghost px-4 py-2.5 text-sm">
-                <LogIn className="h-4 w-4" aria-hidden="true" /> Đăng nhập
+              <button type="button" onClick={onOpenLogin} className="ff-btn ff-btn-ghost px-4 py-2.5 text-[13px]">
+                Đăng nhập
               </button>
-              <button type="button" onClick={onEnterApp} className="ff-btn ff-btn-primary px-5 py-2.5 text-sm">
-                <BookOpenCheck className="h-4 w-4" aria-hidden="true" /> Vào ứng dụng
+              <button type="button" onClick={onEnterApp} className="ff-btn ff-btn-primary px-5 py-2.5 text-[13px]">
+                Bắt đầu
               </button>
             </>
           )}
@@ -194,10 +181,11 @@ export const LandingNav: React.FC<LandingNavProps> = ({
           onClick={() => setMenuOpen((prev) => !prev)}
           aria-expanded={menuOpen}
           aria-controls="ff-mobile-menu"
-          aria-label={menuOpen ? 'Đóng menu' : 'Mở menu'}
+          aria-label={menuOpen ? 'Đóng' : 'Mở rộng'}
+          title={menuOpen ? 'Đóng' : 'Mở rộng'}
           className="ff-btn ff-btn-ghost h-10 w-10 !p-0 lg:hidden"
         >
-          {menuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+          {menuOpen ? <X className="h-5 w-5" aria-hidden="true" /> : <Menu className="h-5 w-5" aria-hidden="true" />}
         </button>
       </div>
 
@@ -209,21 +197,21 @@ export const LandingNav: React.FC<LandingNavProps> = ({
         <button
           type="button"
           tabIndex={-1}
-          aria-label="Đóng menu di động"
-          className="ff-fade-in fixed inset-0 -z-10 bg-black/60 backdrop-blur-sm border-none outline-none cursor-default"
+          aria-label="Đóng"
+          title="Đóng"
+          className="fixed inset-0 -z-10 bg-black/60 backdrop-blur-sm border-0 outline-none cursor-default"
           onClick={() => setMenuOpen(false)}
         />
-        <div className="ff-drawer-in mx-4 mt-2 max-h-[calc(100dvh-5rem)] overflow-y-auto rounded-2xl border border-[var(--ff-border)] bg-[var(--ff-bg-soft)]/95 p-5 shadow-2xl backdrop-blur-2xl">
+        <div className="mx-4 mt-2 max-h-[calc(100dvh-5rem)] overflow-y-auto rounded-2xl border border-[var(--ff-border)] bg-[var(--ff-bg-soft)] p-5 shadow-2xl">
           <nav aria-label="Điều hướng di động" className="grid gap-1">
-            {NAV_LINKS.map((link) => (
+            {LANDING_CHAPTERS.map((chapter) => (
               <button
-                key={link.id}
+                key={chapter.id}
                 type="button"
-                onClick={() => goToSection(link.id)}
-                className="flex items-center justify-between rounded-2xl px-4 py-3 text-left text-sm font-medium text-[var(--ff-text-soft)] bg-transparent border-0 transition-colors hover:bg-[var(--ff-surface)] hover:text-[var(--ff-text)]"
+                onClick={() => goToSection(chapter.id)}
+                className="flex items-center justify-between rounded-xl px-4 py-3 text-left text-sm font-medium text-[var(--ff-text-soft)] bg-transparent border-0 cursor-pointer hover:bg-[var(--ff-surface)] hover:text-[var(--ff-text)]"
               >
-                {link.label}
-                <ArrowRight className="h-4 w-4 opacity-60" aria-hidden="true" />
+                {chapter.label}
               </button>
             ))}
           </nav>
@@ -235,9 +223,9 @@ export const LandingNav: React.FC<LandingNavProps> = ({
                 setMenuOpen(false);
                 onEnterApp();
               }}
-              className="ff-btn ff-btn-primary w-full px-5 py-3.5 text-sm"
+              className="ff-btn ff-btn-primary w-full px-5 py-3 text-sm"
             >
-              Vào ứng dụng <ArrowRight className="h-4 w-4" aria-hidden="true" />
+              Bắt đầu
             </button>
             {!currentUser && (
               <>
@@ -247,9 +235,9 @@ export const LandingNav: React.FC<LandingNavProps> = ({
                     setMenuOpen(false);
                     onOpenLogin();
                   }}
-                  className="ff-btn ff-btn-ghost w-full px-5 py-3.5 text-sm"
+                  className="ff-btn ff-btn-ghost w-full px-5 py-3 text-sm"
                 >
-                  <LogIn className="h-4 w-4" aria-hidden="true" /> Đăng nhập
+                  Đăng nhập
                 </button>
                 <button
                   type="button"
@@ -257,9 +245,9 @@ export const LandingNav: React.FC<LandingNavProps> = ({
                     setMenuOpen(false);
                     onOpenRegister();
                   }}
-                  className="ff-btn ff-btn-ghost w-full px-5 py-3.5 text-sm"
+                  className="ff-btn ff-btn-ghost w-full px-5 py-3 text-sm"
                 >
-                  <BookOpenCheck className="h-4 w-4" aria-hidden="true" /> Đăng ký
+                  Đăng ký
                 </button>
               </>
             )}

@@ -1,5 +1,4 @@
 import React from 'react';
-import { ArrowLeft, Terminal } from 'lucide-react';
 import type { AppRoute } from '../../types/index';
 import { useAppStore } from '../../store/appStore';
 
@@ -91,21 +90,20 @@ export const Skybridge404: React.FC<Skybridge404Props> = ({ onNavigate }) => {
           <button
             type="button"
             onClick={() => go('home')}
-            className="inline-flex h-11 items-center gap-2 rounded-full px-5 text-sm font-semibold focus-visible:outline-2 focus-visible:outline-offset-2"
+            className="inline-flex h-11 items-center rounded-full px-5 text-sm font-semibold focus-visible:outline-2 focus-visible:outline-offset-2"
             style={{
               backgroundColor: 'var(--accent-primary)',
               color: '#06080d',
               transition: 'transform 180ms cubic-bezier(0.2, 0.8, 0.2, 1), opacity 180ms ease',
             }}
           >
-            <ArrowLeft className="h-4 w-4" aria-hidden="true" />
-            <span>Về Home</span>
+            <span>Trang chủ</span>
           </button>
 
           <button
             type="button"
             onClick={() => go('workspace')}
-            className="inline-flex h-11 items-center gap-2 rounded-full border px-5 text-sm font-semibold focus-visible:outline-2 focus-visible:outline-offset-2"
+            className="inline-flex h-11 items-center rounded-full border px-5 text-sm font-semibold focus-visible:outline-2 focus-visible:outline-offset-2"
             style={{
               backgroundColor: 'rgba(12, 16, 24, 0.72)',
               borderColor: 'rgba(255, 255, 255, 0.26)',
@@ -114,8 +112,7 @@ export const Skybridge404: React.FC<Skybridge404Props> = ({ onNavigate }) => {
               transition: 'transform 180ms cubic-bezier(0.2, 0.8, 0.2, 1), border-color 180ms ease',
             }}
           >
-            <Terminal className="h-4 w-4" aria-hidden="true" />
-            <span>Mở Work space</span>
+            <span>Workspace</span>
           </button>
         </div>
       </section>

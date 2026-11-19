@@ -4,6 +4,7 @@ export type AppRoute =
   | 'explore'
   | 'workspace'
   | 'community'
+  | 'profile'
   | 'settings'
   | 'admin'
   | 'not-found';
@@ -25,6 +26,8 @@ export type AIActivityState = 'idle' | 'thinking' | 'streaming' | 'verified' | '
 export type AIProtocol = 'openai-compatible' | 'anthropic' | 'gemini';
 
 export type ThemeMode = 'dark' | 'light';
+
+export type ThemeEffect = 'droplet' | 'rain' | 'diwali';
 
 export type UserRole = 'user' | 'admin' | 'SUPER_ADMIN' | 'CLUB_LEADER' | 'STUDENT';
 
@@ -405,6 +408,7 @@ export interface BYOKConfig {
 
 export interface SettingsState {
   theme: ThemeMode;
+  themeEffect?: ThemeEffect;
   reducedMotion: boolean;
   compactDensity: boolean;
   defaultExportTarget: 'antigravity' | 'cursor';

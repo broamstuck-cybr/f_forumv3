@@ -9,7 +9,7 @@
 .ff-story-track {
   position: relative;
   width: 100%;
-  height: 560vh;
+  min-height: 280vh;
 }
 
 .ff-story-sticky {
@@ -19,8 +19,9 @@
   height: calc(100svh - var(--navbar-h));
   overflow: hidden;
   display: flex;
-  align-items: center;
-  justify-content: center;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: clamp(20px, 3vh, 36px) 0;
   background: var(--bg-canvas);
   isolation: isolate;
 }
@@ -30,8 +31,8 @@
   inset: 0;
   pointer-events: none;
   background:
-    radial-gradient(ellipse 64% 48% at 22% 18%, var(--accent-soft), transparent 70%),
-    radial-gradient(ellipse 52% 44% at 82% 80%, var(--accent-verdigris-soft), transparent 72%);
+    radial-gradient(ellipse 62% 46% at 20% 20%, var(--accent-soft), transparent 70%),
+    radial-gradient(ellipse 52% 44% at 84% 80%, var(--accent-verdigris-soft), transparent 72%);
   z-index: 0;
 }
 
@@ -43,18 +44,14 @@
     linear-gradient(to right, var(--border-subtle) 1px, transparent 1px),
     linear-gradient(to bottom, var(--border-subtle) 1px, transparent 1px);
   background-size: 48px 48px;
-  -webkit-mask-image: radial-gradient(ellipse 70% 62% at 50% 45%, #000 18%, transparent 78%);
-  mask-image: radial-gradient(ellipse 70% 62% at 50% 45%, #000 18%, transparent 78%);
-  opacity: 0.55;
+  -webkit-mask-image: radial-gradient(ellipse 72% 62% at 50% 45%, #000 18%, transparent 78%);
+  mask-image: radial-gradient(ellipse 72% 62% at 50% 45%, #000 18%, transparent 78%);
+  opacity: 0.45;
   z-index: 0;
 }
 
 .ff-story-rail {
-  position: absolute;
-  top: 20px;
-  right: clamp(12px, 2.2vw, 28px);
-  z-index: 35;
-  display: flex;
+  display: inline-flex;
   align-items: center;
   gap: 6px;
   padding: 5px;
@@ -72,7 +69,7 @@
   font-family: var(--font-mono);
   font-size: 11px;
   font-weight: 600;
-  padding: 5px 10px;
+  padding: 6px 12px;
   border-radius: var(--radius-pill);
   cursor: pointer;
   white-space: nowrap;
@@ -84,411 +81,30 @@
   color: var(--accent-primary);
 }
 
-.ff-story-act1 {
-  position: absolute;
-  inset: 0;
-  z-index: 12;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: flex-start;
-  padding-top: clamp(56px, 9vh, 96px);
-  padding-inline: 16px;
-  pointer-events: none;
-  will-change: transform, opacity;
-}
-
-.ff-story-glyph-row {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: clamp(8px, 1.4vw, 18px);
-  margin-bottom: 14px;
-}
-
-.ff-story-pixel-chip {
-  display: inline-grid;
-  place-items: center;
-  width: clamp(30px, 3.6vw, 40px);
-  height: clamp(30px, 3.6vw, 40px);
-  border-radius: 10px;
-  border: 1px solid var(--border-strong);
-  background: var(--bg-surface);
-  color: var(--accent-primary);
-  box-shadow: var(--shadow-sm);
-  will-change: transform, opacity;
-}
-
-.ff-story-pixel-chip[data-tone='verdigris'] {
-  color: var(--accent-verdigris);
-}
-
-.ff-story-pixel-chip[data-tone='jade'] {
-  color: var(--accent-jade);
-}
-
-.ff-story-pixel-chip[data-tone='copper'] {
-  color: var(--accent-copper);
-}
-
-.ff-story-h1 {
-  margin: 0;
-  font-family: var(--font-display);
-  font-size: clamp(2rem, 1.35rem + 3.1vw, 4.1rem);
-  font-weight: 800;
-  letter-spacing: -0.035em;
-  line-height: 1.04;
-  text-align: center;
-  color: var(--ink-primary);
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 0 0.24em;
-}
-
-.ff-story-char {
-  display: inline-block;
-  will-change: transform, opacity;
-}
-
-.ff-story-sub {
-  margin: 12px auto 0;
-  max-width: 52ch;
-  text-align: center;
-  font-size: clamp(0.86rem, 0.82rem + 0.22vw, 1rem);
-  color: var(--ink-secondary);
-}
-
-.ff-story-act2-copy {
-  position: absolute;
-  top: clamp(58px, 10vh, 104px);
-  left: 50%;
-  transform: translate3d(-50%, 0, 0);
-  width: min(760px, calc(100% - 32px));
-  z-index: 16;
-  text-align: center;
-  pointer-events: none;
-  will-change: transform, opacity;
-}
-
-.ff-story-act2-h2 {
-  margin: 0;
-  font-family: var(--font-display);
-  font-size: clamp(1.75rem, 1.2rem + 2.4vw, 3.35rem);
-  font-weight: 800;
-  letter-spacing: -0.03em;
-  line-height: 1.08;
-  color: var(--ink-primary);
-}
-
-.ff-story-word {
-  display: inline-block;
-  margin-inline: 0.14em;
-  will-change: transform, opacity, filter;
-}
-
-.ff-story-cards-stage {
-  position: absolute;
-  inset: 0;
-  z-index: 14;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  pointer-events: none;
-}
-
-.ff-story-card {
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  width: clamp(148px, 15.5vw, 206px);
-  height: clamp(192px, 20.5vw, 266px);
-  margin-left: calc(clamp(148px, 15.5vw, 206px) / -2);
-  margin-top: calc(clamp(192px, 20.5vw, 266px) / -2);
-  border-radius: 18px;
+.ff-story-specimen-card {
+  width: clamp(250px, 26vw, 330px);
+  flex-shrink: 0;
+  border-radius: 22px;
   border: 1px solid var(--border-strong);
   background: var(--bg-surface);
   box-shadow: var(--shadow-specular), var(--shadow-md);
   overflow: hidden;
-  padding: 12px;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
   text-align: left;
-  cursor: pointer;
-  pointer-events: auto;
   color: var(--ink-primary);
-  will-change: transform, opacity;
-  transition: border-color 180ms ease;
+  transition: border-color 200ms ease, transform 220ms ease;
 }
 
-.ff-story-card:hover {
+.ff-story-specimen-card:hover {
   border-color: var(--accent-primary);
+  transform: translateY(-2px);
 }
 
-.ff-story-card-accent {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 3px;
-}
-
-.ff-story-card-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 6px;
-}
-
-.ff-story-card-code {
-  font-family: var(--font-mono);
-  font-size: 10px;
-  font-weight: 600;
-  color: var(--ink-muted);
-}
-
-.ff-story-card-route {
-  font-family: var(--font-mono);
-  font-size: 9.5px;
-  padding: 2px 7px;
-  border-radius: var(--radius-pill);
-  background: var(--bg-panel);
-  color: var(--ink-secondary);
-}
-
-.ff-story-card-preview {
-  flex: 1;
-  margin-block: 10px;
-  border-radius: 10px;
-  border: 1px solid var(--border-subtle);
-  background: var(--bg-panel);
-  overflow: hidden;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 8px;
-}
-
-.ff-story-card-title {
-  font-family: var(--font-display);
-  font-size: 13px;
-  font-weight: 700;
-  line-height: 1.2;
-  color: var(--ink-primary);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.ff-story-card-caption {
-  margin-top: 2px;
-  font-size: 11px;
-  line-height: 1.25;
-  color: var(--ink-secondary);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.ff-story-portal {
-  position: absolute;
-  inset: 0;
-  z-index: 24;
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: clamp(20px, 4vw, 48px);
-  background:
-    radial-gradient(ellipse 60% 48% at 24% 22%, rgba(245, 158, 11, 0.22), transparent 68%),
-    radial-gradient(ellipse 56% 48% at 78% 76%, rgba(45, 212, 191, 0.18), transparent 70%),
-    linear-gradient(160deg, #070a11 0%, #0d1320 52%, #06080d 100%);
-  color: #f1efe9;
-  will-change: clip-path, opacity;
-  pointer-events: none;
-}
-
-.ff-story-portal[data-interactive='true'] {
-  pointer-events: auto;
-}
-
-.ff-story-portal-grid {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  background-image:
-    linear-gradient(to right, rgba(241, 239, 233, 0.06) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(241, 239, 233, 0.06) 1px, transparent 1px);
-  background-size: 40px 40px;
-  opacity: 0.65;
-}
-
-.ff-story-portal-head {
-  position: relative;
-  z-index: 2;
-  text-align: center;
-  max-width: 720px;
-  margin-bottom: clamp(18px, 3vh, 30px);
-}
-
-.ff-story-portal-title {
-  margin: 0;
-  font-family: var(--font-display);
-  font-size: clamp(1.75rem, 1.2rem + 2.4vw, 3.25rem);
-  font-weight: 800;
-  letter-spacing: -0.03em;
-  line-height: 1.06;
-  color: #f1efe9;
-}
-
-.ff-story-portal-sub {
-  margin: 10px auto 0;
-  max-width: 50ch;
-  font-size: 14.5px;
-  color: #a1a9b8;
-}
-
-.ff-story-viewport-wrap {
-  position: relative;
-  z-index: 2;
-  width: min(720px, 100%);
-  perspective: 900px;
-}
-
-.ff-story-viewport-3d {
-  width: 100%;
-  border-radius: 20px;
-  border: 1px solid rgba(241, 239, 233, 0.16);
-  background: rgba(12, 16, 24, 0.92);
-  box-shadow: 0 32px 80px rgba(0, 0, 0, 0.62), inset 0 1px 0 rgba(255, 255, 255, 0.12);
-  overflow: hidden;
-  transform-style: preserve-3d;
-  will-change: transform;
-}
-
-.ff-story-vp-bar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-  padding: 10px 14px;
-  border-bottom: 1px solid rgba(241, 239, 233, 0.1);
-  background: rgba(18, 23, 34, 0.95);
-  font-family: var(--font-mono);
-  font-size: 11px;
-  color: #a1a9b8;
-}
-
-.ff-story-vp-body {
-  display: grid;
-  grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr);
-  gap: 12px;
-  padding: 14px;
-}
-
-.ff-manifesto-track {
+.ff-story-manifesto-band {
   position: relative;
   width: 100%;
-  height: 280vh;
-  background: #06080d;
-  color: #f1efe9;
-}
-
-.ff-manifesto-sticky {
-  position: sticky;
-  top: var(--navbar-h);
-  width: 100%;
-  height: calc(100svh - var(--navbar-h));
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  padding: clamp(24px, 4vh, 44px) 0;
-  background:
-    radial-gradient(ellipse 62% 46% at 18% 24%, rgba(245, 158, 11, 0.12), transparent 68%),
-    radial-gradient(ellipse 54% 46% at 86% 78%, rgba(45, 212, 191, 0.1), transparent 70%),
-    #06080d;
-}
-
-.ff-manifesto-band {
-  position: relative;
-  flex: 1;
-  display: flex;
-  align-items: center;
-  overflow: hidden;
-  width: 100%;
-}
-
-.ff-manifesto-line {
-  display: inline-flex;
-  align-items: center;
-  gap: clamp(20px, 3vw, 40px);
-  white-space: nowrap;
-  padding-inline: clamp(24px, 8vw, 120px);
-  will-change: transform;
-}
-
-.ff-manifesto-phrase {
-  display: inline-flex;
-  align-items: baseline;
-  font-family: var(--font-display);
-  font-size: clamp(2.1rem, 1.4rem + 3.4vw, 4.8rem);
-  font-weight: 800;
-  letter-spacing: -0.035em;
-  line-height: 1.05;
-  color: #f1efe9;
-}
-
-.ff-manifesto-glyph {
-  display: inline-block;
-  will-change: transform, opacity;
-}
-
-.ff-manifesto-badge {
-  display: inline-flex;
-  align-items: center;
-  padding: 8px 16px;
-  border-radius: 12px;
-  font-family: var(--font-mono);
-  font-size: clamp(12px, 1.1vw, 14px);
-  font-weight: 700;
-  border: 1px solid rgba(245, 158, 11, 0.45);
-  background: rgba(245, 158, 11, 0.14);
-  color: #fcd34d;
-  box-shadow: 0 10px 26px rgba(0, 0, 0, 0.4);
-  will-change: transform, opacity;
-}
-
-.ff-manifesto-badge[data-tone='verdigris'] {
-  border-color: rgba(45, 212, 191, 0.45);
-  background: rgba(45, 212, 191, 0.14);
-  color: #5eead4;
-}
-
-.ff-manifesto-badge[data-tone='jade'] {
-  border-color: rgba(52, 211, 153, 0.45);
-  background: rgba(52, 211, 153, 0.14);
-  color: #6ee7b7;
-}
-
-.ff-manifesto-badge[data-tone='copper'] {
-  border-color: rgba(224, 122, 56, 0.48);
-  background: rgba(224, 122, 56, 0.16);
-  color: #fdba74;
-}
-
-.ff-manifesto-actions {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: 14px;
-  padding-inline: clamp(16px, 3vw, 32px);
-  max-width: var(--container-max);
-  width: 100%;
-  margin-inline: auto;
+  background: #07080b;
+  color: #f4f1ea;
+  border-top: 1px solid var(--border-subtle);
 }
 
 .ff-story-static {
@@ -496,44 +112,20 @@
   padding-block: 48px;
   display: flex;
   flex-direction: column;
-  gap: 40px;
-}
-
-@media (max-width: 767px) {
-  .ff-story-rail {
-    top: 10px;
-    right: 12px;
-    gap: 2px;
-    padding: 3px;
-  }
-
-  .ff-story-rail-btn {
-    font-size: 10px;
-    padding: 4px 7px;
-  }
-
-  .ff-story-vp-body {
-    grid-template-columns: 1fr;
-  }
-
-  .ff-story-card {
-    width: 136px;
-    height: 176px;
-    margin-left: -68px;
-    margin-top: -88px;
-    padding: 9px;
-  }
+  gap: 36px;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .ff-story-track,
-  .ff-manifesto-track {
+  .ff-story-track {
+    min-height: auto !important;
+  }
+
+  .ff-story-sticky {
+    position: static !important;
     height: auto !important;
   }
 
-  .ff-story-sticky,
-  .ff-manifesto-sticky {
-    position: static !important;
-    height: auto !important;
+  .ff-story-specimen-card {
+    transition: none !important;
   }
 }

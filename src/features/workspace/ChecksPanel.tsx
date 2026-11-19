@@ -2,12 +2,11 @@ import React from 'react';
 import {
   AlertTriangle,
   CheckCircle2,
-  Play,
   ShieldAlert,
   ShieldCheck,
   XCircle,
 } from 'lucide-react';
-import type { ChecksReport, CheckStatus } from '../../types/index';
+import type { CheckCategory, ChecksReport, CheckStatus } from '../../types/index';
 
 export interface ChecksPanelProps {
   report: ChecksReport | null;
@@ -15,25 +14,34 @@ export interface ChecksPanelProps {
   onSelectFile?: (path: string) => void;
 }
 
+const CATEGORY_TAGS: Record<CheckCategory, string> = {
+  html_structure: 'HTML',
+  js_syntax: 'JS',
+  responsive_layout: 'Responsive',
+  internal_links: 'Links',
+  secret_scan: 'Secrets',
+  accessibility: 'A11y',
+};
+
 function getStatusColors(status: CheckStatus): { bg: string; fg: string; label: string } {
   if (status === 'pass') {
     return {
-      bg: 'rgba(52, 211, 153, 0.14)',
+      bg: 'var(--accent-jade-soft)',
       fg: 'var(--accent-jade)',
-      label: 'Pass',
+      label: 'Đạt',
     };
   }
   if (status === 'warn') {
     return {
-      bg: 'rgba(245, 158, 11, 0.15)',
+      bg: 'var(--accent-soft)',
       fg: 'var(--accent-primary)',
-      label: 'Warn',
+      label: 'Cảnh báo',
     };
   }
   return {
-    bg: 'rgba(224, 122, 56, 0.18)',
-    fg: 'var(--accent-copper)',
-    label: 'Fail',
+    bg: 'var(--accent-danger-soft)',
+    fg: 'var(--accent-danger)',
+    label: 'Lỗi',
   };
 }
 
@@ -54,17 +62,17 @@ export const ChecksPanel: React.FC<ChecksPanelProps> = ({
         <div className="min-w-0">
           <div className="flex items-center gap-1.5">
             {report?.overallStatus === 'fail' ? (
-              <ShieldAlert className="w-4 h-4 shrink-0" style={{ color: 'var(--accent-copper)' }} />
+              <ShieldAlert className="w-4 h-4 shrink-0" style={{ color: 'var(--accent-copper)' }} aria-hidden="true" />
             ) : (
-              <ShieldCheck className="w-4 h-4 shrink-0" style={{ color: 'var(--accent-jade)' }} />
+              <ShieldCheck className="w-4 h-4 shrink-0" style={{ color: 'var(--accent-jade)' }} aria-hidden="true" />
             )}
             <span style={{ color: 'var(--ink-primary)' }} className="text-xs font-semibold truncate">
-              Kiểm định tự động (Static & DOM)
+              Kiểm định tự động
             </span>
           </div>
           {report ? (
             <p style={{ color: 'var(--ink-secondary)' }} className="text-[11px] mt-1 font-mono">
-              {report.passCount} pass / {report.warnCount} warn / {report.failCount} fail
+              {report.passCount} đạt · {report.warnCount} cảnh báo · {report.failCount} lỗi
             </p>
           ) : (
             <p style={{ color: 'var(--ink-secondary)' }} className="text-[11px] mt-1">
@@ -78,11 +86,10 @@ export const ChecksPanel: React.FC<ChecksPanelProps> = ({
           onClick={onRunChecks}
           style={{
             background: 'var(--accent-primary)',
-            color: '#0b0d12',
+            color: 'var(--ink-inverse)',
           }}
-          className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold shrink-0"
+          className="px-3 py-1.5 rounded-lg text-xs font-semibold shrink-0 cursor-pointer"
         >
-          <Play className="w-3.5 h-3.5" />
           Chạy lại
         </button>
       </div>
@@ -91,6 +98,7 @@ export const ChecksPanel: React.FC<ChecksPanelProps> = ({
         <div className="flex flex-col gap-2">
           {report.results.map((item) => {
             const tone = getStatusColors(item.status);
+            const tag = CATEGORY_TAGS[item.category];
             return (
               <article
                 key={item.id}
@@ -103,12 +111,22 @@ export const ChecksPanel: React.FC<ChecksPanelProps> = ({
                 <div className="flex items-start justify-between gap-2">
                   <div className="flex items-center gap-2 min-w-0">
                     {item.status === 'pass' ? (
-                      <CheckCircle2 className="w-4 h-4 shrink-0" style={{ color: tone.fg }} />
+                      <CheckCircle2 className="w-4 h-4 shrink-0" style={{ color: tone.fg }} aria-hidden="true" />
                     ) : item.status === 'warn' ? (
-                      <AlertTriangle className="w-4 h-4 shrink-0" style={{ color: tone.fg }} />
+                      <AlertTriangle className="w-4 h-4 shrink-0" style={{ color: tone.fg }} aria-hidden="true" />
                     ) : (
-                      <XCircle className="w-4 h-4 shrink-0" style={{ color: tone.fg }} />
+                      <XCircle className="w-4 h-4 shrink-0" style={{ color: tone.fg }} aria-hidden="true" />
                     )}
+                    <span
+                      style={{
+                        color: 'var(--ink-secondary)',
+                        borderColor: 'var(--border-subtle)',
+                        background: 'var(--bg-surface)',
+                      }}
+                      className="text-[10px] font-mono px-1.5 py-0.5 rounded border shrink-0"
+                    >
+                      {tag}
+                    </span>
                     <h4
                       style={{ color: 'var(--ink-primary)' }}
                       className="text-xs font-semibold truncate"
@@ -149,7 +167,7 @@ export const ChecksPanel: React.FC<ChecksPanelProps> = ({
                             type="button"
                             onClick={() => onSelectFile?.(issue.file)}
                             style={{ color: 'var(--accent-primary)' }}
-                            className="font-mono text-left hover:underline"
+                            className="font-mono text-left hover:underline cursor-pointer"
                           >
                             {issue.file}
                             {issue.line ? `:${issue.line}` : ''}

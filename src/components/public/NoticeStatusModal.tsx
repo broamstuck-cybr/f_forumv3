@@ -1,10 +1,10 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
-import { Activity, CheckCircle2, ExternalLink, FileCheck2, ShieldAlert, X } from 'lucide-react';
+import { X } from 'lucide-react';
 import type { AdminChangelogEntry, SourceLibraryName } from '../../types/index';
 import { apiClient } from '../../services/apiClient';
 import { useAppStore } from '../../store/appStore';
-import { LiquidTabs, ThemeSwitch } from '../pinui';
+import { LiquidTabs } from '../pinui';
 
 interface NoticeStatusModalProps {
   open: boolean;
@@ -21,35 +21,36 @@ const LIBRARY_ATTRIBUTIONS: Array<{
 }> = [
   {
     key: 'pinui',
-    name: 'Pin UI Registry',
+    name: 'PinUI Registry',
     license: 'MIT License (c) Rachit Thakur / Shadcn Labs',
     origin: 'sources/pinui/',
     url: 'https://www.pinui.xyz',
-    usage: 'Interactive islands: PromptComposer, LiquidTabs, SearchCard, ThemeSwitch, Chips, TaskCard, FileBox, PresenceCards, DynamicDropZone, HaloSignIn, SynaisFooter.',
+    usage:
+      'PromptComposer, ThemeSwitch, LampSwitch, ReaderCard, Magnify, LiquidTabs, Chips, ChatRoom, SelectionList, SiteRail, SynaisFooter.',
   },
   {
     key: 'threeui',
-    name: 'ThreeUI Direction Archive',
-    license: 'Reference Metadata Only (No proprietary code copied)',
+    name: 'ThreeUI Archive',
+    license: 'Reference Metadata Only',
     origin: 'sources/threeui/',
     url: 'https://threeui.com',
-    usage: 'Spatial pacing, WebGL/3D performance budget badges, and curated showcase direction inside Explore Split Stage.',
+    usage: 'Không gian 3D, WebGL và nhịp bố cục cho Khám phá và Hồ sơ.',
   },
   {
     key: 'motionsites',
-    name: 'MotionSites Section Briefs',
-    license: 'Free Public Section Prompts',
+    name: 'MotionSites Briefs',
+    license: 'Public Section Specs',
     origin: 'sources/motionsites/',
     url: 'https://motionsites.ai',
-    usage: 'Editorial narrative pacing, Skybridge 404 composition, and AI workspace viewport layout rhythm.',
+    usage: 'Nhịp kể chuyện Scrollytelling, 20+ GIF thực tế và cấu trúc trang đích.',
   },
   {
     key: 'lucianlabs',
-    name: 'lucianLabs UX/UI Elements',
+    name: 'LucianLabs Elements',
     license: 'MIT License (c) 2026 Seokwoooo',
     origin: 'sources/lucianlabs/',
     url: 'https://lucianlabs.dev',
-    usage: 'CommandPalette (#046) motion curves, Split Pane (#101), Diff Hunk (#127), and Streaming Log Filter (#166).',
+    usage: 'Hệ biến --ux-* và 400 vi chuyển động chuẩn xác.',
   },
   {
     key: 'codefronts',
@@ -57,12 +58,12 @@ const LIBRARY_ATTRIBUTIONS: Array<{
     license: 'MIT License (c) CodeFronts',
     origin: 'sources/codefronts/',
     url: 'https://codefronts.com',
-    usage: 'Anti-FOUC theme hydration script, Liquid Glass toast notifications, and code copy micro-controls.',
+    usage: '5.047 mẫu CSS thuần và kỹ thuật anti-FOUC.',
   },
 ];
 
 export const NoticeStatusModal: React.FC<NoticeStatusModalProps> = ({ open, onClose }) => {
-  const { sourceCatalog, reducedMotion, setReducedMotion, theme, toggleTheme } = useAppStore();
+  const { sourceCatalog, reducedMotion, setReducedMotion } = useAppStore();
   const [activeTab, setActiveTab] = useState<'attributions' | 'changelog' | 'policy'>('attributions');
   const [changelog, setChangelog] = useState<AdminChangelogEntry[]>([]);
   const [loadingLog, setLoadingLog] = useState(false);
@@ -121,7 +122,7 @@ export const NoticeStatusModal: React.FC<NoticeStatusModalProps> = ({ open, onCl
           onClick={onClose}
           role="dialog"
           aria-modal="true"
-          aria-label="Thông tin hệ thống, Bản quyền MIT và Changelog"
+          aria-label="Minh bạch nguồn mở"
           className="fixed inset-0 z-[82] flex items-center justify-center p-4"
           style={{
             backgroundColor: 'rgba(6, 8, 13, 0.72)',
@@ -135,7 +136,7 @@ export const NoticeStatusModal: React.FC<NoticeStatusModalProps> = ({ open, onCl
             exit={{ opacity: 0, y: 8, scale: 0.98 }}
             transition={{ duration: 0.28, ease: [0.16, 1, 0.3, 1] }}
             onClick={(event) => event.stopPropagation()}
-            className="flex max-h-[85vh] w-full max-w-[780px] flex-col overflow-hidden rounded-[24px] border"
+            className="flex max-h-[85vh] w-full max-w-[760px] flex-col overflow-hidden rounded-[24px] border"
             style={{
               backgroundColor: 'var(--bg-surface)',
               borderColor: 'var(--border-strong)',
@@ -148,17 +149,18 @@ export const NoticeStatusModal: React.FC<NoticeStatusModalProps> = ({ open, onCl
             >
               <div>
                 <h2 className="text-lg font-semibold" style={{ color: 'var(--ink-primary)' }}>
-                  Thông tin Hệ thống & Minh bạch Nguồn mở
+                  Minh bạch Nguồn mở
                 </h2>
                 <p className="mt-1 text-sm" style={{ color: 'var(--ink-secondary)' }}>
-                  Bản quyền MIT từ 5 thư viện SOURCEOFKNOWLEDGFORAI, lịch sử cập nhật và điều khiển chuyển động.
+                  Bản quyền từ 5 thư viện SOURCEOFKNOWLEDGFORAI, nhật ký cập nhật và chuẩn kiểm định.
                 </p>
               </div>
               <button
                 type="button"
                 onClick={onClose}
-                aria-label="Đóng cửa sổ thông tin"
-                className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border focus-visible:outline-2 focus-visible:outline-offset-2"
+                aria-label="Đóng"
+                title="Đóng"
+                className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border cursor-pointer"
                 style={{
                   backgroundColor: 'var(--bg-panel)',
                   borderColor: 'var(--border-subtle)',
@@ -178,32 +180,28 @@ export const NoticeStatusModal: React.FC<NoticeStatusModalProps> = ({ open, onCl
             >
               <LiquidTabs
                 tabs={[
-                  { id: 'attributions', label: 'Bản quyền MIT', count: 5 },
-                  { id: 'changelog', label: 'Changelog', count: changelog.length },
-                  { id: 'policy', label: 'Chính sách AI & Motion' },
+                  { id: 'attributions', label: 'Bản quyền', count: 5 },
+                  { id: 'changelog', label: 'Nhật ký', count: changelog.length },
+                  { id: 'policy', label: 'Chính sách' },
                 ]}
                 activeId={activeTab}
                 onChange={(id) => setActiveTab(id as 'attributions' | 'changelog' | 'policy')}
               />
 
-              <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={() => setReducedMotion(!reducedMotion)}
-                  className="inline-flex h-9 items-center gap-2 rounded-full border px-3 text-xs font-medium focus-visible:outline-2 focus-visible:outline-offset-2"
-                  style={{
-                    backgroundColor: reducedMotion
-                      ? 'color-mix(in srgb, var(--accent-verdigris) 16%, transparent)'
-                      : 'var(--bg-surface)',
-                    borderColor: reducedMotion ? 'var(--accent-verdigris)' : 'var(--border-subtle)',
-                    color: reducedMotion ? 'var(--accent-verdigris)' : 'var(--ink-secondary)',
-                  }}
-                >
-                  <Activity className="h-3.5 w-3.5" aria-hidden="true" />
-                  <span>{reducedMotion ? 'Reduced Motion: Bật' : 'Adaptive Motion'}</span>
-                </button>
-                <ThemeSwitch theme={theme} onToggle={toggleTheme} compact />
-              </div>
+              <button
+                type="button"
+                onClick={() => setReducedMotion(!reducedMotion)}
+                className="inline-flex h-9 items-center rounded-full border px-3.5 text-xs font-medium cursor-pointer"
+                style={{
+                  backgroundColor: reducedMotion
+                    ? 'color-mix(in srgb, var(--accent-verdigris) 16%, transparent)'
+                    : 'var(--bg-surface)',
+                  borderColor: reducedMotion ? 'var(--accent-verdigris)' : 'var(--border-subtle)',
+                  color: reducedMotion ? 'var(--accent-verdigris)' : 'var(--ink-secondary)',
+                }}
+              >
+                {reducedMotion ? 'Giảm động' : 'Chuyển động'}
+              </button>
             </div>
 
             <div className="min-h-0 flex-1 overflow-y-auto px-6 py-5">
@@ -227,7 +225,7 @@ export const NoticeStatusModal: React.FC<NoticeStatusModalProps> = ({ open, onCl
                               color: 'var(--accent-primary)',
                             }}
                           >
-                            {countsByLib[lib.key] || 0} mục trong Explore
+                            {countsByLib[lib.key] || 0} mục
                           </span>
                         </div>
                         <p className="mt-1 text-xs font-medium" style={{ color: 'var(--ink-secondary)' }}>
@@ -251,11 +249,10 @@ export const NoticeStatusModal: React.FC<NoticeStatusModalProps> = ({ open, onCl
                           href={lib.url}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="inline-flex items-center gap-1 text-xs font-medium hover:underline"
+                          className="text-xs font-medium hover:underline"
                           style={{ color: 'var(--accent-verdigris)' }}
                         >
-                          <span>Nguồn gốc</span>
-                          <ExternalLink className="h-3 w-3" aria-hidden="true" />
+                          Mở nguồn
                         </a>
                       </div>
                     </article>
@@ -267,7 +264,7 @@ export const NoticeStatusModal: React.FC<NoticeStatusModalProps> = ({ open, onCl
                 <div className="space-y-4">
                   {loadingLog ? (
                     <p className="py-8 text-center text-sm" style={{ color: 'var(--ink-muted)' }}>
-                      Đang tải nhật ký phiên bản...
+                      Đang tải nhật ký...
                     </p>
                   ) : changelog.length === 0 ? (
                     <div
@@ -278,7 +275,7 @@ export const NoticeStatusModal: React.FC<NoticeStatusModalProps> = ({ open, onCl
                         color: 'var(--ink-secondary)',
                       }}
                     >
-                      Chưa có bản ghi Changelog công khai mới từ Admin Gateway. Hệ thống đang chạy F-FORUM v3.0.0.
+                      Hệ thống vận hành ổn định trên F-Forum v3.0.0.
                     </div>
                   ) : (
                     changelog.map((entry) => (
@@ -327,12 +324,11 @@ export const NoticeStatusModal: React.FC<NoticeStatusModalProps> = ({ open, onCl
                       borderColor: 'var(--border-subtle)',
                     }}
                   >
-                    <div className="flex items-center gap-2 text-sm font-semibold" style={{ color: 'var(--ink-primary)' }}>
-                      <FileCheck2 className="h-4 w-4" style={{ color: 'var(--accent-jade)' }} aria-hidden="true" />
-                      <span>Chính sách Kiểm chứng Mã nguồn AI</span>
+                    <div className="text-sm font-semibold" style={{ color: 'var(--ink-primary)' }}>
+                      Kiểm chứng Live View &amp; Diff &amp; Check
                     </div>
                     <p className="mt-2 text-sm leading-relaxed" style={{ color: 'var(--ink-secondary)' }}>
-                      Mọi mã nguồn do AI tổng hợp trong Work space đều chạy trong khung iframe cô lập (`sandbox="allow-scripts"`) và phải đi qua 6 lớp kiểm định thực tế: cấu trúc HTML, cú pháp JS, responsive overflow, liên kết nội bộ, quét lộ lọt bí mật (secret scan) và tiêu chuẩn tiếp cận cơ bản.
+                      Mọi mã nguồn trong Workspace được chạy trong khung cô lập (`sandbox="allow-scripts"`) và kiểm định tự động qua 6 lớp: cấu trúc HTML, cú pháp JS, hiển thị đa màn hình, liên kết nội bộ, quét bí mật và khả năng tiếp cận.
                     </p>
                   </div>
 
@@ -343,12 +339,11 @@ export const NoticeStatusModal: React.FC<NoticeStatusModalProps> = ({ open, onCl
                       borderColor: 'var(--border-subtle)',
                     }}
                   >
-                    <div className="flex items-center gap-2 text-sm font-semibold" style={{ color: 'var(--ink-primary)' }}>
-                      <ShieldAlert className="h-4 w-4" style={{ color: 'var(--accent-primary)' }} aria-hidden="true" />
-                      <span>Trách nhiệm Kiểm duyệt & Minh bạch</span>
+                    <div className="text-sm font-semibold" style={{ color: 'var(--ink-primary)' }}>
+                      Bảo mật Khóa Cá nhân
                     </div>
                     <p className="mt-2 text-sm leading-relaxed" style={{ color: 'var(--ink-secondary)' }}>
-                      AI có thể tạo sai lệch kỹ thuật hoặc phát sinh logic chưa tối ưu. Người dùng cần xem xét Diff theo từng dòng và xác minh trước khi xuất bản ra môi trường sản xuất. Khóa API BYOK không bao giờ được ghi vào tệp ZIP xuất ra.
+                      Khóa API BYOK không bao giờ được ghi vào tệp nén xuất ra. Mọi thay đổi mã nguồn đều hiển thị rõ trên Diff &amp; Check để người dùng kiểm duyệt trước khi xuất bản.
                     </p>
                   </div>
 
@@ -360,25 +355,24 @@ export const NoticeStatusModal: React.FC<NoticeStatusModalProps> = ({ open, onCl
                     }}
                   >
                     <div>
-                      <div className="flex items-center gap-2 text-sm font-semibold" style={{ color: 'var(--ink-primary)' }}>
-                        <CheckCircle2 className="h-4 w-4" style={{ color: 'var(--accent-verdigris)' }} aria-hidden="true" />
-                        <span>Adaptive Motion & Reduced-Motion</span>
+                      <div className="text-sm font-semibold" style={{ color: 'var(--ink-primary)' }}>
+                        Chế độ Giảm chuyển động
                       </div>
                       <p className="mt-1 text-xs" style={{ color: 'var(--ink-secondary)' }}>
-                        Tắt toàn bộ chuyển động phức tạp và nền động trên toàn ứng dụng để giảm tải GPU hoặc tránh say chuyển động.
+                        Tắt hiệu ứng phức tạp trên toàn hệ thống để giữ sự tĩnh tại tối đa.
                       </p>
                     </div>
                     <button
                       type="button"
                       onClick={() => setReducedMotion(!reducedMotion)}
-                      className="inline-flex h-10 shrink-0 items-center justify-center rounded-full px-4 text-xs font-semibold focus-visible:outline-2 focus-visible:outline-offset-2"
+                      className="inline-flex h-10 shrink-0 items-center justify-center rounded-full px-4 text-xs font-semibold cursor-pointer"
                       style={{
                         backgroundColor: reducedMotion ? 'var(--accent-verdigris)' : 'var(--bg-surface)',
                         color: reducedMotion ? '#06080d' : 'var(--ink-primary)',
                         border: '1px solid var(--border-strong)',
                       }}
                     >
-                      {reducedMotion ? 'Đang tắt chuyển động' : 'Bật chế độ giảm chuyển động'}
+                      {reducedMotion ? 'Đang bật' : 'Giảm động'}
                     </button>
                   </div>
                 </div>

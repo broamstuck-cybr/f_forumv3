@@ -1,6 +1,5 @@
 import React, { type ReactNode } from 'react';
 import { motion, useReducedMotion } from 'motion/react';
-import { ArrowUpRight } from 'lucide-react';
 
 export interface PresenceMember {
   name: string;
@@ -40,7 +39,7 @@ export const PresenceCards: React.FC<PresenceCardsProps> = ({
   members,
   children,
   onAction,
-  actionLabel = 'Cập nhật hồ sơ',
+  actionLabel = 'Cập nhật',
   className = '',
 }) => {
   const reduced = Boolean(useReducedMotion());
@@ -93,7 +92,7 @@ export const PresenceCards: React.FC<PresenceCardsProps> = ({
             <button
               type="button"
               onClick={onAction}
-              className="inline-flex items-center gap-1 rounded-full px-3 py-1.5 text-[12px] font-semibold cursor-pointer transition-colors"
+              className="inline-flex items-center rounded-full px-3.5 py-1.5 text-[12px] font-semibold cursor-pointer transition-colors"
               style={{
                 background: 'var(--accent-soft)',
                 color: 'var(--accent-primary)',
@@ -101,7 +100,6 @@ export const PresenceCards: React.FC<PresenceCardsProps> = ({
               }}
             >
               <span>{actionLabel}</span>
-              <ArrowUpRight className="h-3.5 w-3.5" aria-hidden="true" />
             </button>
           )}
         </div>

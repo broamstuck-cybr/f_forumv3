@@ -1,13 +1,14 @@
 import React from 'react';
 import { motion, useReducedMotion } from 'motion/react';
-import { Command, FileCheck2, ShieldCheck } from 'lucide-react';
 import type { AppRoute } from '../../types/index';
 import { KineticLogo } from '../brand/KineticLogo';
+import './synais-footer.css';
 
 export interface SynaisFooterProps {
   onNavigate: (route: AppRoute) => void;
   onOpenNotice: () => void;
-  onOpenCommandPalette: () => void;
+  onOpenCommandPalette?: () => void;
+  onSubscribe?: (email: string) => Promise<void> | void;
 }
 
 const WORDMARK = 'F-FORUM';
@@ -15,88 +16,98 @@ const WORDMARK = 'F-FORUM';
 export const SynaisFooter: React.FC<SynaisFooterProps> = ({
   onNavigate,
   onOpenNotice,
-  onOpenCommandPalette,
 }) => {
   const reduced = Boolean(useReducedMotion());
 
   const columns: Array<{ title: string; links: Array<{ label: string; action: () => void }> }> = [
     {
-      title: 'Không gian chính',
+      title: 'Không gian',
       links: [
-        { label: 'Landing Page', action: () => onNavigate('landing') },
-        { label: 'Home Launchpad', action: () => onNavigate('home') },
-        { label: 'Thư viện Explore', action: () => onNavigate('explore') },
-        { label: 'Work space Arena', action: () => onNavigate('workspace') },
+        { label: 'Giới thiệu', action: () => onNavigate('landing') },
+        { label: 'Trang chủ', action: () => onNavigate('home') },
+        { label: 'Khám phá', action: () => onNavigate('explore') },
+        { label: 'Workspace', action: () => onNavigate('workspace') },
       ],
     },
     {
-      title: 'Cộng đồng & Tri thức',
+      title: 'Tri thức',
       links: [
-        { label: 'Source of Knowledge', action: () => onNavigate('community') },
-        { label: 'Dev Q&A', action: () => onNavigate('community') },
-        { label: 'Project Showcase', action: () => onNavigate('community') },
-        { label: 'Club Hub Handover', action: () => onNavigate('community') },
+        { label: 'Hỏi đáp', action: () => onNavigate('community') },
+        { label: 'Trưng bày', action: () => onNavigate('community') },
+        { label: 'Hội nhóm', action: () => onNavigate('community') },
       ],
     },
     {
-      title: 'Hệ thống & Cấu hình',
+      title: 'Hệ thống',
       links: [
-        { label: 'Maker Profile & Cài đặt', action: () => onNavigate('settings') },
-        { label: 'Phím tắt Ctrl+E', action: onOpenCommandPalette },
-        { label: 'Giấy phép & Changelog', action: onOpenNotice },
+        { label: 'Hồ sơ', action: () => onNavigate('profile') },
+        { label: 'Cài đặt', action: () => onNavigate('settings') },
+        { label: 'Nhật ký', action: onOpenNotice },
       ],
     },
     {
-      title: 'Minh bạch & An toàn',
+      title: 'Minh bạch',
       links: [
-        { label: 'Chính sách kiểm chứng AI', action: onOpenNotice },
-        { label: 'Ghi nhận nguồn MIT', action: onOpenNotice },
-        { label: 'Quét lộ lọt bí mật ZIP', action: () => onNavigate('workspace') },
+        { label: 'Chính sách', action: onOpenNotice },
+        { label: 'Bản quyền', action: onOpenNotice },
+        { label: 'Diff & Check', action: () => onNavigate('workspace') },
       ],
     },
   ];
 
   return (
-    <footer className="sy-footer pt-14" aria-label="Chân trang F-FORUM v3">
+    <footer className="sy-footer pt-14" aria-label="Chân trang F-Forum">
       <div className="ff-container">
         <div className="grid gap-10 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,2fr)] pb-12">
           <div className="space-y-4">
-            <button
-              type="button"
-              onClick={() => onNavigate('landing')}
-              className="inline-flex items-center gap-2.5 bg-transparent border-0 p-0 cursor-pointer"
-            >
-              <KineticLogo size={30} showWordmark />
-            </button>
+            <div className="inline-flex items-center gap-2.5">
+              <button
+                type="button"
+                onClick={() => onNavigate('landing')}
+                className="inline-flex items-center bg-transparent border-0 p-0 cursor-pointer"
+                aria-label="F-Forum"
+                title="F-Forum"
+              >
+                <KineticLogo size={30} showWordmark={false} />
+              </button>
+              <span
+                className="font-semibold tracking-tight whitespace-nowrap select-none"
+                style={{
+                  fontFamily: 'var(--font-display)',
+                  color: 'var(--ink-primary)',
+                  fontSize: '19px',
+                }}
+              >
+                F-FORUM
+              </span>
+            </div>
             <p className="max-w-sm text-[13.5px] leading-relaxed" style={{ color: 'var(--ink-secondary)' }}>
-              Môi trường kiến tạo Web, UI/UX và chia sẻ tri thức học thuật với Live Preview sandbox, Diff trực quan và kiểm định tự động.
+              Không gian kiến tạo giao diện tĩnh tại, nơi mỗi dòng mã đi qua Live View cô lập và Diff &amp; Check minh bạch.
             </p>
             <div className="flex flex-wrap items-center gap-2.5 pt-1">
               <button
                 type="button"
-                onClick={onOpenCommandPalette}
-                className="inline-flex items-center gap-1.5 rounded-full border px-3.5 py-2 text-[12px] font-medium cursor-pointer transition-colors"
-                style={{
-                  borderColor: 'var(--border-strong)',
-                  background: 'var(--bg-panel)',
-                  color: 'var(--ink-primary)',
-                }}
-              >
-                <Command className="h-3.5 w-3.5" style={{ color: 'var(--accent-primary)' }} aria-hidden="true" />
-                <span>Mở nhanh Ctrl+E</span>
-              </button>
-              <button
-                type="button"
                 onClick={onOpenNotice}
-                className="inline-flex items-center gap-1.5 rounded-full border px-3.5 py-2 text-[12px] font-medium cursor-pointer transition-colors"
+                className="inline-flex items-center rounded-full border px-4 py-2 text-[12px] font-medium cursor-pointer transition-colors"
                 style={{
                   borderColor: 'var(--border-subtle)',
                   background: 'transparent',
                   color: 'var(--ink-secondary)',
                 }}
               >
-                <FileCheck2 className="h-3.5 w-3.5" aria-hidden="true" />
-                <span>Notice &amp; MIT</span>
+                Bản quyền
+              </button>
+              <button
+                type="button"
+                onClick={() => onNavigate('workspace')}
+                className="inline-flex items-center rounded-full border px-4 py-2 text-[12px] font-medium cursor-pointer transition-colors"
+                style={{
+                  borderColor: 'var(--border-accent)',
+                  background: 'var(--accent-soft)',
+                  color: 'var(--accent-primary)',
+                }}
+              >
+                Live View
               </button>
             </div>
           </div>
@@ -130,11 +141,8 @@ export const SynaisFooter: React.FC<SynaisFooterProps> = ({
           className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between border-t py-5 text-[12px]"
           style={{ borderColor: 'var(--border-subtle)', color: 'var(--ink-muted)' }}
         >
-          <p className="m-0">F-FORUM v3 · Obsidian Foundry &amp; Editorial Stone Design System</p>
-          <p className="m-0 inline-flex items-center gap-1.5">
-            <ShieldCheck className="h-3.5 w-3.5" style={{ color: 'var(--accent-jade)' }} aria-hidden="true" />
-            <span>AI có thể sai sót — luôn kiểm chứng lại mã nguồn và học liệu.</span>
-          </p>
+          <p className="m-0">F-Forum · Kiến trúc Giao diện &amp; Tư duy Phản biện</p>
+          <p className="m-0">Đối chiếu từng dòng trước khi xuất bản.</p>
         </div>
       </div>
 

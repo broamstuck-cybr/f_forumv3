@@ -2,33 +2,26 @@ import React, { useMemo, useRef, useState } from 'react';
 import {
   Archive,
   Check,
-  Code2,
-  Compass,
-  Download,
-  Eye,
-  FileCode2,
   GitBranch,
-  History,
-  Layers,
-  MessageSquare,
+  Maximize2,
   Monitor,
+  PanelLeftClose,
+  PanelLeftOpen,
   Pencil,
   PictureInPicture2,
   Pin,
-  Plus,
-  ShieldCheck,
   Smartphone,
-  Maximize2,
   Trash2,
-  Upload,
   X,
 } from 'lucide-react';
 import {
+  Chips,
   DynamicDropZone,
   LiquidTabs,
   PromptComposer,
   SearchCard,
   TaskCard,
+  type ChipItem,
 } from '../../components/pinui';
 import { useAppStore } from '../../store/appStore';
 import { AiProjectSetupDrawer } from './AiProjectSetupDrawer';
@@ -40,20 +33,59 @@ type CenterPaneMode = 'chat' | 'preview' | 'code';
 type MobileColumnTab = 'history' | 'arena' | 'inspector';
 type AgentExecutionMode = 'Build' | 'Refine' | 'Audit';
 
-const AGENT_MODES: Array<{ id: AgentExecutionMode; label: string; description: string }> = [
-  { id: 'Build', label: 'Build', description: 'Tạo mới bộ tệp HTML/CSS/JS từ đầu' },
-  { id: 'Refine', label: 'Refine', description: 'Tinh chỉnh giao diện, tokens và responsive' },
-  { id: 'Audit', label: 'Audit', description: 'Rà soát lỗi truy cập, DOM và tối ưu hóa' },
+const CHIP_ACTIONS: ChipItem[] = [
+  {
+    id: 'Build',
+    label: 'Dựng',
+    accent: 'var(--accent-primary)',
+    lip: 'var(--accent-copper)',
+    bg: 'var(--accent-soft)',
+    ink: 'var(--accent-primary)',
+  },
+  {
+    id: 'Refine',
+    label: 'Tinh chỉnh',
+    accent: 'var(--accent-verdigris)',
+    lip: 'var(--accent-verdigris)',
+    bg: 'var(--accent-verdigris-soft)',
+    ink: 'var(--accent-verdigris)',
+  },
+  {
+    id: 'Audit',
+    label: 'Kiểm định',
+    accent: 'var(--accent-jade)',
+    lip: 'var(--accent-jade)',
+    bg: 'var(--accent-jade-soft)',
+    ink: 'var(--accent-jade)',
+  },
+  {
+    id: 'Design',
+    label: 'Thiết kế',
+    accent: 'var(--accent-copper)',
+    lip: 'var(--accent-copper)',
+    bg: 'var(--accent-soft)',
+    ink: 'var(--accent-copper)',
+  },
 ];
 
 const MODEL_OPTIONS = [
-  { id: 'auto', name: 'Auto (9Router Smart)', note: 'Dùng cấu hình Gateway 9Router mặc định' },
-  { id: 'studio-smart-route', name: 'Studio Smart Route', note: 'Cân bằng tốc độ và chất lượng' },
-  { id: 'studio-heavy-route', name: 'Studio Heavy Route', note: 'Tối ưu kiến trúc phức tạp' },
-  { id: 'ag/gemini-3.8-flash-low', name: 'Gemini 3.8 Flash (Fast)', note: 'Phản hồi siêu nhanh đa tệp' },
-  { id: 'ag/gemini-4-argon-high', name: 'Gemini 4 Argon', note: 'Phân tích hệ thống chuyên sâu' },
-  { id: 'ag/claude-sonnet-5-5-medium', name: 'Claude Sonnet 5.5', note: 'Thiết kế UI & logic tinh gọn' },
+  { id: 'auto', name: 'Định tuyến', note: 'Cấu hình Gateway mặc định' },
+  { id: 'studio-smart-route', name: 'Smart Route', note: 'Cân bằng tốc độ và chiều sâu' },
+  { id: 'studio-heavy-route', name: 'Heavy Route', note: 'Kiến trúc đa tệp phức tạp' },
+  { id: 'ag/gemini-3.8-flash-low', name: 'Gemini Flash', note: 'Phản hồi nhanh' },
+  { id: 'ag/gemini-4-argon-high', name: 'Gemini Argon', note: 'Phân tích hệ thống' },
+  { id: 'ag/claude-sonnet-5-5-medium', name: 'Sonnet 5.5', note: 'Thiết kế UI tinh gọn' },
 ];
+
+function isSameCalendarDay(iso: string, now: Date): boolean {
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return false;
+  return (
+    date.getFullYear() === now.getFullYear() &&
+    date.getMonth() === now.getMonth() &&
+    date.getDate() === now.getDate()
+  );
+}
 
 export const WorkspaceView: React.FC = () => {
   const {
@@ -87,6 +119,7 @@ export const WorkspaceView: React.FC = () => {
   const [previewMode, setPreviewMode] = useState<PreviewViewportMode>('desktop');
   const [rightTab, setRightTab] = useState<'diff' | 'checks'>('diff');
   const [mobileColumn, setMobileColumn] = useState<MobileColumnTab>('arena');
+  const [railCollapsed, setRailCollapsed] = useState(false);
 
   const [historyQuery, setHistoryQuery] = useState('');
   const [showArchived, setShowArchived] = useState(false);
@@ -103,8 +136,8 @@ export const WorkspaceView: React.FC = () => {
   const [githubConnected, setGithubConnected] = useState(false);
   const [githubScope, setGithubScope] = useState<'read-only' | 'pr-push'>('read-only');
 
-  const [leftWidthPct, setLeftWidthPct] = useState(21);
-  const [rightWidthPct, setRightWidthPct] = useState(25);
+  const [leftWidthPct, setLeftWidthPct] = useState(19);
+  const [rightWidthPct, setRightWidthPct] = useState(26);
   const gridContainerRef = useRef<HTMLDivElement | null>(null);
 
   const filteredProjects = useMemo(() => {
@@ -125,6 +158,20 @@ export const WorkspaceView: React.FC = () => {
       });
   }, [projects, historyQuery, showArchived]);
 
+  const groupedProjects = useMemo(() => {
+    const now = new Date();
+    const today: typeof filteredProjects = [];
+    const older: typeof filteredProjects = [];
+    for (const proj of filteredProjects) {
+      if (isSameCalendarDay(proj.updatedAt, now)) {
+        today.push(proj);
+      } else {
+        older.push(proj);
+      }
+    }
+    return { today, older };
+  }, [filteredProjects]);
+
   const diffTotals = useMemo(() => {
     let added = 0;
     let deleted = 0;
@@ -136,7 +183,7 @@ export const WorkspaceView: React.FC = () => {
   }, [activeProject.diffs]);
 
   const taskCardItems = useMemo(() => {
-    return activeProject.processes.slice(0, 6).map((proc) => ({
+    return activeProject.processes.slice(0, 4).map((proc) => ({
       id: proc.id,
       label: proc.name,
       status: (proc.status === 'completed'
@@ -150,6 +197,16 @@ export const WorkspaceView: React.FC = () => {
 
   const isGenerating = aiActivity === 'thinking' || aiActivity === 'streaming';
   const quotaBlocked = !quota.unlimited && quota.exhausted;
+
+  const handleChipToggle = (id: string) => {
+    if (id === 'Design') {
+      setDropZoneOpen((v) => !v);
+      return;
+    }
+    if (id === 'Build' || id === 'Refine' || id === 'Audit') {
+      setAgentMode(id);
+    }
+  };
 
   const handleSendPrompt = async (overrideText?: string) => {
     const raw = (overrideText !== undefined ? overrideText : composerValue).trim();
@@ -175,10 +232,10 @@ export const WorkspaceView: React.FC = () => {
 
       addToast({
         type: result.clean ? 'success' : 'warning',
-        title: `Đã xuất gói ${result.filename}`,
+        title: `Đã xuất ${result.filename}`,
         message: result.clean
-          ? 'Secret scanner xác nhận 0 chuỗi nhạy cảm trong gói ZIP.'
-          : `Đã tự động ẩn ${result.findingsCount} chuỗi nhạy cảm trước khi nén ZIP.`,
+          ? 'Không phát hiện chuỗi nhạy cảm trong gói ZIP.'
+          : `Đã ẩn ${result.findingsCount} chuỗi nhạy cảm trước khi đóng gói.`,
       });
     } catch {
       addToast({
@@ -197,20 +254,20 @@ export const WorkspaceView: React.FC = () => {
       incoming.map((f) => ({
         path: f.name,
         content: f.content,
-        summary: 'Uploaded via DynamicDropZone',
+        summary: 'Tệp đính kèm cục bộ',
       }))
     );
     attachItemToWorkspace({
       id: `upload-${Date.now()}`,
       kind: 'blueprint',
       title: incoming.map((f) => f.name).join(', '),
-      summary: `Tệp đính kèm từ thiết bị (${incoming.length} tệp)`,
+      summary: `${incoming.length} tệp từ thiết bị`,
     });
     setDropZoneOpen(false);
   };
 
   const handleDividerPointerDown =
-    (side: 'left' | 'right') => (e: React.PointerEvent<HTMLButtonElement>) => {
+    (_side: 'left' | 'right') => (e: React.PointerEvent<HTMLButtonElement>) => {
       e.currentTarget.setPointerCapture(e.pointerId);
     };
 
@@ -220,7 +277,7 @@ export const WorkspaceView: React.FC = () => {
       const rect = gridContainerRef.current.getBoundingClientRect();
       const pct = ((e.clientX - rect.left) / rect.width) * 100;
       if (side === 'left') {
-        setLeftWidthPct(Math.max(16, Math.min(30, Math.round(pct))));
+        setLeftWidthPct(Math.max(15, Math.min(28, Math.round(pct))));
       } else {
         const fromRight = 100 - pct;
         setRightWidthPct(Math.max(20, Math.min(34, Math.round(fromRight))));
@@ -232,13 +289,13 @@ export const WorkspaceView: React.FC = () => {
       if (!['ArrowLeft', 'ArrowRight', 'Escape'].includes(e.key)) return;
       e.preventDefault();
       if (e.key === 'Escape') {
-        setLeftWidthPct(21);
-        setRightWidthPct(25);
+        setLeftWidthPct(19);
+        setRightWidthPct(26);
         return;
       }
       const delta = e.key === 'ArrowRight' ? 2 : -2;
       if (side === 'left') {
-        setLeftWidthPct((v) => Math.max(16, Math.min(30, v + delta)));
+        setLeftWidthPct((v) => Math.max(15, Math.min(28, v + delta)));
       } else {
         setRightWidthPct((v) => Math.max(20, Math.min(34, v - delta)));
       }
@@ -249,6 +306,133 @@ export const WorkspaceView: React.FC = () => {
     setCenterMode('code');
     setMobileColumn('arena');
   };
+
+  const renderProjectRow = (proj: (typeof filteredProjects)[number]) => {
+    const isActive = proj.id === activeProject.id;
+    const isRenaming = renamingId === proj.id;
+
+    return (
+      <li
+        key={proj.id}
+        style={{
+          background: isActive ? 'var(--bg-panel)' : 'transparent',
+          borderColor: isActive ? 'var(--border-strong)' : 'transparent',
+        }}
+        className="group rounded-xl border px-2.5 py-2 transition-colors"
+      >
+        {isRenaming ? (
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              renameProject(proj.id, renameDraft);
+              setRenamingId(null);
+            }}
+            className="flex items-center gap-1"
+          >
+            <input
+              value={renameDraft}
+              onChange={(e) => setRenameDraft(e.target.value)}
+              autoFocus
+              aria-label="Tên dự án"
+              style={{
+                background: 'var(--bg-canvas)',
+                borderColor: 'var(--border-strong)',
+                color: 'var(--ink-primary)',
+              }}
+              className="flex-1 min-w-0 px-2 py-1 rounded-md border text-xs outline-none"
+            />
+            <button
+              type="submit"
+              aria-label="Lưu tên"
+              title="Lưu tên"
+              style={{ color: 'var(--accent-jade)' }}
+              className="p-1 cursor-pointer"
+            >
+              <Check className="w-3.5 h-3.5" aria-hidden="true" />
+            </button>
+          </form>
+        ) : (
+          <div className="flex items-center justify-between gap-1.5">
+            <button
+              type="button"
+              onClick={() => {
+                selectProject(proj.id);
+                setMobileColumn('arena');
+              }}
+              className="text-left flex-1 min-w-0 cursor-pointer"
+            >
+              <span
+                style={{ color: isActive ? 'var(--ink-primary)' : 'var(--ink-secondary)' }}
+                className="text-[13px] font-medium truncate block"
+              >
+                {proj.name}
+              </span>
+            </button>
+
+            <div
+              className={`flex items-center gap-0.5 shrink-0 transition-opacity ${
+                proj.pinned ? 'opacity-100' : 'opacity-0 group-hover:opacity-100 group-focus-within:opacity-100'
+              }`}
+            >
+              <button
+                type="button"
+                onClick={() => togglePinProject(proj.id)}
+                aria-label="Ghim"
+                title="Ghim"
+                style={{
+                  color: proj.pinned ? 'var(--accent-primary)' : 'var(--ink-muted)',
+                }}
+                className="p-1 rounded hover:opacity-80 cursor-pointer"
+              >
+                <Pin className="w-3 h-3" aria-hidden="true" />
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setRenamingId(proj.id);
+                  setRenameDraft(proj.name);
+                }}
+                aria-label="Đổi tên"
+                title="Đổi tên"
+                style={{ color: 'var(--ink-muted)' }}
+                className="p-1 rounded hover:opacity-80 cursor-pointer"
+              >
+                <Pencil className="w-3 h-3" aria-hidden="true" />
+              </button>
+              <button
+                type="button"
+                onClick={() => toggleArchiveProject(proj.id)}
+                aria-label="Lưu trữ"
+                title="Lưu trữ"
+                style={{
+                  color: proj.archived ? 'var(--accent-copper)' : 'var(--ink-muted)',
+                }}
+                className="p-1 rounded hover:opacity-80 cursor-pointer"
+              >
+                <Archive className="w-3 h-3" aria-hidden="true" />
+              </button>
+              <button
+                type="button"
+                onClick={() => deleteProject(proj.id)}
+                aria-label="Xóa"
+                title="Xóa"
+                style={{ color: 'var(--ink-muted)' }}
+                className="p-1 rounded hover:opacity-80 cursor-pointer"
+              >
+                <Trash2 className="w-3 h-3" aria-hidden="true" />
+              </button>
+            </div>
+          </div>
+        )}
+      </li>
+    );
+  };
+
+  const desktopGridColumns = railCollapsed
+    ? `minmax(0,1fr) 8px minmax(260px,${rightWidthPct}%)`
+    : `minmax(210px,${leftWidthPct}%) 8px minmax(0,1fr) 8px minmax(260px,${rightWidthPct}%)`;
+
+  const selectedChipIds = dropZoneOpen ? [agentMode, 'Design'] : [agentMode];
 
   return (
     <main
@@ -265,12 +449,12 @@ export const WorkspaceView: React.FC = () => {
         }}
         className="lg:hidden px-3 py-2 border-b flex items-center justify-between gap-2"
       >
-        <div className="grid grid-cols-3 gap-1 w-full">
+        <div className="grid grid-cols-3 gap-1.5 w-full">
           {(
             [
-              { id: 'history', label: 'Dự án & Tệp' },
-              { id: 'arena', label: 'Arena & Preview' },
-              { id: 'inspector', label: 'Diff & Checks' },
+              { id: 'history', label: 'Hội thoại' },
+              { id: 'arena', label: 'Sân khấu' },
+              { id: 'inspector', label: 'Diff & Check' },
             ] as Array<{ id: MobileColumnTab; label: string }>
           ).map((tab) => (
             <button
@@ -285,7 +469,7 @@ export const WorkspaceView: React.FC = () => {
                 color:
                   mobileColumn === tab.id ? 'var(--accent-primary)' : 'var(--ink-secondary)',
               }}
-              className="py-1.5 px-2 rounded-lg border text-xs font-medium truncate"
+              className="py-1.5 px-2 rounded-lg border text-xs font-medium truncate cursor-pointer"
             >
               {tab.label}
             </button>
@@ -297,220 +481,258 @@ export const WorkspaceView: React.FC = () => {
         ref={gridContainerRef}
         style={
           {
-            '--ff-ws-left': `${leftWidthPct}%`,
-            '--ff-ws-right': `${rightWidthPct}%`,
+            '--ff-ws-grid': desktopGridColumns,
           } as React.CSSProperties
         }
-        className="flex-1 min-h-0 flex flex-col lg:grid lg:grid-cols-[minmax(220px,var(--ff-ws-left))_10px_minmax(0,1fr)_10px_minmax(260px,var(--ff-ws-right))]"
+        className="flex-1 min-h-0 flex flex-col lg:grid lg:[grid-template-columns:var(--ff-ws-grid)]"
       >
-        <aside
-          aria-label="Workspace History and Context"
-          style={{
-            background: 'var(--bg-surface)',
-            borderColor: 'var(--border-subtle)',
-          }}
-          className={`${
-            mobileColumn === 'history' ? 'flex' : 'hidden'
-          } lg:flex flex-col gap-3 p-3 border-r min-w-0 overflow-y-auto`}
-        >
-          <div className="flex items-center justify-between gap-2">
-            <button
-              type="button"
-              onClick={() => {
-                createProject(`Arena Build #${projects.length + 1}`);
-                setCenterMode('chat');
-                setMobileColumn('arena');
-              }}
-              style={{
-                background: 'var(--accent-primary)',
-                color: '#0b0d12',
-              }}
-              className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold"
-            >
-              <Plus className="w-3.5 h-3.5" />
-              New Chat
-            </button>
-            <button
-              type="button"
-              onClick={() => setShowArchived((v) => !v)}
-              aria-pressed={showArchived}
-              aria-label="Toggle archived projects"
-              style={{
-                background: showArchived ? 'var(--bg-panel)' : 'transparent',
-                borderColor: 'var(--border-subtle)',
-                color: showArchived ? 'var(--accent-primary)' : 'var(--ink-secondary)',
-              }}
-              className="p-2 rounded-xl border"
-            >
-              <Archive className="w-3.5 h-3.5" />
-            </button>
-          </div>
-
-          <SearchCard
-            value={historyQuery}
-            onChange={setHistoryQuery}
-            placeholder="Tìm dự án Workspace..."
-            compact
-          />
-
-          <section aria-label="Project History" className="flex flex-col gap-1.5">
-            <div className="flex items-center justify-between px-1">
-              <span style={{ color: 'var(--ink-secondary)' }} className="text-xs font-medium">
-                Lịch sử dự án ({filteredProjects.length})
-              </span>
-            </div>
-            <ul className="flex flex-col gap-1.5">
-              {filteredProjects.map((proj) => {
-                const isActive = proj.id === activeProject.id;
-                const isRenaming = renamingId === proj.id;
-                return (
-                  <li
-                    key={proj.id}
-                    style={{
-                      background: isActive ? 'var(--bg-panel)' : 'transparent',
-                      borderColor: isActive ? 'var(--border-strong)' : 'var(--border-subtle)',
-                    }}
-                    className="rounded-xl border p-2.5 overflow-hidden"
-                  >
-                    {isRenaming ? (
-                      <form
-                        onSubmit={(e) => {
-                          e.preventDefault();
-                          renameProject(proj.id, renameDraft);
-                          setRenamingId(null);
-                        }}
-                        className="flex items-center gap-1"
-                      >
-                        <input
-                          value={renameDraft}
-                          onChange={(e) => setRenameDraft(e.target.value)}
-                          autoFocus
-                          style={{
-                            background: 'var(--bg-canvas)',
-                            borderColor: 'var(--border-strong)',
-                            color: 'var(--ink-primary)',
-                          }}
-                          className="flex-1 min-w-0 px-2 py-1 rounded-md border text-xs"
-                        />
-                        <button
-                          type="submit"
-                          aria-label="Save project name"
-                          style={{ color: 'var(--accent-jade)' }}
-                          className="p-1"
-                        >
-                          <Check className="w-3.5 h-3.5" />
-                        </button>
-                      </form>
-                    ) : (
-                      <div className="flex items-start justify-between gap-2">
-                        <button
-                          type="button"
-                          onClick={() => {
-                            selectProject(proj.id);
-                            setMobileColumn('arena');
-                          }}
-                          className="text-left flex-1 min-w-0"
-                        >
-                          <div className="flex items-center gap-1.5">
-                            {proj.pinned && (
-                              <Pin
-                                className="w-3 h-3 shrink-0"
-                                style={{ color: 'var(--accent-primary)' }}
-                              />
-                            )}
-                            <span
-                              style={{ color: 'var(--ink-primary)' }}
-                              className="text-xs font-semibold truncate block"
-                            >
-                              {proj.name}
-                            </span>
-                          </div>
-                          <span
-                            style={{ color: 'var(--ink-muted)' }}
-                            className="text-[11px] font-mono block mt-0.5"
-                          >
-                            {proj.files.length} tệp | {proj.messages.length} lượt
-                          </span>
-                        </button>
-                        <div className="flex items-center gap-0.5 shrink-0">
-                          <button
-                            type="button"
-                            onClick={() => togglePinProject(proj.id)}
-                            aria-label="Pin project"
-                            style={{
-                              color: proj.pinned ? 'var(--accent-primary)' : 'var(--ink-muted)',
-                            }}
-                            className="p-1 rounded hover:opacity-80"
-                          >
-                            <Pin className="w-3 h-3" />
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setRenamingId(proj.id);
-                              setRenameDraft(proj.name);
-                            }}
-                            aria-label="Rename project"
-                            style={{ color: 'var(--ink-muted)' }}
-                            className="p-1 rounded hover:opacity-80"
-                          >
-                            <Pencil className="w-3 h-3" />
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => toggleArchiveProject(proj.id)}
-                            aria-label="Archive project"
-                            style={{
-                              color: proj.archived ? 'var(--accent-copper)' : 'var(--ink-muted)',
-                            }}
-                            className="p-1 rounded hover:opacity-80"
-                          >
-                            <Archive className="w-3 h-3" />
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => deleteProject(proj.id)}
-                            aria-label="Delete project"
-                            style={{ color: 'var(--ink-muted)' }}
-                            className="p-1 rounded hover:opacity-80"
-                          >
-                            <Trash2 className="w-3 h-3" />
-                          </button>
-                        </div>
-                      </div>
-                    )}
-                  </li>
-                );
-              })}
-            </ul>
-          </section>
-
-          <section
-            aria-label="Attached Explore Context"
+        {!railCollapsed && (
+          <aside
+            aria-label="Lịch sử hội thoại"
             style={{
-              background: 'var(--bg-panel)',
+              background: 'var(--bg-surface)',
               borderColor: 'var(--border-subtle)',
             }}
-            className="rounded-xl border p-3 flex flex-col gap-2 overflow-hidden"
+            className={`${
+              mobileColumn === 'history' ? 'flex' : 'hidden'
+            } lg:flex flex-col gap-3 p-3.5 border-r min-w-0 overflow-y-auto ff-scrollbar`}
           >
             <div className="flex items-center justify-between gap-2">
-              <span className="text-xs font-semibold">Ngữ cảnh đính kèm</span>
               <button
                 type="button"
-                onClick={() => navigate('explore')}
-                style={{ color: 'var(--accent-primary)' }}
-                className="inline-flex items-center gap-1 text-[11px] font-medium"
+                onClick={() => {
+                  createProject(`Phiên dựng #${projects.length + 1}`);
+                  setCenterMode('chat');
+                  setMobileColumn('arena');
+                }}
+                style={{
+                  background: 'var(--accent-primary)',
+                  color: 'var(--ink-inverse)',
+                }}
+                className="flex-1 px-3 py-2 rounded-xl text-xs font-semibold cursor-pointer"
               >
-                <Compass className="w-3 h-3" />
-                Explore
+                Tạo mới
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowArchived((v) => !v)}
+                aria-pressed={showArchived}
+                aria-label="Hiện lưu trữ"
+                title="Hiện lưu trữ"
+                style={{
+                  background: showArchived ? 'var(--bg-panel)' : 'transparent',
+                  borderColor: 'var(--border-subtle)',
+                  color: showArchived ? 'var(--accent-primary)' : 'var(--ink-secondary)',
+                }}
+                className="p-2 rounded-xl border cursor-pointer"
+              >
+                <Archive className="w-3.5 h-3.5" aria-hidden="true" />
+              </button>
+              <button
+                type="button"
+                onClick={() => setRailCollapsed(true)}
+                aria-label="Thu gọn thanh bên"
+                title="Thu gọn thanh bên"
+                style={{
+                  borderColor: 'var(--border-subtle)',
+                  color: 'var(--ink-secondary)',
+                }}
+                className="hidden lg:inline-flex p-2 rounded-xl border cursor-pointer"
+              >
+                <PanelLeftClose className="w-3.5 h-3.5" aria-hidden="true" />
               </button>
             </div>
-            {activeProject.attachedItems.length === 0 ? (
-              <p style={{ color: 'var(--ink-muted)' }} className="text-[11px]">
-                Chưa đính kèm mẫu UI hoặc tài nguyên từ Explore.
-              </p>
-            ) : (
-              <div className="flex flex-wrap gap-1.5">
+
+            <SearchCard
+              value={historyQuery}
+              onChange={setHistoryQuery}
+              placeholder="Tìm chuỗi hội thoại..."
+              compact
+            />
+
+            <div className="flex-1 min-h-0 overflow-y-auto ff-scrollbar space-y-4 pr-0.5">
+              {groupedProjects.today.length > 0 && (
+                <section aria-label="Hôm nay" className="space-y-1">
+                  <div
+                    className="px-2.5 text-[11px] font-medium"
+                    style={{ color: 'var(--ink-muted)' }}
+                  >
+                    Hôm nay
+                  </div>
+                  <ul className="m-0 p-0 list-none flex flex-col gap-0.5">
+                    {groupedProjects.today.map(renderProjectRow)}
+                  </ul>
+                </section>
+              )}
+
+              {groupedProjects.older.length > 0 && (
+                <section aria-label="Trước đó" className="space-y-1">
+                  <div
+                    className="px-2.5 text-[11px] font-medium"
+                    style={{ color: 'var(--ink-muted)' }}
+                  >
+                    Trước đó
+                  </div>
+                  <ul className="m-0 p-0 list-none flex flex-col gap-0.5">
+                    {groupedProjects.older.map(renderProjectRow)}
+                  </ul>
+                </section>
+              )}
+
+              {filteredProjects.length === 0 && (
+                <p className="px-2.5 text-xs" style={{ color: 'var(--ink-muted)' }}>
+                  Chưa có phiên phù hợp.
+                </p>
+              )}
+            </div>
+          </aside>
+        )}
+
+        {!railCollapsed && (
+          <button
+            type="button"
+            role="separator"
+            aria-orientation="vertical"
+            aria-label="Điều chỉnh thanh lịch sử"
+            aria-valuemin={15}
+            aria-valuemax={28}
+            aria-valuenow={leftWidthPct}
+            onPointerDown={handleDividerPointerDown('left')}
+            onPointerMove={handleDividerPointerMove('left')}
+            onKeyDown={handleDividerKeyDown('left')}
+            style={{ background: 'var(--bg-canvas)' }}
+            className="hidden lg:flex items-center justify-center cursor-col-resize select-none border-0 p-0"
+          >
+            <span
+              style={{ background: 'var(--border-subtle)' }}
+              className="w-px h-14 rounded-full"
+            />
+          </button>
+        )}
+
+        <section
+          aria-label="Sân khấu chính"
+          className={`${
+            mobileColumn === 'arena' ? 'flex' : 'hidden'
+          } lg:flex flex-col min-w-0 min-h-0 px-3 py-3 lg:px-5 lg:py-4 gap-3.5`}
+        >
+          <header
+            style={{
+              background: 'var(--bg-surface)',
+              borderColor: 'var(--border-subtle)',
+            }}
+            className="rounded-2xl border px-4 py-2.5 flex items-center justify-between gap-3 flex-wrap shrink-0"
+          >
+            <div className="flex items-center gap-2 min-w-0">
+              {railCollapsed && (
+                <button
+                  type="button"
+                  onClick={() => setRailCollapsed(false)}
+                  aria-label="Mở thanh lịch sử"
+                  title="Mở thanh lịch sử"
+                  style={{
+                    borderColor: 'var(--border-subtle)',
+                    color: 'var(--ink-secondary)',
+                  }}
+                  className="hidden lg:inline-flex p-1.5 rounded-lg border cursor-pointer"
+                >
+                  <PanelLeftOpen className="w-3.5 h-3.5" aria-hidden="true" />
+                </button>
+              )}
+              <h1
+                style={{ fontFamily: 'var(--font-serif)', color: 'var(--ink-primary)' }}
+                className="m-0 text-base sm:text-lg font-semibold truncate"
+              >
+                {activeProject.name}
+              </h1>
+            </div>
+
+            <div className="flex items-center gap-1.5 flex-wrap">
+              <button
+                type="button"
+                onClick={() => setCenterMode('chat')}
+                aria-pressed={centerMode === 'chat'}
+                style={{
+                  background: centerMode === 'chat' ? 'var(--bg-panel)' : 'transparent',
+                  borderColor: centerMode === 'chat' ? 'var(--border-strong)' : 'transparent',
+                  color: centerMode === 'chat' ? 'var(--ink-primary)' : 'var(--ink-secondary)',
+                }}
+                className="px-3 py-1.5 rounded-xl border text-xs font-medium cursor-pointer"
+              >
+                Hội thoại
+              </button>
+              <button
+                type="button"
+                onClick={() => setCenterMode('code')}
+                aria-pressed={centerMode === 'code'}
+                style={{
+                  background: centerMode === 'code' ? 'var(--bg-panel)' : 'transparent',
+                  borderColor: centerMode === 'code' ? 'var(--border-strong)' : 'transparent',
+                  color: centerMode === 'code' ? 'var(--ink-primary)' : 'var(--ink-secondary)',
+                }}
+                className="px-3 py-1.5 rounded-xl border text-xs font-medium cursor-pointer"
+              >
+                Mã nguồn
+              </button>
+
+              {centerMode === 'preview' && (
+                <div
+                  style={{
+                    background: 'var(--bg-panel)',
+                    borderColor: 'var(--border-subtle)',
+                  }}
+                  className="inline-flex items-center rounded-xl border p-0.5"
+                >
+                  {(
+                    [
+                      { id: 'desktop', label: 'Màn hình lớn', icon: Monitor },
+                      { id: 'mobile', label: 'Di động 390px', icon: Smartphone },
+                      { id: 'fullscreen', label: 'Toàn màn hình', icon: Maximize2 },
+                      { id: 'pip', label: 'Cửa sổ nổi', icon: PictureInPicture2 },
+                    ] as const
+                  ).map((vp) => {
+                    const Icon = vp.icon;
+                    const active = previewMode === vp.id;
+                    return (
+                      <button
+                        key={vp.id}
+                        type="button"
+                        onClick={() => setPreviewMode(vp.id)}
+                        aria-pressed={active}
+                        aria-label={vp.label}
+                        title={vp.label}
+                        style={{
+                          background: active ? 'var(--bg-surface)' : 'transparent',
+                          color: active ? 'var(--accent-primary)' : 'var(--ink-secondary)',
+                        }}
+                        className="p-1.5 rounded-lg cursor-pointer"
+                      >
+                        <Icon className="w-3.5 h-3.5" aria-hidden="true" />
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+
+              <button
+                type="button"
+                onClick={() => void handleExportZip()}
+                disabled={exporting}
+                style={{
+                  background: 'var(--bg-panel)',
+                  borderColor: 'var(--border-strong)',
+                  color: 'var(--ink-primary)',
+                }}
+                className="px-3 py-1.5 rounded-xl border text-xs font-medium disabled:opacity-60 cursor-pointer"
+              >
+                {exporting ? 'Đang nén' : 'Xuất ZIP'}
+              </button>
+            </div>
+          </header>
+
+          {activeProject.attachedItems.length > 0 && (
+            <div className="flex items-center justify-between gap-2 flex-wrap px-1">
+              <div className="flex flex-wrap items-center gap-1.5">
                 {activeProject.attachedItems.map((item) => (
                   <span
                     key={item.id}
@@ -519,191 +741,32 @@ export const WorkspaceView: React.FC = () => {
                       borderColor: 'var(--border-strong)',
                       color: 'var(--ink-primary)',
                     }}
-                    className="inline-flex items-center gap-1.5 max-w-full px-2 py-1 rounded-full border text-[11px]"
+                    className="inline-flex items-center gap-1.5 max-w-[260px] px-2.5 py-1 rounded-full border text-[11px]"
                   >
                     <span className="truncate">{item.title}</span>
                     <button
                       type="button"
                       onClick={() => detachItemFromWorkspace(item.id)}
-                      aria-label={`Remove ${item.title}`}
+                      aria-label={`Gỡ ${item.title}`}
+                      title={`Gỡ ${item.title}`}
                       style={{ color: 'var(--ink-muted)' }}
+                      className="cursor-pointer hover:opacity-80"
                     >
-                      <X className="w-3 h-3" />
+                      <X className="w-3 h-3" aria-hidden="true" />
                     </button>
                   </span>
                 ))}
               </div>
-            )}
-          </section>
-
-          <section
-            aria-label="Project Snapshots"
-            style={{
-              background: 'var(--bg-panel)',
-              borderColor: 'var(--border-subtle)',
-            }}
-            className="rounded-xl border p-3 flex flex-col gap-2 overflow-hidden"
-          >
-            <div className="flex items-center justify-between gap-2">
-              <span className="inline-flex items-center gap-1.5 text-xs font-semibold">
-                <History className="w-3.5 h-3.5" style={{ color: 'var(--accent-verdigris)' }} />
-                Snapshots ({activeProject.snapshots.length})
-              </span>
               <button
                 type="button"
-                onClick={() => createProjectSnapshot()}
+                onClick={() => navigate('explore')}
                 style={{ color: 'var(--accent-primary)' }}
-                className="text-[11px] font-medium"
+                className="text-xs font-medium hover:underline cursor-pointer"
               >
-                Lưu mốc
+                Khám phá
               </button>
             </div>
-            <ul className="flex flex-col gap-1 max-h-36 overflow-y-auto">
-              {activeProject.snapshots.slice(0, 6).map((snap) => (
-                <li
-                  key={snap.id}
-                  style={{
-                    background: 'var(--bg-surface)',
-                    borderColor: 'var(--border-subtle)',
-                  }}
-                  className="rounded-lg border px-2 py-1.5 flex items-center justify-between gap-2"
-                >
-                  <span className="text-[11px] truncate">{snap.label}</span>
-                  <button
-                    type="button"
-                    onClick={() => restoreProjectSnapshot(snap.id)}
-                    style={{ color: 'var(--accent-verdigris)' }}
-                    className="text-[11px] font-medium shrink-0"
-                  >
-                    Khôi phục
-                  </button>
-                </li>
-              ))}
-            </ul>
-          </section>
-        </aside>
-
-        <button
-          type="button"
-          role="separator"
-          aria-orientation="vertical"
-          aria-label="Resize left history panel"
-          aria-valuemin={16}
-          aria-valuemax={30}
-          aria-valuenow={leftWidthPct}
-          onPointerDown={handleDividerPointerDown('left')}
-          onPointerMove={handleDividerPointerMove('left')}
-          onKeyDown={handleDividerKeyDown('left')}
-          style={{ background: 'var(--bg-canvas)' }}
-          className="hidden lg:flex items-center justify-center cursor-col-resize select-none border-0 p-0"
-        >
-          <span
-            style={{ background: 'var(--border-strong)' }}
-            className="w-0.5 h-12 rounded-full"
-          />
-        </button>
-
-        <section
-          aria-label="Arena Work space Main Stage"
-          className={`${
-            mobileColumn === 'arena' ? 'flex' : 'hidden'
-          } lg:flex flex-col min-w-0 min-h-0 p-3 gap-3`}
-        >
-          <header
-            style={{
-              background: 'var(--bg-surface)',
-              borderColor: 'var(--border-subtle)',
-            }}
-            className="rounded-2xl border px-3.5 py-2.5 flex items-center justify-between gap-2 flex-wrap shrink-0"
-          >
-            <div className="flex items-center gap-1.5 flex-wrap">
-              {(
-                [
-                  { id: 'chat', label: 'Hội thoại AI', icon: MessageSquare },
-                  { id: 'preview', label: 'Live Preview', icon: Eye },
-                  { id: 'code', label: 'Code & Diff', icon: Code2 },
-                ] as const
-              ).map((tab) => {
-                const Icon = tab.icon;
-                const active = centerMode === tab.id;
-                return (
-                  <button
-                    key={tab.id}
-                    type="button"
-                    onClick={() => setCenterMode(tab.id)}
-                    aria-pressed={active}
-                    style={{
-                      background: active ? 'var(--bg-panel)' : 'transparent',
-                      borderColor: active ? 'var(--border-strong)' : 'transparent',
-                      color: active ? 'var(--accent-primary)' : 'var(--ink-secondary)',
-                    }}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-xs font-semibold"
-                  >
-                    <Icon className="w-3.5 h-3.5" />
-                    {tab.label}
-                  </button>
-                );
-              })}
-            </div>
-
-            <div className="flex items-center gap-1.5 flex-wrap">
-              <div
-                style={{
-                  background: 'var(--bg-panel)',
-                  borderColor: 'var(--border-subtle)',
-                }}
-                className="inline-flex items-center rounded-xl border p-0.5"
-              >
-                {(
-                  [
-                    { id: 'desktop', label: 'Desktop', icon: Monitor },
-                    { id: 'mobile', label: 'Mobile', icon: Smartphone },
-                    { id: 'fullscreen', label: 'Full', icon: Maximize2 },
-                    { id: 'pip', label: 'PiP', icon: PictureInPicture2 },
-                  ] as const
-                ).map((vp) => {
-                  const Icon = vp.icon;
-                  const active = previewMode === vp.id;
-                  return (
-                    <button
-                      key={vp.id}
-                      type="button"
-                      onClick={() => {
-                        setPreviewMode(vp.id);
-                        if (vp.id !== 'pip' && centerMode !== 'preview') {
-                          setCenterMode('preview');
-                        }
-                      }}
-                      aria-pressed={active}
-                      aria-label={`Viewport ${vp.label}`}
-                      style={{
-                        background: active ? 'var(--bg-surface)' : 'transparent',
-                        color: active ? 'var(--accent-primary)' : 'var(--ink-secondary)',
-                      }}
-                      className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-[11px] font-medium"
-                    >
-                      <Icon className="w-3.5 h-3.5" />
-                      <span className="hidden sm:inline">{vp.label}</span>
-                    </button>
-                  );
-                })}
-              </div>
-
-              <button
-                type="button"
-                onClick={() => void handleExportZip()}
-                disabled={exporting}
-                style={{
-                  background: 'var(--accent-primary)',
-                  color: '#0b0d12',
-                }}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold disabled:opacity-60"
-              >
-                <Download className="w-3.5 h-3.5" />
-                {exporting ? 'Đang nén...' : 'Export ZIP'}
-              </button>
-            </div>
-          </header>
+          )}
 
           <div className="flex-1 min-h-0 flex flex-col">
             {centerMode === 'preview' ? (
@@ -727,7 +790,7 @@ export const WorkspaceView: React.FC = () => {
                   background: 'var(--bg-surface)',
                   borderColor: 'var(--border-subtle)',
                 }}
-                className="flex-1 min-h-[300px] max-h-[54vh] rounded-2xl border p-4 overflow-y-auto flex flex-col gap-3"
+                className="flex-1 min-h-[300px] max-h-[62vh] rounded-2xl border px-5 py-5 overflow-y-auto ff-scrollbar flex flex-col gap-5"
               >
                 {activeProject.messages.map((msg) => {
                   const isUser = msg.role === 'user';
@@ -739,11 +802,17 @@ export const WorkspaceView: React.FC = () => {
                         background: isUser
                           ? 'var(--bg-panel)'
                           : isSystem
-                            ? 'rgba(224, 122, 56, 0.12)'
-                            : 'var(--bg-canvas)',
-                        borderColor: isSystem ? 'var(--accent-copper)' : 'var(--border-subtle)',
+                            ? 'var(--accent-soft)'
+                            : 'transparent',
+                        borderColor: isSystem
+                          ? 'var(--border-accent)'
+                          : isUser
+                            ? 'var(--border-subtle)'
+                            : 'var(--border-subtle)',
                       }}
-                      className="rounded-xl border p-3.5 flex flex-col gap-2 overflow-hidden"
+                      className={`${
+                        isUser || isSystem ? 'rounded-xl border px-4 py-3.5' : 'border-b pb-5 last:border-b-0'
+                      } flex flex-col gap-2 overflow-hidden`}
                     >
                       <div className="flex items-center justify-between gap-2 text-[11px]">
                         <span
@@ -757,14 +826,14 @@ export const WorkspaceView: React.FC = () => {
                           className="font-semibold"
                         >
                           {isUser
-                            ? currentUser?.name || 'Developer'
+                            ? currentUser?.name || 'Bạn'
                             : isSystem
-                              ? 'System Notice'
-                              : 'F-FORUM Synthesis Engine'}
+                              ? 'Thông báo'
+                              : 'F-Forum'}
                         </span>
                         <span style={{ color: 'var(--ink-muted)' }} className="font-mono">
-                          {msg.modelUsed ? `${msg.modelUsed} | ` : ''}
-                          {new Date(msg.createdAt).toLocaleTimeString([], {
+                          {msg.modelUsed ? `${msg.modelUsed} · ` : ''}
+                          {new Date(msg.createdAt).toLocaleTimeString('vi-VN', {
                             hour: '2-digit',
                             minute: '2-digit',
                           })}
@@ -773,7 +842,7 @@ export const WorkspaceView: React.FC = () => {
 
                       <p
                         style={{ color: 'var(--ink-primary)' }}
-                        className="text-sm leading-relaxed whitespace-pre-wrap break-words"
+                        className="m-0 text-sm leading-relaxed whitespace-pre-wrap break-words"
                       >
                         {msg.content}
                       </p>
@@ -788,11 +857,10 @@ export const WorkspaceView: React.FC = () => {
                               style={{
                                 background: 'var(--bg-panel)',
                                 borderColor: 'var(--border-subtle)',
-                                color: 'var(--ink-primary)',
+                                color: 'var(--accent-primary)',
                               }}
-                              className="inline-flex items-center gap-1 px-2 py-1 rounded-lg border font-mono text-[11px]"
+                              className="px-2.5 py-1 rounded-lg border font-mono text-[11px] cursor-pointer hover:opacity-90"
                             >
-                              <FileCode2 className="w-3 h-3" style={{ color: 'var(--accent-primary)' }} />
                               {filePath}
                             </button>
                           ))}
@@ -810,108 +878,112 @@ export const WorkspaceView: React.FC = () => {
               background: 'var(--bg-surface)',
               borderColor: 'var(--border-subtle)',
             }}
-            className="rounded-2xl border p-3 flex flex-col gap-2.5 shrink-0 overflow-hidden"
+            className="rounded-2xl border p-3 flex flex-col gap-2.5 shrink-0"
           >
             {dropZoneOpen && (
-              <div className="pb-1">
+              <div
+                style={{ borderColor: 'var(--border-subtle)' }}
+                className="rounded-xl border p-2.5 flex flex-col gap-2"
+              >
+                <div className="flex items-center justify-between px-1">
+                  <span className="text-xs font-medium" style={{ color: 'var(--ink-secondary)' }}>
+                    Nạp tệp thiết kế hoặc mã nguồn
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setDropZoneOpen(false)}
+                    aria-label="Đóng khung nạp tệp"
+                    title="Đóng"
+                    style={{ color: 'var(--ink-muted)' }}
+                    className="p-1 rounded-lg cursor-pointer"
+                  >
+                    <X className="w-3.5 h-3.5" aria-hidden="true" />
+                  </button>
+                </div>
                 <DynamicDropZone
                   onFilesAdded={handleFilesDropped}
-                  label="Thả tệp HTML/CSS/JS/JSON hoặc đặc tả để đính kèm vào Workspace"
+                  label="Thả tệp HTML, CSS, JS hoặc ảnh mẫu vào đây"
                   compact
                 />
               </div>
             )}
 
-            <div className="flex items-center justify-between gap-2 flex-wrap text-xs">
-              <div className="flex items-center gap-1.5 flex-wrap">
-                {AGENT_MODES.map((m) => (
-                  <button
-                    key={m.id}
-                    type="button"
-                    onClick={() => setAgentMode(m.id)}
-                    aria-pressed={agentMode === m.id}
-                    title={m.description}
-                    style={{
-                      background: agentMode === m.id ? 'var(--bg-panel)' : 'transparent',
-                      borderColor:
-                        agentMode === m.id ? 'var(--accent-primary)' : 'var(--border-subtle)',
-                      color:
-                        agentMode === m.id ? 'var(--accent-primary)' : 'var(--ink-secondary)',
-                    }}
-                    className="px-2.5 py-1 rounded-lg border text-xs font-medium"
-                  >
-                    {m.label}
-                  </button>
-                ))}
-                <button
-                  type="button"
-                  onClick={() => setDropZoneOpen((v) => !v)}
-                  style={{
-                    background: dropZoneOpen ? 'var(--bg-panel)' : 'transparent',
-                    borderColor: 'var(--border-subtle)',
-                    color: 'var(--ink-secondary)',
-                  }}
-                  className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg border text-xs"
-                >
-                  <Upload className="w-3.5 h-3.5" />
-                  Design-to-Code
-                </button>
-              </div>
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <Chips
+                items={CHIP_ACTIONS}
+                selectedIds={selectedChipIds}
+                onToggle={handleChipToggle}
+                multi={false}
+                variant="tactile"
+                corner={10}
+              />
 
-              <div className="flex items-center gap-3 font-mono text-[11px]">
+              <div className="ml-auto flex items-center gap-2 flex-wrap shrink-0">
                 <span
                   style={{ color: 'var(--ink-secondary)' }}
-                  className="inline-flex items-center gap-1"
+                  className="inline-flex items-center gap-1.5 font-mono text-[11px] whitespace-nowrap"
                 >
-                  <GitBranch className="w-3.5 h-3.5" style={{ color: 'var(--accent-verdigris)' }} />
-                  main
+                  <GitBranch className="w-3.5 h-3.5" style={{ color: 'var(--accent-verdigris)' }} aria-hidden="true" />
+                  <span>main</span>
                   <span style={{ color: 'var(--accent-jade)' }}>+{diffTotals.added}</span>
-                  <span style={{ color: 'var(--accent-copper)' }}>-{diffTotals.deleted}</span>
                 </span>
+
                 <span
                   style={{
                     background: quota.unlimited
-                      ? 'rgba(52, 211, 153, 0.14)'
+                      ? 'var(--accent-jade-soft)'
                       : quotaBlocked
-                        ? 'rgba(224, 122, 56, 0.18)'
+                        ? 'var(--accent-danger-soft)'
                         : 'var(--bg-panel)',
                     color: quota.unlimited
                       ? 'var(--accent-jade)'
                       : quotaBlocked
-                        ? 'var(--accent-copper)'
-                        : 'var(--accent-primary)',
+                        ? 'var(--accent-danger)'
+                        : 'var(--ink-secondary)',
                     borderColor: 'var(--border-subtle)',
                   }}
-                  className="px-2.5 py-0.5 rounded-full border font-semibold"
+                  className="px-2.5 py-1 rounded-full border font-mono text-[11px] whitespace-nowrap"
                 >
-                  {quota.unlimited ? '∞ Admin' : `${quota.used}/${quota.limit ?? 15} lượt AI`}
+                  {quota.unlimited ? '∞ Admin' : `${quota.used}/${quota.limit ?? 15}`}
                 </span>
+
+                <button
+                  type="button"
+                  onClick={() => setCenterMode((prev) => (prev === 'preview' ? 'chat' : 'preview'))}
+                  aria-pressed={centerMode === 'preview'}
+                  style={{
+                    background: centerMode === 'preview' ? 'var(--bg-panel)' : 'var(--accent-primary)',
+                    color: centerMode === 'preview' ? 'var(--accent-primary)' : 'var(--ink-inverse)',
+                    borderColor: centerMode === 'preview' ? 'var(--border-accent)' : 'transparent',
+                    boxShadow: 'var(--shadow-sm)',
+                  }}
+                  className="px-4 py-1.5 rounded-full border text-xs font-semibold whitespace-nowrap cursor-pointer transition-colors"
+                >
+                  Live View
+                </button>
               </div>
             </div>
 
             {quotaBlocked && (
               <div
                 style={{
-                  background: 'rgba(224, 122, 56, 0.12)',
+                  background: 'var(--accent-danger-soft)',
                   borderColor: 'var(--accent-copper)',
                   color: 'var(--ink-primary)',
                 }}
                 className="rounded-xl border px-3 py-2 text-xs flex items-center justify-between gap-2 flex-wrap"
               >
-                <span>
-                  Đã sử dụng hết 15/15 lượt miễn phí. Cấu hình khóa API riêng (BYOK) trong Cài đặt
-                  hoặc đăng nhập Admin để sử dụng không giới hạn.
-                </span>
+                <span>Đã dùng hết 15/15 lượt miễn phí. Chuyển sang khóa riêng hoặc đăng nhập Admin.</span>
                 <button
                   type="button"
                   onClick={() => navigate('settings')}
                   style={{
                     background: 'var(--accent-primary)',
-                    color: '#0b0d12',
+                    color: 'var(--ink-inverse)',
                   }}
-                  className="px-2.5 py-1 rounded-lg text-xs font-semibold shrink-0"
+                  className="px-3 py-1 rounded-lg text-xs font-semibold shrink-0 cursor-pointer"
                 >
-                  Mở Cài đặt BYOK
+                  Cài đặt
                 </button>
               </div>
             )}
@@ -930,11 +1002,6 @@ export const WorkspaceView: React.FC = () => {
               }}
               disabled={isGenerating || quotaBlocked}
             />
-
-            <p style={{ color: 'var(--ink-muted)' }} className="text-[11px] flex items-center gap-1.5">
-              <ShieldCheck className="w-3.5 h-3.5 shrink-0" style={{ color: 'var(--accent-verdigris)' }} />
-              Mã nguồn do AI tổng hợp cần được đối chiếu qua Live Preview và kiểm định Static/DOM trước khi triển khai.
-            </p>
           </div>
         </section>
 
@@ -942,7 +1009,7 @@ export const WorkspaceView: React.FC = () => {
           type="button"
           role="separator"
           aria-orientation="vertical"
-          aria-label="Resize right inspector panel"
+          aria-label="Điều chỉnh thanh kiểm định"
           aria-valuemin={20}
           aria-valuemax={34}
           aria-valuenow={rightWidthPct}
@@ -953,27 +1020,41 @@ export const WorkspaceView: React.FC = () => {
           className="hidden lg:flex items-center justify-center cursor-col-resize select-none border-0 p-0"
         >
           <span
-            style={{ background: 'var(--border-strong)' }}
-            className="w-0.5 h-12 rounded-full"
+            style={{ background: 'var(--border-subtle)' }}
+            className="w-px h-14 rounded-full"
           />
         </button>
 
         <aside
-          aria-label="Diff Checks and Processes Inspector"
+          aria-label="Diff & Check"
           style={{
             background: 'var(--bg-surface)',
             borderColor: 'var(--border-subtle)',
           }}
           className={`${
             mobileColumn === 'inspector' ? 'flex' : 'hidden'
-          } lg:flex flex-col gap-3 p-3 border-l min-w-0 overflow-y-auto`}
+          } lg:flex flex-col gap-3.5 p-3.5 border-l min-w-0 overflow-y-auto ff-scrollbar`}
         >
+          <div className="flex items-center justify-between gap-2 px-0.5">
+            <h2
+              style={{ fontFamily: 'var(--font-serif)', color: 'var(--ink-primary)' }}
+              className="m-0 text-base font-semibold"
+            >
+              Diff & Check
+            </h2>
+            <span className="font-mono text-[11px]" style={{ color: 'var(--ink-secondary)' }}>
+              <span style={{ color: 'var(--accent-jade)' }}>+{diffTotals.added}</span>
+              {' / '}
+              <span style={{ color: 'var(--accent-copper)' }}>-{diffTotals.deleted}</span>
+            </span>
+          </div>
+
           <LiquidTabs
             tabs={[
-              { id: 'diff', label: 'Diff', count: activeProject.files.length },
+              { id: 'diff', label: 'Thay đổi', count: activeProject.files.length },
               {
                 id: 'checks',
-                label: 'Checks',
+                label: 'Kiểm định',
                 count: activeProject.checksReport?.results.length || 6,
               },
             ]}
@@ -982,36 +1063,34 @@ export const WorkspaceView: React.FC = () => {
           />
 
           {rightTab === 'diff' ? (
-            <div className="flex flex-col gap-2">
+            <div className="flex flex-col gap-1.5">
               {activeProject.diffs.map((entry) => (
                 <button
                   key={entry.path}
                   type="button"
                   onClick={() => handleJumpToFile(entry.path)}
                   style={{
-                    background: 'var(--bg-panel)',
+                    background:
+                      activeProject.activeFilePath === entry.path
+                        ? 'var(--bg-panel)'
+                        : 'transparent',
                     borderColor:
                       activeProject.activeFilePath === entry.path
                         ? 'var(--border-strong)'
                         : 'var(--border-subtle)',
                   }}
-                  className="w-full text-left rounded-xl border p-2.5 flex items-center justify-between gap-2 overflow-hidden"
+                  className="w-full text-left rounded-xl border px-3 py-2 flex items-center justify-between gap-2 overflow-hidden cursor-pointer"
                 >
-                  <div className="min-w-0">
-                    <span
-                      style={{ color: 'var(--ink-primary)' }}
-                      className="font-mono text-xs font-medium block truncate"
-                    >
-                      {entry.path}
-                    </span>
-                    <span style={{ color: 'var(--ink-muted)' }} className="text-[11px] block">
-                      {entry.status}
-                    </span>
-                  </div>
-                  <div className="font-mono text-xs shrink-0 flex items-center gap-1.5">
+                  <span
+                    style={{ color: 'var(--ink-primary)' }}
+                    className="font-mono text-xs truncate min-w-0"
+                  >
+                    {entry.path}
+                  </span>
+                  <span className="font-mono text-[11px] shrink-0 flex items-center gap-1.5">
                     <span style={{ color: 'var(--accent-jade)' }}>+{entry.additions}</span>
                     <span style={{ color: 'var(--accent-copper)' }}>-{entry.deletions}</span>
-                  </div>
+                  </span>
                 </button>
               ))}
             </div>
@@ -1022,41 +1101,95 @@ export const WorkspaceView: React.FC = () => {
                 const report = runChecksOnActiveProject();
                 addToast({
                   type: report.overallStatus === 'fail' ? 'warning' : 'success',
-                  title: `Hoàn tất kiểm định: ${report.passCount}/${report.results.length} Pass`,
+                  title: `Kiểm định: ${report.passCount}/${report.results.length} đạt`,
                 });
               }}
               onSelectFile={handleJumpToFile}
             />
           )}
 
-          <TaskCard
-            title="Processes"
-            subtitle="Thực thi thời gian thực trong Workspace"
-            progressLabel={`${activeProject.processes.filter((p) => p.status === 'completed').length}/${activeProject.processes.length}`}
-            tasks={taskCardItems}
-          />
-
           <section
-            aria-label="GitHub Connectors"
+            aria-label="Mốc lưu"
             style={{
               background: 'var(--bg-panel)',
               borderColor: 'var(--border-subtle)',
             }}
-            className="rounded-xl border p-3 flex flex-col gap-2.5 overflow-hidden"
+            className="rounded-xl border p-3 flex flex-col gap-2 overflow-hidden"
           >
             <div className="flex items-center justify-between gap-2">
-              <span className="text-xs font-semibold">Connectors (GitHub)</span>
+              <span className="text-xs font-semibold" style={{ color: 'var(--ink-primary)' }}>
+                Mốc lưu ({activeProject.snapshots.length})
+              </span>
+              <button
+                type="button"
+                onClick={() => createProjectSnapshot()}
+                style={{ color: 'var(--accent-primary)' }}
+                className="text-xs font-medium cursor-pointer"
+              >
+                Lưu mốc
+              </button>
+            </div>
+            {activeProject.snapshots.length === 0 ? (
+              <p className="m-0 text-[11px]" style={{ color: 'var(--ink-muted)' }}>
+                Chưa có mốc lưu.
+              </p>
+            ) : (
+              <ul className="m-0 p-0 list-none flex flex-col gap-1 max-h-32 overflow-y-auto ff-scrollbar">
+                {activeProject.snapshots.slice(0, 5).map((snap) => (
+                  <li
+                    key={snap.id}
+                    style={{
+                      background: 'var(--bg-surface)',
+                      borderColor: 'var(--border-subtle)',
+                    }}
+                    className="rounded-lg border px-2.5 py-1.5 flex items-center justify-between gap-2"
+                  >
+                    <span className="text-[11px] truncate">{snap.label}</span>
+                    <button
+                      type="button"
+                      onClick={() => restoreProjectSnapshot(snap.id)}
+                      style={{ color: 'var(--accent-verdigris)' }}
+                      className="text-[11px] font-medium shrink-0 cursor-pointer"
+                    >
+                      Khôi phục
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
+
+          {taskCardItems.length > 0 && (
+            <TaskCard
+              title="Tiến trình"
+              progressLabel={`${activeProject.processes.filter((p) => p.status === 'completed').length}/${activeProject.processes.length}`}
+              tasks={taskCardItems}
+            />
+          )}
+
+          <section
+            aria-label="GitHub"
+            style={{
+              background: 'var(--bg-panel)',
+              borderColor: 'var(--border-subtle)',
+            }}
+            className="rounded-xl border p-3 flex flex-col gap-2 overflow-hidden"
+          >
+            <div className="flex items-center justify-between gap-2">
+              <span className="text-xs font-semibold" style={{ color: 'var(--ink-primary)' }}>
+                GitHub
+              </span>
               <button
                 type="button"
                 onClick={() => setGithubConnected((v) => !v)}
                 style={{
-                  background: githubConnected ? 'rgba(52, 211, 153, 0.14)' : 'var(--bg-surface)',
+                  background: githubConnected ? 'var(--accent-jade-soft)' : 'var(--bg-surface)',
                   color: githubConnected ? 'var(--accent-jade)' : 'var(--ink-secondary)',
                   borderColor: 'var(--border-subtle)',
                 }}
-                className="px-2.5 py-1 rounded-lg border text-[11px] font-semibold"
+                className="px-2.5 py-1 rounded-lg border text-[11px] font-medium cursor-pointer"
               >
-                {githubConnected ? 'Đã kết nối' : 'Kết nối'}
+                {githubConnected ? 'Ngắt' : 'Kết nối'}
               </button>
             </div>
             <div className="flex items-center gap-1.5">
@@ -1071,9 +1204,9 @@ export const WorkspaceView: React.FC = () => {
                   color:
                     githubScope === 'read-only' ? 'var(--accent-primary)' : 'var(--ink-secondary)',
                 }}
-                className="flex-1 py-1.5 rounded-lg border text-[11px] font-medium"
+                className="flex-1 py-1 rounded-lg border text-[11px] font-medium cursor-pointer"
               >
-                Read-only
+                Chỉ đọc
               </button>
               <button
                 type="button"
@@ -1086,7 +1219,7 @@ export const WorkspaceView: React.FC = () => {
                   color:
                     githubScope === 'pr-push' ? 'var(--accent-primary)' : 'var(--ink-secondary)',
                 }}
-                className="flex-1 py-1.5 rounded-lg border text-[11px] font-medium"
+                className="flex-1 py-1 rounded-lg border text-[11px] font-medium cursor-pointer"
               >
                 PR & Push
               </button>
@@ -1101,10 +1234,9 @@ export const WorkspaceView: React.FC = () => {
               borderColor: 'var(--border-strong)',
               color: 'var(--ink-primary)',
             }}
-            className="w-full inline-flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl border text-xs font-semibold"
+            className="w-full px-3 py-2 rounded-xl border text-xs font-medium cursor-pointer"
           >
-            <Layers className="w-4 h-4" style={{ color: 'var(--accent-primary)' }} />
-            Mở AI Project Setup Bundle
+            Thiết lập
           </button>
         </aside>
       </div>
@@ -1136,7 +1268,7 @@ export const WorkspaceView: React.FC = () => {
           addWorkspaceFiles(incoming);
           addToast({
             type: 'success',
-            title: 'Đã thêm 5 tệp cấu hình AI Setup vào Workspace',
+            title: 'Đã thêm 5 tệp cấu hình vào Workspace',
           });
         }}
       />

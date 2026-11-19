@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
-import { Shield, X } from 'lucide-react';
+import { X } from 'lucide-react';
 import { HaloSignIn } from '../pinui';
 import { useAppStore } from '../../store/appStore';
 
@@ -106,6 +106,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ open, onClose }) => {
               type="button"
               onClick={handleClose}
               aria-label="Đóng cửa sổ đăng nhập"
+              title="Đóng"
               className="absolute top-4 right-4 z-10 inline-flex h-9 w-9 items-center justify-center rounded-full border focus-visible:outline-2 focus-visible:outline-offset-2"
               style={{
                 backgroundColor: 'var(--bg-panel)',
@@ -143,11 +144,10 @@ export const AuthModal: React.FC<AuthModalProps> = ({ open, onClose }) => {
               <button
                 type="button"
                 onClick={handleAdminPortal}
-                className="inline-flex items-center gap-1.5 font-medium underline-offset-4 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2"
+                className="inline-flex items-center font-medium underline-offset-4 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2"
                 style={{ color: 'var(--ink-secondary)' }}
               >
-                <Shield className="h-3.5 w-3.5" aria-hidden="true" />
-                <span>Cổng Quản trị</span>
+                <span>Quản trị</span>
               </button>
             </div>
           </motion.div>

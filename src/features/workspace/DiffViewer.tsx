@@ -1,17 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import {
-  Check,
-  ChevronDown,
-  ChevronRight,
-  Columns2,
-  Copy,
-  FileCode2,
-  FileText,
-  FolderOpen,
-  Pencil,
-  RotateCcw,
-  Rows3,
-} from 'lucide-react';
+import { ChevronDown, ChevronRight } from 'lucide-react';
 import type { DiffEntry, WorkspaceFile } from '../../types/index';
 
 export interface DiffViewerProps {
@@ -109,32 +97,34 @@ export const DiffViewer: React.FC<DiffViewerProps> = ({
         }}
         className="border-b lg:border-b-0 lg:border-r p-3 flex flex-col gap-2 min-w-0"
       >
-        <button
-          type="button"
-          onClick={() => setTreeExpanded((v) => !v)}
-          className="flex items-center justify-between gap-2 text-xs font-semibold py-1"
-          style={{ color: 'var(--ink-primary)' }}
-        >
-          <span className="inline-flex items-center gap-1.5">
+        <div className="flex items-center justify-between gap-2 py-1">
+          <button
+            type="button"
+            onClick={() => setTreeExpanded((v) => !v)}
+            aria-label={treeExpanded ? 'Thu gọn danh sách tệp' : 'Mở rộng danh sách tệp'}
+            title={treeExpanded ? 'Thu gọn' : 'Mở rộng'}
+            className="p-0.5 rounded cursor-pointer"
+            style={{ color: 'var(--ink-secondary)' }}
+          >
             {treeExpanded ? (
-              <ChevronDown className="w-3.5 h-3.5" />
+              <ChevronDown className="w-3.5 h-3.5" aria-hidden="true" />
             ) : (
-              <ChevronRight className="w-3.5 h-3.5" />
+              <ChevronRight className="w-3.5 h-3.5" aria-hidden="true" />
             )}
-            <FolderOpen className="w-3.5 h-3.5" style={{ color: 'var(--accent-primary)' }} />
-            Cây tệp Workspace ({files.length})
+          </button>
+          <span className="text-xs font-semibold flex-1 truncate" style={{ color: 'var(--ink-primary)' }}>
+            Tệp ({files.length})
           </span>
-          <span className="font-mono text-[11px]" style={{ color: 'var(--ink-secondary)' }}>
+          <span className="font-mono text-[11px] shrink-0" style={{ color: 'var(--ink-secondary)' }}>
             +{totalAdditions} -{totalDeletions}
           </span>
-        </button>
+        </div>
 
         {treeExpanded && (
           <ul className="flex flex-row lg:flex-col gap-1 overflow-x-auto lg:overflow-y-auto pb-1 lg:pb-0">
             {files.map((file) => {
               const entry = diffs.find((d) => d.path === file.path);
               const isSelected = activeFile?.path === file.path;
-              const isMarkdown = file.path.endsWith('.md');
               return (
                 <li key={file.path} className="shrink-0">
                   <button
@@ -145,19 +135,9 @@ export const DiffViewer: React.FC<DiffViewerProps> = ({
                       borderColor: isSelected ? 'var(--border-strong)' : 'transparent',
                       color: isSelected ? 'var(--ink-primary)' : 'var(--ink-secondary)',
                     }}
-                    className="w-full text-left px-2.5 py-2 rounded-lg border flex items-center justify-between gap-2 text-xs"
+                    className="w-full text-left px-2.5 py-2 rounded-lg border flex items-center justify-between gap-2 text-xs cursor-pointer"
                   >
-                    <span className="inline-flex items-center gap-1.5 truncate">
-                      {isMarkdown ? (
-                        <FileText className="w-3.5 h-3.5 shrink-0" />
-                      ) : (
-                        <FileCode2
-                          className="w-3.5 h-3.5 shrink-0"
-                          style={{ color: isSelected ? 'var(--accent-primary)' : undefined }}
-                        />
-                      )}
-                      <span className="font-mono truncate">{file.path}</span>
-                    </span>
+                    <span className="font-mono truncate">{file.path}</span>
                     {entry && (entry.additions > 0 || entry.deletions > 0) && (
                       <span className="font-mono text-[10px] shrink-0 flex items-center gap-1">
                         {entry.additions > 0 && (
@@ -212,10 +192,9 @@ export const DiffViewer: React.FC<DiffViewerProps> = ({
                 borderColor: viewMode === 'unified' ? 'var(--border-strong)' : 'var(--border-subtle)',
                 color: viewMode === 'unified' ? 'var(--accent-primary)' : 'var(--ink-secondary)',
               }}
-              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg border text-xs"
+              className="px-2.5 py-1 rounded-lg border text-xs font-medium cursor-pointer"
             >
-              <Rows3 className="w-3.5 h-3.5" />
-              Unified
+              Gộp
             </button>
             <button
               type="button"
@@ -226,10 +205,9 @@ export const DiffViewer: React.FC<DiffViewerProps> = ({
                 borderColor: viewMode === 'split' ? 'var(--border-strong)' : 'var(--border-subtle)',
                 color: viewMode === 'split' ? 'var(--accent-primary)' : 'var(--ink-secondary)',
               }}
-              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg border text-xs"
+              className="px-2.5 py-1 rounded-lg border text-xs font-medium cursor-pointer"
             >
-              <Columns2 className="w-3.5 h-3.5" />
-              Split
+              Tách
             </button>
             <button
               type="button"
@@ -240,10 +218,9 @@ export const DiffViewer: React.FC<DiffViewerProps> = ({
                 borderColor: viewMode === 'edit' ? 'var(--border-strong)' : 'var(--border-subtle)',
                 color: viewMode === 'edit' ? 'var(--accent-primary)' : 'var(--ink-secondary)',
               }}
-              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg border text-xs"
+              className="px-2.5 py-1 rounded-lg border text-xs font-medium cursor-pointer"
             >
-              <Pencil className="w-3.5 h-3.5" />
-              Sửa trực tiếp
+              Sửa
             </button>
             {viewMode !== 'edit' && (
               <button
@@ -255,9 +232,9 @@ export const DiffViewer: React.FC<DiffViewerProps> = ({
                   borderColor: 'var(--border-subtle)',
                   color: 'var(--ink-secondary)',
                 }}
-                className="px-2 py-1 rounded-lg border text-xs"
+                className="px-2.5 py-1 rounded-lg border text-xs cursor-pointer"
               >
-                {collapseUnchanged ? 'Mở toàn bộ' : 'Thu gọn ngữ cảnh'}
+                {collapseUnchanged ? 'Mở rộng' : 'Thu gọn'}
               </button>
             )}
             <button
@@ -268,19 +245,9 @@ export const DiffViewer: React.FC<DiffViewerProps> = ({
                 borderColor: 'var(--border-strong)',
                 color: copiedPath === activeFile?.path ? 'var(--accent-jade)' : 'var(--ink-primary)',
               }}
-              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg border text-xs font-medium"
+              className="px-2.5 py-1 rounded-lg border text-xs font-medium cursor-pointer"
             >
-              {copiedPath === activeFile?.path ? (
-                <>
-                  <Check className="w-3.5 h-3.5" />
-                  Đã sao chép
-                </>
-              ) : (
-                <>
-                  <Copy className="w-3.5 h-3.5" />
-                  Copy Code
-                </>
-              )}
+              {copiedPath === activeFile?.path ? 'Đã chép' : 'Sao chép'}
             </button>
           </div>
         </div>
@@ -295,10 +262,10 @@ export const DiffViewer: React.FC<DiffViewerProps> = ({
           >
             <span className="text-xs" style={{ color: 'var(--ink-secondary)' }}>
               {hunkDecision[activeDiff.path] === 'accepted'
-                ? 'Đã xác nhận giữ thay đổi mới cho tệp này.'
+                ? 'Đã xác nhận thay đổi cho tệp này.'
                 : hunkDecision[activeDiff.path] === 'reverted'
-                  ? 'Đã khôi phục nội dung gốc trước khi thay đổi.'
-                  : 'Duyệt thay đổi hunk cho tệp đang chọn:'}
+                  ? 'Đã khôi phục nguyên bản.'
+                  : 'Xác nhận thay đổi cho tệp đang chọn:'}
             </span>
             <div className="flex items-center gap-2">
               <button
@@ -306,11 +273,10 @@ export const DiffViewer: React.FC<DiffViewerProps> = ({
                 onClick={handleAcceptHunk}
                 style={{
                   background: 'var(--accent-primary)',
-                  color: '#0b0d12',
+                  color: 'var(--ink-inverse)',
                 }}
-                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold"
+                className="px-2.5 py-1 rounded-lg text-xs font-semibold cursor-pointer"
               >
-                <Check className="w-3.5 h-3.5" />
                 Chấp nhận
               </button>
               <button
@@ -321,10 +287,9 @@ export const DiffViewer: React.FC<DiffViewerProps> = ({
                   borderColor: 'var(--border-strong)',
                   color: 'var(--ink-primary)',
                 }}
-                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg border text-xs"
+                className="px-2.5 py-1 rounded-lg border text-xs cursor-pointer"
               >
-                <RotateCcw className="w-3.5 h-3.5" />
-                Giữ bản gốc
+                Hoàn tác
               </button>
             </div>
           </div>

@@ -164,20 +164,22 @@ export const LivePreviewFrame: React.FC<LivePreviewFrameProps> = ({
             <button
               type="button"
               onClick={() => setReloadNonce((n) => n + 1)}
-              aria-label="Refresh preview"
+              aria-label="Tải lại"
+              title="Tải lại"
               style={{ color: 'var(--ink-secondary)' }}
-              className="p-1 rounded-md hover:opacity-80"
+              className="p-1 rounded-md hover:opacity-80 cursor-pointer"
             >
-              <RefreshCw className="w-3.5 h-3.5" />
+              <RefreshCw className="w-3.5 h-3.5" aria-hidden="true" />
             </button>
             <button
               type="button"
               onClick={() => onModeChange('desktop')}
-              aria-label="Dock preview"
+              aria-label="Gắn lại"
+              title="Gắn lại"
               style={{ color: 'var(--ink-secondary)' }}
-              className="p-1 rounded-md hover:opacity-80"
+              className="p-1 rounded-md hover:opacity-80 cursor-pointer"
             >
-              <Maximize2 className="w-3.5 h-3.5" />
+              <Maximize2 className="w-3.5 h-3.5" aria-hidden="true" />
             </button>
             <button
               type="button"
@@ -185,11 +187,12 @@ export const LivePreviewFrame: React.FC<LivePreviewFrameProps> = ({
                 setPipOffset({ x: 0, y: 0 });
                 onModeChange('desktop');
               }}
-              aria-label="Close PiP"
+              aria-label="Đóng"
+              title="Đóng"
               style={{ color: 'var(--ink-secondary)' }}
-              className="p-1 rounded-md hover:opacity-80"
+              className="p-1 rounded-md hover:opacity-80 cursor-pointer"
             >
-              <X className="w-3.5 h-3.5" />
+              <X className="w-3.5 h-3.5" aria-hidden="true" />
             </button>
           </div>
         </div>
@@ -232,27 +235,29 @@ export const LivePreviewFrame: React.FC<LivePreviewFrameProps> = ({
             <button
               type="button"
               onClick={() => setReloadNonce((n) => n + 1)}
+              aria-label="Tải lại"
+              title="Tải lại"
               style={{
                 background: 'var(--bg-panel)',
                 color: 'var(--ink-primary)',
                 borderColor: 'var(--border-subtle)',
               }}
-              className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border text-xs font-medium"
+              className="inline-flex items-center justify-center w-8 h-8 rounded-lg border cursor-pointer"
             >
-              <RefreshCw className="w-3.5 h-3.5" />
-              Reload
+              <RefreshCw className="w-3.5 h-3.5" aria-hidden="true" />
             </button>
             <button
               type="button"
               onClick={() => onModeChange('desktop')}
+              aria-label="Thu nhỏ"
+              title="Thu nhỏ"
               style={{
                 background: 'var(--accent-primary)',
-                color: '#0b0d12',
+                color: 'var(--ink-inverse)',
               }}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold"
+              className="inline-flex items-center justify-center w-8 h-8 rounded-lg cursor-pointer"
             >
-              <Minimize2 className="w-3.5 h-3.5" />
-              Thoát toàn màn hình
+              <Minimize2 className="w-3.5 h-3.5" aria-hidden="true" />
             </button>
           </div>
         </div>
@@ -305,56 +310,61 @@ export const LivePreviewFrame: React.FC<LivePreviewFrameProps> = ({
             type="button"
             onClick={() => onModeChange('desktop')}
             aria-pressed={mode === 'desktop'}
-            aria-label="Desktop preview"
+            aria-label="Màn hình lớn"
+            title="Màn hình lớn"
             style={{
               background: mode === 'desktop' ? 'var(--bg-surface)' : 'transparent',
               color: mode === 'desktop' ? 'var(--accent-primary)' : 'var(--ink-secondary)',
               borderColor: mode === 'desktop' ? 'var(--border-strong)' : 'transparent',
             }}
-            className="p-1.5 rounded-lg border"
+            className="p-1.5 rounded-lg border cursor-pointer"
           >
-            <Monitor className="w-3.5 h-3.5" />
+            <Monitor className="w-3.5 h-3.5" aria-hidden="true" />
           </button>
           <button
             type="button"
             onClick={() => onModeChange('mobile')}
             aria-pressed={mode === 'mobile'}
-            aria-label="Mobile 390px preview"
+            aria-label="Di động 390px"
+            title="Di động 390px"
             style={{
               background: mode === 'mobile' ? 'var(--bg-surface)' : 'transparent',
               color: mode === 'mobile' ? 'var(--accent-primary)' : 'var(--ink-secondary)',
               borderColor: mode === 'mobile' ? 'var(--border-strong)' : 'transparent',
             }}
-            className="p-1.5 rounded-lg border"
+            className="p-1.5 rounded-lg border cursor-pointer"
           >
-            <Smartphone className="w-3.5 h-3.5" />
+            <Smartphone className="w-3.5 h-3.5" aria-hidden="true" />
           </button>
           <button
             type="button"
             onClick={() => onModeChange('pip')}
-            aria-label="Floating PiP preview"
+            aria-label="Cửa sổ nổi"
+            title="Cửa sổ nổi"
             style={{ color: 'var(--ink-secondary)' }}
-            className="p-1.5 rounded-lg hover:opacity-80"
+            className="p-1.5 rounded-lg hover:opacity-80 cursor-pointer"
           >
-            <PictureInPicture2 className="w-3.5 h-3.5" />
+            <PictureInPicture2 className="w-3.5 h-3.5" aria-hidden="true" />
           </button>
           <button
             type="button"
             onClick={() => onModeChange('fullscreen')}
-            aria-label="Fullscreen preview"
+            aria-label="Toàn màn hình"
+            title="Toàn màn hình"
             style={{ color: 'var(--ink-secondary)' }}
-            className="p-1.5 rounded-lg hover:opacity-80"
+            className="p-1.5 rounded-lg hover:opacity-80 cursor-pointer"
           >
-            <Maximize2 className="w-3.5 h-3.5" />
+            <Maximize2 className="w-3.5 h-3.5" aria-hidden="true" />
           </button>
           <button
             type="button"
             onClick={() => setReloadNonce((n) => n + 1)}
-            aria-label="Refresh sandboxed iframe"
+            aria-label="Tải lại"
+            title="Tải lại"
             style={{ color: 'var(--ink-secondary)' }}
-            className="p-1.5 rounded-lg hover:opacity-80"
+            className="p-1.5 rounded-lg hover:opacity-80 cursor-pointer"
           >
-            <RefreshCw className="w-3.5 h-3.5" />
+            <RefreshCw className="w-3.5 h-3.5" aria-hidden="true" />
           </button>
         </div>
       </div>

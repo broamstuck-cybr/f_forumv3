@@ -27,6 +27,7 @@ import type {
   ResourceItem,
   SettingsState,
   SourceCatalogItem,
+  ThemeEffect,
   ThemeMode,
   ToastItem,
   User,
@@ -46,6 +47,7 @@ const STORAGE_SAVED_ITEMS_KEY = 'fforum_v3_saved_items';
 
 const DEFAULT_SETTINGS: SettingsState = {
   theme: 'dark',
+  themeEffect: 'droplet',
   reducedMotion: false,
   compactDensity: false,
   defaultExportTarget: 'antigravity',
@@ -57,6 +59,30 @@ const DEFAULT_SETTINGS: SettingsState = {
     apiKey: '',
   },
 };
+
+function applyThemeToDom(theme: ThemeMode, reducedMotion?: boolean): void {
+  if (typeof document !== 'undefined') {
+    const root = document.documentElement;
+    root.setAttribute('data-theme', theme);
+    root.classList.toggle('dark', theme === 'dark');
+    root.classList.toggle('light', theme === 'light');
+    root.style.colorScheme = theme;
+    if (typeof reducedMotion === 'boolean') {
+      root.classList.toggle('reduce-motion', reducedMotion);
+    }
+    const meta = document.querySelector('meta[name="theme-color"]');
+    if (meta) {
+      meta.setAttribute('content', theme === 'dark' ? '#090a0d' : '#f7f5f0');
+    }
+  }
+  if (typeof window !== 'undefined') {
+    try {
+      window.localStorage.setItem('fforum_theme', theme);
+    } catch {
+      return;
+    }
+  }
+}
 
 const DEFAULT_QUOTA: QuotaState = {
   subjectId: 'guest:local',
@@ -352,6 +378,7 @@ function parseRouteFromPathname(pathname: string): AppRoute {
   if (clean === '/explore') return 'explore';
   if (clean === '/workspace') return 'workspace';
   if (clean === '/community') return 'community';
+  if (clean === '/profile') return 'profile';
   if (clean === '/settings') return 'settings';
   if (clean === '/admin') return 'admin';
   return 'not-found';
@@ -370,6 +397,7 @@ function normalizeRouteTarget(target: AppRoute | DimensionView): AppRoute {
     target === 'explore' ||
     target === 'workspace' ||
     target === 'community' ||
+    target === 'profile' ||
     target === 'settings' ||
     target === 'admin' ||
     target === 'not-found'
@@ -455,11 +483,12 @@ export interface AppStoreContextValue {
   updateWorkspaceFile: (filePath: string, content: string) => void;
   addWorkspaceFiles: (files: Array<{ path: string; content: string; summary?: string }>) => void;
   attachItemToWorkspace: (item: AttachedContextItem, navigateToWorkspace?: boolean) => void;
+  openInWorkspace: (item: AttachedContextItem) => void;
   detachItemFromWorkspace: (itemId: string) => void;
   launchPromptToWorkspace: (prompt: string, attached?: AttachedContextItem[]) => Promise<void>;
   sendWorkspacePrompt: (
     prompt: string,
-    options?: { model?: string; agentMode?: string }
+    options?: { model?: string; agentMode?: string; attachedItems?: AttachedContextItem[] }
   ) => Promise<void>;
   runChecksOnActiveProject: () => ChecksReport;
   createProjectSnapshot: (label?: string) => void;
@@ -500,6 +529,8 @@ export interface AppStoreContextValue {
   theme: ThemeMode;
   setTheme: (theme: ThemeMode) => void;
   toggleTheme: () => void;
+  themeEffect: ThemeEffect;
+  setThemeEffect: (effect: ThemeEffect) => void;
   reducedMotion: boolean;
   setReducedMotion: (val: boolean) => void;
   toasts: ToastItem[];
@@ -536,20 +567,47 @@ export const AppStoreProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
   const [settings, setSettings] = useState<SettingsState>(() => {
     if (typeof window === 'undefined') return DEFAULT_SETTINGS;
+    let fallbackTheme: ThemeMode = DEFAULT_SETTINGS.theme;
+    try {
+      const legacyTheme = window.localStorage.getItem('fforum_theme');
+      if (legacyTheme === 'light' || legacyTheme === 'dark') {
+        fallbackTheme = legacyTheme;
+      }
+    } catch {
+      fallbackTheme = DEFAULT_SETTINGS.theme;
+    }
     try {
       const raw = window.localStorage.getItem(STORAGE_SETTINGS_KEY);
-      if (!raw) return DEFAULT_SETTINGS;
+      if (!raw) {
+        return {
+          ...DEFAULT_SETTINGS,
+          theme: fallbackTheme,
+        };
+      }
       const parsed = JSON.parse(raw) as Partial<SettingsState>;
+      const resolvedTheme: ThemeMode =
+        parsed.theme === 'light' || parsed.theme === 'dark' ? parsed.theme : fallbackTheme;
+      const resolvedEffect: ThemeEffect =
+        parsed.themeEffect === 'droplet' ||
+        parsed.themeEffect === 'rain' ||
+        parsed.themeEffect === 'diwali'
+          ? parsed.themeEffect
+          : 'droplet';
       return {
         ...DEFAULT_SETTINGS,
         ...parsed,
+        theme: resolvedTheme,
+        themeEffect: resolvedEffect,
         byok: {
           ...DEFAULT_SETTINGS.byok,
           ...(parsed.byok || {}),
         },
       };
     } catch {
-      return DEFAULT_SETTINGS;
+      return {
+        ...DEFAULT_SETTINGS,
+        theme: fallbackTheme,
+      };
     }
   });
 
@@ -613,18 +671,37 @@ export const AppStoreProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   }, []);
 
   useEffect(() => {
-    if (typeof document === 'undefined') return;
-    const root = document.documentElement;
-    root.setAttribute('data-theme', settings.theme);
-    root.classList.toggle('dark', settings.theme === 'dark');
-    root.classList.toggle('light', settings.theme === 'light');
-    root.classList.toggle('reduce-motion', settings.reducedMotion);
-    try {
-      window.localStorage.setItem('fforum_theme', settings.theme);
-    } catch {
-      return;
-    }
+    applyThemeToDom(settings.theme, settings.reducedMotion);
   }, [settings.theme, settings.reducedMotion]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const handleStorage = (e: StorageEvent) => {
+      if (e.key === STORAGE_SETTINGS_KEY && e.newValue) {
+        try {
+          const parsed = JSON.parse(e.newValue) as Partial<SettingsState>;
+          if (parsed.theme === 'light' || parsed.theme === 'dark') {
+            setSettings((prev) => ({
+              ...prev,
+              ...parsed,
+              theme: parsed.theme as ThemeMode,
+              byok: {
+                ...prev.byok,
+                ...(parsed.byok || {}),
+              },
+            }));
+          }
+        } catch {
+          return;
+        }
+      } else if (e.key === 'fforum_theme' && (e.newValue === 'light' || e.newValue === 'dark')) {
+        const nextTheme = e.newValue;
+        setSettings((prev) => (prev.theme === nextTheme ? prev : { ...prev, theme: nextTheme }));
+      }
+    };
+    window.addEventListener('storage', handleStorage);
+    return () => window.removeEventListener('storage', handleStorage);
+  }, []);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -918,24 +995,77 @@ export const AppStoreProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
   const attachItemToWorkspace = useCallback(
     (item: AttachedContextItem, navigateToWorkspace = false) => {
-      updateActiveProject((proj) => {
-        const already = proj.attachedItems.some((a) => a.id === item.id);
-        return {
-          ...proj,
-          updatedAt: new Date().toISOString(),
-          attachedItems: already ? proj.attachedItems : [...proj.attachedItems, item],
-        };
-      });
-      addToast({
-        type: 'success',
-        title: 'Đã đính kèm vào Workspace',
-        message: item.title,
-      });
+      if (activeProject.archived) {
+        const fallbackProj = projects.find((p) => !p.archived);
+        if (!fallbackProj) {
+          if (navigateToWorkspace) {
+            createProject(item.title || 'Workspace Mới', item.summary, [item]);
+            addToast({
+              type: 'success',
+              title: 'Đã đính kèm vào Workspace',
+              message: item.title,
+            });
+            navigate('workspace');
+          } else {
+            addToast({
+              type: 'warning',
+              title: 'Dự án đang lưu trữ',
+              message: 'Hãy bỏ lưu trữ hoặc tạo dự án mới để đính kèm.',
+            });
+          }
+          return;
+        }
+        setActiveProjectId(fallbackProj.id);
+        const alreadyInFallback = fallbackProj.attachedItems.some((a) => a.id === item.id);
+        if (!alreadyInFallback) {
+          const now = new Date().toISOString();
+          setProjects((prev) =>
+            prev.map((p) =>
+              p.id === fallbackProj.id
+                ? { ...p, updatedAt: now, attachedItems: [...p.attachedItems, item] }
+                : p
+            )
+          );
+          addToast({
+            type: 'success',
+            title: 'Đã đính kèm vào Workspace',
+            message: item.title,
+          });
+        }
+        if (navigateToWorkspace) {
+          navigate('workspace');
+        }
+        return;
+      }
+
+      const already = activeProject.attachedItems.some((a) => a.id === item.id);
+      if (!already) {
+        updateActiveProject((proj) => {
+          if (proj.attachedItems.some((a) => a.id === item.id)) return proj;
+          return {
+            ...proj,
+            updatedAt: new Date().toISOString(),
+            attachedItems: [...proj.attachedItems, item],
+          };
+        });
+        addToast({
+          type: 'success',
+          title: 'Đã đính kèm vào Workspace',
+          message: item.title,
+        });
+      }
       if (navigateToWorkspace) {
         navigate('workspace');
       }
     },
-    [updateActiveProject, addToast, navigate]
+    [activeProject, projects, createProject, updateActiveProject, addToast, navigate]
+  );
+
+  const openInWorkspace = useCallback(
+    (item: AttachedContextItem) => {
+      attachItemToWorkspace(item, true);
+    },
+    [attachItemToWorkspace]
   );
 
   const detachItemFromWorkspace = useCallback(
@@ -970,7 +1100,10 @@ export const AppStoreProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   }, [activeProject.files, updateActiveProject]);
 
   const sendWorkspacePrompt = useCallback(
-    async (prompt: string, options?: { model?: string; agentMode?: string }) => {
+    async (
+      prompt: string,
+      options?: { model?: string; agentMode?: string; attachedItems?: AttachedContextItem[] }
+    ) => {
       const trimmed = prompt.trim();
       if (!trimmed) return;
 
@@ -1011,7 +1144,7 @@ export const AppStoreProvider: React.FC<{ children: React.ReactNode }> = ({ chil
             model: options?.model,
             agentMode: options?.agentMode,
             files: activeProject.files.map((f) => ({ path: f.path, content: f.content })),
-            attachedItems: activeProject.attachedItems,
+            attachedItems: options?.attachedItems ?? activeProject.attachedItems,
             history: activeProject.messages
               .filter((m) => m.role === 'user' || m.role === 'assistant')
               .slice(-6)
@@ -1145,20 +1278,25 @@ export const AppStoreProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
   const launchPromptToWorkspace = useCallback(
     async (prompt: string, attached: AttachedContextItem[] = []) => {
-      if (attached.length > 0) {
-        updateActiveProject((proj) => {
-          const existingIds = new Set(proj.attachedItems.map((a) => a.id));
-          const merged = [
-            ...proj.attachedItems,
-            ...attached.filter((a) => !existingIds.has(a.id)),
-          ];
-          return { ...proj, attachedItems: merged };
-        });
+      let nextAttached = activeProject.attachedItems;
+      if (attached.length > 0 && !activeProject.archived) {
+        const existingIds = new Set(activeProject.attachedItems.map((a) => a.id));
+        const additions = attached.filter((a) => !existingIds.has(a.id));
+        if (additions.length > 0) {
+          nextAttached = [...activeProject.attachedItems, ...additions];
+          updateActiveProject((proj) => {
+            const ids = new Set(proj.attachedItems.map((a) => a.id));
+            const added = attached.filter((a) => !ids.has(a.id));
+            return added.length > 0
+              ? { ...proj, attachedItems: [...proj.attachedItems, ...added] }
+              : proj;
+          });
+        }
       }
       navigate('workspace');
-      await sendWorkspacePrompt(prompt);
+      await sendWorkspacePrompt(prompt, { attachedItems: nextAttached });
     },
-    [updateActiveProject, navigate, sendWorkspacePrompt]
+    [activeProject.attachedItems, activeProject.archived, updateActiveProject, navigate, sendWorkspacePrompt]
   );
 
   const createProjectSnapshot = useCallback(
@@ -1434,7 +1572,7 @@ export const AppStoreProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   }, []);
 
   const setTheme = useCallback((theme: ThemeMode) => {
-    setSettings((prev) => ({ ...prev, theme }));
+    setSettings((prev) => (prev.theme === theme ? prev : { ...prev, theme }));
   }, []);
 
   const toggleTheme = useCallback(() => {
@@ -1442,6 +1580,10 @@ export const AppStoreProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       ...prev,
       theme: prev.theme === 'dark' ? 'light' : 'dark',
     }));
+  }, []);
+
+  const setThemeEffect = useCallback((themeEffect: ThemeEffect) => {
+    setSettings((prev) => ({ ...prev, themeEffect }));
   }, []);
 
   const setReducedMotion = useCallback((reducedMotion: boolean) => {
@@ -1471,6 +1613,7 @@ export const AppStoreProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       updateWorkspaceFile,
       addWorkspaceFiles,
       attachItemToWorkspace,
+      openInWorkspace,
       detachItemFromWorkspace,
       launchPromptToWorkspace,
       sendWorkspacePrompt,
@@ -1503,6 +1646,8 @@ export const AppStoreProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       theme: settings.theme,
       setTheme,
       toggleTheme,
+      themeEffect: settings.themeEffect ?? 'droplet',
+      setThemeEffect,
       reducedMotion: settings.reducedMotion,
       setReducedMotion,
       toasts,
@@ -1529,6 +1674,7 @@ export const AppStoreProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       updateWorkspaceFile,
       addWorkspaceFiles,
       attachItemToWorkspace,
+      openInWorkspace,
       detachItemFromWorkspace,
       launchPromptToWorkspace,
       sendWorkspacePrompt,
@@ -1559,6 +1705,7 @@ export const AppStoreProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       updateByok,
       setTheme,
       toggleTheme,
+      setThemeEffect,
       setReducedMotion,
       toasts,
       addToast,

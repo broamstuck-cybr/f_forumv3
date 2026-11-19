@@ -16,7 +16,7 @@ export interface DynamicDropZoneProps {
 
 export const DynamicDropZone: React.FC<DynamicDropZoneProps> = ({
   onFilesAdded,
-  label = 'Kéo thả tệp HTML/CSS/JS/MD hoặc bấm để chọn',
+  label = 'Nạp tệp',
   compact = false,
   className = '',
 }) => {
@@ -80,20 +80,12 @@ export const DynamicDropZone: React.FC<DynamicDropZoneProps> = ({
     }
   };
 
+  const buttonLabel = phase === 'done' ? 'Đã nạp' : over ? 'Thả tệp' : 'Nạp tệp';
+
   return (
     <div
-      role="button"
-      tabIndex={0}
-      aria-label={label}
       data-over={over}
       className={`pdz-zone ${compact ? 'px-3 py-2.5' : 'px-5 py-6'} ${className}`}
-      onClick={() => inputRef.current?.click()}
-      onKeyDown={(e) => {
-        if (e.key === 'Enter' || e.key === ' ') {
-          e.preventDefault();
-          inputRef.current?.click();
-        }
-      }}
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
@@ -114,10 +106,11 @@ export const DynamicDropZone: React.FC<DynamicDropZoneProps> = ({
       <motion.div
         animate={reduced ? undefined : over ? { scale: 1.06 } : { scale: 1 }}
         transition={{ type: 'spring', stiffness: 320, damping: 24 }}
-        className="relative z-10 flex items-center gap-2.5"
+        className="relative z-10 flex flex-wrap items-center justify-center gap-3 w-full"
       >
         <span
           className="inline-grid place-items-center rounded-full shrink-0"
+          aria-hidden="true"
           style={{
             width: compact ? 28 : 36,
             height: compact ? 28 : 36,
@@ -131,16 +124,34 @@ export const DynamicDropZone: React.FC<DynamicDropZoneProps> = ({
             <Upload className="h-4 w-4" aria-hidden="true" />
           )}
         </span>
-        <div className="text-left min-w-0">
-          <div className="text-[12.5px] font-medium" style={{ color: 'var(--ink-primary)' }}>
-            {phase === 'done' ? `Đã thêm ${lastCount} tệp vào ngữ cảnh` : over ? 'Thả tệp để nạp vào Work space' : label}
-          </div>
-          {!compact && phase === 'idle' && (
+        <div className="text-left min-w-0 flex-1">
+          {phase === 'done' ? (
+            <div className="text-[12.5px] font-medium" style={{ color: 'var(--ink-primary)' }}>
+              {`Đã thêm ${lastCount} tệp`}
+            </div>
+          ) : label !== 'Nạp tệp' ? (
+            <div className="text-[12.5px] font-medium" style={{ color: 'var(--ink-primary)' }}>
+              {label}
+            </div>
+          ) : null}
+          {!compact && (
             <div className="text-[11px] font-mono mt-0.5" style={{ color: 'var(--ink-muted)' }}>
-              HTML · CSS · JS · Markdown · Design screenshot
+              HTML · CSS · JS · Markdown · Ảnh mẫu
             </div>
           )}
         </div>
+        <button
+          type="button"
+          onClick={() => inputRef.current?.click()}
+          className="shrink-0 rounded-full border px-3.5 py-1.5 text-[12px] font-semibold cursor-pointer transition-colors"
+          style={{
+            background: phase === 'done' ? 'var(--accent-jade-soft)' : 'var(--bg-surface)',
+            borderColor: phase === 'done' ? 'var(--accent-jade)' : 'var(--border-accent)',
+            color: phase === 'done' ? 'var(--accent-jade)' : 'var(--accent-primary)',
+          }}
+        >
+          {buttonLabel}
+        </button>
       </motion.div>
     </div>
   );

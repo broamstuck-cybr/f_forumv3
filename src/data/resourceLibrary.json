@@ -181,7 +181,8 @@
     "compatibility": "Git, Markdown Readers",
     "lastVerified": "2026-11-19",
     "status": "verified_tested",
-    "description": "Kho lưu trữ 6.770 thành phần giao diện từ 5 thư viện lớn phục vụ tác tử AI truy vấn và tái tạo UI."
+    "description": "Kho lưu trữ 6.770 thành phần giao diện thực chiến từ 5 thư viện lớn (CodeFronts 5.047, ThreeUI 961, LucianLabs 400, MotionSites 321, PinUI 41).",
+    "snippet": "total: 6770 | codefronts: 5047 | threeui: 961 (1485 tags) | lucianlabs: 400 | motionsites: 321 | pinui: 41"
   },
   {
     "id": "res-nextjs-repo",
@@ -474,5 +475,99 @@
     "lastVerified": "2026-11-19",
     "status": "verified_tested",
     "description": "Tập hợp các MCP server tiêu chuẩn kết nối tác tử AI với hệ thống tệp, Git, SQLite và web."
+  },
+  {
+    "id": "res-shoptify-winter-reverser",
+    "title": "Shopify Winter Reverser Engine",
+    "group": "GitHub Repositories",
+    "category": "Architecture Teardown",
+    "tags": [
+      "platform:GitHub",
+      "tech:CSS",
+      "level:Advanced",
+      "cost:Free"
+    ],
+    "officialUrl": "https://github.com/broamstuck-cybr/shoptify-winter-reverser-engine",
+    "license": "Open Source",
+    "compatibility": "Modern CSS, WebGL, Rive",
+    "lastVerified": "2026-11-19",
+    "status": "verified_tested",
+    "description": "Phân tích cấu trúc Shopify Winter: 12 chương, 199 cập nhật, 249 liên kết, 682 tài nguyên (124.3 MB) trên chiều cao 46.413px.",
+    "snippet": "--st-paper: #f7f7ee; --st-ink: #292919; --st-accent: #ea1360; sections: 12; features: 199; assets: 682; pageHeight: 46413px"
+  },
+  {
+    "id": "res-fforum-v2-repo",
+    "title": "F-Forum Production Repository",
+    "group": "GitHub Repositories",
+    "category": "Production App",
+    "tags": [
+      "platform:GitHub",
+      "tech:React",
+      "tech:Tailwind",
+      "tech:TypeScript",
+      "level:Intermediate",
+      "cost:Free"
+    ],
+    "officialUrl": "https://github.com/broamstuck-cybr/f-forum",
+    "license": "Open Source",
+    "compatibility": "React 19, Vite, Tailwind CSS v4",
+    "lastVerified": "2026-11-19",
+    "status": "verified_tested",
+    "description": "Mã nguồn nền tảng cộng đồng học thuật và tạo giao diện F-Forum triển khai thực tế trên Vercel."
+  },
+  {
+    "id": "res-edunext-fe-repo",
+    "title": "Edunext Frontend Automation",
+    "group": "Dev Tools",
+    "category": "Userscript Automation",
+    "tags": [
+      "platform:GitHub",
+      "tech:JavaScript",
+      "level:Intermediate",
+      "cost:Free"
+    ],
+    "officialUrl": "https://github.com/broamstuck-cybr/Edunext_fe",
+    "license": "Open Source",
+    "compatibility": "Tampermonkey, Modern Browsers",
+    "lastVerified": "2026-11-19",
+    "status": "verified_tested",
+    "description": "Bộ công cụ tự động hóa và tối ưu thao tác học tập trực tuyến kèm kiểm định SHA256."
+  },
+  {
+    "id": "res-pinui-registry",
+    "title": "PinUI Component Registry",
+    "group": "UI/UX",
+    "category": "Component Registry",
+    "tags": [
+      "platform:Web",
+      "tech:React",
+      "tech:TypeScript",
+      "level:Intermediate",
+      "cost:Free"
+    ],
+    "officialUrl": "https://www.pinui.xyz/components",
+    "license": "MIT",
+    "compatibility": "React 19, Motion, Three.js",
+    "lastVerified": "2026-11-19",
+    "status": "verified_tested",
+    "description": "41 thành phần và blocx tương tác tinh xảo với vật lý lò xo, SVG goo filter và kính lỏng."
+  },
+  {
+    "id": "res-lucianlabs-tokens",
+    "title": "LucianLabs UX/UI Tokens",
+    "group": "UI/UX",
+    "category": "Micro-Interactions",
+    "tags": [
+      "platform:Web",
+      "tech:CSS",
+      "level:Intermediate",
+      "cost:Free"
+    ],
+    "officialUrl": "https://lucianlabs.dev/en/uxui-prompt/",
+    "license": "MIT",
+    "compatibility": "Vanilla HTML, CSS Custom Properties",
+    "lastVerified": "2026-11-19",
+    "status": "verified_tested",
+    "description": "400 phần tử giao diện và vi chuyển động MIT kèm hệ thống biến --ux-* chuẩn mực."
   }
 ]

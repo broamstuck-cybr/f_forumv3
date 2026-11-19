@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import Lenis from 'lenis';
 
 export function usePrefersReducedMotion(): boolean {
   const [reduced, setReduced] = useState(false);
@@ -10,10 +11,43 @@ export function usePrefersReducedMotion(): boolean {
       setReduced(mq.matches || document.documentElement.classList.contains('reduce-motion'));
     sync();
     mq.addEventListener('change', sync);
-    return () => mq.removeEventListener('change', sync);
+    const observer = new MutationObserver(sync);
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
+    return () => {
+      mq.removeEventListener('change', sync);
+      observer.disconnect();
+    };
   }, []);
 
   return reduced;
+}
+
+export function useLenisSmoothScroll(enabled: boolean): void {
+  const reduced = usePrefersReducedMotion();
+
+  useEffect(() => {
+    if (!enabled || reduced || typeof window === 'undefined') return;
+
+    const lenis = new Lenis({
+      duration: 1.12,
+      easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+      smoothWheel: true,
+      touchMultiplier: 1.4,
+    });
+
+    let rafId = 0;
+    const raf = (time: number) => {
+      lenis.raf(time);
+      rafId = window.requestAnimationFrame(raf);
+    };
+
+    rafId = window.requestAnimationFrame(raf);
+
+    return () => {
+      if (rafId) window.cancelAnimationFrame(rafId);
+      lenis.destroy();
+    };
+  }, [enabled, reduced]);
 }
 
 type VisibilityHandler = (isIntersecting: boolean) => void;
@@ -123,34 +157,54 @@ export function useScrollProgress(): number {
   return progress;
 }
 
-export function useScrollY(): number {
-  const [scrollY, setScrollY] = useState(0);
+export function useActiveChapter(sectionIds: string[]): string {
+  const [activeId, setActiveId] = useState(sectionIds[0] ?? 'top');
 
   useEffect(() => {
-    let frame = 0;
-    const update = () => {
-      frame = 0;
-      setScrollY(window.scrollY);
-    };
-    const onScroll = () => {
-      if (frame) return;
-      frame = requestAnimationFrame(update);
-    };
-    update();
-    window.addEventListener('scroll', onScroll, { passive: true });
-    return () => {
-      if (frame) cancelAnimationFrame(frame);
-      window.removeEventListener('scroll', onScroll);
-    };
-  }, []);
+    if (typeof window === 'undefined' || sectionIds.length === 0) return;
 
-  return scrollY;
+    let rafId = 0;
+    const sync = () => {
+      rafId = 0;
+      const triggerY = window.innerHeight * 0.36;
+      let current = sectionIds[0];
+
+      for (const id of sectionIds) {
+        const el = document.getElementById(id);
+        if (!el) continue;
+        const rect = el.getBoundingClientRect();
+        if (rect.top <= triggerY) {
+          current = id;
+        }
+      }
+
+      setActiveId(current);
+    };
+
+    const onScroll = () => {
+      if (rafId) return;
+      rafId = requestAnimationFrame(sync);
+    };
+
+    sync();
+    window.addEventListener('scroll', onScroll, { passive: true });
+    window.addEventListener('resize', onScroll, { passive: true });
+    return () => {
+      if (rafId) cancelAnimationFrame(rafId);
+      window.removeEventListener('scroll', onScroll);
+      window.removeEventListener('resize', onScroll);
+    };
+  }, [sectionIds]);
+
+  return activeId;
 }
 
-export function scrollToSection(sectionId: string, offset = 88): void {
+export function scrollToSection(sectionId: string, offset = 76): void {
   const target = document.getElementById(sectionId);
   if (!target) return;
-  const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const reduced =
+    window.matchMedia('(prefers-reduced-motion: reduce)').matches ||
+    document.documentElement.classList.contains('reduce-motion');
   window.scrollTo({
     top: target.getBoundingClientRect().top + window.scrollY - offset,
     behavior: reduced ? 'auto' : 'smooth',
