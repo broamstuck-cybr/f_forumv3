@@ -3,17 +3,107 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-    <title>F-Forum — Không gian Kiến tạo Web &amp; Tri thức</title>
+    <title>F-Forum — Viết bằng AI, chấm bằng bút đỏ</title>
     <meta
       name="description"
-      content="F-Forum là không gian kiến tạo Web/UI với Live View cô lập, Diff &amp; Check tự động và kho tài nguyên thực chiến."
+      content="F-Forum là không gian kiến tạo Web/UI cho học sinh, giảng viên, vibe coder và nhà thiết kế web: dựng bằng AI, kiểm chứng qua Live View cô lập, Diff &amp; Check 6 lớp và kho 6.770 mẫu mã nguồn mở."
     />
-    <meta name="theme-color" content="#090a0d" />
+    <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
+    <meta name="author" content="F-Forum" />
+    <meta name="theme-color" content="#121110" />
+    <link rel="canonical" href="https://fforum3.vercel.app/" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="F-Forum" />
+    <meta property="og:locale" content="vi_VN" />
+    <meta property="og:url" content="https://fforum3.vercel.app/" />
+    <meta property="og:title" content="F-Forum — Viết bằng AI, chấm bằng bút đỏ" />
+    <meta
+      property="og:description"
+      content="Không gian kiến tạo Web/UI và phản biện kỹ thuật với Live View cô lập, Diff &amp; Check 6 lớp và 6.770 thành phần chuẩn hóa từ PinUI, ThreeUI, MotionSites, LucianLabs và CodeFronts."
+    />
+    <meta property="og:image" content="https://fforum3.vercel.app/og-cover.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="F-Forum — Viết bằng AI, chấm bằng bút đỏ" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="F-Forum — Viết bằng AI, chấm bằng bút đỏ" />
+    <meta
+      name="twitter:description"
+      content="Dựng Web/UI bằng AI, chạy thật trong Live View cô lập và kiểm chứng từng dòng bằng Diff &amp; Check."
+    />
+    <meta name="twitter:image" content="https://fforum3.vercel.app/og-cover.png" />
     <link
       rel="icon"
       type="image/svg+xml"
-      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32' fill='none'%3E%3Crect width='32' height='32' rx='8' fill='%23090a0d'/%3E%3Cpath d='M7 7.5L25 5.5L22.5 11.5L12.5 12.2L7 7.5Z' fill='%23c89b54'/%3E%3Cpath d='M7 7.5L12.5 12.2V25.5L7 22.5V7.5Z' fill='%23f4f1ea'/%3E%3Cpath d='M13.5 14.8L22.5 13.8L20.5 18.8L13.5 19.3V14.8Z' fill='%232dd4bf'/%3E%3C/svg%3E"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32' fill='none'%3E%3Crect width='32' height='32' rx='6' fill='%23121110'/%3E%3Cpath d='M7 5h17v4.6H12v4.6h9.5v4.4H12V27H7V5Z' fill='%23efe9dd'/%3E%3Cpath d='M15.6 23.4l3.3 3.4 7.3-9.6' stroke='%23d63a27' stroke-width='2.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E"
     />
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@graph": [
+          {
+            "@type": "Organization",
+            "@id": "https://fforum3.vercel.app/#organization",
+            "name": "F-Forum",
+            "url": "https://fforum3.vercel.app/",
+            "sameAs": [
+              "https://github.com/broamstuck-cybr/f_forumv3",
+              "https://github.com/broamstuck-cybr/SOURCEOFKNOWLEDGFORAI",
+              "https://github.com/broamstuck-cybr/shoptify-winter-reverser-engine"
+            ]
+          },
+          {
+            "@type": "WebSite",
+            "@id": "https://fforum3.vercel.app/#website",
+            "name": "F-Forum",
+            "url": "https://fforum3.vercel.app/",
+            "inLanguage": "vi-VN",
+            "publisher": {
+              "@id": "https://fforum3.vercel.app/#organization"
+            },
+            "description": "Không gian kiến tạo Web/UI và phản biện kỹ thuật với Live View cô lập, Diff & Check 6 lớp và kho 6.770 mẫu mã nguồn mở."
+          },
+          {
+            "@type": "WebApplication",
+            "@id": "https://fforum3.vercel.app/#webapp",
+            "name": "F-Forum v3",
+            "url": "https://fforum3.vercel.app/",
+            "applicationCategory": "DeveloperApplication",
+            "operatingSystem": "Web",
+            "inLanguage": "vi-VN",
+            "datePublished": "2026-11-18",
+            "dateModified": "2026-11-20",
+            "softwareVersion": "3.0.0",
+            "license": "https://opensource.org/licenses/MIT",
+            "offers": {
+              "@type": "Offer",
+              "price": "0",
+              "priceCurrency": "VND"
+            },
+            "featureList": [
+              "Live View iframe sandbox không chia sẻ allow-same-origin trên 390px, 768px và 1440px",
+              "Diff & Check tự động 6 lớp gồm cấu trúc HTML, cú pháp JS, khung nhìn, liên kết, quét bí mật và tiếp cận",
+              "Kho tham chiếu 6.770 thành phần chuẩn hóa từ CodeFronts, ThreeUI, LucianLabs, MotionSites và PinUI",
+              "15 lượt tạo mã tiêu chuẩn miễn phí cùng hỗ trợ khóa API riêng BYOK"
+            ],
+            "author": {
+              "@id": "https://fforum3.vercel.app/#organization"
+            }
+          },
+          {
+            "@type": "SoftwareSourceCode",
+            "@id": "https://fforum3.vercel.app/#source",
+            "name": "f_forumv3",
+            "codeRepository": "https://github.com/broamstuck-cybr/f_forumv3",
+            "programmingLanguage": ["TypeScript", "React", "CSS"],
+            "license": "https://opensource.org/licenses/MIT",
+            "author": {
+              "@id": "https://fforum3.vercel.app/#organization"
+            }
+          }
+        ]
+      }
+    </script>
     <script>
       (function () {
         try {
@@ -41,20 +131,101 @@
           root.style.colorScheme = theme;
           var meta = document.querySelector('meta[name="theme-color"]');
           if (meta) {
-            meta.setAttribute('content', theme === 'dark' ? '#090a0d' : '#f7f5f0');
+            meta.setAttribute('content', theme === 'dark' ? '#121110' : '#f4f0e6');
           }
         } catch (e) {}
       })();
     </script>
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@300;400;500;600;700&family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500;1,600&family=JetBrains+Mono:wght@400;500;600;700&family=Kanit:wght@300;400;500;600;700;800;900&family=Manrope:wght@400;500;600;700&family=Newsreader:ital,opsz,wght@0,6..72,400..600;1,6..72,400..600&family=Pinyon+Script&family=Playfair+Display:ital,wght@0,600;0,700;1,600;1,700&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap"
-      rel="stylesheet"
-    />
   </head>
   <body>
-    <div id="root"></div>
+    <div id="root">
+      <header>
+        <nav aria-label="Điều hướng F-Forum">
+          <a href="/">F-Forum</a>
+          <a href="/home">Trang chủ</a>
+          <a href="/explore">Khám phá</a>
+          <a href="/workspace">Workspace</a>
+          <a href="/community">Source of Knowledge</a>
+          <a href="/profile">Hồ sơ</a>
+          <a href="/settings">Cài đặt</a>
+        </nav>
+      </header>
+      <main>
+        <article>
+          <h1>F-Forum — Khai phóng tư duy, kiểm chứng từng dòng mã</h1>
+          <p>
+            F-Forum là không gian kiến tạo Web/UI và phản biện kỹ thuật dành cho học sinh, sinh viên, giảng viên, vibe
+            coder và nhà thiết kế web. Mọi giao diện dựng bằng AI đều chạy thật trong Live View cô lập
+            (sandbox=&quot;allow-scripts&quot; không dùng allow-same-origin), đối chiếu từng dòng bằng Diff &amp; Check
+            6 lớp và tham chiếu 6.770 thành phần chuẩn hóa.
+          </p>
+          <h2>Kho tham chiếu 6.770 thành phần chuẩn hóa</h2>
+          <table>
+            <thead>
+              <tr>
+                <th>Thư viện</th>
+                <th>Số thành phần</th>
+                <th>Giấy phép</th>
+                <th>Vai trò trên F-Forum</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>CodeFronts</td>
+                <td>5.047</td>
+                <td>Public Spec</td>
+                <td>Mẫu giao diện và CSS thuần chuẩn hóa</td>
+              </tr>
+              <tr>
+                <td>ThreeUI</td>
+                <td>961</td>
+                <td>Catalogue Metadata</td>
+                <td>1.485 thẻ WebGL và không gian 3D</td>
+              </tr>
+              <tr>
+                <td>LucianLabs</td>
+                <td>400</td>
+                <td>MIT</td>
+                <td>200 interface và 200 vi chuyển động</td>
+              </tr>
+              <tr>
+                <td>MotionSites</td>
+                <td>321</td>
+                <td>Creative Spec</td>
+                <td>Chuyển động trang đích thực tế</td>
+              </tr>
+              <tr>
+                <td>PinUI</td>
+                <td>41</td>
+                <td>MIT</td>
+                <td>30 components và 11 blocx tương tác</td>
+              </tr>
+            </tbody>
+          </table>
+          <h2>Quy trình kiểm chứng 6 lớp trên Diff &amp; Check</h2>
+          <ul>
+            <li>Cấu trúc HTML ngữ nghĩa và landmark chuẩn tiếp cận.</li>
+            <li>Cú pháp JavaScript và kiểm tra lỗi thực thi.</li>
+            <li>Tương thích khung nhìn di động 390px, 768px và 1440px.</li>
+            <li>Kiểm tra liên kết nội bộ và chính sách referrer.</li>
+            <li>Quét và ẩn tự động khóa bí mật trước khi xuất tệp ZIP.</li>
+            <li>Truy cập mở 0₫ với 15 lượt AI tiêu chuẩn và tùy chọn khóa API cá nhân (BYOK).</li>
+          </ul>
+          <h2>Hỏi đáp nhanh về F-Forum</h2>
+          <h3>F-Forum có miễn phí không?</h3>
+          <p>
+            Có. F-Forum mở miễn phí với 15 lượt tạo mã tiêu chuẩn cho mỗi phiên và hỗ trợ nhập khóa API cá nhân
+            (OpenAI-compatible, Anthropic hoặc Gemini) trong mục Cài đặt.
+          </p>
+          <h3>Live View cô lập mã nguồn bằng cách nào?</h3>
+          <p>
+            Mọi bản dựng được hiển thị trong iframe với sandbox=&quot;allow-scripts&quot; không bật allow-same-origin và
+            kèm referrerPolicy=&quot;no-referrer&quot; nhằm tách biệt hoàn toàn với phiên chính.
+          </p>
+          <p>Cập nhật ngày 20/11/2026 bởi F-Forum · Mã nguồn mở MIT tại github.com/broamstuck-cybr/f_forumv3.</p>
+        </article>
+      </main>
+    </div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

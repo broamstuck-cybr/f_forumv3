@@ -1,0 +1,20 @@
+# F-Forum v3
+
+> Không gian kiến tạo Web/UI và phản biện kỹ thuật dành cho học sinh, sinh viên, giảng viên, vibe coder và nhà thiết kế web. Viết bằng AI, kiểm chứng qua Live View cô lập và Diff & Check 6 lớp.
+
+## Main sections
+
+- [Trang giới thiệu](https://fforum3.vercel.app/): Câu chuyện sản phẩm theo từng chương, mô phỏng iPhone 18 Pro chạy ứng dụng F-Forum, 21 bản chuyển động MotionSites và hỏi đáp minh bạch.
+- [Trang chủ](https://fforum3.vercel.app/home): PinUI Prompt Composer dựng đặc tả 0 lượt, kho mẫu chuyển động và lối vào nhanh Workspace.
+- [Bàn soi Khám phá](https://fforum3.vercel.app/explore): Kho tham chiếu 6.770 thành phần từ CodeFronts, ThreeUI, LucianLabs, MotionSites, PinUI và bảng xếp hạng kho GitHub.
+- [Workspace](https://fforum3.vercel.app/workspace): Môi trường 3 vùng với Live View cô lập (390px, 768px, 1440px), Diff & Check 6 lớp và xuất tệp ZIP quét bí mật.
+- [Source of Knowledge](https://fforum3.vercel.app/community): Tòa soạn phản biện Socratic, trình diễn hộp cát, học liệu chuẩn hóa và hồ sơ chuyển giao câu lạc bộ.
+
+## Key verifiable facts
+
+- Nhà phát triển: F-Forum (giấy phép MIT)
+- Mã nguồn: https://github.com/broamstuck-cybr/f_forumv3
+- Kho tham chiếu hợp nhất: https://github.com/broamstuck-cybr/SOURCEOFKNOWLEDGFORAI (6.770 thành phần: CodeFronts 5.047, ThreeUI 961, LucianLabs 400, MotionSites 321, PinUI 41)
+- Giải phẫu kiến trúc cuộn: https://github.com/broamstuck-cybr/shoptify-winter-reverser-engine (12 chương, 199 cập nhật, 682 tài nguyên)
+- Bảo mật Live View: iframe sandbox="allow-scripts" không dùng allow-same-origin, referrerPolicy="no-referrer"
+- Truy cập mở: 0 VND, 15 lượt tạo mã tiêu chuẩn mỗi phiên, hỗ trợ khóa API riêng (BYOK) lưu cục bộ trình duyệt

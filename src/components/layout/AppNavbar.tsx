@@ -1,9 +1,10 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
-import { Menu, X } from 'lucide-react';
+import { Menu, Settings, X } from 'lucide-react';
 import type { AppRoute } from '../../types/index';
 import { useAppStore } from '../../store/appStore';
 import { KineticLogo } from '../brand/KineticLogo';
+import './app-shell.css';
 
 export interface AppNavbarProps {
   onOpenNotice?: () => void;
@@ -29,29 +30,21 @@ function userInitials(name: string): string {
 }
 
 export const AppNavbar: React.FC<AppNavbarProps> = () => {
-  const {
-    currentRoute,
-    navigate,
-    aiActivity,
-    currentUser,
-    quota,
-    setAuthModalOpen,
-    logout,
-    savedItemIds,
-  } = useAppStore();
-
+  const { currentRoute, navigate, aiActivity, currentUser, quota, setAuthModalOpen, logout } = useAppStore();
   const reduced = Boolean(useReducedMotion());
-  const [profileOpen, setProfileOpen] = useState(false);
-  const [mobileOpen, setMobileOpen] = useState(false);
-  const profileRef = useRef<HTMLDivElement>(null);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [sheetOpen, setSheetOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+  const burgerRef = useRef<HTMLButtonElement>(null);
+  const closeRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
-    if (!profileOpen) return;
-    const onDown = (e: PointerEvent) => {
-      if (!profileRef.current?.contains(e.target as Node)) setProfileOpen(false);
+    if (!menuOpen) return;
+    const onDown = (event: PointerEvent) => {
+      if (!menuRef.current?.contains(event.target as Node)) setMenuOpen(false);
     };
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setProfileOpen(false);
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setMenuOpen(false);
     };
     document.addEventListener('pointerdown', onDown);
     document.addEventListener('keydown', onKey);
@@ -59,321 +52,230 @@ export const AppNavbar: React.FC<AppNavbarProps> = () => {
       document.removeEventListener('pointerdown', onDown);
       document.removeEventListener('keydown', onKey);
     };
-  }, [profileOpen]);
+  }, [menuOpen]);
 
-  const displayName = currentUser ? currentUser.name : 'Khách';
+  useEffect(() => {
+    if (!sheetOpen) return;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    closeRef.current?.focus();
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setSheetOpen(false);
+    };
+    document.addEventListener('keydown', onKey);
+    const burger = burgerRef.current;
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      document.removeEventListener('keydown', onKey);
+      burger?.focus();
+    };
+  }, [sheetOpen]);
+
   const isAdmin = currentUser?.role === 'admin';
-  const quotaLabel = quota.unlimited || isAdmin ? 'Vô hạn' : `${quota.used}/${quota.limit ?? 15}`;
+  const unlimited = quota.unlimited || isAdmin;
+  const limit = quota.limit ?? 15;
+  const remaining = Math.max(0, quota.remaining ?? limit - quota.used);
+  const low = !unlimited && remaining <= 3;
+
+  const go = (route: AppRoute) => {
+    setMenuOpen(false);
+    setSheetOpen(false);
+    navigate(route);
+  };
+
+  const signOut = () => {
+    setMenuOpen(false);
+    setSheetOpen(false);
+    void logout();
+  };
+
+  const spring = reduced ? { duration: 0.01 } : { type: 'spring' as const, stiffness: 300, damping: 30 };
 
   return (
-    <header
-      className="sticky top-0 z-50 w-full border-b backdrop-blur-xl"
-      style={{
-        height: 'var(--navbar-h)',
-        background: 'var(--bg-glass-strong)',
-        borderColor: 'var(--border-subtle)',
-      }}
-    >
-      <div className="w-full max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 h-full flex items-center justify-between gap-2 md:gap-3">
-        <div className="flex items-center gap-3 md:gap-5 min-w-0">
-          <button
-            type="button"
-            onClick={() => {
-              setMobileOpen(false);
-              navigate('landing');
-            }}
-            aria-label="F-Forum"
-            title="F-Forum"
-            className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-transparent border-0 p-0 cursor-pointer transition-transform hover:scale-105"
-          >
-            <KineticLogo size={28} activity={aiActivity} showWordmark={false} />
+    <header className="nav">
+      <div className="wrap-wide nav__row">
+        <div className="flex items-center gap-4 min-w-0">
+          <button type="button" className="nav__brand" onClick={() => go('home')} aria-label="F-Forum, về trang chủ">
+            <KineticLogo size={26} activity={aiActivity} showWordmark />
           </button>
 
-          <nav aria-label="Điều hướng chính" className="hidden md:flex items-center gap-1 min-w-0">
+          <nav aria-label="Điều hướng chính" className="nav__tabs">
             {PRIMARY_TABS.map((tab) => {
               const active = currentRoute === tab.id;
               return (
                 <button
                   key={tab.id}
                   type="button"
-                  onClick={() => navigate(tab.id)}
+                  className="nav__tab"
+                  onClick={() => go(tab.id)}
                   aria-current={active ? 'page' : undefined}
-                  className="relative shrink-0 whitespace-nowrap rounded-lg px-3.5 py-2 text-[13px] font-medium bg-transparent border-0 cursor-pointer transition-colors"
-                  style={{
-                    color: active ? 'var(--ink-primary)' : 'var(--ink-secondary)',
-                  }}
                 >
+                  {tab.label}
                   {active && (
-                    <motion.span
-                      layoutId="ff-nav-active-pill"
-                      className="absolute inset-0 rounded-lg border"
-                      style={{
-                        background: 'var(--bg-panel)',
-                        borderColor: 'var(--border-strong)',
-                      }}
-                      transition={
-                        reduced
-                          ? { duration: 0.01 }
-                          : { type: 'spring', visualDuration: 0.34, bounce: 0.14 }
-                      }
-                      aria-hidden="true"
-                    />
+                    <motion.span layoutId="nav-ink" className="nav__ink" transition={spring} aria-hidden="true">
+                      <svg viewBox="0 0 100 6" preserveAspectRatio="none" fill="none">
+                        <path
+                          d="M1 3.4 C 18 0.8, 34 5.2, 52 2.8 S 84 1.4, 99 3.2"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          vectorEffect="non-scaling-stroke"
+                        />
+                      </svg>
+                    </motion.span>
                   )}
-                  <span className="relative z-10 whitespace-nowrap">{tab.label}</span>
                 </button>
               );
             })}
           </nav>
         </div>
 
-        <div className="flex items-center gap-2 shrink-0">
+        <div className="nav__side">
+          <p className="nav__quota" data-low={low} aria-label={unlimited ? 'Lượt AI không giới hạn' : `Còn ${remaining} trên ${limit} lượt AI`}>
+            <strong>{unlimited ? '∞' : `${remaining}/${limit}`}</strong>
+            <span>lượt</span>
+          </p>
+
           <button
             type="button"
-            onClick={() => navigate(isAdmin ? 'admin' : 'settings')}
-            aria-label={`Hạn mức ${quotaLabel}`}
-            title="Hạn mức"
-            className="hidden sm:inline-flex items-center justify-center h-9 px-3.5 rounded-full border text-[12px] font-mono font-semibold whitespace-nowrap cursor-pointer transition-colors"
-            style={{
-              background: isAdmin
-                ? 'var(--accent-jade-soft)'
-                : quota.exhausted
-                  ? 'var(--accent-danger-soft)'
-                  : 'var(--accent-soft)',
-              borderColor: isAdmin
-                ? 'var(--accent-jade)'
-                : quota.exhausted
-                  ? 'var(--accent-danger)'
-                  : 'var(--border-accent)',
-              color: isAdmin
-                ? 'var(--accent-jade)'
-                : quota.exhausted
-                  ? 'var(--accent-danger)'
-                  : 'var(--accent-primary)',
-            }}
+            className="icon-btn nav__account"
+            onClick={() => go('settings')}
+            aria-label="Cài đặt"
+            data-active={currentRoute === 'settings'}
           >
-            {quotaLabel}
+            <Settings size={18} strokeWidth={1.75} aria-hidden="true" />
           </button>
 
-          <div ref={profileRef} className="relative">
-            <button
-              type="button"
-              onClick={() => setProfileOpen((prev) => !prev)}
-              aria-haspopup="menu"
-              aria-expanded={profileOpen}
-              aria-label={displayName}
-              title={displayName}
-              className="inline-flex items-center justify-center h-9 w-9 rounded-full border p-0 cursor-pointer transition-colors"
-              style={{
-                background: 'var(--bg-panel)',
-                borderColor: profileOpen ? 'var(--border-accent)' : 'var(--border-subtle)',
-                color: 'var(--ink-primary)',
-              }}
-            >
-              <span
-                className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[11px] font-mono font-bold"
-                style={{
-                  background: 'var(--accent-gradient)',
-                  color: 'var(--ink-inverse)',
-                }}
+          {currentUser ? (
+            <div className="relative nav__account" ref={menuRef}>
+              <button
+                type="button"
+                className="nav__avatarBtn"
+                onClick={() => setMenuOpen((open) => !open)}
+                aria-haspopup="menu"
+                aria-expanded={menuOpen}
+                aria-label={`Tài khoản ${currentUser.name}`}
               >
-                {userInitials(displayName)}
-              </span>
+                <span className="nav__avatar" aria-hidden="true">
+                  {userInitials(currentUser.name)}
+                </span>
+              </button>
+              <AnimatePresence>
+                {menuOpen && (
+                  <motion.div
+                    className="nav__menu"
+                    role="menu"
+                    initial={reduced ? { opacity: 0 } : { opacity: 0, scale: 0.96, y: -4 }}
+                    animate={{ opacity: 1, scale: 1, y: 0 }}
+                    exit={reduced ? { opacity: 0 } : { opacity: 0, scale: 0.97, y: -4 }}
+                    transition={{ duration: 0.16, ease: [0.2, 0.8, 0.2, 1] }}
+                  >
+                    <div className="nav__menuHead">
+                      <p className="nav__menuName">{currentUser.name}</p>
+                      <p className="t-label">{isAdmin ? 'quản trị' : 'thành viên'}</p>
+                    </div>
+                    <button type="button" role="menuitem" className="nav__menuItem" onClick={() => go('profile')}>
+                      Hồ sơ
+                    </button>
+                    {isAdmin && (
+                      <button type="button" role="menuitem" className="nav__menuItem" onClick={() => go('admin')}>
+                        Quản trị
+                      </button>
+                    )}
+                    <button type="button" role="menuitem" className="nav__menuItem" data-tone="red" onClick={signOut}>
+                      Đăng xuất
+                    </button>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+          ) : (
+            <button type="button" className="btn btn-solid btn-sm nav__account" onClick={() => setAuthModalOpen(true)}>
+              Đăng nhập
             </button>
-
-            <AnimatePresence>
-              {profileOpen && (
-                <motion.div
-                  role="menu"
-                  aria-label="Tài khoản"
-                  initial={reduced ? { opacity: 0 } : { opacity: 0, y: 6, scale: 0.96 }}
-                  animate={{ opacity: 1, y: 0, scale: 1 }}
-                  exit={reduced ? { opacity: 0 } : { opacity: 0, y: 4, scale: 0.96 }}
-                  transition={{ duration: 0.16, ease: [0.22, 1, 0.36, 1] }}
-                  className="absolute right-0 mt-2 w-56 rounded-2xl border p-2 overflow-hidden z-50"
-                  style={{
-                    background: 'var(--bg-surface)',
-                    borderColor: 'var(--border-strong)',
-                    boxShadow: 'var(--shadow-lg)',
-                  }}
-                >
-                  <div
-                    className="px-3 py-2.5 mb-1.5 rounded-xl border"
-                    style={{ background: 'var(--bg-panel)', borderColor: 'var(--border-subtle)' }}
-                  >
-                    <div className="text-[13px] font-semibold truncate" style={{ color: 'var(--ink-primary)' }}>
-                      {displayName}
-                    </div>
-                    <div className="text-[11px] font-mono truncate mt-0.5" style={{ color: 'var(--ink-muted)' }}>
-                      {currentUser ? `@${currentUser.username} · ${quotaLabel}` : `Khách · ${quotaLabel}`}
-                    </div>
-                  </div>
-
-                  <button
-                    type="button"
-                    role="menuitem"
-                    onClick={() => {
-                      setProfileOpen(false);
-                      navigate('profile');
-                    }}
-                    className="flex w-full items-center justify-between rounded-xl px-3 py-2 text-left text-[13px] bg-transparent border-0 cursor-pointer transition-colors"
-                    style={{ color: 'var(--ink-primary)' }}
-                  >
-                    <span>Hồ sơ</span>
-                  </button>
-
-                  <button
-                    type="button"
-                    role="menuitem"
-                    onClick={() => {
-                      setProfileOpen(false);
-                      navigate('profile');
-                    }}
-                    className="flex w-full items-center justify-between rounded-xl px-3 py-2 text-left text-[13px] bg-transparent border-0 cursor-pointer transition-colors"
-                    style={{ color: 'var(--ink-primary)' }}
-                  >
-                    <span>Đã lưu</span>
-                    <span className="text-[11px] font-mono" style={{ color: 'var(--ink-muted)' }}>
-                      {savedItemIds.length}
-                    </span>
-                  </button>
-
-                  <button
-                    type="button"
-                    role="menuitem"
-                    onClick={() => {
-                      setProfileOpen(false);
-                      navigate('settings');
-                    }}
-                    className="flex w-full items-center justify-between rounded-xl px-3 py-2 text-left text-[13px] bg-transparent border-0 cursor-pointer transition-colors"
-                    style={{ color: 'var(--ink-primary)' }}
-                  >
-                    <span>Cài đặt</span>
-                  </button>
-
-                  {isAdmin && (
-                    <button
-                      type="button"
-                      role="menuitem"
-                      onClick={() => {
-                        setProfileOpen(false);
-                        navigate('admin');
-                      }}
-                      className="flex w-full items-center rounded-xl px-3 py-2 text-left text-[13px] bg-transparent border-0 cursor-pointer transition-colors"
-                      style={{ color: 'var(--accent-jade)' }}
-                    >
-                      <span>Quản trị</span>
-                    </button>
-                  )}
-
-                  <div className="my-1.5 border-t" style={{ borderColor: 'var(--border-subtle)' }} />
-
-                  {currentUser ? (
-                    <button
-                      type="button"
-                      role="menuitem"
-                      onClick={() => {
-                        setProfileOpen(false);
-                        void logout();
-                      }}
-                      className="flex w-full items-center rounded-xl px-3 py-2 text-left text-[13px] bg-transparent border-0 cursor-pointer transition-colors"
-                      style={{ color: 'var(--accent-danger)' }}
-                    >
-                      <span>Đăng xuất</span>
-                    </button>
-                  ) : (
-                    <button
-                      type="button"
-                      role="menuitem"
-                      onClick={() => {
-                        setProfileOpen(false);
-                        setAuthModalOpen(true);
-                      }}
-                      className="flex w-full items-center rounded-xl px-3 py-2 text-left text-[13px] font-semibold bg-transparent border-0 cursor-pointer transition-colors"
-                      style={{ color: 'var(--accent-primary)' }}
-                    >
-                      <span>Đăng nhập</span>
-                    </button>
-                  )}
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </div>
+          )}
 
           <button
+            ref={burgerRef}
             type="button"
-            onClick={() => setMobileOpen((prev) => !prev)}
-            aria-label={mobileOpen ? 'Đóng' : 'Mở'}
-            title={mobileOpen ? 'Đóng' : 'Mở'}
-            aria-expanded={mobileOpen}
-            className="md:hidden inline-grid place-items-center h-9 w-9 rounded-full border cursor-pointer"
-            style={{
-              background: 'var(--bg-panel)',
-              borderColor: 'var(--border-subtle)',
-              color: 'var(--ink-primary)',
-            }}
+            className="icon-btn nav__burger"
+            onClick={() => setSheetOpen(true)}
+            aria-label="Mở menu"
+            aria-expanded={sheetOpen}
           >
-            {mobileOpen ? <X className="h-4 w-4" aria-hidden="true" /> : <Menu className="h-4 w-4" aria-hidden="true" />}
+            <Menu size={20} strokeWidth={1.75} aria-hidden="true" />
           </button>
         </div>
       </div>
 
       <AnimatePresence>
-        {mobileOpen && (
+        {sheetOpen && (
           <motion.div
-            initial={reduced ? { opacity: 0 } : { opacity: 0, y: -8 }}
+            className="navsheet"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Menu"
+            initial={reduced ? { opacity: 0 } : { opacity: 0, y: -16 }}
             animate={{ opacity: 1, y: 0 }}
-            exit={reduced ? { opacity: 0 } : { opacity: 0, y: -6 }}
-            transition={{ duration: 0.18 }}
-            className="md:hidden border-b px-4 py-3 space-y-2"
-            style={{
-              background: 'var(--bg-surface)',
-              borderColor: 'var(--border-strong)',
-              boxShadow: 'var(--shadow-lg)',
-            }}
+            exit={reduced ? { opacity: 0 } : { opacity: 0, y: -12 }}
+            transition={{ duration: 0.24, ease: [0.2, 0.8, 0.2, 1] }}
           >
-            <nav aria-label="Điều hướng di động" className="grid gap-1">
-              {PRIMARY_TABS.map((tab) => {
-                const active = currentRoute === tab.id;
-                return (
-                  <button
-                    key={tab.id}
-                    type="button"
-                    onClick={() => {
-                      setMobileOpen(false);
-                      navigate(tab.id);
-                    }}
-                    className="flex items-center justify-between rounded-xl px-3.5 py-2.5 text-left text-[13.5px] font-medium border cursor-pointer"
-                    style={{
-                      background: active ? 'var(--accent-soft)' : 'transparent',
-                      borderColor: active ? 'var(--border-accent)' : 'transparent',
-                      color: active ? 'var(--accent-primary)' : 'var(--ink-primary)',
-                    }}
-                  >
-                    <span>{tab.label}</span>
-                  </button>
-                );
-              })}
-            </nav>
-
-            <div className="flex items-center justify-between pt-2 border-t" style={{ borderColor: 'var(--border-subtle)' }}>
-              <span className="text-[12px] font-mono" style={{ color: 'var(--ink-muted)' }}>
-                {quotaLabel}
-              </span>
+            <div className="navsheet__top">
+              <KineticLogo size={26} activity={aiActivity} showWordmark />
               <button
+                ref={closeRef}
                 type="button"
-                onClick={() => {
-                  setMobileOpen(false);
-                  navigate('settings');
-                }}
-                className="rounded-full border px-3.5 py-1.5 text-[12px] font-medium cursor-pointer"
-                style={{
-                  background: 'var(--bg-panel)',
-                  borderColor: 'var(--border-subtle)',
-                  color: 'var(--ink-primary)',
-                }}
+                className="icon-btn"
+                onClick={() => setSheetOpen(false)}
+                aria-label="Đóng menu"
               >
+                <X size={20} strokeWidth={1.75} aria-hidden="true" />
+              </button>
+            </div>
+            <ul className="navsheet__list">
+              {PRIMARY_TABS.map((tab, index) => (
+                <motion.li
+                  key={tab.id}
+                  initial={reduced ? false : { opacity: 0, y: 14 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.4, delay: 0.04 + index * 0.045, ease: [0.25, 0.1, 0.25, 1] }}
+                >
+                  <button
+                    type="button"
+                    className="navsheet__link"
+                    onClick={() => go(tab.id)}
+                    aria-current={currentRoute === tab.id ? 'page' : undefined}
+                  >
+                    {tab.label}
+                  </button>
+                </motion.li>
+              ))}
+            </ul>
+            <div className="navsheet__foot">
+              <button type="button" className="btn btn-line" onClick={() => go('settings')}>
                 Cài đặt
               </button>
+              {isAdmin && (
+                <button type="button" className="btn btn-line" onClick={() => go('admin')}>
+                  Quản trị
+                </button>
+              )}
+              {currentUser ? (
+                <button type="button" className="btn btn-ghost" onClick={signOut}>
+                  Đăng xuất
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  className="btn btn-solid"
+                  onClick={() => {
+                    setSheetOpen(false);
+                    setAuthModalOpen(true);
+                  }}
+                >
+                  Đăng nhập
+                </button>
+              )}
             </div>
           </motion.div>
         )}

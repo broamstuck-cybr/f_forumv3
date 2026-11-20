@@ -125,8 +125,8 @@ export const NoticeStatusModal: React.FC<NoticeStatusModalProps> = ({ open, onCl
           aria-label="Minh bạch nguồn mở"
           className="fixed inset-0 z-[82] flex items-center justify-center p-4"
           style={{
-            backgroundColor: 'rgba(6, 8, 13, 0.72)',
-            backdropFilter: 'blur(12px)',
+            backgroundColor: 'var(--bg-veil)',
+            backdropFilter: 'blur(10px)',
           }}
         >
           <motion.div
@@ -136,11 +136,11 @@ export const NoticeStatusModal: React.FC<NoticeStatusModalProps> = ({ open, onCl
             exit={{ opacity: 0, y: 8, scale: 0.98 }}
             transition={{ duration: 0.28, ease: [0.16, 1, 0.3, 1] }}
             onClick={(event) => event.stopPropagation()}
-            className="flex max-h-[85vh] w-full max-w-[760px] flex-col overflow-hidden rounded-[24px] border"
+            className="flex max-h-[85vh] w-full max-w-[760px] flex-col overflow-hidden rounded-[8px] border"
             style={{
-              backgroundColor: 'var(--bg-surface)',
-              borderColor: 'var(--border-strong)',
-              boxShadow: '0 32px 72px -28px rgba(0, 0, 0, 0.72)',
+              backgroundColor: 'var(--bg-raised)',
+              borderColor: 'var(--line-strong)',
+              boxShadow: 'var(--shadow-3)',
             }}
           >
             <div

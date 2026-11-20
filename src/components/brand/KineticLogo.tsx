@@ -15,136 +15,46 @@ export const KineticLogo: React.FC<KineticLogoProps> = ({
   showWordmark = false,
   className = '',
 }) => {
-  const prefersReduced = useReducedMotion();
-  const reduced = Boolean(prefersReduced);
-
-  const isThinking = activity === 'thinking';
-  const isStreaming = activity === 'streaming';
-  const isVerified = activity === 'verified';
+  const reduced = Boolean(useReducedMotion());
+  const busy = activity === 'thinking' || activity === 'streaming';
+  const stroke = activity === 'verified' ? 'var(--green)' : 'var(--red)';
   const isError = activity === 'error';
 
-  const topColor = isError
-    ? 'var(--accent-danger)'
-    : isVerified
-      ? 'var(--accent-jade)'
-      : 'var(--accent-primary)';
-
-  const midColor = isError
-    ? 'var(--accent-copper)'
-    : isStreaming
-      ? 'var(--accent-verdigris)'
-      : isVerified
-        ? 'var(--accent-jade)'
-        : 'var(--accent-verdigris)';
-
   return (
-    <span className={`inline-flex items-center gap-2.5 select-none ${className}`}>
-      <motion.svg
-        width={size}
-        height={size}
-        viewBox="0 0 32 32"
-        fill="none"
-        role="img"
-        aria-label="F-FORUM Kinetic Mark"
-        className="shrink-0 overflow-visible"
-        animate={
-          reduced
-            ? undefined
-            : isThinking
-              ? { scale: [1, 1.05, 1] }
-              : isError
-                ? { x: [0, -1.5, 1.5, 0] }
-                : { scale: 1, x: 0 }
-        }
-        transition={
-          isThinking
-            ? { duration: 1.5, repeat: Infinity, ease: 'easeInOut' }
-            : isError
-              ? { duration: 0.35, ease: 'easeOut' }
-              : { duration: 0.28, ease: 'easeOut' }
-        }
-      >
-        <rect
-          x="1"
-          y="1"
-          width="30"
-          height="30"
-          rx="8"
-          fill="var(--bg-surface)"
-          stroke="var(--border-strong)"
-          strokeWidth="1.2"
-        />
-
-        <motion.path
-          d="M8 8.5L13.2 12.6V24.5L8 22V8.5Z"
-          fill="var(--ink-primary)"
-          initial={false}
-          animate={
-            reduced
-              ? undefined
-              : {
-                  opacity: isThinking ? [0.75, 1, 0.75] : 1,
-                }
-          }
-          transition={
-            isThinking
-              ? { duration: 1.4, repeat: Infinity, ease: 'easeInOut' }
-              : { duration: 0.25 }
-          }
-        />
-
-        <motion.path
-          d="M8 8.5L24.5 6.8L22.2 12.2L13.2 12.6L8 8.5Z"
-          fill={topColor}
-          initial={false}
-          animate={
-            reduced
-              ? undefined
-              : isStreaming
-                ? { x: [0, 1.2, 0], opacity: [0.9, 1, 0.9] }
-                : isThinking
-                  ? { y: [0, -0.8, 0] }
-                  : { x: 0, y: 0, opacity: 1 }
-          }
-          transition={
-            isStreaming || isThinking
-              ? { duration: 1.1, repeat: Infinity, ease: 'easeInOut' }
-              : { duration: 0.25 }
-          }
-        />
-
-        <motion.path
-          d="M14.4 15.2L22.6 14.3L20.8 18.9L14.4 19.4V15.2Z"
-          fill={midColor}
-          initial={false}
-          animate={
-            reduced
-              ? undefined
-              : isStreaming
-                ? { scaleX: [0.85, 1.08, 0.85], opacity: [0.8, 1, 0.8] }
-                : isVerified
-                  ? { scale: [0.94, 1.06, 1] }
-                  : { scaleX: 1, scale: 1, opacity: 1 }
-          }
-          style={{ transformOrigin: '14.4px 17px' }}
-          transition={
-            isStreaming
-              ? { duration: 0.95, repeat: Infinity, ease: 'easeInOut' }
-              : { duration: 0.3, ease: 'easeOut' }
-          }
-        />
-      </motion.svg>
-
+    <span className={`inline-flex items-center gap-2 ${className}`} style={{ color: 'var(--fg)' }}>
+      <svg width={size} height={size} viewBox="0 0 32 32" fill="none" aria-hidden="true">
+        <path d="M7 5h17v4.6H12v4.6h9.5v4.4H12V27H7V5Z" fill="currentColor" />
+        {isError ? (
+          <path d="M17 20.5l8 7M25 20.5l-8 7" stroke={stroke} strokeWidth="2.6" strokeLinecap="round" />
+        ) : (
+          <motion.path
+            d="M15.6 23.4l3.3 3.4 7.3-9.6"
+            stroke={stroke}
+            strokeWidth="2.6"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            initial={false}
+            animate={busy && !reduced ? { pathLength: [0.15, 1, 1], opacity: [0.5, 1, 1] } : { pathLength: 1, opacity: 1 }}
+            transition={
+              busy && !reduced
+                ? { duration: activity === 'streaming' ? 0.9 : 1.5, repeat: Infinity, ease: [0.55, 0.1, 0.35, 1] }
+                : { duration: 0.4 }
+            }
+          />
+        )}
+      </svg>
       {showWordmark && (
         <span
-          className="font-semibold tracking-tight whitespace-nowrap"
           style={{
             fontFamily: 'var(--font-display)',
-            color: 'var(--ink-primary)',
-            fontSize: `${Math.max(15, Math.round(size * 0.62))}px`,
+            fontSize: Math.round(size * 0.72),
+            fontWeight: 560,
+            letterSpacing: '-0.02em',
+            lineHeight: 1,
+            whiteSpace: 'nowrap',
           }}
         >
-          F-FORUM
+          F-Forum
         </span>
       )}
     </span>

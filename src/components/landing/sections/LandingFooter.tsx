@@ -1,17 +1,14 @@
 import React from 'react';
 import type { AppRoute } from '../../../types/index';
-import { SynaisFooter } from '../../pinui';
+import { AppFooter } from '../../layout/AppFooter';
 
 interface LandingFooterProps {
   onNavigate: (route: AppRoute) => void;
   onOpenNotice: () => void;
 }
 
-export const LandingFooter: React.FC<LandingFooterProps> = ({
-  onNavigate,
-  onOpenNotice,
-}) => {
-  return <SynaisFooter onNavigate={onNavigate} onOpenNotice={onOpenNotice} />;
+export const LandingFooter: React.FC<LandingFooterProps> = ({ onNavigate, onOpenNotice }) => {
+  return <AppFooter onNavigate={onNavigate} onOpenNotice={onOpenNotice} />;
 };
 
 export default LandingFooter;

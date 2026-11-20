@@ -1,13 +1,18 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { motion, useScroll, useTransform } from 'motion/react';
+import { motion, useScroll, useTransform, type MotionValue } from 'motion/react';
 import { ArrowUpRight } from 'lucide-react';
 import type { AppRoute } from '../../types/index';
 import { useAppStore } from '../../store/appStore';
 import {
   BROAMSTUCK_REPOS,
   MARQUEE_ROW_1,
-  STACKING_PROJECTS,
+  MARQUEE_ROW_2,
+  SOURCE_KNOWLEDGE_BREAKDOWN,
+  type BroamstuckRepoShowcase,
 } from '../../data/realShowcaseData';
+import { Mark } from '../../ui/Mark';
+import { Media, previewFor } from '../../ui/Media';
+import { ScrollFillText } from '../../ui/ScrollFillText';
 import { handleImageError } from '../../utils/mediaFallback';
 import '../../styles/story.css';
 
@@ -17,15 +22,80 @@ export interface ScrollStoryEngineProps {
   onOpenLeaderboard?: () => void;
 }
 
+const ARCHIVE_PARAGRAPH =
+  'Mỗi mẫu trong kho tham chiếu đều mang tên thư viện, giấy phép gốc và bản xem thật. Bạn chọn mẫu trên bàn soi, mở thẳng vào Workspace, đối chiếu từng dòng khác biệt và kiểm chứng trong Live View trước khi mang đi.';
+
+const RepoStackPlate: React.FC<{
+  repo: BroamstuckRepoShowcase;
+  index: number;
+  total: number;
+  progress: MotionValue<number>;
+  reduced: boolean;
+  onNavigate: (route: AppRoute) => void;
+}> = ({ repo, index, total, progress, reduced, onNavigate }) => {
+  const targetScale = 1 - (total - 1 - index) * 0.025;
+  const scale = useTransform(progress, [index / total, 1], [1, targetScale]);
+  return (
+    <div
+      className="stry-slot"
+      style={reduced ? undefined : { top: `calc(var(--nav-h) + ${16 + index * 18}px)` }}
+    >
+      <motion.article style={reduced ? undefined : { scale }} className="stry-card">
+        <div>
+          <div className="stry-card-top">
+            <div>
+              <p className="t-label">{repo.fullName}</p>
+              <h3 className="t-title" style={{ fontSize: 'var(--text-2xl)', marginTop: 'var(--space-2)' }}>
+                {repo.name}
+              </h3>
+            </div>
+            <a
+              href={repo.htmlUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label={`Mở ${repo.name}`}
+              className="icon-btn"
+            >
+              <ArrowUpRight size={18} aria-hidden="true" />
+            </a>
+          </div>
+          <p className="t-lead" style={{ fontSize: 'var(--text-sm)', marginTop: 'var(--space-3)' }}>
+            {repo.summaryVi}
+          </p>
+        </div>
+
+        <div>
+          <dl className="stry-card-metrics">
+            {repo.metrics.slice(0, 3).map((metric) => (
+              <div key={metric.label}>
+                <dt className="t-label">{metric.label}</dt>
+                <dd>{metric.value}</dd>
+              </div>
+            ))}
+          </dl>
+          <div className="hm-actions" style={{ marginTop: 'var(--space-4)' }}>
+            <button type="button" className="btn btn-red btn-sm" onClick={() => onNavigate('workspace')}>
+              Workspace
+            </button>
+            <button type="button" className="btn btn-line btn-sm" onClick={() => onNavigate('explore')}>
+              Khám phá
+            </button>
+          </div>
+        </div>
+      </motion.article>
+    </div>
+  );
+};
+
 export const ScrollStoryEngine: React.FC<ScrollStoryEngineProps> = ({
   onNavigate,
   onLaunchPrompt,
   onOpenLeaderboard,
 }) => {
-  const { reducedMotion } = useAppStore();
+  const { reducedMotion, sourceCatalog } = useAppStore();
   const [osReduced, setOsReduced] = useState(false);
-  const [activeChapter, setActiveChapter] = useState<0 | 1 | 2>(0);
-  const trackRef = useRef<HTMLDivElement>(null);
+  const marqueeRef = useRef<HTMLDivElement>(null);
+  const stackRef = useRef<HTMLDivElement>(null);
 
   const reduced = reducedMotion || osReduced;
 
@@ -38,23 +108,18 @@ export const ScrollStoryEngine: React.FC<ScrollStoryEngineProps> = ({
     return () => mq.removeEventListener('change', sync);
   }, []);
 
-  const { scrollYProgress } = useScroll({
-    target: trackRef,
+  const { scrollYProgress: marqueeProgress } = useScroll({
+    target: marqueeRef,
+    offset: ['start end', 'end start'],
+  });
+
+  const { scrollYProgress: stackProgress } = useScroll({
+    target: stackRef,
     offset: ['start start', 'end end'],
   });
 
-  useEffect(() => {
-    if (reduced) return;
-    return scrollYProgress.on('change', (v) => {
-      if (v < 0.34) setActiveChapter(0);
-      else if (v < 0.68) setActiveChapter(1);
-      else setActiveChapter(2);
-    });
-  }, [scrollYProgress, reduced]);
-
-  const railX = useTransform(scrollYProgress, [0, 1], [120, -560]);
-  const repoScale = useTransform(scrollYProgress, [0.35, 0.85], [0.96, 1]);
-  const repoOpacity = useTransform(scrollYProgress, [0.25, 0.6], [0.55, 1]);
+  const row1X = useTransform(marqueeProgress, [0, 1], [-140, 100]);
+  const row2X = useTransform(marqueeProgress, [0, 1], [100, -140]);
 
   const openLeaderboard = () => {
     if (onOpenLeaderboard) {
@@ -70,293 +135,184 @@ export const ScrollStoryEngine: React.FC<ScrollStoryEngineProps> = ({
     onNavigate('explore');
   };
 
-  const featuredVisuals = useMemo(() => MARQUEE_ROW_1.slice(0, 6), []);
+  const catalogMediaItems = useMemo(
+    () => sourceCatalog.filter((item) => previewFor(item.id) !== null).slice(0, 8),
+    [sourceCatalog]
+  );
+
+  const featuredMotion = useMemo(() => MARQUEE_ROW_1.slice(0, 6).concat(MARQUEE_ROW_2.slice(0, 2)), []);
   const featuredRepos = useMemo(() => BROAMSTUCK_REPOS.slice(0, 3), []);
 
-  const jumpToStage = (stage: 0 | 1 | 2) => {
-    setActiveChapter(stage);
-    if (!trackRef.current || typeof window === 'undefined') return;
-    const rect = trackRef.current.getBoundingClientRect();
-    const startTop = rect.top + window.scrollY - 64;
-    const span = Math.max(1, trackRef.current.offsetHeight - window.innerHeight);
-    const ratios: Record<0 | 1 | 2, number> = { 0: 0.05, 1: 0.45, 2: 0.85 };
-    window.scrollTo({
-      top: startTop + span * ratios[stage],
-      behavior: reduced ? 'auto' : 'smooth',
-    });
-  };
-
-  if (reduced) {
-    return (
-      <section aria-label="Hệ sinh thái thực chiến F-Forum" className="ff-story-root">
-        <div className="ff-container ff-story-static">
-          <div className="flex flex-wrap items-end justify-between gap-4">
-            <div>
-              <h2
-                className="m-0 text-[26px] sm:text-[34px] font-semibold tracking-tight"
-                style={{ fontFamily: 'var(--font-serif)' }}
-              >
-                Mẫu thật từ MotionSites &amp; SOURCEOFKNOWLEDGFORAI
+  return (
+    <div className="stry">
+      <section ref={marqueeRef} aria-label="Kho mẫu đang chuyển động" className="stry-band">
+        <div className="wrap-wide">
+          <div className="stry-head">
+            <div className="stry-head-copy">
+              <p className="t-label">kho tham chiếu chuyển động</p>
+              <h2 className="t-title">
+                Từ mẫu thật đến <Mark kind="underline">bản kiểm chứng</Mark>
               </h2>
-              <p className="mt-2 max-w-2xl text-[14.5px]" style={{ color: 'var(--ink-secondary)' }}>
-                6.770 thành phần chuẩn hóa cùng bản dựng chạy trong Live View cô lập và Diff &amp; Check.
+              <p className="t-lead">
+                Xem nhanh các chuyển động thực tế từ PinUI, ThreeUI và MotionSites; bấm một chạm để đưa vào Workspace.
               </p>
             </div>
-            <div className="flex items-center gap-2.5">
-              <button
-                type="button"
-                onClick={() => onNavigate('explore')}
-                className="rounded-full border px-4 py-2 text-[12.5px] font-medium cursor-pointer"
-                style={{
-                  borderColor: 'var(--border-strong)',
-                  background: 'var(--bg-surface)',
-                  color: 'var(--ink-primary)',
-                }}
-              >
-                Khám phá
+            <div className="hm-actions">
+              <button type="button" className="btn btn-line" onClick={() => onNavigate('explore')}>
+                Bàn soi
               </button>
-              <button
-                type="button"
-                onClick={openLeaderboard}
-                className="rounded-full border-0 px-4 py-2 text-[12.5px] font-semibold cursor-pointer"
-                style={{ background: 'var(--accent-gradient)', color: 'var(--ink-inverse)' }}
-              >
+              <button type="button" className="btn btn-solid" onClick={openLeaderboard}>
                 Xếp hạng
               </button>
             </div>
           </div>
+        </div>
 
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {featuredVisuals.map((item) => (
-              <article key={item.id} className="ff-story-specimen-card w-full">
-                <div className="aspect-[16/10] w-full overflow-hidden bg-[#0b0d14]">
+        <div className="stry-marquee">
+          <motion.div
+            style={reduced ? undefined : { x: row1X }}
+            data-reduced={reduced ? 'true' : undefined}
+            className="stry-row"
+          >
+            {catalogMediaItems.map((item) => {
+              const preview = previewFor(item.id);
+              return (
+                <article key={item.id} className="stry-plate">
+                  <div className="plate stry-media">
+                    {preview && <Media preview={preview} title={item.title} />}
+                  </div>
+                  <div className="stry-plate-foot">
+                    <div className="min-w-0">
+                      <p className="stry-plate-title">{item.title}</p>
+                      <p className="t-label">{item.sourceLibrary}</p>
+                    </div>
+                    <button
+                      type="button"
+                      className="btn btn-line btn-sm"
+                      onClick={() =>
+                        void onLaunchPrompt(
+                          `Dựng giao diện tham chiếu ${item.title} (${item.sourceLibrary}) tương thích 390px, 768px và 1440px.`
+                        )
+                      }
+                    >
+                      Dùng mẫu
+                    </button>
+                  </div>
+                </article>
+              );
+            })}
+          </motion.div>
+
+          <motion.div
+            style={reduced ? undefined : { x: row2X }}
+            data-reduced={reduced ? 'true' : undefined}
+            className="stry-row"
+          >
+            {featuredMotion.map((item) => (
+              <article key={item.id} className="stry-plate">
+                <div className="plate stry-media">
                   <img
                     src={item.imageUrl}
                     alt={item.title}
                     loading="lazy"
                     decoding="async"
                     onError={(e) => handleImageError(e, item.fallbackUrl)}
-                    className="h-full w-full object-cover"
                   />
                 </div>
-                <div className="flex items-center justify-between gap-2 p-4">
+                <div className="stry-plate-foot">
                   <div className="min-w-0">
-                    <div className="truncate text-[14px] font-semibold">{item.title}</div>
-                    <div className="text-[11px] font-mono" style={{ color: 'var(--ink-muted)' }}>
-                      MotionSites · {item.category}
-                    </div>
+                    <p className="stry-plate-title">{item.title}</p>
+                    <p className="t-label">{item.category}</p>
                   </div>
                   <button
                     type="button"
+                    className="btn btn-line btn-sm"
                     onClick={() =>
                       void onLaunchPrompt(
                         `Xây dựng giao diện lấy cảm hứng từ ${item.title} (${item.category}) với Live View cô lập và Diff & Check.`
                       )
                     }
-                    className="rounded-full border px-3 py-1.5 text-[11.5px] font-medium cursor-pointer"
-                    style={{
-                      borderColor: 'var(--border-accent)',
-                      background: 'var(--accent-soft)',
-                      color: 'var(--accent-primary)',
-                    }}
                   >
-                    Dùng ngay
+                    Dùng mẫu
                   </button>
                 </div>
               </article>
             ))}
+          </motion.div>
+        </div>
+      </section>
+
+      <section aria-label="Nguyên tắc kiểm chứng" className="stry-band">
+        <div className="wrap">
+          <p className="t-label">6.770 thành phần chuẩn hóa</p>
+          <ScrollFillText text={ARCHIVE_PARAGRAPH} className="stry-fill" />
+        </div>
+      </section>
+
+      <section aria-label="Năm thư viện tham chiếu" className="stry-band sheet scene-paper">
+        <div className="wrap-wide">
+          <div className="stry-head">
+            <div className="stry-head-copy">
+              <p className="t-label">source of knowledge archive</p>
+              <h2 className="t-title">Năm thư viện nguồn trên bàn soi</h2>
+            </div>
+            <button type="button" className="btn btn-solid" onClick={() => onNavigate('explore')}>
+              Mở bàn soi
+            </button>
+          </div>
+
+          <ul className="stry-libs">
+            {SOURCE_KNOWLEDGE_BREAKDOWN.libraries.map((lib) => (
+              <li key={lib.library} className="stry-lib-row">
+                <span className="stry-lib-name">{lib.label}</span>
+                <div className="stry-lib-meta">
+                  <span>{lib.extraLabel}</span>
+                  <span className="t-label">{lib.license}</span>
+                </div>
+                <span className="stry-lib-count">{lib.count.toLocaleString('vi-VN')}</span>
+                <a
+                  href={lib.officialUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label={`Mở ${lib.label}`}
+                  className="icon-btn"
+                >
+                  <ArrowUpRight size={18} aria-hidden="true" />
+                </a>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </section>
+
+      <section aria-label="Kho mã cốt lõi" className="stry-band">
+        <div className="wrap-wide">
+          <div className="stry-head">
+            <div className="stry-head-copy">
+              <p className="t-label">kho mã nguồn gốc</p>
+              <h2 className="t-title">Ba hệ thống nền tảng</h2>
+            </div>
+            <button type="button" className="btn btn-line" onClick={openLeaderboard}>
+              Xem repo
+            </button>
+          </div>
+
+          <div ref={stackRef} className="stry-stack">
+            {featuredRepos.map((repo, idx) => (
+              <RepoStackPlate
+                key={repo.id}
+                repo={repo}
+                index={idx}
+                total={featuredRepos.length}
+                progress={stackProgress}
+                reduced={reduced}
+                onNavigate={onNavigate}
+              />
+            ))}
           </div>
         </div>
       </section>
-    );
-  }
-
-  return (
-    <section aria-label="Hành trình thực chiến F-Forum" className="ff-story-root">
-      <div ref={trackRef} className="ff-story-track">
-        <div className="ff-story-sticky">
-          <div className="ff-story-backdrop" aria-hidden="true" />
-          <div className="ff-story-grid" aria-hidden="true" />
-
-          <div className="ff-container relative z-10 flex flex-wrap items-center justify-between gap-4">
-            <div>
-              <div className="font-mono text-[11px]" style={{ color: 'var(--accent-primary)' }}>
-                6.770 THÀNH PHẦN · 12 CHƯƠNG SHOPIFY WINTER · MOTION THẬT
-              </div>
-              <h2
-                className="mt-1 m-0 text-[24px] sm:text-[34px] font-semibold tracking-tight"
-                style={{ fontFamily: 'var(--font-serif)' }}
-              >
-                Từ mẫu thực tế đến Workspace kiểm định
-              </h2>
-            </div>
-
-            <nav aria-label="Chuyển nhịp trình diễn" className="ff-story-rail">
-              {(
-                [
-                  [0, 'Mẫu thật'],
-                  [1, 'Kho mã'],
-                  [2, 'Kiểm định'],
-                ] as const
-              ).map(([idx, label]) => (
-                <button
-                  key={idx}
-                  type="button"
-                  data-active={activeChapter === idx}
-                  onClick={() => jumpToStage(idx)}
-                  className="ff-story-rail-btn"
-                >
-                  {label}
-                </button>
-              ))}
-            </nav>
-          </div>
-
-          <div className="relative z-10 w-full overflow-hidden py-4">
-            <motion.div style={{ x: railX }} className="flex w-max gap-5 px-6 sm:px-12">
-              {featuredVisuals.map((item) => (
-                <article key={item.id} className="ff-story-specimen-card">
-                  <div className="aspect-[16/10] w-full overflow-hidden bg-[#0b0d14]">
-                    <img
-                      src={item.imageUrl}
-                      alt={item.title}
-                      loading="lazy"
-                      decoding="async"
-                      onError={(e) => handleImageError(e, item.fallbackUrl)}
-                      className="h-full w-full object-cover"
-                    />
-                  </div>
-                  <div className="flex items-center justify-between gap-2 p-4">
-                    <div className="min-w-0">
-                      <div className="truncate text-[14px] font-semibold">{item.title}</div>
-                      <div className="mt-0.5 font-mono text-[11px]" style={{ color: 'var(--ink-muted)' }}>
-                        {item.category}
-                      </div>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() =>
-                        void onLaunchPrompt(
-                          `Dựng giao diện lấy cảm hứng từ ${item.title} (${item.category}) tuân thủ Live View và Diff & Check.`
-                        )
-                      }
-                      className="rounded-full border px-3 py-1.5 text-[11.5px] font-medium cursor-pointer shrink-0"
-                      style={{
-                        borderColor: 'var(--border-accent)',
-                        background: 'var(--accent-soft)',
-                        color: 'var(--accent-primary)',
-                      }}
-                    >
-                      Dùng ngay
-                    </button>
-                  </div>
-                </article>
-              ))}
-            </motion.div>
-          </div>
-
-          <motion.div
-            style={{ scale: repoScale, opacity: repoOpacity }}
-            className="ff-container relative z-10"
-          >
-            <div className="grid gap-3 md:grid-cols-3">
-              {featuredRepos.map((repo, idx) => {
-                const projectMeta = STACKING_PROJECTS[idx];
-                return (
-                  <article
-                    key={repo.id}
-                    className="rounded-2xl border p-4 flex flex-col justify-between gap-3"
-                    style={{
-                      background: 'var(--bg-surface)',
-                      borderColor: 'var(--border-strong)',
-                    }}
-                  >
-                    <div className="flex items-start justify-between gap-2">
-                      <div className="min-w-0">
-                        <div className="font-mono text-[10.5px]" style={{ color: 'var(--accent-primary)' }}>
-                          {projectMeta?.category ?? repo.language}
-                        </div>
-                        <h3 className="mt-1 m-0 truncate text-[15px] font-semibold">
-                          {repo.name}
-                        </h3>
-                      </div>
-                      <a
-                        href={repo.htmlUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        aria-label={`Mở ${repo.name}`}
-                        title={`Mở ${repo.name}`}
-                        className="grid h-8 w-8 shrink-0 place-items-center rounded-full border"
-                        style={{
-                          borderColor: 'var(--border-subtle)',
-                          color: 'var(--ink-secondary)',
-                        }}
-                      >
-                        <ArrowUpRight className="h-3.5 w-3.5" aria-hidden="true" />
-                      </a>
-                    </div>
-
-                    <p className="m-0 text-[12.5px] leading-relaxed line-clamp-2" style={{ color: 'var(--ink-secondary)' }}>
-                      {repo.summaryVi}
-                    </p>
-
-                    <div className="flex items-center justify-between border-t pt-2.5" style={{ borderColor: 'var(--border-subtle)' }}>
-                      <span className="font-mono text-[11px]" style={{ color: 'var(--ink-muted)' }}>
-                        {repo.metrics[0]?.label}: {repo.metrics[0]?.value}
-                      </span>
-                      <button
-                        type="button"
-                        onClick={() => onNavigate('explore')}
-                        className="rounded-full border-0 bg-transparent p-0 text-[12px] font-medium cursor-pointer"
-                        style={{ color: 'var(--accent-primary)' }}
-                      >
-                        Khám phá
-                      </button>
-                    </div>
-                  </article>
-                );
-              })}
-            </div>
-          </motion.div>
-        </div>
-      </div>
-
-      <div className="ff-story-manifesto-band py-10">
-        <div className="ff-container flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <div className="max-w-2xl">
-            <div className="font-mono text-[11px] text-[#c89b54]">
-              DIFF &amp; CHECK · LIVE VIEW
-            </div>
-            <p
-              className="mt-1.5 m-0 text-[17px] sm:text-[21px] font-semibold text-[#f4f1ea]"
-              style={{ fontFamily: 'var(--font-serif)' }}
-            >
-              Mọi sản phẩm trên F-Forum đều đi qua kiểm chứng trực quan trước khi bàn giao.
-            </p>
-          </div>
-          <div className="flex items-center gap-3 shrink-0">
-            <button
-              type="button"
-              onClick={() => onNavigate('workspace')}
-              className="rounded-full border-0 px-5 py-2.5 text-[13px] font-semibold cursor-pointer"
-              style={{
-                background: 'linear-gradient(135deg, #e5c384 0%, #c89b54 100%)',
-                color: '#090a0d',
-              }}
-            >
-              Workspace
-            </button>
-            <button
-              type="button"
-              onClick={openLeaderboard}
-              className="rounded-full border border-white/20 bg-white/5 px-5 py-2.5 text-[13px] font-medium text-[#f4f1ea] cursor-pointer"
-            >
-              Xếp hạng
-            </button>
-          </div>
-        </div>
-      </div>
-    </section>
+    </div>
   );
 };
 

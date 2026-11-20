@@ -5,61 +5,61 @@ export interface LandingChapter {
 }
 
 export const LANDING_CHAPTERS: LandingChapter[] = [
-  { id: 'top', code: '01', label: 'Khởi đầu' },
-  { id: 'san-pham', code: '02', label: 'Sản phẩm' },
-  { id: 'tuyen-ngon', code: '03', label: 'Tuyên ngôn' },
-  { id: 'du-an', code: '04', label: 'Dự án' },
-  { id: 'faq', code: '05', label: 'Mở rộng' },
+  { id: 'top', code: 'I', label: 'Khởi đầu' },
+  { id: 'san-pham', code: 'II', label: 'Sản phẩm' },
+  { id: 'tuyen-ngon', code: 'III', label: 'Tuyên ngôn' },
+  { id: 'du-an', code: 'IV', label: 'Dự án' },
+  { id: 'faq', code: 'V', label: 'Hỏi đáp' },
 ];
 
 export const MANIFESTO_TEXT =
-  'Mỗi giao diện đáng giá không bắt đầu từ sự sao chép vội vã. Nó khởi nguồn từ câu hỏi đúng, qua kiểm chứng Live View cô lập, đối chiếu từng dòng với Diff & Check, và chắt lọc từ tri thức thật của PinUI, ThreeUI, MotionSites, LucianLabs cùng SOURCEOFKNOWLEDGFORAI.';
+  'Một giao diện đáng giá không bắt đầu từ sự sao chép vội vã. Nó khởi nguồn từ câu hỏi đúng, chạy thật trong Live View cô lập, được chấm từng dòng bằng Diff & Check và đối chiếu cùng 6.770 mẫu có nguồn gốc minh bạch.';
 
 export const MANIFESTO_PILLARS: Array<{ title: string; detail: string }> = [
   {
     title: 'Đặt câu hỏi trước khi sinh mã',
-    detail: 'Giữ mạch lập luận rõ ràng cho sinh viên, giảng viên và người thiết kế giao diện.',
+    detail: 'Dành cho học sinh, giảng viên và người thiết kế web coi trọng mạch lập luận và kiểm chứng thực tế.',
   },
   {
-    title: 'Kiểm chứng trên Live View cô lập',
-    detail: 'Mọi bản dựng đều chạy trong sandbox tách biệt để quan sát thực chất trước khi tin.',
+    title: 'Chạy thật trong Live View cô lập',
+    detail: 'Mọi bản dựng đều thực thi trong sandbox không đồng nguồn để quan sát cấu trúc trên 390px, 768px và 1440px.',
   },
   {
-    title: 'Soi từng dòng bằng Diff & Check',
-    detail: 'Không chấp nhận thay đổi mù mờ. Mọi chỉnh sửa đều đối chiếu và quét rò rỉ.',
+    title: 'Chấm từng dòng với Diff & Check',
+    detail: 'Đối chiếu thay đổi mã nguồn, kiểm tra 6 tiêu chí chất lượng và quét khóa bí mật trước khi tải về.',
   },
 ];
 
 export const OPEN_ACCESS_FEATURES: string[] = [
-  'Live View cô lập với kiểm định 390px, 768px và 1440px',
+  'Live View cô lập với khung nhìn 390px, 768px và 1440px không chia sẻ quyền đồng nguồn',
   'Kho 6.770 thành phần chuẩn hóa từ PinUI, ThreeUI, MotionSites, LucianLabs và CodeFronts',
-  'Diff & Check từng dòng trước khi đóng gói mã nguồn sạch bí mật',
-  '15 lượt tạo mã tiêu chuẩn miễn phí cùng cấu hình khóa API cá nhân (BYOK)',
+  'Diff & Check tự động 6 lớp và quét khóa API bí mật trước khi đóng gói ZIP',
+  '15 lượt tạo mã tiêu chuẩn miễn phí cùng tùy chọn kết nối khóa API riêng (BYOK) trong Cài đặt',
 ];
 
 export const FAQ_ITEMS: Array<{ id: string; question: string; answer: string }> = [
   {
     id: 'f1',
-    question: 'F-Forum phù hợp với ai và có mở miễn phí không?',
+    question: 'F-Forum là gì và phù hợp với đối tượng nào?',
     answer:
-      'F-Forum dành cho học sinh, sinh viên, giảng viên và những người xây dựng web coi trọng tư duy phản biện. Các tính năng cốt lõi đều mở miễn phí với 15 lượt AI tiêu chuẩn và tùy chọn khóa API cá nhân trong Cài đặt.',
+      'F-Forum là không gian kiến tạo Web/UI và phản biện kỹ thuật dành cho học sinh, sinh viên, giảng viên, vibe coder và nhà thiết kế web. Mọi ý tưởng được dựng bằng AI rồi kiểm chứng trực tiếp qua Live View cô lập và Diff & Check trước khi xuất bản.',
   },
   {
     id: 'f2',
-    question: 'Live View và Diff & Check đảm bảo an toàn ra sao?',
+    question: 'Live View và Diff & Check kiểm định mã nguồn như thế nào?',
     answer:
-      'Mọi giao diện được dựng trong iframe sandbox tách biệt không dùng quyền đồng nguồn, đồng thời đi qua bộ kiểm định cú pháp, bố cục 390px và quét khóa bí mật trước khi xuất tệp.',
+      'Mọi bản dựng chạy trong iframe sandbox="allow-scripts" không bật allow-same-origin và kèm referrerPolicy="no-referrer". Bộ Diff & Check tự động rà 6 lớp: cấu trúc HTML, cú pháp JS, khung nhìn di động, liên kết nội bộ, quét bí mật và khả năng tiếp cận.',
   },
   {
     id: 'f3',
-    question: 'Nguồn mẫu từ PinUI, ThreeUI, MotionSites và LucianLabs được ghi nhận thế nào?',
+    question: '6.770 mẫu trong kho tham chiếu đến từ đâu?',
     answer:
-      'Toàn bộ 6.770 thành phần trong SOURCEOFKNOWLEDGFORAI đều giữ nguyên tên tác giả, đường dẫn gốc và giấy phép MIT hoặc tài liệu công khai tương ứng.',
+      'Toàn bộ 6.770 thành phần được lập chỉ mục từ kho SOURCEOFKNOWLEDGFORAI gồm CodeFronts (5.047), ThreeUI (961), LucianLabs (400), MotionSites (321) và PinUI (41), giữ nguyên tên tác giả, đường dẫn gốc và giấy phép công khai.',
   },
   {
     id: 'f4',
-    question: 'Làm sao để biến ý tưởng trong khung chat thành dự án hoàn chỉnh?',
+    question: 'Chi phí sử dụng và giới hạn lượt AI được tính ra sao?',
     answer:
-      'Từ khung PinUI Prompt ngay trên trang này hoặc tại Trang chủ, yêu cầu của bạn được chuyển thẳng sang Workspace 3 cột để tinh chỉnh, xem Live View và kiểm định Diff & Check.',
+      'F-Forum mở miễn phí với 15 lượt tạo mã tiêu chuẩn cho mỗi phiên khách hoặc tài khoản thành viên. Khi cần dùng nhiều hơn, bạn có thể nhập khóa API riêng (OpenAI-compatible, Anthropic hoặc Gemini) trong khu Cài đặt; khóa chỉ lưu tại trình duyệt và không đi vào tệp sao lưu.',
   },
 ];

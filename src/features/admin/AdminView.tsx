@@ -212,7 +212,7 @@ export const AdminView: React.FC = () => {
 
   if (!isAdmin) {
     return (
-      <main
+      <div
         style={{
           background: 'var(--bg-canvas)',
           color: 'var(--ink-primary)',
@@ -319,12 +319,12 @@ export const AdminView: React.FC = () => {
             Quay lại trang Home
           </button>
         </section>
-      </main>
+      </div>
     );
   }
 
   return (
-    <main
+    <div
       style={{
         background: 'var(--bg-canvas)',
         color: 'var(--ink-primary)',
@@ -904,6 +904,6 @@ export const AdminView: React.FC = () => {
           </section>
         </div>
       </div>
-    </main>
+    </div>
   );
 };

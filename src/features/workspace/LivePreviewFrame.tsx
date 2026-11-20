@@ -1,22 +1,15 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
-import {
-  Maximize2,
-  Minimize2,
-  Monitor,
-  PictureInPicture2,
-  RefreshCw,
-  Smartphone,
-  X,
-} from 'lucide-react';
+import React, { useLayoutEffect, useMemo, useRef, useState } from 'react';
 import type { WorkspaceFile } from '../../types/index';
 
-export type PreviewViewportMode = 'desktop' | 'mobile' | 'fullscreen' | 'pip';
+export const PREVIEW_VIEWPORTS = [390, 768, 1440] as const;
+
+export type PreviewViewport = (typeof PREVIEW_VIEWPORTS)[number];
 
 export interface LivePreviewFrameProps {
   files: WorkspaceFile[];
-  mode: PreviewViewportMode;
-  onModeChange: (mode: PreviewViewportMode) => void;
-  title?: string;
+  title: string;
+  viewport: PreviewViewport;
+  reloadNonce: number;
 }
 
 function instrumentLoopGuard(jsSource: string): string {
@@ -71,327 +64,68 @@ export function compileWorkspaceSrcDoc(files: WorkspaceFile[]): string {
   return doc;
 }
 
+
+function escapeAttribute(value: string): string {
+  return value.replace(/&/g, '&amp;').replace(/"/g, '&quot;');
+}
+
+export function buildStandalonePreviewDoc(files: WorkspaceFile[], title: string): string {
+  const safeTitle = escapeAttribute(title).replace(/</g, '&lt;');
+  const frameDoc = escapeAttribute(compileWorkspaceSrcDoc(files));
+  return `<!DOCTYPE html><html lang="vi"><head><meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="referrer" content="no-referrer" /><title>${safeTitle}</title><style>html,body{margin:0;height:100%}iframe{display:block;width:100%;height:100%;border:0}</style></head><body><iframe title="${safeTitle}" sandbox="allow-scripts" referrerpolicy="no-referrer" srcdoc="${frameDoc}"></iframe></body></html>`;
+}
+
 export const LivePreviewFrame: React.FC<LivePreviewFrameProps> = ({
   files,
-  mode,
-  onModeChange,
-  title = 'Sandboxed Live Preview',
+  title,
+  viewport,
+  reloadNonce,
 }) => {
-  const [reloadNonce, setReloadNonce] = useState(0);
-  const [pipOffset, setPipOffset] = useState({ x: 0, y: 0 });
-  const dragOriginRef = useRef<{ startX: number; startY: number; origX: number; origY: number } | null>(
-    null
-  );
-
+  const areaRef = useRef<HTMLDivElement>(null);
+  const [area, setArea] = useState({ width: 0, height: 0 });
   const srcDoc = useMemo(() => compileWorkspaceSrcDoc(files), [files]);
 
-  useEffect(() => {
-    if (mode !== 'fullscreen') return;
-    const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        onModeChange('desktop');
-      }
-    };
-    window.addEventListener('keydown', onKeyDown);
-    return () => window.removeEventListener('keydown', onKeyDown);
-  }, [mode, onModeChange]);
-
-  const handlePipPointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
-    if (mode !== 'pip') return;
-    e.currentTarget.setPointerCapture(e.pointerId);
-    dragOriginRef.current = {
-      startX: e.clientX,
-      startY: e.clientY,
-      origX: pipOffset.x,
-      origY: pipOffset.y,
-    };
-  };
-
-  const handlePipPointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
-    if (mode !== 'pip' || !dragOriginRef.current) return;
-    const dx = e.clientX - dragOriginRef.current.startX;
-    const dy = e.clientY - dragOriginRef.current.startY;
-    setPipOffset({
-      x: Math.max(-520, Math.min(24, dragOriginRef.current.origX + dx)),
-      y: Math.max(-420, Math.min(24, dragOriginRef.current.origY + dy)),
+  useLayoutEffect(() => {
+    const element = areaRef.current;
+    if (!element) return;
+    const observer = new ResizeObserver((entries) => {
+      const rect = entries[0].contentRect;
+      setArea({ width: Math.floor(rect.width), height: Math.floor(rect.height) });
     });
-  };
+    observer.observe(element);
+    return () => observer.disconnect();
+  }, []);
 
-  const handlePipPointerUp = (e: React.PointerEvent<HTMLDivElement>) => {
-    if (dragOriginRef.current) {
-      e.currentTarget.releasePointerCapture(e.pointerId);
-      dragOriginRef.current = null;
-    }
-  };
-
-  const iframeElement = (
-    <iframe
-      key={`${mode}-${reloadNonce}`}
-      title={title}
-      srcDoc={srcDoc}
-      sandbox="allow-scripts"
-      referrerPolicy="no-referrer"
-      className="w-full h-full border-0 block bg-white"
-    />
-  );
-
-  if (mode === 'pip') {
-    return (
-      <div
-        role="region"
-        aria-label="Floating Live Preview"
-        style={{
-          transform: `translate3d(${pipOffset.x}px, ${pipOffset.y}px, 0)`,
-          background: 'var(--bg-surface)',
-          borderColor: 'var(--border-strong)',
-          boxShadow: '0 20px 48px rgba(0, 0, 0, 0.45)',
-        }}
-        className="fixed bottom-5 right-5 z-40 w-[340px] max-w-[calc(100vw-24px)] h-[240px] rounded-2xl border overflow-hidden flex flex-col"
-      >
-        <div
-          onPointerDown={handlePipPointerDown}
-          onPointerMove={handlePipPointerMove}
-          onPointerUp={handlePipPointerUp}
-          style={{
-            background: 'var(--bg-panel)',
-            borderColor: 'var(--border-subtle)',
-            color: 'var(--ink-primary)',
-          }}
-          className="h-9 px-3 border-b flex items-center justify-between gap-2 cursor-grab active:cursor-grabbing select-none shrink-0"
-        >
-          <span className="text-xs font-medium truncate">PiP Live Preview</span>
-          <div className="flex items-center gap-1">
-            <button
-              type="button"
-              onClick={() => setReloadNonce((n) => n + 1)}
-              aria-label="Tải lại"
-              title="Tải lại"
-              style={{ color: 'var(--ink-secondary)' }}
-              className="p-1 rounded-md hover:opacity-80 cursor-pointer"
-            >
-              <RefreshCw className="w-3.5 h-3.5" aria-hidden="true" />
-            </button>
-            <button
-              type="button"
-              onClick={() => onModeChange('desktop')}
-              aria-label="Gắn lại"
-              title="Gắn lại"
-              style={{ color: 'var(--ink-secondary)' }}
-              className="p-1 rounded-md hover:opacity-80 cursor-pointer"
-            >
-              <Maximize2 className="w-3.5 h-3.5" aria-hidden="true" />
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                setPipOffset({ x: 0, y: 0 });
-                onModeChange('desktop');
-              }}
-              aria-label="Đóng"
-              title="Đóng"
-              style={{ color: 'var(--ink-secondary)' }}
-              className="p-1 rounded-md hover:opacity-80 cursor-pointer"
-            >
-              <X className="w-3.5 h-3.5" aria-hidden="true" />
-            </button>
-          </div>
-        </div>
-        <div className="flex-1 min-h-0 overflow-hidden">{iframeElement}</div>
-      </div>
-    );
-  }
-
-  if (mode === 'fullscreen') {
-    return (
-      <div
-        role="dialog"
-        aria-modal="true"
-        aria-label="Fullscreen Live Preview"
-        style={{ background: 'var(--bg-canvas)' }}
-        className="fixed inset-0 z-50 flex flex-col overflow-hidden"
-      >
-        <div
-          style={{
-            background: 'var(--bg-surface)',
-            borderColor: 'var(--border-subtle)',
-            color: 'var(--ink-primary)',
-          }}
-          className="h-12 px-4 border-b flex items-center justify-between gap-3 shrink-0"
-        >
-          <div className="flex items-center gap-2 min-w-0">
-            <span className="text-sm font-semibold truncate">{title}</span>
-            <span
-              style={{
-                background: 'var(--bg-panel)',
-                color: 'var(--accent-verdigris)',
-                borderColor: 'var(--border-subtle)',
-              }}
-              className="text-xs px-2 py-0.5 rounded-full border shrink-0"
-            >
-              sandbox=&quot;allow-scripts&quot;
-            </span>
-          </div>
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={() => setReloadNonce((n) => n + 1)}
-              aria-label="Tải lại"
-              title="Tải lại"
-              style={{
-                background: 'var(--bg-panel)',
-                color: 'var(--ink-primary)',
-                borderColor: 'var(--border-subtle)',
-              }}
-              className="inline-flex items-center justify-center w-8 h-8 rounded-lg border cursor-pointer"
-            >
-              <RefreshCw className="w-3.5 h-3.5" aria-hidden="true" />
-            </button>
-            <button
-              type="button"
-              onClick={() => onModeChange('desktop')}
-              aria-label="Thu nhỏ"
-              title="Thu nhỏ"
-              style={{
-                background: 'var(--accent-primary)',
-                color: 'var(--ink-inverse)',
-              }}
-              className="inline-flex items-center justify-center w-8 h-8 rounded-lg cursor-pointer"
-            >
-              <Minimize2 className="w-3.5 h-3.5" aria-hidden="true" />
-            </button>
-          </div>
-        </div>
-        <div className="flex-1 min-h-0 p-3 overflow-hidden">
-          <div
-            style={{ borderColor: 'var(--border-strong)' }}
-            className="w-full h-full rounded-xl border overflow-hidden"
-          >
-            {iframeElement}
-          </div>
-        </div>
-      </div>
-    );
-  }
+  const scale = area.width > 0 ? Math.min(1, area.width / viewport) : 1;
+  const shownWidth = Math.round(viewport * scale);
 
   return (
-    <div
-      style={{
-        background: 'var(--bg-surface)',
-        borderColor: 'var(--border-subtle)',
-      }}
-      className="flex flex-col h-full min-h-[380px] rounded-2xl border overflow-hidden"
-    >
-      <div
-        style={{
-          background: 'var(--bg-panel)',
-          borderColor: 'var(--border-subtle)',
-          color: 'var(--ink-secondary)',
-        }}
-        className="px-3 py-2 border-b flex items-center justify-between gap-2 flex-wrap shrink-0"
-      >
-        <div className="flex items-center gap-2 min-w-0">
-          <span style={{ color: 'var(--ink-primary)' }} className="text-xs font-medium truncate">
-            {title}
-          </span>
-          <span
-            style={{
-              background: 'var(--bg-surface)',
-              color: 'var(--accent-jade)',
-              borderColor: 'var(--border-subtle)',
-            }}
-            className="text-[11px] px-2 py-0.5 rounded-full border shrink-0"
-          >
-            CSP Isolated
-          </span>
-        </div>
-
-        <div className="flex items-center gap-1">
-          <button
-            type="button"
-            onClick={() => onModeChange('desktop')}
-            aria-pressed={mode === 'desktop'}
-            aria-label="Màn hình lớn"
-            title="Màn hình lớn"
-            style={{
-              background: mode === 'desktop' ? 'var(--bg-surface)' : 'transparent',
-              color: mode === 'desktop' ? 'var(--accent-primary)' : 'var(--ink-secondary)',
-              borderColor: mode === 'desktop' ? 'var(--border-strong)' : 'transparent',
-            }}
-            className="p-1.5 rounded-lg border cursor-pointer"
-          >
-            <Monitor className="w-3.5 h-3.5" aria-hidden="true" />
-          </button>
-          <button
-            type="button"
-            onClick={() => onModeChange('mobile')}
-            aria-pressed={mode === 'mobile'}
-            aria-label="Di động 390px"
-            title="Di động 390px"
-            style={{
-              background: mode === 'mobile' ? 'var(--bg-surface)' : 'transparent',
-              color: mode === 'mobile' ? 'var(--accent-primary)' : 'var(--ink-secondary)',
-              borderColor: mode === 'mobile' ? 'var(--border-strong)' : 'transparent',
-            }}
-            className="p-1.5 rounded-lg border cursor-pointer"
-          >
-            <Smartphone className="w-3.5 h-3.5" aria-hidden="true" />
-          </button>
-          <button
-            type="button"
-            onClick={() => onModeChange('pip')}
-            aria-label="Cửa sổ nổi"
-            title="Cửa sổ nổi"
-            style={{ color: 'var(--ink-secondary)' }}
-            className="p-1.5 rounded-lg hover:opacity-80 cursor-pointer"
-          >
-            <PictureInPicture2 className="w-3.5 h-3.5" aria-hidden="true" />
-          </button>
-          <button
-            type="button"
-            onClick={() => onModeChange('fullscreen')}
-            aria-label="Toàn màn hình"
-            title="Toàn màn hình"
-            style={{ color: 'var(--ink-secondary)' }}
-            className="p-1.5 rounded-lg hover:opacity-80 cursor-pointer"
-          >
-            <Maximize2 className="w-3.5 h-3.5" aria-hidden="true" />
-          </button>
-          <button
-            type="button"
-            onClick={() => setReloadNonce((n) => n + 1)}
-            aria-label="Tải lại"
-            title="Tải lại"
-            style={{ color: 'var(--ink-secondary)' }}
-            className="p-1.5 rounded-lg hover:opacity-80 cursor-pointer"
-          >
-            <RefreshCw className="w-3.5 h-3.5" aria-hidden="true" />
-          </button>
-        </div>
-      </div>
-
-      <div
-        style={{ background: 'var(--bg-canvas)' }}
-        className="flex-1 min-h-0 p-3 flex items-stretch justify-center overflow-auto"
-      >
-        {mode === 'mobile' ? (
-          <div
-            style={{
-              borderColor: 'var(--border-strong)',
-              background: 'var(--bg-panel)',
-            }}
-            className="w-[390px] max-w-full min-h-[520px] rounded-[24px] border-2 p-2 overflow-hidden flex flex-col shrink-0"
-          >
-            <div className="flex-1 rounded-[16px] overflow-hidden">{iframeElement}</div>
-          </div>
-        ) : (
-          <div
-            style={{ borderColor: 'var(--border-subtle)' }}
-            className="w-full h-full min-h-[360px] rounded-xl border overflow-hidden"
-          >
-            {iframeElement}
+    <div className="ws-frame-host">
+      <div ref={areaRef} className="ws-frame-area">
+        {area.width > 0 && (
+          <div className="ws-frame plate scene-paper" style={{ width: shownWidth, height: area.height }}>
+            <div className="ws-frame-clip">
+              <iframe
+                key={reloadNonce}
+                title={title}
+                srcDoc={srcDoc}
+                sandbox="allow-scripts"
+                referrerPolicy="no-referrer"
+                className="ws-frame-doc"
+                style={{
+                  width: viewport,
+                  height: Math.round(area.height / scale),
+                  transform: `scale(${scale})`,
+                }}
+              />
+            </div>
           </div>
         )}
       </div>
+      <p className="t-label ws-frame-note">
+        <span>{viewport} px</span>
+        {scale < 1 && <span>thu còn {Math.round(scale * 100)}%</span>}
+      </p>
     </div>
   );
 };

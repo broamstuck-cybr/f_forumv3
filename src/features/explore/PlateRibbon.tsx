@@ -1,0 +1,230 @@
+import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import type { SourceCatalogItem } from '../../types/index';
+import { Media, previewFor } from '../../ui/Media';
+import { shortTitle } from './catalog';
+
+interface PlateRibbonProps {
+  label: string;
+  items: SourceCatalogItem[];
+  savedIds: string[];
+  direction: 1 | -1;
+  startAtEnd: boolean;
+  drift: boolean;
+  calm: boolean;
+  onSelect: (item: SourceCatalogItem) => void;
+}
+
+interface DragState {
+  pointerId: number;
+  startX: number;
+  startLeft: number;
+  moved: boolean;
+}
+
+const DRIFT_SPEED = 16;
+const DRAG_THRESHOLD = 6;
+
+export const PlateRibbon: React.FC<PlateRibbonProps> = ({
+  label,
+  items,
+  savedIds,
+  direction,
+  startAtEnd,
+  drift,
+  calm,
+  onSelect,
+}) => {
+  const scrollerRef = useRef<HTMLDivElement>(null);
+  const listRef = useRef<HTMLUListElement>(null);
+  const holdRef = useRef({ hover: false, focus: false, drag: false });
+  const dragRef = useRef<DragState | null>(null);
+  const suppressClickRef = useRef(false);
+  const [cursor, setCursor] = useState(0);
+  const safeCursor = Math.min(cursor, Math.max(0, items.length - 1));
+
+  useLayoutEffect(() => {
+    const el = scrollerRef.current;
+    if (!el) return;
+    el.scrollLeft = startAtEnd ? el.scrollWidth - el.clientWidth : 0;
+  }, [items, startAtEnd]);
+
+  useEffect(() => {
+    const el = scrollerRef.current;
+    if (!el || !drift) return;
+    let frame = 0;
+    let last = 0;
+    let heading: number = direction;
+    let position = el.scrollLeft;
+    let visible = false;
+    const step = (now: number) => {
+      const delta = last ? Math.min(64, now - last) : 16;
+      last = now;
+      const max = el.scrollWidth - el.clientWidth;
+      const hold = holdRef.current;
+      if (hold.hover || hold.focus || hold.drag || max <= 0) {
+        position = el.scrollLeft;
+      } else {
+        if (Math.abs(el.scrollLeft - position) > 2) position = el.scrollLeft;
+        position += (heading * DRIFT_SPEED * delta) / 1000;
+        if (position >= max) {
+          position = max;
+          heading = -1;
+        }
+        if (position <= 0) {
+          position = 0;
+          heading = 1;
+        }
+        el.scrollLeft = position;
+      }
+      frame = requestAnimationFrame(step);
+    };
+    const observer = new IntersectionObserver((entries) => {
+      const next = entries[entries.length - 1].isIntersecting;
+      if (next === visible) return;
+      visible = next;
+      cancelAnimationFrame(frame);
+      if (visible) {
+        last = 0;
+        position = el.scrollLeft;
+        frame = requestAnimationFrame(step);
+      }
+    });
+    observer.observe(el);
+    return () => {
+      observer.disconnect();
+      cancelAnimationFrame(frame);
+    };
+  }, [drift, direction, items]);
+
+  const handlePointerDown = (event: React.PointerEvent<HTMLDivElement>) => {
+    if (event.pointerType !== 'mouse' || event.button !== 0) return;
+    const el = scrollerRef.current;
+    if (!el) return;
+    dragRef.current = {
+      pointerId: event.pointerId,
+      startX: event.clientX,
+      startLeft: el.scrollLeft,
+      moved: false,
+    };
+  };
+
+  const handlePointerMove = (event: React.PointerEvent<HTMLDivElement>) => {
+    const drag = dragRef.current;
+    const el = scrollerRef.current;
+    if (!drag || !el) return;
+    const distance = event.clientX - drag.startX;
+    if (!drag.moved && Math.abs(distance) > DRAG_THRESHOLD) {
+      drag.moved = true;
+      holdRef.current.drag = true;
+      el.setPointerCapture(drag.pointerId);
+      el.dataset.dragging = 'true';
+    }
+    if (drag.moved) el.scrollLeft = drag.startLeft - distance;
+  };
+
+  const handlePointerEnd = () => {
+    const drag = dragRef.current;
+    const el = scrollerRef.current;
+    dragRef.current = null;
+    holdRef.current.drag = false;
+    if (!drag || !el || !drag.moved) return;
+    if (el.hasPointerCapture(drag.pointerId)) el.releasePointerCapture(drag.pointerId);
+    delete el.dataset.dragging;
+    suppressClickRef.current = true;
+    window.setTimeout(() => {
+      suppressClickRef.current = false;
+    }, 0);
+  };
+
+  const handleClickCapture = (event: React.MouseEvent<HTMLDivElement>) => {
+    if (!suppressClickRef.current) return;
+    event.preventDefault();
+    event.stopPropagation();
+  };
+
+  const handleBlur = (event: React.FocusEvent<HTMLDivElement>) => {
+    if (!event.currentTarget.contains(event.relatedTarget as Node | null)) {
+      holdRef.current.focus = false;
+    }
+  };
+
+  const handleKeyDown = (event: React.KeyboardEvent<HTMLUListElement>) => {
+    let next = -1;
+    if (event.key === 'ArrowRight') next = Math.min(items.length - 1, safeCursor + 1);
+    else if (event.key === 'ArrowLeft') next = Math.max(0, safeCursor - 1);
+    else if (event.key === 'Home') next = 0;
+    else if (event.key === 'End') next = items.length - 1;
+    if (next < 0) return;
+    event.preventDefault();
+    const target = listRef.current?.querySelectorAll<HTMLButtonElement>('.ex-plate')[next];
+    if (!target) return;
+    target.focus({ preventScroll: true });
+    target.scrollIntoView({ inline: 'center', block: 'nearest', behavior: calm ? 'auto' : 'smooth' });
+  };
+
+  return (
+    <div
+      ref={scrollerRef}
+      className="ex-ribbon no-scrollbar"
+      onPointerEnter={() => {
+        holdRef.current.hover = true;
+      }}
+      onPointerLeave={() => {
+        holdRef.current.hover = false;
+      }}
+      onFocus={() => {
+        holdRef.current.focus = true;
+      }}
+      onBlur={handleBlur}
+      onPointerDown={handlePointerDown}
+      onPointerMove={handlePointerMove}
+      onPointerUp={handlePointerEnd}
+      onPointerCancel={handlePointerEnd}
+      onClickCapture={handleClickCapture}
+    >
+      <ul
+        ref={listRef}
+        className="ex-ribbon-track"
+        aria-label={`${label}: ${items.length} mẫu, dùng phím mũi tên để duyệt`}
+        onKeyDown={handleKeyDown}
+      >
+        {items.map((item, index) => {
+          const preview = previewFor(item.id);
+          const saved = savedIds.includes(item.id);
+          const title = shortTitle(item);
+          return (
+            <li key={item.id}>
+              <button
+                type="button"
+                className="ex-plate"
+                tabIndex={index === safeCursor ? 0 : -1}
+                aria-haspopup="dialog"
+                aria-label={saved ? `${item.title}, đã lưu` : item.title}
+                onFocus={() => setCursor(index)}
+                onClick={() => onSelect(item)}
+              >
+                {preview ? (
+                  <span className="plate ex-plate-frame">
+                    <span className="ex-plate-shot">
+                      <Media preview={preview} title={item.title} />
+                    </span>
+                  </span>
+                ) : (
+                  <span className="plate ex-plate-frame ex-plate-type">
+                    <span className="ex-plate-word">{title}</span>
+                    <span className="t-label">{item.category}</span>
+                  </span>
+                )}
+                <span className="ex-plate-cap" aria-hidden="true">
+                  <span className="t-label">{String(index + 1).padStart(2, '0')}</span>
+                  {preview ? <span className="ex-plate-title">{title}</span> : null}
+                  {saved ? <span className="t-note ex-plate-saved">đã lưu</span> : null}
+                </span>
+              </button>
+            </li>
+          );
+        })}
+      </ul>
+    </div>
+  );
+};

@@ -1,43 +1,97 @@
-import React, { useEffect, useState } from 'react';
+import React, { useId, useRef, useState } from 'react';
 import { Eye, EyeOff } from 'lucide-react';
-import type { AIProtocol } from '../../types/index';
+import type { AIProtocol, ProjectSetupTarget } from '../../types/index';
 import { useAppStore } from '../../store/appStore';
-import { LampSwitch, LiquidTabs, ThemeSwitch } from '../../components/pinui';
+import { ThemeSwitch } from '../../components/pinui';
+import { Modal } from '../workspace/Modal';
+import { applyBackup, buildBackup, clearLocalData, downloadBackup, parseBackup, type BackupPayload } from './backup';
+import './settings.css';
 
-type SettingsSectionId = 'appearance' | 'motion' | 'ai' | 'export' | 'system';
-
-interface LocalConnectorPrefs {
-  githubConnected: boolean;
-  githubScope: 'read-only' | 'pr-push';
-  githubRepo: string;
-  defaultProjectPrivacy: 'private' | 'public';
+interface RowProps {
+  label: string;
+  hint: string;
+  htmlFor?: string;
+  labelId?: string;
+  wide?: boolean;
+  children: React.ReactNode;
 }
 
-const PREFS_STORAGE_KEY = 'fforum_v3_extended_prefs';
+const Row: React.FC<RowProps> = ({ label, hint, htmlFor, labelId, wide, children }) => (
+  <div className="st-row" data-wide={wide ? 'true' : undefined}>
+    <div className="st-text">
+      {htmlFor ? (
+        <label className="st-label" htmlFor={htmlFor}>
+          {label}
+        </label>
+      ) : (
+        <p className="st-label" id={labelId}>
+          {label}
+        </p>
+      )}
+      <p className="st-hint">{hint}</p>
+    </div>
+    <div className="st-control">{children}</div>
+  </div>
+);
 
-const DEFAULT_PREFS: LocalConnectorPrefs = {
-  githubConnected: false,
-  githubScope: 'read-only',
-  githubRepo: '',
-  defaultProjectPrivacy: 'private',
-};
-
-function loadConnectorPrefs(): LocalConnectorPrefs {
-  if (typeof window === 'undefined') return DEFAULT_PREFS;
-  try {
-    const raw = window.localStorage.getItem(PREFS_STORAGE_KEY);
-    if (!raw) return DEFAULT_PREFS;
-    const parsed = JSON.parse(raw) as Partial<LocalConnectorPrefs>;
-    return {
-      githubConnected: Boolean(parsed.githubConnected),
-      githubScope: parsed.githubScope === 'pr-push' ? 'pr-push' : 'read-only',
-      githubRepo: typeof parsed.githubRepo === 'string' ? parsed.githubRepo : '',
-      defaultProjectPrivacy: parsed.defaultProjectPrivacy === 'public' ? 'public' : 'private',
-    };
-  } catch {
-    return DEFAULT_PREFS;
-  }
+interface SwitchProps {
+  checked: boolean;
+  onChange: (next: boolean) => void;
+  labelId: string;
 }
+
+const Switch: React.FC<SwitchProps> = ({ checked, onChange, labelId }) => (
+  <div className="st-switch-wrap">
+    <span className="t-label" aria-hidden="true">
+      {checked ? 'bật' : 'tắt'}
+    </span>
+    <button
+      type="button"
+      role="switch"
+      className="st-switch"
+      aria-checked={checked}
+      aria-labelledby={labelId}
+      onClick={() => onChange(!checked)}
+    />
+  </div>
+);
+
+interface SegmentProps<Value extends string> {
+  value: Value;
+  options: Array<{ id: Value; label: string }>;
+  onChange: (next: Value) => void;
+  labelId: string;
+}
+
+function Segment<Value extends string>({ value, options, onChange, labelId }: SegmentProps<Value>) {
+  return (
+    <div className="st-seg" role="group" aria-labelledby={labelId}>
+      {options.map((option) => (
+        <button
+          key={option.id}
+          type="button"
+          className="st-seg-item"
+          aria-pressed={value === option.id}
+          onClick={() => onChange(option.id)}
+        >
+          {option.label}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+const DENSITY_OPTIONS: Array<{ id: 'roomy' | 'compact'; label: string }> = [
+  { id: 'roomy', label: 'Rộng' },
+  { id: 'compact', label: 'Gọn' },
+];
+
+const TARGET_OPTIONS: Array<{ id: ProjectSetupTarget; label: string }> = [
+  { id: 'antigravity', label: 'Antigravity' },
+  { id: 'cursor', label: 'Cursor' },
+];
+
+const PROTOCOLS: AIProtocol[] = ['openai-compatible', 'anthropic', 'gemini'];
 
 export const SettingsView: React.FC = () => {
   const {
@@ -53,699 +107,298 @@ export const SettingsView: React.FC = () => {
     setReducedMotion,
     savedItemIds,
     projects,
-    navigate,
     addToast,
   } = useAppStore();
 
-  const [section, setSection] = useState<SettingsSectionId>('appearance');
-  const [prefs, setPrefs] = useState<LocalConnectorPrefs>(() => loadConnectorPrefs());
   const [showApiKey, setShowApiKey] = useState(false);
   const [confirmReset, setConfirmReset] = useState(false);
+  const [pendingBackup, setPendingBackup] = useState<BackupPayload | null>(null);
+  const [importError, setImportError] = useState('');
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const baseId = useId();
+  const idFor = (name: string) => `${baseId}-${name}`;
 
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-    try {
-      const existingRaw = window.localStorage.getItem(PREFS_STORAGE_KEY);
-      const existing = existingRaw ? (JSON.parse(existingRaw) as Record<string, unknown>) : {};
-      window.localStorage.setItem(
-        PREFS_STORAGE_KEY,
-        JSON.stringify({
-          ...existing,
-          ...prefs,
-        })
-      );
-    } catch {
-      return;
-    }
-  }, [prefs]);
+  const byok = settings.byok;
+  const quotaLimit = quota.limit;
+  const quotaText = quota.unlimited
+    ? 'không giới hạn'
+    : quotaLimit === null
+      ? `đã dùng ${quota.used}`
+      : `còn ${quota.remaining ?? Math.max(0, quotaLimit - quota.used)}/${quotaLimit}`;
 
-  const handleExportWorkspaceJson = () => {
-    const payload = {
-      exportedAt: new Date().toISOString(),
-      version: '3.0.0',
-      savedItemIds,
-      settings: {
-        theme: settings.theme,
-        themeEffect,
-        reducedMotion: settings.reducedMotion,
-        compactDensity: settings.compactDensity,
-        defaultExportTarget: settings.defaultExportTarget,
-      },
-      projects,
-    };
-    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const anchor = document.createElement('a');
-    anchor.href = url;
-    anchor.download = `f-forum-v3-backup-${new Date().toISOString().slice(0, 10)}.json`;
-    document.body.appendChild(anchor);
-    anchor.click();
-    anchor.remove();
-    URL.revokeObjectURL(url);
+  const handleExport = () => {
+    downloadBackup(buildBackup(settings, projects, savedItemIds));
     addToast({
       type: 'success',
-      title: 'Đã xuất bản sao lưu',
-      message: 'Khóa API cá nhân đã được loại bỏ khỏi tệp xuất.',
+      title: 'Đã tải bản sao lưu',
+      message: 'Tệp không chứa khóa API.',
     });
   };
 
+  const handleFileChosen = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    event.target.value = '';
+    if (!file) return;
+    const parsed = parseBackup(await file.text().catch(() => ''));
+    if (!parsed) {
+      setImportError('Tệp này không phải bản sao lưu F-Forum hợp lệ.');
+      return;
+    }
+    setImportError('');
+    setPendingBackup(parsed);
+  };
+
+  const handleConfirmImport = () => {
+    if (!pendingBackup) return;
+    if (!applyBackup(pendingBackup)) {
+      setPendingBackup(null);
+      setImportError('Trình duyệt không lưu được dữ liệu từ tệp này.');
+      return;
+    }
+    window.location.reload();
+  };
+
   const handleResetLocalData = () => {
-    if (typeof window === 'undefined') return;
-    const keysToRemove: string[] = [];
-    for (let i = 0; i < window.localStorage.length; i += 1) {
-      const key = window.localStorage.key(i);
-      if (key && (key.startsWith('fforum_v3_') || key === 'fforum_theme')) {
-        keysToRemove.push(key);
-      }
-    }
-    for (const key of keysToRemove) {
-      window.localStorage.removeItem(key);
-    }
-    window.localStorage.removeItem('fforum_theme');
+    clearLocalData();
     setConfirmReset(false);
     addToast({
       type: 'warning',
-      title: 'Đã đặt lại dữ liệu cục bộ',
-      message: 'Đang khôi phục trạng thái mặc định...',
+      title: 'Đã đặt lại dữ liệu',
+      message: 'Đang nạp lại trang.',
     });
     window.setTimeout(() => {
       window.location.reload();
     }, 450);
   };
 
-  const sections: Array<{ id: SettingsSectionId; label: string }> = [
-    { id: 'appearance', label: 'Giao diện' },
-    { id: 'motion', label: 'Chuyển động' },
-    { id: 'ai', label: 'Kết nối AI' },
-    { id: 'export', label: 'Xuất mã' },
-    { id: 'system', label: 'Hệ thống' },
-  ];
-
-  const quotaRatio = quota.unlimited
-    ? 1
-    : Math.min(1, Math.max(0, quota.used / Math.max(1, quota.limit || 15)));
-
   return (
-    <div className="ff-container py-10 sm:py-14 pb-24 flex-1">
-      <header
-        className="pb-8 mb-8 border-b flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between"
-        style={{ borderColor: 'var(--border-subtle)' }}
-      >
-        <div className="space-y-2 max-w-2xl">
-          <h1
-            className="m-0 text-3xl sm:text-4xl font-semibold tracking-tight"
-            style={{ fontFamily: 'var(--font-serif)', color: 'var(--ink-primary)' }}
-          >
-            Cài đặt
-          </h1>
-          <p className="m-0 text-sm" style={{ color: 'var(--ink-secondary)' }}>
-            Ánh sáng, chuyển động, khóa kết nối AI, định dạng xuất mã và trạng thái cục bộ.
-          </p>
-        </div>
+    <div className="st" data-density={settings.compactDensity ? 'compact' : 'roomy'}>
+      <div className="st-wrap">
+        <header className="st-head">
+          <h1 className="t-title">Cài đặt</h1>
+          <p className="st-lead">Mọi tùy chỉnh nằm trên một tờ, lưu ngay trong trình duyệt này.</p>
+        </header>
 
-        <button
-          type="button"
-          onClick={() => navigate('profile')}
-          className="self-start sm:self-auto rounded-full border px-4 py-2 text-xs font-medium cursor-pointer"
-          style={{
-            borderColor: 'var(--border-strong)',
-            color: 'var(--ink-primary)',
-            background: 'transparent',
-          }}
-        >
-          Hồ sơ
-        </button>
-      </header>
+        <div className="st-sheet">
+          <section className="st-group" aria-labelledby={idFor('look')}>
+            <h2 className="st-group-name" id={idFor('look')}>
+              Giao diện
+            </h2>
+            <div className="st-rows">
+              <Row label="Sáng tối" hint="Mực cho nền tối, Giấy cho nền sáng." labelId={idFor('theme')} wide>
+                <ThemeSwitch
+                  theme={theme}
+                  onThemeChange={(next) => setTheme(next)}
+                  effect={themeEffect}
+                  onEffectChange={(effect) => setThemeEffect(effect)}
+                />
+              </Row>
+            </div>
+          </section>
 
-      <div className="grid grid-cols-1 items-start gap-8 lg:grid-cols-[220px_minmax(0,1fr)]">
-        <nav
-          aria-label="Danh mục cài đặt"
-          className="flex gap-1.5 overflow-x-auto pb-2 lg:pb-0 lg:flex-col lg:sticky lg:top-24"
-        >
-          {sections.map((item) => {
-            const active = section === item.id;
-            return (
-              <button
-                key={item.id}
-                type="button"
-                onClick={() => setSection(item.id)}
-                aria-current={active ? 'page' : undefined}
-                className="shrink-0 rounded-xl px-4 py-2.5 text-left text-xs font-semibold cursor-pointer transition-colors"
-                style={{
-                  backgroundColor: active ? 'var(--bg-surface)' : 'transparent',
-                  borderColor: active ? 'var(--border-strong)' : 'transparent',
-                  borderWidth: '1px',
-                  borderStyle: 'solid',
-                  color: active ? 'var(--accent-primary)' : 'var(--ink-secondary)',
-                }}
-              >
-                {item.label}
-              </button>
-            );
-          })}
-        </nav>
+          <section className="st-group" aria-labelledby={idFor('motion')}>
+            <h2 className="st-group-name" id={idFor('motion')}>
+              Chuyển động
+            </h2>
+            <div className="st-rows">
+              <Row label="Giảm chuyển động" hint="Bỏ hiệu ứng, đổi cảnh tức thì." labelId={idFor('reduce')}>
+                <Switch checked={reducedMotion} onChange={setReducedMotion} labelId={idFor('reduce')} />
+              </Row>
+              <Row label="Mật độ" hint="Gọn thu hẹp hàng và lề trong Workspace." labelId={idFor('density')}>
+                <Segment
+                  value={settings.compactDensity ? 'compact' : 'roomy'}
+                  options={DENSITY_OPTIONS}
+                  onChange={(next) => updateSettings({ compactDensity: next === 'compact' })}
+                  labelId={idFor('density')}
+                />
+              </Row>
+            </div>
+          </section>
 
-        <main className="min-w-0">
-          {section === 'appearance' && (
-            <section
-              aria-label="Giao diện"
-              className="rounded-[24px] border p-6 sm:p-8 space-y-8"
-              style={{
-                backgroundColor: 'var(--bg-surface)',
-                borderColor: 'var(--border-subtle)',
-              }}
-            >
-              <div className="space-y-1.5">
-                <h2
-                  className="m-0 text-2xl font-semibold"
-                  style={{ fontFamily: 'var(--font-serif)', color: 'var(--ink-primary)' }}
-                >
-                  Giao diện
-                </h2>
-                <p className="m-0 text-xs" style={{ color: 'var(--ink-secondary)' }}>
-                  Chuyển đổi sắc độ sáng tối và hiệu ứng lan tỏa bề mặt trên toàn hệ thống.
+          <section className="st-group" aria-labelledby={idFor('ai')}>
+            <h2 className="st-group-name" id={idFor('ai')}>
+              Kết nối AI
+            </h2>
+            <div className="st-rows">
+              <Row label="Lượt AI" hint="Hạn mức của phiên đang dùng." labelId={idFor('quota')}>
+                <p className="st-value" data-low={!quota.unlimited && quota.exhausted}>
+                  {quotaText}
                 </p>
-              </div>
-
-              <div
-                className="flex flex-col gap-4 border-t pt-6"
-                style={{ borderColor: 'var(--border-subtle)' }}
-              >
-                <div className="space-y-1">
-                  <div className="text-sm font-medium" style={{ color: 'var(--ink-primary)' }}>
-                    Hiệu ứng chuyển sắc
-                  </div>
-                  <p className="m-0 text-xs" style={{ color: 'var(--ink-muted)' }}>
-                    Chọn Giọt nước, Mưa rơi hoặc Ánh sáng khi chuyển đổi nền.
-                  </p>
-                </div>
-
-                <div className="w-full max-w-[560px]">
-                  <ThemeSwitch
-                    theme={theme}
-                    onThemeChange={(next) => setTheme(next)}
-                    effect={themeEffect}
-                    onEffectChange={(eff) => setThemeEffect(eff)}
-                  />
-                </div>
-              </div>
-
-              <div
-                className="flex flex-col gap-4 border-t pt-6"
-                style={{ borderColor: 'var(--border-subtle)' }}
-              >
-                <div className="space-y-1">
-                  <div className="text-sm font-medium" style={{ color: 'var(--ink-primary)' }}>
-                    Đèn kéo dây
-                  </div>
-                  <p className="m-0 text-xs" style={{ color: 'var(--ink-muted)' }}>
-                    Kéo chao đèn hoặc gạt công tắc để bật tắt ánh sáng giao diện.
-                  </p>
-                </div>
-
-                <div className="w-full max-w-[560px] min-h-[260px]">
-                  <LampSwitch
-                    on={theme === 'light'}
-                    onToggle={(isLight) => setTheme(isLight ? 'light' : 'dark')}
-                    onLabel="Sáng"
-                    offLabel="Tối"
-                    className="min-h-[260px]"
-                  />
-                </div>
-              </div>
-            </section>
-          )}
-
-          {section === 'motion' && (
-            <section
-              aria-label="Chuyển động"
-              className="rounded-[24px] border p-6 sm:p-8 space-y-6"
-              style={{
-                backgroundColor: 'var(--bg-surface)',
-                borderColor: 'var(--border-subtle)',
-              }}
-            >
-              <div className="space-y-1.5">
-                <h2
-                  className="m-0 text-2xl font-semibold"
-                  style={{ fontFamily: 'var(--font-serif)', color: 'var(--ink-primary)' }}
-                >
-                  Chuyển động
-                </h2>
-                <p className="m-0 text-xs" style={{ color: 'var(--ink-secondary)' }}>
-                  Điều chỉnh nhịp chuyển động vật lý và mật độ khoảng trống hiển thị.
-                </p>
-              </div>
-
-              <div
-                className="flex flex-wrap items-center justify-between gap-4 border-t pt-6"
-                style={{ borderColor: 'var(--border-subtle)' }}
-              >
-                <div className="space-y-1">
-                  <div className="text-sm font-medium" style={{ color: 'var(--ink-primary)' }}>
-                    Giảm chuyển động
-                  </div>
-                  <p className="m-0 text-xs" style={{ color: 'var(--ink-muted)' }}>
-                    Ưu tiên chuyển cảnh tức thì và tắt hiệu ứng lò xo phức tạp.
-                  </p>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => setReducedMotion(!reducedMotion)}
-                  aria-pressed={reducedMotion}
-                  className="rounded-full border px-4 py-2 text-xs font-semibold cursor-pointer"
-                  style={{
-                    backgroundColor: reducedMotion ? 'var(--accent-verdigris-soft)' : 'var(--bg-panel)',
-                    borderColor: reducedMotion ? 'var(--accent-verdigris)' : 'var(--border-subtle)',
-                    color: reducedMotion ? 'var(--accent-verdigris)' : 'var(--ink-secondary)',
-                  }}
-                >
-                  {reducedMotion ? 'Đang bật' : 'Đang tắt'}
-                </button>
-              </div>
-
-              <div
-                className="flex flex-wrap items-center justify-between gap-4 border-t pt-6"
-                style={{ borderColor: 'var(--border-subtle)' }}
-              >
-                <div className="space-y-1">
-                  <div className="text-sm font-medium" style={{ color: 'var(--ink-primary)' }}>
-                    Mật độ hiển thị
-                  </div>
-                  <p className="m-0 text-xs" style={{ color: 'var(--ink-muted)' }}>
-                    Chuyển giữa khoảng thở rộng rãi mặc định và bố cục thu gọn.
-                  </p>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => updateSettings({ compactDensity: !settings.compactDensity })}
-                  aria-pressed={settings.compactDensity}
-                  className="rounded-full border px-4 py-2 text-xs font-semibold cursor-pointer"
-                  style={{
-                    backgroundColor: settings.compactDensity ? 'var(--accent-soft)' : 'var(--bg-panel)',
-                    borderColor: settings.compactDensity ? 'var(--border-accent)' : 'var(--border-subtle)',
-                    color: settings.compactDensity ? 'var(--accent-primary)' : 'var(--ink-secondary)',
-                  }}
-                >
-                  {settings.compactDensity ? 'Thu gọn' : 'Tiêu chuẩn'}
-                </button>
-              </div>
-            </section>
-          )}
-
-          {section === 'ai' && (
-            <section
-              aria-label="Kết nối AI"
-              className="rounded-[24px] border p-6 sm:p-8 space-y-6"
-              style={{
-                backgroundColor: 'var(--bg-surface)',
-                borderColor: 'var(--border-subtle)',
-              }}
-            >
-              <div className="flex flex-wrap items-start justify-between gap-4">
-                <div className="space-y-1.5">
-                  <h2
-                    className="m-0 text-2xl font-semibold"
-                    style={{ fontFamily: 'var(--font-serif)', color: 'var(--ink-primary)' }}
-                  >
-                    Kết nối AI
-                  </h2>
-                  <p className="m-0 text-xs" style={{ color: 'var(--ink-secondary)' }}>
-                    Khóa API riêng chỉ lưu cục bộ trên trình duyệt và truyền qua kết nối bảo mật khi gọi mô hình.
-                  </p>
-                </div>
-
-                <button
-                  type="button"
-                  onClick={() => updateByok({ enabled: !settings.byok.enabled })}
-                  aria-pressed={settings.byok.enabled}
-                  className="rounded-full border px-4 py-2 text-xs font-semibold cursor-pointer"
-                  style={{
-                    backgroundColor: settings.byok.enabled ? 'var(--accent-jade-soft)' : 'var(--bg-panel)',
-                    borderColor: settings.byok.enabled ? 'var(--accent-jade)' : 'var(--border-subtle)',
-                    color: settings.byok.enabled ? 'var(--accent-jade)' : 'var(--ink-secondary)',
-                  }}
-                >
-                  {settings.byok.enabled ? 'Đang bật' : 'Đang tắt'}
-                </button>
-              </div>
-
-              <div className="grid grid-cols-1 gap-4 md:grid-cols-2 border-t pt-6" style={{ borderColor: 'var(--border-subtle)' }}>
-                <div>
-                  <label className="mb-1.5 block text-xs font-medium" style={{ color: 'var(--ink-secondary)' }}>
-                    Giao thức
-                  </label>
-                  <select
-                    value={settings.byok.protocol}
-                    onChange={(e) => updateByok({ protocol: e.target.value as AIProtocol })}
-                    className="h-10 w-full rounded-xl border px-3 font-mono text-xs outline-none"
-                    style={{
-                      backgroundColor: 'var(--bg-panel)',
-                      borderColor: 'var(--border-subtle)',
-                      color: 'var(--ink-primary)',
-                    }}
-                  >
-                    <option value="openai-compatible">openai-compatible</option>
-                    <option value="anthropic">anthropic</option>
-                    <option value="gemini">gemini</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="mb-1.5 block text-xs font-medium" style={{ color: 'var(--ink-secondary)' }}>
-                    Tên mô hình
-                  </label>
-                  <input
-                    type="text"
-                    value={settings.byok.model}
-                    onChange={(e) => updateByok({ model: e.target.value })}
-                    placeholder="studio-smart-route"
-                    className="h-10 w-full rounded-xl border px-3 font-mono text-xs outline-none"
-                    style={{
-                      backgroundColor: 'var(--bg-panel)',
-                      borderColor: 'var(--border-subtle)',
-                      color: 'var(--ink-primary)',
-                    }}
-                  />
-                </div>
-
-                <div className="md:col-span-2">
-                  <label className="mb-1.5 block text-xs font-medium" style={{ color: 'var(--ink-secondary)' }}>
-                    Đường dẫn API
-                  </label>
-                  <input
-                    type="url"
-                    value={settings.byok.baseUrl}
-                    onChange={(e) => updateByok({ baseUrl: e.target.value })}
-                    placeholder="https://api.openai.com/v1"
-                    className="h-10 w-full rounded-xl border px-3 font-mono text-xs outline-none"
-                    style={{
-                      backgroundColor: 'var(--bg-panel)',
-                      borderColor: 'var(--border-subtle)',
-                      color: 'var(--ink-primary)',
-                    }}
-                  />
-                </div>
-
-                <div className="md:col-span-2">
-                  <label className="mb-1.5 block text-xs font-medium" style={{ color: 'var(--ink-secondary)' }}>
-                    Khóa API
-                  </label>
-                  <div className="flex items-center gap-2">
+              </Row>
+              <Row label="Khóa riêng" hint="Gọi mô hình bằng khóa API của bạn." labelId={idFor('byok')}>
+                <Switch
+                  checked={byok.enabled}
+                  onChange={(next) => updateByok({ enabled: next })}
+                  labelId={idFor('byok')}
+                />
+              </Row>
+              {byok.enabled && (
+                <>
+                  <Row label="Giao thức" hint="Chuẩn API của nhà cung cấp." htmlFor={idFor('protocol')} wide>
+                    <select
+                      id={idFor('protocol')}
+                      className="field st-mono"
+                      value={byok.protocol}
+                      onChange={(event) => updateByok({ protocol: event.target.value as AIProtocol })}
+                    >
+                      {PROTOCOLS.map((protocol) => (
+                        <option key={protocol} value={protocol}>
+                          {protocol}
+                        </option>
+                      ))}
+                    </select>
+                  </Row>
+                  <Row label="Mô hình" hint="Tên mô hình gửi tới nhà cung cấp." htmlFor={idFor('model')} wide>
                     <input
-                      type={showApiKey ? 'text' : 'password'}
-                      value={settings.byok.apiKey}
-                      onChange={(e) => updateByok({ apiKey: e.target.value })}
-                      placeholder="sk-..."
-                      autoComplete="off"
-                      className="h-10 flex-1 rounded-xl border px-3 font-mono text-xs outline-none"
-                      style={{
-                        backgroundColor: 'var(--bg-panel)',
-                        borderColor: 'var(--border-subtle)',
-                        color: 'var(--ink-primary)',
-                      }}
+                      id={idFor('model')}
+                      type="text"
+                      className="field st-mono"
+                      value={byok.model}
+                      spellCheck={false}
+                      onChange={(event) => updateByok({ model: event.target.value })}
                     />
-                    <button
-                      type="button"
-                      onClick={() => setShowApiKey((prev) => !prev)}
-                      aria-label={showApiKey ? 'Ẩn khóa API' : 'Hiện khóa API'}
-                      title={showApiKey ? 'Ẩn' : 'Hiện'}
-                      className="inline-flex h-10 w-10 items-center justify-center rounded-xl border cursor-pointer"
-                      style={{
-                        backgroundColor: 'var(--bg-panel)',
-                        borderColor: 'var(--border-subtle)',
-                        color: 'var(--ink-secondary)',
-                      }}
-                    >
-                      {showApiKey ? (
-                        <EyeOff className="h-4 w-4" aria-hidden="true" />
-                      ) : (
-                        <Eye className="h-4 w-4" aria-hidden="true" />
-                      )}
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </section>
-          )}
-
-          {section === 'export' && (
-            <section
-              aria-label="Xuất mã"
-              className="rounded-[24px] border p-6 sm:p-8 space-y-6"
-              style={{
-                backgroundColor: 'var(--bg-surface)',
-                borderColor: 'var(--border-subtle)',
-              }}
-            >
-              <div className="space-y-1.5">
-                <h2
-                  className="m-0 text-2xl font-semibold"
-                  style={{ fontFamily: 'var(--font-serif)', color: 'var(--ink-primary)' }}
-                >
-                  Xuất mã
-                </h2>
-                <p className="m-0 text-xs" style={{ color: 'var(--ink-secondary)' }}>
-                  Cấu hình bộ tệp khởi tạo tự động sinh kèm khi xuất gói ZIP từ Workspace.
-                </p>
-              </div>
-
-              <div
-                className="flex flex-wrap items-center justify-between gap-4 border-t pt-6"
-                style={{ borderColor: 'var(--border-subtle)' }}
-              >
-                <div className="space-y-1">
-                  <div className="text-sm font-medium" style={{ color: 'var(--ink-primary)' }}>
-                    Môi trường đích
-                  </div>
-                  <p className="m-0 text-xs" style={{ color: 'var(--ink-muted)' }}>
-                    Sinh bộ RULES.md, SKILLS.md và PROJECT_CONTEXT phù hợp trình soạn thảo.
-                  </p>
-                </div>
-                <LiquidTabs
-                  tabs={[
-                    { id: 'antigravity', label: 'Antigravity' },
-                    { id: 'cursor', label: 'Cursor' },
-                  ]}
-                  activeId={settings.defaultExportTarget}
-                  onChange={(id) =>
-                    updateSettings({ defaultExportTarget: id as 'antigravity' | 'cursor' })
-                  }
-                />
-              </div>
-
-              <div
-                className="flex flex-wrap items-center justify-between gap-4 border-t pt-6"
-                style={{ borderColor: 'var(--border-subtle)' }}
-              >
-                <div className="space-y-1">
-                  <div className="text-sm font-medium" style={{ color: 'var(--ink-primary)' }}>
-                    Quyền riêng tư mặc định
-                  </div>
-                  <p className="m-0 text-xs" style={{ color: 'var(--ink-muted)' }}>
-                    Dự án mới lưu cục bộ cho đến khi bạn chủ động chia sẻ.
-                  </p>
-                </div>
-                <LiquidTabs
-                  tabs={[
-                    { id: 'private', label: 'Riêng tư' },
-                    { id: 'public', label: 'Công khai' },
-                  ]}
-                  activeId={prefs.defaultProjectPrivacy}
-                  onChange={(id) =>
-                    setPrefs((p) => ({ ...p, defaultProjectPrivacy: id as 'private' | 'public' }))
-                  }
-                />
-              </div>
-            </section>
-          )}
-
-          {section === 'system' && (
-            <section
-              aria-label="Hệ thống"
-              className="rounded-[24px] border p-6 sm:p-8 space-y-6"
-              style={{
-                backgroundColor: 'var(--bg-surface)',
-                borderColor: 'var(--border-subtle)',
-              }}
-            >
-              <div className="space-y-1.5">
-                <h2
-                  className="m-0 text-2xl font-semibold"
-                  style={{ fontFamily: 'var(--font-serif)', color: 'var(--ink-primary)' }}
-                >
-                  Hệ thống
-                </h2>
-                <p className="m-0 text-xs" style={{ color: 'var(--ink-secondary)' }}>
-                  Hạn mức sử dụng thực tế, kết nối GitHub, sao lưu dữ liệu và đặt lại trình duyệt.
-                </p>
-              </div>
-
-              <div
-                className="rounded-2xl border p-5 space-y-3"
-                style={{
-                  backgroundColor: 'var(--bg-panel)',
-                  borderColor: 'var(--border-subtle)',
-                }}
-              >
-                <div className="flex items-center justify-between gap-2">
-                  <span className="text-xs font-medium" style={{ color: 'var(--ink-secondary)' }}>
-                    Hạn mức AI phiên hiện tại
-                  </span>
-                  <span
-                    className="font-mono text-xs font-semibold"
-                    style={{
-                      color: quota.unlimited
-                        ? 'var(--accent-jade)'
-                        : quota.exhausted
-                          ? 'var(--accent-danger)'
-                          : 'var(--accent-primary)',
-                    }}
+                  </Row>
+                  <Row label="Địa chỉ API" hint="Đường dẫn gốc của dịch vụ." htmlFor={idFor('url')} wide>
+                    <input
+                      id={idFor('url')}
+                      type="url"
+                      className="field st-mono"
+                      value={byok.baseUrl}
+                      spellCheck={false}
+                      onChange={(event) => updateByok({ baseUrl: event.target.value })}
+                    />
+                  </Row>
+                  <Row
+                    label="Khóa API"
+                    hint="Chỉ lưu trong trình duyệt này, gửi kèm khi gọi AI, không vào bản sao lưu."
+                    htmlFor={idFor('key')}
+                    wide
                   >
-                    {quota.unlimited ? 'Không giới hạn' : `${quota.used}/${quota.limit ?? 15} lượt`}
-                  </span>
-                </div>
-
-                <div
-                  className="h-1.5 w-full overflow-hidden rounded-full"
-                  style={{ backgroundColor: 'var(--bg-surface)' }}
-                >
-                  <div
-                    className="h-full w-full rounded-full"
-                    style={{
-                      backgroundColor: quota.unlimited
-                        ? 'var(--accent-jade)'
-                        : quota.exhausted
-                          ? 'var(--accent-danger)'
-                          : 'var(--accent-primary)',
-                      transform: `scaleX(${quotaRatio})`,
-                      transformOrigin: 'left center',
-                    }}
-                  />
-                </div>
-              </div>
-
-              <div
-                className="border-t pt-6 space-y-4"
-                style={{ borderColor: 'var(--border-subtle)' }}
-              >
-                <div className="flex flex-wrap items-center justify-between gap-3">
-                  <div className="space-y-1">
-                    <div className="text-sm font-medium" style={{ color: 'var(--ink-primary)' }}>
-                      GitHub
+                    <div className="st-secret">
+                      <input
+                        id={idFor('key')}
+                        type={showApiKey ? 'text' : 'password'}
+                        className="field st-mono"
+                        value={byok.apiKey}
+                        autoComplete="off"
+                        spellCheck={false}
+                        onChange={(event) => updateByok({ apiKey: event.target.value })}
+                      />
+                      <button
+                        type="button"
+                        className="icon-btn"
+                        aria-label={showApiKey ? 'Ẩn khóa' : 'Hiện khóa'}
+                        title={showApiKey ? 'Ẩn khóa' : 'Hiện khóa'}
+                        aria-pressed={showApiKey}
+                        onClick={() => setShowApiKey((value) => !value)}
+                      >
+                        {showApiKey ? <EyeOff size={18} aria-hidden="true" /> : <Eye size={18} aria-hidden="true" />}
+                      </button>
                     </div>
-                    <p className="m-0 text-xs" style={{ color: 'var(--ink-muted)' }}>
-                      Giới hạn quyền đọc hoặc cho phép đẩy nhánh đối chiếu từ Workspace.
-                    </p>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      const next = !prefs.githubConnected;
-                      setPrefs((p) => ({ ...p, githubConnected: next }));
-                      addToast({
-                        type: next ? 'success' : 'info',
-                        title: next ? 'Đã kết nối GitHub' : 'Đã ngắt kết nối GitHub',
-                      });
-                    }}
-                    className="rounded-full px-4 py-2 text-xs font-semibold cursor-pointer"
-                    style={{
-                      backgroundColor: prefs.githubConnected ? 'var(--accent-jade)' : 'var(--accent-primary)',
-                      color: 'var(--ink-inverse)',
-                    }}
-                  >
-                    {prefs.githubConnected ? 'Ngắt' : 'Kết nối'}
-                  </button>
-                </div>
+                    {!byok.apiKey.trim() && <p className="st-note">Chưa có khóa, F-Forum vẫn dùng kết nối chung.</p>}
+                  </Row>
+                </>
+              )}
+            </div>
+          </section>
 
-                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                  <input
-                    type="text"
-                    value={prefs.githubRepo}
-                    onChange={(e) => setPrefs((p) => ({ ...p, githubRepo: e.target.value }))}
-                    placeholder="owner/repository"
-                    aria-label="Kho GitHub"
-                    className="h-10 flex-1 rounded-xl border px-3 font-mono text-xs outline-none"
-                    style={{
-                      backgroundColor: 'var(--bg-panel)',
-                      borderColor: 'var(--border-subtle)',
-                      color: 'var(--ink-primary)',
-                    }}
-                  />
-                  <LiquidTabs
-                    tabs={[
-                      { id: 'read-only', label: 'Chỉ đọc' },
-                      { id: 'pr-push', label: 'PR & Push' },
-                    ]}
-                    activeId={prefs.githubScope}
-                    onChange={(id) =>
-                      setPrefs((p) => ({ ...p, githubScope: id as 'read-only' | 'pr-push' }))
-                    }
-                  />
-                </div>
-              </div>
+          <section className="st-group" aria-labelledby={idFor('export')}>
+            <h2 className="st-group-name" id={idFor('export')}>
+              Xuất mã
+            </h2>
+            <div className="st-rows">
+              <Row label="Bộ thiết lập" hint="Tệp hướng dẫn kèm theo ZIP dành cho trình soạn thảo này." labelId={idFor('target')}>
+                <Segment
+                  value={settings.defaultExportTarget}
+                  options={TARGET_OPTIONS}
+                  onChange={(next) => updateSettings({ defaultExportTarget: next })}
+                  labelId={idFor('target')}
+                />
+              </Row>
+            </div>
+          </section>
 
-              <div
-                className="flex flex-wrap items-center justify-between gap-3 border-t pt-6"
-                style={{ borderColor: 'var(--border-subtle)' }}
-              >
-                <button
-                  type="button"
-                  onClick={handleExportWorkspaceJson}
-                  className="rounded-full border px-5 py-2 text-xs font-semibold cursor-pointer"
-                  style={{
-                    backgroundColor: 'var(--bg-panel)',
-                    borderColor: 'var(--border-strong)',
-                    color: 'var(--ink-primary)',
-                  }}
-                >
-                  Sao lưu
+          <section className="st-group" aria-labelledby={idFor('data')}>
+            <h2 className="st-group-name" id={idFor('data')}>
+              Dữ liệu
+            </h2>
+            <div className="st-rows">
+              <Row label="Sao lưu" hint="Tải dự án và mục đã lưu thành một tệp, không kèm khóa API." labelId={idFor('backup')}>
+                <button type="button" className="btn btn-line" onClick={handleExport}>
+                  Tải về
                 </button>
-
-                {!confirmReset ? (
-                  <button
-                    type="button"
-                    onClick={() => setConfirmReset(true)}
-                    className="rounded-full border px-5 py-2 text-xs font-semibold cursor-pointer"
-                    style={{
-                      borderColor: 'var(--accent-copper)',
-                      color: 'var(--accent-copper)',
-                      backgroundColor: 'transparent',
-                    }}
-                  >
-                    Đặt lại
-                  </button>
-                ) : (
-                  <div className="flex items-center gap-2">
-                    <button
-                      type="button"
-                      onClick={() => setConfirmReset(false)}
-                      className="rounded-full border px-4 py-2 text-xs font-medium cursor-pointer"
-                      style={{
-                        borderColor: 'var(--border-subtle)',
-                        color: 'var(--ink-secondary)',
-                      }}
-                    >
-                      Hủy
-                    </button>
-                    <button
-                      type="button"
-                      onClick={handleResetLocalData}
-                      className="rounded-full px-4 py-2 text-xs font-semibold cursor-pointer"
-                      style={{
-                        backgroundColor: 'var(--accent-danger)',
-                        color: 'var(--ink-inverse)',
-                      }}
-                    >
-                      Xác nhận
-                    </button>
-                  </div>
+              </Row>
+              <Row label="Khôi phục" hint="Nạp tệp sao lưu để thay dữ liệu hiện tại." labelId={idFor('restore')}>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="application/json,.json"
+                  className="sr-only"
+                  tabIndex={-1}
+                  aria-hidden="true"
+                  onChange={(event) => void handleFileChosen(event)}
+                />
+                <button type="button" className="btn btn-line" onClick={() => fileInputRef.current?.click()}>
+                  Chọn tệp
+                </button>
+                {importError && (
+                  <p className="st-note st-error" role="alert">
+                    {importError}
+                  </p>
                 )}
-              </div>
-            </section>
-          )}
-        </main>
+              </Row>
+              <Row label="Đặt lại" hint="Xóa dự án, mục đã lưu và cài đặt khỏi trình duyệt này." labelId={idFor('reset')}>
+                <button type="button" className="btn btn-line st-danger" onClick={() => setConfirmReset(true)}>
+                  Đặt lại
+                </button>
+              </Row>
+            </div>
+          </section>
+        </div>
       </div>
+
+      <Modal
+        open={pendingBackup !== null}
+        onClose={() => setPendingBackup(null)}
+        label="Khôi phục dữ liệu"
+        className="st-dialog"
+      >
+        <div className="st-dialog-body">
+          <h2>Khôi phục từ tệp?</h2>
+          <p>
+            <span className="st-value">{pendingBackup?.projects.length}</span> dự án trong tệp sẽ thay toàn bộ dự
+            án hiện tại. Trang sẽ nạp lại.
+          </p>
+          <div className="st-dialog-actions">
+            <button type="button" className="btn btn-line" onClick={() => setPendingBackup(null)}>
+              Hủy
+            </button>
+            <button type="button" className="btn btn-solid" onClick={handleConfirmImport}>
+              Khôi phục
+            </button>
+          </div>
+        </div>
+      </Modal>
+
+      <Modal
+        open={confirmReset}
+        onClose={() => setConfirmReset(false)}
+        label="Đặt lại dữ liệu"
+        className="st-dialog"
+      >
+        <div className="st-dialog-body">
+          <h2>Đặt lại dữ liệu?</h2>
+          <p>Dự án, mục đã lưu và cài đặt trong trình duyệt này sẽ mất hẳn. Hãy sao lưu trước nếu cần.</p>
+          <div className="st-dialog-actions">
+            <button type="button" className="btn btn-line" onClick={() => setConfirmReset(false)}>
+              Hủy
+            </button>
+            <button type="button" className="btn btn-red" onClick={handleResetLocalData}>
+              Đặt lại
+            </button>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 };

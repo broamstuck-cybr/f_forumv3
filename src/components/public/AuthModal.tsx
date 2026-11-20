@@ -84,8 +84,8 @@ export const AuthModal: React.FC<AuthModalProps> = ({ open, onClose }) => {
           aria-label="Xác thực tài khoản F-FORUM"
           className="fixed inset-0 z-[80] flex items-center justify-center p-4"
           style={{
-            backgroundColor: 'rgba(6, 8, 13, 0.72)',
-            backdropFilter: 'blur(12px)',
+            backgroundColor: 'var(--bg-veil)',
+            backdropFilter: 'blur(10px)',
           }}
         >
           <motion.div
@@ -95,11 +95,11 @@ export const AuthModal: React.FC<AuthModalProps> = ({ open, onClose }) => {
             exit={{ opacity: 0, scale: 0.97, y: 8 }}
             transition={{ duration: 0.28, ease: [0.16, 1, 0.3, 1] }}
             onClick={(event) => event.stopPropagation()}
-            className="relative w-full max-w-[440px] overflow-hidden rounded-[24px] border"
+            className="relative w-full max-w-[440px] overflow-hidden rounded-[8px] border"
             style={{
-              backgroundColor: 'var(--bg-surface)',
-              borderColor: 'var(--border-strong)',
-              boxShadow: '0 28px 64px -24px rgba(0, 0, 0, 0.65)',
+              backgroundColor: 'var(--bg-raised)',
+              borderColor: 'var(--line-strong)',
+              boxShadow: 'var(--shadow-3)',
             }}
           >
             <button

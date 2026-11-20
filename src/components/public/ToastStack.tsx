@@ -17,12 +17,12 @@ const ToastRow: React.FC<{ toast: ToastItem; onDismiss: (id: string) => void }> 
 
   const accentVar =
     toast.type === 'success'
-      ? 'var(--accent-jade)'
+      ? 'var(--green)'
       : toast.type === 'warning'
-        ? 'var(--accent-primary)'
+        ? 'var(--amber)'
         : toast.type === 'error'
-          ? 'var(--accent-copper)'
-          : 'var(--accent-verdigris)';
+          ? 'var(--red)'
+          : 'var(--fg)';
 
   const IconComponent =
     toast.type === 'success'
@@ -42,12 +42,11 @@ const ToastRow: React.FC<{ toast: ToastItem; onDismiss: (id: string) => void }> 
       transition={{ duration: 0.24, ease: [0.2, 0.8, 0.2, 1] }}
       role="status"
       aria-live="polite"
-      className="pointer-events-auto relative flex w-full max-w-[360px] items-start gap-3 overflow-hidden rounded-[16px] border px-4 py-3.5"
+      className="pointer-events-auto relative flex w-full max-w-[360px] items-start gap-3 overflow-hidden rounded-[6px] border px-4 py-3.5"
       style={{
-        backgroundColor: 'color-mix(in srgb, var(--bg-surface) 88%, transparent)',
-        borderColor: 'var(--border-strong)',
-        backdropFilter: 'blur(14px)',
-        boxShadow: '0 20px 44px -20px rgba(0, 0, 0, 0.6)',
+        backgroundColor: 'var(--bg-high)',
+        borderColor: 'var(--line-strong)',
+        boxShadow: 'var(--shadow-2)',
       }}
     >
       <span
