@@ -4,13 +4,10 @@ import type { SourceCatalogItem } from '../../types/index';
 import { previewFor } from '../../ui/Media';
 import { useAppStore } from '../../store/appStore';
 import { PinUIPlayground } from '../../components/pinui';
-import { buildThreeUIInteractiveHtml } from '../../data/threeuiInteractiveDemos';
 import {
   LIBRARY_LABEL,
-  buildMotionThemeOverrideCss,
   buildSnippetThemeOverrideCss,
   copyText,
-  extractInlineStyles,
   fetchMotionSitesFullMap,
   fetchPinUISourceMap,
   getCachedMotionSitesFullMap,
@@ -185,29 +182,19 @@ export const SpecimenSheet: React.FC<SpecimenSheetProps> = ({
     [item, isMotion, motionMap]
   );
 
-  const threeHtml = useMemo(
-    () =>
-      item && isThreeUI
-        ? buildThreeUIInteractiveHtml(item.id, safeTitle, item.category, stageTheme)
-        : '',
-    [item, isThreeUI, safeTitle, stageTheme]
-  );
-
   const safeHtml = useMemo(() => {
     if (!item) return '';
     if (isPinUI) return pinuiSource?.tsx ?? '';
-    if (isThreeUI) return threeHtml;
-    if (isMotion) return motionEntry?.liveHtml ?? sanitizeSnippetCode(item.previewHtml);
+    if (isThreeUI || isMotion) return '';
     return sanitizeSnippetCode(item.previewHtml);
-  }, [item, isPinUI, isThreeUI, isMotion, pinuiSource, threeHtml, motionEntry]);
+  }, [item, isPinUI, isThreeUI, isMotion, pinuiSource]);
 
   const safeCss = useMemo(() => {
     if (!item) return '';
     if (isPinUI) return pinuiSource?.css ?? '';
-    if (isThreeUI) return extractInlineStyles(threeHtml);
-    if (isMotion) return extractInlineStyles(motionEntry?.liveHtml) || sanitizeSnippetCode(item.previewCss);
+    if (isThreeUI || isMotion) return '';
     return sanitizeSnippetCode(item.previewCss);
-  }, [item, isPinUI, isThreeUI, isMotion, pinuiSource, threeHtml, motionEntry]);
+  }, [item, isPinUI, isThreeUI, isMotion, pinuiSource]);
 
   const safeSpec = useMemo(() => {
     if (!item) return '';
@@ -218,12 +205,6 @@ export const SpecimenSheet: React.FC<SpecimenSheetProps> = ({
       `${safeTitle}\nNhóm: ${LIBRARY_LABEL[item.sourceLibrary]}\nRuntime: ${item.runtime}\nPhong cách: ${item.style}\n\n${safeDesc}`
     );
   }, [item, isPinUI, isMotion, pinuiSource, motionEntry, safeTitle, safeDesc]);
-
-  const motionThemeOverride = useMemo(
-    () =>
-      motionEntry?.liveHtml ? buildMotionThemeOverrideCss(motionEntry.liveHtml, stageTheme) : '',
-    [motionEntry, stageTheme]
-  );
 
   const snippetCssWithTheme = useMemo(() => {
     if (!item || isPinUI || isThreeUI || isMotion) return '';
@@ -320,25 +301,7 @@ export const SpecimenSheet: React.FC<SpecimenSheetProps> = ({
                   theme={stageTheme}
                   compact
                 />
-              ) : isThreeUI ? (
-                <SandboxPreview
-                  title={safeTitle}
-                  html={threeHtml}
-                  css=""
-                  theme={stageTheme}
-                  viewport={viewport}
-                  nonce={nonce}
-                />
-              ) : isMotion && motionEntry?.liveHtml ? (
-                <SandboxPreview
-                  title={safeTitle}
-                  html={motionEntry.liveHtml}
-                  css={motionThemeOverride}
-                  theme={stageTheme}
-                  viewport={viewport}
-                  nonce={nonce}
-                />
-              ) : item.previewHtml ? (
+              ) : !isThreeUI && !isMotion && item.previewHtml ? (
                 <SandboxPreview
                   title={safeTitle}
                   html={item.previewHtml}
@@ -355,6 +318,13 @@ export const SpecimenSheet: React.FC<SpecimenSheetProps> = ({
                   fallbackLabel={LIBRARY_LABEL[item.sourceLibrary]}
                   fit="contain"
                   activePlay
+                />
+              ) : item.previewImage ? (
+                <img
+                  src={item.previewImage}
+                  alt={safeTitle}
+                  referrerPolicy="no-referrer"
+                  style={{ width: '100%', height: '100%', objectFit: 'contain', display: 'block' }}
                 />
               ) : (
                 <div className="ex-spec-type">

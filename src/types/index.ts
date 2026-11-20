@@ -76,6 +76,7 @@ export interface SourceCatalogItem {
   description: string;
   previewHtml?: string;
   previewCss?: string;
+  previewImage?: string;
   promptSpec?: string;
 }
 

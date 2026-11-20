@@ -2,17 +2,14 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import type { SourceCatalogItem, SourceLibraryName } from '../../types/index';
 import { useAppStore } from '../../store/appStore';
 import { PinUIPlayground } from '../../components/pinui';
-import { buildThreeUIInteractiveHtml } from '../../data/threeuiInteractiveDemos';
 import { previewFor } from '../../ui/Media';
 import { Reveal } from '../../ui/Reveal';
 import {
   LIBRARY_LABEL,
   LIBRARY_ORDER,
   archiveCount,
-  buildMotionThemeOverrideCss,
   buildSnippetThemeOverrideCss,
   copyText,
-  extractInlineStyles,
   fetchMotionSitesFullMap,
   fetchPinUISourceMap,
   formatCount,
@@ -209,29 +206,19 @@ export const PlateTable: React.FC<PlateTableProps> = ({
     [activeItem, isMotion, motionMap]
   );
 
-  const threeHtml = useMemo(
-    () =>
-      activeItem && isThreeUI
-        ? buildThreeUIInteractiveHtml(activeItem.id, activeTitle, activeItem.category, stageTheme)
-        : '',
-    [activeItem, isThreeUI, activeTitle, stageTheme]
-  );
-
   const activeHtml = useMemo(() => {
     if (!activeItem) return '';
     if (isPinUI) return pinuiSource?.tsx ?? '';
-    if (isThreeUI) return threeHtml;
-    if (isMotion) return motionEntry?.liveHtml ?? sanitizeSnippetCode(activeItem.previewHtml);
+    if (isThreeUI || isMotion) return '';
     return sanitizeSnippetCode(activeItem.previewHtml);
-  }, [activeItem, isPinUI, isThreeUI, isMotion, pinuiSource, threeHtml, motionEntry]);
+  }, [activeItem, isPinUI, isThreeUI, isMotion, pinuiSource]);
 
   const activeCss = useMemo(() => {
     if (!activeItem) return '';
     if (isPinUI) return pinuiSource?.css ?? '';
-    if (isThreeUI) return extractInlineStyles(threeHtml);
-    if (isMotion) return extractInlineStyles(motionEntry?.liveHtml) || sanitizeSnippetCode(activeItem.previewCss);
+    if (isThreeUI || isMotion) return '';
     return sanitizeSnippetCode(activeItem.previewCss);
-  }, [activeItem, isPinUI, isThreeUI, isMotion, pinuiSource, threeHtml, motionEntry]);
+  }, [activeItem, isPinUI, isThreeUI, isMotion, pinuiSource]);
 
   const activePrompt = useMemo(() => {
     if (!activeItem) return '';
@@ -242,12 +229,6 @@ export const PlateTable: React.FC<PlateTableProps> = ({
       `${activeTitle}\nNhóm: ${LIBRARY_LABEL[activeItem.sourceLibrary]}\nRuntime: ${activeItem.runtime}\nPhong cách: ${activeItem.style}\n\n${activeDesc}`
     );
   }, [activeItem, isPinUI, isMotion, pinuiSource, motionEntry, activeTitle, activeDesc]);
-
-  const motionThemeOverride = useMemo(
-    () =>
-      motionEntry?.liveHtml ? buildMotionThemeOverrideCss(motionEntry.liveHtml, stageTheme) : '',
-    [motionEntry, stageTheme]
-  );
 
   const snippetCssWithTheme = useMemo(() => {
     if (!activeItem || isPinUI || isThreeUI || isMotion) return '';
@@ -409,25 +390,7 @@ export const PlateTable: React.FC<PlateTableProps> = ({
                     theme={stageTheme}
                     compact
                   />
-                ) : isThreeUI ? (
-                  <SandboxPreview
-                    title={activeTitle}
-                    html={threeHtml}
-                    css=""
-                    theme={stageTheme}
-                    viewport={viewport}
-                    nonce={nonce}
-                  />
-                ) : isMotion && motionEntry?.liveHtml ? (
-                  <SandboxPreview
-                    title={activeTitle}
-                    html={motionEntry.liveHtml}
-                    css={motionThemeOverride}
-                    theme={stageTheme}
-                    viewport={viewport}
-                    nonce={nonce}
-                  />
-                ) : activeItem.previewHtml ? (
+                ) : !isThreeUI && !isMotion && activeItem.previewHtml ? (
                   <SandboxPreview
                     title={activeTitle}
                     html={activeItem.previewHtml}
@@ -444,6 +407,13 @@ export const PlateTable: React.FC<PlateTableProps> = ({
                     fallbackLabel={LIBRARY_LABEL[activeItem.sourceLibrary]}
                     fit="contain"
                     activePlay
+                  />
+                ) : activeItem.previewImage ? (
+                  <img
+                    src={activeItem.previewImage}
+                    alt={activeTitle}
+                    referrerPolicy="no-referrer"
+                    style={{ width: '100%', height: '100%', objectFit: 'contain', display: 'block' }}
                   />
                 ) : (
                   <div className="ex-spec-type">

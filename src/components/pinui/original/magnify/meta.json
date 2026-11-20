@@ -1,0 +1,12 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "magnify",
+  "type": "registry:component",
+  "title": "Magnify",
+  "description": "A type specimen you inspect with a real magnifying glass.",
+  "dependencies": [
+    "motion"
+  ],
+  "docs": "Magnify — A type specimen you inspect with a real magnifying glass.\n\nThe stylesheet sits next to the component and is imported by it, so keep the two together in components/pinui/.\n\nIt is drawn in Inter (700) for the letter, with Helvetica Neue for the micro-type (Arial where it is missing). If your project does not already load that face it will fall back to your system sans and look noticeably different.\n\nIt comes in two themes: pass theme=\"dark\" for the dark one, or wire the prop to your own theme switch.",
+  "$registry_url": "https://www.pinui.xyz/r/magnify.json"
+}

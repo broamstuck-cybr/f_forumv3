@@ -1,0 +1,12 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "liquid-tabs",
+  "type": "registry:component",
+  "title": "Liquid Tabs",
+  "description": "A notifications card whose active tab is liquid, flowing from tab to tab.",
+  "dependencies": [
+    "motion"
+  ],
+  "docs": "Liquid Tabs — A notifications card whose active tab is liquid, flowing from tab to tab.\n\nThe stylesheet sits next to the component and is imported by it, so keep the two together in components/pinui/.\n\nIt is drawn in Inter (500 and 600). If your project does not already load that face it will fall back to your system sans and look noticeably different.\n\nIt comes in two themes: pass theme=\"dark\" for the dark one, or wire the prop to your own theme switch.",
+  "$registry_url": "https://www.pinui.xyz/r/liquid-tabs.json"
+}

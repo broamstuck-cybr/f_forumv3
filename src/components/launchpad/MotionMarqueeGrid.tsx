@@ -1,12 +1,10 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
 import {
   MOTION_MARQUEE_ITEMS,
   type MotionMarqueeItem,
   type MotionMarqueeRow,
 } from '../../data/motionShowcaseCatalog';
-import { SandboxPreview } from '../../features/explore/SandboxPreview';
-import type { PreviewViewport } from '../../features/explore/catalog';
 import { useAppStore } from '../../store/appStore';
 
 export interface MotionMarqueeGridProps {
@@ -20,7 +18,8 @@ interface MotionSiteFullRecord {
   title: string;
   category: string;
   promptText: string;
-  liveHtml: string;
+  sourceUrl?: string;
+  previewImage?: string;
   tags: string[];
 }
 
@@ -50,66 +49,18 @@ function loadMotionSitesFull(): Promise<Record<string, MotionSiteFullRecord>> {
   return motionSitesPromise;
 }
 
-function prepareLiveDocument(
-  liveHtml: string | undefined,
-  posterUrl: string,
-  isThumb: boolean
-): { html: string; css: string } {
-  const safePoster = posterUrl.replace(/"/g, '&quot;');
-  if (!liveHtml) {
-    return {
-      html: `<div class="mmq-fallback-stage" style="width:100%;height:100vh;background-image:url('${safePoster}');background-size:cover;background-position:center;"></div>`,
-      css: 'html,body{display:block!important;padding:0!important;margin:0!important;width:100%!important;height:100vh!important;overflow:hidden!important;}',
-    };
-  }
-  const styleMatch = liveHtml.match(/<style[^>]*>([\s\S]*?)<\/style>/i);
-  const bodyMatch = liveHtml.match(/<body[^>]*>([\s\S]*?)<\/body>/i);
-  const rawBody = (bodyMatch ? bodyMatch[1] : liveHtml)
-    .replace(/poster=""/g, `poster="${safePoster}"`)
-    .replace(/'Be Vietnam Pro',\s*/g, '');
-  const rawStyle = (styleMatch ? styleMatch[1] : '').replace(/'Be Vietnam Pro',\s*/g, '');
-  const overflowRule = isThumb ? 'overflow:hidden!important;' : 'overflow-x:hidden!important;';
-  const resetCss = `html,body{display:block!important;place-items:unset!important;padding:0!important;margin:0!important;width:100%!important;min-height:100vh!important;${overflowRule}}.bg-media{background-image:url("${safePoster}");background-size:cover;background-position:center;}`;
-  return {
-    html: rawBody,
-    css: `${rawStyle}\n${resetCss}`,
-  };
-}
-
 const MarqueeThumb: React.FC<{
   item: MotionMarqueeItem;
-  liveHtml?: string;
-  enableLive?: boolean;
   className?: string;
-}> = ({ item, liveHtml, enableLive = true, className = '' }) => {
-  const hostRef = useRef<HTMLDivElement | null>(null);
+}> = ({ item, className = '' }) => {
   const [useFallback, setUseFallback] = useState(false);
   const [plateOnly, setPlateOnly] = useState(false);
   const [loaded, setLoaded] = useState(false);
-  const [inView, setInView] = useState(false);
-
-  useEffect(() => {
-    if (!enableLive || !hostRef.current || typeof IntersectionObserver === 'undefined') return;
-    const el = hostRef.current;
-    const io = new IntersectionObserver(
-      (entries) => {
-        const entry = entries[0];
-        if (entry) setInView(entry.isIntersecting);
-      },
-      { rootMargin: '60px', threshold: 0.05 }
-    );
-    io.observe(el);
-    return () => io.disconnect();
-  }, [enableLive]);
 
   const src = useFallback ? item.fallbackUrl : item.imageUrl;
-  const prepared = useMemo(
-    () => (inView && liveHtml ? prepareLiveDocument(liveHtml, src, true) : null),
-    [inView, liveHtml, src]
-  );
 
   return (
-    <div ref={hostRef} className={`mmq-thumb-host ${className}`.trim()}>
+    <div className={`mmq-thumb-host ${className}`.trim()}>
       {(!loaded || plateOnly) && (
         <div className="mmq-thumb-plate" role={plateOnly ? 'img' : undefined} aria-label={plateOnly ? item.title : undefined} aria-hidden={plateOnly ? undefined : 'true'}>
           <span className="t-label">{item.category}</span>
@@ -136,19 +87,6 @@ const MarqueeThumb: React.FC<{
           }}
         />
       )}
-      {prepared && (
-        <div className="mmq-mini-live" aria-hidden="true">
-          <SandboxPreview
-            title={item.title}
-            html={prepared.html}
-            css={prepared.css}
-            theme="dark"
-            viewport={1440}
-            nonce={0}
-            className="mmq-thumb-sandbox"
-          />
-        </div>
-      )}
     </div>
   );
 };
@@ -170,8 +108,6 @@ export const MotionMarqueeGrid: React.FC<MotionMarqueeGridProps> = ({
   );
   const [activeItem, setActiveItem] = useState<MotionMarqueeItem | null>(null);
   const [activeTab, setActiveTab] = useState<ModalTab>('live');
-  const [viewport, setViewport] = useState<PreviewViewport>(1440);
-  const [previewNonce, setPreviewNonce] = useState(0);
   const [copiedId, setCopiedId] = useState<string | null>(null);
 
   useEffect(() => {
@@ -214,8 +150,6 @@ export const MotionMarqueeGrid: React.FC<MotionMarqueeGridProps> = ({
   const handleOpenItem = (item: MotionMarqueeItem) => {
     setActiveItem(item);
     setActiveTab('live');
-    setViewport(1440);
-    setPreviewNonce(0);
   };
 
   const handleCopyPrompt = async (item: MotionMarqueeItem) => {
@@ -241,7 +175,6 @@ export const MotionMarqueeGrid: React.FC<MotionMarqueeGridProps> = ({
   const renderCard = (item: MotionMarqueeItem, isClone: boolean) => {
     const liked = isItemLiked(item.id);
     const hearts = getHeartCount(item.id);
-    const fullRecord = fullMap[item.id];
 
     return (
       <article
@@ -251,13 +184,9 @@ export const MotionMarqueeGrid: React.FC<MotionMarqueeGridProps> = ({
         onClick={() => handleOpenItem(item)}
       >
         <div className="mmq-card-media">
-          <MarqueeThumb
-            item={item}
-            liveHtml={fullRecord?.liveHtml}
-            enableLive={!isClone}
-          />
+          <MarqueeThumb item={item} />
           <div className="mmq-card-veil" aria-hidden="true">
-            <span className="mmq-card-inspect">Xem trực tiếp &amp; Prompt gốc</span>
+            <span className="mmq-card-inspect">Xem ảnh gốc &amp; Prompt gốc</span>
           </div>
           <span className="mmq-card-badge">{item.category}</span>
         </div>
@@ -298,10 +227,7 @@ export const MotionMarqueeGrid: React.FC<MotionMarqueeGridProps> = ({
   const activeFull = activeItem ? fullMap[activeItem.id] : undefined;
   const activeVerbatimPrompt = activeItem ? getVerbatimPrompt(activeItem) : '';
   const activeTags = activeItem ? activeFull?.tags ?? activeItem.tags : [];
-  const modalDoc = useMemo(() => {
-    if (!activeItem) return null;
-    return prepareLiveDocument(activeFull?.liveHtml, activeItem.imageUrl, false);
-  }, [activeItem, activeFull?.liveHtml]);
+  const activeSourceUrl = activeFull?.sourceUrl || '';
 
   const modalLiked = activeItem ? isItemLiked(activeItem.id) : false;
   const modalHearts = activeItem ? getHeartCount(activeItem.id) : 0;
@@ -358,7 +284,6 @@ export const MotionMarqueeGrid: React.FC<MotionMarqueeGridProps> = ({
       )}
 
       {activeItem &&
-        modalDoc &&
         typeof document !== 'undefined' &&
         createPortal(
           <div
@@ -464,39 +389,16 @@ export const MotionMarqueeGrid: React.FC<MotionMarqueeGridProps> = ({
                   </button>
                 </div>
 
-                {activeTab === 'live' && (
-                  <div className="mmq-vp-controls" role="group" aria-label="Khung nhìn">
-                    <button
-                      type="button"
-                      className="mmq-vp-btn"
-                      aria-pressed={viewport === 1440}
-                      onClick={() => setViewport(1440)}
+                {activeTab === 'live' && activeSourceUrl && (
+                  <div className="mmq-vp-controls">
+                    <a
+                      href={activeSourceUrl}
+                      target="_blank"
+                      rel="noreferrer noopener"
+                      className="btn btn-line btn-sm"
                     >
-                      Desktop · 1440px
-                    </button>
-                    <button
-                      type="button"
-                      className="mmq-vp-btn"
-                      aria-pressed={viewport === 768}
-                      onClick={() => setViewport(768)}
-                    >
-                      Tablet · 768px
-                    </button>
-                    <button
-                      type="button"
-                      className="mmq-vp-btn"
-                      aria-pressed={viewport === 390}
-                      onClick={() => setViewport(390)}
-                    >
-                      Mobile · 390px
-                    </button>
-                    <button
-                      type="button"
-                      className="mmq-vp-btn"
-                      onClick={() => setPreviewNonce((n) => n + 1)}
-                    >
-                      Tải lại
-                    </button>
+                      Mở trang gốc
+                    </a>
                   </div>
                 )}
               </div>
@@ -504,14 +406,11 @@ export const MotionMarqueeGrid: React.FC<MotionMarqueeGridProps> = ({
               <div className="mmq-modal-body ff-scrollbar">
                 {activeTab === 'live' && (
                   <div className="mmq-live-pane">
-                    <SandboxPreview
-                      title={activeItem.title}
-                      html={modalDoc.html}
-                      css={modalDoc.css}
-                      theme="dark"
-                      viewport={viewport}
-                      nonce={previewNonce}
-                      className="mmq-modal-sandbox"
+                    <img
+                      src={activeFull?.previewImage || activeItem.imageUrl}
+                      alt={`${activeItem.title} · ${activeItem.category}`}
+                      referrerPolicy="no-referrer"
+                      style={{ width: '100%', height: 'auto', display: 'block', borderRadius: 12 }}
                     />
                   </div>
                 )}

@@ -1,0 +1,12 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "lamp-switch",
+  "type": "registry:component",
+  "title": "Lamp Switch",
+  "description": "A hanging ceramic lamp that swings on a cord and toggles with a liquid switch.",
+  "dependencies": [
+    "motion"
+  ],
+  "docs": "Lamp Switch — A hanging ceramic lamp that swings on a cord and toggles with a liquid switch.\n\nThe stylesheet sits next to the component and is imported by it, so keep the two together in components/pinui/.\n\nIt is drawn in Inter (300). If your project does not already load that face it will fall back to your system sans and look noticeably different.\n\nIt comes in two themes: pass theme=\"dark\" for the dark one, or wire the prop to your own theme switch.",
+  "$registry_url": "https://www.pinui.xyz/r/lamp-switch.json"
+}

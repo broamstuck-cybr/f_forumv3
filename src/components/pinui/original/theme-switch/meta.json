@@ -1,0 +1,10 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "theme-switch",
+  "type": "registry:component",
+  "title": "Theme Switch",
+  "description": "A theme toggle that rains, drips or sets off fireworks to change the theme.",
+  "dependencies": [],
+  "docs": "Theme Switch — A theme toggle that rains, drips or sets off fireworks to change the theme.\n\nThe stylesheet sits next to the component and is imported by it, so keep the two together in components/pinui/.\n\nIt is set in the system's own UI face, so there is no font to load.\n\nIt comes in two themes: pass theme=\"dark\" for the dark one, or wire the prop to your own theme switch.\n\ntheme-switch-engine.ts is every effect and must sit beside the component. The component switches its own scene; pass onThemeChange to switch your app's theme when the effect lands, and theme to keep the scene in step with your own switch (a change from outside lands at once). Every effect stays inside the component's box, so give it the room you want the rain and the fireworks to fill, or pass fill. Mark any extra control with data-pts-target and it takes the new theme as the flood reaches it. Diwali's sounds are synthesised with Web Audio and only play after a press; pass sound={false} to silence them. With reduced motion it switches at once.",
+  "$registry_url": "https://www.pinui.xyz/r/theme-switch.json"
+}

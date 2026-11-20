@@ -2,13 +2,12 @@ import React, { useEffect, useMemo, useState } from 'react';
 import type { SourceCatalogItem } from '../../types/index';
 import { useAppStore } from '../../store/appStore';
 import { PinUIPlayground } from '../../components/pinui';
-import { buildThreeUIInteractiveHtml } from '../../data/threeuiInteractiveDemos';
+import { previewFor } from '../../ui/Media';
+import { SpecimenMedia } from './SpecimenMedia';
 import {
   LIBRARY_LABEL,
-  buildMotionThemeOverrideCss,
   buildSnippetThemeOverrideCss,
   copyText,
-  extractInlineStyles,
   fetchMotionSitesFullMap,
   fetchPinUISourceMap,
   getCachedMotionSitesFullMap,
@@ -165,31 +164,23 @@ export const ExperienceView: React.FC = () => {
     [activeItem, isMotion, motionMap]
   );
 
-  const threeInteractiveHtml = useMemo(
-    () =>
-      activeItem && isThreeUI
-        ? buildThreeUIInteractiveHtml(activeItem.id, activeTitle, activeItem.category, stageTheme)
-        : '',
-    [activeItem, isThreeUI, activeTitle, stageTheme]
-  );
+  const activePreview = activeItem ? previewFor(activeItem.id) : null;
+  const activeOriginalImage = activeItem?.previewImage || (motionEntry as { previewImage?: string } | null)?.previewImage || '';
+  const activeOriginalUrl = activeItem?.officialUrl || (motionEntry as { sourceUrl?: string } | null)?.sourceUrl || '';
 
   const activeHtml = useMemo(() => {
     if (!activeItem) return '';
     if (isPinUI) return pinuiSource?.tsx ?? '';
-    if (isThreeUI) return threeInteractiveHtml;
-    if (isMotion) return motionEntry?.liveHtml ?? sanitizeSnippetCode(activeItem.previewHtml);
+    if (isThreeUI || isMotion) return '';
     return sanitizeSnippetCode(activeItem.previewHtml);
-  }, [activeItem, isPinUI, isThreeUI, isMotion, pinuiSource, threeInteractiveHtml, motionEntry]);
+  }, [activeItem, isPinUI, isThreeUI, isMotion, pinuiSource]);
 
   const activeCss = useMemo(() => {
     if (!activeItem) return '';
     if (isPinUI) return pinuiSource?.css ?? '';
-    if (isThreeUI) return extractInlineStyles(threeInteractiveHtml);
-    if (isMotion) {
-      return extractInlineStyles(motionEntry?.liveHtml) || sanitizeSnippetCode(activeItem.previewCss);
-    }
+    if (isThreeUI || isMotion) return '';
     return sanitizeSnippetCode(activeItem.previewCss);
-  }, [activeItem, isPinUI, isThreeUI, isMotion, pinuiSource, threeInteractiveHtml, motionEntry]);
+  }, [activeItem, isPinUI, isThreeUI, isMotion, pinuiSource]);
 
   const activePrompt = useMemo(() => {
     if (!activeItem) return '';
@@ -200,12 +191,6 @@ export const ExperienceView: React.FC = () => {
       `${activeTitle}\nNhóm: ${LIBRARY_LABEL[activeItem.sourceLibrary]}\nRuntime: ${activeItem.runtime}\nPhong cách: ${activeItem.style}\nTừ khóa: ${activeItem.tags.join(', ')}\n\n${activeDesc}`
     );
   }, [activeItem, isPinUI, isMotion, pinuiSource, motionEntry, activeTitle, activeDesc]);
-
-  const motionThemeOverride = useMemo(
-    () =>
-      motionEntry?.liveHtml ? buildMotionThemeOverrideCss(motionEntry.liveHtml, stageTheme) : '',
-    [motionEntry, stageTheme]
-  );
 
   const snippetCssWithTheme = useMemo(() => {
     if (!activeItem || isPinUI || isThreeUI || isMotion) return '';
@@ -525,32 +510,42 @@ export const ExperienceView: React.FC = () => {
                       itemId={activeItem.id}
                       theme={stageTheme}
                     />
-                  ) : isThreeUI ? (
-                    <SandboxPreview
-                      title={activeTitle}
-                      html={threeInteractiveHtml}
-                      css=""
-                      theme={stageTheme}
-                      viewport={viewport}
-                      nonce={nonce}
-                    />
-                  ) : isMotion ? (
-                    motionEntry?.liveHtml ? (
-                      <SandboxPreview
+                  ) : isThreeUI || isMotion ? (
+                    activePreview ? (
+                      <SpecimenMedia
+                        key={activeItem.id}
+                        preview={activePreview}
                         title={activeTitle}
-                        html={motionEntry.liveHtml}
-                        css={motionThemeOverride}
-                        theme={stageTheme}
-                        viewport={viewport}
-                        nonce={nonce}
+                        fallbackLabel={LIBRARY_LABEL[activeItem.sourceLibrary]}
+                        fit="contain"
+                        activePlay
                       />
+                    ) : activeOriginalImage ? (
+                      <div className="ex-xp-original-media">
+                        <img
+                          src={activeOriginalImage}
+                          alt={activeTitle}
+                          loading="eager"
+                          referrerPolicy="no-referrer"
+                          style={{ width: '100%', height: '100%', objectFit: 'contain', display: 'block' }}
+                        />
+                      </div>
                     ) : (
-                      <div className="ex-xp-loading" role="status">
+                      <div className="ex-spec-type">
+                        <span className="ex-spec-word">{activeTitle}</span>
                         <span className="t-label">
-                          {datasetsLoading
-                            ? 'Đang tải bản dựng chuyển động trực tiếp...'
-                            : 'Không tìm thấy bản dựng cho mẫu này'}
+                          {isThreeUI ? 'ThreeUI Pro MCP · Xem trực tiếp tại trang gốc' : 'MotionSites Prompt · Xem tại trang gốc'}
                         </span>
+                        {activeOriginalUrl ? (
+                          <a
+                            href={activeOriginalUrl}
+                            target="_blank"
+                            rel="noreferrer noopener"
+                            className="btn btn-line btn-sm"
+                          >
+                            Mở trang gốc
+                          </a>
+                        ) : null}
                       </div>
                     )
                   ) : (
@@ -664,6 +659,16 @@ export const ExperienceView: React.FC = () => {
 
             {activeItem ? (
               <div className="ex-xp-card-foot">
+                {activeOriginalUrl ? (
+                  <a
+                    href={activeOriginalUrl}
+                    target="_blank"
+                    rel="noreferrer noopener"
+                    className="btn btn-line"
+                  >
+                    Trang gốc
+                  </a>
+                ) : null}
                 <button type="button" className="btn btn-line" onClick={handleAttach}>
                   Đính kèm vào dự án
                 </button>

@@ -1,16 +1,4 @@
 import React, { Suspense, lazy, useState, type ComponentType, type MouseEvent, type ReactNode } from 'react';
-import {
-  ChipsDemo,
-  DropZoneDemo,
-  FileBoxDemo,
-  HaloSignInDemo,
-  LiquidTabsDemo,
-  PromptComposerDemo,
-  SearchCardDemo,
-  SelectionListDemo,
-  TaskCardDemo,
-  ThemeSwitchDemo,
-} from './PinUIDemos';
 import './pinui-stage.css';
 
 export interface PinUIPlaygroundProps {
@@ -32,13 +20,25 @@ interface DemoEntry {
   render: (ctx: DemoContext) => ReactNode;
 }
 
-const PresenceCards = lazy(() => import('./PresenceCards').then((m) => ({ default: m.PresenceCards })));
-const ReaderCard = lazy(() => import('./ReaderCard').then((m) => ({ default: m.ReaderCard })));
-const Magnify = lazy(() => import('./Magnify').then((m) => ({ default: m.Magnify })));
-const ChatRoom = lazy(() => import('./ChatRoom').then((m) => ({ default: m.ChatRoom })));
-const LampSwitch = lazy(() => import('./LampSwitch').then((m) => ({ default: m.LampSwitch })));
+const PresenceCards = lazy(() => import('./original/presence-cards/PresenceCards'));
+const ReaderCard = lazy(() => import('./original/reader-card/ReaderCard'));
+const Magnify = lazy(() => import('./original/magnify/Magnify'));
+const ChatRoom = lazy(() => import('./original/chat-room/ChatRoom'));
+const LampSwitch = lazy(() => import('./original/lamp-switch/LampSwitch'));
+const ThemeSwitch = lazy(() => import('./original/theme-switch/ThemeSwitch'));
+const SearchCard = lazy(() => import('./original/search-card/SearchCard'));
+const SelectionList = lazy(() => import('./original/selection-list/SelectionList'));
+const FileBox = lazy(() => import('./original/file-box/FileBox'));
+const TaskCard = lazy(() => import('./original/task-card/TaskCard'));
+const DynamicDropZone = lazy(() => import('./original/dynamic-drop-zone/DynamicDropZone'));
+const PromptComposer = lazy(() => import('./original/prompt-composer/PromptComposer'));
+const LiquidTabs = lazy(() => import('./original/liquid-tabs/LiquidTabs'));
+const Chips = lazy(() => import('./original/chips/Chips'));
+const Weather = lazy(() => import('./original/weather/Weather'));
+
 const SynaisFooter = lazy(() => import('./SynaisFooter').then((m) => ({ default: m.SynaisFooter })));
 const SlingSlider = lazy(() => import('./SlingSlider').then((m) => ({ default: m.SlingSlider })));
+const HaloSignIn = lazy(() => import('./HaloSignIn').then((m) => ({ default: m.HaloSignIn })));
 const CopyPastePad = lazy(() => import('./CopyPastePad'));
 const ThermalDial = lazy(() => import('./ThermalDial'));
 const Joystick = lazy(() => import('./Joystick'));
@@ -46,7 +46,6 @@ const SwapCard = lazy(() => import('./SwapCard'));
 const CartCard = lazy(() => import('./CartCard'));
 const BalanceCard = lazy(() => import('./BalanceCard'));
 const CalendarCard = lazy(() => import('./CalendarCard'));
-const Weather = lazy(() => import('./Weather'));
 const Taxi = lazy(() => import('./Taxi'));
 const Recorder = lazy(() => import('./Recorder'));
 const LiquidVoice = lazy(() => import('./LiquidVoice'));
@@ -66,149 +65,138 @@ const PixelkitSignIn = lazy(() => import('./PixelkitSignIn'));
 const CaremetricFooter = lazy(() => import('./CaremetricFooter'));
 
 const noop = () => undefined;
+const noopAsync = async () => undefined;
 
-const PRESENCE_MEMBERS = [
-  { name: 'Minh Khoa', role: 'Thiết kế', status: 'Đang chỉnh sửa' },
-  { name: 'Gia Hân', role: 'Phản biện', status: 'Đang xem' },
-  { name: 'Đức Anh', role: 'Kiến trúc', status: 'Đang bình luận' },
-  { name: 'Thu Trang', role: 'Nội dung', status: 'Vừa vào' },
-];
-
-const READER_LINES = [
-  'Mỗi câu lạc bộ là một câu chuyện nhỏ về những người cùng muốn làm điều gì đó đến nơi đến chốn.',
-  'Chúng tôi ghi lại từng buổi họp, từng bản nháp và từng lần sửa để người đến sau không phải bắt đầu lại.',
-  'Khi tài liệu sống cùng cộng đồng, việc học trở thành thói quen chứ không còn là một kỳ thi.',
-];
+const HaloSignInLive: React.FC = () => {
+  const [mode, setMode] = useState<'login' | 'register'>('login');
+  return <HaloSignIn mode={mode} onModeChange={setMode} onSubmit={noopAsync} />;
+};
 
 const REGISTRY: Record<string, DemoEntry> = {
   'presence-cards': {
     kind: 'component',
-    render: () => (
-      <div style={{ width: 'min(100%, 560px)' }}>
-        <PresenceCards
-          title="Bảng thiết kế chung"
-          subtitle="Bốn người đang cùng làm việc"
-          members={PRESENCE_MEMBERS}
-          actionLabel="Mời thêm người"
-          onAction={noop}
-        />
-      </div>
-    ),
+    render: ({ theme }) => <PresenceCards theme={theme} fill />,
   },
   'theme-switch': {
     kind: 'component',
-    render: ({ theme, setTheme }) => <ThemeSwitchDemo theme={theme} onThemeChange={setTheme} />,
+    render: ({ theme, setTheme }) => (
+      <ThemeSwitch fill theme={theme} sound onThemeChange={setTheme} />
+    ),
   },
   'reader-card': {
     kind: 'component',
-    render: ({ theme }) => (
-      <ReaderCard
-        title="Nhật ký câu lạc bộ"
-        subtitle="Trang đọc mở rộng"
-        excerptLines={READER_LINES}
-        paragraphs={READER_LINES}
-        openLabel="Đọc tiếp"
-        theme={theme}
-      />
-    ),
+    render: ({ theme }) => <ReaderCard theme={theme} fill />,
   },
-  'search-card': { kind: 'component', render: () => <SearchCardDemo /> },
-  'selection-list': { kind: 'component', render: () => <SelectionListDemo /> },
+  'search-card': {
+    kind: 'component',
+    render: ({ theme }) => <SearchCard theme={theme} />,
+  },
+  'selection-list': {
+    kind: 'component',
+    render: ({ theme }) => <SelectionList theme={theme} />,
+  },
   'desk-computer': {
     kind: 'component',
-    render: ({ theme }) => (
-      <div style={{ width: 'min(100%, 760px)' }}>
-        <DeskComputer theme={theme} sound={false} />
-      </div>
-    ),
+    render: ({ theme }) => <DeskComputer theme={theme} sound fill />,
   },
   'liquid-voice': {
     kind: 'component',
-    render: ({ theme }) => (
-      <div style={{ width: 'min(100%, 720px)' }}>
-        <LiquidVoice theme={theme} />
-      </div>
-    ),
+    render: ({ theme }) => <LiquidVoice theme={theme} fill />,
   },
-  'file-box': { kind: 'component', render: () => <FileBoxDemo /> },
+  'file-box': {
+    kind: 'component',
+    render: ({ theme }) => <FileBox theme={theme} fill />,
+  },
   'copy-paste-pad': {
     kind: 'component',
     render: ({ theme, setTheme }) => (
-      <div style={{ width: 'min(100%, 760px)' }}>
-        <CopyPastePad theme={theme} onThemeChange={setTheme} />
-      </div>
+      <CopyPastePad fill theme={theme} sound onThemeChange={setTheme} />
     ),
   },
-  'task-card': { kind: 'component', render: () => <TaskCardDemo /> },
+  'task-card': {
+    kind: 'component',
+    render: ({ theme }) => <TaskCard theme={theme} />,
+  },
   magnify: {
     kind: 'component',
-    render: ({ theme, compact }) => (
-      <Magnify
-        theme={theme}
-        glyph="F"
-        microText="diễn đàn sinh viên"
-        hintText="Rê chuột để phóng to"
-        size={compact ? 240 : 320}
-      />
-    ),
+    render: ({ theme }) => <Magnify theme={theme} />,
   },
   'progress-image': {
     kind: 'component',
-    render: ({ theme }) => (
-      <div style={{ width: 'min(100%, 640px)' }}>
-        <ProgressImage theme={theme} />
-      </div>
-    ),
+    render: ({ theme }) => <ProgressImage theme={theme} />,
   },
-  'prompt-composer': { kind: 'component', render: ({ theme }) => <PromptComposerDemo theme={theme} /> },
-  'calendar-card': { kind: 'component', render: ({ theme }) => <CalendarCard theme={theme} /> },
+  'prompt-composer': {
+    kind: 'component',
+    render: ({ theme }) => <PromptComposer theme={theme} />,
+  },
+  'calendar-card': {
+    kind: 'component',
+    render: ({ theme }) => <CalendarCard theme={theme} />,
+  },
   'chat-room': {
     kind: 'component',
-    render: () => (
-      <div style={{ width: 'min(100%, 420px)' }}>
-        <ChatRoom title="Phòng học nhóm tối nay" />
-      </div>
-    ),
+    render: ({ theme }) => <ChatRoom theme={theme} sound />,
   },
-  'dynamic-drop-zone': { kind: 'component', render: () => <DropZoneDemo /> },
-  'swap-card': { kind: 'component', render: ({ theme }) => <SwapCard theme={theme} /> },
-  'liquid-tabs': { kind: 'component', render: () => <LiquidTabsDemo /> },
+  'dynamic-drop-zone': {
+    kind: 'component',
+    render: ({ theme }) => <DynamicDropZone theme={theme} />,
+  },
+  'swap-card': {
+    kind: 'component',
+    render: ({ theme }) => <SwapCard theme={theme} />,
+  },
+  'liquid-tabs': {
+    kind: 'component',
+    render: ({ theme }) => <LiquidTabs theme={theme} />,
+  },
   'thermal-dial': {
     kind: 'component',
-    render: ({ theme, compact }) => <ThermalDial theme={theme} size={compact ? 260 : 340} />,
+    render: ({ theme }) => <ThermalDial theme={theme} />,
   },
   'lamp-switch': {
     kind: 'component',
-    render: () => <LampSwitch onLabel="Đèn bàn đang sáng" offLabel="Đèn bàn đã tắt" />,
+    render: ({ theme }) => <LampSwitch theme={theme} />,
   },
   joystick: {
     kind: 'component',
-    render: ({ theme, compact }) => <Joystick theme={theme} pixel={compact ? 6 : 8} sound={false} />,
+    render: ({ theme }) => <Joystick theme={theme} sound />,
   },
   weather: {
     kind: 'component',
-    render: ({ theme }) => <Weather theme={theme} city="Hà Nội" forecastCity="Đà Nẵng" />,
+    render: ({ theme }) => <Weather theme={theme} />,
   },
   recorder: {
     kind: 'component',
-    render: ({ theme, compact }) => <Recorder theme={theme} size={compact ? 280 : 360} sound={false} />,
+    render: ({ theme }) => <Recorder theme={theme} sound />,
   },
   taxi: {
     kind: 'component',
-    render: ({ theme }) => <Taxi theme={theme} sound={false} />,
+    render: ({ theme }) => <Taxi theme={theme} sound />,
   },
-  chips: { kind: 'component', render: ({ theme }) => <ChipsDemo theme={theme} /> },
+  chips: {
+    kind: 'component',
+    render: ({ theme }) => <Chips theme={theme} sound corner={20} shadow={50} rows={2} />,
+  },
   'otp-input': {
     kind: 'component',
-    render: ({ theme }) => <OtpInput theme={theme} code="123456" hint="Mã thử nghiệm: 123456" />,
+    render: ({ theme }) => <OtpInput theme={theme} />,
   },
   'add-member': {
     kind: 'component',
     render: ({ theme }) => <AddMember theme={theme} open />,
   },
-  'session-list': { kind: 'component', render: () => <SessionList /> },
-  'balance-card': { kind: 'component', render: () => <BalanceCard sound={false} /> },
-  'cart-card': { kind: 'component', render: () => <CartCard title="Giày chạy bộ Aero" brand="Studio" price={59} sound={false} /> },
+  'session-list': {
+    kind: 'component',
+    render: () => <SessionList corner={32} />,
+  },
+  'balance-card': {
+    kind: 'component',
+    render: () => <BalanceCard sound credit={false} />,
+  },
+  'cart-card': {
+    kind: 'component',
+    render: () => <CartCard sound />,
+  },
   'storybook-hero': { kind: 'block', render: () => <StorybookHero /> },
   'partylabs-hero': { kind: 'block', render: () => <PartylabsHero /> },
   'luna-hero': { kind: 'block', render: ({ theme }) => <LunaHero theme={theme} /> },
@@ -221,19 +209,22 @@ const REGISTRY: Record<string, DemoEntry> = {
     kind: 'block',
     render: () => <SynaisFooter onNavigate={noop} onOpenNotice={noop} onSubscribe={noop} />,
   },
-  'halo-sign-in': { kind: 'component', render: () => <HaloSignInDemo /> },
+  'halo-sign-in': {
+    kind: 'block',
+    render: () => <HaloSignInLive />,
+  },
   'pixelkit-sign-in': { kind: 'block', render: () => <PixelkitSignIn onSubmit={noop} onProvider={noop} /> },
   'sling-slider': {
     kind: 'component',
-    render: ({ theme }) => <SlingSlider theme={theme} label="Độ sáng màn hình" defaultValue={62} />,
+    render: ({ theme }) => <SlingSlider theme={theme} defaultValue={62} />,
   },
   'weather-card': {
     kind: 'component',
-    render: ({ theme }) => <Weather theme={theme} city="Hà Nội" forecastCity="Đà Nẵng" />,
+    render: ({ theme }) => <Weather theme={theme} />,
   },
   'taxi-card': {
     kind: 'component',
-    render: ({ theme }) => <Taxi theme={theme} sound={false} />,
+    render: ({ theme }) => <Taxi theme={theme} sound />,
   },
 };
 
@@ -243,13 +234,13 @@ const normalizeId = (itemId: string) => itemId.trim().replace(new RegExp('^(comp
 
 const Loading = () => (
   <p className="pinui-stage__status" role="status">
-    Đang tải thành phần
+    Loading original PinUI component...
   </p>
 );
 
 const Missing = ({ itemId }: { itemId: string }) => (
   <p className="pinui-stage__status" role="status">
-    Chưa có bản xem trực tiếp cho {itemId}
+    No live component mapped for {itemId}
   </p>
 );
 
@@ -260,7 +251,7 @@ const stopNavigation = (event: MouseEvent<HTMLElement>) => {
 };
 
 export const PinUIPlayground: React.FC<PinUIPlaygroundProps> = ({ itemId, theme, compact = false }) => {
-  const [localTheme, setLocalTheme] = useState<Theme>('dark');
+  const [localTheme, setLocalTheme] = useState<Theme>('light');
   const controlled = theme !== undefined;
   const activeTheme: Theme = controlled ? theme : localTheme;
   const entry = REGISTRY[normalizeId(itemId)];
@@ -269,19 +260,19 @@ export const PinUIPlayground: React.FC<PinUIPlaygroundProps> = ({ itemId, theme,
 
   return (
     <div
-      className={`pinui-stage ${activeTheme === 'dark' ? 'scene-ink' : 'scene-paper'}`}
+      className="pinui-stage"
       data-theme={activeTheme}
       data-kind={entry?.kind ?? 'component'}
       data-compact={compact || undefined}
       onClickCapture={stopNavigation}
     >
       {!controlled && (
-        <div className="pinui-stage__toggle" role="group" aria-label="Chế độ nền">
+        <div className="pinui-stage__toggle" role="group" aria-label="Theme">
           <button type="button" aria-pressed={activeTheme === 'light'} onClick={() => setLocalTheme('light')}>
-            Sáng
+            Light
           </button>
           <button type="button" aria-pressed={activeTheme === 'dark'} onClick={() => setLocalTheme('dark')}>
-            Tối
+            Dark
           </button>
         </div>
       )}
@@ -297,4 +288,3 @@ export const PinUIPlayground: React.FC<PinUIPlaygroundProps> = ({ itemId, theme,
     </div>
   );
 };
-

@@ -1,0 +1,12 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "file-box",
+  "type": "registry:component",
+  "title": "File Box",
+  "description": "A cardboard file box whose folders lift out by their tabs.",
+  "dependencies": [
+    "motion"
+  ],
+  "docs": "File Box — A cardboard file box whose folders lift out by their tabs.\n\nThe stylesheet sits next to the component and is imported by it, so keep the two together in components/pinui/.\n\nIt is set in the system's own UI face, so there is no font to load.\n\nIt comes in two themes: pass theme=\"dark\" for the dark one, or wire the prop to your own theme switch.\n\nIts colours are registered as typed CSS custom properties (@property) so a theme change cross-fades; a browser without @property simply switches instantly. Pass fill to have it take its container's whole box, with the scene centred in the largest square that fits.",
+  "$registry_url": "https://www.pinui.xyz/r/file-box.json"
+}

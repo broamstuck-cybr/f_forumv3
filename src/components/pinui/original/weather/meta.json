@@ -1,0 +1,12 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "weather",
+  "type": "registry:component",
+  "title": "Weather",
+  "description": "A weather square that opens out into a five-day forecast.",
+  "dependencies": [
+    "motion"
+  ],
+  "docs": "Weather — A weather square that opens out into a five-day forecast.\n\nThe stylesheet sits next to the component and is imported by it, so keep the two together in components/pinui/.\n\nIt is drawn in Inter Tight. If your project does not already load that face it will fall back to your system sans and look noticeably different.\n\nIt comes in two themes: pass theme=\"dark\" for the dark one, or wire the prop to your own theme switch.",
+  "$registry_url": "https://www.pinui.xyz/r/weather.json"
+}
