@@ -144,8 +144,8 @@ export function createThemeSwitch(opts: ThemeSwitchEngineOptions): ThemeSwitchEn
     const originY = btnRect.top - rect.top + btnRect.height / 2;
     const w = Math.max(rect.width, 320);
     const h = Math.max(rect.height, 280);
-    const floodColor = next === 'dark' ? '#090a0d' : '#f7f5f0';
-    const accentColor = next === 'dark' ? '#c89b54' : '#9a6e28';
+    const floodColor = next === 'dark' ? '#121110' : '#f4f0e6';
+    const accentColor = next === 'dark' ? '#ff6450' : '#c42a18';
 
     watchdogId = window.setTimeout(() => commit(next), WATCHDOG_MS);
 

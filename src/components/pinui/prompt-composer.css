@@ -209,6 +209,12 @@
   transform-origin: 20px 0;
 }
 
+.pcmp[data-menu="up"] .pcmp__menu {
+  top: auto;
+  bottom: calc(100% + 8px);
+  transform-origin: 20px 100%;
+}
+
 .pcmp .pcmp__option {
   position: relative;
   display: flex;

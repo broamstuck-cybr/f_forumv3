@@ -7,7 +7,6 @@ import React, {
   useRef,
   useState,
 } from 'react';
-import JSZip from 'jszip';
 import sourceCatalogJson from '../data/sourceCatalog.json';
 import resourceLibraryJson from '../data/resourceLibrary.json';
 import communitySeedJson from '../data/communitySeed.json';
@@ -72,7 +71,7 @@ function applyThemeToDom(theme: ThemeMode, reducedMotion?: boolean): void {
     }
     const meta = document.querySelector('meta[name="theme-color"]');
     if (meta) {
-      meta.setAttribute('content', theme === 'dark' ? '#090a0d' : '#f7f5f0');
+      meta.setAttribute('content', theme === 'dark' ? '#121110' : '#f4f0e6');
     }
   }
   if (typeof window !== 'undefined') {
@@ -485,7 +484,11 @@ export interface AppStoreContextValue {
   attachItemToWorkspace: (item: AttachedContextItem, navigateToWorkspace?: boolean) => void;
   openInWorkspace: (item: AttachedContextItem) => void;
   detachItemFromWorkspace: (itemId: string) => void;
-  launchPromptToWorkspace: (prompt: string, attached?: AttachedContextItem[]) => Promise<void>;
+  launchPromptToWorkspace: (
+    prompt: string,
+    attached?: AttachedContextItem[],
+    options?: { model?: string }
+  ) => Promise<void>;
   sendWorkspacePrompt: (
     prompt: string,
     options?: { model?: string; agentMode?: string; attachedItems?: AttachedContextItem[] }
@@ -1277,7 +1280,11 @@ export const AppStoreProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   );
 
   const launchPromptToWorkspace = useCallback(
-    async (prompt: string, attached: AttachedContextItem[] = []) => {
+    async (
+      prompt: string,
+      attached: AttachedContextItem[] = [],
+      options?: { model?: string }
+    ) => {
       let nextAttached = activeProject.attachedItems;
       if (attached.length > 0 && !activeProject.archived) {
         const existingIds = new Set(activeProject.attachedItems.map((a) => a.id));
@@ -1294,7 +1301,10 @@ export const AppStoreProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         }
       }
       navigate('workspace');
-      await sendWorkspacePrompt(prompt, { attachedItems: nextAttached });
+      await sendWorkspacePrompt(prompt, {
+        attachedItems: nextAttached,
+        model: options?.model,
+      });
     },
     [activeProject.attachedItems, activeProject.archived, updateActiveProject, navigate, sendWorkspacePrompt]
   );
@@ -1348,6 +1358,7 @@ export const AppStoreProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
   const exportActiveProjectZip = useCallback(
     async (includeSetupBundle = true, target?: ProjectSetupTarget) => {
+      const { default: JSZip } = await import('jszip');
       const zip = new JSZip();
       const { clean, findings, sanitizedFiles } = sanitizeFilesForZipExport(activeProject.files);
 

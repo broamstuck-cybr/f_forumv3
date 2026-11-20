@@ -73,7 +73,7 @@ const RepoStackPlate: React.FC<{
               </div>
             ))}
           </dl>
-          <div className="hm-actions" style={{ marginTop: 'var(--space-4)' }}>
+          <div className="stry-actions" style={{ marginTop: 'var(--space-4)' }}>
             <button type="button" className="btn btn-red btn-sm" onClick={() => onNavigate('workspace')}>
               Workspace
             </button>
@@ -157,7 +157,7 @@ export const ScrollStoryEngine: React.FC<ScrollStoryEngineProps> = ({
                 Xem nhanh các chuyển động thực tế từ PinUI, ThreeUI và MotionSites; bấm một chạm để đưa vào Workspace.
               </p>
             </div>
-            <div className="hm-actions">
+            <div className="stry-actions">
               <button type="button" className="btn btn-line" onClick={() => onNavigate('explore')}>
                 Bàn soi
               </button>

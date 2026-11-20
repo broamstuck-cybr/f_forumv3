@@ -1,6 +1,8 @@
 import React, { useMemo, useState } from 'react';
-import { Magnify, ReaderCard } from '../../components/pinui';
+import { Magnify } from '../../components/pinui/Magnify';
+import { ReaderCard } from '../../components/pinui/ReaderCard';
 import { BROAMSTUCK_REPOS, SOURCE_KNOWLEDGE_BREAKDOWN } from '../../data/realShowcaseData';
+import { RANKED_REPOS, rankedRepoContext, rankedRepoSavedId, studioRepoContext } from '../explore/catalog';
 import { useAppStore } from '../../store/appStore';
 import { Mark } from '../../ui/Mark';
 import { Media, previewFor } from '../../ui/Media';
@@ -16,6 +18,8 @@ interface PlateSpecimen {
   previewId?: string;
   projectId?: string;
   savedId?: string;
+  communityPostId?: string;
+  repoContext?: ReturnType<typeof rankedRepoContext>;
 }
 
 const FAN_TILTS = ['-1.6deg', '0.9deg', '-0.8deg', '1.4deg', '-1.1deg', '0.6deg'];
@@ -43,6 +47,7 @@ export const ProfileView: React.FC = () => {
     selectProject,
     savedItemIds,
     toggleSavedItem,
+    openInWorkspace,
     sourceCatalog,
     resourceLibrary,
     communityPosts,
@@ -61,6 +66,7 @@ export const ProfileView: React.FC = () => {
 
   const specimens = useMemo<PlateSpecimen[]>(() => {
     const list: PlateSpecimen[] = [];
+    const savedSet = new Set(savedItemIds);
 
     for (const savedId of savedItemIds) {
       const tpl = sourceCatalog.find((item) => item.id === savedId);
@@ -95,6 +101,60 @@ export const ProfileView: React.FC = () => {
           ],
           savedId: res.id,
         });
+        continue;
+      }
+
+      const ranked = RANKED_REPOS.find((repo) => rankedRepoSavedId(repo) === savedId);
+      if (ranked) {
+        list.push({
+          id: `saved-${savedId}`,
+          origin: ranked.language || 'GitHub',
+          title: ranked.fullName,
+          subtitle: `${ranked.stars.toLocaleString('vi-VN')} sao`,
+          summary: ranked.description,
+          paragraphs: [
+            ranked.description,
+            `Nhóm ${ranked.category}, giấy phép ${ranked.license || 'không ghi'}, nguồn ${ranked.htmlUrl}.`,
+          ],
+          savedId,
+          repoContext: rankedRepoContext(ranked),
+        });
+        continue;
+      }
+
+      const house = BROAMSTUCK_REPOS.find((repo) => repo.id === savedId);
+      if (house) {
+        list.push({
+          id: `saved-${house.id}`,
+          origin: house.language,
+          title: house.name,
+          subtitle: house.fullName,
+          summary: house.summaryVi,
+          paragraphs: [
+            house.summaryVi,
+            `Các tệp trọng tâm gồm ${house.keyPaths.join(', ')}. Nguồn ${house.htmlUrl}.`,
+          ],
+          savedId: house.id,
+          repoContext: studioRepoContext(house),
+        });
+        continue;
+      }
+
+      const post = communityPosts.find((item) => item.id === savedId);
+      if (post) {
+        list.push({
+          id: `saved-${post.id}`,
+          origin: post.category,
+          title: post.title,
+          subtitle: `@${post.author.handle}`,
+          summary: post.body || post.description || post.title,
+          paragraphs: [
+            post.body || post.description || post.title,
+            `Chuyên mục ${post.category} trong Source of Knowledge, đăng bởi ${post.author.name}.`,
+          ],
+          savedId: post.id,
+          communityPostId: post.id,
+        });
       }
     }
 
@@ -117,6 +177,7 @@ export const ProfileView: React.FC = () => {
     });
 
     for (const repo of BROAMSTUCK_REPOS.slice(0, 3)) {
+      if (savedSet.has(repo.id)) continue;
       list.push({
         id: `repo-${repo.id}`,
         origin: repo.language,
@@ -131,11 +192,12 @@ export const ProfileView: React.FC = () => {
               : `Cập nhật gần nhất vào ${new Date(repo.pushedAt).toLocaleDateString('vi-VN')}.`
           }`,
         ],
+        repoContext: studioRepoContext(repo),
       });
     }
 
     return list;
-  }, [projects, savedItemIds, sourceCatalog, resourceLibrary]);
+  }, [projects, savedItemIds, sourceCatalog, resourceLibrary, communityPosts]);
 
   const [selectedId, setSelectedId] = useState<string>(() => specimens[0]?.id || '');
 
@@ -295,13 +357,29 @@ export const ProfileView: React.FC = () => {
                     type="button"
                     className="btn btn-solid"
                     onClick={() => {
+                      if (selectedSpecimen.communityPostId) {
+                        try {
+                          window.sessionStorage.setItem('ff_community_post_id', selectedSpecimen.communityPostId);
+                        } catch {
+                          void 0;
+                        }
+                        window.dispatchEvent(
+                          new CustomEvent('ff:community-post', { detail: selectedSpecimen.communityPostId })
+                        );
+                        navigate('community');
+                        return;
+                      }
+                      if (selectedSpecimen.repoContext) {
+                        openInWorkspace(selectedSpecimen.repoContext);
+                        return;
+                      }
                       if (selectedSpecimen.projectId) {
                         selectProject(selectedSpecimen.projectId);
                       }
                       navigate('workspace');
                     }}
                   >
-                    Workspace
+                    {selectedSpecimen.communityPostId ? 'Mở bài' : 'Workspace'}
                   </button>
                   {selectedSpecimen.savedId && (
                     <button

@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ArrowUp, Bookmark, BookmarkCheck, Flag, X } from 'lucide-react';
 import type {
   ClubHandoverDossier,
@@ -7,7 +7,7 @@ import type {
   CommunityPost,
 } from '../../types/index';
 import { useAppStore } from '../../store/appStore';
-import { ReaderCard } from '../../components/pinui';
+import { ReaderCard } from '../../components/pinui/ReaderCard';
 import { Mark } from '../../ui/Mark';
 import { Modal } from '../workspace/Modal';
 import './community.css';
@@ -70,8 +70,10 @@ export const CommunityView: React.FC = () => {
     reportPost,
     addToast,
     theme,
+    reducedMotion,
   } = useAppStore();
 
+  const leadSectionRef = useRef<HTMLElement>(null);
   const [sectionTab, setSectionTab] = useState<SectionTab>('critique');
   const [critiqueFilter, setCritiqueFilter] = useState<CritiqueFilter>('all');
   const [searchQuery, setSearchQuery] = useState('');
@@ -149,9 +151,62 @@ export const CommunityView: React.FC = () => {
   const leadAnswers = useMemo(() => (leadPost ? getAllAnswers(leadPost) : []), [leadPost]);
 
   const counts: Record<SectionTab, number> = {
-    critique: communityChannels.qa.length + communityChannels.showcase.length,
-    clubs: communityChannels.clubs.length,
-    knowledge: communityChannels.drops.length,
+    critique:
+      communityChannels.qa.filter((p) => !p.hidden).length +
+      communityChannels.showcase.filter((p) => !p.hidden).length,
+    clubs: communityChannels.clubs.filter((p) => !p.hidden).length,
+    knowledge: communityChannels.drops.filter((p) => !p.hidden).length,
+  };
+
+  const focusPostById = useCallback(
+    (postId: string | null) => {
+      if (!postId) return;
+      if (communityChannels.clubs.some((p) => p.id === postId && !p.hidden)) {
+        setSectionTab('clubs');
+        setSelectedId(postId);
+        return;
+      }
+      if (communityChannels.drops.some((p) => p.id === postId && !p.hidden)) {
+        setSectionTab('knowledge');
+        setSelectedId(postId);
+        return;
+      }
+      if (
+        communityChannels.qa.some((p) => p.id === postId && !p.hidden) ||
+        communityChannels.showcase.some((p) => p.id === postId && !p.hidden)
+      ) {
+        setSectionTab('critique');
+        setCritiqueFilter('all');
+        setSelectedId(postId);
+      }
+    },
+    [communityChannels]
+  );
+
+  useEffect(() => {
+    try {
+      const pending = window.sessionStorage.getItem('ff_community_post_id');
+      if (pending) {
+        focusPostById(pending);
+        window.sessionStorage.removeItem('ff_community_post_id');
+      }
+    } catch {
+      void 0;
+    }
+    const onPostEvent = (event: Event) => {
+      const detail = (event as CustomEvent<string>).detail;
+      if (typeof detail === 'string') focusPostById(detail);
+    };
+    window.addEventListener('ff:community-post', onPostEvent);
+    return () => window.removeEventListener('ff:community-post', onPostEvent);
+  }, [focusPostById]);
+
+  const selectEditionPost = (postId: string) => {
+    setSelectedId(postId);
+    leadSectionRef.current?.scrollIntoView({
+      behavior: reducedMotion ? 'auto' : 'smooth',
+      block: 'start',
+    });
   };
 
   const requireSignedIn = (): boolean => {
@@ -495,7 +550,7 @@ export const CommunityView: React.FC = () => {
           <div className="cm-empty">
             <h2 className="t-title">Chưa có bài viết khớp từ khóa</h2>
             <p className="t-lead">Xóa bộ lọc hoặc đăng chủ đề mới lên trang nhất.</p>
-            <div className="hm-actions">
+            <div className="cm-empty-actions">
               {searchQuery && (
                 <button type="button" className="btn btn-line" onClick={() => setSearchQuery('')}>
                   Xóa lọc
@@ -508,7 +563,7 @@ export const CommunityView: React.FC = () => {
           </div>
         ) : (
           <>
-            <section aria-label="Bài tiêu điểm" className="cm-front">
+            <section ref={leadSectionRef} aria-label="Bài tiêu điểm" className="cm-front">
               <article className="cm-lead">
                 <div className="cm-lead-meta">
                   <span className="tag tag-red">{leadPost.category}</span>
@@ -733,13 +788,12 @@ export const CommunityView: React.FC = () => {
                       key={post.id}
                       className="cm-row"
                       data-active={active ? 'true' : undefined}
-                      onClick={() => setSelectedId(post.id)}
                     >
                       <button
                         type="button"
                         className="cm-row-btn"
                         aria-current={active ? 'true' : undefined}
-                        onClick={() => setSelectedId(post.id)}
+                        onClick={() => selectEditionPost(post.id)}
                       >
                         <span className="t-label">
                           {post.category}, @{post.author.handle}

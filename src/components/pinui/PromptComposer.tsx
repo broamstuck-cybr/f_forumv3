@@ -53,6 +53,7 @@ export interface PromptComposerProps {
   className?: string;
   transcriptText?: string;
   theme?: "light" | "dark";
+  menuPlacement?: "down" | "up";
 }
 
 type Slot = {
@@ -167,6 +168,7 @@ export function PromptComposer({
   showFan = true,
   className = "",
   theme = "light",
+  menuPlacement = "down",
 }: PromptComposerProps) {
   const reduced = useReducedMotion();
   const group = useId();
@@ -357,7 +359,12 @@ export function PromptComposer({
   const recording = mode === "recording";
 
   return (
-    <div className={`pcmp ${className}`} data-theme={theme} data-disabled={disabled || undefined}>
+    <div
+      className={`pcmp ${className}`}
+      data-theme={theme}
+      data-menu={menuPlacement}
+      data-disabled={disabled || undefined}
+    >
       <LayoutGroup id={layoutId ?? `pcmp-${group}`}>
         <form className="pcmp__row" onSubmit={send}>
           <div className="pcmp__side">

@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
 import { X } from 'lucide-react';
-import { HaloSignIn } from '../pinui';
+import { HaloSignIn } from '../pinui/HaloSignIn';
 import { useAppStore } from '../../store/appStore';
 
 interface AuthModalProps {

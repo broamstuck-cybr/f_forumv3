@@ -151,6 +151,15 @@
     gap: var(--space-7);
     padding-block: var(--space-7);
     border-bottom: 1px solid var(--line-strong);
+    scroll-margin-top: calc(var(--nav-h) + var(--space-4));
+  }
+
+  .cm-empty-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-3);
   }
 
   .cm-lead {

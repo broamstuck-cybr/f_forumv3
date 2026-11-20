@@ -5,7 +5,7 @@ import {
   PromptComposer,
   type PromptComposerAction,
   type PromptComposerModel,
-} from '../../components/pinui';
+} from '../../components/pinui/PromptComposer';
 import { ScrollStoryEngine } from '../../components/launchpad/ScrollStoryEngine';
 import { Mark } from '../../ui/Mark';
 import './home.css';
@@ -115,7 +115,7 @@ export const HomeView: React.FC<HomeViewProps> = () => {
   const reduced = Boolean(useReducedMotion());
   const [promptText, setPromptText] = useState('');
   const [selectedAction, setSelectedAction] = useState<string | null>(null);
-  const [selectedModel, setSelectedModel] = useState(HOME_MODELS[0].name);
+  const [selectedModel, setSelectedModel] = useState(HOME_MODELS[0].id ?? 'auto');
   const [bpStyleIdx, setBpStyleIdx] = useState(0);
   const [bpLayoutIdx, setBpLayoutIdx] = useState(0);
   const [bpFeatureIdx, setBpFeatureIdx] = useState(0);
@@ -150,7 +150,23 @@ export const HomeView: React.FC<HomeViewProps> = () => {
   };
 
   const handleLaunch = (text: string) => {
-    void launchPromptToWorkspace(text);
+    const mappedModel =
+      selectedModel === 'fast'
+        ? 'ag/gemini-3.8-flash-low'
+        : selectedModel === 'architect'
+          ? 'studio-heavy-route'
+          : 'auto';
+    void launchPromptToWorkspace(text, [], { model: mappedModel });
+  };
+
+  const openCommunityPost = (postId: string) => {
+    try {
+      window.sessionStorage.setItem('ff_community_post_id', postId);
+    } catch {
+      void 0;
+    }
+    window.dispatchEvent(new CustomEvent('ff:community-post', { detail: postId }));
+    navigate('community');
   };
 
   const openExploreLeaderboard = () => {
@@ -367,9 +383,13 @@ export const HomeView: React.FC<HomeViewProps> = () => {
                 </div>
                 <div className="hm-row-side">
                   <span className="t-label">{post.votes ?? post.likes ?? 0} tán thành</span>
-                  <button type="button" className="btn btn-line btn-sm" onClick={() => navigate('community')}>
-                    Đọc tiếp
-                  </button>
+                    <button
+                      type="button"
+                      className="btn btn-line btn-sm"
+                      onClick={() => openCommunityPost(post.id)}
+                    >
+                      Đọc tiếp
+                    </button>
                 </div>
               </li>
             ))}

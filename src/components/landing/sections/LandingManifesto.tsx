@@ -4,7 +4,7 @@ import { useAppStore } from '../../../store/appStore';
 import { Mark } from '../../../ui/Mark';
 import { Reveal } from '../../../ui/Reveal';
 import { ScrollFillText } from '../../../ui/ScrollFillText';
-import { PromptComposer, type PromptComposerAction } from '../../pinui';
+import { PromptComposer, type PromptComposerAction } from '../../pinui/PromptComposer';
 import { MANIFESTO_PILLARS, MANIFESTO_TEXT } from '../landingContent';
 
 interface LandingManifestoProps {

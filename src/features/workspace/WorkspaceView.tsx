@@ -1,6 +1,7 @@
 import React, { useId, useMemo, useRef, useState } from 'react';
 import { Ellipsis, PanelLeft, PanelLeftClose, X } from 'lucide-react';
-import { DynamicDropZone, PromptComposer } from '../../components/pinui';
+import { DynamicDropZone } from '../../components/pinui/DynamicDropZone';
+import { PromptComposer } from '../../components/pinui/PromptComposer';
 import { useAppStore } from '../../store/appStore';
 import { AiProjectSetupDrawer } from './AiProjectSetupDrawer';
 import { DiffViewer, type DiffViewMode } from './DiffViewer';
@@ -459,6 +460,8 @@ export const WorkspaceView: React.FC = () => {
 
             <PromptComposer
               layoutId="ff-prompt-composer"
+              theme={settings.theme}
+              menuPlacement="up"
               value={composerValue}
               onChange={setComposerValue}
               selectedModel={selectedModel}

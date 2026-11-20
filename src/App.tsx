@@ -1,23 +1,45 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { Suspense, lazy, useEffect, useRef, useState } from 'react';
 import { LayoutGroup, MotionConfig } from 'motion/react';
 import { AppProvider, useAppStore } from './store/appStore';
 import { AppNavbar } from './components/layout/AppNavbar';
 import { AppFooter } from './components/layout/AppFooter';
-import { LandingPage } from './components/landing/LandingPage';
 import { AuthModal } from './components/public/AuthModal';
 import { NoticeStatusModal } from './components/public/NoticeStatusModal';
-import { Skybridge404 } from './components/public/Skybridge404';
 import { ToastStack } from './components/public/ToastStack';
-import { AdminView } from './features/admin/AdminView';
-import { CommunityView } from './features/community/CommunityView';
-import { ExploreView } from './features/explore/ExploreView';
-import { HomeView } from './features/launchpad/HomeView';
-import { ProfileView } from './features/profile/ProfileView';
-import { SettingsView } from './features/settings/SettingsView';
-import { WorkspaceView } from './features/workspace/WorkspaceView';
 import './components/layout/app-shell.css';
 
-const ROUTE_META: Record<string, { title: string; description: string; path: string }> = {
+const LandingPage = lazy(() =>
+  import('./components/landing/LandingPage').then((m) => ({ default: m.LandingPage }))
+);
+const HomeView = lazy(() =>
+  import('./features/launchpad/HomeView').then((m) => ({ default: m.HomeView }))
+);
+const ExploreView = lazy(() =>
+  import('./features/explore/ExploreView').then((m) => ({ default: m.ExploreView }))
+);
+const WorkspaceView = lazy(() =>
+  import('./features/workspace/WorkspaceView').then((m) => ({ default: m.WorkspaceView }))
+);
+const CommunityView = lazy(() =>
+  import('./features/community/CommunityView').then((m) => ({ default: m.CommunityView }))
+);
+const ProfileView = lazy(() =>
+  import('./features/profile/ProfileView').then((m) => ({ default: m.ProfileView }))
+);
+const SettingsView = lazy(() =>
+  import('./features/settings/SettingsView').then((m) => ({ default: m.SettingsView }))
+);
+const AdminView = lazy(() =>
+  import('./features/admin/AdminView').then((m) => ({ default: m.AdminView }))
+);
+const Skybridge404 = lazy(() =>
+  import('./components/public/Skybridge404').then((m) => ({ default: m.Skybridge404 }))
+);
+
+const ROUTE_META: Record<
+  string,
+  { title: string; description: string; path: string; noindex?: boolean }
+> = {
   landing: {
     title: 'F-Forum — Viết bằng AI, chấm bằng bút đỏ',
     description:
@@ -58,15 +80,23 @@ const ROUTE_META: Record<string, { title: string; description: string; path: str
     title: 'Quản trị — F-Forum',
     description: 'Bảng điều khiển quản trị hệ thống F-Forum v3.',
     path: '/admin',
+    noindex: true,
   },
   'not-found': {
     title: 'Không tìm thấy trang — F-Forum',
     description: 'Đường dẫn không tồn tại trên F-Forum.',
     path: '/404',
+    noindex: true,
   },
 };
 
 const SITE_ORIGIN = 'https://fforum3.vercel.app';
+const INDEX_ROBOTS = 'index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1';
+
+function setMetaContent(selector: string, value: string): void {
+  const el = document.querySelector(selector);
+  if (el) el.setAttribute('content', value);
+}
 
 const AppShell: React.FC = () => {
   const { currentRoute, navigate, currentUser, authModalOpen, setAuthModalOpen, reducedMotion } = useAppStore();
@@ -76,11 +106,26 @@ const AppShell: React.FC = () => {
 
   useEffect(() => {
     const meta = ROUTE_META[currentRoute] ?? ROUTE_META.landing;
+    const fullUrl = `${SITE_ORIGIN}${meta.path}`;
     document.title = meta.title;
-    const descEl = document.querySelector('meta[name="description"]');
-    if (descEl) descEl.setAttribute('content', meta.description);
+    setMetaContent('meta[name="description"]', meta.description);
+    setMetaContent('meta[name="robots"]', meta.noindex ? 'noindex, nofollow' : INDEX_ROBOTS);
+    setMetaContent('meta[property="og:title"]', meta.title);
+    setMetaContent('meta[property="og:description"]', meta.description);
+    setMetaContent('meta[property="og:url"]', fullUrl);
+    setMetaContent('meta[name="twitter:title"]', meta.title);
+    setMetaContent('meta[name="twitter:description"]', meta.description);
     const canonEl = document.querySelector('link[rel="canonical"]');
-    if (canonEl) canonEl.setAttribute('href', `${SITE_ORIGIN}${meta.path}`);
+    if (currentRoute === 'not-found') {
+      canonEl?.remove();
+    } else if (canonEl) {
+      canonEl.setAttribute('href', fullUrl);
+    } else {
+      const link = document.createElement('link');
+      link.setAttribute('rel', 'canonical');
+      link.setAttribute('href', fullUrl);
+      document.head.appendChild(link);
+    }
     if (firstRender.current) {
       firstRender.current = false;
       return;
@@ -106,22 +151,30 @@ const AppShell: React.FC = () => {
           {showNavbar && <AppNavbar onOpenNotice={() => setNoticeModalOpen(true)} />}
 
           <main id="noi-dung" ref={mainRef} tabIndex={-1} className="shell__main">
-            {currentRoute === 'landing' && (
-              <LandingPage
-                currentUser={currentUser}
-                onOpenAuth={() => setAuthModalOpen(true)}
-                onEnterApp={() => navigate('home')}
-                onNavigate={(view) => navigate(view)}
-              />
-            )}
-            {currentRoute === 'home' && <HomeView />}
-            {currentRoute === 'explore' && <ExploreView />}
-            {currentRoute === 'workspace' && <WorkspaceView />}
-            {currentRoute === 'community' && <CommunityView />}
-            {currentRoute === 'profile' && <ProfileView />}
-            {currentRoute === 'settings' && <SettingsView />}
-            {currentRoute === 'admin' && <AdminView />}
-            {currentRoute === 'not-found' && <Skybridge404 onNavigate={navigate} />}
+            <Suspense
+              fallback={
+                <div className="wrap-wide" style={{ paddingBlock: 'var(--space-8)' }}>
+                  <p className="t-label">đang mở trang</p>
+                </div>
+              }
+            >
+              {currentRoute === 'landing' && (
+                <LandingPage
+                  currentUser={currentUser}
+                  onOpenAuth={() => setAuthModalOpen(true)}
+                  onEnterApp={() => navigate('home')}
+                  onNavigate={(view) => navigate(view)}
+                />
+              )}
+              {currentRoute === 'home' && <HomeView />}
+              {currentRoute === 'explore' && <ExploreView />}
+              {currentRoute === 'workspace' && <WorkspaceView />}
+              {currentRoute === 'community' && <CommunityView />}
+              {currentRoute === 'profile' && <ProfileView />}
+              {currentRoute === 'settings' && <SettingsView />}
+              {currentRoute === 'admin' && <AdminView />}
+              {currentRoute === 'not-found' && <Skybridge404 onNavigate={navigate} />}
+            </Suspense>
           </main>
 
           {showFooter && <AppFooter onNavigate={navigate} onOpenNotice={() => setNoticeModalOpen(true)} />}

@@ -4,7 +4,7 @@ import { X } from 'lucide-react';
 import type { AdminChangelogEntry, SourceLibraryName } from '../../types/index';
 import { apiClient } from '../../services/apiClient';
 import { useAppStore } from '../../store/appStore';
-import { LiquidTabs } from '../pinui';
+import { LiquidTabs } from '../pinui/LiquidTabs';
 
 interface NoticeStatusModalProps {
   open: boolean;
@@ -63,7 +63,7 @@ const LIBRARY_ATTRIBUTIONS: Array<{
 ];
 
 export const NoticeStatusModal: React.FC<NoticeStatusModalProps> = ({ open, onClose }) => {
-  const { sourceCatalog, reducedMotion, setReducedMotion } = useAppStore();
+  const { sourceCatalog } = useAppStore();
   const [activeTab, setActiveTab] = useState<'attributions' | 'changelog' | 'policy'>('attributions');
   const [changelog, setChangelog] = useState<AdminChangelogEntry[]>([]);
   const [loadingLog, setLoadingLog] = useState(false);
@@ -187,21 +187,6 @@ export const NoticeStatusModal: React.FC<NoticeStatusModalProps> = ({ open, onCl
                 activeId={activeTab}
                 onChange={(id) => setActiveTab(id as 'attributions' | 'changelog' | 'policy')}
               />
-
-              <button
-                type="button"
-                onClick={() => setReducedMotion(!reducedMotion)}
-                className="inline-flex h-9 items-center rounded-full border px-3.5 text-xs font-medium cursor-pointer"
-                style={{
-                  backgroundColor: reducedMotion
-                    ? 'color-mix(in srgb, var(--accent-verdigris) 16%, transparent)'
-                    : 'var(--bg-surface)',
-                  borderColor: reducedMotion ? 'var(--accent-verdigris)' : 'var(--border-subtle)',
-                  color: reducedMotion ? 'var(--accent-verdigris)' : 'var(--ink-secondary)',
-                }}
-              >
-                {reducedMotion ? 'Giảm động' : 'Chuyển động'}
-              </button>
             </div>
 
             <div className="min-h-0 flex-1 overflow-y-auto px-6 py-5">
@@ -343,37 +328,9 @@ export const NoticeStatusModal: React.FC<NoticeStatusModalProps> = ({ open, onCl
                       Bảo mật Khóa Cá nhân
                     </div>
                     <p className="mt-2 text-sm leading-relaxed" style={{ color: 'var(--ink-secondary)' }}>
-                      Khóa API BYOK không bao giờ được ghi vào tệp nén xuất ra. Mọi thay đổi mã nguồn đều hiển thị rõ trên Diff &amp; Check để người dùng kiểm duyệt trước khi xuất bản.
+                      Khóa API BYOK không bao giờ được ghi vào tệp nén xuất ra. Mọi tùy chỉnh hiển thị, giao diện Mực
+                      và Giấy cùng chế độ giảm chuyển động được đặt tập trung trong mục Cài đặt.
                     </p>
-                  </div>
-
-                  <div
-                    className="flex flex-col gap-3 rounded-[16px] border p-4 sm:flex-row sm:items-center sm:justify-between"
-                    style={{
-                      backgroundColor: 'var(--bg-panel)',
-                      borderColor: 'var(--border-subtle)',
-                    }}
-                  >
-                    <div>
-                      <div className="text-sm font-semibold" style={{ color: 'var(--ink-primary)' }}>
-                        Chế độ Giảm chuyển động
-                      </div>
-                      <p className="mt-1 text-xs" style={{ color: 'var(--ink-secondary)' }}>
-                        Tắt hiệu ứng phức tạp trên toàn hệ thống để giữ sự tĩnh tại tối đa.
-                      </p>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => setReducedMotion(!reducedMotion)}
-                      className="inline-flex h-10 shrink-0 items-center justify-center rounded-full px-4 text-xs font-semibold cursor-pointer"
-                      style={{
-                        backgroundColor: reducedMotion ? 'var(--accent-verdigris)' : 'var(--bg-surface)',
-                        color: reducedMotion ? '#06080d' : 'var(--ink-primary)',
-                        border: '1px solid var(--border-strong)',
-                      }}
-                    >
-                      {reducedMotion ? 'Đang bật' : 'Giảm động'}
-                    </button>
                   </div>
                 </div>
               ) : null}

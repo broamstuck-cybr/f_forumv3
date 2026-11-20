@@ -1,6 +1,5 @@
 import React, { useMemo, useState } from 'react';
 import type { CheckCategory, DimensionView } from '../../types/index';
-import sourceCatalogJson from '../../data/sourceCatalog.json';
 import { getProofDemo, PROOF_BRIEF, type ProofVersion } from '../../data/proofDemo';
 import { Media, previewFor } from '../../ui/Media';
 import './fforum-mobile.css';
@@ -29,11 +28,12 @@ export const CHECK_LABELS: Record<CheckCategory, string> = {
   accessibility: 'Tiếp cận',
 };
 
-interface CatalogRow {
-  id: string;
-  title: string;
-  sourceLibrary: string;
-}
+const FEATURED_MOBILE_PLATES: Array<{ id: string; title: string }> = [
+  { id: 'component/presence-cards', title: 'Presence Cards' },
+  { id: 'component/theme-switch', title: 'Theme Switch' },
+  { id: 'component/reader-card', title: 'Reader Card' },
+  { id: 'component/search-card', title: 'Search Card' },
+];
 
 export const FForumMobileApp: React.FC<FForumMobileAppProps> = ({ onNavigate, onGoHome, onActivityPulse }) => {
   const [tab, setTab] = useState<MobileTab>('write');
@@ -47,10 +47,7 @@ export const FForumMobileApp: React.FC<FForumMobileAppProps> = ({ onNavigate, on
     0
   );
 
-  const plates = useMemo(() => {
-    const rows = sourceCatalogJson as CatalogRow[];
-    return rows.filter((row) => previewFor(row.id)?.kind === 'video').slice(0, 4);
-  }, []);
+  const plates = FEATURED_MOBILE_PLATES;
 
   const switchTab = (next: MobileTab) => {
     setTab(next);

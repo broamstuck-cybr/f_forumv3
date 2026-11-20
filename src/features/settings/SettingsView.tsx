@@ -2,7 +2,7 @@ import React, { useId, useRef, useState } from 'react';
 import { Eye, EyeOff } from 'lucide-react';
 import type { AIProtocol, ProjectSetupTarget } from '../../types/index';
 import { useAppStore } from '../../store/appStore';
-import { ThemeSwitch } from '../../components/pinui';
+import { ThemeSwitch } from '../../components/pinui/ThemeSwitch';
 import { Modal } from '../workspace/Modal';
 import { applyBackup, buildBackup, clearLocalData, downloadBackup, parseBackup, type BackupPayload } from './backup';
 import './settings.css';

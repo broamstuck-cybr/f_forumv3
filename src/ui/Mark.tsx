@@ -65,6 +65,7 @@ export const Mark: React.FC<MarkProps> = ({ kind = 'underline', delay = 0, child
   const pathRefs = useRef<Array<SVGPathElement | null>>([]);
   const [size, setSize] = useState<Size | null>(null);
   const [seen, setSeen] = useState(false);
+  const drawnRef = useRef(false);
   const seedRef = useRef(Math.floor(Math.random() * 100000) + 1);
 
   useLayoutEffect(() => {
@@ -102,6 +103,7 @@ export const Mark: React.FC<MarkProps> = ({ kind = 'underline', delay = 0, child
     const reduce =
       window.matchMedia('(prefers-reduced-motion: reduce)').matches ||
       document.documentElement.classList.contains('reduce-motion');
+    const anims: Animation[] = [];
     pathRefs.current.forEach((p, pass) => {
       if (!p) return;
       const len = p.getTotalLength();
@@ -110,20 +112,26 @@ export const Mark: React.FC<MarkProps> = ({ kind = 'underline', delay = 0, child
         p.style.strokeDashoffset = String(len);
         return;
       }
-      if (reduce || !p.animate) {
+      if (reduce || !p.animate || drawnRef.current) {
         p.style.strokeDashoffset = '0';
+        drawnRef.current = true;
         return;
       }
       const anim = p.animate([{ strokeDashoffset: len }, { strokeDashoffset: 0 }], {
-        duration: 380 + len * 1.4,
-        delay: delay + pass * 200,
+        duration: Math.min(720, 300 + len * 0.85),
+        delay: delay + pass * 140,
         easing: 'cubic-bezier(.55,.1,.35,1)',
         fill: 'both',
       });
+      anims.push(anim);
       anim.onfinish = () => {
         p.style.strokeDashoffset = '0';
+        drawnRef.current = true;
       };
     });
+    return () => {
+      anims.forEach((anim) => anim.cancel());
+    };
   }, [seen, size, delay, kind]);
 
   return (
