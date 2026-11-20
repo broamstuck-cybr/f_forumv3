@@ -1,8 +1,10 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
-import './styles/tokens.css';
-import './styles/base.css';
-import './styles/pinui.css';
+import '@fontsource-variable/newsreader';
+import '@fontsource-variable/newsreader/wght-italic.css';
+import '@fontsource/be-vietnam-pro/400.css';
+import '@fontsource/be-vietnam-pro/600.css';
+import '@fontsource/be-vietnam-pro/700.css';
 import './index.css';
 import { App } from './App';
 

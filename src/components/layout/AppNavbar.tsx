@@ -3,6 +3,7 @@ import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
 import { Menu, X } from 'lucide-react';
 import type { AppRoute } from '../../types/index';
 import { useAppStore } from '../../store/appStore';
+import { ThemeSwitch } from '../pinui/ThemeSwitch';
 import { KineticLogo } from '../brand/KineticLogo';
 
 export interface AppNavbarProps {
@@ -12,9 +13,8 @@ export interface AppNavbarProps {
 const PRIMARY_TABS: Array<{ id: AppRoute; label: string }> = [
   { id: 'home', label: 'Trang chủ' },
   { id: 'explore', label: 'Khám phá' },
-  { id: 'workspace', label: 'Workspace' },
+  { id: 'workspace', label: 'Work' },
   { id: 'community', label: 'Tri thức' },
-  { id: 'profile', label: 'Hồ sơ' },
 ];
 
 function userInitials(name: string): string {
@@ -35,14 +35,17 @@ export const AppNavbar: React.FC<AppNavbarProps> = () => {
     aiActivity,
     currentUser,
     quota,
+    theme,
+    setTheme,
     setAuthModalOpen,
     logout,
-    savedItemIds,
   } = useAppStore();
 
   const reduced = Boolean(useReducedMotion());
   const [profileOpen, setProfileOpen] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const mobileTrigger = useRef<HTMLButtonElement>(null);
+  const profileTrigger = useRef<HTMLButtonElement>(null);
   const profileRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -51,7 +54,7 @@ export const AppNavbar: React.FC<AppNavbarProps> = () => {
       if (!profileRef.current?.contains(e.target as Node)) setProfileOpen(false);
     };
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setProfileOpen(false);
+      if (e.key === 'Escape') { setProfileOpen(false); profileTrigger.current?.focus(); }
     };
     document.addEventListener('pointerdown', onDown);
     document.addEventListener('keydown', onKey);
@@ -61,16 +64,25 @@ export const AppNavbar: React.FC<AppNavbarProps> = () => {
     };
   }, [profileOpen]);
 
+  useEffect(() => {
+    if (!mobileOpen) return;
+    const close = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') { setMobileOpen(false); mobileTrigger.current?.focus(); }
+    };
+    document.addEventListener('keydown', close);
+    return () => document.removeEventListener('keydown', close);
+  }, [mobileOpen]);
+
   const displayName = currentUser ? currentUser.name : 'Khách';
   const isAdmin = currentUser?.role === 'admin';
-  const quotaLabel = quota.unlimited || isAdmin ? 'Vô hạn' : `${quota.used}/${quota.limit ?? 15}`;
+  const quotaLabel = quota.unlimited || isAdmin ? 'Vô hạn' : `${Math.max(0, (quota.limit ?? 15) - quota.used)}/${quota.limit ?? 15}`;
 
   return (
     <header
-      className="sticky top-0 z-50 w-full border-b backdrop-blur-xl"
+      className="press-app-nav sticky top-0 z-50 w-full border-b"
       style={{
         height: 'var(--navbar-h)',
-        background: 'var(--bg-glass-strong)',
+        background: 'var(--bg-surface)',
         borderColor: 'var(--border-subtle)',
       }}
     >
@@ -80,9 +92,9 @@ export const AppNavbar: React.FC<AppNavbarProps> = () => {
             type="button"
             onClick={() => {
               setMobileOpen(false);
-              navigate('landing');
+              navigate('home');
             }}
-            aria-label="F-Forum"
+            aria-label="F-Forum: Bàn làm việc"
             title="F-Forum"
             className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-transparent border-0 p-0 cursor-pointer transition-transform hover:scale-105"
           >
@@ -130,7 +142,7 @@ export const AppNavbar: React.FC<AppNavbarProps> = () => {
           <button
             type="button"
             onClick={() => navigate(isAdmin ? 'admin' : 'settings')}
-            aria-label={`Hạn mức ${quotaLabel}`}
+            aria-label={`Lượt AI còn lại: ${quotaLabel}`}
             title="Hạn mức"
             className="hidden sm:inline-flex items-center justify-center h-9 px-3.5 rounded-full border text-[12px] font-mono font-semibold whitespace-nowrap cursor-pointer transition-colors"
             style={{
@@ -154,13 +166,15 @@ export const AppNavbar: React.FC<AppNavbarProps> = () => {
             {quotaLabel}
           </button>
 
+          <ThemeSwitch compact sound={false} theme={theme} onThemeChange={setTheme} />
           <div ref={profileRef} className="relative">
             <button
               type="button"
               onClick={() => setProfileOpen((prev) => !prev)}
-              aria-haspopup="menu"
+              ref={profileTrigger}
+              aria-controls={profileOpen ? 'ff-account' : undefined}
               aria-expanded={profileOpen}
-              aria-label={displayName}
+              aria-label={`Tài khoản: ${displayName}`}
               title={displayName}
               className="inline-flex items-center justify-center h-9 w-9 rounded-full border p-0 cursor-pointer transition-colors"
               style={{
@@ -183,7 +197,8 @@ export const AppNavbar: React.FC<AppNavbarProps> = () => {
             <AnimatePresence>
               {profileOpen && (
                 <motion.div
-                  role="menu"
+                  id="ff-account"
+                  role="group"
                   aria-label="Tài khoản"
                   initial={reduced ? { opacity: 0 } : { opacity: 0, y: 6, scale: 0.96 }}
                   animate={{ opacity: 1, y: 0, scale: 1 }}
@@ -210,7 +225,6 @@ export const AppNavbar: React.FC<AppNavbarProps> = () => {
 
                   <button
                     type="button"
-                    role="menuitem"
                     onClick={() => {
                       setProfileOpen(false);
                       navigate('profile');
@@ -223,23 +237,6 @@ export const AppNavbar: React.FC<AppNavbarProps> = () => {
 
                   <button
                     type="button"
-                    role="menuitem"
-                    onClick={() => {
-                      setProfileOpen(false);
-                      navigate('profile');
-                    }}
-                    className="flex w-full items-center justify-between rounded-xl px-3 py-2 text-left text-[13px] bg-transparent border-0 cursor-pointer transition-colors"
-                    style={{ color: 'var(--ink-primary)' }}
-                  >
-                    <span>Đã lưu</span>
-                    <span className="text-[11px] font-mono" style={{ color: 'var(--ink-muted)' }}>
-                      {savedItemIds.length}
-                    </span>
-                  </button>
-
-                  <button
-                    type="button"
-                    role="menuitem"
                     onClick={() => {
                       setProfileOpen(false);
                       navigate('settings');
@@ -250,11 +247,15 @@ export const AppNavbar: React.FC<AppNavbarProps> = () => {
                     <span>Cài đặt</span>
                   </button>
 
+                  <button type="button" onClick={() => { setProfileOpen(false); navigate('landing'); }}
+                    className="flex w-full items-center rounded-xl px-3 text-left text-[13px] cursor-pointer">
+                    Giới thiệu
+                  </button>
+
                   {isAdmin && (
                     <button
                       type="button"
-                      role="menuitem"
-                      onClick={() => {
+                        onClick={() => {
                         setProfileOpen(false);
                         navigate('admin');
                       }}
@@ -270,8 +271,7 @@ export const AppNavbar: React.FC<AppNavbarProps> = () => {
                   {currentUser ? (
                     <button
                       type="button"
-                      role="menuitem"
-                      onClick={() => {
+                        onClick={() => {
                         setProfileOpen(false);
                         void logout();
                       }}
@@ -283,8 +283,7 @@ export const AppNavbar: React.FC<AppNavbarProps> = () => {
                   ) : (
                     <button
                       type="button"
-                      role="menuitem"
-                      onClick={() => {
+                        onClick={() => {
                         setProfileOpen(false);
                         setAuthModalOpen(true);
                       }}
@@ -302,9 +301,11 @@ export const AppNavbar: React.FC<AppNavbarProps> = () => {
           <button
             type="button"
             onClick={() => setMobileOpen((prev) => !prev)}
-            aria-label={mobileOpen ? 'Đóng' : 'Mở'}
+            aria-label={mobileOpen ? 'Đóng điều hướng' : 'Mở điều hướng'}
             title={mobileOpen ? 'Đóng' : 'Mở'}
+            ref={mobileTrigger}
             aria-expanded={mobileOpen}
+            aria-controls={mobileOpen ? 'ff-mobile-menu' : undefined}
             className="md:hidden inline-grid place-items-center h-9 w-9 rounded-full border cursor-pointer"
             style={{
               background: 'var(--bg-panel)',
@@ -324,6 +325,7 @@ export const AppNavbar: React.FC<AppNavbarProps> = () => {
             animate={{ opacity: 1, y: 0 }}
             exit={reduced ? { opacity: 0 } : { opacity: 0, y: -6 }}
             transition={{ duration: 0.18 }}
+            id="ff-mobile-menu"
             className="md:hidden border-b px-4 py-3 space-y-2"
             style={{
               background: 'var(--bg-surface)',
@@ -342,7 +344,8 @@ export const AppNavbar: React.FC<AppNavbarProps> = () => {
                       setMobileOpen(false);
                       navigate(tab.id);
                     }}
-                    className="flex items-center justify-between rounded-xl px-3.5 py-2.5 text-left text-[13.5px] font-medium border cursor-pointer"
+                    aria-current={active ? 'page' : undefined}
+                    className="flex min-h-11 items-center justify-between rounded-xl px-3.5 py-2.5 text-left text-[13.5px] font-medium border cursor-pointer"
                     style={{
                       background: active ? 'var(--accent-soft)' : 'transparent',
                       borderColor: active ? 'var(--border-accent)' : 'transparent',

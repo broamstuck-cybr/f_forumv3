@@ -256,7 +256,7 @@ export const HomeView: React.FC<HomeViewProps> = ({ onOpenNotice }) => {
                   className="mt-3 max-w-xl text-[14.5px] sm:text-[15.5px]"
                   style={{ color: 'var(--ink-secondary)' }}
                 >
-                  Chọn một thẻ PinUI để dựng nhanh đặc tả không tốn lượt, hoặc mô tả trực tiếp để mở vào Workspace với Live View và Diff &amp; Check.
+                  Soạn đặc tả không tốn lượt AI, hoặc chuyển thẳng sang Work để dựng và kiểm tra.
                 </p>
 
                 <div className="mt-6 w-full text-left">

@@ -104,3 +104,7 @@ All runtime secrets and gateway parameters are read from environment variables. 
 ## License
 
 Released under the [MIT License](./LICENSE). Third-party pattern attributions are documented in [NOTICE.md](./NOTICE.md).
+
+## Proof Press rebuild
+
+See [the rebuild report](docs/REBUILD_REPORT.md) for the baseline audit, five-library source coverage, run instructions, and verified versus outstanding acceptance criteria.

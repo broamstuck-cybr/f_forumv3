@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { lazy, Suspense, useEffect, useMemo, useState } from 'react';
 import {
   Bookmark,
   BookmarkCheck,
@@ -8,9 +8,11 @@ import {
 import { STACKING_PROJECTS } from '../../data/realShowcaseData';
 import type { ResourceItem, SourceCatalogItem, SourceLibraryName } from '../../types/index';
 import { useAppStore } from '../../store/appStore';
-import { LiquidTabs, Magnify, ReaderCard, SearchCard } from '../../components/pinui';
+import { LiquidTabs, Magnify, ReaderCard, SearchCard, SelectionList } from '../../components/pinui';
 import { GitHubShowcase } from './GitHubShowcase';
 import { RepoLeaderboard } from './RepoLeaderboard';
+
+const SlingSlider = lazy(() => import('../../components/pinui/SlingSlider'));
 
 type ExploreMode = 'templates' | 'github' | 'leaderboard';
 type SortMode = 'popular' | 'recent' | 'minimal';
@@ -143,6 +145,7 @@ export const ExploreView: React.FC = () => {
     sourceCatalog,
     resourceLibrary,
     savedItemIds,
+    navigate,
     toggleSavedItem,
     attachItemToWorkspace,
     createProject,
@@ -151,6 +154,7 @@ export const ExploreView: React.FC = () => {
 
   const [mode, setMode] = useState<ExploreMode>(() => {
     if (typeof window === 'undefined') return 'templates';
+    if (new URLSearchParams(window.location.search).get('library') === 'pinui') return 'templates';
     return resolveIncomingMode(window.sessionStorage.getItem('ff_explore_mode')) || 'templates';
   });
 
@@ -161,7 +165,7 @@ export const ExploreView: React.FC = () => {
     'Liquid Glass',
     'Shopify Winter',
   ]);
-  const [selectedLibrary, setSelectedLibrary] = useState<'all' | SourceLibraryName>('all');
+  const [selectedLibrary, setSelectedLibrary] = useState<'all' | SourceLibraryName>(() => new URLSearchParams(window.location.search).get('library') === 'pinui' ? 'pinui' : 'all');
   const [sortMode, setSortMode] = useState<SortMode>('popular');
   const [selectedTemplateId, setSelectedTemplateId] = useState<string>(sourceCatalog[0]?.id || '');
 
@@ -169,7 +173,7 @@ export const ExploreView: React.FC = () => {
     if (typeof window === 'undefined') return;
     const stored = resolveIncomingMode(window.sessionStorage.getItem('ff_explore_mode'));
     if (stored) {
-      setMode(stored);
+      if (new URLSearchParams(window.location.search).get('library') !== 'pinui') setMode(stored);
       window.sessionStorage.removeItem('ff_explore_mode');
     }
     const onExploreMode = (event: Event) => {
@@ -231,10 +235,9 @@ export const ExploreView: React.FC = () => {
     return (
       filteredTemplates.find((item) => item.id === selectedTemplateId) ||
       filteredTemplates[0] ||
-      sourceCatalog[0] ||
       null
     );
-  }, [filteredTemplates, selectedTemplateId, sourceCatalog]);
+  }, [filteredTemplates, selectedTemplateId]);
 
   useEffect(() => {
     if (selectedTemplate && selectedTemplate.id !== selectedTemplateId) {
@@ -248,19 +251,16 @@ export const ExploreView: React.FC = () => {
   };
 
   const handleOpenTemplateInWorkspace = (tpl: SourceCatalogItem) => {
-    createProject(tpl.title, `${LIBRARY_DISPLAY[tpl.sourceLibrary]} — ${tpl.description}`);
-    attachItemToWorkspace(
-      {
-        id: tpl.id,
-        kind: 'template',
-        title: tpl.title,
-        sourceLibrary: tpl.sourceLibrary,
-        summary: tpl.description,
-        payload: tpl.promptSpec || `${tpl.archivePath}\nRuntime: ${tpl.runtime}\nStyle: ${tpl.style}`,
-        tags: tpl.tags,
-      },
-      true
-    );
+    createProject(tpl.title, `${LIBRARY_DISPLAY[tpl.sourceLibrary]} — ${tpl.description}`, [{
+      id: tpl.id,
+      kind: 'template',
+      title: tpl.title,
+      sourceLibrary: tpl.sourceLibrary,
+      summary: tpl.description,
+      payload: [tpl.promptSpec || tpl.archivePath, tpl.officialUrl, tpl.installCommand].filter(Boolean).join('\n'),
+      tags: tpl.tags,
+    }]);
+    navigate('workspace');
   };
 
   const handleUseResource = (item: ResourceItem) => {
@@ -303,7 +303,7 @@ export const ExploreView: React.FC = () => {
       <header className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between border-b pb-8" style={{ borderColor: 'var(--border-subtle)' }}>
         <div className="max-w-2xl space-y-3">
           <p className="font-mono text-[11px] tracking-[0.22em]" style={{ color: 'var(--accent-primary)' }}>
-            F-FORUM · KHO MẪU &amp; MÃ NGUỒN
+            02 / THƯ MỤC
           </p>
           <h1
             className="m-0 font-semibold tracking-tight leading-[1.05]"
@@ -317,7 +317,7 @@ export const ExploreView: React.FC = () => {
             {headingSplit.rest}
           </h1>
           <p className="m-0 text-[15px] leading-relaxed" style={{ color: 'var(--ink-secondary)' }}>
-            Những cấu trúc giao diện được tuyển chọn từ PinUI, ThreeUI, MotionSites, LucianLabs và các kho lưu trữ mở, sẵn sàng kiểm định trong Live View.
+            Tra cứu công cụ, mẫu giao diện và kho mã nguồn. Lưu tài liệu hoặc đính kèm vào bản dựng.
           </p>
         </div>
 
@@ -405,6 +405,7 @@ export const ExploreView: React.FC = () => {
                   key={pill.id}
                   type="button"
                   onClick={() => setSelectedLibrary(pill.id)}
+                  aria-pressed={active}
                   className="shrink-0 rounded-full border px-4 py-1.5 text-xs font-medium cursor-pointer transition-colors"
                   style={{
                     backgroundColor: active ? 'var(--accent-primary)' : 'var(--bg-surface)',
@@ -480,6 +481,29 @@ export const ExploreView: React.FC = () => {
                     >
                       Đặt lại
                     </button>
+                  </div>
+                ) : selectedLibrary === 'pinui' && selectedTemplate ? (
+                  <div className="pinui-catalog">
+                    <SelectionList items={filteredTemplates.map(({ id, title }) => ({ id, label: title }))}
+                      selectedId={selectedTemplate.id} onSelect={setSelectedTemplateId} ariaLabel="Mẫu PinUI" />
+                    <div className="pinui-catalog-detail" aria-labelledby="pinui-title">
+                      <p className="font-mono text-xs">PIN UI / {selectedTemplate.category}</p>
+                      <h3 id="pinui-title">{selectedTemplate.title}</h3>
+                      <p>{selectedTemplate.description}</p>
+                      <p className="font-mono text-xs">{selectedTemplate.license}</p>
+                      {selectedTemplate.id === 'component/sling-slider' && (
+                        <Suspense fallback={<p role="status">Đang tải…</p>}>
+                          <SlingSlider theme={theme} label="Thử thanh trượt" hint={false} />
+                        </Suspense>
+                      )}
+                      {selectedTemplate.installCommand && <details><summary>Lệnh cài đặt</summary><pre>{selectedTemplate.installCommand}</pre></details>}
+                      <div className="pinui-catalog-actions">
+                        <a href={selectedTemplate.officialUrl} target="_blank" rel="noreferrer">Nguồn PinUI</a>
+                        <button type="button" onClick={() => handleOpenTemplateInWorkspace(selectedTemplate)}>Tạo dự án</button>
+                        <button type="button" aria-pressed={selectedSaved} onClick={() => toggleSavedItem(selectedTemplate.id)}>{selectedSaved ? 'Bỏ lưu' : 'Lưu mẫu'}</button>
+                      </div>
+                      <p className="text-xs">Tạo dự án đính kèm tài liệu tham chiếu, không tự chạy lệnh cài đặt.</p>
+                    </div>
                   </div>
                 ) : (
                   <div className="flex gap-5 overflow-x-auto pb-4 snap-x ff-scrollbar">

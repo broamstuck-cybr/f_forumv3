@@ -465,7 +465,7 @@ export const CommunityView: React.FC = () => {
       >
         <div className="max-w-2xl space-y-3">
           <p className="font-mono text-[11px] tracking-[0.22em]" style={{ color: 'var(--accent-primary)' }}>
-            F-FORUM · SALON PHẢN BIỆN &amp; HỌC LIỆU
+            03 / DIỄN ĐÀN
           </p>
           <h1
             className="m-0 font-semibold tracking-tight leading-[1.05]"
@@ -479,7 +479,7 @@ export const CommunityView: React.FC = () => {
             {headingSplit.rest}
           </h1>
           <p className="m-0 text-[15px] leading-relaxed" style={{ color: 'var(--ink-secondary)' }}>
-            Không gian đối thoại Socratic, soi xét nguyên mẫu trực tiếp trong hộp cát và lưu giữ hồ sơ chuyển giao giữa các thế hệ kỹ sư.
+            Đặt câu hỏi, góp ý bản dựng và bàn giao dự án cho người tiếp nối.
           </p>
         </div>
 

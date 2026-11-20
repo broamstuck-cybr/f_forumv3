@@ -1,3 +1,4 @@
+import { parseRouteFromPathname, routeToPathname } from '../utils/routes';
 import React, {
   createContext,
   useCallback,
@@ -7,7 +8,6 @@ import React, {
   useRef,
   useState,
 } from 'react';
-import JSZip from 'jszip';
 import sourceCatalogJson from '../data/sourceCatalog.json';
 import resourceLibraryJson from '../data/resourceLibrary.json';
 import communitySeedJson from '../data/communitySeed.json';
@@ -291,7 +291,7 @@ body {
 }
 
 function createInitialProject(
-  name = 'Obsidian Spatial Workbench',
+  name = 'Bản dựng mới',
   description = 'Starter multi-file project with 8px token rhythm and live preview.'
 ): WorkspaceProject {
   const now = new Date().toISOString();
@@ -369,25 +369,6 @@ function mergeRemoteProjects(
       ? []
       : localOnly;
   return [...merged, ...keptLocal];
-}
-
-function parseRouteFromPathname(pathname: string): AppRoute {
-  const clean = pathname.replace(/\/+$/, '') || '/';
-  if (clean === '/') return 'landing';
-  if (clean === '/home') return 'home';
-  if (clean === '/explore') return 'explore';
-  if (clean === '/workspace') return 'workspace';
-  if (clean === '/community') return 'community';
-  if (clean === '/profile') return 'profile';
-  if (clean === '/settings') return 'settings';
-  if (clean === '/admin') return 'admin';
-  return 'not-found';
-}
-
-function routeToPathname(route: AppRoute): string {
-  if (route === 'landing') return '/';
-  if (route === 'not-found') return '/404';
-  return `/${route}`;
 }
 
 function normalizeRouteTarget(target: AppRoute | DimensionView): AppRoute {
@@ -542,7 +523,7 @@ const AppStoreContext = createContext<AppStoreContextValue | null>(null);
 
 export const AppStoreProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [currentRoute, setCurrentRoute] = useState<AppRoute>(() =>
-    typeof window !== 'undefined' ? parseRouteFromPathname(window.location.pathname) : 'landing'
+    typeof window !== 'undefined' ? parseRouteFromPathname(window.location.pathname, window.location.search) : 'landing'
   );
   const [authModalOpen, setAuthModalOpen] = useState(false);
 
@@ -664,7 +645,7 @@ export const AppStoreProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   useEffect(() => {
     if (typeof window === 'undefined') return;
     const handlePopState = () => {
-      setCurrentRoute(parseRouteFromPathname(window.location.pathname));
+      setCurrentRoute(parseRouteFromPathname(window.location.pathname, window.location.search));
     };
     window.addEventListener('popstate', handlePopState);
     return () => window.removeEventListener('popstate', handlePopState);
@@ -754,7 +735,7 @@ export const AppStoreProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     setCurrentRoute(nextRoute);
     if (typeof window !== 'undefined') {
       const nextPath = routeToPathname(nextRoute);
-      if (window.location.pathname !== nextPath) {
+      if (window.location.pathname !== nextPath || window.location.search) {
         window.history.pushState({}, '', nextPath);
       }
       window.scrollTo({ top: 0, behavior: 'auto' });
@@ -1348,6 +1329,7 @@ export const AppStoreProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
   const exportActiveProjectZip = useCallback(
     async (includeSetupBundle = true, target?: ProjectSetupTarget) => {
+      const { default: JSZip } = await import('jszip');
       const zip = new JSZip();
       const { clean, findings, sanitizedFiles } = sanitizeFilesForZipExport(activeProject.files);
 

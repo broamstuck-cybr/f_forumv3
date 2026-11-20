@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { lazy, Suspense, useEffect, useState } from 'react';
 import { LayoutGroup, MotionConfig } from 'motion/react';
 import { AppProvider, useAppStore } from './store/appStore';
 import { AppNavbar } from './components/layout/AppNavbar';
@@ -8,25 +8,32 @@ import { AuthModal } from './components/public/AuthModal';
 import { NoticeStatusModal } from './components/public/NoticeStatusModal';
 import { Skybridge404 } from './components/public/Skybridge404';
 import { ToastStack } from './components/public/ToastStack';
-import { AdminView } from './features/admin/AdminView';
-import { CommunityView } from './features/community/CommunityView';
-import { ExploreView } from './features/explore/ExploreView';
-import { HomeView } from './features/launchpad/HomeView';
-import { ProfileView } from './features/profile/ProfileView';
-import { SettingsView } from './features/settings/SettingsView';
-import { WorkspaceView } from './features/workspace/WorkspaceView';
+const AdminView = lazy(() => import('./features/admin/AdminView').then((module) => ({ default: module.AdminView })));
+const CommunityView = lazy(() => import('./features/community/CommunityView').then((module) => ({ default: module.CommunityView })));
+const ExploreView = lazy(() => import('./features/explore/ExploreView').then((module) => ({ default: module.ExploreView })));
+const HomeView = lazy(() => import('./features/launchpad/HomeView').then((module) => ({ default: module.HomeView })));
+const ProfileView = lazy(() => import('./features/profile/ProfileView').then((module) => ({ default: module.ProfileView })));
+const SettingsView = lazy(() => import('./features/settings/SettingsView').then((module) => ({ default: module.SettingsView })));
+const WorkspaceView = lazy(() => import('./features/workspace/WorkspaceView').then((module) => ({ default: module.WorkspaceView })));
+const titles = {
+  landing: 'Xưởng thực hành web', home: 'Bàn làm việc', explore: 'Khám phá', workspace: 'Work',
+  community: 'Source of Knowledge', profile: 'Hồ sơ', settings: 'Cài đặt', admin: 'Quản trị',
+  'not-found': 'Không tìm thấy trang',
+};
+
 
 const AppShell: React.FC = () => {
   const {
     currentRoute,
     navigate,
-    currentUser,
     authModalOpen,
     setAuthModalOpen,
     reducedMotion,
   } = useAppStore();
 
   const [noticeModalOpen, setNoticeModalOpen] = useState(false);
+
+  useEffect(() => { document.title = `${titles[currentRoute]} · F-Forum`; }, [currentRoute]);
 
   const showNavbar = currentRoute !== 'landing' && currentRoute !== 'not-found';
   const showFooter =
@@ -43,19 +50,15 @@ const AppShell: React.FC = () => {
             background: 'var(--bg-canvas)',
             color: 'var(--ink-primary)',
           }}
+          data-route={currentRoute}
           className="min-h-screen w-full flex flex-col overflow-x-clip"
         >
-          {showNavbar && <AppNavbar onOpenNotice={() => setNoticeModalOpen(true)} />}
+          {showNavbar && <><a className="app-skip" href="#app-content">Đến nội dung</a><AppNavbar onOpenNotice={() => setNoticeModalOpen(true)} /></>}
 
-          <div className="flex-1 min-w-0 flex flex-col">
+          <div id="app-content" tabIndex={-1} className="flex-1 min-w-0 flex flex-col">
+            <Suspense fallback={<p className="ff-container py-6" role="status">Đang tải…</p>}>
             {currentRoute === 'landing' && (
-              <LandingPage
-                currentUser={currentUser}
-                onOpenAuth={() => setAuthModalOpen(true)}
-                onOpenLogin={() => setAuthModalOpen(true)}
-                onEnterApp={() => navigate('home')}
-                onNavigate={(view) => navigate(view)}
-              />
+              <LandingPage onOpenNotice={() => setNoticeModalOpen(true)} />
             )}
 
             {currentRoute === 'home' && (
@@ -69,6 +72,7 @@ const AppShell: React.FC = () => {
             {currentRoute === 'settings' && <SettingsView />}
             {currentRoute === 'admin' && <AdminView />}
             {currentRoute === 'not-found' && <Skybridge404 onNavigate={navigate} />}
+            </Suspense>
           </div>
 
           {showFooter && (

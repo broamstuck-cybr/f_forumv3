@@ -16,7 +16,8 @@
     "license": "MIT (c) Rachit Thakur / Shadcn Labs",
     "officialUrl": "https://www.pinui.xyz/components/presence-cards",
     "archivePath": "sources/pinui/registry/presence-cards",
-    "description": "Two cards on a shared canvas, worked on live by four people at once."
+    "description": "Two cards on a shared canvas, worked on live by four people at once.",
+    "installCommand": "npx shadcn@latest add \"https://www.pinui.xyz/r/presence-cards.json\""
   },
   {
     "id": "component/theme-switch",
@@ -35,7 +36,8 @@
     "license": "MIT (c) Rachit Thakur / Shadcn Labs",
     "officialUrl": "https://www.pinui.xyz/components/theme-switch",
     "archivePath": "sources/pinui/registry/theme-switch",
-    "description": "A theme toggle that rains, drips or sets off fireworks to change the theme."
+    "description": "A theme toggle that rains, drips or sets off fireworks to change the theme.",
+    "installCommand": "npx shadcn@latest add \"https://www.pinui.xyz/r/theme-switch.json\""
   },
   {
     "id": "component/reader-card",
@@ -54,7 +56,8 @@
     "license": "MIT (c) Rachit Thakur / Shadcn Labs",
     "officialUrl": "https://www.pinui.xyz/components/reader-card",
     "archivePath": "sources/pinui/registry/reader-card",
-    "description": "A story card that scrolls in place and morphs into a liquid-glass reader."
+    "description": "A story card that scrolls in place and morphs into a liquid-glass reader.",
+    "installCommand": "npx shadcn@latest add \"https://www.pinui.xyz/r/reader-card.json\""
   },
   {
     "id": "component/search-card",
@@ -73,7 +76,8 @@
     "license": "MIT (c) Rachit Thakur / Shadcn Labs",
     "officialUrl": "https://www.pinui.xyz/components/search-card",
     "archivePath": "sources/pinui/registry/search-card",
-    "description": "A centred search bar that rises and morphs open into a card of recent searches."
+    "description": "A centred search bar that rises and morphs open into a card of recent searches.",
+    "installCommand": "npx shadcn@latest add \"https://www.pinui.xyz/r/search-card.json\""
   },
   {
     "id": "component/selection-list",
@@ -92,7 +96,8 @@
     "license": "MIT (c) Rachit Thakur / Shadcn Labs",
     "officialUrl": "https://www.pinui.xyz/components/selection-list",
     "archivePath": "sources/pinui/registry/selection-list",
-    "description": "A single-choice list whose halves snap together like magnets."
+    "description": "A single-choice list whose halves snap together like magnets.",
+    "installCommand": "npx shadcn@latest add \"https://www.pinui.xyz/r/selection-list.json\""
   },
   {
     "id": "component/desk-computer",
@@ -111,7 +116,8 @@
     "license": "MIT (c) Rachit Thakur / Shadcn Labs",
     "officialUrl": "https://www.pinui.xyz/components/desk-computer",
     "archivePath": "sources/pinui/registry/desk-computer",
-    "description": "A late-90s desk computer in true isometric that you can actually use."
+    "description": "A late-90s desk computer in true isometric that you can actually use.",
+    "installCommand": "npx shadcn@latest add \"https://www.pinui.xyz/r/desk-computer.json\""
   },
   {
     "id": "component/liquid-voice",
@@ -130,7 +136,8 @@
     "license": "MIT (c) Rachit Thakur / Shadcn Labs",
     "officialUrl": "https://www.pinui.xyz/components/liquid-voice",
     "archivePath": "sources/pinui/registry/liquid-voice",
-    "description": "A voice-input pill of real liquid glass that stretches into a recorder."
+    "description": "A voice-input pill of real liquid glass that stretches into a recorder.",
+    "installCommand": "npx shadcn@latest add \"https://www.pinui.xyz/r/liquid-voice.json\""
   },
   {
     "id": "component/file-box",
@@ -149,7 +156,8 @@
     "license": "MIT (c) Rachit Thakur / Shadcn Labs",
     "officialUrl": "https://www.pinui.xyz/components/file-box",
     "archivePath": "sources/pinui/registry/file-box",
-    "description": "A cardboard file box whose folders lift out by their tabs."
+    "description": "A cardboard file box whose folders lift out by their tabs.",
+    "installCommand": "npx shadcn@latest add \"https://www.pinui.xyz/r/file-box.json\""
   },
   {
     "id": "component/copy-paste-pad",
@@ -168,7 +176,8 @@
     "license": "MIT (c) Rachit Thakur / Shadcn Labs",
     "officialUrl": "https://www.pinui.xyz/components/copy-paste-pad",
     "archivePath": "sources/pinui/registry/copy-paste-pad",
-    "description": "A 3-D aluminium macro pad whose ⌘C and ⌘V copy and paste the theme."
+    "description": "A 3-D aluminium macro pad whose ⌘C and ⌘V copy and paste the theme.",
+    "installCommand": "npx shadcn@latest add \"https://www.pinui.xyz/r/copy-paste-pad.json\""
   },
   {
     "id": "component/task-card",
@@ -187,7 +196,8 @@
     "license": "MIT (c) Rachit Thakur / Shadcn Labs",
     "officialUrl": "https://www.pinui.xyz/components/task-card",
     "archivePath": "sources/pinui/registry/task-card",
-    "description": "A task with subtasks on a connector tree, progress, priority and status."
+    "description": "A task with subtasks on a connector tree, progress, priority and status.",
+    "installCommand": "npx shadcn@latest add \"https://www.pinui.xyz/r/task-card.json\""
   },
   {
     "id": "component/magnify",
@@ -206,7 +216,8 @@
     "license": "MIT (c) Rachit Thakur / Shadcn Labs",
     "officialUrl": "https://www.pinui.xyz/components/magnify",
     "archivePath": "sources/pinui/registry/magnify",
-    "description": "A type specimen you inspect with a real magnifying glass."
+    "description": "A type specimen you inspect with a real magnifying glass.",
+    "installCommand": "npx shadcn@latest add \"https://www.pinui.xyz/r/magnify.json\""
   },
   {
     "id": "component/progress-image",
@@ -225,7 +236,8 @@
     "license": "MIT (c) Rachit Thakur / Shadcn Labs",
     "officialUrl": "https://www.pinui.xyz/components/progress-image",
     "archivePath": "sources/pinui/registry/progress-image",
-    "description": "A rollout card whose photograph is the progress bar."
+    "description": "A rollout card whose photograph is the progress bar.",
+    "installCommand": "npx shadcn@latest add \"https://www.pinui.xyz/r/progress-image.json\""
   },
   {
     "id": "component/prompt-composer",
@@ -244,7 +256,8 @@
     "license": "MIT (c) Rachit Thakur / Shadcn Labs",
     "officialUrl": "https://www.pinui.xyz/components/prompt-composer",
     "archivePath": "sources/pinui/registry/prompt-composer",
-    "description": "An assistant's field with its quick actions fanned out behind it."
+    "description": "An assistant's field with its quick actions fanned out behind it.",
+    "installCommand": "npx shadcn@latest add \"https://www.pinui.xyz/r/prompt-composer.json\""
   },
   {
     "id": "component/calendar-card",
@@ -263,7 +276,8 @@
     "license": "MIT (c) Rachit Thakur / Shadcn Labs",
     "officialUrl": "https://www.pinui.xyz/components/calendar-card",
     "archivePath": "sources/pinui/registry/calendar-card",
-    "description": "A month card where the selected day glides from date to date."
+    "description": "A month card where the selected day glides from date to date.",
+    "installCommand": "npx shadcn@latest add \"https://www.pinui.xyz/r/calendar-card.json\""
   },
   {
     "id": "component/chat-room",
@@ -282,7 +296,8 @@
     "license": "MIT (c) Rachit Thakur / Shadcn Labs",
     "officialUrl": "https://www.pinui.xyz/components/chat-room",
     "archivePath": "sources/pinui/registry/chat-room",
-    "description": "A stack of faces that morphs into a voice chat card, and back."
+    "description": "A stack of faces that morphs into a voice chat card, and back.",
+    "installCommand": "npx shadcn@latest add \"https://www.pinui.xyz/r/chat-room.json\""
   },
   {
     "id": "component/dynamic-drop-zone",
@@ -301,7 +316,8 @@
     "license": "MIT (c) Rachit Thakur / Shadcn Labs",
     "officialUrl": "https://www.pinui.xyz/components/dynamic-drop-zone",
     "archivePath": "sources/pinui/registry/dynamic-drop-zone",
-    "description": "A file drop zone that turns into a magnetic black hole."
+    "description": "A file drop zone that turns into a magnetic black hole.",
+    "installCommand": "npx shadcn@latest add \"https://www.pinui.xyz/r/dynamic-drop-zone.json\""
   },
   {
     "id": "component/swap-card",
@@ -320,7 +336,8 @@
     "license": "MIT (c) Rachit Thakur / Shadcn Labs",
     "officialUrl": "https://www.pinui.xyz/components/swap-card",
     "archivePath": "sources/pinui/registry/swap-card",
-    "description": "A token swap card where every number rolls and the button is liquid."
+    "description": "A token swap card where every number rolls and the button is liquid.",
+    "installCommand": "npx shadcn@latest add \"https://www.pinui.xyz/r/swap-card.json\""
   },
   {
     "id": "component/liquid-tabs",
@@ -339,7 +356,8 @@
     "license": "MIT (c) Rachit Thakur / Shadcn Labs",
     "officialUrl": "https://www.pinui.xyz/components/liquid-tabs",
     "archivePath": "sources/pinui/registry/liquid-tabs",
-    "description": "A notifications card whose active tab is liquid, flowing from tab to tab."
+    "description": "A notifications card whose active tab is liquid, flowing from tab to tab.",
+    "installCommand": "npx shadcn@latest add \"https://www.pinui.xyz/r/liquid-tabs.json\""
   },
   {
     "id": "component/thermal-dial",
@@ -358,7 +376,8 @@
     "license": "MIT (c) Rachit Thakur / Shadcn Labs",
     "officialUrl": "https://www.pinui.xyz/components/thermal-dial",
     "archivePath": "sources/pinui/registry/thermal-dial",
-    "description": "A thermal dial that undulates with heat and rolls through the seasons."
+    "description": "A thermal dial that undulates with heat and rolls through the seasons.",
+    "installCommand": "npx shadcn@latest add \"https://www.pinui.xyz/r/thermal-dial.json\""
   },
   {
     "id": "component/lamp-switch",
@@ -377,7 +396,8 @@
     "license": "MIT (c) Rachit Thakur / Shadcn Labs",
     "officialUrl": "https://www.pinui.xyz/components/lamp-switch",
     "archivePath": "sources/pinui/registry/lamp-switch",
-    "description": "A hanging ceramic lamp that swings on a cord and toggles with a liquid switch."
+    "description": "A hanging ceramic lamp that swings on a cord and toggles with a liquid switch.",
+    "installCommand": "npx shadcn@latest add \"https://www.pinui.xyz/r/lamp-switch.json\""
   },
   {
     "id": "component/joystick",
@@ -396,7 +416,8 @@
     "license": "MIT (c) Rachit Thakur / Shadcn Labs",
     "officialUrl": "https://www.pinui.xyz/components/joystick",
     "archivePath": "sources/pinui/registry/joystick",
-    "description": "A pixel-art arcade stick you can grab, push to the gate and let snap back."
+    "description": "A pixel-art arcade stick you can grab, push to the gate and let snap back.",
+    "installCommand": "npx shadcn@latest add \"https://www.pinui.xyz/r/joystick.json\""
   },
   {
     "id": "component/weather",
@@ -415,7 +436,8 @@
     "license": "MIT (c) Rachit Thakur / Shadcn Labs",
     "officialUrl": "https://www.pinui.xyz/components/weather",
     "archivePath": "sources/pinui/registry/weather",
-    "description": "A weather square that opens out into a five-day forecast."
+    "description": "A weather square that opens out into a five-day forecast.",
+    "installCommand": "npx shadcn@latest add \"https://www.pinui.xyz/r/weather.json\""
   },
   {
     "id": "component/recorder",
@@ -434,7 +456,8 @@
     "license": "MIT (c) Rachit Thakur / Shadcn Labs",
     "officialUrl": "https://www.pinui.xyz/components/recorder",
     "archivePath": "sources/pinui/registry/recorder",
-    "description": "A voice recorder with a waveform that scrolls under the playhead."
+    "description": "A voice recorder with a waveform that scrolls under the playhead.",
+    "installCommand": "npx shadcn@latest add \"https://www.pinui.xyz/r/recorder.json\""
   },
   {
     "id": "component/taxi",
@@ -453,7 +476,8 @@
     "license": "MIT (c) Rachit Thakur / Shadcn Labs",
     "officialUrl": "https://www.pinui.xyz/components/taxi",
     "archivePath": "sources/pinui/registry/taxi",
-    "description": "Hail a cab in one tap, and ride the whole trip on one card."
+    "description": "Hail a cab in one tap, and ride the whole trip on one card.",
+    "installCommand": "npx shadcn@latest add \"https://www.pinui.xyz/r/taxi.json\""
   },
   {
     "id": "component/chips",
@@ -472,7 +496,8 @@
     "license": "MIT (c) Rachit Thakur / Shadcn Labs",
     "officialUrl": "https://www.pinui.xyz/components/chips",
     "archivePath": "sources/pinui/registry/chips",
-    "description": "A selection list of 3D chips that press into the surface."
+    "description": "A selection list of 3D chips that press into the surface.",
+    "installCommand": "npx shadcn@latest add \"https://www.pinui.xyz/r/chips.json\""
   },
   {
     "id": "component/otp-input",
@@ -491,7 +516,8 @@
     "license": "MIT (c) Rachit Thakur / Shadcn Labs",
     "officialUrl": "https://www.pinui.xyz/components/otp-input",
     "archivePath": "sources/pinui/registry/otp-input",
-    "description": "A one-time-code field made of eggs that crack on a wrong code."
+    "description": "A one-time-code field made of eggs that crack on a wrong code.",
+    "installCommand": "npx shadcn@latest add \"https://www.pinui.xyz/r/otp-input.json\""
   },
   {
     "id": "component/add-member",
@@ -510,7 +536,8 @@
     "license": "MIT (c) Rachit Thakur / Shadcn Labs",
     "officialUrl": "https://www.pinui.xyz/components/add-member",
     "archivePath": "sources/pinui/registry/add-member",
-    "description": "Pick people for a project, and watch their faces fly into the stack."
+    "description": "Pick people for a project, and watch their faces fly into the stack.",
+    "installCommand": "npx shadcn@latest add \"https://www.pinui.xyz/r/add-member.json\""
   },
   {
     "id": "component/session-list",
@@ -529,7 +556,8 @@
     "license": "MIT (c) Rachit Thakur / Shadcn Labs",
     "officialUrl": "https://www.pinui.xyz/components/session-list",
     "archivePath": "sources/pinui/registry/session-list",
-    "description": "A session broken into blocks, counting down in real time."
+    "description": "A session broken into blocks, counting down in real time.",
+    "installCommand": "npx shadcn@latest add \"https://www.pinui.xyz/r/session-list.json\""
   },
   {
     "id": "component/balance-card",
@@ -548,7 +576,8 @@
     "license": "MIT (c) Rachit Thakur / Shadcn Labs",
     "officialUrl": "https://www.pinui.xyz/components/balance-card",
     "archivePath": "sources/pinui/registry/balance-card",
-    "description": "A counting balance, a liquid currency selector and a drawer that settles."
+    "description": "A counting balance, a liquid currency selector and a drawer that settles.",
+    "installCommand": "npx shadcn@latest add \"https://www.pinui.xyz/r/balance-card.json\""
   },
   {
     "id": "component/cart-card",
@@ -567,7 +596,8 @@
     "license": "MIT (c) Rachit Thakur / Shadcn Labs",
     "officialUrl": "https://www.pinui.xyz/components/cart-card",
     "archivePath": "sources/pinui/registry/cart-card",
-    "description": "A product card that is only a photo until you open it."
+    "description": "A product card that is only a photo until you open it.",
+    "installCommand": "npx shadcn@latest add \"https://www.pinui.xyz/r/cart-card.json\""
   },
   {
     "id": "blocx/storybook-hero",
@@ -586,7 +616,8 @@
     "license": "MIT (c) Rachit Thakur / Shadcn Labs",
     "officialUrl": "https://www.pinui.xyz/blocx/storybook-hero",
     "archivePath": "sources/pinui/blocx/storybook-hero",
-    "description": "Hero Section block. A parchment hero with a glowing cottage in an arch."
+    "description": "Hero Section block. A parchment hero with a glowing cottage in an arch.",
+    "installCommand": "npx shadcn@latest add \"https://www.pinui.xyz/r/blocx/storybook-hero.json\""
   },
   {
     "id": "blocx/partylabs-hero",
@@ -605,7 +636,8 @@
     "license": "MIT (c) Rachit Thakur / Shadcn Labs",
     "officialUrl": "https://www.pinui.xyz/blocx/partylabs-hero",
     "archivePath": "sources/pinui/blocx/partylabs-hero",
-    "description": "Hero Section block. A headline floating in a field of party photos."
+    "description": "Hero Section block. A headline floating in a field of party photos.",
+    "installCommand": "npx shadcn@latest add \"https://www.pinui.xyz/r/blocx/partylabs-hero.json\""
   },
   {
     "id": "blocx/luna-hero",
@@ -624,7 +656,8 @@
     "license": "MIT (c) Rachit Thakur / Shadcn Labs",
     "officialUrl": "https://www.pinui.xyz/blocx/luna-hero",
     "archivePath": "sources/pinui/blocx/luna-hero",
-    "description": "Hero Section block. Pixel storefront hero with a floating mega menu."
+    "description": "Hero Section block. Pixel storefront hero with a floating mega menu.",
+    "installCommand": "npx shadcn@latest add \"https://www.pinui.xyz/r/blocx/luna-hero.json\""
   },
   {
     "id": "blocx/orbit-hero",
@@ -643,7 +676,8 @@
     "license": "MIT (c) Rachit Thakur / Shadcn Labs",
     "officialUrl": "https://www.pinui.xyz/blocx/orbit-hero",
     "archivePath": "sources/pinui/blocx/orbit-hero",
-    "description": "Hero Section block. Space hero with a live, turning WebGL Earth."
+    "description": "Hero Section block. Space hero with a live, turning WebGL Earth.",
+    "installCommand": "npx shadcn@latest add \"https://www.pinui.xyz/r/blocx/orbit-hero.json\""
   },
   {
     "id": "blocx/odometer-pricing",
@@ -662,7 +696,8 @@
     "license": "MIT (c) Rachit Thakur / Shadcn Labs",
     "officialUrl": "https://www.pinui.xyz/blocx/odometer-pricing",
     "archivePath": "sources/pinui/blocx/odometer-pricing",
-    "description": "Pricing block. Prices roll like an odometer on billing."
+    "description": "Pricing block. Prices roll like an odometer on billing.",
+    "installCommand": "npx shadcn@latest add \"https://www.pinui.xyz/r/blocx/odometer-pricing.json\""
   },
   {
     "id": "blocx/caremetric-footer",
@@ -681,7 +716,8 @@
     "license": "MIT (c) Rachit Thakur / Shadcn Labs",
     "officialUrl": "https://www.pinui.xyz/blocx/caremetric-footer",
     "archivePath": "sources/pinui/blocx/caremetric-footer",
-    "description": "Footer block. Green link columns over a giant, bleeding mark."
+    "description": "Footer block. Green link columns over a giant, bleeding mark.",
+    "installCommand": "npx shadcn@latest add \"https://www.pinui.xyz/r/blocx/caremetric-footer.json\""
   },
   {
     "id": "blocx/smart-pricing",
@@ -700,7 +736,8 @@
     "license": "MIT (c) Rachit Thakur / Shadcn Labs",
     "officialUrl": "https://www.pinui.xyz/blocx/smart-pricing",
     "archivePath": "sources/pinui/blocx/smart-pricing",
-    "description": "Pricing block. Lime plans with a yearly switch and rolling prices."
+    "description": "Pricing block. Lime plans with a yearly switch and rolling prices.",
+    "installCommand": "npx shadcn@latest add \"https://www.pinui.xyz/r/blocx/smart-pricing.json\""
   },
   {
     "id": "blocx/contact-form",
@@ -719,7 +756,8 @@
     "license": "MIT (c) Rachit Thakur / Shadcn Labs",
     "officialUrl": "https://www.pinui.xyz/blocx/contact-form",
     "archivePath": "sources/pinui/blocx/contact-form",
-    "description": "Contact block. Black tiles, a reaching hand and a real form."
+    "description": "Contact block. Black tiles, a reaching hand and a real form.",
+    "installCommand": "npx shadcn@latest add \"https://www.pinui.xyz/r/blocx/contact-form.json\""
   },
   {
     "id": "blocx/synais-footer",
@@ -738,7 +776,8 @@
     "license": "MIT (c) Rachit Thakur / Shadcn Labs",
     "officialUrl": "https://www.pinui.xyz/blocx/synais-footer",
     "archivePath": "sources/pinui/blocx/synais-footer",
-    "description": "Footer block. Dark link columns over a giant cream wordmark."
+    "description": "Footer block. Dark link columns over a giant cream wordmark.",
+    "installCommand": "npx shadcn@latest add \"https://www.pinui.xyz/r/blocx/synais-footer.json\""
   },
   {
     "id": "blocx/halo-sign-in",
@@ -757,7 +796,8 @@
     "license": "MIT (c) Rachit Thakur / Shadcn Labs",
     "officialUrl": "https://www.pinui.xyz/blocx/halo-sign-in",
     "archivePath": "sources/pinui/blocx/halo-sign-in",
-    "description": "Auth block. A soft card in a tray, its mark in turning dots."
+    "description": "Auth block. A soft card in a tray, its mark in turning dots.",
+    "installCommand": "npx shadcn@latest add \"https://www.pinui.xyz/r/blocx/halo-sign-in.json\""
   },
   {
     "id": "blocx/pixelkit-sign-in",
@@ -776,7 +816,8 @@
     "license": "MIT (c) Rachit Thakur / Shadcn Labs",
     "officialUrl": "https://www.pinui.xyz/blocx/pixelkit-sign-in",
     "archivePath": "sources/pinui/blocx/pixelkit-sign-in",
-    "description": "Auth block. A lime tile, three providers and a magic link."
+    "description": "Auth block. A lime tile, three providers and a magic link.",
+    "installCommand": "npx shadcn@latest add \"https://www.pinui.xyz/r/blocx/pixelkit-sign-in.json\""
   },
   {
     "id": "three-js-365-tetrahedron",
@@ -2302,5 +2343,23 @@
     "officialUrl": "https://codefronts.com/components/css-buttons/css-disabled-button-state-full-state-reference/",
     "archivePath": "sources/codefronts/components/css-buttons/css-disabled-button-state-full-state-reference.md",
     "description": "Every button state side by side in one row — rest, hover, focus, pressed, truly disabled, and aria-disabled (focusable, explains itself, refuses activation)."
+  },
+  {
+    "id": "component/sling-slider",
+    "title": "Sling Slider",
+    "sourceLibrary": "pinui",
+    "category": "Components",
+    "subcategory": "component",
+    "tags": [
+      "range",
+      "react",
+      "controls"
+    ],
+    "runtime": "React, CSS",
+    "style": "Physics slider",
+    "license": "MIT (c) Rachit Thakur / Shadcn Labs",
+    "officialUrl": "https://www.pinui.xyz/components/sling-slider",
+    "archivePath": "components/library/SlingSlider.tsx",
+    "description": "Thanh trượt tương tác: kéo trực tiếp hoặc thả điểm trượt như ná cao su. Hỗ trợ bàn phím và giảm chuyển động."
   }
 ]

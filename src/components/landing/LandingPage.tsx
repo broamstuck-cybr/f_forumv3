@@ -1,155 +1,74 @@
-import React, { useEffect, useState } from 'react';
-import { X } from 'lucide-react';
-import type { AppRoute, DimensionView, User } from '../../types/index';
+import { lazy, Suspense, useState } from 'react';
+import type { AppRoute } from '../../types';
+import { routeToPathname } from '../../utils/routes';
 import { useAppStore } from '../../store/appStore';
-import { safeStorage } from '../../utils/storage';
-import { BackToTop } from './LandingPrimitives';
-import { LandingNav } from './LandingNav';
-import { LANDING_CHAPTERS } from './landingContent';
-import { scrollToSection, useActiveChapter, useLenisSmoothScroll } from './useLandingMotion';
-import { LandingHero } from './sections/LandingHero';
-import { LandingShowcase } from './sections/LandingShowcase';
-import { LandingManifesto } from './sections/LandingManifesto';
-import { LandingProjects } from './sections/LandingProjects';
-import { LandingPricing } from './sections/LandingPricing';
-import { LandingFAQ } from './sections/LandingFAQ';
-import { LandingFooter } from './sections/LandingFooter';
+const HardwareShowcase = lazy(() => import('../HardwareShowcase').then((module) => ({ default: module.HardwareShowcase })));
 
-export interface LandingPageProps {
-  currentUser?: User | null;
-  onOpenAuth?: () => void;
-  onOpenLogin?: () => void;
-  onEnterApp?: () => void;
-  onNavigate?: (view: DimensionView) => void;
+const chapters = [
+  { route: 'workspace', label: 'Work', detail: 'Viết mã, xem kết quả trong Live View và đối chiếu thay đổi với Diff & Check.' },
+  { route: 'explore', label: 'Explore', detail: 'Tra cứu mẫu giao diện, công cụ và kho mã nguồn trước khi bắt tay vào dựng.' },
+  { route: 'community', label: 'Source of Knowledge', detail: 'Đặt câu hỏi, chia sẻ bản dựng và lưu lại kinh nghiệm cho người tiếp nối.' },
+] as const;
+
+function routeLink(event: React.MouseEvent<HTMLAnchorElement>, route: AppRoute, navigate: (route: AppRoute) => void) {
+  if (event.button || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+  event.preventDefault();
+  navigate(route);
 }
 
-const CHAPTER_IDS = LANDING_CHAPTERS.map((c) => c.id);
-
-export const LandingPage: React.FC<LandingPageProps> = ({
-  currentUser: propUser,
-  onOpenAuth,
-  onOpenLogin,
-  onEnterApp,
-  onNavigate,
-}) => {
-  const store = useAppStore();
-  const [noticeOpen, setNoticeOpen] = useState(false);
-
-  const currentUser = propUser !== undefined ? propUser : store.currentUser;
-  const enterApp = onEnterApp ?? (() => store.navigate('home'));
-  const openAuth = onOpenAuth ?? (() => store.setAuthModalOpen(true));
-  const openLogin = onOpenLogin ?? (() => store.setAuthModalOpen(true));
-  const navigateTo = onNavigate ?? ((view: DimensionView) => store.navigate(view));
-
-  const activeChapterId = useActiveChapter(CHAPTER_IDS);
-
-  useLenisSmoothScroll(true);
-
-  useEffect(() => {
-    safeStorage.setItem('fforum_landing_seen', 'true');
-  }, []);
-
-  const handleFooterNavigate = (route: AppRoute) => {
-    if (route === 'landing') {
-      scrollToSection('top');
-      return;
-    }
-    store.navigate(route);
-  };
-
+export function LandingPage({ onOpenNotice }: { onOpenNotice: () => void }) {
+  const { navigate, currentUser, setAuthModalOpen } = useAppStore();
+  const [showDemo, setShowDemo] = useState(false);
+  function link(route: AppRoute, label: string, className?: string) {
+    return <a className={className} href={routeToPathname(route)} onClick={(event) => routeLink(event, route, navigate)}>{label}</a>;
+  }
   return (
-    <div className="ff-landing select-text">
-      <a href="#ff-main" className="ff-skip-link">
-        Chuyển đến nội dung chính
-      </a>
-
-      <LandingNav
-        currentUser={currentUser}
-        onOpenLogin={openLogin}
-        onOpenRegister={openAuth}
-        onEnterApp={enterApp}
-      />
-
-      <nav aria-label="Chỉ mục chương" className="ff-chapter-rail">
-        {LANDING_CHAPTERS.map((chapter) => {
-          const active = activeChapterId === chapter.id;
-          return (
-            <button
-              key={chapter.id}
-              type="button"
-              onClick={() => scrollToSection(chapter.id)}
-              aria-label={chapter.label}
-              title={chapter.label}
-              data-active={active}
-              className="ff-chapter-dot"
-            >
-              {chapter.code}
-            </button>
-          );
-        })}
-      </nav>
-
-      <main id="ff-main" tabIndex={-1} className="relative z-10 w-full outline-none">
-        <LandingHero
-          currentUser={currentUser}
-          onOpenAuth={openAuth}
-          onOpenLogin={openLogin}
-          onEnterApp={enterApp}
-          onNavigate={navigateTo}
-        />
-        <LandingShowcase onNavigate={navigateTo} />
-        <LandingManifesto onNavigate={navigateTo} />
-        <LandingProjects onNavigate={navigateTo} />
-        <LandingPricing onEnterApp={enterApp} />
-        <LandingFAQ onEnterApp={enterApp} />
-      </main>
-
-      <LandingFooter onNavigate={handleFooterNavigate} onOpenNotice={() => setNoticeOpen(true)} />
-      <BackToTop />
-
-      {noticeOpen && (
-        <div
-          role="dialog"
-          aria-modal="true"
-          aria-label="Thông tin bản quyền và kiểm định"
-          className="fixed inset-0 z-[90] grid place-items-center bg-black/70 px-4 backdrop-blur-sm"
-        >
-          <div className="ff-glass w-full max-w-lg rounded-[28px] p-6 sm:p-8 space-y-4">
-            <div className="flex items-center justify-between border-b border-[var(--ff-border)] pb-3">
-              <div
-                className="text-lg font-semibold text-[var(--ff-text)]"
-                style={{ fontFamily: 'var(--font-serif)' }}
-              >
-                Bản quyền &amp; Minh bạch
-              </div>
-              <button
-                type="button"
-                onClick={() => setNoticeOpen(false)}
-                aria-label="Đóng"
-                title="Đóng"
-                className="grid h-8 w-8 place-items-center rounded-full border border-[var(--ff-border)] bg-transparent text-[var(--ff-text-soft)] cursor-pointer"
-              >
-                <X className="h-4 w-4" aria-hidden="true" />
-              </button>
-            </div>
-            <p className="m-0 text-[13.5px] leading-relaxed text-[var(--ff-text-soft)]">
-              F-Forum tôn trọng đầy đủ nguồn gốc học liệu từ PinUI, ThreeUI, MotionSites, LucianLabs,
-              CodeFronts và SOURCEOFKNOWLEDGFORAI. Mọi mã nguồn chạy trong Live View đều đi qua sandbox cô lập và Diff &amp; Check.
-            </p>
-            <div className="flex justify-end pt-2">
-              <button
-                type="button"
-                onClick={() => setNoticeOpen(false)}
-                className="ff-btn ff-btn-primary px-5 py-2 text-[13px]"
-              >
-                Đóng
-              </button>
-            </div>
+    <div className="press">
+      <a href="#ff-main" className="ff-skip-link">Đến nội dung</a>
+      <header className="press-wrap press-nav">
+        <a href="/" className="press-brand"><span className="press-mark" aria-hidden="true" /> F–FORUM</a>
+        <nav aria-label="Điều hướng chính"><a href="/explore?library=pinui">Kho PinUI</a>{link('community', 'Tri thức')}</nav>
+        {currentUser ? link('home', 'Vào xưởng', 'press-button') : <button className="press-button" onClick={() => setAuthModalOpen(true)}>Đăng nhập</button>}
+      </header>
+      <main id="ff-main" className="press-wrap" tabIndex={-1}>
+        <div className="press-running press-meta"><span>XƯỞNG THỰC HÀNH WEB</span><span>F–FORUM / ẤN BẢN 03</span></div>
+        <section className="press-hero" aria-labelledby="press-title">
+          <div className="press-intro">
+            <p className="press-meta press-label"><span aria-hidden="true" /> KHÔNG GIAN KIẾN TẠO</p>
+            <h1 id="press-title">Từ ý tưởng<br /> đến <em>bản dựng.</em></h1>
+            <p className="press-lead">Một xưởng làm web để thử ý tưởng, xem giao diện chạy thật và kiểm tra từng thay đổi trước khi mang mã nguồn đi.</p>
+            <div className="press-actions">{link('home', 'Vào xưởng', 'press-button press-primary')}<a href="#muc-luc" className="press-button">Xem mục lục</a></div>
           </div>
-        </div>
-      )}
+          <figure className="press-figure">
+            <img src="/press-hero.jpg" alt="Các tấm kim loại và giấy gấp đan vào nhau, với một cạnh đỏ son" fetchPriority="high" />
+            <figcaption className="press-meta"><span>HÌNH 01</span><span>NGHIÊN CỨU VẬT LIỆU</span></figcaption>
+          </figure>
+        </section>
+        <section id="muc-luc" className="press-index" aria-labelledby="press-index-title">
+          <div><p className="press-meta press-label">CHỈ MỤC / 01–03</p><h2 id="press-index-title">Bên trong<br /> xưởng.</h2><a href="/explore?library=pinui" className="press-button mt-4">Kho PinUI</a></div>
+          <ol>{chapters.map(({ route, label, detail }, index) => <li key={route}>
+            <a href={routeToPathname(route)} onClick={(event) => routeLink(event, route, navigate)}>
+              <span className="press-meta">0{index + 1}</span><div><h3>{label}</h3><p>{detail}</p></div><span aria-hidden="true">↗</span>
+            </a>
+          </li>)}</ol>
+        </section>
+        <section className="press-index press-bench" aria-labelledby="press-demo-title">
+          <div><p className="press-meta press-label">BÀN THỬ / 04</p><h2 id="press-demo-title">Thử trên<br /> thiết bị.</h2></div>
+          <div><p className="press-lead">Mở mô phỏng để khám phá giao diện F-Forum trên điện thoại.</p>
+            <button className="press-button" aria-expanded={showDemo} aria-controls="press-device" onClick={() => setShowDemo((open) => !open)}>{showDemo ? 'Đóng mô phỏng' : 'Mở mô phỏng'}</button>
+          </div>
+        </section>
+        <div id="press-device" hidden={!showDemo}>{showDemo && <Suspense fallback={<p role="status">Đang tải mô phỏng…</p>}><HardwareShowcase onNavigate={navigate} /></Suspense>}</div>
+        <section className="press-index press-faq" aria-labelledby="press-faq-title">
+          <div><p className="press-meta press-label">PHỤ LỤC / 05</p><h2 id="press-faq-title">Trước khi<br />bắt đầu.</h2></div>
+          <div>
+            <details><summary>Có cần tài khoản không?</summary><p>Không. Khách có thể mở Work, thử bản dựng và xuất ZIP. Đăng nhập để đăng bài và đồng bộ dự án với tài khoản.</p></details>
+            <details><summary>Soạn đặc tả có tốn lượt AI không?</summary><p>Không. Bàn làm việc soạn đặc tả ngay trong trình duyệt. Gửi yêu cầu tạo mã qua AI trong Work mới sử dụng hạn mức của phiên.</p></details>
+            <details><summary>Live View chạy ở đâu?</summary><p>Bản dựng chạy trong một khung xem trước cách ly. Dùng Diff &amp; Check để xem thay đổi và kết quả kiểm tra; kết quả không thay thế việc rà soát mã trước khi phát hành.</p></details>
+          </div>
+        </section>
+      </main>
+      <footer className="press-wrap press-footer"><span className="press-meta">F–FORUM / XƯỞNG WEB</span><button className="press-button" onClick={onOpenNotice}>Nguồn &amp; giấy phép</button></footer>
     </div>
   );
-};
-
-export default LandingPage;
+}

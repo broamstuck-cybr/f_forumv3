@@ -41,6 +41,7 @@ for (const it of pinuiRaw) {
     style: 'Shadcn Modern',
     license: it.license || 'MIT',
     officialUrl: it.url || 'https://www.pinui.xyz',
+    installCommand: it.install,
     archivePath: it.path.replace(/^\/+/, ''),
     description: cleanDescription(it.description || `${it.title} - Thanh phan giao dien React Tailwind tu thu vien Pin UI.`)
   });

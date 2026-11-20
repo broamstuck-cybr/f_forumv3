@@ -71,6 +71,7 @@ export interface SourceCatalogItem {
   officialUrl: string;
   archivePath: string;
   description: string;
+  installCommand?: string;
   previewHtml?: string;
   previewCss?: string;
   promptSpec?: string;

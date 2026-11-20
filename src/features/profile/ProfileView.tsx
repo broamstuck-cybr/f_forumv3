@@ -223,7 +223,7 @@ export const ProfileView: React.FC = () => {
                 color: 'var(--ink-secondary)',
               }}
             >
-              Giữ lại những nhịp điệu bề mặt, bản dựng đang đi qua Live View và các mẫu từ PinUI, ThreeUI cùng MotionSites đã chọn lọc qua từng phiên.
+              Xem lại bản dựng đang làm và mở những tài liệu bạn đã lưu.
             </p>
 
             <div className="pt-2 flex flex-wrap items-center gap-3">

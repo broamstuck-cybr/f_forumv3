@@ -6,6 +6,8 @@ import { promisify } from 'node:util';
 const execFileAsync = promisify(execFile);
 import net from 'node:net';
 import fs from 'node:fs';
+import os from 'node:os';
+import { once } from 'node:events';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -35,11 +37,15 @@ describe('F-FORUM v3 Core Verification Suite', () => {
   let serverProcess;
   let baseUrl;
   let testPort;
-  const runtimeStatePath = path.join(projectRoot, 'data', 'runtime-state.json');
+  let runtimeDir;
 
   before(async () => {
     testPort = await getFreePort();
     baseUrl = `http://127.0.0.1:${testPort}`;
+
+    runtimeDir = fs.mkdtempSync(path.join(os.tmpdir(), 'fforum-test-'));
+    fs.mkdirSync(path.join(runtimeDir, 'src', 'data'), { recursive: true });
+    fs.copyFileSync(path.join(projectRoot, 'src', 'data', 'communitySeed.json'), path.join(runtimeDir, 'src', 'data', 'communitySeed.json'));
 
     const env = {
       ...process.env,
@@ -52,8 +58,8 @@ describe('F-FORUM v3 Core Verification Suite', () => {
       SUPABASE_SERVICE_ROLE_KEY: '',
     };
 
-    serverProcess = spawn('npx', ['tsx', 'server/index.ts'], {
-      cwd: projectRoot,
+    serverProcess = spawn(process.execPath, ['--import', path.join(projectRoot, 'node_modules', 'tsx', 'dist', 'loader.mjs'), path.join(projectRoot, 'server', 'index.ts')], {
+      cwd: runtimeDir,
       env,
       stdio: 'pipe',
     });
@@ -83,21 +89,12 @@ describe('F-FORUM v3 Core Verification Suite', () => {
   });
 
   after(async () => {
-    if (serverProcess && !serverProcess.killed) {
+    if (serverProcess?.pid && serverProcess.exitCode === null && serverProcess.signalCode === null) {
+      const exited = once(serverProcess, 'exit');
       serverProcess.kill('SIGTERM');
-      await new Promise((r) => setTimeout(r, 500));
-      if (!serverProcess.killed) {
-        serverProcess.kill('SIGKILL');
-      }
+      await exited;
     }
-
-    try {
-      if (fs.existsSync(runtimeStatePath)) {
-        fs.unlinkSync(runtimeStatePath);
-      }
-    } catch {
-      void 0;
-    }
+    if (runtimeDir) fs.rmSync(runtimeDir, { recursive: true, force: true });
   });
 
   describe('(a) 15-Turn Quota Enforcement', () => {
