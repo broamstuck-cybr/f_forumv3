@@ -78,7 +78,7 @@ export const LandingShowcase: React.FC<LandingShowcaseProps> = ({ onNavigate }) 
           <div className="lp-head-copy">
             <p className="t-label">không chỉ là hình ảnh</p>
             <h2 className="t-title">
-              Sản phẩm <Mark kind="circle">chạy thật</Mark> từ kho tham chiếu
+              Sản phẩm <Mark kind="circle">chạy thật</Mark> với mẫu &amp; mã nguồn
             </h2>
             <p className="t-lead">
               21 chuyển động thực tế từ kho F-Forum: cuộn xuống để kéo hai dải bản in ngược chiều, cuộn ngược để tua lại.

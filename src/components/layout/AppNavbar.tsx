@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
-import { Menu, Settings, X } from 'lucide-react';
-import type { AppRoute } from '../../types/index';
+import { Menu, Moon, Sun, X } from 'lucide-react';
+import type { AppRoute, ThemePreference } from '../../types/index';
 import { useAppStore } from '../../store/appStore';
 import { KineticLogo } from '../brand/KineticLogo';
 import './app-shell.css';
@@ -17,6 +17,12 @@ const PRIMARY_TABS: Array<{ id: AppRoute; label: string }> = [
   { id: 'community', label: 'Tri thức' },
 ];
 
+const THEME_OPTIONS: Array<{ id: ThemePreference; label: string }> = [
+  { id: 'dark', label: 'Tối' },
+  { id: 'light', label: 'Sáng' },
+  { id: 'system', label: 'Hệ thống' },
+];
+
 function userInitials(name: string): string {
   return (
     name
@@ -29,7 +35,19 @@ function userInitials(name: string): string {
 }
 
 export const AppNavbar: React.FC<AppNavbarProps> = () => {
-  const { currentRoute, navigate, aiActivity, currentUser, quota, setAuthModalOpen, logout } = useAppStore();
+  const {
+    currentRoute,
+    navigate,
+    aiActivity,
+    currentUser,
+    quota,
+    setAuthModalOpen,
+    logout,
+    theme,
+    toggleTheme,
+    settings,
+    updateSettings,
+  } = useAppStore();
   const reduced = Boolean(useReducedMotion());
   const [menuOpen, setMenuOpen] = useState(false);
   const [sheetOpen, setSheetOpen] = useState(false);
@@ -72,10 +90,18 @@ export const AppNavbar: React.FC<AppNavbarProps> = () => {
 
   const isAdmin = currentUser?.role === 'admin';
   const unlimited = quota.unlimited || isAdmin;
-  const limit = quota.limit ?? 15;
-  const remaining = Math.max(0, quota.remaining ?? limit - quota.used);
-  const low = !unlimited && remaining <= 3;
+  const limit = quota.limit;
+  const remaining = limit === null ? null : Math.max(0, quota.remaining ?? limit - quota.used);
+  const lowQuota = !unlimited && remaining !== null && remaining <= 3;
+  const quotaLabel = unlimited
+    ? 'Không giới hạn'
+    : limit === null
+      ? `Đã dùng ${quota.used} lượt`
+      : `${remaining}/${limit} lượt`;
   const avatarText = currentUser ? userInitials(currentUser.name) : 'K';
+  const themePreference: ThemePreference = settings.themePreference ?? 'system';
+  const ambientEnabled = settings.ambientVideo !== false;
+  const themeToggleLabel = theme === 'dark' ? 'Chuyển sang chế độ sáng' : 'Chuyển sang chế độ tối';
 
   const go = (route: AppRoute) => {
     setMenuOpen(false);
@@ -144,20 +170,18 @@ export const AppNavbar: React.FC<AppNavbarProps> = () => {
         </div>
 
         <div className="nav__side">
-          <p className="nav__quota" data-low={low} aria-label={unlimited ? 'Lượt AI không giới hạn' : `Còn ${remaining} trên ${limit} lượt AI`}>
-            <strong>{unlimited ? '∞' : `${remaining}/${limit}`}</strong>
-            <span>lượt</span>
-          </p>
-
           <button
             type="button"
-            className="icon-btn nav__account"
-            onClick={() => go('settings')}
-            aria-label="Cài đặt"
-            title="Cài đặt"
-            data-active={currentRoute === 'settings'}
+            className="icon-btn nav__themeBtn"
+            onClick={toggleTheme}
+            aria-label={themeToggleLabel}
+            title={themeToggleLabel}
           >
-            <Settings size={18} strokeWidth={1.75} aria-hidden="true" />
+            {theme === 'dark' ? (
+              <Sun size={18} strokeWidth={1.75} aria-hidden="true" />
+            ) : (
+              <Moon size={18} strokeWidth={1.75} aria-hidden="true" />
+            )}
           </button>
 
           <div className="relative nav__account" ref={menuRef}>
@@ -165,7 +189,7 @@ export const AppNavbar: React.FC<AppNavbarProps> = () => {
               type="button"
               className="nav__avatarBtn"
               onClick={() => setMenuOpen((open) => !open)}
-              aria-haspopup="menu"
+              aria-haspopup="dialog"
               aria-expanded={menuOpen}
               aria-label={currentUser ? `Tài khoản ${currentUser.name}` : 'Tài khoản khách'}
               title={currentUser ? currentUser.name : 'Khách'}
@@ -178,38 +202,94 @@ export const AppNavbar: React.FC<AppNavbarProps> = () => {
               {menuOpen && (
                 <motion.div
                   className="nav__menu"
-                  role="menu"
+                  role="dialog"
+                  aria-label="Tài khoản và cài đặt nhanh"
                   initial={reduced ? { opacity: 0 } : { opacity: 0, scale: 0.96, y: -4 }}
                   animate={{ opacity: 1, scale: 1, y: 0 }}
                   exit={reduced ? { opacity: 0 } : { opacity: 0, scale: 0.97, y: -4 }}
                   transition={{ duration: 0.16, ease: [0.2, 0.8, 0.2, 1] }}
                 >
                   <div className="nav__menuHead">
-                    <p className="nav__menuName">{currentUser ? currentUser.name : 'Khách'}</p>
-                    <p className="t-label">
-                      {currentUser ? (isAdmin ? 'quản trị' : 'thành viên') : 'phiên khách'}
-                    </p>
+                    <div className="nav__menuIdentity">
+                      <p className="nav__menuName">{currentUser ? currentUser.name : 'Khách'}</p>
+                      <p className="t-label">
+                        {currentUser ? (isAdmin ? 'quản trị' : 'thành viên') : 'phiên khách'}
+                      </p>
+                    </div>
+                    <span className="nav__menuQuota" data-low={lowQuota}>
+                      {quotaLabel}
+                    </span>
                   </div>
-                  <button type="button" role="menuitem" className="nav__menuItem" onClick={() => go('profile')}>
-                    Hồ sơ
-                  </button>
-                  <button type="button" role="menuitem" className="nav__menuItem" onClick={() => go('settings')}>
-                    Cài đặt
-                  </button>
-                  {isAdmin && (
-                    <button type="button" role="menuitem" className="nav__menuItem" onClick={() => go('admin')}>
-                      Quản trị
+
+                  <div className="nav__menuSection">
+                    <div className="nav__menuBlock">
+                      <span className="nav__menuSubLabel">Chủ đề</span>
+                      <div className="nav__seg" role="group" aria-label="Chọn chủ đề">
+                        {THEME_OPTIONS.map((opt) => (
+                          <button
+                            key={opt.id}
+                            type="button"
+                            className="nav__segBtn"
+                            aria-pressed={themePreference === opt.id}
+                            onClick={() => updateSettings({ themePreference: opt.id })}
+                          >
+                            {opt.label}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="nav__switchRow">
+                      <span className="nav__switchLabel">Nền video động</span>
+                      <button
+                        type="button"
+                        role="switch"
+                        aria-checked={ambientEnabled}
+                        aria-label="Nền video động"
+                        className="nav__switch"
+                        onClick={() => updateSettings({ ambientVideo: !ambientEnabled })}
+                      >
+                        <span className="nav__switchThumb" aria-hidden="true" />
+                      </button>
+                    </div>
+
+                    <div className="nav__switchRow">
+                      <span className="nav__switchLabel">Mật độ gọn</span>
+                      <button
+                        type="button"
+                        role="switch"
+                        aria-checked={settings.compactDensity}
+                        aria-label="Mật độ gọn"
+                        className="nav__switch"
+                        onClick={() => updateSettings({ compactDensity: !settings.compactDensity })}
+                      >
+                        <span className="nav__switchThumb" aria-hidden="true" />
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="nav__menuNav">
+                    <button type="button" className="nav__menuItem" onClick={() => go('profile')}>
+                      Hồ sơ
                     </button>
-                  )}
-                  {currentUser ? (
-                    <button type="button" role="menuitem" className="nav__menuItem" data-tone="red" onClick={signOut}>
-                      Đăng xuất
+                    <button type="button" className="nav__menuItem" onClick={() => go('settings')}>
+                      Cài đặt
                     </button>
-                  ) : (
-                    <button type="button" role="menuitem" className="nav__menuItem" data-tone="red" onClick={openAuth}>
-                      Đăng nhập
-                    </button>
-                  )}
+                    {isAdmin && (
+                      <button type="button" className="nav__menuItem" onClick={() => go('admin')}>
+                        Quản trị
+                      </button>
+                    )}
+                    {currentUser ? (
+                      <button type="button" className="nav__menuItem" data-tone="red" onClick={signOut}>
+                        Đăng xuất
+                      </button>
+                    ) : (
+                      <button type="button" className="nav__menuItem" data-tone="red" onClick={openAuth}>
+                        Đăng nhập
+                      </button>
+                    )}
+                  </div>
                 </motion.div>
               )}
             </AnimatePresence>
@@ -282,15 +362,35 @@ export const AppNavbar: React.FC<AppNavbarProps> = () => {
               ))}
             </ul>
             <div className="navsheet__account">
-              <div className="navsheet__identity">
-                <span className="nav__avatar" data-guest={!currentUser} aria-hidden="true">
-                  {avatarText}
-                </span>
-                <div>
-                  <p className="nav__menuName">{currentUser ? currentUser.name : 'Khách'}</p>
-                  <p className="t-label">
-                    {currentUser ? (isAdmin ? 'quản trị' : 'thành viên') : 'phiên khách'}
-                  </p>
+              <div className="navsheet__identityRow">
+                <div className="navsheet__identity">
+                  <span className="nav__avatar" data-guest={!currentUser} aria-hidden="true">
+                    {avatarText}
+                  </span>
+                  <div className="min-w-0">
+                    <p className="nav__menuName">{currentUser ? currentUser.name : 'Khách'}</p>
+                    <p className="t-label">
+                      {currentUser ? (isAdmin ? 'quản trị' : 'thành viên') : 'phiên khách'}
+                    </p>
+                  </div>
+                </div>
+                <div className="navsheet__tools">
+                  <span className="nav__menuQuota" data-low={lowQuota}>
+                    {quotaLabel}
+                  </span>
+                  <button
+                    type="button"
+                    className="icon-btn"
+                    onClick={toggleTheme}
+                    aria-label={themeToggleLabel}
+                    title={themeToggleLabel}
+                  >
+                    {theme === 'dark' ? (
+                      <Sun size={18} strokeWidth={1.75} aria-hidden="true" />
+                    ) : (
+                      <Moon size={18} strokeWidth={1.75} aria-hidden="true" />
+                    )}
+                  </button>
                 </div>
               </div>
               <div className="navsheet__foot">

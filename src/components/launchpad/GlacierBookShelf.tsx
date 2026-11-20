@@ -8,6 +8,7 @@ import React, {
   useRef,
   useState,
 } from 'react';
+import { ChevronLeft, ChevronRight, Moon, RotateCw, Sun } from 'lucide-react';
 import {
   GLACIER_BOOKS,
   type GlacierBookMotif,
@@ -15,7 +16,28 @@ import {
   type GlacierBookSpec,
 } from '../../data/glacierBooksData';
 import { useAppStore } from '../../store/appStore';
-import type { AppRoute } from '../../types';
+import type { AppRoute, SourceCatalogItem } from '../../types';
+import { PinUIPlayground, SelectionList, type SelectionListItem } from '../pinui';
+import { previewFor } from '../../ui/Media';
+import { SandboxPreview } from '../../features/explore/SandboxPreview';
+import { SpecimenMedia } from '../../features/explore/SpecimenMedia';
+import {
+  LIBRARY_LABEL,
+  buildSnippetThemeOverrideCss,
+  fetchMotionSitesFullMap,
+  fetchPinUISourceMap,
+  getCachedMotionSitesFullMap,
+  getCachedPinUISourceMap,
+  resolveMotionSiteEntry,
+  resolvePinUISource,
+  sanitizeBrandText,
+  sanitizeSnippetCode,
+  shortTitle,
+  templateContext,
+  type MotionSiteFullEntry,
+  type PinUISourceEntry,
+  type PreviewTheme,
+} from '../../features/explore/catalog';
 import './glacier-shelf.css';
 
 export interface GlacierBookShelfProps {
@@ -95,16 +117,6 @@ const SLIDERS: ReadonlyArray<{
   { key: 'grainPct', label: 'Hạt nhiễu %', min: 0, max: 30, step: 1 },
 ];
 
-const INK_CENTERS: ReadonlyArray<readonly [number, number]> = [
-  [96, 150],
-  [392, 230],
-  [236, 440],
-  [90, 660],
-  [388, 720],
-  [250, 850],
-  [60, 420],
-];
-
 const mod = (n: number, m: number): number => ((n % m) + m) % m;
 const relIndex = (v: number, s: number): number => ((((v - s) % TOTAL) + 54) % TOTAL) - 18;
 const smooth = (x: number): number => x * x * (3 - 2 * x);
@@ -120,21 +132,6 @@ const insetFor = (rect: RectPx): string => {
   const vw = document.documentElement.clientWidth;
   const vh = window.innerHeight;
   return `inset(${rect.t}px ${Math.max(0, vw - rect.l - rect.w)}px ${Math.max(0, vh - rect.t - rect.h)}px ${rect.l}px round 3px)`;
-};
-
-const wrapTitle = (title: string, max: number): string[] => {
-  const lines: string[] = [];
-  let line = '';
-  title.split(' ').forEach((word) => {
-    if (line && (line + ' ' + word).length > max) {
-      lines.push(line);
-      line = word;
-    } else {
-      line = line ? line + ' ' + word : word;
-    }
-  });
-  if (line) lines.push(line);
-  return lines;
 };
 
 const buildCss = (book: GlacierBookSpec, v: GlacierBookSettings): string => {
@@ -328,7 +325,7 @@ function Motif({ kind }: { kind: GlacierBookMotif }): React.JSX.Element {
 
 function BookSpine({ book }: { book: GlacierBookSpec }): React.JSX.Element {
   return (
-    <div className="gb-sp-in">
+    <div className="gb-sp-in" data-group={book.group}>
       <span className="gb-sp-band gb-sp-band--top" aria-hidden="true" />
       <div className="gb-sp-art">
         <Motif kind={book.motif} />
@@ -336,7 +333,7 @@ function BookSpine({ book }: { book: GlacierBookSpec }): React.JSX.Element {
       <div className="gb-sp-title">{book.title}</div>
       <div className="gb-sp-foot">
         <span className="gb-sp-code">{book.code}</span>
-        <span className="gb-sp-count">{book.editionTag.replace(/^ARCHIVAL EDITION\s*·\s*/i, 'ED · ')}</span>
+        <span className="gb-sp-count">{book.editionTag}</span>
       </div>
       <span className="gb-sp-band gb-sp-band--bot" aria-hidden="true" />
     </div>
@@ -345,19 +342,22 @@ function BookSpine({ book }: { book: GlacierBookSpec }): React.JSX.Element {
 
 function BookCover({ book }: { book: GlacierBookSpec }): React.JSX.Element {
   return (
-    <div className="gb-cv-in">
+    <div className="gb-cv-in" data-group={book.group}>
       <div className="gb-cv-top">
-        <span>{book.editionTag}</span>
-        <span>{book.code}</span>
+        <span className="gb-cv-ed">{book.editionTag}</span>
+        <span className="gb-cv-grp">{book.groupLabel}</span>
       </div>
-      <h3 className="gb-cv-title">{book.title}</h3>
-      <div className="gb-cv-art">
+      <div className="gb-cv-head">
+        <h3 className="gb-cv-title">{book.title}</h3>
+        <span className="gb-cv-sub">{book.subtitleEn}</span>
+      </div>
+      <div className="gb-cv-art" data-group={book.group}>
         <div className="gb-cv-art-inner">
           <Motif kind={book.motif} />
         </div>
       </div>
       <div className="gb-cv-bot">
-        <span className="gb-cv-sub">{book.subtitleEn}</span>
+        <span className="gb-cv-code">{book.code}</span>
         <span className="gb-cv-badge">{book.countLabel}</span>
       </div>
     </div>
@@ -378,6 +378,7 @@ const Tape = memo(function Tape({ v, setRef, onEnter, onLeave }: TapeProps): Rea
       ref={(el) => setRef(v, el)}
       className="gb-tape"
       data-v={v}
+      data-group={book.group}
       aria-hidden="true"
       style={
         {
@@ -389,10 +390,10 @@ const Tape = memo(function Tape({ v, setRef, onEnter, onLeave }: TapeProps): Rea
       onPointerEnter={() => onEnter(v)}
       onPointerLeave={() => onLeave(v)}
     >
-      <div className="gb-sp">
+      <div className="gb-sp" data-group={book.group}>
         <BookSpine book={book} />
       </div>
-      <div className="gb-cv">
+      <div className="gb-cv" data-group={book.group}>
         <BookCover book={book} />
       </div>
     </div>
@@ -411,28 +412,182 @@ function Rise({ children }: { children: React.ReactNode }): React.JSX.Element {
 
 interface DialogProps {
   book: GlacierBookSpec;
+  bookIndex: number;
+  totalBooks: number;
   rect: RectPx;
+  onStepBook: (delta: -1 | 1) => void;
   onClosed: () => void;
   onNavigate?: (route: AppRoute) => void;
   onLaunchPrompt?: (prompt: string) => void;
 }
 
-function BookDialog({ book, rect, onClosed, onNavigate, onLaunchPrompt }: DialogProps): React.JSX.Element {
-  const { getHeartCount, isItemLiked, toggleLikedItem, savedItemIds, toggleSavedItem } = useAppStore();
+function BookDialog({
+  book,
+  bookIndex,
+  totalBooks,
+  rect,
+  onStepBook,
+  onClosed,
+  onNavigate,
+  onLaunchPrompt,
+}: DialogProps): React.JSX.Element {
+  const {
+    sourceCatalog,
+    theme,
+    getHeartCount,
+    isItemLiked,
+    toggleLikedItem,
+    savedItemIds,
+    toggleSavedItem,
+    openExperience,
+    openInWorkspace,
+    addToast,
+  } = useAppStore();
+
   const [vals, setVals] = useState<GlacierBookSettings>(book.settings);
   const [copied, setCopied] = useState('');
   const [demoKey, setDemoKey] = useState(0);
+  const [stageMode, setStageMode] = useState<'resource' | 'glacier'>('resource');
+  const [stageTheme, setStageTheme] = useState<PreviewTheme>(theme);
+  const [codeTab, setCodeTab] = useState<'code' | 'css' | 'prompt'>('code');
+  const [pinuiMap, setPinuiMap] = useState<Record<string, PinUISourceEntry> | null>(
+    () => getCachedPinUISourceMap()
+  );
+  const [motionMap, setMotionMap] = useState<Record<string, MotionSiteFullEntry> | null>(
+    () => getCachedMotionSitesFullMap()
+  );
+
+  const bookItems = useMemo(() => {
+    const byId = new Map<string, SourceCatalogItem>();
+    for (const item of sourceCatalog) {
+      byId.set(item.id, item);
+    }
+    const picked: SourceCatalogItem[] = [];
+    for (const id of book.featuredItemIds) {
+      const found = byId.get(id);
+      if (found && !picked.some((p) => p.id === found.id)) {
+        picked.push(found);
+      }
+    }
+    if (picked.length < 4) {
+      for (const item of sourceCatalog) {
+        if (item.sourceLibrary === book.catalogLibrary && !picked.some((p) => p.id === item.id)) {
+          picked.push(item);
+          if (picked.length >= 6) break;
+        }
+      }
+    }
+    return picked;
+  }, [sourceCatalog, book]);
+
+  const [selectedItemId, setSelectedItemId] = useState<string>(() => bookItems[0]?.id ?? '');
+
+  useEffect(() => {
+    setVals(book.settings);
+    setSelectedItemId(bookItems[0]?.id ?? '');
+    setDemoKey((k) => k + 1);
+  }, [book.id, book.settings, bookItems]);
+
+  useEffect(() => {
+    setStageTheme(theme);
+  }, [theme]);
+
+  useEffect(() => {
+    if (!pinuiMap) {
+      void fetchPinUISourceMap().then((loaded) => setPinuiMap(loaded));
+    }
+    if (!motionMap) {
+      void fetchMotionSitesFullMap().then((loaded) => setMotionMap(loaded));
+    }
+  }, [pinuiMap, motionMap]);
+
+  const selectedItem = useMemo(
+    () => bookItems.find((it) => it.id === selectedItemId) ?? bookItems[0] ?? null,
+    [bookItems, selectedItemId]
+  );
+
+  const selectionItems: SelectionListItem[] = useMemo(
+    () =>
+      bookItems.map((item) => ({
+        id: item.id,
+        label: `${shortTitle(item)} · ${LIBRARY_LABEL[item.sourceLibrary]}`,
+        swatch: book.accent,
+      })),
+    [bookItems, book.accent]
+  );
+
+  const selectedLib = selectedItem?.sourceLibrary;
+  const isPinUI = selectedLib === 'pinui';
+  const isThreeUI = selectedLib === 'threeui';
+  const isMotion = selectedLib === 'motionsites';
+
+  const pinuiSource = useMemo(
+    () => (selectedItem && isPinUI ? resolvePinUISource(pinuiMap, selectedItem.id) : null),
+    [selectedItem, isPinUI, pinuiMap]
+  );
+
+  const motionEntry = useMemo(
+    () => (selectedItem && isMotion ? resolveMotionSiteEntry(motionMap, selectedItem.id) : null),
+    [selectedItem, isMotion, motionMap]
+  );
+
+  const selectedTitle = selectedItem ? sanitizeBrandText(selectedItem.title) : book.title;
+  const selectedDesc = selectedItem ? sanitizeBrandText(selectedItem.description) : book.synopsisVi;
+  const selectedPreview = selectedItem ? previewFor(selectedItem.id) : null;
+
+  const selectedHtml = useMemo(() => {
+    if (!selectedItem) return '';
+    if (isPinUI) return pinuiSource?.tsx ?? '';
+    if (isThreeUI || isMotion) return '';
+    return sanitizeSnippetCode(selectedItem.previewHtml);
+  }, [selectedItem, isPinUI, isThreeUI, isMotion, pinuiSource]);
+
+  const selectedCss = useMemo(() => {
+    if (!selectedItem) return '';
+    if (isPinUI) return pinuiSource?.css ?? '';
+    if (isThreeUI || isMotion) return '';
+    return sanitizeSnippetCode(selectedItem.previewCss);
+  }, [selectedItem, isPinUI, isThreeUI, isMotion, pinuiSource]);
+
+  const selectedPrompt = useMemo(() => {
+    if (!selectedItem) return book.promptTemplate;
+    if (isPinUI && pinuiSource?.prompt) return pinuiSource.prompt;
+    if (isMotion && motionEntry?.promptText) return motionEntry.promptText;
+    return (
+      sanitizeBrandText(selectedItem.promptSpec) ||
+      `${selectedTitle}\nNhóm: ${LIBRARY_LABEL[selectedItem.sourceLibrary]}\nRuntime: ${selectedItem.runtime}\nPhong cách: ${selectedItem.style}\n\n${selectedDesc}`
+    );
+  }, [selectedItem, isPinUI, isMotion, pinuiSource, motionEntry, selectedTitle, selectedDesc, book.promptTemplate]);
+
+  const selectedCssWithTheme = useMemo(() => {
+    if (!selectedItem || isPinUI || isThreeUI || isMotion) return '';
+    const extra = buildSnippetThemeOverrideCss(
+      selectedItem.sourceLibrary,
+      selectedItem.previewCss,
+      stageTheme
+    );
+    return extra ? `${extra}\n${selectedItem.previewCss ?? ''}` : selectedItem.previewCss ?? '';
+  }, [selectedItem, isPinUI, isThreeUI, isMotion, stageTheme]);
+
+  useEffect(() => {
+    if (isThreeUI || isMotion) {
+      setCodeTab('prompt');
+    } else {
+      setCodeTab('code');
+    }
+  }, [selectedItem?.id, isThreeUI, isMotion]);
+
   const sheetRef = useRef<HTMLDivElement | null>(null);
   const closeRef = useRef<HTMLButtonElement | null>(null);
   const demoFrameRef = useRef<HTMLIFrameElement | null>(null);
-  const circlesRef = useRef<Array<SVGCircleElement | null>>([]);
   const closingRef = useRef(false);
-  const maskId = `gb-ink-${useId().replace(/[^a-zA-Z0-9]/g, '')}`;
-  const titleId = `${maskId}-t`;
-  const liked = isItemLiked(book.id);
-  const saved = savedItemIds.includes(book.id);
+  const uid = useId().replace(/[^a-zA-Z0-9]/g, '');
+  const titleId = `gb-dlg-${uid}-t`;
+
+  const bookLiked = isItemLiked(book.id);
+  const bookSaved = savedItemIds.includes(book.id);
+  const itemSaved = selectedItem ? savedItemIds.includes(selectedItem.id) : false;
   const cssText = useMemo(() => buildCss(book, vals), [book, vals]);
-  const posterLines = useMemo(() => wrapTitle(book.title, 13), [book.title]);
 
   const postSettingsToDemo = useCallback((settings: GlacierBookSettings) => {
     demoFrameRef.current?.contentWindow?.postMessage(
@@ -461,35 +616,12 @@ function BookDialog({ book, rect, onClosed, onNavigate, onLaunchPrompt }: Dialog
       sheet.querySelectorAll<HTMLElement>('[data-rise]').forEach((el, i) => {
         el.animate(
           [{ transform: 'translateY(110%)' }, { transform: 'translateY(0%)' }],
-          { duration: 420, delay: 160 + i * 35, easing: EASE, fill: 'both' }
+          { duration: 420, delay: 140 + i * 30, easing: EASE, fill: 'both' }
         );
       });
     }
     closeRef.current?.focus({ preventScroll: true });
   }, [rect]);
-
-  useEffect(() => {
-    const reduced = prefersReduced();
-    const circles = circlesRef.current;
-    if (reduced) {
-      circles.forEach((c) => c?.setAttribute('r', '720'));
-      return undefined;
-    }
-    circles.forEach((c) => c?.setAttribute('r', '0'));
-    const t0 = performance.now() + 200;
-    let raf = 0;
-    const step = (now: number) => {
-      let done = true;
-      circles.forEach((c, i) => {
-        const p = clamp01((now - t0 - i * 45) / 800);
-        if (p < 1) done = false;
-        c?.setAttribute('r', String(720 * (1 - Math.pow(1 - p, 3))));
-      });
-      if (!done) raf = requestAnimationFrame(step);
-    };
-    raf = requestAnimationFrame(step);
-    return () => cancelAnimationFrame(raf);
-  }, []);
 
   const close = useCallback(() => {
     if (closingRef.current) return;
@@ -517,9 +649,28 @@ function BookDialog({ book, rect, onClosed, onNavigate, onLaunchPrompt }: Dialog
         close();
         return;
       }
+      const activeEl = document.activeElement as HTMLElement | null;
+      const inControl =
+        activeEl &&
+        (activeEl.tagName === 'INPUT' ||
+          activeEl.tagName === 'TEXTAREA' ||
+          activeEl.tagName === 'SELECT' ||
+          activeEl.getAttribute('role') === 'option');
+      if (!inControl && ev.key === 'ArrowLeft') {
+        ev.preventDefault();
+        onStepBook(-1);
+        return;
+      }
+      if (!inControl && ev.key === 'ArrowRight') {
+        ev.preventDefault();
+        onStepBook(1);
+        return;
+      }
       if (ev.key !== 'Tab' || !sheetRef.current) return;
       const items = Array.from(
-        sheetRef.current.querySelectorAll<HTMLElement>('button, input, a[href], [tabindex]:not([tabindex="-1"])')
+        sheetRef.current.querySelectorAll<HTMLElement>(
+          'button, input, a[href], [tabindex]:not([tabindex="-1"])'
+        )
       ).filter((el) => !el.hasAttribute('disabled'));
       if (!items.length) return;
       const first = items[0];
@@ -534,7 +685,7 @@ function BookDialog({ book, rect, onClosed, onNavigate, onLaunchPrompt }: Dialog
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [close]);
+  }, [close, onStepBook]);
 
   useEffect(() => {
     if (!copied) return undefined;
@@ -542,16 +693,46 @@ function BookDialog({ book, rect, onClosed, onNavigate, onLaunchPrompt }: Dialog
     return () => window.clearTimeout(id);
   }, [copied]);
 
-  const doCopy = async (kind: 'css' | 'prompt') => {
-    const ok = await copyText(kind === 'css' ? cssText : book.promptTemplate);
-    setCopied(ok ? (kind === 'css' ? 'Đã chép CSS' : 'Đã chép prompt') : 'Không chép được');
+  const doCopyResource = async (kind: 'code' | 'prompt') => {
+    const textToCopy =
+      kind === 'prompt'
+        ? selectedPrompt
+        : codeTab === 'css'
+          ? selectedCss || selectedHtml || cssText
+          : selectedHtml || selectedCss || cssText;
+    const ok = await copyText(textToCopy);
+    const msg = ok ? (kind === 'code' ? 'Đã chép mã' : 'Đã chép Prompt') : 'Không chép được';
+    setCopied(msg);
+    addToast({
+      type: ok ? 'success' : 'error',
+      title: msg,
+      message: selectedTitle,
+    });
   };
 
-  const launch = () => {
-    if (onLaunchPrompt) onLaunchPrompt(book.promptTemplate);
-    else onNavigate?.('workspace');
+  const handleOpenWorkspace = () => {
+    if (selectedItem) {
+      openInWorkspace(templateContext(selectedItem, selectedPrompt || undefined));
+    } else if (onLaunchPrompt) {
+      onLaunchPrompt(book.promptTemplate);
+    } else {
+      onNavigate?.('workspace');
+    }
     close();
   };
+
+  const handleOpenExperience = () => {
+    if (!selectedItem) return;
+    openExperience(selectedItem.id);
+    close();
+  };
+
+  const shownResourceCode =
+    codeTab === 'code'
+      ? selectedHtml || selectedPrompt
+      : codeTab === 'css'
+        ? selectedCss || cssText
+        : selectedPrompt;
 
   const style = {
     '--ac': book.accent,
@@ -572,230 +753,382 @@ function BookDialog({ book, rect, onClosed, onNavigate, onLaunchPrompt }: Dialog
           <button ref={closeRef} type="button" className="gb-txt-btn" onClick={close}>
             Đóng
           </button>
-          <span className="gb-lbl">
-            {book.editionTag} · {book.code}
+          <div className="gb-sheet-nav">
+            <button
+              type="button"
+              className="gb-icon-btn"
+              aria-label="Cuốn sách trước"
+              title="Cuốn sách trước (Phím mũi tên trái)"
+              onClick={() => onStepBook(-1)}
+            >
+              <ChevronLeft size={18} aria-hidden="true" />
+            </button>
+            <span className="gb-lbl gb-sheet-nav-lbl">
+              {book.editionTag} · {book.title} ({String(bookIndex + 1).padStart(2, '0')} /{' '}
+              {String(totalBooks).padStart(2, '0')})
+            </span>
+            <button
+              type="button"
+              className="gb-icon-btn"
+              aria-label="Cuốn sách tiếp theo"
+              title="Cuốn sách tiếp theo (Phím mũi tên phải)"
+              onClick={() => onStepBook(1)}
+            >
+              <ChevronRight size={18} aria-hidden="true" />
+            </button>
+          </div>
+          <span className="gb-lbl gb-bar-r">
+            {book.groupLabel} · {book.countLabel}
           </span>
-          <span className="gb-lbl gb-bar-r">{book.subtitleEn}</span>
         </div>
+
         <div className="gb-sheet-grid">
           <aside className="gb-left">
-            <div className="gb-poster">
-              <svg
-                viewBox="0 0 474 900"
-                className="gb-poster-svg"
-                aria-hidden="true"
-                focusable="false"
-              >
-                <defs>
-                  <filter
-                    id={`${maskId}-f`}
-                    filterUnits="userSpaceOnUse"
-                    x={-400}
-                    y={-400}
-                    width={1300}
-                    height={1700}
-                  >
-                    <feTurbulence type="fractalNoise" baseFrequency="0.011" numOctaves={3} seed={4} result="n" />
-                    <feDisplacementMap in="SourceGraphic" in2="n" scale={90} xChannelSelector="R" yChannelSelector="G" />
-                  </filter>
-                  <mask
-                    id={maskId}
-                    maskUnits="userSpaceOnUse"
-                    x={0}
-                    y={0}
-                    width={474}
-                    height={900}
-                  >
-                    <g filter={`url(#${maskId}-f)`}>
-                      {INK_CENTERS.map(([cx, cy], i) => (
-                        <circle
-                          key={i}
-                          ref={(el) => {
-                            circlesRef.current[i] = el;
-                          }}
-                          cx={cx}
-                          cy={cy}
-                          r={0}
-                          fill="#fff"
-                        />
-                      ))}
-                    </g>
-                  </mask>
-                </defs>
-                <rect width={474} height={900} className="gb-pp-rule" />
-                <g mask={`url(#${maskId})`}>
-                  <rect width={474} height={900} className="gb-pp-bg" />
-                  <rect x={18} y={18} width={438} height={864} className="gb-pp-frame" />
-                  <text x={38} y={56} className="gb-pp-mono" fontSize={13}>
-                    {book.editionTag} · {book.code}
-                  </text>
-                  <text x={436} y={56} textAnchor="end" className="gb-pp-mono" fontSize={13}>
-                    {book.year}
-                  </text>
-                  <g transform="translate(47 150) scale(3.3)">
-                    <MotifShapes kind={book.motif} />
-                  </g>
-                  {posterLines.map((line, i) => (
-                    <text
-                      key={line}
-                      x={38}
-                      y={640 + i * 60}
-                      fontSize={58}
-                      className="gb-pp-title"
+            <div className="gb-book-summary">
+              <div className="gb-book-summary-top">
+                <span className="gb-lbl gb-d-meta">
+                  {book.editionTag} · {book.groupLabel} · {book.year}
+                </span>
+                <div className="gb-book-summary-react">
+                  <div className="gb-heart">
+                    <button
+                      type="button"
+                      className="gb-icon-btn"
+                      aria-label={bookLiked ? 'Bỏ thích sách này' : 'Thích sách này'}
+                      title={bookLiked ? 'Bỏ thích sách này' : 'Thích sách này'}
+                      aria-pressed={bookLiked}
+                      data-on={bookLiked ? 'true' : 'false'}
+                      onClick={() => toggleLikedItem(book.id)}
                     >
-                      {line}
-                    </text>
-                  ))}
-                  <text x={38} y={820} className="gb-pp-mono" fontSize={14}>
-                    {book.subtitleEn}
-                  </text>
-                  <rect x={316} y={832} width={120} height={28} className="gb-pp-badge" />
-                  <text x={376} y={851} textAnchor="middle" className="gb-pp-badge-t" fontSize={14}>
-                    {book.countLabel}
-                  </text>
-                </g>
-              </svg>
-            </div>
-          </aside>
-          <div className="gb-right">
-            <Rise>
-              <h2 id={titleId} className="gb-d-title">
-                {book.title}
-              </h2>
-            </Rise>
-            <Rise>
-              <p className="gb-lbl gb-d-meta">
-                {book.groupLabel} · {book.year} · {book.countLabel}
-              </p>
-            </Rise>
-            <Rise>
-              <p className="gb-d-syn">{book.synopsisVi}</p>
-            </Rise>
-            <Rise>
-              <p className="gb-d-credit">{book.creditVi}</p>
-            </Rise>
-            <Rise>
-              <div className="gb-actions">
-                <div className="gb-heart">
+                      <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" focusable="false">
+                        <path d="M12 20.5s-7.5-4.6-9.4-9.2C1.2 8 3 4.8 6.3 4.8c2 0 3.4 1.1 4.2 2.4h3c.8-1.3 2.2-2.4 4.2-2.4 3.3 0 5.1 3.2 3.7 6.5-1.9 4.6-9.4 9.2-9.4 9.2z" />
+                      </svg>
+                    </button>
+                    <span className="gb-count">{getHeartCount(book.id)}</span>
+                  </div>
                   <button
                     type="button"
                     className="gb-icon-btn"
-                    aria-label={liked ? 'Bỏ thích sách này' : 'Thích sách này'}
-                    aria-pressed={liked}
-                    data-on={liked ? 'true' : 'false'}
-                    onClick={() => toggleLikedItem(book.id)}
+                    aria-label={bookSaved ? 'Bỏ lưu sách này' : 'Lưu sách này'}
+                    title={bookSaved ? 'Bỏ lưu sách này' : 'Lưu sách này'}
+                    aria-pressed={bookSaved}
+                    data-on={bookSaved ? 'true' : 'false'}
+                    onClick={() => toggleSavedItem(book.id)}
                   >
-                    <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" focusable="false">
-                      <path
-                        d="M12 20.5s-7.5-4.6-9.4-9.2C1.2 8 3 4.8 6.3 4.8c2 0 3.4 1.1 4.2 2.4h3c.8-1.3 2.2-2.4 4.2-2.4 3.300 0 5.100 3.200 3.700 6.500-1.900 4.600-9.400 9.200-9.400 9.200z"
-                        transform="translate(0 0)"
-                      />
+                    <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" focusable="false">
+                      <path d="M6 3.5h12v17l-6-4.4-6 4.4z" />
                     </svg>
                   </button>
-                  <span className="gb-count">{getHeartCount(book.id)}</span>
                 </div>
+              </div>
+
+              <h2 id={titleId} className="gb-d-title">
+                {book.title}
+              </h2>
+              <p className="gb-d-syn">{book.synopsisVi}</p>
+            </div>
+
+            <div className="gb-catalog-panel">
+              <div className="gb-catalog-head">
+                <h3 className="gb-h3">Mục tài nguyên thực tế ({bookItems.length})</h3>
+                <span className="gb-lbl">{LIBRARY_LABEL[book.catalogLibrary]}</span>
+              </div>
+
+              <SelectionList
+                items={selectionItems}
+                selectedId={selectedItem?.id ?? ''}
+                onSelect={(id) => {
+                  setSelectedItemId(id);
+                  setStageMode('resource');
+                  setDemoKey((k) => k + 1);
+                }}
+                ariaLabel={`Danh sách mục tài nguyên trong ${book.title}`}
+                className="gb-selection-list"
+              />
+
+              <div className="gb-mode-switch" role="tablist" aria-label="Chế độ sân khấu sách">
                 <button
                   type="button"
-                  className="gb-icon-btn"
-                  aria-label={saved ? 'Bỏ lưu sách này' : 'Lưu sách này'}
-                  aria-pressed={saved}
-                  data-on={saved ? 'true' : 'false'}
-                  onClick={() => toggleSavedItem(book.id)}
+                  role="tab"
+                  aria-selected={stageMode === 'resource'}
+                  className={`gb-txt-btn${stageMode === 'resource' ? ' gb-solid' : ''}`}
+                  onClick={() => setStageMode('resource')}
                 >
-                  <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" focusable="false">
-                    <path d="M6 3.5h12v17l-6-4.4-6 4.4z" />
-                  </svg>
+                  Sân khấu mẫu thật
                 </button>
-                <button type="button" className="gb-txt-btn" onClick={() => void doCopy('css')}>
-                  Chép CSS
+                <button
+                  type="button"
+                  role="tab"
+                  aria-selected={stageMode === 'glacier'}
+                  className={`gb-txt-btn${stageMode === 'glacier' ? ' gb-solid' : ''}`}
+                  onClick={() => setStageMode('glacier')}
+                >
+                  Tùy chỉnh Glacier CSS
                 </button>
-                <button type="button" className="gb-txt-btn" onClick={() => void doCopy('prompt')}>
-                  Chép Prompt
-                </button>
-                <button type="button" className="gb-txt-btn gb-solid" onClick={launch}>
-                  Mở trong Workspace
-                </button>
-                <span className="gb-toast" role="status" aria-live="polite">
-                  {copied}
-                </span>
               </div>
-            </Rise>
-            <Rise>
-              <div className="gb-live">
-                <div className="gb-live-head">
-                  <span className="gb-lbl">Trải nghiệm tương tác trực tiếp · {book.editionTag}</span>
-                  <button
-                    type="button"
-                    className="gb-txt-btn"
-                    onClick={() => setDemoKey((k) => k + 1)}
-                  >
-                    Tải lại
-                  </button>
-                </div>
-                <div className="gb-live-stage">
-                  <iframe
-                    key={`${book.id}-${demoKey}`}
-                    ref={demoFrameRef}
-                    title={`Chạy thử ${book.title}`}
-                    srcDoc={book.liveDemoHtml}
-                    sandbox="allow-scripts"
-                    referrerPolicy="no-referrer"
-                    className="gb-live-iframe"
-                    onLoad={() => postSettingsToDemo(vals)}
-                  />
-                </div>
-              </div>
-            </Rise>
-            <Rise>
-              <div className="gb-bench">
-                <div className="gb-bench-head">
-                  <h3 className="gb-h3">Tùy chỉnh Glacier</h3>
-                  <button
-                    type="button"
-                    className="gb-txt-btn"
-                    onClick={() => setVals(book.settings)}
-                  >
-                    Đặt lại
-                  </button>
-                </div>
-                {SLIDERS.map((sl) => (
-                  <label key={sl.key} className="gb-sl">
-                    <span className="gb-lbl">{sl.label}</span>
-                    <input
-                      type="range"
-                      min={sl.min}
-                      max={sl.max}
-                      step={sl.step}
-                      value={vals[sl.key]}
-                      onChange={(ev) => {
-                        const n = Number(ev.target.value);
-                        setVals((prev) => ({ ...prev, [sl.key]: n }));
-                      }}
-                    />
-                    <output>{vals[sl.key]}</output>
-                  </label>
-                ))}
-                <pre className="gb-code" tabIndex={0} aria-label="CSS Glacier đã tạo">
-                  {cssText}
-                </pre>
-              </div>
-            </Rise>
-            <Rise>
-              <h3 className="gb-h3">
-                Tài nguyên tập trung trong sách · {book.resources.length}
-              </h3>
-            </Rise>
-            {book.resources.map((res) => (
-              <Rise key={res.title}>
-                <article className="gb-res">
-                  <header>
-                    <h4>{res.title}</h4>
-                    <span className="gb-tag">{res.tag}</span>
-                  </header>
-                  <p>{res.detail}</p>
-                </article>
-              </Rise>
-            ))}
+            </div>
+          </aside>
+
+          <div className="gb-right">
+            {stageMode === 'resource' && selectedItem ? (
+              <>
+                <Rise>
+                  <div className="gb-res-hero">
+                    <div className="gb-res-hero-info">
+                      <span className="gb-lbl gb-d-meta">
+                        {LIBRARY_LABEL[selectedItem.sourceLibrary]} · {selectedItem.category} ·{' '}
+                        {selectedItem.runtime}
+                      </span>
+                      <h3 className="gb-res-hero-title">{selectedTitle}</h3>
+                      <p className="gb-res-hero-desc">{selectedDesc}</p>
+                    </div>
+                  </div>
+                </Rise>
+
+                <Rise>
+                  <div className="gb-actions">
+                    <button
+                      type="button"
+                      className="gb-txt-btn"
+                      onClick={() => void doCopyResource('code')}
+                    >
+                      Chép mã
+                    </button>
+                    <button
+                      type="button"
+                      className="gb-txt-btn"
+                      onClick={() => void doCopyResource('prompt')}
+                    >
+                      Chép Prompt
+                    </button>
+                    <button
+                      type="button"
+                      className="gb-txt-btn"
+                      onClick={handleOpenExperience}
+                    >
+                      Trải nghiệm
+                    </button>
+                    <button
+                      type="button"
+                      className="gb-txt-btn gb-solid"
+                      onClick={handleOpenWorkspace}
+                    >
+                      Mở Workspace
+                    </button>
+                    <button
+                      type="button"
+                      className="gb-icon-btn"
+                      aria-label={itemSaved ? 'Bỏ lưu mẫu tài nguyên này' : 'Lưu Bookmark mẫu tài nguyên này'}
+                      title={itemSaved ? 'Đã lưu Bookmark' : 'Lưu Bookmark'}
+                      aria-pressed={itemSaved}
+                      data-on={itemSaved ? 'true' : 'false'}
+                      onClick={() => toggleSavedItem(selectedItem.id)}
+                    >
+                      <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" focusable="false">
+                        <path d="M6 3.5h12v17l-6-4.4-6 4.4z" />
+                      </svg>
+                    </button>
+                    <button
+                      type="button"
+                      className="gb-icon-btn"
+                      aria-label={
+                        stageTheme === 'dark'
+                          ? 'Chuyển sân khấu sang nền sáng'
+                          : 'Chuyển sân khấu sang nền tối'
+                      }
+                      title={stageTheme === 'dark' ? 'Nền tối — Đổi sang sáng' : 'Nền sáng — Đổi sang tối'}
+                      onClick={() => setStageTheme((prev) => (prev === 'dark' ? 'light' : 'dark'))}
+                    >
+                      {stageTheme === 'dark' ? (
+                        <Moon size={16} aria-hidden="true" />
+                      ) : (
+                        <Sun size={16} aria-hidden="true" />
+                      )}
+                    </button>
+                    <button
+                      type="button"
+                      className="gb-icon-btn"
+                      aria-label="Tải lại sân khấu chạy thử"
+                      title="Tải lại sân khấu chạy thử"
+                      onClick={() => setDemoKey((k) => k + 1)}
+                    >
+                      <RotateCw size={16} aria-hidden="true" />
+                    </button>
+                    <span className="gb-toast" role="status" aria-live="polite">
+                      {copied}
+                    </span>
+                  </div>
+                </Rise>
+
+                <Rise>
+                  <div className="gb-live">
+                    <div
+                      className="gb-live-stage"
+                      data-theme={stageTheme}
+                      data-playground={isPinUI ? 'true' : 'false'}
+                    >
+                      {isPinUI ? (
+                        <PinUIPlayground
+                          key={`${selectedItem.id}-${demoKey}`}
+                          itemId={selectedItem.id}
+                          theme={stageTheme}
+                          compact
+                        />
+                      ) : !isThreeUI && !isMotion && selectedItem.previewHtml ? (
+                        <SandboxPreview
+                          title={selectedTitle}
+                          html={selectedItem.previewHtml}
+                          css={selectedCssWithTheme}
+                          theme={stageTheme}
+                          viewport={1440}
+                          nonce={demoKey}
+                        />
+                      ) : selectedPreview ? (
+                        <SpecimenMedia
+                          key={selectedItem.id}
+                          preview={selectedPreview}
+                          title={selectedTitle}
+                          fallbackLabel={LIBRARY_LABEL[selectedItem.sourceLibrary]}
+                          fit="contain"
+                          activePlay
+                        />
+                      ) : selectedItem.previewImage ? (
+                        <img
+                          src={selectedItem.previewImage}
+                          alt={selectedTitle}
+                          referrerPolicy="no-referrer"
+                          style={{
+                            width: '100%',
+                            height: '100%',
+                            objectFit: 'contain',
+                            display: 'block',
+                          }}
+                        />
+                      ) : (
+                        <div className="gb-live-fallback">
+                          <span>{selectedTitle}</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </Rise>
+
+                <Rise>
+                  <div className="gb-bench">
+                    <div className="gb-bench-head">
+                      <div className="gb-code-tab-group" role="tablist" aria-label="Mã nguồn mẫu">
+                        {selectedHtml ? (
+                          <button
+                            type="button"
+                            role="tab"
+                            aria-selected={codeTab === 'code'}
+                            className={`gb-txt-btn${codeTab === 'code' ? ' gb-solid' : ''}`}
+                            onClick={() => setCodeTab('code')}
+                          >
+                            {isPinUI ? 'TSX' : 'HTML'}
+                          </button>
+                        ) : null}
+                        {selectedCss ? (
+                          <button
+                            type="button"
+                            role="tab"
+                            aria-selected={codeTab === 'css'}
+                            className={`gb-txt-btn${codeTab === 'css' ? ' gb-solid' : ''}`}
+                            onClick={() => setCodeTab('css')}
+                          >
+                            CSS
+                          </button>
+                        ) : null}
+                        <button
+                          type="button"
+                          role="tab"
+                          aria-selected={codeTab === 'prompt'}
+                          className={`gb-txt-btn${codeTab === 'prompt' ? ' gb-solid' : ''}`}
+                          onClick={() => setCodeTab('prompt')}
+                        >
+                          Prompt
+                        </button>
+                      </div>
+                      <button
+                        type="button"
+                        className="gb-txt-btn"
+                        onClick={() =>
+                          void doCopyResource(codeTab === 'prompt' ? 'prompt' : 'code')
+                        }
+                      >
+                        {codeTab === 'prompt' ? 'Chép Prompt' : 'Chép mã'}
+                      </button>
+                    </div>
+                    <pre className="gb-code" tabIndex={0} aria-label="Mã nguồn và Prompt mẫu đang chọn">
+                      {shownResourceCode}
+                    </pre>
+                  </div>
+                </Rise>
+              </>
+            ) : (
+              <>
+                <Rise>
+                  <div className="gb-live">
+                    <div className="gb-live-head">
+                      <span className="gb-lbl">Phòng thử thông số Glacier · {book.editionTag}</span>
+                      <button
+                        type="button"
+                        className="gb-txt-btn"
+                        onClick={() => setDemoKey((k) => k + 1)}
+                      >
+                        Tải lại
+                      </button>
+                    </div>
+                    <div className="gb-live-stage">
+                      <iframe
+                        key={`${book.id}-${demoKey}`}
+                        ref={demoFrameRef}
+                        title={`Chạy thử ${book.title}`}
+                        srcDoc={book.liveDemoHtml}
+                        sandbox="allow-scripts"
+                        referrerPolicy="no-referrer"
+                        className="gb-live-iframe"
+                        onLoad={() => postSettingsToDemo(vals)}
+                      />
+                    </div>
+                  </div>
+                </Rise>
+                <Rise>
+                  <div className="gb-bench">
+                    <div className="gb-bench-head">
+                      <h3 className="gb-h3">Tùy chỉnh Glacier CSS</h3>
+                      <button
+                        type="button"
+                        className="gb-txt-btn"
+                        onClick={() => setVals(book.settings)}
+                      >
+                        Đặt lại
+                      </button>
+                    </div>
+                    {SLIDERS.map((sl) => (
+                      <label key={sl.key} className="gb-sl">
+                        <span className="gb-lbl">{sl.label}</span>
+                        <input
+                          type="range"
+                          min={sl.min}
+                          max={sl.max}
+                          step={sl.step}
+                          value={vals[sl.key]}
+                          onChange={(ev) => {
+                            const n = Number(ev.target.value);
+                            setVals((prev) => ({ ...prev, [sl.key]: n }));
+                          }}
+                        />
+                        <output>{vals[sl.key]}</output>
+                      </label>
+                    ))}
+                    <pre className="gb-code" tabIndex={0} aria-label="CSS Glacier đã tạo">
+                      {cssText}
+                    </pre>
+                  </div>
+                </Rise>
+              </>
+            )}
           </div>
         </div>
       </div>
@@ -917,6 +1250,14 @@ export function GlacierBookShelf({ onNavigate, onLaunchPrompt }: GlacierBookShel
       goTo(Math.round(eng.current.T) + delta);
     },
     [goTo]
+  );
+
+  const handleStepDialogBook = useCallback(
+    (delta: -1 | 1) => {
+      step(delta);
+      setDialog((prev) => (prev ? { ...prev, idx: mod(prev.idx + delta, COUNT) } : null));
+    },
+    [step]
   );
 
   const openBook = useCallback(() => {
@@ -1132,6 +1473,7 @@ export function GlacierBookShelf({ onNavigate, onLaunchPrompt }: GlacierBookShel
   const onPointerDown = (ev: React.PointerEvent<HTMLDivElement>) => {
     const e = eng.current;
     if (e.modal || (ev.pointerType === 'mouse' && ev.button !== 0)) return;
+    if ((ev.target as HTMLElement).closest('button')) return;
     e.drag = { x: ev.clientX, T0: e.T, moved: false };
     const move = (m: PointerEvent) => {
       const dr = e.drag;
@@ -1165,6 +1507,7 @@ export function GlacierBookShelf({ onNavigate, onLaunchPrompt }: GlacierBookShel
       e.suppress = false;
       return;
     }
+    if ((ev.target as HTMLElement).closest('button')) return;
     const holder = (ev.target as HTMLElement).closest('[data-v]') as HTMLElement | null;
     if (holder) {
       const v = Number(holder.dataset.v);
@@ -1286,18 +1629,46 @@ export function GlacierBookShelf({ onNavigate, onLaunchPrompt }: GlacierBookShel
         onClick={onStageClick}
         onKeyDown={onStageKey}
       >
+        <button
+          type="button"
+          className="gb-stage-nav gb-stage-nav--prev"
+          aria-label="Cuốn sách trước"
+          title="Cuốn sách trước (Phím mũi tên trái)"
+          onClick={(ev) => {
+            ev.stopPropagation();
+            step(-1);
+          }}
+        >
+          <ChevronLeft size={22} aria-hidden="true" />
+        </button>
+
         <div className="gb-origin">{tapes}</div>
+
         <button
           ref={ringRef}
           type="button"
           className="gb-ring"
           aria-label={`Mở sách ${activeBook.title}`}
+          title={`Mở sách ${activeBook.title}`}
           onClick={(ev) => {
             ev.stopPropagation();
             openBook();
           }}
         >
           <span className="gb-ring-tri" aria-hidden="true" />
+        </button>
+
+        <button
+          type="button"
+          className="gb-stage-nav gb-stage-nav--next"
+          aria-label="Cuốn sách tiếp theo"
+          title="Cuốn sách tiếp theo (Phím mũi tên phải)"
+          onClick={(ev) => {
+            ev.stopPropagation();
+            step(1);
+          }}
+        >
+          <ChevronRight size={22} aria-hidden="true" />
         </button>
       </div>
 
@@ -1306,11 +1677,10 @@ export function GlacierBookShelf({ onNavigate, onLaunchPrompt }: GlacierBookShel
           type="button"
           className="gb-arrow gb-arrow-l"
           aria-label="Sách trước"
+          title="Sách trước"
           onClick={() => step(-1)}
         >
-          <svg viewBox="0 0 18 10" width="18" height="10" aria-hidden="true" focusable="false">
-            <path d="M5 1 L1 5 L5 9 M1 5 H17" />
-          </svg>
+          <ChevronLeft size={18} aria-hidden="true" />
         </button>
         <div className="gb-cap" aria-hidden="true">
           <div
@@ -1336,11 +1706,10 @@ export function GlacierBookShelf({ onNavigate, onLaunchPrompt }: GlacierBookShel
           type="button"
           className="gb-arrow gb-arrow-r"
           aria-label="Sách sau"
+          title="Sách sau"
           onClick={() => step(1)}
         >
-          <svg viewBox="0 0 18 10" width="18" height="10" aria-hidden="true" focusable="false">
-            <path d="M13 1 L17 5 L13 9 M17 5 H1" />
-          </svg>
+          <ChevronRight size={18} aria-hidden="true" />
         </button>
       </div>
 
@@ -1368,7 +1737,10 @@ export function GlacierBookShelf({ onNavigate, onLaunchPrompt }: GlacierBookShel
       {dialog && dialogBook ? (
         <BookDialog
           book={dialogBook}
+          bookIndex={dialog.idx}
+          totalBooks={COUNT}
           rect={dialog.rect}
+          onStepBook={handleStepDialogBook}
           onClosed={onClosed}
           onNavigate={onNavigate}
           onLaunchPrompt={onLaunchPrompt}

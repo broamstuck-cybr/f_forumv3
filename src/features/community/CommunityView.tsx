@@ -1,4 +1,22 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import {
+  ArrowBigUp,
+  ArrowUpRight,
+  Bookmark,
+  BookOpen,
+  Check,
+  Copy,
+  Flag,
+  MessageSquare,
+  Monitor,
+  Moon,
+  RotateCw,
+  Share2,
+  Smartphone,
+  Sun,
+  Tablet,
+  X,
+} from 'lucide-react';
 import type {
   ClubHandoverDossier,
   CommunityAnswer,
@@ -8,12 +26,16 @@ import type {
 } from '../../types/index';
 import { useAppStore } from '../../store/appStore';
 import {
+  ChatRoom,
   Chips,
+  FileBox,
   LiquidTabs,
   PresenceCards,
   ReaderCard,
   SearchCard,
+  type ChatRoomPerson,
   type ChipItem,
+  type FileBoxTab,
   type LiquidTabItem,
   type PresenceMember,
 } from '../../components/pinui';
@@ -32,6 +54,8 @@ const LOCAL_REPLIES_STORAGE_KEY = 'fforum_v3_community_replies_v7';
 const LOCAL_ACCEPTED_STORAGE_KEY = 'fforum_v3_community_accepted_v7';
 const LOCAL_RECENT_SEARCHES_KEY = 'fforum_v3_community_recent_searches_v7';
 
+const VIEWPORT_CYCLE: PreviewViewport[] = [1440, 768, 390];
+
 const DEFAULT_RECENT_SEARCHES = [
   'virtualization',
   'css-tokens',
@@ -41,7 +65,7 @@ const DEFAULT_RECENT_SEARCHES = [
 ];
 
 const TOPIC_CHIPS: ChipItem[] = [
-  { id: 'all', label: 'Tất cả chủ đề' },
+  { id: 'all', label: 'Tất cả' },
   { id: 'react', label: 'React & UI' },
   { id: 'css-tokens', label: 'CSS Tokens' },
   { id: 'motion', label: 'Motion & Glass' },
@@ -58,6 +82,8 @@ const QUICK_COMPOSE_TAGS = [
   'agent-rules',
   'bento',
 ];
+
+const CHAT_HUES = ['#ff6450', '#7fd69b', '#7da3bb', '#e9b44c', '#b0aec6'];
 
 const SAMPLE_SNIPPET: CommunityShowcaseSnippet = {
   html: '<div class="builder-demo-card">\n  <div class="builder-demo-head">\n    <span class="builder-badge">Sandbox Live</span>\n    <span id="demo-counter" class="builder-counter">0 lượt chạy</span>\n  </div>\n  <h3 class="builder-title">Khối kiểm định tương tác thời gian thực</h3>\n  <p class="builder-desc">Nhấn nút bên dưới để kiểm tra phản hồi sự kiện JS trong khung cô lập.</p>\n  <button type="button" id="demo-trigger" class="builder-btn">Kích hoạt xung kiểm thử</button>\n</div>',
@@ -155,6 +181,16 @@ function loadJsonFromStorage<T>(key: string, fallback: T): T {
   }
 }
 
+function nextViewportValue(current: PreviewViewport): PreviewViewport {
+  const idx = VIEWPORT_CYCLE.indexOf(current);
+  return VIEWPORT_CYCLE[(idx + 1) % VIEWPORT_CYCLE.length];
+}
+
+function viewportTooltip(current: PreviewViewport): string {
+  const next = nextViewportValue(current);
+  return `Khung nhìn ${current}px · Nhấn để chuyển ${next}px`;
+}
+
 interface ContributorStat {
   handle: string;
   name: string;
@@ -209,15 +245,14 @@ export const CommunityView: React.FC = () => {
   );
 
   const [selectedPostId, setSelectedPostId] = useState<string | null>(null);
-  const [openCommentDrawers, setOpenCommentDrawers] = useState<Record<string, boolean>>({
-    'qa-01': true,
-  });
+  const [openCommentDrawers, setOpenCommentDrawers] = useState<Record<string, boolean>>({});
   const [replyDrafts, setReplyDrafts] = useState<Record<string, string>>({});
   const [submittingReplyId, setSubmittingReplyId] = useState<string | null>(null);
 
   const [codeModes, setCodeModes] = useState<Record<string, CodeDisplayMode>>({
     'sc-01': 'live',
   });
+  const [activeCodeFiles, setActiveCodeFiles] = useState<Record<string, string>>({});
   const [sandboxViewports, setSandboxViewports] = useState<Record<string, PreviewViewport>>({});
   const [sandboxThemes, setSandboxThemes] = useState<Record<string, PreviewTheme>>({});
   const [sandboxNonces, setSandboxNonces] = useState<Record<string, number>>({});
@@ -225,6 +260,7 @@ export const CommunityView: React.FC = () => {
   const [copiedCodeId, setCopiedCodeId] = useState<string | null>(null);
   const [copiedShareId, setCopiedShareId] = useState<string | null>(null);
 
+  const [composerOpen, setComposerOpen] = useState(false);
   const [composeChannel, setComposeChannel] = useState<CommunityChannel>('showcase');
   const [composeTitle, setComposeTitle] = useState('');
   const [composeBody, setComposeBody] = useState('');
@@ -297,7 +333,13 @@ export const CommunityView: React.FC = () => {
         const enrichedDemo = sp.demoSnippet
           ? {
               ...sp.demoSnippet,
-              ...(ENRICHED_DEMOS[sp.id] ? { js: ENRICHED_DEMOS[sp.id].js, html: ENRICHED_DEMOS[sp.id].html, css: ENRICHED_DEMOS[sp.id].css } : {}),
+              ...(ENRICHED_DEMOS[sp.id]
+                ? {
+                    js: ENRICHED_DEMOS[sp.id].js,
+                    html: ENRICHED_DEMOS[sp.id].html,
+                    css: ENRICHED_DEMOS[sp.id].css,
+                  }
+                : {}),
             }
           : ENRICHED_DEMOS[sp.id];
         map.set(sp.id, {
@@ -352,10 +394,7 @@ export const CommunityView: React.FC = () => {
     [isItemLiked]
   );
 
-  const demoPosts = useMemo(
-    () => allPosts.filter((p) => Boolean(p.demoSnippet)),
-    [allPosts]
-  );
+  const demoPosts = useMemo(() => allPosts.filter((p) => Boolean(p.demoSnippet)), [allPosts]);
 
   const savedCommunityPosts = useMemo(
     () => allPosts.filter((p) => savedItemIds.includes(p.id)),
@@ -370,7 +409,7 @@ export const CommunityView: React.FC = () => {
   const feedTabItems = useMemo<LiquidTabItem[]>(
     () => [
       { id: 'all', label: 'Tất cả', count: allPosts.length },
-      { id: 'trending', label: 'Thịnh hành', count: allPosts.length },
+      { id: 'trending', label: 'Thịnh hành' },
       { id: 'demos', label: 'Mã chạy thử', count: demoPosts.length },
       { id: 'saved', label: 'Đã lưu', count: savedCommunityPosts.length },
     ],
@@ -436,6 +475,19 @@ export const CommunityView: React.FC = () => {
     [topContributors]
   );
 
+  const chatRoomPeople = useMemo<ChatRoomPerson[]>(
+    () =>
+      topContributors.slice(0, 4).map((c, idx) => ({
+        id: `cm-cr-${c.handle}`,
+        name: c.name,
+        role: c.role || 'Thành viên',
+        initials: authorInitials(c.name),
+        hue: CHAT_HUES[idx % CHAT_HUES.length],
+        speaking: idx < 2,
+      })),
+    [topContributors]
+  );
+
   const matchesTopicFilter = useCallback((post: CommunityPost, topic: string): boolean => {
     if (topic === 'all') return true;
     const haystack = [
@@ -450,22 +502,48 @@ export const CommunityView: React.FC = () => {
       .toLowerCase();
 
     if (topic === 'react') {
-      return haystack.includes('react') || haystack.includes('frontend') || haystack.includes('component');
+      return (
+        haystack.includes('react') ||
+        haystack.includes('frontend') ||
+        haystack.includes('component')
+      );
     }
     if (topic === 'css-tokens') {
-      return haystack.includes('token') || haystack.includes('css') || haystack.includes('tailwind') || haystack.includes('design');
+      return (
+        haystack.includes('token') ||
+        haystack.includes('css') ||
+        haystack.includes('tailwind') ||
+        haystack.includes('design')
+      );
     }
     if (topic === 'motion') {
-      return haystack.includes('motion') || haystack.includes('glass') || haystack.includes('3d') || haystack.includes('spotlight');
+      return (
+        haystack.includes('motion') ||
+        haystack.includes('glass') ||
+        haystack.includes('3d') ||
+        haystack.includes('spotlight')
+      );
     }
     if (topic === 'performance') {
-      return haystack.includes('performance') || haystack.includes('virtual') || haystack.includes('fps') || haystack.includes('cpu');
+      return (
+        haystack.includes('performance') ||
+        haystack.includes('virtual') ||
+        haystack.includes('fps') ||
+        haystack.includes('cpu')
+      );
     }
     if (topic === 'agent-rules') {
-      return haystack.includes('agent') || haystack.includes('rule') || haystack.includes('prompt') || haystack.includes('clean');
+      return (
+        haystack.includes('agent') ||
+        haystack.includes('rule') ||
+        haystack.includes('prompt') ||
+        haystack.includes('clean')
+      );
     }
     if (topic === 'clubs') {
-      return post.channel === 'clubs' || haystack.includes('club') || haystack.includes('dossier');
+      return (
+        post.channel === 'clubs' || haystack.includes('club') || haystack.includes('dossier')
+      );
     }
     return haystack.includes(topic.toLowerCase());
   }, []);
@@ -537,16 +615,6 @@ export const CommunityView: React.FC = () => {
       null,
     [allPosts, selectedPostId, visiblePosts]
   );
-
-  const activeDiscussionThreads = useMemo<CommunityPost[]>(() => {
-    return [...allPosts]
-      .sort((a, b) => {
-        const repliesDiff = getPostAnswers(b).length - getPostAnswers(a).length;
-        if (repliesDiff !== 0) return repliesDiff;
-        return getPostScore(b) - getPostScore(a);
-      })
-      .slice(0, 4);
-  }, [allPosts, getPostAnswers, getPostScore]);
 
   const readerParagraphs = useMemo<string[]>(() => {
     if (!activeReaderPost) return [];
@@ -803,6 +871,7 @@ export const CommunityView: React.FC = () => {
       setComposeJs('');
       setComposeIncludeCode(false);
       setComposePreviewLive(false);
+      setComposerOpen(false);
 
       addToast({
         type: 'success',
@@ -960,125 +1029,44 @@ export const CommunityView: React.FC = () => {
   return (
     <div className="cm">
       <div className="wrap-wide cm-shell">
-        <aside className="cm-rail-left" aria-label="Điều hướng cộng đồng">
-          <div className="cm-panel">
-            <div className="cm-rail-head">
-              <p className="t-label">mạng xã hội kỹ thuật</p>
-              <h1 className="cm-rail-title">
-                <span className="t-script cm-cap">T</span>ri thức
-              </h1>
-              <p className="cm-rail-sub">
-                Chia sẻ kiến trúc giao diện, chạy thử mã HTML/CSS/JS trực tiếp và phản biện kỹ thuật.
-              </p>
+        <main className="cm-main" aria-label="Luồng bài viết Tri thức">
+          <header className="cm-hero-bar">
+            <div className="cm-hero-top">
+              <div className="cm-hero-title-group">
+                <h1 className="cm-page-title">Tri thức</h1>
+                <span className="cm-count">{visiblePosts.length} bài</span>
+              </div>
+              <button
+                type="button"
+                className="btn btn-red btn-sm cm-write-btn"
+                onClick={() => setComposerOpen(true)}
+              >
+                Viết bài
+              </button>
             </div>
 
-            <div className="cm-section-head">
-              <span className="cm-section-title">Luồng bảng tin</span>
-              <span className="t-label">{visiblePosts.length} hiển thị</span>
-            </div>
+            <div className="cm-search-row">
+              <div className="cm-search-box">
+                <SearchCard
+                  value={searchQuery}
+                  onChange={setSearchQuery}
+                  placeholder="Tìm bài viết, mã mẫu, thẻ hoặc @tác_giả..."
+                  recentSearches={recentSearches}
+                  onSelectRecent={(q) => {
+                    setSearchQuery(q);
+                    recordRecentSearch(q);
+                  }}
+                />
+              </div>
 
-            <div className="cm-rail-tabs">
-              <LiquidTabs
-                tabs={feedTabItems}
-                activeId={feedTab}
-                onChange={(id) => setFeedTab(id as FeedTabId)}
-                ariaLabel="Chuyển kênh bảng tin"
-              />
-            </div>
-          </div>
-
-          <div className="cm-panel">
-            <div className="cm-section-head">
-              <span className="cm-section-title">Chủ đề kỹ thuật</span>
-              {selectedTopic !== 'all' && (
-                <button
-                  type="button"
-                  className="btn btn-ghost btn-sm"
-                  onClick={() => setSelectedTopic('all')}
-                >
-                  Đặt lại
-                </button>
-              )}
-            </div>
-
-            <div className="cm-topics-wrap">
-              <Chips
-                items={TOPIC_CHIPS}
-                selectedIds={[selectedTopic]}
-                onToggle={handleToggleTopic}
-                multi={false}
-                variant="filter"
-                theme={theme}
-              />
-            </div>
-          </div>
-
-          <PresenceCards
-            title="Thành viên đóng góp"
-            subtitle="Nhấn vào tác giả để lọc bài viết"
-            members={presenceMembers}
-            actionLabel={authorFilter ? 'Bỏ lọc' : 'Tất cả'}
-            onAction={() => setAuthorFilter(null)}
-          >
-            <ul className="cm-contrib-list">
-              {topContributors.map((person, index) => {
-                const isSelected =
-                  authorFilter !== null &&
-                  authorFilter.toLowerCase() === person.handle.toLowerCase();
-                return (
-                  <li key={person.handle}>
-                    <button
-                      type="button"
-                      className="cm-contrib-btn"
-                      data-active={isSelected ? 'true' : undefined}
-                      onClick={() =>
-                        setAuthorFilter((prev) =>
-                          prev && prev.toLowerCase() === person.handle.toLowerCase()
-                            ? null
-                            : person.handle
-                        )
-                      }
-                    >
-                      <span className="cm-contrib-rank">{index + 1}</span>
-                      <span className="cm-contrib-info">
-                        <span className="cm-contrib-name">{person.name}</span>
-                        <span className="cm-contrib-meta">
-                          @{person.handle} · {person.postsCount} bài · {person.repliesCount} phản hồi
-                        </span>
-                      </span>
-                      <span className="cm-contrib-score">{person.score}đ</span>
-                    </button>
-                  </li>
-                );
-              })}
-            </ul>
-          </PresenceCards>
-        </aside>
-
-        <main className="cm-center" aria-label="Luồng bài viết cộng đồng">
-          <section className="cm-top-bar" aria-label="Tìm kiếm và sắp xếp">
-            <SearchCard
-              value={searchQuery}
-              onChange={(val) => {
-                setSearchQuery(val);
-              }}
-              placeholder="Tìm bài viết, mã mẫu HTML/CSS, thẻ chủ đề hoặc @tác_giả..."
-              recentSearches={recentSearches}
-              onSelectRecent={(q) => {
-                setSearchQuery(q);
-                recordRecentSearch(q);
-              }}
-            />
-
-            <div className="cm-top-controls">
-              <div className="cm-sort-group" role="group" aria-label="Sắp xếp luồng bài">
+              <div className="cm-sort-group" role="group" aria-label="Sắp xếp bài viết">
                 <button
                   type="button"
                   className="cm-sort-btn"
                   aria-pressed={sortMode === 'newest'}
                   onClick={() => setSortMode('newest')}
                 >
-                  Mới nhất
+                  Mới
                 </button>
                 <button
                   type="button"
@@ -1094,278 +1082,76 @@ export const CommunityView: React.FC = () => {
                   aria-pressed={sortMode === 'discussed'}
                   onClick={() => setSortMode('discussed')}
                 >
-                  Nhiều thảo luận
+                  Thảo luận
                 </button>
               </div>
+            </div>
 
-              <span className="t-label">
-                {visiblePosts.length} / {allPosts.length} bài viết
-              </span>
+            <div className="cm-nav-strip">
+              <div className="cm-feed-tabs">
+                <LiquidTabs
+                  tabs={feedTabItems}
+                  activeId={feedTab}
+                  onChange={(id) => setFeedTab(id as FeedTabId)}
+                  ariaLabel="Kênh bảng tin"
+                />
+              </div>
+            </div>
+
+            <div className="cm-topics-strip">
+              <Chips
+                items={TOPIC_CHIPS}
+                selectedIds={[selectedTopic]}
+                onToggle={handleToggleTopic}
+                multi={false}
+                variant="filter"
+                theme={theme}
+              />
             </div>
 
             {hasActiveFilter && (
               <div className="cm-active-filters">
-                <span className="t-label">Đang lọc:</span>
                 {feedTab !== 'all' && (
-                  <span className="tag tag-red">
-                    Kênh: {feedTabItems.find((t) => t.id === feedTab)?.label}
+                  <span className="cm-filter-pill">
+                    {feedTabItems.find((t) => t.id === feedTab)?.label}
                   </span>
                 )}
                 {selectedTopic !== 'all' && (
-                  <span className="tag tag-red">
-                    Chủ đề: {TOPIC_CHIPS.find((c) => c.id === selectedTopic)?.label || selectedTopic}
+                  <span className="cm-filter-pill">
+                    {TOPIC_CHIPS.find((c) => c.id === selectedTopic)?.label || selectedTopic}
                   </span>
                 )}
-                {authorFilter && <span className="tag tag-red">Tác giả: @{authorFilter}</span>}
+                {authorFilter && <span className="cm-filter-pill">@{authorFilter}</span>}
                 {searchQuery.trim() && (
-                  <span className="tag tag-red">Từ khóa: {searchQuery.trim()}</span>
+                  <span className="cm-filter-pill">“{searchQuery.trim()}”</span>
                 )}
                 <button
                   type="button"
-                  className="btn btn-line btn-sm"
+                  className="cm-clear-btn"
                   onClick={clearAllFilters}
                 >
-                  Xóa bộ lọc
+                  Đặt lại
                 </button>
               </div>
             )}
-          </section>
-
-          <section className="cm-composer" aria-label="Đăng bài chia sẻ">
-            <form className="cm-composer-grid" onSubmit={(e) => void handleCreatePost(e)}>
-              <div className="cm-composer-head">
-                <div className="cm-composer-title-wrap">
-                  <span className="cm-avatar-chip" aria-hidden="true">
-                    {authorInitials(currentUser?.name || 'Builder VN')}
-                  </span>
-                  <h2 className="cm-composer-title">Đăng bài chia sẻ</h2>
-                </div>
-
-                <div className="cm-composer-tools">
-                  <button
-                    type="button"
-                    className="btn btn-line btn-sm"
-                    onClick={handlePrefillFromWorkspace}
-                  >
-                    Nạp từ Workspace
-                  </button>
-                  <button
-                    type="button"
-                    className="btn btn-line btn-sm"
-                    aria-pressed={composeIncludeCode}
-                    onClick={() => setComposeIncludeCode((prev) => !prev)}
-                  >
-                    {composeIncludeCode ? 'Ẩn khung mã HTML/CSS/JS' : 'Đính kèm mã HTML/CSS/JS'}
-                  </button>
-                </div>
-              </div>
-
-              <div className="cm-composer-row">
-                <div className="cm-field">
-                  <label htmlFor="cm-post-title" className="t-label">
-                    tiêu đề bài viết
-                  </label>
-                  <input
-                    id="cm-post-title"
-                    type="text"
-                    className="field"
-                    required
-                    value={composeTitle}
-                    onChange={(e) => setComposeTitle(e.target.value)}
-                    placeholder="Ví dụ: Tối ưu Liquid Glass Button hoặc kiến trúc Token..."
-                  />
-                </div>
-
-                <div className="cm-field">
-                  <label htmlFor="cm-post-category" className="t-label">
-                    chuyên mục
-                  </label>
-                  <select
-                    id="cm-post-category"
-                    className="field"
-                    value={composeCategory}
-                    onChange={(e) => {
-                      const val = e.target.value;
-                      setComposeCategory(val);
-                      if (val === 'Components' || val === 'Layouts') {
-                        setComposeChannel('showcase');
-                      } else if (val === 'Agent Rules' || val === 'Prompts') {
-                        setComposeChannel('drops');
-                      } else if (val === 'Hội nhóm') {
-                        setComposeChannel('clubs');
-                      } else {
-                        setComposeChannel('qa');
-                      }
-                    }}
-                  >
-                    <option value="React / Frontend">React / Frontend</option>
-                    <option value="UI/UX & Tokens">UI/UX &amp; Tokens</option>
-                    <option value="Components">Components (Hộp cát)</option>
-                    <option value="Layouts">Layouts (Bố cục)</option>
-                    <option value="Agent Rules">Agent Rules</option>
-                    <option value="Hội nhóm">Hội nhóm dự án</option>
-                  </select>
-                </div>
-              </div>
-
-              <div className="cm-field">
-                <label htmlFor="cm-post-body" className="t-label">
-                  nội dung chia sẻ
-                </label>
-                <textarea
-                  id="cm-post-body"
-                  rows={2}
-                  className="field"
-                  value={composeBody}
-                  onChange={(e) => setComposeBody(e.target.value)}
-                  placeholder="Trình bày giải pháp, thông số kỹ thuật, hoặc câu hỏi cần cộng đồng phản biện..."
-                />
-              </div>
-
-              <div className="cm-field">
-                <label htmlFor="cm-post-tags" className="t-label">
-                  thẻ chủ đề (phân tách bằng dấu phẩy)
-                </label>
-                <input
-                  id="cm-post-tags"
-                  type="text"
-                  className="field"
-                  value={composeTagsInput}
-                  onChange={(e) => setComposeTagsInput(e.target.value)}
-                  placeholder="react, css-tokens, glassmorphism"
-                />
-                <div className="cm-quick-tags" role="group" aria-label="Chọn nhanh thẻ chủ đề">
-                  {QUICK_COMPOSE_TAGS.map((tag) => {
-                    const active = activeComposeTags.includes(tag);
-                    return (
-                      <button
-                        key={tag}
-                        type="button"
-                        className="cm-quick-tag-btn"
-                        data-active={active ? 'true' : undefined}
-                        onClick={() => handleToggleQuickComposeTag(tag)}
-                      >
-                        #{tag}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-
-              {composeIncludeCode && (
-                <div className="cm-code-composer">
-                  <div className="cm-code-composer-bar">
-                    <span className="t-label">Mã chạy thử trực tiếp (HTML / CSS / JS cô lập)</span>
-                    <div className="cm-composer-tools">
-                      <button
-                        type="button"
-                        className="btn btn-line btn-sm"
-                        onClick={handleLoadSampleSnippet}
-                      >
-                        Chèn mẫu chạy thử
-                      </button>
-                      <button
-                        type="button"
-                        className="btn btn-ghost btn-sm"
-                        aria-pressed={composePreviewLive}
-                        onClick={() => setComposePreviewLive((p) => !p)}
-                      >
-                        {composePreviewLive ? 'Ẩn bản xem thử' : 'Chạy thử ngay'}
-                      </button>
-                    </div>
-                  </div>
-
-                  <div className="cm-code-editors">
-                    <div className="cm-field">
-                      <label htmlFor="cm-code-html" className="t-label">
-                        HTML
-                      </label>
-                      <textarea
-                        id="cm-code-html"
-                        rows={4}
-                        className="field cm-code-input"
-                        value={composeHtml}
-                        onChange={(e) => setComposeHtml(e.target.value)}
-                        placeholder="<div class='demo-card'>...</div>"
-                      />
-                    </div>
-
-                    <div className="cm-field">
-                      <label htmlFor="cm-code-css" className="t-label">
-                        CSS
-                      </label>
-                      <textarea
-                        id="cm-code-css"
-                        rows={4}
-                        className="field cm-code-input"
-                        value={composeCss}
-                        onChange={(e) => setComposeCss(e.target.value)}
-                        placeholder=".demo-card { padding: 20px; }"
-                      />
-                    </div>
-
-                    <div className="cm-field">
-                      <label htmlFor="cm-code-js" className="t-label">
-                        JavaScript
-                      </label>
-                      <textarea
-                        id="cm-code-js"
-                        rows={4}
-                        className="field cm-code-input"
-                        value={composeJs}
-                        onChange={(e) => setComposeJs(e.target.value)}
-                        placeholder="document.querySelector('.demo-card')..."
-                      />
-                    </div>
-                  </div>
-
-                  {composePreviewLive && (
-                    <div className="cm-sandbox-stage">
-                      <SandboxPreview
-                        title={composeTitle.trim() || 'Bản nháp bài viết'}
-                        html={compileHtmlWithJs({
-                          html: composeHtml || SAMPLE_SNIPPET.html,
-                          css: composeCss || SAMPLE_SNIPPET.css,
-                          js: composeJs,
-                        })}
-                        css={composeCss || SAMPLE_SNIPPET.css}
-                        theme={theme}
-                        viewport={1440}
-                        nonce={0}
-                      />
-                    </div>
-                  )}
-                </div>
-              )}
-
-              <div className="cm-composer-foot">
-                <span className="t-label">
-                  {composeIncludeCode
-                    ? 'Đã bật đính kèm hộp cát SandboxPreview an toàn'
-                    : 'Có thể đính kèm mã HTML/CSS/JS để người đọc chạy thử trực tiếp'}
-                </span>
-                <button
-                  type="submit"
-                  className="btn btn-red btn-sm"
-                  disabled={submittingPost || !composeTitle.trim()}
-                >
-                  {submittingPost ? 'Đang đăng...' : 'Đăng bài chia sẻ'}
-                </button>
-              </div>
-            </form>
-          </section>
+          </header>
 
           {visiblePosts.length === 0 ? (
             <div className="cm-empty">
-              <h3 className="t-title" style={{ fontSize: 'var(--text-xl)' }}>
-                Không tìm thấy bài viết khớp bộ lọc
-              </h3>
+              <h2 className="cm-empty-title">Không tìm thấy bài viết phù hợp</h2>
               <p className="cm-post-body">
-                Thử chuyển kênh bảng tin, xóa từ khóa tìm kiếm hoặc đăng một bài chia sẻ mới.
+                Thử đổi kênh, xóa từ khóa lọc hoặc đăng bài chia sẻ mới.
               </p>
               <div className="cm-empty-actions">
                 <button type="button" className="btn btn-line btn-sm" onClick={clearAllFilters}>
-                  Xóa toàn bộ bộ lọc
+                  Xóa bộ lọc
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-red btn-sm"
+                  onClick={() => setComposerOpen(true)}
+                >
+                  Viết bài mới
                 </button>
               </div>
             </div>
@@ -1378,18 +1164,59 @@ export const CommunityView: React.FC = () => {
                 const isLiked = isItemLiked(post.id);
                 const isSaved = savedItemIds.includes(post.id);
                 const isCommentsOpen = Boolean(openCommentDrawers[post.id]);
-                const hasRunnableCode = Boolean(post.demoSnippet);
                 const hasCodeOrPayload = Boolean(post.demoSnippet || post.payload);
-                const currentCodeMode: CodeDisplayMode =
-                  codeModes[post.id] ?? 'collapsed';
-                const currentViewport: PreviewViewport =
-                  sandboxViewports[post.id] ?? 1440;
-                const currentPreviewTheme: PreviewTheme =
-                  sandboxThemes[post.id] ?? theme;
+                const currentCodeMode: CodeDisplayMode = codeModes[post.id] ?? 'collapsed';
+                const currentViewport: PreviewViewport = sandboxViewports[post.id] ?? 1440;
+                const currentPreviewTheme: PreviewTheme = sandboxThemes[post.id] ?? theme;
                 const currentNonce = sandboxNonces[post.id] ?? 0;
                 const solved =
                   Boolean(post.isAccepted || post.acceptedAnswer) ||
                   answers.some((a) => a.isAccepted);
+
+                const codeFileTabs: FileBoxTab[] = post.demoSnippet
+                  ? [
+                      {
+                        id: 'html',
+                        label: 'index.html',
+                        meta: `${post.demoSnippet.html.split(/\r?\n/).length} dòng`,
+                      },
+                      ...(post.demoSnippet.css
+                        ? [
+                            {
+                              id: 'css',
+                              label: 'styles.css',
+                              meta: `${post.demoSnippet.css.split(/\r?\n/).length} dòng`,
+                            },
+                          ]
+                        : []),
+                      ...(post.demoSnippet.js
+                        ? [
+                            {
+                              id: 'js',
+                              label: 'app.js',
+                              meta: `${post.demoSnippet.js.split(/\r?\n/).length} dòng`,
+                            },
+                          ]
+                        : []),
+                    ]
+                  : post.payload
+                    ? [
+                        {
+                          id: 'payload',
+                          label: post.fileType ? `snippet.${post.fileType}` : 'notes.md',
+                          meta: `${post.payload.split(/\r?\n/).length} dòng`,
+                        },
+                      ]
+                    : [];
+
+                const activeCodeKey = activeCodeFiles[post.id] || codeFileTabs[0]?.id || 'html';
+                const activeCodeContent = post.demoSnippet
+                  ? activeCodeKey === 'css'
+                    ? post.demoSnippet.css
+                    : activeCodeKey === 'js'
+                      ? post.demoSnippet.js || ''
+                      : post.demoSnippet.html
+                  : whiteLabelText(post.payload || '');
 
                 return (
                   <li
@@ -1411,25 +1238,22 @@ export const CommunityView: React.FC = () => {
                               : post.author.handle
                           )
                         }
-                        title={`Lọc bài viết của @${post.author.handle}`}
+                        title={`Lọc bài của @${post.author.handle}`}
                       >
                         <span className="cm-avatar-chip" aria-hidden="true">
                           {authorInitials(post.author.name)}
                         </span>
-                        <span className="cm-author-name">{post.author.name}</span>
-                        <span className="t-label">@{post.author.handle}</span>
-                        <span className="tag">{post.author.role}</span>
+                        <span className="cm-author-meta">
+                          <span className="cm-author-name">{post.author.name}</span>
+                          <span className="t-label">
+                            @{post.author.handle} · {formatPostDate(post.createdAt)}
+                          </span>
+                        </span>
                       </button>
 
-                      <div className="cm-post-badges">
-                        <span className="tag tag-red">{whiteLabelText(post.category)}</span>
-                        {hasRunnableCode && (
-                          <span className="tag tag-green">Mã chạy thử</span>
-                        )}
-                        {solved && <span className="tag tag-green">Đạt chuẩn</span>}
-                        <time className="t-label" dateTime={post.createdAt}>
-                          {formatPostDate(post.createdAt)}
-                        </time>
+                      <div className="cm-post-meta-right">
+                        <span className="cm-cat-label">{whiteLabelText(post.category)}</span>
+                        {solved && <span className="cm-solved-dot">Đạt chuẩn</span>}
                       </div>
                     </div>
 
@@ -1448,12 +1272,9 @@ export const CommunityView: React.FC = () => {
                     {post.channel === 'clubs' && post.activeDossier && (
                       <div className="cm-dossier">
                         <div className="cm-section-head">
-                          <div>
-                            <p className="t-label">hồ sơ bàn giao câu lạc bộ</p>
-                            <h3 className="cm-composer-title">
-                              {post.activeDossier.projectTitle}
-                            </h3>
-                          </div>
+                          <h3 className="cm-dossier-title">
+                            {post.activeDossier.projectTitle}
+                          </h3>
                           <button
                             type="button"
                             className="btn btn-line btn-sm"
@@ -1475,7 +1296,7 @@ export const CommunityView: React.FC = () => {
 
                     {post.tags.length > 0 && (
                       <div className="cm-tags">
-                        {post.tags.slice(0, 6).map((tag) => {
+                        {post.tags.slice(0, 4).map((tag) => {
                           const cleanTag = whiteLabelText(tag);
                           const isTagActive =
                             selectedTopic.toLowerCase() === cleanTag.toLowerCase() ||
@@ -1515,7 +1336,7 @@ export const CommunityView: React.FC = () => {
                             {post.demoSnippet && (
                               <button
                                 type="button"
-                                className="btn btn-line btn-sm"
+                                className="cm-pill-toggle"
                                 aria-pressed={currentCodeMode === 'live'}
                                 onClick={() =>
                                   setCodeModes((prev) => ({
@@ -1525,85 +1346,79 @@ export const CommunityView: React.FC = () => {
                                   }))
                                 }
                               >
-                                {currentCodeMode === 'live'
-                                  ? 'Đang chạy trực tiếp'
-                                  : 'Chạy thử trực tiếp'}
+                                {currentCodeMode === 'live' ? 'Đang chạy' : 'Chạy thử'}
                               </button>
                             )}
                             <button
                               type="button"
-                              className="btn btn-line btn-sm"
+                              className="cm-pill-toggle"
                               aria-pressed={currentCodeMode === 'code'}
                               onClick={() =>
                                 setCodeModes((prev) => ({
                                   ...prev,
-                                  [post.id]:
-                                    prev[post.id] === 'code' ? 'collapsed' : 'code',
+                                  [post.id]: prev[post.id] === 'code' ? 'collapsed' : 'code',
                                 }))
                               }
                             >
-                              {currentCodeMode === 'code' ? 'Ẩn mã nguồn' : 'Xem mã'}
+                              {currentCodeMode === 'code' ? 'Ẩn mã' : 'Mã nguồn'}
                             </button>
+                          </div>
 
+                          <div className="cm-sandbox-actions">
                             {currentCodeMode === 'live' && post.demoSnippet && (
                               <>
                                 <button
                                   type="button"
-                                  className="btn btn-ghost btn-sm"
-                                  aria-pressed={currentViewport === 1440}
+                                  className="cm-icon-btn"
+                                  aria-label={viewportTooltip(currentViewport)}
+                                  title={viewportTooltip(currentViewport)}
                                   onClick={() =>
                                     setSandboxViewports((prev) => ({
                                       ...prev,
-                                      [post.id]: 1440,
+                                      [post.id]: nextViewportValue(currentViewport),
                                     }))
                                   }
                                 >
-                                  1440px
+                                  {currentViewport === 1440 ? (
+                                    <Monitor size={15} aria-hidden="true" />
+                                  ) : currentViewport === 768 ? (
+                                    <Tablet size={15} aria-hidden="true" />
+                                  ) : (
+                                    <Smartphone size={15} aria-hidden="true" />
+                                  )}
                                 </button>
                                 <button
                                   type="button"
-                                  className="btn btn-ghost btn-sm"
-                                  aria-pressed={currentViewport === 768}
-                                  onClick={() =>
-                                    setSandboxViewports((prev) => ({
-                                      ...prev,
-                                      [post.id]: 768,
-                                    }))
+                                  className="cm-icon-btn"
+                                  aria-label={
+                                    currentPreviewTheme === 'dark'
+                                      ? 'Chuyển hộp cát sang nền sáng'
+                                      : 'Chuyển hộp cát sang nền tối'
                                   }
-                                >
-                                  768px
-                                </button>
-                                <button
-                                  type="button"
-                                  className="btn btn-ghost btn-sm"
-                                  aria-pressed={currentViewport === 390}
-                                  onClick={() =>
-                                    setSandboxViewports((prev) => ({
-                                      ...prev,
-                                      [post.id]: 390,
-                                    }))
+                                  title={
+                                    currentPreviewTheme === 'dark'
+                                      ? 'Đổi sang nền sáng'
+                                      : 'Đổi sang nền tối'
                                   }
-                                >
-                                  390px
-                                </button>
-                                <button
-                                  type="button"
-                                  className="btn btn-ghost btn-sm"
                                   onClick={() =>
                                     setSandboxThemes((prev) => ({
                                       ...prev,
                                       [post.id]:
-                                        (prev[post.id] ?? theme) === 'dark'
-                                          ? 'light'
-                                          : 'dark',
+                                        (prev[post.id] ?? theme) === 'dark' ? 'light' : 'dark',
                                     }))
                                   }
                                 >
-                                  {currentPreviewTheme === 'dark' ? 'Nền tối' : 'Nền sáng'}
+                                  {currentPreviewTheme === 'dark' ? (
+                                    <Sun size={15} aria-hidden="true" />
+                                  ) : (
+                                    <Moon size={15} aria-hidden="true" />
+                                  )}
                                 </button>
                                 <button
                                   type="button"
-                                  className="btn btn-ghost btn-sm"
+                                  className="cm-icon-btn"
+                                  aria-label="Chạy lại hộp cát"
+                                  title="Chạy lại"
                                   onClick={() =>
                                     setSandboxNonces((prev) => ({
                                       ...prev,
@@ -1611,26 +1426,34 @@ export const CommunityView: React.FC = () => {
                                     }))
                                   }
                                 >
-                                  Chạy lại
+                                  <RotateCw size={15} aria-hidden="true" />
                                 </button>
                               </>
                             )}
-                          </div>
 
-                          <div className="cm-sandbox-actions">
                             <button
                               type="button"
-                              className="btn btn-line btn-sm"
+                              className="cm-icon-btn"
+                              aria-label="Chép mã nguồn"
+                              title={copiedCodeId === post.id ? 'Đã chép mã' : 'Chép mã'}
+                              data-active={copiedCodeId === post.id ? 'true' : undefined}
                               onClick={() => void handleCopyCode(post)}
                             >
-                              {copiedCodeId === post.id ? 'Đã chép mã' : 'Chép mã'}
+                              {copiedCodeId === post.id ? (
+                                <Check size={15} aria-hidden="true" />
+                              ) : (
+                                <Copy size={15} aria-hidden="true" />
+                              )}
                             </button>
+
                             <button
                               type="button"
-                              className="btn btn-solid btn-sm"
+                              className="cm-icon-btn"
+                              aria-label="Mở mã nguồn trong Workspace"
+                              title="Mở trong Workspace"
                               onClick={() => forkPostToWorkspace(post)}
                             >
-                              Mở trong Workspace
+                              <ArrowUpRight size={15} aria-hidden="true" />
                             </button>
                           </div>
                         </div>
@@ -1649,125 +1472,131 @@ export const CommunityView: React.FC = () => {
                         )}
 
                         {currentCodeMode === 'code' && (
-                          <div className="cm-code-view">
-                            {post.demoSnippet ? (
-                              <>
-                                <div>
-                                  <span className="t-label">HTML</span>
-                                  <pre className="cm-code-block">{post.demoSnippet.html}</pre>
-                                </div>
-                                {post.demoSnippet.css && (
-                                  <div>
-                                    <span className="t-label">CSS</span>
-                                    <pre className="cm-code-block">{post.demoSnippet.css}</pre>
-                                  </div>
-                                )}
-                                {post.demoSnippet.js && (
-                                  <div>
-                                    <span className="t-label">JavaScript</span>
-                                    <pre className="cm-code-block">{post.demoSnippet.js}</pre>
-                                  </div>
-                                )}
-                              </>
-                            ) : (
-                              <pre className="cm-code-block">
-                                {whiteLabelText(post.payload || '')}
-                              </pre>
-                            )}
+                          <div className="cm-code-layout">
+                            <div className="cm-code-filebox">
+                              <FileBox
+                                title="Tệp mã"
+                                tabs={codeFileTabs}
+                                activeId={activeCodeKey}
+                                onSelect={(id) =>
+                                  setActiveCodeFiles((prev) => ({
+                                    ...prev,
+                                    [post.id]: id,
+                                  }))
+                                }
+                              />
+                            </div>
+                            <pre className="cm-code-block">{activeCodeContent}</pre>
                           </div>
                         )}
                       </div>
                     )}
 
-                    <div className="cm-post-foot">
+                    <footer className="cm-post-foot">
                       <div className="cm-post-reactions">
-                        <button
-                          type="button"
-                          className="cm-action-pill"
-                          aria-pressed={isLiked}
-                          onClick={() => handleToggleVote(post)}
-                        >
-                          {isLiked ? `Đã tán thành · ${score}` : `Tán thành · ${score}`}
-                        </button>
+                        <div className="cm-action-pair">
+                          <button
+                            type="button"
+                            className="cm-icon-btn"
+                            aria-pressed={isLiked}
+                            aria-label={isLiked ? 'Bỏ tán thành' : 'Tán thành bài viết'}
+                            title={isLiked ? 'Đã tán thành' : 'Tán thành'}
+                            onClick={() => handleToggleVote(post)}
+                          >
+                            <ArrowBigUp size={18} aria-hidden="true" />
+                          </button>
+                          <span className="cm-count">{score}</span>
+                        </div>
 
-                        <button
-                          type="button"
-                          className="cm-action-pill"
-                          aria-expanded={isCommentsOpen}
-                          data-active={isCommentsOpen ? 'true' : undefined}
-                          onClick={() =>
-                            setOpenCommentDrawers((prev) => ({
-                              ...prev,
-                              [post.id]: !prev[post.id],
-                            }))
-                          }
-                        >
-                          {`Bình luận · ${answers.length}`}
-                        </button>
-
-                        <button
-                          type="button"
-                          className="cm-action-pill"
-                          aria-pressed={isSaved}
-                          onClick={() => toggleSavedItem(post.id)}
-                        >
-                          {isSaved ? 'Đã lưu' : 'Lưu bài'}
-                        </button>
+                        <div className="cm-action-pair">
+                          <button
+                            type="button"
+                            className="cm-icon-btn"
+                            aria-expanded={isCommentsOpen}
+                            data-active={isCommentsOpen ? 'true' : undefined}
+                            aria-label="Mở bình luận"
+                            title="Bình luận"
+                            onClick={() =>
+                              setOpenCommentDrawers((prev) => ({
+                                ...prev,
+                                [post.id]: !prev[post.id],
+                              }))
+                            }
+                          >
+                            <MessageSquare size={16} aria-hidden="true" />
+                          </button>
+                          <span className="cm-count">{answers.length}</span>
+                        </div>
                       </div>
 
                       <div className="cm-post-utilities">
                         <button
                           type="button"
-                          className="cm-action-pill"
+                          className="cm-icon-btn"
+                          aria-pressed={isSaved}
+                          aria-label={isSaved ? 'Bỏ lưu bài viết' : 'Lưu bài viết'}
+                          title={isSaved ? 'Đã lưu' : 'Lưu bài'}
+                          onClick={() => toggleSavedItem(post.id)}
+                        >
+                          <Bookmark size={16} aria-hidden="true" />
+                        </button>
+
+                        <button
+                          type="button"
+                          className="cm-icon-btn"
+                          aria-label="Chia sẻ liên kết bài viết"
+                          title={copiedShareId === post.id ? 'Đã chép liên kết' : 'Chia sẻ'}
+                          data-active={copiedShareId === post.id ? 'true' : undefined}
                           onClick={() => void handleSharePost(post)}
                         >
-                          {copiedShareId === post.id ? 'Đã chép liên kết' : 'Chia sẻ'}
+                          {copiedShareId === post.id ? (
+                            <Check size={16} aria-hidden="true" />
+                          ) : (
+                            <Share2 size={16} aria-hidden="true" />
+                          )}
                         </button>
 
                         <button
                           type="button"
-                          className="cm-action-pill"
+                          className="cm-icon-btn"
                           data-active={isSelected ? 'true' : undefined}
+                          aria-label="Chọn bài để Đọc sâu"
+                          title={isSelected ? 'Đang mở trong Trình đọc' : 'Đọc sâu'}
                           onClick={() => setSelectedPostId(post.id)}
                         >
-                          {isSelected ? 'Đang chọn Đọc sâu' : 'Đọc sâu'}
+                          <BookOpen size={16} aria-hidden="true" />
                         </button>
-
-                        {!hasCodeOrPayload && (
-                          <button
-                            type="button"
-                            className="cm-action-pill"
-                            onClick={() => forkPostToWorkspace(post)}
-                          >
-                            Mở trong Workspace
-                          </button>
-                        )}
 
                         <button
                           type="button"
-                          className="btn btn-ghost btn-sm"
+                          className="cm-icon-btn"
+                          aria-label="Mở trong Workspace"
+                          title="Mở trong Workspace"
+                          onClick={() => forkPostToWorkspace(post)}
+                        >
+                          <ArrowUpRight size={16} aria-hidden="true" />
+                        </button>
+
+                        <button
+                          type="button"
+                          className="cm-icon-btn cm-icon-btn--muted"
+                          aria-label="Báo cáo bài viết"
+                          title="Báo cáo"
                           onClick={() => setReportTarget(post)}
                         >
-                          Báo cáo
+                          <Flag size={15} aria-hidden="true" />
                         </button>
                       </div>
-                    </div>
+                    </footer>
 
                     {isCommentsOpen && (
                       <div
                         className="cm-comments-drawer"
                         aria-label={`Luồng bình luận của ${whiteLabelText(post.title)}`}
                       >
-                        <div className="cm-section-head">
-                          <span className="cm-section-title">
-                            Thảo luận trực tiếp ({answers.length})
-                          </span>
-                          <span className="t-label">Lưu tự động</span>
-                        </div>
-
                         {answers.length === 0 ? (
                           <p className="t-label">
-                            Chưa có phản hồi. Hãy để lại bình luận hoặc đoạn mã đối chiếu đầu tiên.
+                            Chưa có phản hồi. Hãy để lại bình luận đầu tiên.
                           </p>
                         ) : (
                           <ul className="cm-comments-list">
@@ -1779,22 +1608,21 @@ export const CommunityView: React.FC = () => {
                               >
                                 <div className="cm-comment-head">
                                   <div className="cm-comment-author">
-                                    <span className="cm-avatar-chip" aria-hidden="true">
+                                    <span className="cm-avatar-chip cm-avatar-chip--sm" aria-hidden="true">
                                       {authorInitials(ans.author.name)}
                                     </span>
                                     <span className="cm-author-name">{ans.author.name}</span>
-                                    <span className="t-label">@{ans.author.handle}</span>
                                     <time className="t-label" dateTime={ans.createdAt}>
                                       {formatPostDate(ans.createdAt)}
                                     </time>
                                   </div>
 
                                   {ans.isAccepted ? (
-                                    <span className="tag tag-green">Lời giải chuẩn</span>
+                                    <span className="cm-solved-dot">Lời giải chuẩn</span>
                                   ) : (
                                     <button
                                       type="button"
-                                      className="btn btn-ghost btn-sm"
+                                      className="cm-clear-btn"
                                       onClick={() => void handleAcceptSolution(post, ans.id)}
                                     >
                                       Đánh dấu chuẩn
@@ -1817,7 +1645,7 @@ export const CommunityView: React.FC = () => {
                           <textarea
                             id={`cm-reply-${post.id}`}
                             rows={2}
-                            className="field"
+                            className="field cm-textarea"
                             value={replyDrafts[post.id] || ''}
                             onChange={(e) =>
                               setReplyDrafts((prev) => ({
@@ -1825,11 +1653,11 @@ export const CommunityView: React.FC = () => {
                                 [post.id]: e.target.value,
                               }))
                             }
-                            placeholder="Viết bình luận, phản biện kỹ thuật hoặc giải pháp bổ sung..."
+                            placeholder="Viết phản hồi kỹ thuật..."
                           />
                           <div className="cm-comment-form-row">
                             <span className="t-label">
-                              Đăng dưới tên @{currentUser?.username || 'builder_vn'}
+                              @{currentUser?.username || 'builder_vn'}
                             </span>
                             <button
                               type="submit"
@@ -1839,9 +1667,7 @@ export const CommunityView: React.FC = () => {
                                 !(replyDrafts[post.id] || '').trim()
                               }
                             >
-                              {submittingReplyId === post.id
-                                ? 'Đang gửi...'
-                                : 'Gửi bình luận'}
+                              {submittingReplyId === post.id ? 'Đang gửi...' : 'Gửi'}
                             </button>
                           </div>
                         </form>
@@ -1854,62 +1680,48 @@ export const CommunityView: React.FC = () => {
           )}
         </main>
 
-        <aside className="cm-rail-right" aria-label="Thống kê và luồng thảo luận">
-          <section className="cm-panel" aria-label="Thống kê thực tế">
-            <div className="cm-section-head">
-              <span className="cm-section-title">Chỉ số cộng đồng</span>
-              <span className="t-label">Thời gian thực</span>
-            </div>
-
-            <div className="cm-stats-grid">
-              <button
-                type="button"
-                className="cm-stat-card"
-                data-active={feedTab === 'all' ? 'true' : undefined}
-                onClick={() => setFeedTab('all')}
-              >
-                <strong className="cm-stat-val">{allPosts.length}</strong>
-                <span className="cm-stat-label">Tổng bài viết</span>
-              </button>
-
-              <button
-                type="button"
-                className="cm-stat-card"
-                data-active={feedTab === 'demos' ? 'true' : undefined}
-                onClick={() => setFeedTab('demos')}
-              >
-                <strong className="cm-stat-val">{demoPosts.length}</strong>
-                <span className="cm-stat-label">Mã chạy thử</span>
-              </button>
-
-              <button
-                type="button"
-                className="cm-stat-card"
-                data-active={feedTab === 'trending' ? 'true' : undefined}
-                onClick={() => setFeedTab('trending')}
-              >
-                <strong className="cm-stat-val">{totalCommentsCount}</strong>
-                <span className="cm-stat-label">Phản hồi</span>
-              </button>
-
-              <button
-                type="button"
-                className="cm-stat-card"
-                data-active={feedTab === 'saved' ? 'true' : undefined}
-                onClick={() => setFeedTab('saved')}
-              >
-                <strong className="cm-stat-val">{savedCommunityPosts.length}</strong>
-                <span className="cm-stat-label">Đã lưu</span>
-              </button>
-            </div>
-          </section>
+        <aside className="cm-rail-right" aria-label="Trình đọc và tác giả nổi bật">
+          <div className="cm-metrics-bar" role="group" aria-label="Chỉ số nhanh">
+            <button
+              type="button"
+              className="cm-metric-item"
+              data-active={feedTab === 'all' ? 'true' : undefined}
+              onClick={() => setFeedTab('all')}
+            >
+              <strong>{allPosts.length}</strong>
+              <span>Bài</span>
+            </button>
+            <button
+              type="button"
+              className="cm-metric-item"
+              data-active={feedTab === 'demos' ? 'true' : undefined}
+              onClick={() => setFeedTab('demos')}
+            >
+              <strong>{demoPosts.length}</strong>
+              <span>Mã</span>
+            </button>
+            <button
+              type="button"
+              className="cm-metric-item"
+              data-active={feedTab === 'trending' ? 'true' : undefined}
+              onClick={() => setFeedTab('trending')}
+            >
+              <strong>{totalCommentsCount}</strong>
+              <span>Bình luận</span>
+            </button>
+            <button
+              type="button"
+              className="cm-metric-item"
+              data-active={feedTab === 'saved' ? 'true' : undefined}
+              onClick={() => setFeedTab('saved')}
+            >
+              <strong>{savedCommunityPosts.length}</strong>
+              <span>Đã lưu</span>
+            </button>
+          </div>
 
           {activeReaderPost && (
-            <section className="cm-panel cm-reader-wrap" aria-label="Trình đọc chi tiết">
-              <div className="cm-section-head">
-                <span className="cm-section-title">Trình đọc chi tiết</span>
-                <span className="t-label">@{activeReaderPost.author.handle}</span>
-              </div>
+            <section className="cm-reader-wrap" aria-label="Trình đọc chi tiết">
               <ReaderCard
                 title={whiteLabelText(activeReaderPost.title)}
                 subtitle={`${whiteLabelText(activeReaderPost.category)} · @${activeReaderPost.author.handle}`}
@@ -1920,96 +1732,84 @@ export const CommunityView: React.FC = () => {
             </section>
           )}
 
-          <section className="cm-panel" aria-label="Luồng thảo luận sôi nổi">
-            <div className="cm-section-head">
-              <span className="cm-section-title">Thảo luận đang mở</span>
-              <span className="t-label">{activeDiscussionThreads.length} chủ đề</span>
-            </div>
-
-            <ul className="cm-thread-list">
-              {activeDiscussionThreads.map((thread) => {
-                const repliesCount = getPostAnswers(thread).length;
-                const score = getPostScore(thread);
-                const active = activeReaderPost?.id === thread.id;
+          <PresenceCards
+            className="cm-presence-card"
+            title="Tác giả nổi bật"
+            subtitle="Chọn để lọc theo tác giả"
+            members={presenceMembers}
+            actionLabel={authorFilter ? 'Bỏ lọc' : 'Tất cả'}
+            onAction={() => setAuthorFilter(null)}
+          >
+            <ul className="cm-contrib-list">
+              {topContributors.map((person) => {
+                const isSelected =
+                  authorFilter !== null &&
+                  authorFilter.toLowerCase() === person.handle.toLowerCase();
                 return (
-                  <li key={thread.id}>
+                  <li key={person.handle}>
                     <button
                       type="button"
-                      className="cm-thread-btn"
-                      data-active={active ? 'true' : undefined}
-                      onClick={() => {
-                        if (feedTab === 'saved' && !savedItemIds.includes(thread.id)) {
-                          setFeedTab('all');
-                        }
-                        focusAndScrollToPost(thread.id, true);
-                      }}
+                      className="cm-contrib-btn"
+                      data-active={isSelected ? 'true' : undefined}
+                      onClick={() =>
+                        setAuthorFilter((prev) =>
+                          prev && prev.toLowerCase() === person.handle.toLowerCase()
+                            ? null
+                            : person.handle
+                        )
+                      }
                     >
-                      <span className="cm-thread-title">{whiteLabelText(thread.title)}</span>
-                      <span className="cm-thread-meta">
-                        <span>@{thread.author.handle}</span>
-                        <span>
-                          {repliesCount} bình luận · {score} tán thành
-                        </span>
+                      <span className="cm-contrib-info">
+                        <span className="cm-contrib-name">{person.name}</span>
+                        <span className="cm-contrib-meta">@{person.handle}</span>
                       </span>
+                      <span className="cm-contrib-score">{person.score}đ</span>
                     </button>
                   </li>
                 );
               })}
             </ul>
-          </section>
+          </PresenceCards>
 
-          <section className="cm-panel" aria-label="Bài viết đã lưu nhanh">
+          <section className="cm-panel" aria-label="Đã lưu nhanh">
             <div className="cm-section-head">
               <span className="cm-section-title">Đã lưu nhanh</span>
-              <span className="t-label">{savedCommunityPosts.length} mục</span>
+              <span className="cm-count">{savedCommunityPosts.length}</span>
             </div>
 
             {savedCommunityPosts.length === 0 ? (
-              <div className="cm-saved-item">
-                <p className="cm-rail-sub">
-                  Chưa có bài viết đã lưu. Nhấn Lưu bài trên thẻ bất kỳ để đồng bộ với tab Đã lưu và trang Hồ sơ.
-                </p>
-                {allPosts[0] && (
-                  <div className="cm-saved-actions">
-                    <button
-                      type="button"
-                      className="btn btn-line btn-sm"
-                      onClick={() => toggleSavedItem(allPosts[0].id)}
-                    >
-                      Lưu bài tiêu điểm
-                    </button>
-                  </div>
-                )}
-              </div>
+              <p className="cm-rail-sub">
+                Nhấn biểu tượng lưu trên bất kỳ bài viết nào để giữ lại đọc sau.
+              </p>
             ) : (
               <ul className="cm-saved-list">
-                {savedCommunityPosts.map((savedPost) => (
+                {savedCommunityPosts.slice(0, 4).map((savedPost) => (
                   <li key={savedPost.id} className="cm-saved-item">
-                    <span className="cm-thread-title">{whiteLabelText(savedPost.title)}</span>
-                    <span className="t-label">
-                      @{savedPost.author.handle} · {whiteLabelText(savedPost.category)}
-                    </span>
-                    <div className="cm-saved-actions">
+                    <button
+                      type="button"
+                      className="cm-saved-link"
+                      onClick={() => focusAndScrollToPost(savedPost.id, false)}
+                    >
+                      {whiteLabelText(savedPost.title)}
+                    </button>
+                    <div className="cm-saved-icons">
                       <button
                         type="button"
-                        className="btn btn-line btn-sm"
-                        onClick={() => focusAndScrollToPost(savedPost.id, false)}
-                      >
-                        Xem bài
-                      </button>
-                      <button
-                        type="button"
-                        className="btn btn-solid btn-sm"
+                        className="cm-icon-btn cm-icon-btn--sm"
+                        aria-label={`Mở ${whiteLabelText(savedPost.title)} trong Workspace`}
+                        title="Mở Workspace"
                         onClick={() => forkPostToWorkspace(savedPost)}
                       >
-                        Workspace
+                        <ArrowUpRight size={14} aria-hidden="true" />
                       </button>
                       <button
                         type="button"
-                        className="btn btn-ghost btn-sm"
+                        className="cm-icon-btn cm-icon-btn--sm"
+                        aria-label={`Bỏ lưu ${whiteLabelText(savedPost.title)}`}
+                        title="Bỏ lưu"
                         onClick={() => toggleSavedItem(savedPost.id)}
                       >
-                        Bỏ lưu
+                        <X size={14} aria-hidden="true" />
                       </button>
                     </div>
                   </li>
@@ -2017,8 +1817,252 @@ export const CommunityView: React.FC = () => {
               </ul>
             )}
           </section>
+
+          <div className="cm-chatroom-wrap">
+            <ChatRoom
+              title="Phòng thảo luận"
+              people={chatRoomPeople.length > 0 ? chatRoomPeople : undefined}
+              sound={false}
+              defaultOpen={false}
+            />
+          </div>
         </aside>
       </div>
+
+      <Modal
+        open={composerOpen}
+        onClose={() => setComposerOpen(false)}
+        label="Viết bài chia sẻ mới"
+        className="cm-dialog cm-dialog--composer"
+      >
+        <form className="cm-dialog-body" onSubmit={(e) => void handleCreatePost(e)}>
+          <div className="cm-dialog-head">
+            <h2 className="cm-dialog-title">Viết bài chia sẻ</h2>
+            <button
+              type="button"
+              className="cm-icon-btn"
+              aria-label="Đóng cửa sổ viết bài"
+              title="Đóng"
+              onClick={() => setComposerOpen(false)}
+            >
+              <X size={16} aria-hidden="true" />
+            </button>
+          </div>
+
+          <div className="cm-composer-tools">
+            <button
+              type="button"
+              className="btn btn-line btn-sm"
+              onClick={handlePrefillFromWorkspace}
+            >
+              Nạp từ Workspace
+            </button>
+            <button
+              type="button"
+              className="btn btn-line btn-sm"
+              aria-pressed={composeIncludeCode}
+              onClick={() => setComposeIncludeCode((prev) => !prev)}
+            >
+              {composeIncludeCode ? 'Ẩn hộp mã' : 'Đính kèm mã chạy thử'}
+            </button>
+          </div>
+
+          <div className="cm-composer-row">
+            <div className="cm-field">
+              <label htmlFor="cm-post-title" className="t-label">
+                Tiêu đề
+              </label>
+              <input
+                id="cm-post-title"
+                type="text"
+                className="field"
+                required
+                value={composeTitle}
+                onChange={(e) => setComposeTitle(e.target.value)}
+                placeholder="Tối ưu token giao diện hoặc mẫu thành phần..."
+              />
+            </div>
+
+            <div className="cm-field">
+              <label htmlFor="cm-post-category" className="t-label">
+                Chuyên mục
+              </label>
+              <select
+                id="cm-post-category"
+                className="field"
+                value={composeCategory}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  setComposeCategory(val);
+                  if (val === 'Components' || val === 'Layouts') {
+                    setComposeChannel('showcase');
+                  } else if (val === 'Agent Rules' || val === 'Prompts') {
+                    setComposeChannel('drops');
+                  } else if (val === 'Hội nhóm') {
+                    setComposeChannel('clubs');
+                  } else {
+                    setComposeChannel('qa');
+                  }
+                }}
+              >
+                <option value="React / Frontend">React / Frontend</option>
+                <option value="UI/UX & Tokens">UI/UX &amp; Tokens</option>
+                <option value="Components">Components</option>
+                <option value="Layouts">Layouts</option>
+                <option value="Agent Rules">Agent Rules</option>
+                <option value="Hội nhóm">Hội nhóm</option>
+              </select>
+            </div>
+          </div>
+
+          <div className="cm-field">
+            <label htmlFor="cm-post-body" className="t-label">
+              Nội dung
+            </label>
+            <textarea
+              id="cm-post-body"
+              rows={3}
+              className="field cm-textarea"
+              value={composeBody}
+              onChange={(e) => setComposeBody(e.target.value)}
+              placeholder="Chia sẻ giải pháp, kinh nghiệm hoặc câu hỏi kỹ thuật..."
+            />
+          </div>
+
+          <div className="cm-field">
+            <label htmlFor="cm-post-tags" className="t-label">
+              Thẻ chủ đề
+            </label>
+            <input
+              id="cm-post-tags"
+              type="text"
+              className="field"
+              value={composeTagsInput}
+              onChange={(e) => setComposeTagsInput(e.target.value)}
+              placeholder="react, css-tokens"
+            />
+            <div className="cm-quick-tags" role="group" aria-label="Chọn nhanh thẻ">
+              {QUICK_COMPOSE_TAGS.map((tag) => {
+                const active = activeComposeTags.includes(tag);
+                return (
+                  <button
+                    key={tag}
+                    type="button"
+                    className="cm-quick-tag-btn"
+                    data-active={active ? 'true' : undefined}
+                    onClick={() => handleToggleQuickComposeTag(tag)}
+                  >
+                    #{tag}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {composeIncludeCode && (
+            <div className="cm-code-composer">
+              <div className="cm-code-composer-bar">
+                <span className="t-label">Hộp cát HTML / CSS / JS</span>
+                <div className="cm-composer-tools">
+                  <button
+                    type="button"
+                    className="btn btn-line btn-sm"
+                    onClick={handleLoadSampleSnippet}
+                  >
+                    Chèn mẫu
+                  </button>
+                  <button
+                    type="button"
+                    className="btn btn-ghost btn-sm"
+                    aria-pressed={composePreviewLive}
+                    onClick={() => setComposePreviewLive((p) => !p)}
+                  >
+                    {composePreviewLive ? 'Ẩn xem thử' : 'Xem thử'}
+                  </button>
+                </div>
+              </div>
+
+              <div className="cm-code-editors">
+                <div className="cm-field">
+                  <label htmlFor="cm-code-html" className="t-label">
+                    HTML
+                  </label>
+                  <textarea
+                    id="cm-code-html"
+                    rows={3}
+                    className="field cm-code-input"
+                    value={composeHtml}
+                    onChange={(e) => setComposeHtml(e.target.value)}
+                    placeholder="<div class='demo-card'>...</div>"
+                  />
+                </div>
+
+                <div className="cm-field">
+                  <label htmlFor="cm-code-css" className="t-label">
+                    CSS
+                  </label>
+                  <textarea
+                    id="cm-code-css"
+                    rows={3}
+                    className="field cm-code-input"
+                    value={composeCss}
+                    onChange={(e) => setComposeCss(e.target.value)}
+                    placeholder=".demo-card { padding: 20px; }"
+                  />
+                </div>
+
+                <div className="cm-field">
+                  <label htmlFor="cm-code-js" className="t-label">
+                    JavaScript
+                  </label>
+                  <textarea
+                    id="cm-code-js"
+                    rows={3}
+                    className="field cm-code-input"
+                    value={composeJs}
+                    onChange={(e) => setComposeJs(e.target.value)}
+                    placeholder="document.querySelector('.demo-card')..."
+                  />
+                </div>
+              </div>
+
+              {composePreviewLive && (
+                <div className="cm-sandbox-stage">
+                  <SandboxPreview
+                    title={composeTitle.trim() || 'Bản nháp'}
+                    html={compileHtmlWithJs({
+                      html: composeHtml || SAMPLE_SNIPPET.html,
+                      css: composeCss || SAMPLE_SNIPPET.css,
+                      js: composeJs,
+                    })}
+                    css={composeCss || SAMPLE_SNIPPET.css}
+                    theme={theme}
+                    viewport={1440}
+                    nonce={0}
+                  />
+                </div>
+              )}
+            </div>
+          )}
+
+          <div className="cm-dialog-actions">
+            <button
+              type="button"
+              className="btn btn-line btn-sm"
+              onClick={() => setComposerOpen(false)}
+            >
+              Hủy
+            </button>
+            <button
+              type="submit"
+              className="btn btn-red btn-sm"
+              disabled={submittingPost || !composeTitle.trim()}
+            >
+              {submittingPost ? 'Đang đăng...' : 'Đăng bài'}
+            </button>
+          </div>
+        </form>
+      </Modal>
 
       <Modal
         open={reportTarget !== null}
@@ -2028,35 +2072,39 @@ export const CommunityView: React.FC = () => {
       >
         <form className="cm-dialog-body" onSubmit={(e) => void handleSubmitReport(e)}>
           <div className="cm-dialog-head">
-            <h2 className="t-title" style={{ fontSize: 'var(--text-xl)' }}>
-              Báo cáo bài viết
-            </h2>
+            <h2 className="cm-dialog-title">Báo cáo bài viết</h2>
             <button
               type="button"
-              className="btn btn-ghost btn-sm"
+              className="cm-icon-btn"
+              aria-label="Đóng hộp thoại báo cáo"
+              title="Đóng"
               onClick={() => setReportTarget(null)}
             >
-              Đóng
+              <X size={16} aria-hidden="true" />
             </button>
           </div>
           <p className="t-label">{reportTarget ? whiteLabelText(reportTarget.title) : ''}</p>
           <div className="cm-field">
             <label htmlFor="cm-reason" className="t-label">
-              lý do báo cáo
+              Lý do
             </label>
             <textarea
               id="cm-reason"
               rows={3}
-              className="field"
+              className="field cm-textarea"
               value={reportReason}
               onChange={(e) => setReportReason(e.target.value)}
             />
           </div>
           <div className="cm-dialog-actions">
-            <button type="button" className="btn btn-line" onClick={() => setReportTarget(null)}>
+            <button
+              type="button"
+              className="btn btn-line btn-sm"
+              onClick={() => setReportTarget(null)}
+            >
               Hủy
             </button>
-            <button type="submit" className="btn btn-red" disabled={submittingReport}>
+            <button type="submit" className="btn btn-red btn-sm" disabled={submittingReport}>
               {submittingReport ? 'Đang gửi' : 'Gửi báo cáo'}
             </button>
           </div>
@@ -2071,21 +2119,21 @@ export const CommunityView: React.FC = () => {
       >
         <form className="cm-dialog-body" onSubmit={(e) => void handleSaveDossier(e)}>
           <div className="cm-dialog-head">
-            <h2 className="t-title" style={{ fontSize: 'var(--text-xl)' }}>
-              Hồ sơ chuyển giao
-            </h2>
+            <h2 className="cm-dialog-title">Hồ sơ chuyển giao</h2>
             <button
               type="button"
-              className="btn btn-ghost btn-sm"
+              className="cm-icon-btn"
+              aria-label="Đóng hộp thoại hồ sơ"
+              title="Đóng"
               onClick={() => setDossierClub(null)}
             >
-              Đóng
+              <X size={16} aria-hidden="true" />
             </button>
           </div>
 
           <div className="cm-field">
             <label htmlFor="cm-d-title" className="t-label">
-              tên dự án
+              Tên dự án
             </label>
             <input
               id="cm-d-title"
@@ -2098,12 +2146,12 @@ export const CommunityView: React.FC = () => {
 
           <div className="cm-field">
             <label htmlFor="cm-d-notes" className="t-label">
-              ghi chú bàn giao
+              Ghi chú bàn giao
             </label>
             <textarea
               id="cm-d-notes"
               rows={4}
-              className="field"
+              className="field cm-textarea"
               value={dossierDraft.handoverNotes}
               onChange={(e) => setDossierDraft((d) => ({ ...d, handoverNotes: e.target.value }))}
             />
@@ -2111,22 +2159,26 @@ export const CommunityView: React.FC = () => {
 
           <div className="cm-field">
             <label htmlFor="cm-d-ms" className="t-label">
-              cột mốc tiếp theo (mỗi dòng một mục)
+              Cột mốc tiếp theo
             </label>
             <textarea
               id="cm-d-ms"
               rows={3}
-              className="field"
+              className="field cm-textarea"
               value={milestonesText}
               onChange={(e) => setMilestonesText(e.target.value)}
             />
           </div>
 
           <div className="cm-dialog-actions">
-            <button type="button" className="btn btn-line" onClick={() => setDossierClub(null)}>
+            <button
+              type="button"
+              className="btn btn-line btn-sm"
+              onClick={() => setDossierClub(null)}
+            >
               Hủy
             </button>
-            <button type="submit" className="btn btn-red" disabled={savingDossier}>
+            <button type="submit" className="btn btn-red btn-sm" disabled={savingDossier}>
               {savingDossier ? 'Đang lưu' : 'Lưu hồ sơ'}
             </button>
           </div>

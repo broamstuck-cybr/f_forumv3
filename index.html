@@ -108,24 +108,44 @@
       (function () {
         try {
           var saved = null;
+          var pref = 'system';
+          var ambient = 'on';
+          var density = 'roomy';
           try {
             var rawSettings = localStorage.getItem('fforum_v3_settings');
             if (rawSettings) {
               var parsed = JSON.parse(rawSettings);
-              if (parsed && (parsed.theme === 'light' || parsed.theme === 'dark')) {
-                saved = parsed.theme;
+              if (parsed) {
+                if (parsed.themePreference === 'light' || parsed.themePreference === 'dark' || parsed.themePreference === 'system') {
+                  pref = parsed.themePreference;
+                }
+                if (pref !== 'system' && (parsed.theme === 'light' || parsed.theme === 'dark')) {
+                  saved = parsed.theme;
+                } else if (!parsed.themePreference && (parsed.theme === 'light' || parsed.theme === 'dark')) {
+                  saved = parsed.theme;
+                }
+                if (parsed.ambientVideo === false) ambient = 'off';
+                if (parsed.compactDensity === true) density = 'compact';
               }
             }
           } catch (err) {}
-          if (!saved) {
+          if (!saved && pref === 'system') {
             var legacy = localStorage.getItem('fforum_theme');
             if (legacy === 'light' || legacy === 'dark') {
               saved = legacy;
             }
           }
-          var theme = saved === 'light' || saved === 'dark' ? saved : 'dark';
+          var systemDark = true;
+          try {
+            if (window.matchMedia) {
+              systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+            }
+          } catch (err) {}
+          var theme = saved === 'light' || saved === 'dark' ? saved : (systemDark ? 'dark' : 'light');
           var root = document.documentElement;
           root.dataset.theme = theme;
+          root.dataset.ambient = ambient;
+          root.dataset.density = density;
           root.classList.toggle('dark', theme === 'dark');
           root.classList.toggle('light', theme === 'light');
           root.style.colorScheme = theme;

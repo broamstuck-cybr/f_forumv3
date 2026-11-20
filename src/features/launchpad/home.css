@@ -5,6 +5,10 @@
     color: var(--fg);
   }
 
+  html[data-ambient='on'] .hm {
+    background: transparent;
+  }
+
   .hm-desk {
     position: relative;
     overflow: hidden;

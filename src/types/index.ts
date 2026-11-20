@@ -410,8 +410,14 @@ export interface BYOKConfig {
   apiKey: string;
 }
 
+export type ThemePreference = 'system' | 'light' | 'dark';
+
 export interface SettingsState {
   theme: ThemeMode;
+  themePreference?: ThemePreference;
+  ambientVideo?: boolean;
+  autoRunChecks?: boolean;
+  defaultViewport?: 1440 | 768 | 390;
   themeEffect?: ThemeEffect;
   reducedMotion: boolean;
   compactDensity: boolean;

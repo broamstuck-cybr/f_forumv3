@@ -112,10 +112,10 @@ export const GROUP_LABEL: Record<ResourceGroup, string> = {
 
 export const REPO_CATEGORIES: Array<{ id: string; label: string }> = [
   { id: 'all', label: 'Tất cả' },
-  { id: 'AI Agents & CLI', label: 'Agents' },
-  { id: 'Skills, Rules & Prompts', label: 'Skills' },
-  { id: 'UI/UX & Motion', label: 'UI/UX' },
-  { id: 'Local LLM & DevTools', label: 'Local LLM' },
+  { id: 'Skills, Rules & Prompts', label: 'Kỹ năng & Prompt' },
+  { id: 'AI Agents & CLI', label: 'AI Agent & CLI' },
+  { id: 'UI/UX & Motion', label: 'UI/UX & Chuyển động' },
+  { id: 'Local LLM & DevTools', label: 'LLM Cục bộ & Công cụ' },
 ];
 
 const numberFormat = new Intl.NumberFormat('vi-VN');

@@ -1,7 +1,25 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import {
+  Monitor,
+  Moon,
+  RotateCw,
+  Search,
+  Smartphone,
+  Sun,
+  Tablet,
+  ZoomIn,
+  ZoomOut,
+} from 'lucide-react';
 import type { SourceCatalogItem } from '../../types/index';
 import { useAppStore } from '../../store/appStore';
-import { PinUIPlayground } from '../../components/pinui';
+import {
+  Chips,
+  FileBox,
+  Magnify,
+  PinUIPlayground,
+  type ChipItem,
+  type FileBoxTab,
+} from '../../components/pinui';
 import { previewFor } from '../../ui/Media';
 import { SpecimenMedia } from './SpecimenMedia';
 import {
@@ -19,7 +37,6 @@ import {
   sanitizeSnippetCode,
   shortTitle,
   templateContext,
-  whiteLabelArchivePath,
   type MotionSiteFullEntry,
   type PinUISourceEntry,
   type PreviewTheme,
@@ -39,12 +56,6 @@ const CATEGORY_TABS: Array<{ id: CategoryTab; label: string }> = [
   { id: 'motionsites', label: 'Chuyển động' },
   { id: 'codefronts', label: 'Bố cục' },
   { id: 'saved', label: 'Đã lưu' },
-];
-
-const VIEWPORTS: Array<{ value: PreviewViewport; label: string }> = [
-  { value: 1440, label: 'Desktop' },
-  { value: 768, label: 'Tablet 768px' },
-  { value: 390, label: 'Mobile 390px' },
 ];
 
 export const ExperienceView: React.FC = () => {
@@ -70,6 +81,8 @@ export const ExperienceView: React.FC = () => {
   const [search, setSearch] = useState('');
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [viewport, setViewport] = useState<PreviewViewport>(1440);
+  const [stageZoomed, setStageZoomed] = useState(false);
+  const [magnifyOpen, setMagnifyOpen] = useState(false);
   const [stageTheme, setStageTheme] = useState<PreviewTheme>(theme);
   const [nonce, setNonce] = useState(0);
   const [codeTab, setCodeTab] = useState<CodeTab>('html');
@@ -245,6 +258,40 @@ export const ExperienceView: React.FC = () => {
   const copyCodeContent =
     codeTab === 'css' ? activeCss || activeHtml : activeHtml || activeCss;
 
+  const categoryChipItems: ChipItem[] = useMemo(
+    () =>
+      CATEGORY_TABS.map((tab) => ({
+        id: tab.id,
+        label: tab.id === 'saved' ? `Đã lưu (${savedCount})` : tab.label,
+      })),
+    [savedCount]
+  );
+
+  const fileBoxTabs: FileBoxTab[] = useMemo(
+    () => [
+      {
+        id: 'html',
+        label: 'TSX / HTML',
+        meta: isPinUI ? 'Thành phần React TSX' : 'Mã cấu trúc HTML',
+      },
+      {
+        id: 'css',
+        label: 'CSS',
+        meta: 'Định dạng & Biến giao diện',
+      },
+      {
+        id: 'prompt',
+        label: 'Prompt',
+        meta: 'Đặc tả Prompt nguyên bản',
+      },
+    ],
+    [isPinUI]
+  );
+
+  const cycleViewport = () => {
+    setViewport((prev) => (prev === 1440 ? 768 : prev === 768 ? 390 : 1440));
+  };
+
   return (
     <div className="ex-xp">
       <header className="ex-xp-topbar">
@@ -351,27 +398,19 @@ export const ExperienceView: React.FC = () => {
           data-open={drawerOpen ? 'true' : 'false'}
           aria-label="Danh sách thành phần"
         >
-          <div className="ex-xp-cat-tabs" role="tablist" aria-label="Nhóm thành phần">
-            {CATEGORY_TABS.map((tab) => {
-              const selected = category === tab.id;
-              return (
-                <button
-                  key={tab.id}
-                  type="button"
-                  role="tab"
-                  aria-selected={selected}
-                  className="ex-pill"
-                  aria-pressed={selected}
-                  onClick={() => {
-                    setCategory(tab.id);
-                    if (tab.id === 'saved') setSavedOnly(false);
-                  }}
-                >
-                  {tab.id === 'saved' ? `Đã lưu (${savedCount})` : tab.label}
-                </button>
-              );
-            })}
-          </div>
+          <Chips
+            items={categoryChipItems}
+            selectedIds={[category]}
+            onToggle={(id) => {
+              const nextCat = id as CategoryTab;
+              setCategory(nextCat);
+              if (nextCat === 'saved') setSavedOnly(false);
+            }}
+            multi={false}
+            variant="filter"
+            theme={theme}
+            className="ex-xp-cat-chips"
+          />
 
           <div className="ex-xp-list-meta">
             <span className="t-label">{filteredItems.length} mẫu hiển thị</span>
@@ -452,46 +491,88 @@ export const ExperienceView: React.FC = () => {
         <div className="ex-xp-main">
           <section className="ex-xp-center" aria-label="Sân khấu trải nghiệm">
             <div className="ex-xp-toolbar">
-              <div className="ex-xp-tool-group" role="group" aria-label="Khung kích thước">
-                {VIEWPORTS.map((vp) => (
-                  <button
-                    key={vp.value}
-                    type="button"
-                    className="ex-text"
-                    aria-pressed={viewport === vp.value}
-                    onClick={() => setViewport(vp.value)}
-                  >
-                    {vp.label}
-                  </button>
-                ))}
+              <div className="ex-xp-tool-meta">
+                <span className="t-label">
+                  {viewport}px · {stageZoomed ? '115%' : '100%'} · {stageTheme === 'dark' ? 'Mực' : 'Giấy'}
+                </span>
               </div>
 
-              <div className="ex-xp-tool-group" role="group" aria-label="Chủ đề sân khấu">
+              <div className="ex-stage-controls" role="group" aria-label="Điều khiển sân khấu">
                 <button
                   type="button"
-                  className="ex-text"
-                  aria-pressed={stageTheme === 'light'}
-                  onClick={() => setStageTheme('light')}
+                  className="ex-stage-icon-btn"
+                  aria-label={`Khung nhìn ${viewport}px — Bấm để đổi kích thước`}
+                  title={`Khung nhìn ${viewport}px (1440 / 768 / 390)`}
+                  onClick={cycleViewport}
                 >
-                  Sáng
+                  {viewport === 1440 ? (
+                    <Monitor size={16} aria-hidden="true" />
+                  ) : viewport === 768 ? (
+                    <Tablet size={16} aria-hidden="true" />
+                  ) : (
+                    <Smartphone size={16} aria-hidden="true" />
+                  )}
                 </button>
                 <button
                   type="button"
-                  className="ex-text"
-                  aria-pressed={stageTheme === 'dark'}
-                  onClick={() => setStageTheme('dark')}
+                  className="ex-stage-icon-btn"
+                  aria-pressed={stageZoomed}
+                  aria-label={stageZoomed ? 'Thu nhỏ sân khấu về 100%' : 'Phóng to sân khấu 115%'}
+                  title={stageZoomed ? 'Thu nhỏ sân khấu (100%)' : 'Phóng to sân khấu (115%)'}
+                  onClick={() => setStageZoomed((z) => !z)}
                 >
-                  Tối
+                  {stageZoomed ? (
+                    <ZoomOut size={16} aria-hidden="true" />
+                  ) : (
+                    <ZoomIn size={16} aria-hidden="true" />
+                  )}
                 </button>
                 <button
                   type="button"
-                  className="ex-text"
+                  className="ex-stage-icon-btn"
+                  aria-label={stageTheme === 'dark' ? 'Chuyển sân khấu sang nền sáng' : 'Chuyển sân khấu sang nền tối'}
+                  title={stageTheme === 'dark' ? 'Nền tối — Bấm để đổi nền sáng' : 'Nền sáng — Bấm để đổi nền tối'}
+                  onClick={() => setStageTheme((prev) => (prev === 'dark' ? 'light' : 'dark'))}
+                >
+                  {stageTheme === 'dark' ? (
+                    <Moon size={16} aria-hidden="true" />
+                  ) : (
+                    <Sun size={16} aria-hidden="true" />
+                  )}
+                </button>
+                <button
+                  type="button"
+                  className="ex-stage-icon-btn"
+                  aria-label="Đặt lại sân khấu"
+                  title="Đặt lại sân khấu chạy thử"
                   onClick={() => setNonce((n) => n + 1)}
                 >
-                  Đặt lại
+                  <RotateCw size={16} aria-hidden="true" />
+                </button>
+                <button
+                  type="button"
+                  className="ex-stage-icon-btn"
+                  aria-pressed={magnifyOpen}
+                  aria-label={magnifyOpen ? 'Tắt kính lúp soi chi tiết' : 'Bật kính lúp soi chi tiết'}
+                  title={magnifyOpen ? 'Tắt kính lúp soi chi tiết' : 'Bật kính lúp PinUI Magnify'}
+                  onClick={() => setMagnifyOpen((m) => !m)}
+                >
+                  <Search size={16} aria-hidden="true" />
                 </button>
               </div>
             </div>
+
+            {magnifyOpen && activeItem ? (
+              <div className="ex-xp-magnify-drawer" aria-label="Kính lúp soi chi tiết chữ và cấu trúc">
+                <Magnify
+                  glyph={activeTitle.charAt(0).toUpperCase() || 'F'}
+                  microText={`${activeTitle.toUpperCase()} · ${activeItem.runtime.toUpperCase()} · ${activeItem.style.toUpperCase()} · `}
+                  hintText={`Di chuyển để soi chi tiết ${activeTitle} · Bấm để phóng đại`}
+                  theme={stageTheme}
+                  size={420}
+                />
+              </div>
+            ) : null}
 
             <div
               className="ex-xp-stage"
@@ -502,6 +583,7 @@ export const ExperienceView: React.FC = () => {
                 <div
                   className="ex-xp-stage-frame"
                   data-viewport={viewport}
+                  data-zoomed={stageZoomed ? 'true' : 'false'}
                   data-playground={isPinUI ? 'true' : 'false'}
                 >
                   {isPinUI ? (
@@ -580,71 +662,42 @@ export const ExperienceView: React.FC = () => {
                     <dt>phong cách</dt>
                     <dd>{activeItem.style}</dd>
                   </div>
-                  <div>
-                    <dt>giấy phép</dt>
-                    <dd>{sanitizeBrandText(activeItem.license)}</dd>
-                  </div>
-                  <div>
-                    <dt>mã hồ sơ</dt>
-                    <dd>{whiteLabelArchivePath(activeItem)}</dd>
-                  </div>
                 </dl>
               </div>
             ) : null}
           </section>
 
           <section className="ex-xp-card ex-xp-source-drawer" aria-label="Mã nguồn và Prompt nguyên bản">
-            <div className="ex-code-tabs">
-              <div className="ex-filter" role="tablist" aria-label="Ngăn mã nguồn">
-                <button
-                  type="button"
-                  role="tab"
-                  aria-selected={codeTab === 'html'}
-                  className="ex-text"
-                  aria-pressed={codeTab === 'html'}
-                  onClick={() => setCodeTab('html')}
-                >
-                  TSX / HTML
-                </button>
-                <button
-                  type="button"
-                  role="tab"
-                  aria-selected={codeTab === 'css'}
-                  className="ex-text"
-                  aria-pressed={codeTab === 'css'}
-                  onClick={() => setCodeTab('css')}
-                >
-                  CSS
-                </button>
-                <button
-                  type="button"
-                  role="tab"
-                  aria-selected={codeTab === 'prompt'}
-                  className="ex-text"
-                  aria-pressed={codeTab === 'prompt'}
-                  onClick={() => setCodeTab('prompt')}
-                >
-                  Prompt
-                </button>
-              </div>
-
-              <div className="ex-xp-copy-bar">
-                <button
-                  type="button"
-                  className="ex-text"
-                  disabled={!copyCodeContent}
-                  onClick={() => void handleCopy(copyCodeContent, 'code', 'Đã chép mã')}
-                >
-                  {copiedTarget === 'code' ? 'Đã chép' : 'Chép mã'}
-                </button>
-                <button
-                  type="button"
-                  className="ex-text"
-                  disabled={!activePrompt}
-                  onClick={() => void handleCopy(activePrompt, 'prompt', 'Đã chép Prompt')}
-                >
-                  {copiedTarget === 'prompt' ? 'Đã chép' : 'Chép Prompt'}
-                </button>
+            <div className="ex-code-filebox-wrap">
+              <FileBox
+                title="Tệp mã nguồn & Prompt"
+                tabs={fileBoxTabs}
+                activeId={codeTab}
+                onSelect={(nextId) => setCodeTab(nextId as CodeTab)}
+                className="ex-pinui-filebox"
+              />
+              <div className="ex-code-tabs">
+                <span className="t-label">
+                  {codeTab === 'html' ? 'TSX / HTML' : codeTab === 'css' ? 'CSS' : 'Prompt'}
+                </span>
+                <div className="ex-xp-copy-bar">
+                  <button
+                    type="button"
+                    className="ex-text"
+                    disabled={!copyCodeContent}
+                    onClick={() => void handleCopy(copyCodeContent, 'code', 'Đã chép mã')}
+                  >
+                    {copiedTarget === 'code' ? 'Đã chép' : 'Chép mã'}
+                  </button>
+                  <button
+                    type="button"
+                    className="ex-text"
+                    disabled={!activePrompt}
+                    onClick={() => void handleCopy(activePrompt, 'prompt', 'Đã chép Prompt')}
+                  >
+                    {copiedTarget === 'prompt' ? 'Đã chép' : 'Chép Prompt'}
+                  </button>
+                </div>
               </div>
             </div>
 

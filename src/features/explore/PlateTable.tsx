@@ -1,13 +1,13 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { Monitor, Moon, RotateCw, Smartphone, Sun, Tablet, ZoomIn, ZoomOut } from 'lucide-react';
 import type { SourceCatalogItem, SourceLibraryName } from '../../types/index';
 import { useAppStore } from '../../store/appStore';
-import { PinUIPlayground } from '../../components/pinui';
+import { FileBox, PinUIPlayground, type FileBoxTab } from '../../components/pinui';
 import { previewFor } from '../../ui/Media';
 import { Reveal } from '../../ui/Reveal';
 import {
   LIBRARY_LABEL,
   LIBRARY_ORDER,
-  archiveCount,
   buildSnippetThemeOverrideCss,
   copyText,
   fetchMotionSitesFullMap,
@@ -21,7 +21,6 @@ import {
   sanitizeBrandText,
   sanitizeSnippetCode,
   templateContext,
-  whiteLabelArchivePath,
   type MotionSiteFullEntry,
   type PinUISourceEntry,
   type PreviewTheme,
@@ -45,12 +44,6 @@ interface PlateTableProps {
   library?: LibraryFilter;
   onLibraryChange?: (library: LibraryFilter) => void;
 }
-
-const VIEWPORTS: Array<{ value: PreviewViewport; label: string }> = [
-  { value: 1440, label: 'Desktop' },
-  { value: 768, label: '768px' },
-  { value: 390, label: '390px' },
-];
 
 export const PlateTable: React.FC<PlateTableProps> = ({
   query,
@@ -84,6 +77,7 @@ export const PlateTable: React.FC<PlateTableProps> = ({
   const [activeId, setActiveId] = useState<string | null>(null);
   const [sheetOpen, setSheetOpen] = useState(false);
   const [viewport, setViewport] = useState<PreviewViewport>(1440);
+  const [stageZoomed, setStageZoomed] = useState(false);
   const [stageTheme, setStageTheme] = useState<PreviewTheme>(theme);
   const [nonce, setNonce] = useState(0);
   const [benchCodeOpen, setBenchCodeOpen] = useState(true);
@@ -243,6 +237,34 @@ export const PlateTable: React.FC<PlateTableProps> = ({
   const shownCode =
     benchTab === 'html' ? activeHtml : benchTab === 'css' ? activeCss : activePrompt;
 
+  const cycleViewport = () => {
+    setViewport((prev) => (prev === 1440 ? 768 : prev === 768 ? 390 : 1440));
+  };
+
+  const fileBoxTabs: FileBoxTab[] = useMemo(() => {
+    const list: FileBoxTab[] = [];
+    if (activeHtml) {
+      list.push({
+        id: 'html',
+        label: isPinUI ? 'TSX' : 'HTML',
+        meta: isPinUI ? 'Thành phần React TSX' : 'Cấu trúc HTML',
+      });
+    }
+    if (activeCss) {
+      list.push({
+        id: 'css',
+        label: 'CSS',
+        meta: 'Định dạng & Biến giao diện',
+      });
+    }
+    list.push({
+      id: 'spec',
+      label: 'Prompt',
+      meta: 'Đặc tả kiến trúc & Prompt',
+    });
+    return list;
+  }, [activeHtml, activeCss, isPinUI]);
+
   const handleCopyCode = async () => {
     if (!shownCode) return;
     const ok = await copyText(shownCode);
@@ -318,44 +340,58 @@ export const PlateTable: React.FC<PlateTableProps> = ({
                 <span className="t-label">
                   {String(activeIndex + 1).padStart(2, '0')} / {flat.length}
                 </span>
-                <span className="t-note">
-                  {isThreeUI ? 'tương tác 3D' : isPinUI ? 'chạy trực tiếp React' : 'chạy trực tiếp'}
-                </span>
               </div>
               <div className="ex-stage-controls">
-                {VIEWPORTS.map((vp) => (
-                  <button
-                    key={vp.value}
-                    type="button"
-                    className="ex-text"
-                    aria-pressed={viewport === vp.value}
-                    onClick={() => setViewport(vp.value)}
-                  >
-                    {vp.label}
-                  </button>
-                ))}
                 <button
                   type="button"
-                  className="ex-text"
-                  aria-pressed={stageTheme === 'light'}
-                  onClick={() => setStageTheme('light')}
+                  className="ex-stage-icon-btn"
+                  aria-label={`Khung nhìn ${viewport}px — Bấm để đổi kích thước`}
+                  title={`Khung nhìn ${viewport}px (1440 / 768 / 390)`}
+                  onClick={cycleViewport}
                 >
-                  Sáng
+                  {viewport === 1440 ? (
+                    <Monitor size={16} aria-hidden="true" />
+                  ) : viewport === 768 ? (
+                    <Tablet size={16} aria-hidden="true" />
+                  ) : (
+                    <Smartphone size={16} aria-hidden="true" />
+                  )}
                 </button>
                 <button
                   type="button"
-                  className="ex-text"
-                  aria-pressed={stageTheme === 'dark'}
-                  onClick={() => setStageTheme('dark')}
+                  className="ex-stage-icon-btn"
+                  aria-pressed={stageZoomed}
+                  aria-label={stageZoomed ? 'Thu nhỏ sân khấu về 100%' : 'Phóng to sân khấu 115%'}
+                  title={stageZoomed ? 'Thu nhỏ sân khấu (100%)' : 'Phóng to sân khấu (115%)'}
+                  onClick={() => setStageZoomed((z) => !z)}
                 >
-                  Tối
+                  {stageZoomed ? (
+                    <ZoomOut size={16} aria-hidden="true" />
+                  ) : (
+                    <ZoomIn size={16} aria-hidden="true" />
+                  )}
                 </button>
                 <button
                   type="button"
-                  className="ex-text"
+                  className="ex-stage-icon-btn"
+                  aria-label={stageTheme === 'dark' ? 'Chuyển sân khấu sang nền sáng' : 'Chuyển sân khấu sang nền tối'}
+                  title={stageTheme === 'dark' ? 'Nền tối — Bấm để đổi nền sáng' : 'Nền sáng — Bấm để đổi nền tối'}
+                  onClick={() => setStageTheme((prev) => (prev === 'dark' ? 'light' : 'dark'))}
+                >
+                  {stageTheme === 'dark' ? (
+                    <Moon size={16} aria-hidden="true" />
+                  ) : (
+                    <Sun size={16} aria-hidden="true" />
+                  )}
+                </button>
+                <button
+                  type="button"
+                  className="ex-stage-icon-btn"
+                  aria-label="Đặt lại sân khấu"
+                  title="Đặt lại sân khấu chạy thử"
                   onClick={() => setNonce((n) => n + 1)}
                 >
-                  Đặt lại
+                  <RotateCw size={16} aria-hidden="true" />
                 </button>
                 <button
                   type="button"
@@ -382,6 +418,7 @@ export const PlateTable: React.FC<PlateTableProps> = ({
               <div
                 className="ex-bench-stage-frame"
                 data-viewport={viewport}
+                data-zoomed={stageZoomed ? 'true' : 'false'}
               >
                 {isPinUI ? (
                   <PinUIPlayground
@@ -441,14 +478,6 @@ export const PlateTable: React.FC<PlateTableProps> = ({
                 <dt>phong cách</dt>
                 <dd>{activeItem.style}</dd>
               </div>
-              <div>
-                <dt>giấy phép</dt>
-                <dd>{sanitizeBrandText(activeItem.license)}</dd>
-              </div>
-              <div>
-                <dt>mã mẫu</dt>
-                <dd>{whiteLabelArchivePath(activeItem)}</dd>
-              </div>
             </dl>
 
             <div className="ex-spec-actions">
@@ -486,50 +515,26 @@ export const PlateTable: React.FC<PlateTableProps> = ({
 
             {benchCodeOpen ? (
               <div className="ex-code-drawer">
-                <div className="ex-code-tabs">
-                  <div className="ex-filter" role="tablist" aria-label="Nguồn mã mẫu">
-                    {activeHtml ? (
-                      <button
-                        type="button"
-                        role="tab"
-                        aria-selected={benchTab === 'html'}
-                        className="ex-text"
-                        aria-pressed={benchTab === 'html'}
-                        onClick={() => setBenchTab('html')}
-                      >
-                        {isPinUI ? 'TSX' : 'HTML'}
-                      </button>
-                    ) : null}
-                    {activeCss ? (
-                      <button
-                        type="button"
-                        role="tab"
-                        aria-selected={benchTab === 'css'}
-                        className="ex-text"
-                        aria-pressed={benchTab === 'css'}
-                        onClick={() => setBenchTab('css')}
-                      >
-                        CSS
-                      </button>
-                    ) : null}
+                <div className="ex-code-filebox-wrap">
+                  <FileBox
+                    title="Tệp mã nguồn & Prompt"
+                    tabs={fileBoxTabs}
+                    activeId={benchTab}
+                    onSelect={(nextId) => setBenchTab(nextId as BenchTab)}
+                    className="ex-pinui-filebox"
+                  />
+                  <div className="ex-code-tabs">
+                    <span className="t-label">
+                      {benchTab === 'html' ? (isPinUI ? 'TSX' : 'HTML') : benchTab === 'css' ? 'CSS' : 'Prompt'}
+                    </span>
                     <button
                       type="button"
-                      role="tab"
-                      aria-selected={benchTab === 'spec'}
                       className="ex-text"
-                      aria-pressed={benchTab === 'spec'}
-                      onClick={() => setBenchTab('spec')}
+                      onClick={() => void handleCopyCode()}
                     >
-                      Prompt
+                      {copiedCode ? 'Đã chép' : 'Chép mã'}
                     </button>
                   </div>
-                  <button
-                    type="button"
-                    className="ex-text"
-                    onClick={() => void handleCopyCode()}
-                  >
-                    {copiedCode ? 'Đã chép' : 'Chép mã'}
-                  </button>
                 </div>
                 <pre className="ex-code-pre">
                   <code>{shownCode}</code>
@@ -562,8 +567,6 @@ export const PlateTable: React.FC<PlateTableProps> = ({
       {shown.map((ribbon) => {
         const index = LIBRARY_ORDER.indexOf(ribbon.name);
         const direction = index % 2 === 0 ? 1 : -1;
-        const archived = archiveCount(ribbon.name);
-        const licence = sanitizeBrandText(ribbon.all[0]?.license);
         const lit = ribbon.name === 'lucianlabs';
         const scene = lit ? (theme === 'dark' ? ' ex-lib-lit scene-paper' : ' ex-lib-lit scene-ink') : '';
         return (
@@ -581,18 +584,6 @@ export const PlateTable: React.FC<PlateTableProps> = ({
                   <dt>{query ? 'khớp' : 'trên bàn'}</dt>
                   <dd>{formatCount(ribbon.items.length)}</dd>
                 </div>
-                {archived !== null ? (
-                  <div>
-                    <dt>kho tham chiếu</dt>
-                    <dd>{formatCount(archived)}</dd>
-                  </div>
-                ) : null}
-                {licence ? (
-                  <div>
-                    <dt>giấy phép</dt>
-                    <dd>{licence}</dd>
-                  </div>
-                ) : null}
               </dl>
             </Reveal>
             <PlateRibbon

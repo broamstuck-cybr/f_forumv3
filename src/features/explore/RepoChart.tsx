@@ -277,10 +277,6 @@ export const RepoChart: React.FC<RepoChartProps> = ({ query, onClearQuery, saved
                         <dd>{repo.language || 'không ghi'}</dd>
                       </div>
                       <div>
-                        <dt>giấy phép</dt>
-                        <dd>{repo.license || 'không ghi'}</dd>
-                      </div>
-                      <div>
                         <dt>cập nhật</dt>
                         <dd>{formatDate(repo.pushedAt)}</dd>
                       </div>
@@ -354,10 +350,6 @@ export const RepoChart: React.FC<RepoChartProps> = ({ query, onClearQuery, saved
                       </div>
                       <p className="ex-row-line">{sanitizeBrandText(repo.summaryVi)}</p>
                       <dl className="ex-meta">
-                        <div>
-                          <dt>giấy phép</dt>
-                          <dd>{repo.license}</dd>
-                        </div>
                         <div>
                           <dt>cập nhật</dt>
                           <dd>{formatDate(repo.pushedAt)}</dd>

@@ -10,6 +10,10 @@
     padding-bottom: var(--space-section);
   }
 
+  html[data-ambient='on'] .pf {
+    background: transparent;
+  }
+
   .pf-banner {
     height: clamp(104px, 12vw, 156px);
     width: 100%;
@@ -19,6 +23,12 @@
       linear-gradient(to right, var(--line) 1px, transparent 1px),
       linear-gradient(to bottom, var(--line) 1px, transparent 1px);
     background-size: 32px 32px;
+  }
+
+  html[data-ambient='on'] .pf-banner {
+    background-color: color-mix(in srgb, var(--bg-sunken) 52%, transparent);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
   }
 
   .pf-header {
@@ -97,8 +107,11 @@
     gap: var(--space-4);
     padding: var(--space-4);
     border: 1px solid var(--line-strong);
-    border-radius: var(--radius-md);
-    background: var(--bg-raised);
+    border-radius: 16px;
+    overflow: hidden;
+    background: var(--bg-card-surface);
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
   }
 
   .pf-edit-grid {
@@ -123,8 +136,10 @@
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
     border: 1px solid var(--line);
-    border-radius: var(--radius-md);
-    background: var(--bg-raised);
+    border-radius: 16px;
+    background: var(--bg-card-surface);
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
     overflow: hidden;
   }
 
@@ -195,8 +210,11 @@
     gap: var(--space-3);
     padding: var(--space-4);
     border: 1px solid var(--line);
-    border-radius: var(--radius-lg);
-    background: var(--bg-raised);
+    border-radius: 16px;
+    overflow: hidden;
+    background: var(--bg-card-surface);
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
     min-width: 0;
   }
 
@@ -273,8 +291,11 @@
     gap: var(--space-4);
     padding: var(--space-4);
     border: 1px solid var(--line);
-    border-radius: var(--radius-md);
-    background: var(--bg-raised);
+    border-radius: 16px;
+    overflow: hidden;
+    background: var(--bg-card-surface);
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
   }
 
   .pf-row-main {
@@ -291,10 +312,32 @@
     align-items: start;
   }
 
+  .pf-activity-side {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+    min-width: 0;
+  }
+
+  .pf-calendar-wrap {
+    display: flex;
+    justify-content: center;
+    padding: var(--space-3);
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    overflow: hidden;
+    background: var(--bg-card-surface);
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
+  }
+
   .pf-timeline-card {
     border: 1px solid var(--line);
-    border-radius: var(--radius-lg);
-    background: var(--bg-raised);
+    border-radius: 16px;
+    overflow: hidden;
+    background: var(--bg-card-surface);
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
     padding: var(--space-5);
     display: flex;
     flex-direction: column;
@@ -344,8 +387,11 @@
   .pf-empty {
     padding: var(--space-7) var(--space-5);
     border: 1px solid var(--line);
-    border-radius: var(--radius-md);
-    background: var(--bg-raised);
+    border-radius: 16px;
+    overflow: hidden;
+    background: var(--bg-card-surface);
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
     display: grid;
     justify-items: start;
     gap: var(--space-3);

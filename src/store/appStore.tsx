@@ -55,8 +55,19 @@ function baseHeartCount(id: string): number {
   return 10 + ((h >>> 0) % 91);
 }
 
+function detectSystemTheme(): ThemeMode {
+  if (typeof window !== 'undefined' && typeof window.matchMedia === 'function') {
+    return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+  }
+  return 'dark';
+}
+
 const DEFAULT_SETTINGS: SettingsState = {
   theme: 'dark',
+  themePreference: 'system',
+  ambientVideo: true,
+  autoRunChecks: true,
+  defaultViewport: 1440,
   themeEffect: 'droplet',
   reducedMotion: false,
   compactDensity: false,
@@ -70,10 +81,17 @@ const DEFAULT_SETTINGS: SettingsState = {
   },
 };
 
-function applyThemeToDom(theme: ThemeMode, reducedMotion?: boolean): void {
+function applyThemeToDom(
+  theme: ThemeMode,
+  reducedMotion?: boolean,
+  ambientVideo?: boolean,
+  compactDensity?: boolean
+): void {
   if (typeof document !== 'undefined') {
     const root = document.documentElement;
     root.setAttribute('data-theme', theme);
+    root.setAttribute('data-ambient', ambientVideo === false ? 'off' : 'on');
+    root.setAttribute('data-density', compactDensity ? 'compact' : 'roomy');
     root.classList.toggle('dark', theme === 'dark');
     root.classList.toggle('light', theme === 'light');
     root.style.colorScheme = theme;
@@ -619,27 +637,43 @@ export const AppStoreProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   );
 
   const [settings, setSettings] = useState<SettingsState>(() => {
-    if (typeof window === 'undefined') return DEFAULT_SETTINGS;
-    let fallbackTheme: ThemeMode = DEFAULT_SETTINGS.theme;
+    const sysTheme = detectSystemTheme();
+    if (typeof window === 'undefined') return { ...DEFAULT_SETTINGS, theme: sysTheme };
+    let legacyTheme: ThemeMode | null = null;
     try {
-      const legacyTheme = window.localStorage.getItem('fforum_theme');
-      if (legacyTheme === 'light' || legacyTheme === 'dark') {
-        fallbackTheme = legacyTheme;
+      const legacyRaw = window.localStorage.getItem('fforum_theme');
+      if (legacyRaw === 'light' || legacyRaw === 'dark') {
+        legacyTheme = legacyRaw;
       }
     } catch {
-      fallbackTheme = DEFAULT_SETTINGS.theme;
+      legacyTheme = null;
     }
     try {
       const raw = window.localStorage.getItem(STORAGE_SETTINGS_KEY);
       if (!raw) {
         return {
           ...DEFAULT_SETTINGS,
-          theme: fallbackTheme,
+          theme: legacyTheme ?? sysTheme,
+          themePreference: legacyTheme ?? 'system',
         };
       }
       const parsed = JSON.parse(raw) as Partial<SettingsState>;
+      const resolvedPref =
+        parsed.themePreference === 'light' ||
+        parsed.themePreference === 'dark' ||
+        parsed.themePreference === 'system'
+          ? parsed.themePreference
+          : parsed.theme === 'light' || parsed.theme === 'dark'
+            ? parsed.theme
+            : legacyTheme ?? 'system';
       const resolvedTheme: ThemeMode =
-        parsed.theme === 'light' || parsed.theme === 'dark' ? parsed.theme : fallbackTheme;
+        resolvedPref === 'system'
+          ? sysTheme
+          : resolvedPref === 'light' || resolvedPref === 'dark'
+            ? resolvedPref
+            : parsed.theme === 'light' || parsed.theme === 'dark'
+              ? parsed.theme
+              : sysTheme;
       const resolvedEffect: ThemeEffect =
         parsed.themeEffect === 'droplet' ||
         parsed.themeEffect === 'rain' ||
@@ -650,6 +684,7 @@ export const AppStoreProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         ...DEFAULT_SETTINGS,
         ...parsed,
         theme: resolvedTheme,
+        themePreference: resolvedPref,
         themeEffect: resolvedEffect,
         byok: {
           ...DEFAULT_SETTINGS.byok,
@@ -659,7 +694,8 @@ export const AppStoreProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     } catch {
       return {
         ...DEFAULT_SETTINGS,
-        theme: fallbackTheme,
+        theme: legacyTheme ?? sysTheme,
+        themePreference: legacyTheme ?? 'system',
       };
     }
   });
@@ -740,8 +776,25 @@ export const AppStoreProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   }, []);
 
   useEffect(() => {
-    applyThemeToDom(settings.theme, settings.reducedMotion);
-  }, [settings.theme, settings.reducedMotion]);
+    applyThemeToDom(
+      settings.theme,
+      settings.reducedMotion,
+      settings.ambientVideo !== false,
+      settings.compactDensity
+    );
+  }, [settings.theme, settings.reducedMotion, settings.ambientVideo, settings.compactDensity]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') return undefined;
+    if ((settings.themePreference ?? 'system') !== 'system') return undefined;
+    const mq = window.matchMedia('(prefers-color-scheme: dark)');
+    const syncSystem = () => {
+      const next: ThemeMode = mq.matches ? 'dark' : 'light';
+      setSettings((prev) => (prev.theme === next ? prev : { ...prev, theme: next }));
+    };
+    mq.addEventListener('change', syncSystem);
+    return () => mq.removeEventListener('change', syncSystem);
+  }, [settings.themePreference]);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -1726,10 +1779,21 @@ export const AppStoreProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   );
 
   const updateSettings = useCallback((partial: Partial<SettingsState>) => {
-    setSettings((prev) => ({
-      ...prev,
-      ...partial,
-    }));
+    setSettings((prev) => {
+      const nextPref = partial.themePreference ?? prev.themePreference ?? 'system';
+      let nextTheme = partial.theme ?? prev.theme;
+      if (partial.themePreference === 'system' && !partial.theme) {
+        nextTheme = detectSystemTheme();
+      } else if (partial.themePreference === 'light' || partial.themePreference === 'dark') {
+        nextTheme = partial.themePreference;
+      }
+      return {
+        ...prev,
+        ...partial,
+        themePreference: nextPref,
+        theme: nextTheme,
+      };
+    });
   }, []);
 
   const updateByok = useCallback((partial: Partial<BYOKConfig>) => {
@@ -1743,14 +1807,22 @@ export const AppStoreProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   }, []);
 
   const setTheme = useCallback((theme: ThemeMode) => {
-    setSettings((prev) => (prev.theme === theme ? prev : { ...prev, theme }));
+    setSettings((prev) =>
+      prev.theme === theme && prev.themePreference === theme
+        ? prev
+        : { ...prev, theme, themePreference: theme }
+    );
   }, []);
 
   const toggleTheme = useCallback(() => {
-    setSettings((prev) => ({
-      ...prev,
-      theme: prev.theme === 'dark' ? 'light' : 'dark',
-    }));
+    setSettings((prev) => {
+      const nextTheme: ThemeMode = prev.theme === 'dark' ? 'light' : 'dark';
+      return {
+        ...prev,
+        theme: nextTheme,
+        themePreference: nextTheme,
+      };
+    });
   }, []);
 
   const setThemeEffect = useCallback((themeEffect: ThemeEffect) => {

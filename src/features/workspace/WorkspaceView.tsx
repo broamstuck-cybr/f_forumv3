@@ -1,5 +1,15 @@
 import React, { useEffect, useId, useMemo, useRef, useState } from 'react';
-import { Ellipsis, PanelLeft, PanelLeftClose, X } from 'lucide-react';
+import {
+  Columns2,
+  Ellipsis,
+  MessageSquare,
+  PanelLeft,
+  PanelLeftClose,
+  Paperclip,
+  SlidersHorizontal,
+  X,
+} from 'lucide-react';
+import { Chips, type ChipItem } from '../../components/pinui/Chips';
 import { DynamicDropZone } from '../../components/pinui/DynamicDropZone';
 import { PromptComposer } from '../../components/pinui/PromptComposer';
 import { apiClient } from '../../services/apiClient';
@@ -25,19 +35,19 @@ import './workspace.css';
 type AgentExecutionMode = 'Build' | 'Refine' | 'Audit';
 type MobilePane = 'chat' | 'stage';
 
-const AGENT_MODES: Array<{ id: AgentExecutionMode; label: string }> = [
-  { id: 'Build', label: 'Dựng mới' },
-  { id: 'Refine', label: 'Tinh chỉnh' },
-  { id: 'Audit', label: 'Kiểm định' },
+const AGENT_MODE_CHIPS: ChipItem[] = [
+  { id: 'Build', label: 'Build' },
+  { id: 'Refine', label: 'Refine' },
+  { id: 'Audit', label: 'Audit' },
 ];
 
 const MODEL_OPTIONS = [
-  { id: 'auto', name: 'Định tuyến tự động', note: 'Cổng Gateway mặc định' },
-  { id: 'studio-smart-route', name: 'Smart Route', note: 'Cân bằng tốc độ và cấu trúc' },
-  { id: 'studio-heavy-route', name: 'Heavy Route', note: 'Kiến trúc đa tệp chuyên sâu' },
-  { id: 'ag/gemini-3.8-flash-low', name: 'Gemini 3.8 Flash', note: 'Tốc độ phản hồi tức thì' },
-  { id: 'ag/gemini-4-argon-high', name: 'Gemini 4 Argon', note: 'Tư duy hệ thống & logic' },
-  { id: 'ag/claude-sonnet-5-5-medium', name: 'Claude Sonnet 5.5', note: 'Thiết kế giao diện tinh gọn' },
+  { id: 'auto', name: 'Tự động', note: 'Gateway mặc định' },
+  { id: 'studio-smart-route', name: 'Smart Route', note: 'Cân bằng tốc độ' },
+  { id: 'studio-heavy-route', name: 'Heavy Route', note: 'Kiến trúc đa tệp' },
+  { id: 'ag/gemini-3.8-flash-low', name: 'Gemini 3.8 Flash', note: 'Phản hồi nhanh' },
+  { id: 'ag/gemini-4-argon-high', name: 'Gemini 4 Argon', note: 'Tư duy hệ thống' },
+  { id: 'ag/claude-sonnet-5-5-medium', name: 'Claude Sonnet 5.5', note: 'Giao diện tinh gọn' },
 ];
 
 const STARTERS: StarterPrompt[] = [
@@ -70,7 +80,7 @@ function buildDistinctArenaArtifact(
       .replace(/^\[Mode:\s*[^\]]+\]\s*/i, '')
       .replace(/[<>"]/g, '')
       .trim()
-      .slice(0, 64) || 'F-FORUM Arena Artifact';
+      .slice(0, 64) || 'F-FORUM Artifact';
 
   const isSideA = side === 'A';
   const paletteBg = isSideA ? '#111110' : '#0d151c';
@@ -91,7 +101,7 @@ function buildDistinctArenaArtifact(
   <header class="arena-header" role="banner">
     <div class="arena-brand">
       <span class="arena-dot" aria-hidden="true"></span>
-      <strong>F-FORUM ARENA · MODEL ${side} (${modelLabel})</strong>
+      <strong>MODEL ${side} (${modelLabel})</strong>
     </div>
     <nav class="arena-nav" aria-label="Điều hướng chính">
       <a href="#hero">Tổng quan</a>
@@ -369,9 +379,18 @@ export const WorkspaceView: React.FC = () => {
   const [railSheetOpen, setRailSheetOpen] = useState(false);
   const [stageExpanded, setStageExpanded] = useState(false);
 
-  const [viewport, setViewport] = useState<PreviewViewport>(() =>
-    typeof window !== 'undefined' && window.matchMedia('(max-width: 719px)').matches ? 390 : 1440
-  );
+  const [viewport, setViewport] = useState<PreviewViewport>(() => {
+    if (settings.defaultViewport) return settings.defaultViewport;
+    return typeof window !== 'undefined' && window.matchMedia('(max-width: 719px)').matches
+      ? 390
+      : 1440;
+  });
+
+  useEffect(() => {
+    if (settings.defaultViewport) {
+      setViewport(settings.defaultViewport);
+    }
+  }, [settings.defaultViewport]);
 
   const [renaming, setRenaming] = useState(false);
   const [renameDraft, setRenameDraft] = useState('');
@@ -584,7 +603,9 @@ export const WorkspaceView: React.FC = () => {
 
       if (resultA.files.length > 0) {
         addWorkspaceFiles(resultA.files);
-        runChecksOnActiveProject();
+        if (settings.autoRunChecks !== false) {
+          runChecksOnActiveProject();
+        }
       }
     } finally {
       setArenaRunning(false);
@@ -602,7 +623,9 @@ export const WorkspaceView: React.FC = () => {
     if (!candidate.files.length) return;
 
     addWorkspaceFiles(candidate.files);
-    runChecksOnActiveProject();
+    if (settings.autoRunChecks !== false) {
+      runChecksOnActiveProject();
+    }
 
     updateProjectArenaTurns(activeProject.id, (prev) =>
       prev.map((item) => (item.id === turnId ? { ...item, appliedSide: side } : item))
@@ -791,12 +814,12 @@ export const WorkspaceView: React.FC = () => {
           {renderProjectRail(
             <button
               type="button"
-              className="icon-btn"
+              className="ws-icon-pill"
               aria-label="Thu gọn danh sách phiên"
               title="Thu gọn"
               onClick={() => setRailOpen(false)}
             >
-              <PanelLeftClose size={18} aria-hidden="true" />
+              <PanelLeftClose size={16} aria-hidden="true" />
             </button>
           )}
         </aside>
@@ -807,12 +830,12 @@ export const WorkspaceView: React.FC = () => {
           {!railInline && (
             <button
               type="button"
-              className="icon-btn"
+              className="ws-icon-pill"
               aria-label="Mở danh sách phiên"
               title="Danh sách phiên"
               onClick={() => (isDesktop ? setRailOpen(true) : setRailSheetOpen(true))}
             >
-              <PanelLeft size={18} aria-hidden="true" />
+              <PanelLeft size={16} aria-hidden="true" />
             </button>
           )}
 
@@ -841,142 +864,51 @@ export const WorkspaceView: React.FC = () => {
             </h1>
           )}
 
-          <div className="ws-arena-mode-toggle" role="group" aria-label="Chế độ đấu trường Model">
-            <button
-              type="button"
-              className="ws-mode-pill"
-              aria-pressed={arenaMode === 'single'}
-              onClick={() => setArenaMode('single')}
-            >
-              1 Model
-            </button>
-            <button
-              type="button"
-              className="ws-mode-pill"
-              aria-pressed={arenaMode === 'compare'}
-              onClick={() => setArenaMode('compare')}
-            >
-              So sánh 2 Model (Arena)
-            </button>
-          </div>
+          <div className="ws-chat-controls">
+            <div className="ws-arena-mode-toggle" role="group" aria-label="Chế độ đấu trường Model">
+              <button
+                type="button"
+                className="ws-mode-icon"
+                aria-pressed={arenaMode === 'single'}
+                aria-label="Chế độ 1 Model"
+                title="1 Model"
+                onClick={() => setArenaMode('single')}
+              >
+                <MessageSquare size={14} aria-hidden="true" />
+              </button>
+              <button
+                type="button"
+                className="ws-mode-icon"
+                aria-pressed={arenaMode === 'compare'}
+                aria-label="Chế độ so sánh 2 Model (Arena A-B)"
+                title="So sánh 2 Model (Arena A-B)"
+                onClick={() => setArenaMode('compare')}
+              >
+                <Columns2 size={14} aria-hidden="true" />
+              </button>
+            </div>
 
-          <button
-            type="button"
-            className="btn btn-line btn-sm"
-            onClick={() => setSetupDrawerOpen(true)}
-          >
-            BYOK &amp; Model
-          </button>
-
-          <Popover label="Tùy chọn phiên" icon={<Ellipsis size={18} aria-hidden="true" />}>
-            {(close) => (
-              <ul className="ws-menu">
-                <li>
-                  <button
-                    type="button"
-                    className="ws-menu-item"
-                    onClick={() => {
-                      setRenameDraft(activeProject.name);
-                      setRenaming(true);
-                      close();
-                    }}
-                  >
-                    Đổi tên phiên
-                  </button>
-                </li>
-                <li>
-                  <button
-                    type="button"
-                    className="ws-menu-item"
-                    onClick={() => {
-                      togglePinProject(activeProject.id);
-                      close();
-                    }}
-                  >
-                    {activeProject.pinned ? 'Bỏ ghim phiên' : 'Ghim phiên'}
-                  </button>
-                </li>
-                <li>
-                  <button
-                    type="button"
-                    className="ws-menu-item"
-                    onClick={() => {
-                      createProjectSnapshot();
-                      close();
-                    }}
-                  >
-                    Lưu mốc phiên
-                  </button>
-                </li>
-                <li>
-                  <button
-                    type="button"
-                    className="ws-menu-item"
-                    onClick={() => {
-                      close();
-                      setGithubOpen(true);
-                    }}
-                  >
-                    Kết nối GitHub
-                  </button>
-                </li>
-                <li>
-                  <button
-                    type="button"
-                    className="ws-menu-item"
-                    onClick={() => {
-                      toggleArchiveProject(activeProject.id);
-                      close();
-                    }}
-                  >
-                    {activeProject.archived ? 'Bỏ lưu trữ' : 'Lưu trữ'}
-                  </button>
-                </li>
-                <li>
-                  <button
-                    type="button"
-                    className="ws-menu-item ws-menu-danger"
-                    onClick={() => {
-                      close();
-                      setConfirmDelete(true);
-                    }}
-                  >
-                    Xóa phiên
-                  </button>
-                </li>
-              </ul>
-            )}
-          </Popover>
-        </header>
-
-        <div className="ws-model-bar" aria-label="Điều khiển Model Arena">
-          {arenaMode === 'single' ? (
-            <div className="ws-model-single">
-              <label className="t-label" htmlFor="ws-primary-model-select">
-                Model chính:
-              </label>
+            {arenaMode === 'single' ? (
               <select
                 id="ws-primary-model-select"
-                className="ws-model-select"
+                className="ws-model-select ws-model-select--inline"
+                aria-label="Chọn Model chính"
                 value={selectedModel}
                 onChange={(event) => setSelectedModel(event.target.value)}
               >
                 {MODEL_OPTIONS.map((option) => (
                   <option key={option.id} value={option.id}>
-                    {option.name} — {option.note}
+                    {option.name}
                   </option>
                 ))}
               </select>
-            </div>
-          ) : (
-            <div className="ws-model-compare-bar">
-              <div className="ws-model-slot">
-                <label className="ws-arena-badge" htmlFor="ws-arena-model-a">
-                  Model A
-                </label>
+            ) : (
+              <div className="ws-model-compare-bar" aria-label="Chọn 2 Model so sánh">
+                <span className="ws-arena-badge">A</span>
                 <select
                   id="ws-arena-model-a"
-                  className="ws-model-select"
+                  className="ws-model-select ws-model-select--slot"
+                  aria-label="Model A"
                   value={arenaModelA}
                   onChange={(event) => setArenaModelA(event.target.value)}
                 >
@@ -986,15 +918,11 @@ export const WorkspaceView: React.FC = () => {
                     </option>
                   ))}
                 </select>
-              </div>
-              <span className="ws-vs-tag">VS</span>
-              <div className="ws-model-slot">
-                <label className="ws-arena-badge" htmlFor="ws-arena-model-b">
-                  Model B
-                </label>
+                <span className="ws-arena-badge">B</span>
                 <select
                   id="ws-arena-model-b"
-                  className="ws-model-select"
+                  className="ws-model-select ws-model-select--slot"
+                  aria-label="Model B"
                   value={arenaModelB}
                   onChange={(event) => setArenaModelB(event.target.value)}
                 >
@@ -1005,11 +933,105 @@ export const WorkspaceView: React.FC = () => {
                   ))}
                 </select>
               </div>
-            </div>
-          )}
+            )}
 
-          <span className="t-label ws-quota-pill">Hạn mức: {quotaLabel}</span>
-        </div>
+            <button
+              type="button"
+              className="ws-icon-pill"
+              aria-label="Cấu hình Model & BYOK"
+              title="Cấu hình Model & BYOK"
+              onClick={() => setSetupDrawerOpen(true)}
+            >
+              <SlidersHorizontal size={15} aria-hidden="true" />
+            </button>
+
+            <Popover label="Tùy chọn phiên" icon={<Ellipsis size={16} aria-hidden="true" />}>
+              {(close) => (
+                <div className="ws-menu-wrap">
+                  <div className="ws-menu-quota">
+                    <span className="t-label">Hạn mức</span>
+                    <span className="ws-count">{quotaLabel}</span>
+                  </div>
+                  <ul className="ws-menu">
+                    <li>
+                      <button
+                        type="button"
+                        className="ws-menu-item"
+                        onClick={() => {
+                          setRenameDraft(activeProject.name);
+                          setRenaming(true);
+                          close();
+                        }}
+                      >
+                        Đổi tên phiên
+                      </button>
+                    </li>
+                    <li>
+                      <button
+                        type="button"
+                        className="ws-menu-item"
+                        onClick={() => {
+                          togglePinProject(activeProject.id);
+                          close();
+                        }}
+                      >
+                        {activeProject.pinned ? 'Bỏ ghim phiên' : 'Ghim phiên'}
+                      </button>
+                    </li>
+                    <li>
+                      <button
+                        type="button"
+                        className="ws-menu-item"
+                        onClick={() => {
+                          createProjectSnapshot();
+                          close();
+                        }}
+                      >
+                        Lưu mốc phiên
+                      </button>
+                    </li>
+                    <li>
+                      <button
+                        type="button"
+                        className="ws-menu-item"
+                        onClick={() => {
+                          close();
+                          setGithubOpen(true);
+                        }}
+                      >
+                        Kết nối GitHub
+                      </button>
+                    </li>
+                    <li>
+                      <button
+                        type="button"
+                        className="ws-menu-item"
+                        onClick={() => {
+                          toggleArchiveProject(activeProject.id);
+                          close();
+                        }}
+                      >
+                        {activeProject.archived ? 'Bỏ lưu trữ' : 'Lưu trữ'}
+                      </button>
+                    </li>
+                    <li>
+                      <button
+                        type="button"
+                        className="ws-menu-item ws-menu-danger"
+                        onClick={() => {
+                          close();
+                          setConfirmDelete(true);
+                        }}
+                      >
+                        Xóa phiên
+                      </button>
+                    </li>
+                  </ul>
+                </div>
+              )}
+            </Popover>
+          </div>
+        </header>
 
         <Thread
           messages={activeProject.messages}
@@ -1038,12 +1060,12 @@ export const WorkspaceView: React.FC = () => {
                     <span className="ws-attached-name">{item.title}</span>
                     <button
                       type="button"
-                      className="icon-btn"
+                      className="ws-icon-pill ws-icon-pill--xs"
                       aria-label={`Gỡ ${item.title}`}
                       title="Gỡ"
                       onClick={() => detachItemFromWorkspace(item.id)}
                     >
-                      <X size={16} aria-hidden="true" />
+                      <X size={13} aria-hidden="true" />
                     </button>
                   </li>
                 ))}
@@ -1067,12 +1089,12 @@ export const WorkspaceView: React.FC = () => {
                   </button>
                   <button
                     type="button"
-                    className="icon-btn"
+                    className="ws-icon-pill"
                     aria-label="Đóng khung nạp tệp"
                     title="Đóng"
                     onClick={() => setDropZoneOpen(false)}
                   >
-                    <X size={18} aria-hidden="true" />
+                    <X size={15} aria-hidden="true" />
                   </button>
                 </div>
               </div>
@@ -1081,7 +1103,7 @@ export const WorkspaceView: React.FC = () => {
             {quotaBlocked && (
               <div className="ws-quota" role="status">
                 <p>
-                  Đã dùng hết <span className="ws-count">{quotaLabel}</span>. Mở BYOK &amp; Model để dùng khóa riêng hoặc đăng nhập Admin.
+                  Đã dùng hết <span className="ws-count">{quotaLabel}</span>. Mở BYOK để gắn khóa riêng.
                 </p>
                 <div className="ws-quota-actions">
                   <button
@@ -1089,7 +1111,7 @@ export const WorkspaceView: React.FC = () => {
                     className="btn btn-line btn-sm"
                     onClick={() => setSetupDrawerOpen(true)}
                   >
-                    Gắn khóa BYOK
+                    Gắn BYOK
                   </button>
                   {!currentUser && (
                     <button
@@ -1104,35 +1126,37 @@ export const WorkspaceView: React.FC = () => {
               </div>
             )}
 
-            <div className="ws-dock-row">
-              <div className="ws-seg" role="group" aria-label="Chế độ thực thi">
-                {AGENT_MODES.map((mode) => (
-                  <button
-                    key={mode.id}
-                    type="button"
-                    className="ws-seg-item"
-                    aria-pressed={agentMode === mode.id}
-                    onClick={() => setAgentMode(mode.id)}
-                  >
-                    {mode.label}
-                  </button>
-                ))}
+            <div className="ws-dock-bar">
+              <div className="ws-dock-chips">
+                <Chips
+                  items={AGENT_MODE_CHIPS}
+                  selectedIds={[agentMode]}
+                  onToggle={(id) => setAgentMode(id as AgentExecutionMode)}
+                  multi={false}
+                  variant="filter"
+                  theme={settings.theme}
+                />
               </div>
 
-              <div className="ws-dock-tools">
+              <div className="ws-dock-icons">
                 <button
                   type="button"
-                  className="btn btn-ghost btn-sm"
+                  className="ws-icon-pill"
+                  aria-label="Đính kèm tệp hoặc mở vùng thả tệp"
+                  title="Đính kèm tệp"
+                  aria-pressed={dropZoneOpen}
                   onClick={() => setDropZoneOpen((value) => !value)}
                 >
-                  Đính kèm tệp
+                  <Paperclip size={15} aria-hidden="true" />
                 </button>
                 <button
                   type="button"
-                  className="btn btn-ghost btn-sm"
+                  className="ws-icon-pill"
+                  aria-label="Cấu hình Model & BYOK"
+                  title="Cấu hình Model & BYOK"
                   onClick={() => setSetupDrawerOpen(true)}
                 >
-                  Cấu hình BYOK
+                  <SlidersHorizontal size={15} aria-hidden="true" />
                 </button>
               </div>
             </div>
@@ -1149,7 +1173,7 @@ export const WorkspaceView: React.FC = () => {
               showFan={false}
               placeholder={
                 arenaMode === 'compare'
-                  ? `Nhập yêu cầu để so sánh ${getModelLabel(arenaModelA)} vs ${getModelLabel(arenaModelB)}...`
+                  ? `So sánh ${getModelLabel(arenaModelA)} vs ${getModelLabel(arenaModelB)}...`
                   : 'Mô tả giao diện hoặc tính năng cần dựng...'
               }
               onAttachClick={() => setDropZoneOpen((value) => !value)}
@@ -1173,7 +1197,7 @@ export const WorkspaceView: React.FC = () => {
             aria-pressed={mobilePane === 'chat'}
             onClick={() => setMobilePane('chat')}
           >
-            Hội thoại Arena
+            Hội thoại
           </button>
           <button
             type="button"
@@ -1184,7 +1208,7 @@ export const WorkspaceView: React.FC = () => {
               setMobilePane('stage');
             }}
           >
-            Xem trực tiếp
+            Xem
           </button>
           <button
             type="button"
@@ -1195,7 +1219,7 @@ export const WorkspaceView: React.FC = () => {
               setMobilePane('stage');
             }}
           >
-            Mã nguồn
+            Mã
           </button>
           <button
             type="button"
@@ -1206,7 +1230,7 @@ export const WorkspaceView: React.FC = () => {
               setMobilePane('stage');
             }}
           >
-            Diff &amp; Check
+            Kiểm
           </button>
         </nav>
       )}
@@ -1221,12 +1245,12 @@ export const WorkspaceView: React.FC = () => {
           {renderProjectRail(
             <button
               type="button"
-              className="icon-btn"
+              className="ws-icon-pill"
               aria-label="Đóng danh sách phiên"
               title="Đóng"
               onClick={() => setRailSheetOpen(false)}
             >
-              <X size={18} aria-hidden="true" />
+              <X size={16} aria-hidden="true" />
             </button>
           )}
         </div>

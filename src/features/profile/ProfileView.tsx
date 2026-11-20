@@ -10,6 +10,7 @@ import { useAppStore } from '../../store/appStore';
 import type { AttachedContextItem, CommunityPost } from '../../types/index';
 import { Media, previewFor } from '../../ui/Media';
 import {
+  CalendarCard,
   Chips,
   FileBox,
   LiquidTabs,
@@ -158,7 +159,7 @@ export const ProfileView: React.FC = () => {
 
   const defaultBio =
     currentUser?.bio?.trim() ||
-    'Thiết kế giao diện, kiểm thử hộp cát và lưu trữ các thành phần web chuẩn hóa.';
+    'Thiết kế giao diện và lưu trữ thành phần web.';
   const defaultStatus = currentUser ? 'Đang hoạt động' : 'Phiên cục bộ';
 
   const [bio, setBio] = useState<string>(() => readLocalProfileField(bioStorageKey, defaultBio));
@@ -574,7 +575,7 @@ export const ProfileView: React.FC = () => {
                   Chưa có mục đã lưu
                 </h2>
                 <p className="t-lead" style={{ fontSize: 'var(--text-sm)' }}>
-                  Lưu mẫu giao diện từ Khám phá, kho mã nguồn hoặc bài thảo luận từ Tri thức để mở nhanh tại đây.
+                  Lưu mẫu hoặc bài viết từ Khám phá và Tri thức để mở nhanh tại đây.
                 </p>
                 <div className="pf-empty-actions">
                   <button type="button" className="btn btn-red btn-sm" onClick={() => navigate('explore')}>
@@ -736,12 +737,12 @@ export const ProfileView: React.FC = () => {
             {filteredUserPosts.length === 0 ? (
               <div className="pf-empty">
                 <h2 className="t-title" style={{ fontSize: 'var(--text-xl)' }}>
-                  Chưa có bài viết hoặc tương tác
+                  Chưa có bài viết
                 </h2>
                 <p className="t-lead" style={{ fontSize: 'var(--text-sm)' }}>
                   {currentUser
-                    ? 'Tham gia đặt câu hỏi, trình diễn hộp cát hoặc phản hồi tại mục Tri thức.'
-                    : 'Đăng nhập để đồng bộ bài đăng và lịch sử phản hồi của bạn tại Tri thức.'}
+                    ? 'Đặt câu hỏi hoặc chia sẻ mẫu tại Tri thức.'
+                    : 'Đăng nhập để đồng bộ bài viết của bạn.'}
                 </p>
                 <div className="pf-empty-actions">
                   {!currentUser && (
@@ -810,11 +811,16 @@ export const ProfileView: React.FC = () => {
               </div>
             ) : (
               <div className="pf-activity-grid">
-                <TaskCard
-                  title="Tiến trình kiểm định & Xây dựng"
-                  subtitle="Tổng hợp trạng thái kiểm tra mã nguồn và tác vụ mới nhất."
-                  tasks={builderTasks}
-                />
+                <div className="pf-activity-side">
+                  <TaskCard
+                    title="Kiểm định & Xây dựng"
+                    subtitle="Trạng thái kiểm định mới nhất."
+                    tasks={builderTasks}
+                  />
+                  <div className="pf-calendar-wrap">
+                    <CalendarCard theme={theme} />
+                  </div>
+                </div>
 
                 <div className="pf-timeline-card">
                   <h2 className="pf-item-title">Dòng thời gian hoạt động</h2>

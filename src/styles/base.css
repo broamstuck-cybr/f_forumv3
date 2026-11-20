@@ -458,6 +458,11 @@
     isolation: isolate;
   }
 
+  html[data-ambient='on'],
+  html[data-ambient='on'] body {
+    background-color: transparent;
+  }
+
   .sr-only {
     position: absolute;
     width: 1px;

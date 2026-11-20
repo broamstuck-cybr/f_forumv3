@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { AnimatePresence, motion, useReducedMotion, type Transition } from 'motion/react';
 import { X } from 'lucide-react';
-import { glassSheet, liquidGlass } from './reader-card-glass';
+import { glassSheet } from './reader-card-glass';
 import './reader-card.css';
 
 export interface ReaderCardProps {
@@ -41,13 +41,13 @@ function splitOrnateParagraph(text: string): { prefix: string; cap: string; rest
 
 const DEFAULT_PARAGRAPHS = [
   'Một giao diện có giá trị không phô trương bằng hàng chục khối thẻ giống hệt nhau. Nó dẫn dắt ánh nhìn đi qua khoảng trống có chủ đích, nơi từng đường viền mảnh và độ tương phản vừa đủ tạo nên nhịp thở tĩnh tại.',
-  'Khi đọc sâu vào kiến trúc từ SOURCEOFKNOWLEDGFORAI hay bản giải phẫu Shopify Winter, điều còn lại không phải là hiệu ứng hào nhoáng, mà là kỷ luật tỷ lệ, tốc độ phản hồi và sự chính xác của từng dữ liệu.',
+  'Khi đọc sâu vào kiến trúc thành phần và hệ thống token, điều còn lại không phải là hiệu ứng hào nhoáng, mà là kỷ luật tỷ lệ, tốc độ phản hồi và sự chính xác của từng dữ liệu.',
   'Người thiết kế có tư duy phản biện luôn tự hỏi: phần tử này tồn tại để giải quyết vấn đề gì, hay chỉ để lấp đầy khoảng trống của khung lưới mặc định.',
   'Trong không gian F-Forum, mỗi mẫu giao diện đều có thể mở trực tiếp trên sân khấu kiểm định, đối chiếu từng dòng Diff & Check trước khi xuất bản.',
 ];
 
-const morphOpen: Transition = { type: 'spring', visualDuration: 0.52, bounce: 0.16 };
-const morphClose: Transition = { type: 'spring', visualDuration: 0.4, bounce: 0 };
+const morphOpen: Transition = { type: 'spring', visualDuration: 0.46, bounce: 0.14 };
+const morphClose: Transition = { type: 'spring', visualDuration: 0.34, bounce: 0 };
 
 export const ReaderCard: React.FC<ReaderCardProps> = ({
   title = 'Kỷ luật của Khoảng trống',
@@ -64,12 +64,13 @@ export const ReaderCard: React.FC<ReaderCardProps> = ({
   const [sizeIdx, setSizeIdx] = useState(1);
   const [progress, setProgress] = useState(0);
   const [flashIdx, setFlashIdx] = useState<number | null>(null);
-  const pillRef = useRef<HTMLButtonElement>(null);
   const sheetRef = useRef<HTMLDivElement>(null);
   const excerptRef = useRef<HTMLDivElement>(null);
   const bodyRef = useRef<HTMLDivElement>(null);
 
-  const previewText = excerptLines?.join(' ') ?? paragraphs[0] ?? '';
+  const safeParagraphs = paragraphs.length > 0 ? paragraphs : DEFAULT_PARAGRAPHS;
+  const previewText = (excerptLines?.join(' ') || safeParagraphs[0] || '').trim();
+  const secondaryExcerpt = !excerptLines && safeParagraphs[1] ? safeParagraphs[1].trim() : '';
 
   const toggleOpen = (next: boolean) => {
     setOpen(next);
@@ -77,14 +78,8 @@ export const ReaderCard: React.FC<ReaderCardProps> = ({
   };
 
   useEffect(() => {
-    if (!pillRef.current) return;
-    const handle = liquidGlass(pillRef.current, { ior: 1.42, thickness: 14, blur: 10 });
-    return () => handle.destroy();
-  }, []);
-
-  useEffect(() => {
     if (!open || !sheetRef.current) return;
-    const handle = glassSheet(sheetRef.current, { blur: 22, saturate: 1.6 });
+    const handle = glassSheet(sheetRef.current, { blur: 20, saturate: 1.5 });
     return () => handle.destroy();
   }, [open]);
 
@@ -98,7 +93,7 @@ export const ReaderCard: React.FC<ReaderCardProps> = ({
     };
     window.addEventListener('keydown', onKey);
     const ratio = excerptRef.current
-      ? Math.min(paragraphs.length - 1, Math.floor((excerptRef.current.scrollTop / 180) * paragraphs.length))
+      ? Math.min(safeParagraphs.length - 1, Math.floor((excerptRef.current.scrollTop / 180) * safeParagraphs.length))
       : 0;
     setFlashIdx(ratio);
     const timer = window.setTimeout(() => setFlashIdx(null), 1100);
@@ -106,7 +101,7 @@ export const ReaderCard: React.FC<ReaderCardProps> = ({
       window.removeEventListener('keydown', onKey);
       window.clearTimeout(timer);
     };
-  }, [open, paragraphs.length]);
+  }, [open, safeParagraphs.length]);
 
   const handleScrollBody = () => {
     const el = bodyRef.current;
@@ -117,13 +112,7 @@ export const ReaderCard: React.FC<ReaderCardProps> = ({
 
   return (
     <div className={`prc ${className}`} data-open={open ? 'true' : undefined} data-theme={theme}>
-      <div className="prc__card">
-        <div className="prc__orbs" aria-hidden="true">
-          <span className="prc__orb prc__orb--a" />
-          <span className="prc__orb prc__orb--b" />
-          <span className="prc__orb prc__orb--c" />
-        </div>
-
+      <article className="prc__card">
         <div className="prc__pblur prc__pblur--top" aria-hidden="true" />
         <div className="prc__pblur prc__pblur--bottom" aria-hidden="true" />
 
@@ -133,18 +122,21 @@ export const ReaderCard: React.FC<ReaderCardProps> = ({
         </div>
 
         <div ref={excerptRef} className="prc__excerpt">
-          <p className="m-0">{previewText}</p>
+          <p className="prc__para">{previewText}</p>
+          {secondaryExcerpt && <p className="prc__para prc__para--sub">{secondaryExcerpt}</p>}
         </div>
 
-        <button
-          ref={pillRef}
-          type="button"
-          className="prc__openPill"
-          onClick={() => toggleOpen(true)}
-        >
-          {openLabel}
-        </button>
-      </div>
+        <div className="prc__footer">
+          <span className="prc__metaCount">{safeParagraphs.length} đoạn</span>
+          <button
+            type="button"
+            className="prc__openPill"
+            onClick={() => toggleOpen(true)}
+          >
+            {openLabel}
+          </button>
+        </div>
+      </article>
 
       <AnimatePresence>
         {open && (
@@ -165,13 +157,13 @@ export const ReaderCard: React.FC<ReaderCardProps> = ({
               initial={
                 reduced
                   ? { opacity: 0 }
-                  : { opacity: 0, clipPath: 'inset(12% 18% 12% 18% round 40px)' }
+                  : { opacity: 0, clipPath: 'inset(10% 14% 10% 14% round 28px)' }
               }
-              animate={{ opacity: 1, clipPath: 'inset(0% 0% 0% 0% round 32px)' }}
+              animate={{ opacity: 1, clipPath: 'inset(0% 0% 0% 0% round 18px)' }}
               exit={
                 reduced
                   ? { opacity: 0 }
-                  : { opacity: 0, clipPath: 'inset(14% 20% 14% 20% round 40px)' }
+                  : { opacity: 0, clipPath: 'inset(12% 16% 12% 16% round 28px)' }
               }
               transition={reduced ? { duration: 0.01 } : open ? morphOpen : morphClose}
               onClick={(e) => e.stopPropagation()}
@@ -184,14 +176,12 @@ export const ReaderCard: React.FC<ReaderCardProps> = ({
               </div>
 
               <div className="prc__toolbar">
-                <div>
+                <div className="prc__toolbarMeta">
                   <div className="prc__kicker">{subtitle}</div>
-                  <h3 className="m-0 text-[18px] font-semibold" style={{ fontFamily: 'var(--font-serif)', color: 'var(--ink-primary)' }}>
-                    {title}
-                  </h3>
+                  <h3 className="prc__sheetTitle">{title}</h3>
                 </div>
 
-                <div className="flex items-center gap-3">
+                <div className="prc__toolbarControls">
                   <div className="prc__sizes" role="group" aria-label="Cỡ chữ">
                     {SIZES.map((sz, idx) => (
                       <button
@@ -199,7 +189,8 @@ export const ReaderCard: React.FC<ReaderCardProps> = ({
                         type="button"
                         className="prc__sizeBtn"
                         data-active={sizeIdx === idx}
-                        aria-label={`Cỡ ${sz}`}
+                        aria-label={`Cỡ chữ ${sz}`}
+                        title={`Cỡ chữ ${sz}px`}
                         onClick={() => setSizeIdx(idx)}
                       >
                         {Math.round(sz)}
@@ -209,23 +200,23 @@ export const ReaderCard: React.FC<ReaderCardProps> = ({
                   <button
                     type="button"
                     className="prc__close"
-                    aria-label="Đóng"
+                    aria-label="Đóng trình đọc"
                     title="Đóng"
                     onClick={() => toggleOpen(false)}
                   >
-                    <X className="h-4 w-4" aria-hidden="true" />
+                    <X size={16} aria-hidden="true" />
                   </button>
                 </div>
               </div>
 
               <div ref={bodyRef} className="prc__body" onScroll={handleScrollBody}>
-                <div className="space-y-5" style={{ fontSize: `${SIZES[sizeIdx]}px` }}>
-                  {paragraphs.map((p, idx) => {
+                <div className="prc__bodyInner" style={{ fontSize: `${SIZES[sizeIdx]}px` }}>
+                  {safeParagraphs.map((p, idx) => {
                     const ornate = idx === 0 ? splitOrnateParagraph(p) : null;
                     return (
                       <p
                         key={idx}
-                        className={`m-0 prc__resume ${flashIdx === idx ? 'is-flash' : ''}`}
+                        className={`prc__resume ${flashIdx === idx ? 'is-flash' : ''}`}
                       >
                         {ornate ? (
                           <>

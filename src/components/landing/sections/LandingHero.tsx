@@ -390,8 +390,8 @@ export const LandingHero: React.FC<LandingHeroProps> = ({
 
             <dl className="lp-colophon">
               <div>
-                <dt className="t-label">kho tham chiếu</dt>
-                <dd>196 giao diện &amp; mã nguồn tham khảo · 6.770 chi tiết UI/UX</dd>
+                <dt className="t-label">mẫu &amp; mã nguồn</dt>
+                <dd>196 giao diện chạy trực tiếp · 6.770 chi tiết UI/UX</dd>
               </div>
               <div>
                 <dt className="t-label">khả năng</dt>

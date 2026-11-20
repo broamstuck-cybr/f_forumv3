@@ -8,6 +8,10 @@
     --pfs: clamp(1.75rem, 1.1rem + 2.8vw, 3.65rem);
   }
 
+  html[data-ambient='on'] .tw-stage {
+    background: transparent;
+  }
+
   .tw-stage[data-reduced='true'] {
     height: auto;
     padding-block: var(--space-section);

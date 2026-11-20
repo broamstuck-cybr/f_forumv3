@@ -103,6 +103,8 @@ html[data-theme='dark'],
   --shadow-1: 0 1px 2px rgba(0, 0, 0, 0.4);
   --shadow-2: 0 14px 34px -12px rgba(0, 0, 0, 0.6);
   --shadow-3: 0 40px 80px -28px rgba(0, 0, 0, 0.78);
+  --bg-glass-surface: rgba(24, 23, 21, 0.72);
+  --bg-card-surface: rgba(28, 26, 24, 0.78);
   --grain-opacity: 0.05;
 }
 
@@ -134,6 +136,8 @@ html[data-theme='light'],
   --shadow-1: 0 1px 2px rgba(23, 21, 15, 0.08);
   --shadow-2: 0 14px 30px -14px rgba(23, 21, 15, 0.22);
   --shadow-3: 0 40px 70px -30px rgba(23, 21, 15, 0.34);
+  --bg-glass-surface: rgba(251, 248, 241, 0.76);
+  --bg-card-surface: rgba(255, 252, 246, 0.84);
   --grain-opacity: 0.07;
 }
 

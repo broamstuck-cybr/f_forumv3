@@ -1,6 +1,6 @@
 {
-  "generatedAt": "2026-11-20T04:10:29.467Z",
-  "source": "opencode-deepseek + github-api",
+  "generatedAt": "2026-11-20T23:17:00Z",
+  "source": "Verified GitHub API + F-Forum Curated Vietnamese Index",
   "items": [
     {
       "id": "mattpocock-skills",
@@ -9,14 +9,14 @@
       "owner": "mattpocock",
       "category": "Skills, Rules & Prompts",
       "htmlUrl": "https://github.com/mattpocock/skills",
-      "description": "Skills for Real Engineers. Straight from my .agents directory.",
+      "description": "Tập hợp mô-đun skill cho AI agent, trích từ thư mục .agents của tác giả, phục vụ quy trình kỹ thuật phần mềm.",
       "stars": 327689,
       "forks": 27525,
       "language": "Shell",
       "license": "MIT",
       "pushedAt": "2026-11-18T09:51:01Z",
       "topics": [],
-      "aiNote": "Curated library of composable AI agent skill modules for software engineering workflows."
+      "aiNote": "Chép các tệp skill vào thư mục .agents của dự án để agent tuân theo quy ước code có sẵn."
     },
     {
       "id": "obra-superpowers",
@@ -25,7 +25,7 @@
       "owner": "obra",
       "category": "Skills, Rules & Prompts",
       "htmlUrl": "https://github.com/obra/superpowers",
-      "description": "An agentic skills framework & software development methodology that works.",
+      "description": "Khung skill và phương pháp phát triển phần mềm dành cho agent, tổ chức công việc theo từng bước có kiểm chứng.",
       "stars": 321542,
       "forks": 28582,
       "language": "Shell",
@@ -41,7 +41,7 @@
         "subagent-driven-development",
         "superpowers"
       ],
-      "aiNote": "Modular skill set designed for extending agent capabilities and tool autonomy."
+      "aiNote": "Cài bộ skill này vào harness của agent để chuẩn hóa vòng lặp lập kế hoạch, viết code và kiểm thử."
     },
     {
       "id": "affaan-m-ecc",
@@ -50,7 +50,7 @@
       "owner": "affaan-m",
       "category": "Skills, Rules & Prompts",
       "htmlUrl": "https://github.com/affaan-m/ECC",
-      "description": "The agent harness performance optimization system. Skills, instincts, memory, security, and research-first development for Claude Code, Codex, Opencode, Cursor and beyond.",
+      "description": "Hệ thống tối ưu hiệu năng cho harness agent, gồm skill, phản xạ, bộ nhớ và lớp bảo mật dùng cho Claude Code, Codex, Opencode và Cursor.",
       "stars": 306814,
       "forks": 45164,
       "language": "JavaScript",
@@ -66,7 +66,7 @@
         "mcp",
         "productivity"
       ],
-      "aiNote": "Collection of behavioral instructions and domain-specific engineering rules for coding assistants."
+      "aiNote": "Dùng làm lớp cấu hình chung khi chạy nhiều CLI agent trong cùng repo để giữ hành vi và quy tắc bảo mật thống nhất."
     },
     {
       "id": "multica-ai-andrej-karpathy-skills",
@@ -75,14 +75,14 @@
       "owner": "multica-ai",
       "category": "Skills, Rules & Prompts",
       "htmlUrl": "https://github.com/multica-ai/andrej-karpathy-skills",
-      "description": "A single CLAUDE.md file to improve Claude Code behavior, derived from Andrej Karpathy's observations on LLM coding pitfalls.",
+      "description": "Một tệp CLAUDE.md duy nhất tổng hợp quan sát của Andrej Karpathy về các lỗi thường gặp khi LLM viết code.",
       "stars": 234358,
       "forks": 23293,
       "language": "Unknown",
       "license": "Open Source",
       "pushedAt": "2026-04-20T10:05:04Z",
       "topics": [],
-      "aiNote": "Synthesized deep learning heuristics and prompt patterns distilled from Karpathy technical writings."
+      "aiNote": "Chép tệp này vào gốc dự án để agent tránh các lỗi suy luận phổ biến trước khi sửa mã nguồn."
     },
     {
       "id": "anomalyco-opencode",
@@ -91,14 +91,14 @@
       "owner": "anomalyco",
       "category": "AI Agents & CLI",
       "htmlUrl": "https://github.com/anomalyco/opencode",
-      "description": "The open source coding agent.",
+      "description": "Agent lập trình mã nguồn mở chạy trong terminal, đọc và sửa mã nguồn trực tiếp trong dự án.",
       "stars": 227899,
       "forks": 30924,
       "language": "TypeScript",
       "license": "MIT",
       "pushedAt": "2026-11-19T08:38:56Z",
       "topics": [],
-      "aiNote": "Autonomous terminal-based coding assistant and developer workflow orchestrator."
+      "aiNote": "Dùng CLI này khi cần agent đọc nhiều tệp, sửa code và chạy lệnh kiểm thử thay vì copy thủ công."
     },
     {
       "id": "anthropics-skills",
@@ -107,7 +107,7 @@
       "owner": "anthropics",
       "category": "Skills, Rules & Prompts",
       "htmlUrl": "https://github.com/anthropics/skills",
-      "description": "Public repository for Agent Skills",
+      "description": "Kho công khai các Agent Skill chính thức của Anthropic, kèm định nghĩa năng lực và cấu trúc thư mục mẫu.",
       "stars": 197407,
       "forks": 23114,
       "language": "Python",
@@ -116,7 +116,7 @@
       "topics": [
         "agent-skills"
       ],
-      "aiNote": "Official reference skills and capability definitions for Claude agentic workflows."
+      "aiNote": "Đọc cấu trúc SKILL.md ở đây để viết skill riêng đúng chuẩn trước khi đưa vào dự án."
     },
     {
       "id": "dietrichgebert-ponytail",
@@ -125,7 +125,7 @@
       "owner": "DietrichGebert",
       "category": "Skills, Rules & Prompts",
       "htmlUrl": "https://github.com/DietrichGebert/ponytail",
-      "description": "Makes your AI agent think like the laziest senior dev in the room. The best code is the code you never wrote.",
+      "description": "Bộ skill định hướng agent chọn giải pháp tối giản, ưu tiên thư viện chuẩn và tránh viết thêm mã không cần thiết.",
       "stars": 194406,
       "forks": 10953,
       "language": "JavaScript",
@@ -141,7 +141,7 @@
         "developer-tools",
         "llm"
       ],
-      "aiNote": "Pragmatic minimalist coding heuristics enforcing concise solutions and standard libraries."
+      "aiNote": "Bật skill này khi sửa bug nhỏ để agent không refactor lan sang phần code đang chạy ổn."
     },
     {
       "id": "significant-gravitas-autogpt",
@@ -150,7 +150,7 @@
       "owner": "Significant-Gravitas",
       "category": "AI Agents & CLI",
       "htmlUrl": "https://github.com/Significant-Gravitas/AutoGPT",
-      "description": "AutoGPT is the vision of accessible AI for everyone, to use and to build on. Our mission is to provide the tools, so that you can focus on what matters.",
+      "description": "Nền tảng agent tự động chia nhỏ mục tiêu thành nhiều bước và tự thực thi, kèm giao diện để tạo và chạy agent.",
       "stars": 188099,
       "forks": 45856,
       "language": "Python",
@@ -166,7 +166,7 @@
         "gpt",
         "llama-api"
       ],
-      "aiNote": "Reference architecture for autonomous multi-step agent execution loops."
+      "aiNote": "Tham khảo vòng lặp lập kế hoạch của nó khi tự dựng agent nhiều bước trong ứng dụng riêng."
     },
     {
       "id": "ollama-ollama",
@@ -175,7 +175,7 @@
       "owner": "ollama",
       "category": "Local LLM & DevTools",
       "htmlUrl": "https://github.com/ollama/ollama",
-      "description": "Get up and running with Kimi, GLM, MiniMax, DeepSeek, gpt-oss, Qwen, Gemma and other models.",
+      "description": "Môi trường chạy mô hình ngôn ngữ cục bộ, tải và phục vụ các mô hình như Kimi, GLM, DeepSeek, Qwen, Gemma bằng một lệnh.",
       "stars": 187577,
       "forks": 19156,
       "language": "Go",
@@ -191,7 +191,7 @@
         "llama",
         "llm"
       ],
-      "aiNote": "Standard runtime for downloading, configuring, and serving large language models locally."
+      "aiNote": "Chạy ollama serve rồi trỏ endpoint cục bộ vào ứng dụng để thử tính năng AI mà không tốn phí API."
     },
     {
       "id": "open-webui-open-webui",
@@ -200,7 +200,7 @@
       "owner": "open-webui",
       "category": "Local LLM & DevTools",
       "htmlUrl": "https://github.com/open-webui/open-webui",
-      "description": "User-friendly AI Interface (Supports Ollama, OpenAI API, ...)",
+      "description": "Giao diện web tự lưu trữ để trò chuyện với mô hình cục bộ hoặc API tương thích OpenAI, có quản lý người dùng và tài liệu.",
       "stars": 159069,
       "forks": 23110,
       "language": "Svelte",
@@ -216,7 +216,7 @@
         "ollama",
         "ollama-webui"
       ],
-      "aiNote": "Extensible self-hosted web interface supporting Ollama and OpenAI-compatible inference backends."
+      "aiNote": "Dựng bằng Docker để có giao diện chat nội bộ ngay, thay vì tự viết frontend cho endpoint LLM."
     },
     {
       "id": "langchain-ai-langchain",
@@ -225,7 +225,7 @@
       "owner": "langchain-ai",
       "category": "AI Agents & CLI",
       "htmlUrl": "https://github.com/langchain-ai/langchain",
-      "description": "The agent engineering platform.",
+      "description": "Nền tảng xây dựng ứng dụng LLM, cung cấp chuỗi xử lý, công cụ và lớp kết nối tới nhiều nhà cung cấp mô hình.",
       "stars": 149873,
       "forks": 25161,
       "language": "Python",
@@ -241,7 +241,7 @@
         "enterprise",
         "framework"
       ],
-      "aiNote": "Extensive orchestration ecosystem for LLM application chains and tool bindings."
+      "aiNote": "Dùng các thành phần có sẵn của nó để nối mô hình với tìm kiếm và công cụ thay vì tự viết lớp gọi API."
     },
     {
       "id": "ggml-org-llama-cpp",
@@ -250,7 +250,7 @@
       "owner": "ggml-org",
       "category": "Local LLM & DevTools",
       "htmlUrl": "https://github.com/ggml-org/llama.cpp",
-      "description": "LLM inference in C/C++",
+      "description": "Engine suy luận LLM viết bằng C/C++, tối ưu cho CPU và GPU khi chạy mô hình định dạng GGUF đã lượng tử hóa.",
       "stars": 135658,
       "forks": 25764,
       "language": "C++",
@@ -259,7 +259,7 @@
       "topics": [
         "ggml"
       ],
-      "aiNote": "Pure C/C++ inference engine optimized for CPU and GPU execution of quantized GGUF models."
+      "aiNote": "Chạy server của nó để phục vụ mô hình GGUF trên máy không có GPU rời khi phát triển tính năng local."
     },
     {
       "id": "shadcn-ui-ui",
@@ -268,7 +268,7 @@
       "owner": "shadcn-ui",
       "category": "UI/UX & Motion",
       "htmlUrl": "https://github.com/shadcn-ui/ui",
-      "description": "Composable, accessible components with thoughtful defaults. Build your own component library with code you can customize, extend, and make your own.",
+      "description": "Bộ thành phần giao diện có thể tùy biến, xây trên Radix UI và Tailwind CSS, cho phép chép mã vào dự án và sửa trực tiếp.",
       "stars": 128539,
       "forks": 11424,
       "language": "TypeScript",
@@ -284,7 +284,7 @@
         "laravel",
         "nextjs"
       ],
-      "aiNote": "Re-usable component architecture built with Radix UI primitives and Tailwind CSS."
+      "aiNote": "Dùng CLI để thêm thành phần vào dự án rồi chỉnh mã nguồn tại chỗ thay vì phụ thuộc gói đóng kín."
     },
     {
       "id": "addyosmani-agent-skills",
@@ -293,7 +293,7 @@
       "owner": "addyosmani",
       "category": "Skills, Rules & Prompts",
       "htmlUrl": "https://github.com/addyosmani/agent-skills",
-      "description": "Production-grade engineering skills for AI coding agents.",
+      "description": "Bộ skill kỹ thuật cho agent lập trình, tập trung vào hiệu năng web, kiểm thử và quy trình đưa code lên production.",
       "stars": 119038,
       "forks": 12398,
       "language": "JavaScript",
@@ -307,7 +307,7 @@
         "cursor",
         "skills"
       ],
-      "aiNote": "Practical web performance and engineering skills tailored for AI developer agents."
+      "aiNote": "Nạp skill này trước khi tối ưu Core Web Vitals để agent đo đúng điểm nghẽn thay vì đoán."
     },
     {
       "id": "mrdoob-three-js",
@@ -316,7 +316,7 @@
       "owner": "mrdoob",
       "category": "UI/UX & Motion",
       "htmlUrl": "https://github.com/mrdoob/three.js",
-      "description": "JavaScript 3D Library.",
+      "description": "Thư viện 3D JavaScript dựng cảnh WebGL và WebGPU, quản lý hình học, vật liệu, ánh sáng và camera.",
       "stars": 118892,
       "forks": 37037,
       "language": "JavaScript",
@@ -332,7 +332,7 @@
         "virtual-reality",
         "webaudio"
       ],
-      "aiNote": "Industry standard JavaScript 3D library rendering WebGL and WebGPU scenes."
+      "aiNote": "Dùng khi cần cảnh 3D tương tác trên web mà không phải tự viết shader và pipeline đồ họa."
     },
     {
       "id": "tailwindlabs-tailwindcss",
@@ -341,7 +341,7 @@
       "owner": "tailwindlabs",
       "category": "UI/UX & Motion",
       "htmlUrl": "https://github.com/tailwindlabs/tailwindcss",
-      "description": "A utility-first CSS framework for rapid UI development.",
+      "description": "Khung CSS ưu tiên tiện ích, biên dịch lớp tiện ích từ template và sinh CSS theo token thiết kế.",
       "stars": 98649,
       "forks": 6492,
       "language": "TypeScript",
@@ -356,7 +356,7 @@
         "tailwindcss",
         "utility-classes"
       ],
-      "aiNote": "Utility-first CSS framework with Rust-based compilation engine and modern design tokens."
+      "aiNote": "Khai báo token trong tệp theme để giữ khoảng cách và màu thống nhất thay vì viết CSS rời rạc."
     },
     {
       "id": "vllm-project-vllm",
@@ -365,7 +365,7 @@
       "owner": "vllm-project",
       "category": "Local LLM & DevTools",
       "htmlUrl": "https://github.com/vllm-project/vllm",
-      "description": "A high-throughput and memory-efficient inference and serving engine for LLMs",
+      "description": "Engine phục vụ LLM thông lượng cao, dùng PagedAttention và gom lô liên tục để tăng số request xử lý mỗi giây.",
       "stars": 97197,
       "forks": 25002,
       "language": "Python",
@@ -381,7 +381,7 @@
         "gpt-oss",
         "inference"
       ],
-      "aiNote": "High-throughput LLM serving engine featuring PagedAttention and continuous batching."
+      "aiNote": "Triển khai endpoint tương thích OpenAI của nó khi cần phục vụ mô hình cho nhiều người dùng cùng lúc."
     },
     {
       "id": "openhands-openhands",
@@ -390,7 +390,7 @@
       "owner": "OpenHands",
       "category": "AI Agents & CLI",
       "htmlUrl": "https://github.com/OpenHands/OpenHands",
-      "description": "OpenHands: AI-Driven Development",
+      "description": "Agent phát triển phần mềm chạy trong container, tự đọc mã nguồn, chạy lệnh và sửa tệp để hoàn thành tác vụ.",
       "stars": 93807,
       "forks": 12560,
       "language": "TypeScript",
@@ -406,7 +406,7 @@
         "gpt",
         "llm"
       ],
-      "aiNote": "Containerized software development agent capable of autonomous code modification."
+      "aiNote": "Chạy nó trong sandbox khi muốn agent thử thay đổi mà không ảnh hưởng máy thật."
     },
     {
       "id": "modelcontextprotocol-servers",
@@ -415,14 +415,14 @@
       "owner": "modelcontextprotocol",
       "category": "Local LLM & DevTools",
       "htmlUrl": "https://github.com/modelcontextprotocol/servers",
-      "description": "Model Context Protocol Reference Servers",
+      "description": "Bộ server tham chiếu cho Model Context Protocol, nối agent với tệp, Git, cơ sở dữ liệu và công cụ phát triển.",
       "stars": 92096,
       "forks": 11980,
       "language": "TypeScript",
       "license": "Open Source",
       "pushedAt": "2026-11-18T23:40:40Z",
       "topics": [],
-      "aiNote": "Reference implementations of Model Context Protocol servers for standard developer tools."
+      "aiNote": "Khai báo server phù hợp trong tệp cấu hình MCP để agent truy cập dữ liệu dự án qua giao thức chuẩn."
     },
     {
       "id": "composiohq-awesome-claude-skills",
@@ -431,7 +431,7 @@
       "owner": "ComposioHQ",
       "category": "Skills, Rules & Prompts",
       "htmlUrl": "https://github.com/ComposioHQ/awesome-claude-skills",
-      "description": "A curated list of awesome Claude Skills, resources, and tools for customizing Claude AI workflows",
+      "description": "Danh sách tuyển chọn skill, công cụ và mẫu tích hợp MCP để mở rộng quy trình làm việc với Claude.",
       "stars": 79850,
       "forks": 9788,
       "language": "Python",
@@ -447,7 +447,7 @@
         "codex",
         "composio"
       ],
-      "aiNote": "Directory of enterprise tool connectors, MCP integration patterns, and Claude system skills."
+      "aiNote": "Tra danh sách này để chọn connector MCP có sẵn trước khi tự viết tích hợp."
     },
     {
       "id": "unslothai-unsloth",
@@ -456,7 +456,7 @@
       "owner": "unslothai",
       "category": "Local LLM & DevTools",
       "htmlUrl": "https://github.com/unslothai/unsloth",
-      "description": "Local UI to run and train LLMs and diffusion models. Supports GGUF, MLX, Qwen3.8, DeepSeek-V4.1, MiniMax-H3, Gemma 4, FLUX and more.",
+      "description": "Bộ công cụ tinh chỉnh và chạy mô hình ngôn ngữ, mô hình khuếch tán ngay trên máy, hỗ trợ GGUF, MLX, Qwen3.8, DeepSeek-V4.1, MiniMax-H3, Gemma 4 và FLUX.",
       "stars": 79766,
       "forks": 7446,
       "language": "Python",
@@ -472,7 +472,7 @@
         "image-generation",
         "llama"
       ],
-      "aiNote": "Memory-efficient fine-tuning framework providing significant speedups for open weights."
+      "aiNote": "Dùng khi cần fine-tune mô hình mở trên một GPU tiêu dùng mà vẫn giữ mức tiêu thụ bộ nhớ thấp."
     },
     {
       "id": "juliangarnier-anime",
@@ -481,7 +481,7 @@
       "owner": "juliangarnier",
       "category": "UI/UX & Motion",
       "htmlUrl": "https://github.com/juliangarnier/anime",
-      "description": "JavaScript animation engine",
+      "description": "Engine hoạt ảnh JavaScript điều khiển thuộc tính CSS, SVG và thuộc tính DOM theo timeline và keyframe.",
       "stars": 74897,
       "forks": 5120,
       "language": "JavaScript",
@@ -496,7 +496,7 @@
         "javascript-library",
         "svg"
       ],
-      "aiNote": "Lightweight JavaScript animation engine supporting CSS properties, SVG, and DOM attributes."
+      "aiNote": "Dùng cho chuyển động nhẹ cần timeline rõ ràng mà không muốn kéo theo thư viện nặng."
     },
     {
       "id": "cline-cline",
@@ -505,14 +505,14 @@
       "owner": "cline",
       "category": "AI Agents & CLI",
       "htmlUrl": "https://github.com/cline/cline",
-      "description": "Autonomous coding agent as an SDK, IDE extension, or CLI assistant.",
+      "description": "Agent lập trình tự động đóng gói dưới dạng SDK, tiện ích IDE và trợ lý CLI, có quyền chạy lệnh terminal và thao tác trình duyệt.",
       "stars": 71763,
       "forks": 7939,
       "language": "TypeScript",
       "license": "Apache-2.0",
       "pushedAt": "2026-11-19T00:42:41Z",
       "topics": [],
-      "aiNote": "Autonomous coding agent extension for VS Code with terminal and browser execution capabilities."
+      "aiNote": "Bật nó trong VS Code khi cần agent sửa nhiều tệp và tự chạy lệnh kiểm tra sau mỗi thay đổi."
     },
     {
       "id": "foundationagents-metagpt",
@@ -521,7 +521,7 @@
       "owner": "FoundationAgents",
       "category": "AI Agents & CLI",
       "htmlUrl": "https://github.com/FoundationAgents/MetaGPT",
-      "description": "The Multi-Agent Framework: First AI Software Company, Towards Natural Language Programming",
+      "description": "Khung đa agent mô phỏng vai trò trong công ty phần mềm, phân công phân tích yêu cầu, viết code và kiểm thử.",
       "stars": 71353,
       "forks": 9116,
       "language": "Python",
@@ -534,7 +534,7 @@
         "metagpt",
         "multi-agent"
       ],
-      "aiNote": "Multi-agent framework simulating standard software company roles and collaborative outputs."
+      "aiNote": "Dùng để sinh bản nháp dự án từ mô tả yêu cầu, sau đó đọc lại và chỉnh tay trước khi dùng thật."
     },
     {
       "id": "berriai-litellm",
@@ -543,7 +543,7 @@
       "owner": "BerriAI",
       "category": "Local LLM & DevTools",
       "htmlUrl": "https://github.com/BerriAI/litellm",
-      "description": "The fastest, litest AI Gateway. Rust core with Python SDK. Call 100+ LLM APIs in OpenAI (or native) format with cost tracking, guardrails, load balancing, and logging [Bedrock, Azure, OpenAI, Anthropic, OpenAI, VertexAI, vLLM, Nvidia NIM]",
+      "description": "Gateway gọi hơn 100 API LLM qua một định dạng chung, kèm theo dõi chi phí, giới hạn truy cập, cân bằng tải và ghi log.",
       "stars": 63525,
       "forks": 13407,
       "language": "Python",
@@ -559,7 +559,7 @@
         "litellm",
         "llm"
       ],
-      "aiNote": "Universal proxy translating between OpenAI format and 100+ LLM API providers with load balancing."
+      "aiNote": "Đặt nó làm proxy trước các nhà cung cấp mô hình để đổi key hoặc model mà không sửa code ứng dụng."
     },
     {
       "id": "microsoft-autogen",
@@ -568,7 +568,7 @@
       "owner": "microsoft",
       "category": "AI Agents & CLI",
       "htmlUrl": "https://github.com/microsoft/autogen",
-      "description": "A programming framework for agentic AI",
+      "description": "Khung lập trình cho hệ agent, tổ chức nhiều agent trao đổi theo mẫu hội thoại và sự kiện.",
       "stars": 61934,
       "forks": 9413,
       "language": "Python",
@@ -584,7 +584,7 @@
         "chatgpt",
         "framework"
       ],
-      "aiNote": "Framework for multi-agent conversational patterns and event-driven agent systems."
+      "aiNote": "Dùng mẫu hội thoại có sẵn của nó khi cần nhiều agent phối hợp thay vì tự viết vòng lặp gọi model."
     },
     {
       "id": "crewaiinc-crewai",
@@ -593,7 +593,7 @@
       "owner": "crewAIInc",
       "category": "AI Agents & CLI",
       "htmlUrl": "https://github.com/crewAIInc/crewAI",
-      "description": "Framework for orchestrating role-playing, autonomous AI agents. By fostering collaborative intelligence, CrewAI empowers agents to work together seamlessly, tackling complex tasks.",
+      "description": "Khung điều phối các agent đóng vai trò khác nhau, giao việc theo cấu trúc và tổng hợp kết quả của cả nhóm.",
       "stars": 61091,
       "forks": 9225,
       "language": "Python",
@@ -606,7 +606,7 @@
         "aiagentframework",
         "llms"
       ],
-      "aiNote": "Framework for orchestrating role-playing autonomous AI agents with task delegation."
+      "aiNote": "Định nghĩa vai trò và nhiệm vụ trong YAML để tách cấu hình agent khỏi phần code xử lý."
     },
     {
       "id": "hesreallyhim-awesome-claude-code",
@@ -615,7 +615,7 @@
       "owner": "hesreallyhim",
       "category": "Skills, Rules & Prompts",
       "htmlUrl": "https://github.com/hesreallyhim/awesome-claude-code",
-      "description": "A hand-picked collection of the finest of resources for the most awesome of agents, Claude Code, the undisputed champion of coding companions, from the unstoppable team at Anthropic PBC (no affiliation). A delectable showcase of top tier skills, ambidextrous agents, scintillating status lines, top notch developer tooling, and also we have plugins",
+      "description": "Tập hợp do cộng đồng tuyển chọn gồm cấu hình, workflow, prompt và plugin dùng cho Claude Code.",
       "stars": 58336,
       "forks": 4976,
       "language": "Python",
@@ -631,7 +631,7 @@
         "anthropic-claude",
         "awesome"
       ],
-      "aiNote": "Community collection of configurations, workflows, and prompts for Claude Code CLI."
+      "aiNote": "Xem các mẫu cấu hình ở đây trước khi tự tạo tệp lệnh và hook cho CLI agent."
     },
     {
       "id": "chromedevtools-chrome-devtools-mcp",
@@ -640,7 +640,7 @@
       "owner": "ChromeDevTools",
       "category": "Local LLM & DevTools",
       "htmlUrl": "https://github.com/ChromeDevTools/chrome-devtools-mcp",
-      "description": "Chrome DevTools for coding agents",
+      "description": "Cầu MCP nối agent với Chrome DevTools để đọc log, kiểm tra mạng và phân tích hiệu năng trang đang chạy.",
       "stars": 58267,
       "forks": 4879,
       "language": "TypeScript",
@@ -656,7 +656,7 @@
         "mcp-server",
         "puppeteer"
       ],
-      "aiNote": "Model Context Protocol adapter connecting AI agents directly to Chrome DevTools debugging sessions."
+      "aiNote": "Bật server này khi cần agent tự kiểm tra lỗi console và số đo hiệu năng sau khi sửa giao diện."
     },
     {
       "id": "aaif-goose-goose",
@@ -665,7 +665,7 @@
       "owner": "aaif-goose",
       "category": "AI Agents & CLI",
       "htmlUrl": "https://github.com/aaif-goose/goose",
-      "description": "an open source, extensible AI agent that goes beyond code suggestions - install, execute, edit, and test with any LLM",
+      "description": "Agent lập trình mã nguồn mở chạy trên máy, có thể cài gói, chạy lệnh, sửa tệp và kiểm thử với nhiều nhà cung cấp LLM.",
       "stars": 56778,
       "forks": 6622,
       "language": "Rust",
@@ -677,7 +677,7 @@
         "ai-agents",
         "mcp"
       ],
-      "aiNote": "Open-source on-machine developer agent executing shell and editing operations."
+      "aiNote": "Dùng nó như trợ lý dòng lệnh cho tác vụ lặp lại như cập nhật phụ thuộc và chạy test."
     },
     {
       "id": "davidhdev-react-bits",
@@ -686,7 +686,7 @@
       "owner": "DavidHDev",
       "category": "UI/UX & Motion",
       "htmlUrl": "https://github.com/DavidHDev/react-bits",
-      "description": "The largest open-source library of animated, interactive, and customizable React & Next.js components for building standout web products and experiences. Built for humans and AI agents.",
+      "description": "Thư viện thành phần React và Next.js có hoạt ảnh, hiệu ứng nền và văn bản tương tác, chép trực tiếp vào dự án.",
       "stars": 52291,
       "forks": 2642,
       "language": "JavaScript",
@@ -702,7 +702,7 @@
         "css-animations",
         "javascript"
       ],
-      "aiNote": "Curated collection of animated React components, background shaders, and interactive text effects."
+      "aiNote": "Lấy một thành phần từ đây rồi chỉnh theo token của dự án thay vì tự dựng lại hiệu ứng."
     },
     {
       "id": "mudler-localai",
@@ -711,7 +711,7 @@
       "owner": "mudler",
       "category": "Local LLM & DevTools",
       "htmlUrl": "https://github.com/mudler/LocalAI",
-      "description": "LocalAI is the open-source AI engine. Run any model - LLMs, vision, voice, image, video - on any hardware. No GPU required.",
+      "description": "Engine AI tự lưu trữ cung cấp REST API tương thích OpenAI để chạy mô hình ngôn ngữ, thị giác, giọng nói và ảnh trên phần cứng phổ thông.",
       "stars": 50442,
       "forks": 4618,
       "language": "Go",
@@ -727,7 +727,7 @@
         "image-generation",
         "libp2p"
       ],
-      "aiNote": "Self-hosted drop-in replacement REST API for OpenAI specifications running consumer hardware."
+      "aiNote": "Đổi base URL sang LocalAI để ứng dụng đang dùng SDK OpenAI chạy với mô hình nội bộ."
     },
     {
       "id": "aider-ai-aider",
@@ -736,7 +736,7 @@
       "owner": "Aider-AI",
       "category": "AI Agents & CLI",
       "htmlUrl": "https://github.com/Aider-AI/aider",
-      "description": "aider is AI pair programming in your terminal",
+      "description": "Công cụ lập trình cặp trong terminal, sửa mã nguồn theo yêu cầu và tự tạo commit Git cho từng thay đổi.",
       "stars": 50175,
       "forks": 5177,
       "language": "Python",
@@ -752,7 +752,7 @@
         "gpt-3",
         "gpt-35-turbo"
       ],
-      "aiNote": "Command-line pair programming tool integrating directly with Git repositories."
+      "aiNote": "Dùng trong repo đang sạch trạng thái để mỗi thay đổi của agent thành một commit dễ hoàn tác."
     },
     {
       "id": "janhq-jan",
@@ -761,7 +761,7 @@
       "owner": "janhq",
       "category": "Local LLM & DevTools",
       "htmlUrl": "https://github.com/janhq/jan",
-      "description": "Jan is an open source alternative to ChatGPT that runs 100% offline on your computer.",
+      "description": "Ứng dụng desktop mã nguồn mở chạy mô hình cục bộ hoàn toàn ngoại tuyến, có quản lý mô hình và giao diện chat.",
       "stars": 45826,
       "forks": 3191,
       "language": "Rust",
@@ -777,7 +777,7 @@
         "self-hosted",
         "tauri"
       ],
-      "aiNote": "Open-source local AI desktop application supporting on-device model management and offline chat."
+      "aiNote": "Dùng khi cần thử prompt trên máy không có mạng mà không gửi dữ liệu ra ngoài."
     },
     {
       "id": "patrickjs-awesome-cursorrules",
@@ -786,7 +786,7 @@
       "owner": "PatrickJS",
       "category": "Skills, Rules & Prompts",
       "htmlUrl": "https://github.com/PatrickJS/awesome-cursorrules",
-      "description": "Configuration files that enhance Cursor AI editor experience with custom rules and behaviors",
+      "description": "Kho tệp .cursorrules do cộng đồng đóng góp, mô tả quy tắc riêng cho từng ngôn ngữ và khung làm việc trong Cursor.",
       "stars": 41175,
       "forks": 3548,
       "language": "JavaScript",
@@ -799,7 +799,7 @@
         "cursor-ai-editor",
         "cursorrules"
       ],
-      "aiNote": "Community repository of structured .cursorrules files for popular programming languages and frameworks."
+      "aiNote": "Chọn tệp quy tắc khớp stack rồi rút gọn còn các mục thực sự áp dụng cho dự án."
     },
     {
       "id": "motiondivision-motion",
@@ -808,7 +808,7 @@
       "owner": "motiondivision",
       "category": "UI/UX & Motion",
       "htmlUrl": "https://github.com/motiondivision/motion",
-      "description": "A modern animation library for React and JavaScript",
+      "description": "Thư viện hoạt ảnh cho React và JavaScript, dựng chuyển động bằng vật lý lò xo và tự nội suy bố cục khi phần tử đổi vị trí.",
       "stars": 35357,
       "forks": 1574,
       "language": "TypeScript",
@@ -822,7 +822,7 @@
         "reactanimations",
         "spring"
       ],
-      "aiNote": "Production-ready spring physics and layout animation library for React and modern browsers."
+      "aiNote": "Dùng layout animation của nó cho danh sách và tab thay vì tự tính toán vị trí bằng tay."
     },
     {
       "id": "greensock-gsap",
@@ -831,7 +831,7 @@
       "owner": "greensock",
       "category": "UI/UX & Motion",
       "htmlUrl": "https://github.com/greensock/GSAP",
-      "description": "GSAP (GreenSock Animation Platform), a JavaScript animation library for the modern web",
+      "description": "Nền tảng hoạt ảnh JavaScript hiệu năng cao, có timeline, ScrollTrigger và biến đổi SVG theo đường dẫn.",
       "stars": 30918,
       "forks": 2422,
       "language": "JavaScript",
@@ -844,7 +844,7 @@
         "javascript-library",
         "scroll"
       ],
-      "aiNote": "High-performance JavaScript animation platform with ScrollTrigger and SVG morphing."
+      "aiNote": "Dùng ScrollTrigger khi cần gắn tiến trình chuyển động với vị trí cuộn thay vì tự nghe sự kiện scroll."
     },
     {
       "id": "pmndrs-react-spring",
@@ -853,7 +853,7 @@
       "owner": "pmndrs",
       "category": "UI/UX & Motion",
       "htmlUrl": "https://github.com/pmndrs/react-spring",
-      "description": "️ A spring physics based React animation library",
+      "description": "Thư viện hoạt ảnh React dựa trên vật lý lò xo, tính chuyển động theo lực thay vì thời lượng cố định.",
       "stars": 29318,
       "forks": 1244,
       "language": "TypeScript",
@@ -866,7 +866,7 @@
         "spring-physics",
         "springs"
       ],
-      "aiNote": "Spring-physics based animation library reflecting natural mechanical motion curves."
+      "aiNote": "Dùng cho tương tác kéo thả và mở rộng khối vì chuyển động dừng tự nhiên theo lực tác động."
     },
     {
       "id": "magicuidesign-magicui",
@@ -875,7 +875,7 @@
       "owner": "magicuidesign",
       "category": "UI/UX & Motion",
       "htmlUrl": "https://github.com/magicuidesign/magicui",
-      "description": "UI Library for Design Engineers. Animated components and effects you can copy and paste into your apps. Free. Open Source.",
+      "description": "Bộ thành phần giao diện có hoạt ảnh như viền động, lưới bento và nền hạt, cho phép chép mã vào ứng dụng.",
       "stars": 23370,
       "forks": 1272,
       "language": "MDX",
@@ -890,7 +890,7 @@
         "tailwindcss",
         "typescript"
       ],
-      "aiNote": "UI component collection with animated borders, bento grids, and particle backgrounds."
+      "aiNote": "Dùng các khối có sẵn này cho trang giới thiệu sản phẩm rồi thay màu theo biến CSS của dự án."
     },
     {
       "id": "darkroomengineering-lenis",
@@ -899,7 +899,7 @@
       "owner": "darkroomengineering",
       "category": "UI/UX & Motion",
       "htmlUrl": "https://github.com/darkroomengineering/lenis",
-      "description": "Smooth scroll as it should be",
+      "description": "Thư viện cuộn mượt tạo quán tính cho trang, giữ tốc độ ổn định giữa các khung hình và đồng bộ với chiều cao nội dung.",
       "stars": 17365,
       "forks": 802,
       "language": "TypeScript",
@@ -915,7 +915,7 @@
         "snap",
         "vanilla"
       ],
-      "aiNote": "Smooth scroll library providing frame-rate independent kinetic easing for web layouts."
+      "aiNote": "Bọc trang bằng Lenis rồi nối nó với ScrollTrigger để hoạt ảnh cuộn không bị lệch."
     },
     {
       "id": "broamstuck-cybr-sourceofknowledgforai",
@@ -924,14 +924,14 @@
       "owner": "broamstuck-cybr",
       "category": "Skills, Rules & Prompts",
       "htmlUrl": "https://github.com/broamstuck-cybr/SOURCEOFKNOWLEDGFORAI",
-      "description": "Curated catalog of 6,770 UI components, prompts, and tokens from CodeFronts, ThreeUI, LucianLabs, MotionSites, and PinUI.",
+      "description": "Danh mục tổng hợp 6.770 thành phần giao diện, prompt và token thiết kế từ CodeFronts, ThreeUI, LucianLabs, MotionSites và PinUI.",
       "stars": 2,
       "forks": 0,
       "language": "HTML",
       "license": "Open Source",
       "pushedAt": "2026-11-19T08:38:50Z",
       "topics": [],
-      "aiNote": "Verified knowledge base containing 6,770 UI components across 5 major design libraries and prompt catalog."
+      "aiNote": "Tra danh mục này trước khi tự viết thành phần mới để tái dùng mẫu đã có sẵn cấu trúc."
     },
     {
       "id": "shadcn-labs-pin-ui",
@@ -940,7 +940,7 @@
       "owner": "shadcn-labs",
       "category": "UI/UX & Motion",
       "htmlUrl": "https://github.com/shadcn-labs/pin-ui",
-      "description": "Tactile, physics-driven interactive React components and blocx registry.",
+      "description": "Bộ thành phần React tương tác theo vật lý như PromptComposer, ThemeSwitch, ReaderCard, Magnify và LiquidTabs, kèm registry blocx.",
       "stars": 232,
       "forks": 9,
       "language": "TypeScript",
@@ -953,7 +953,7 @@
         "ui",
         "pin-ui"
       ],
-      "aiNote": "Primary interactive physics component reference for PromptComposer, ThemeSwitch, ReaderCard, Magnify, and LiquidTabs."
+      "aiNote": "Đăng ký registry của nó trong tệp components.json để thêm thành phần qua CLI shadcn."
     },
     {
       "id": "broamstuck-cybr-edunext-fe",
@@ -962,7 +962,7 @@
       "owner": "broamstuck-cybr",
       "category": "AI Agents & CLI",
       "htmlUrl": "https://github.com/broamstuck-cybr/Edunext_fe",
-      "description": "Verified userscript workflow suite with SHA256 integrity manifest.",
+      "description": "Bộ userscript tự động hóa quy trình học tập, kèm manifest SHA256 để kiểm tra tính toàn vẹn của từng tệp.",
       "stars": 3,
       "forks": 0,
       "language": "JavaScript",
@@ -973,7 +973,7 @@
         "userscript",
         "automation"
       ],
-      "aiNote": "Student academic automation toolkit with cryptographic checksum verification."
+      "aiNote": "Đối chiếu mã băm trước khi cài userscript để chắc tệp không bị chỉnh sửa ngoài ý muốn."
     },
     {
       "id": "broamstuck-cybr-f-forum",
@@ -982,7 +982,7 @@
       "owner": "broamstuck-cybr",
       "category": "UI/UX & Motion",
       "htmlUrl": "https://github.com/broamstuck-cybr/f-forum",
-      "description": "F-Forum React 19 + Tailwind CSS v4 student and designer collaboration platform.",
+      "description": "Nền tảng cộng tác cho sinh viên và nhà thiết kế, dựng bằng React 19 và Tailwind CSS v4.",
       "stars": 2,
       "forks": 0,
       "language": "HTML",
@@ -1000,7 +1000,7 @@
         "vietnamese",
         "vite"
       ],
-      "aiNote": "Production predecessor of f_forumv3 deployed at f-forum.vercel.app."
+      "aiNote": "Dùng làm mẫu tham chiếu khi cần cấu trúc dự án React 19 với Tailwind v4 và bố cục diễn đàn."
     },
     {
       "id": "broamstuck-cybr-edunext-legacy",
@@ -1009,7 +1009,7 @@
       "owner": "broamstuck-cybr",
       "category": "Local LLM & DevTools",
       "htmlUrl": "https://github.com/broamstuck-cybr/edunext-legacy",
-      "description": "Archive of Edunext browser extensions and helper scripts.",
+      "description": "Kho lưu trữ tiện ích trình duyệt và script hỗ trợ cũ, giữ lại để tra cứu hành vi của phiên bản trước.",
       "stars": 6,
       "forks": 0,
       "language": "JavaScript",
@@ -1020,7 +1020,7 @@
         "javascript",
         "devtools"
       ],
-      "aiNote": "Legacy student tooling archive maintained under broamstuck-cybr."
+      "aiNote": "Đọc mã cũ ở đây khi cần đối chiếu logic trước khi viết lại thành userscript mới."
     },
     {
       "id": "broamstuck-cybr-resourcepack",
@@ -1029,7 +1029,7 @@
       "owner": "broamstuck-cybr",
       "category": "Local LLM & DevTools",
       "htmlUrl": "https://github.com/broamstuck-cybr/resourcepack",
-      "description": "Curated study asset bundles and edunext question bank packages.",
+      "description": "Gói tài liệu học tập và ngân hàng câu hỏi được đóng gói sẵn để tải và dùng lại.",
       "stars": 1,
       "forks": 0,
       "language": "Unknown",
@@ -1039,7 +1039,7 @@
         "resources",
         "education"
       ],
-      "aiNote": "Packaged academic study assets and reference bundles."
+      "aiNote": "Tách dữ liệu câu hỏi khỏi mã nguồn để cập nhật nội dung mà không phải build lại ứng dụng."
     },
     {
       "id": "langchain-ai-langgraph",
@@ -1048,7 +1048,7 @@
       "owner": "langchain-ai",
       "category": "AI Agents & CLI",
       "htmlUrl": "https://github.com/langchain-ai/langgraph",
-      "description": "Build resilient agents.",
+      "description": "Môi trường chạy agent dưới dạng đồ thị trạng thái, lưu checkpoint giữa các bước và cho phép con người can thiệp.",
       "stars": 45166,
       "forks": 7794,
       "language": "Python",
@@ -1062,7 +1062,7 @@
         "deepagents",
         "enterprise"
       ],
-      "aiNote": "Stateful graph runtime for multi-actor agent workflows with human-in-the-loop checkpoints."
+      "aiNote": "Dùng khi workflow agent cần chạy dài, dừng giữa chừng và khôi phục đúng trạng thái đã lưu."
     },
     {
       "id": "openbmb-chatdev",
@@ -1071,14 +1071,14 @@
       "owner": "OpenBMB",
       "category": "AI Agents & CLI",
       "htmlUrl": "https://github.com/OpenBMB/ChatDev",
-      "description": "ChatDev 2.0: Dev All through LLM-powered Multi-Agent Collaboration",
+      "description": "Hệ mô phỏng công ty phần mềm bằng nhiều agent, chia vai lập kế hoạch, viết code và kiểm thử để tạo chương trình hoàn chỉnh.",
       "stars": 34815,
       "forks": 4353,
       "language": "Python",
       "license": "Apache-2.0",
       "pushedAt": "2026-11-06T07:37:13Z",
       "topics": [],
-      "aiNote": "Multi-agent software company simulation organizing planning, coding, and testing roles."
+      "aiNote": "Dùng để sinh bản dựng thử nghiệm nhanh, sau đó soát lại mã do agent tạo trước khi đưa vào sản phẩm."
     },
     {
       "id": "pydantic-pydantic-ai",
@@ -1087,7 +1087,7 @@
       "owner": "pydantic",
       "category": "AI Agents & CLI",
       "htmlUrl": "https://github.com/pydantic/pydantic-ai",
-      "description": "How Python does AI. Agents, realtime voice, image generation, embeddings. Every model, every interface, typed end to end.",
+      "description": "Khung agent Python dùng kiểu dữ liệu và validate của Pydantic, hỗ trợ agent, giọng nói thời gian thực, sinh ảnh và embedding.",
       "stars": 21296,
       "forks": 3221,
       "language": "Python",
@@ -1101,7 +1101,7 @@
         "llm",
         "pydantic"
       ],
-      "aiNote": "Type-safe Python agent framework built around Pydantic schema validation and dependency injection."
+      "aiNote": "Định nghĩa schema đầu ra bằng Pydantic để kết quả model khớp kiểu trước khi ghi vào cơ sở dữ liệu."
     },
     {
       "id": "openai-openai-agents-python",
@@ -1110,7 +1110,7 @@
       "owner": "openai",
       "category": "AI Agents & CLI",
       "htmlUrl": "https://github.com/openai/openai-agents-python",
-      "description": "A lightweight, powerful framework for multi-agent workflows",
+      "description": "SDK Python gọn nhẹ để dựng workflow nhiều agent, chuyển giao nhiệm vụ, gọi công cụ và áp rào chắn kiểm soát.",
       "stars": 30775,
       "forks": 5080,
       "language": "Python",
@@ -1124,7 +1124,7 @@
         "llm",
         "openai"
       ],
-      "aiNote": "Lightweight Python SDK for multi-agent handoffs, tool execution, and guardrails."
+      "aiNote": "Dùng handoff của nó khi cần chia việc giữa agent điều phối và agent chuyên trách thay vì tự nối chuỗi gọi."
     },
     {
       "id": "google-adk-python",
@@ -1133,7 +1133,7 @@
       "owner": "google",
       "category": "AI Agents & CLI",
       "htmlUrl": "https://github.com/google/adk-python",
-      "description": "An open-source, code-first Python toolkit for building, evaluating, and deploying sophisticated AI agents with flexibility and control.",
+      "description": "Bộ công cụ Python ưu tiên code để xây, đánh giá và triển khai agent, tổ chức công cụ theo mô-đun.",
       "stars": 22276,
       "forks": 4391,
       "language": "Python",
@@ -1147,7 +1147,7 @@
         "agents-sdk",
         "ai"
       ],
-      "aiNote": "Code-first Agent Development Kit from Google for modular tool orchestration and evaluation."
+      "aiNote": "Dùng khi cần viết test cho luồng agent vì toolkit có sẵn phần đánh giá hành vi."
     },
     {
       "id": "browser-use-browser-use",
@@ -1156,7 +1156,7 @@
       "owner": "browser-use",
       "category": "AI Agents & CLI",
       "htmlUrl": "https://github.com/browser-use/browser-use",
-      "description": "Open-source Python library for AI browser agents, plus Browser Use Cloud: stealth browsers and a hosted agent API.",
+      "description": "Thư viện Python cho agent điều khiển trình duyệt, đọc DOM và thực hiện thao tác như click, nhập liệu, điều hướng.",
       "stars": 121537,
       "forks": 13584,
       "language": "Python",
@@ -1170,7 +1170,7 @@
         "browser-use",
         "cdp"
       ],
-      "aiNote": "Vision and DOM automation bridge enabling AI agents to navigate and operate web browsers."
+      "aiNote": "Dùng cho tác vụ kiểm thử giao diện lặp lại, nhưng chạy trên tài khoản thử để tránh thao tác nhầm dữ liệu thật."
     },
     {
       "id": "continuedev-continue",
@@ -1179,7 +1179,7 @@
       "owner": "continuedev",
       "category": "AI Agents & CLI",
       "htmlUrl": "https://github.com/continuedev/continue",
-      "description": "open-source coding agent",
+      "description": "Tiện ích IDE mã nguồn mở nối mô hình cục bộ hoặc dịch vụ bên ngoài với ngữ cảnh mã nguồn và lệnh tùy biến.",
       "stars": 36522,
       "forks": 5579,
       "language": "TypeScript",
@@ -1192,7 +1192,7 @@
         "developer-tools",
         "open-source"
       ],
-      "aiNote": "Open-source IDE extension connecting local and hosted LLMs to codebase context and custom slash tools."
+      "aiNote": "Cấu hình tệp config để trỏ tới mô hình nội bộ khi làm việc với mã nguồn không được gửi ra ngoài."
     },
     {
       "id": "assafelovic-gpt-researcher",
@@ -1201,7 +1201,7 @@
       "owner": "assafelovic",
       "category": "AI Agents & CLI",
       "htmlUrl": "https://github.com/assafelovic/gpt-researcher",
-      "description": "An autonomous agent that conducts deep research on any data using any LLM providers",
+      "description": "Agent nghiên cứu tự động thu thập dữ liệu từ web và tài liệu cục bộ, chạy song song nhiều nguồn rồi tổng hợp báo cáo có trích dẫn.",
       "stars": 30787,
       "forks": 4245,
       "language": "Python",
@@ -1215,7 +1215,7 @@
         "llms",
         "mcp"
       ],
-      "aiNote": "Autonomous deep-research agent generating cited reports from parallel web and local document retrieval."
+      "aiNote": "Dùng khi cần bản tổng quan nhanh về một chủ đề kỹ thuật, luôn kiểm tra lại nguồn trước khi dùng nội dung."
     },
     {
       "id": "camel-ai-camel",
@@ -1224,7 +1224,7 @@
       "owner": "camel-ai",
       "category": "AI Agents & CLI",
       "htmlUrl": "https://github.com/camel-ai/camel",
-      "description": "CAMEL: The first and the best multi-agent framework. Finding the Scaling Law of Agents. https://www.camel-ai.org",
+      "description": "Khung đa agent tổ chức các agent trao đổi theo vai trò, phục vụ mô phỏng, tổng hợp dữ liệu và nghiên cứu luật mở rộng.",
       "stars": 18048,
       "forks": 2149,
       "language": "Python",
@@ -1238,7 +1238,7 @@
         "cooperative-ai",
         "deep-learning"
       ],
-      "aiNote": "Communicative multi-agent framework for role-playing collaboration, data synthesis, and simulation."
+      "aiNote": "Dùng chế độ role-playing của nó để sinh dữ liệu huấn luyện theo cặp vai trò thay vì viết prompt thủ công."
     },
     {
       "id": "agno-agi-agno",
@@ -1247,7 +1247,7 @@
       "owner": "agno-agi",
       "category": "AI Agents & CLI",
       "htmlUrl": "https://github.com/agno-agi/agno",
-      "description": "The self-managing agent platform",
+      "description": "Môi trường chạy agent Python tốc độ cao, hỗ trợ đa phương thức, bộ nhớ dùng chung, kho tri thức và công cụ suy luận.",
       "stars": 43241,
       "forks": 6308,
       "language": "Python",
@@ -1260,7 +1260,7 @@
         "developer-tools",
         "python"
       ],
-      "aiNote": "High-speed Python runtime for multi-modal agents with shared memory, knowledge, and reasoning tools."
+      "aiNote": "Dùng khi cần nhiều agent chia sẻ bộ nhớ và tri thức trong cùng một tiến trình."
     },
     {
       "id": "run-llama-llama-index",
@@ -1269,7 +1269,7 @@
       "owner": "run-llama",
       "category": "AI Agents & CLI",
       "htmlUrl": "https://github.com/run-llama/llama_index",
-      "description": "LlamaIndex is the document processing platform for AI",
+      "description": "Nền tảng xử lý tài liệu cho AI, đánh chỉ mục, truy xuất và điều phối workflow để nối dữ liệu riêng với LLM.",
       "stars": 52965,
       "forks": 8592,
       "language": "Python",
@@ -1283,7 +1283,7 @@
         "framework",
         "llamaindex"
       ],
-      "aiNote": "Data indexing, retrieval, and workflow orchestration framework connecting private corpora to LLMs."
+      "aiNote": "Dùng các bộ đọc tài liệu có sẵn của nó để dựng pipeline RAG thay vì tự tách và nhúng văn bản."
     },
     {
       "id": "vercel-ai",
@@ -1292,7 +1292,7 @@
       "owner": "vercel",
       "category": "AI Agents & CLI",
       "htmlUrl": "https://github.com/vercel/ai",
-      "description": "The AI Toolkit for TypeScript. From the creators of Next.js, the AI SDK is a free open-source library for building AI-powered applications and agents",
+      "description": "Bộ công cụ TypeScript của Vercel để dựng ứng dụng AI, cung cấp primitive cho streaming, đầu ra có cấu trúc và gọi công cụ.",
       "stars": 28100,
       "forks": 5666,
       "language": "TypeScript",
@@ -1306,7 +1306,7 @@
         "generative-ui",
         "javascript"
       ],
-      "aiNote": "TypeScript toolkit providing unified streaming text, structured output, and tool-calling primitives."
+      "aiNote": "Dùng AI SDK trong route handler Next.js để stream phản hồi về client mà không tự quản lý giao thức."
     },
     {
       "id": "langgenius-dify",
@@ -1315,7 +1315,7 @@
       "owner": "langgenius",
       "category": "Local LLM & DevTools",
       "htmlUrl": "https://github.com/langgenius/dify",
-      "description": "Build Agentic workflows, RAG pipelines, with rich AI model and tool support on one collaborative workspace. Deploy on cloud, VPC, or self-hosted, so teams move from prototype to production without rebuilding the stack.",
+      "description": "Nền tảng xây workflow agent và pipeline RAG trên một không gian làm việc trực quan, xuất được API và triển khai tự lưu trữ.",
       "stars": 161533,
       "forks": 25537,
       "language": "Python",
@@ -1329,7 +1329,7 @@
         "ai",
         "automation"
       ],
-      "aiNote": "Visual LLMOps platform combining workflow graphs, RAG pipelines, and backend API publishing."
+      "aiNote": "Dựng luồng thử nghiệm trong giao diện của nó rồi gọi API đã xuất từ frontend để tách phần AI khỏi mã giao diện."
     },
     {
       "id": "n8n-io-n8n",
@@ -1338,7 +1338,7 @@
       "owner": "n8n-io",
       "category": "Local LLM & DevTools",
       "htmlUrl": "https://github.com/n8n-io/n8n",
-      "description": "Fair-code workflow automation platform with native AI capabilities. Combine visual building with custom code, self-host or cloud, 400+ integrations.",
+      "description": "Nền tảng tự động hóa quy trình dạng node, kết hợp xây dựng trực quan với code tùy biến và hơn 400 tích hợp, có node agent AI.",
       "stars": 211454,
       "forks": 61599,
       "language": "TypeScript",
@@ -1352,7 +1352,7 @@
         "data-flow",
         "development"
       ],
-      "aiNote": "Fair-code workflow automation engine with native AI agent nodes, memory buffers, and 400+ integrations."
+      "aiNote": "Dùng webhook node của nó làm điểm nhận sự kiện từ frontend khi cần nối nhanh dịch vụ mà chưa muốn viết backend."
     },
     {
       "id": "flowiseai-flowise",
@@ -1361,7 +1361,7 @@
       "owner": "FlowiseAI",
       "category": "Local LLM & DevTools",
       "htmlUrl": "https://github.com/FlowiseAI/Flowise",
-      "description": "Build AI Agents, Visually",
+      "description": "Công cụ dựng agent AI bằng giao diện node kéo thả, ghép mô hình, bộ truy xuất vector và endpoint API.",
       "stars": 55576,
       "forks": 25096,
       "language": "TypeScript",
@@ -1375,7 +1375,7 @@
         "chatbot",
         "chatgpt"
       ],
-      "aiNote": "Node-based visual builder for composing LangChain agents, vector retrievers, and API endpoints."
+      "aiNote": "Dựng luồng thử nghiệm bằng node rồi xuất endpoint để frontend gọi khi cần prototype nhanh."
     },
     {
       "id": "mintplex-labs-anything-llm",
@@ -1384,7 +1384,7 @@
       "owner": "Mintplex-Labs",
       "category": "Local LLM & DevTools",
       "htmlUrl": "https://github.com/Mintplex-Labs/anything-llm",
-      "description": "Stop renting your intelligence. Own it with AnythingLLM. Everything you need for a powerful local-first agent experience",
+      "description": "Ứng dụng desktop và Docker hợp nhất để trò chuyện với tài liệu riêng tư và dựng agent theo workspace, chạy hoàn toàn cục bộ.",
       "stars": 68447,
       "forks": 7738,
       "language": "JavaScript",
@@ -1398,7 +1398,7 @@
         "agentic-workflow",
         "ai-agents"
       ],
-      "aiNote": "All-in-one desktop and Docker application for private document chat and local workspace agents."
+      "aiNote": "Dùng khi cần chatbot nội bộ trên tài liệu công ty mà không đưa dữ liệu lên cloud, cài một lần qua Docker rồi trỏ vào thư mục tài liệu."
     },
     {
       "id": "composiohq-composio",
@@ -1407,7 +1407,7 @@
       "owner": "ComposioHQ",
       "category": "AI Agents & CLI",
       "htmlUrl": "https://github.com/ComposioHQ/composio",
-      "description": "Composio powers 1000+ toolkits, tool search, context management, authentication, and a sandboxed workbench to help you build AI agents that turn intent into action.",
+      "description": "Lớp tích hợp tool-calling cung cấp hơn 250 connector SaaS đã xác thực, kèm tìm kiếm tool, quản lý context và workbench sandbox để agent biến ý định thành hành động.",
       "stars": 31190,
       "forks": 4964,
       "language": "TypeScript",
@@ -1421,7 +1421,7 @@
         "aiagents",
         "developer-tools"
       ],
-      "aiNote": "Tool-calling integration layer providing 250+ authenticated SaaS connectors for AI agents."
+      "aiNote": "Thay vì tự viết OAuth và client cho từng dịch vụ, gắn Composio để agent gọi Gmail, Slack hay GitHub qua một interface thống nhất."
     },
     {
       "id": "roocodeinc-roo-code",
@@ -1430,14 +1430,14 @@
       "owner": "RooCodeInc",
       "category": "AI Agents & CLI",
       "htmlUrl": "https://github.com/RooCodeInc/Roo-Code",
-      "description": "Roo Code gives you a whole dev team of AI agents in your code editor.",
+      "description": "Tiện ích mở rộng VS Code cung cấp nhiều agent AI lập trình với các chế độ Code, Architect và Ask có thể tùy chỉnh.",
       "stars": 24237,
       "forks": 3439,
       "language": "TypeScript",
       "license": "Apache-2.0",
       "pushedAt": "2026-05-15T18:08:47Z",
       "topics": [],
-      "aiNote": "Autonomous VS Code coding agent supporting customizable Code, Architect, and Ask operational modes."
+      "aiNote": "Đặt prompt kiến trúc ở chế độ Architect rồi chuyển sang Code để thi công, giữ thay đổi gói trong từng tệp."
     },
     {
       "id": "anthropics-claude-code",
@@ -1446,14 +1446,14 @@
       "owner": "anthropics",
       "category": "AI Agents & CLI",
       "htmlUrl": "https://github.com/anthropics/claude-code",
-      "description": "Claude Code is an agentic coding tool that lives in your terminal, understands your codebase, and helps you code faster by executing routine tasks, explaining complex code, and handling git workflows - all through natural language commands.",
+      "description": "Công cụ agent chạy trong terminal, đọc hiểu codebase, thực thi lệnh shell và xử lý luồng git bằng ngôn ngữ tự nhiên.",
       "stars": 156354,
       "forks": 25052,
       "language": "TypeScript",
       "license": "Open Source",
       "pushedAt": "2026-11-20T00:35:26Z",
       "topics": [],
-      "aiNote": "Terminal-native agentic coding tool inspecting repositories, running shell tests, and applying git edits."
+      "aiNote": "Dùng để sửa lỗi và refactor ngay tại thư mục dự án, luôn xem git diff trước khi chấp nhận thay đổi."
     },
     {
       "id": "openai-codex",
@@ -1462,14 +1462,14 @@
       "owner": "openai",
       "category": "AI Agents & CLI",
       "htmlUrl": "https://github.com/openai/codex",
-      "description": "Lightweight coding agent that runs in your terminal",
+      "description": "Agent lập trình gọn nhẹ viết bằng Rust, chạy trong terminal với sandbox để sửa mã nguồn và kiểm chứng bằng lệnh shell.",
       "stars": 135912,
       "forks": 21555,
       "language": "Rust",
       "license": "Apache-2.0",
       "pushedAt": "2026-11-20T03:00:32Z",
       "topics": [],
-      "aiNote": "Sandboxed Rust terminal coding agent executing repository edits and shell verification locally."
+      "aiNote": "Chạy trong sandbox để agent tự sửa và test, chỉ merge khi bước kiểm chứng trả kết quả sạch."
     },
     {
       "id": "google-gemini-gemini-cli",
@@ -1478,7 +1478,7 @@
       "owner": "google-gemini",
       "category": "AI Agents & CLI",
       "htmlUrl": "https://github.com/google-gemini/gemini-cli",
-      "description": "An open-source AI agent that brings the power of Gemini directly into your terminal.",
+      "description": "Agent dòng lệnh mã nguồn mở đưa Gemini vào terminal, kết nối công cụ qua MCP và thao tác tệp trực tiếp.",
       "stars": 108946,
       "forks": 14967,
       "language": "TypeScript",
@@ -1492,7 +1492,7 @@
         "gemini-api",
         "mcp-client"
       ],
-      "aiNote": "Open-source command-line agent integrating Gemini reasoning with MCP tools and file operations."
+      "aiNote": "Dùng làm agent terminal nhẹ khi cần gọi MCP server sẵn có, cấu hình khóa API qua biến môi trường."
     },
     {
       "id": "mastra-ai-mastra",
@@ -1501,7 +1501,7 @@
       "owner": "mastra-ai",
       "category": "AI Agents & CLI",
       "htmlUrl": "https://github.com/mastra-ai/mastra",
-      "description": "Mastra is the modern TypeScript framework for AI-powered applications and agents.",
+      "description": "Framework TypeScript cho ứng dụng và agent AI, có workflow định kiểu, tiện ích RAG, eval và thực thi bền vững.",
       "stars": 29675,
       "forks": 3124,
       "language": "TypeScript",
@@ -1515,7 +1515,7 @@
         "javascript",
         "llm"
       ],
-      "aiNote": "TypeScript agent framework with typed workflows, RAG utilities, evals, and durable execution."
+      "aiNote": "Chọn Mastra khi cần dựng agent nhiều bước trong hệ sinh thái Next.js mà vẫn giữ type an toàn."
     },
     {
       "id": "stackblitz-bolt-new",
@@ -1524,7 +1524,7 @@
       "owner": "stackblitz",
       "category": "AI Agents & CLI",
       "htmlUrl": "https://github.com/stackblitz/bolt.new",
-      "description": "Prompt, run, edit, and deploy full-stack web applications. -- bolt.new -- Help Center: https://support.bolt.new/ -- Community Support: https://discord.com/invite/stackblitz",
+      "description": "Không gian làm việc full-stack chạy trong trình duyệt nhờ WebContainers, cho phép prompt, sửa và triển khai ứng dụng web.",
       "stars": 16606,
       "forks": 14844,
       "language": "TypeScript",
@@ -1536,7 +1536,7 @@
         "chatbot",
         "webcontainers-api"
       ],
-      "aiNote": "In-browser full-stack web workspace powered by WebContainers and AI-assisted code editing."
+      "aiNote": "Dùng để dựng prototype nhanh rồi export mã nguồn về repo thật, tránh phụ thuộc vào môi trường chạy trên cloud."
     },
     {
       "id": "mem0ai-mem0",
@@ -1545,7 +1545,7 @@
       "owner": "mem0ai",
       "category": "AI Agents & CLI",
       "htmlUrl": "https://github.com/mem0ai/mem0",
-      "description": "The Memory Layer for AI Agents - Drop-in memory infrastructure for AI agents and apps. Context that persists. Built for production.",
+      "description": "Lớp bộ nhớ thay thế trực tiếp cho agent và ứng dụng AI, trích xuất và truy hồi trạng thái người dùng, phiên và agent xuyên suốt các lần chạy.",
       "stars": 69260,
       "forks": 8244,
       "language": "Python",
@@ -1559,7 +1559,7 @@
         "ai-agents",
         "chatgpt"
       ],
-      "aiNote": "Persistent memory layer extracting and retrieving user, session, and agent state across runs."
+      "aiNote": "Gắn mem0 vào agent để nhớ sở thích người dùng giữa các phiên mà không phải tự thiết kế schema lưu trữ."
     },
     {
       "id": "swe-agent-swe-agent",
@@ -1568,7 +1568,7 @@
       "owner": "SWE-agent",
       "category": "AI Agents & CLI",
       "htmlUrl": "https://github.com/SWE-agent/SWE-agent",
-      "description": "SWE-agent takes a GitHub issue and tries to automatically fix it, using your LM of choice. It can also be employed for offensive cybersecurity or competitive coding challenges. [NeurIPS 2024]",
+      "description": "Agent nhận issue GitHub và cố gắng sửa tự động bằng model ngôn ngữ tùy chọn, dùng được cho nghiên cứu an ninh và lập trình thi đấu.",
       "stars": 20835,
       "forks": 2281,
       "language": "Python",
@@ -1582,7 +1582,7 @@
         "developer-tools",
         "llm"
       ],
-      "aiNote": "Research-grade autonomous engineering agent resolving real GitHub repository issues end-to-end."
+      "aiNote": "Dùng để benchmark pipeline sửa lỗi tự động trên repo thật, đọc log từng bước để hiểu vì sao agent thất bại."
     },
     {
       "id": "microsoft-graphrag",
@@ -1591,7 +1591,7 @@
       "owner": "microsoft",
       "category": "AI Agents & CLI",
       "htmlUrl": "https://github.com/microsoft/graphrag",
-      "description": "A modular graph-based Retrieval-Augmented Generation (RAG) system",
+      "description": "Hệ RAG dạng module dựa trên đồ thị tri thức, trích xuất cộng đồng thực thể để tổng hợp toàn bộ corpus.",
       "stars": 36696,
       "forks": 3887,
       "language": "Python",
@@ -1605,7 +1605,1080 @@
         "llm",
         "llms"
       ],
-      "aiNote": "Modular knowledge-graph RAG pipeline extracting entity communities for global corpus synthesis."
+      "aiNote": "Dùng khi câu hỏi cần tổng hợp cả bộ tài liệu thay vì tra một đoạn, chấp nhận chi phí index cao hơn RAG vector thuần."
+    },
+    {
+      "id": "pmndrs-zustand",
+      "fullName": "pmndrs/zustand",
+      "name": "zustand",
+      "owner": "pmndrs",
+      "category": "UI/UX & Motion",
+      "htmlUrl": "https://github.com/pmndrs/zustand",
+      "description": "Thư viện quản lý state tối giản cho React, dùng store hook nhỏ gọn không cần boilerplate context.",
+      "stars": 58967,
+      "forks": 2417,
+      "language": "TypeScript",
+      "license": "MIT",
+      "pushedAt": "2026-11-06T13:35:06Z",
+      "topics": [
+        "hacktoberfest",
+        "hooks",
+        "react",
+        "react-context",
+        "reactjs"
+      ],
+      "aiNote": "Tách state toàn cục thành store nhỏ theo miền nghiệp vụ, tránh nhồi mọi thứ vào một store khổng lồ."
+    },
+    {
+      "id": "pmndrs-react-three-fiber",
+      "fullName": "pmndrs/react-three-fiber",
+      "name": "react-three-fiber",
+      "owner": "pmndrs",
+      "category": "UI/UX & Motion",
+      "htmlUrl": "https://github.com/pmndrs/react-three-fiber",
+      "description": "Renderer React cho Three.js, cho phép khai báo scene 3D bằng component và props thay vì gọi API mệnh lệnh.",
+      "stars": 33845,
+      "forks": 2127,
+      "language": "TypeScript",
+      "license": "MIT",
+      "pushedAt": "2026-10-21T15:24:39Z",
+      "topics": [
+        "3d",
+        "animation",
+        "fiber",
+        "react",
+        "renderer"
+      ],
+      "aiNote": "Dựng scene 3D bằng component, tách logic animation vào useFrame và giữ tham chiếu object bằng useRef."
+    },
+    {
+      "id": "lucide-icons-lucide",
+      "fullName": "lucide-icons/lucide",
+      "name": "lucide",
+      "owner": "lucide-icons",
+      "category": "UI/UX & Motion",
+      "htmlUrl": "https://github.com/lucide-icons/lucide",
+      "description": "Bộ icon SVG mã nguồn mở với hơn 2000 biểu tượng vector nhất quán, dùng được cho web và dự án ngoài web.",
+      "stars": 25883,
+      "forks": 1703,
+      "language": "TypeScript",
+      "license": "Custom",
+      "pushedAt": "2026-11-20T14:04:37Z",
+      "topics": [
+        "feather-icons",
+        "figma",
+        "icons",
+        "react",
+        "svg"
+      ],
+      "aiNote": "Import từng icon theo tên để tree-shaking loại bỏ phần không dùng, giữ bundle nhẹ."
+    },
+    {
+      "id": "radix-ui-primitives",
+      "fullName": "radix-ui/primitives",
+      "name": "primitives",
+      "owner": "radix-ui",
+      "category": "UI/UX & Motion",
+      "htmlUrl": "https://github.com/radix-ui/primitives",
+      "description": "Thư viện component headless mã nguồn mở cung cấp nền tảng accessibility cho design system và ứng dụng web.",
+      "stars": 19529,
+      "forks": 1326,
+      "language": "TypeScript",
+      "license": "MIT",
+      "pushedAt": "2026-10-14T21:52:47Z",
+      "topics": [
+        "accessibility",
+        "colors",
+        "component-library",
+        "design-systems",
+        "radix-ui"
+      ],
+      "aiNote": "Bọc primitive bằng Tailwind để có giao diện riêng mà vẫn giữ hành vi bàn phím và ARIA đúng chuẩn."
+    },
+    {
+      "id": "emilkowalski-sonner",
+      "fullName": "emilkowalski/sonner",
+      "name": "sonner",
+      "owner": "emilkowalski",
+      "category": "UI/UX & Motion",
+      "htmlUrl": "https://github.com/emilkowalski/sonner",
+      "description": "Component toast cho React với quan điểm thiết kế sẵn, xử lý xếp chồng và chuyển động thông báo.",
+      "stars": 13242,
+      "forks": 475,
+      "language": "TypeScript",
+      "license": "MIT",
+      "pushedAt": "2026-08-10T11:13:03Z",
+      "topics": [
+        "notifications",
+        "react",
+        "toast"
+      ],
+      "aiNote": "Gọi toast() ngay trong handler sự kiện, tránh tự dựng state thông báo cho từng màn hình."
+    },
+    {
+      "id": "pmndrs-drei",
+      "fullName": "pmndrs/drei",
+      "name": "drei",
+      "owner": "pmndrs",
+      "category": "UI/UX & Motion",
+      "htmlUrl": "https://github.com/pmndrs/drei",
+      "description": "Bộ helper tiện ích cho react-three-fiber, gói sẵn control, loader, vật liệu và môi trường dựng sẵn.",
+      "stars": 10178,
+      "forks": 875,
+      "language": "JavaScript",
+      "license": "MIT",
+      "pushedAt": "2026-11-17T17:53:59Z",
+      "topics": [
+        "helpers",
+        "hooks",
+        "react",
+        "react-three-fiber",
+        "threejs"
+      ],
+      "aiNote": "Dùng các helper như OrbitControls và Environment để bỏ phần code scene lặp lại giữa các dự án."
+    },
+    {
+      "id": "emilkowalski-vaul",
+      "fullName": "emilkowalski/vaul",
+      "name": "vaul",
+      "owner": "emilkowalski",
+      "category": "UI/UX & Motion",
+      "htmlUrl": "https://github.com/emilkowalski/vaul",
+      "description": "Component drawer cho React, hỗ trợ kéo thả và chuyển động mượt trên thiết bị cảm ứng.",
+      "stars": 8757,
+      "forks": 371,
+      "language": "TypeScript",
+      "license": "MIT",
+      "pushedAt": "2025-10-03T19:25:32Z",
+      "topics": [
+        "dialog",
+        "drawer",
+        "react"
+      ],
+      "aiNote": "Dùng cho bottom sheet trên mobile, giữ nội dung cuộn bên trong và khóa scroll nền đúng cách."
+    },
+    {
+      "id": "storybookjs-storybook",
+      "fullName": "storybookjs/storybook",
+      "name": "storybook",
+      "owner": "storybookjs",
+      "category": "UI/UX & Motion",
+      "htmlUrl": "https://github.com/storybookjs/storybook",
+      "description": "Xưởng phát triển UI để dựng, tài liệu hóa và kiểm thử component trong môi trường cô lập.",
+      "stars": 91664,
+      "forks": 10600,
+      "language": "TypeScript",
+      "license": "MIT",
+      "pushedAt": "2026-11-20T16:10:43Z",
+      "topics": [
+        "angular",
+        "components",
+        "design-systems",
+        "documentation",
+        "html"
+      ],
+      "aiNote": "Viết story cho từng trạng thái component trước khi ghép vào trang, biến nó thành tài liệu sống cho team."
+    },
+    {
+      "id": "floating-ui-floating-ui",
+      "fullName": "floating-ui/floating-ui",
+      "name": "floating-ui",
+      "owner": "floating-ui",
+      "category": "UI/UX & Motion",
+      "htmlUrl": "https://github.com/floating-ui/floating-ui",
+      "description": "Thư viện JavaScript định vị phần tử nổi như tooltip, popover và dropdown, kèm logic tương tác và xử lý collision.",
+      "stars": 32818,
+      "forks": 1733,
+      "language": "TypeScript",
+      "license": "MIT",
+      "pushedAt": "2026-11-12T08:46:37Z",
+      "topics": [
+        "dropdown",
+        "hacktoberfest",
+        "popover",
+        "popovers",
+        "position"
+      ],
+      "aiNote": "Dùng khi tự dựng popover để xử lý tràn viewport và flip vị trí, thay vì tính offset thủ công."
+    },
+    {
+      "id": "mantinedev-mantine",
+      "fullName": "mantinedev/mantine",
+      "name": "mantine",
+      "owner": "mantinedev",
+      "category": "UI/UX & Motion",
+      "htmlUrl": "https://github.com/mantinedev/mantine",
+      "description": "Thư viện component React đầy đủ với hơn 100 component, hook tiện ích và hệ thống theme.",
+      "stars": 31961,
+      "forks": 2431,
+      "language": "TypeScript",
+      "license": "MIT",
+      "pushedAt": "2026-11-20T12:08:09Z",
+      "topics": [
+        "dark-mode",
+        "dark-theme",
+        "hooks",
+        "react",
+        "typescript"
+      ],
+      "aiNote": "Chọn Mantine khi cần bộ component hoàn chỉnh cho dashboard nội bộ, dùng theme token thay vì CSS rải rác."
+    },
+    {
+      "id": "tanstack-table",
+      "fullName": "TanStack/table",
+      "name": "table",
+      "owner": "TanStack",
+      "category": "UI/UX & Motion",
+      "htmlUrl": "https://github.com/TanStack/table",
+      "description": "Thư viện headless xây bảng và datagrid cho TS/JS, hỗ trợ React, Vue, Solid và Svelte qua logic không gắn giao diện.",
+      "stars": 28594,
+      "forks": 3590,
+      "language": "TypeScript",
+      "license": "MIT",
+      "pushedAt": "2026-11-18T20:03:14Z",
+      "topics": [
+        "datagrid",
+        "datagrids",
+        "datatable",
+        "filtering",
+        "grid"
+      ],
+      "aiNote": "Dùng khi cần bảng phân trang, sắp xếp và lọc phức tạp mà vẫn kiểm soát hoàn toàn markup và style."
+    },
+    {
+      "id": "recharts-recharts",
+      "fullName": "recharts/recharts",
+      "name": "recharts",
+      "owner": "recharts",
+      "category": "UI/UX & Motion",
+      "htmlUrl": "https://github.com/recharts/recharts",
+      "description": "Thư viện biểu đồ xây trên React và D3, khai báo chart bằng component và props.",
+      "stars": 27726,
+      "forks": 2056,
+      "language": "TypeScript",
+      "license": "MIT",
+      "pushedAt": "2026-11-20T13:54:46Z",
+      "topics": [
+        "chart",
+        "charting-library",
+        "components",
+        "d3",
+        "data-visualisation"
+      ],
+      "aiNote": "Dựng chart nhanh cho dashboard React, bọc trong ResponsiveContainer để chart co giãn theo layout."
+    },
+    {
+      "id": "tanstack-router",
+      "fullName": "TanStack/router",
+      "name": "router",
+      "owner": "TanStack",
+      "category": "UI/UX & Motion",
+      "htmlUrl": "https://github.com/TanStack/router",
+      "description": "Router và framework full-stack cho web với type safety đầy đủ, ưu tiên client và hỗ trợ render phía server.",
+      "stars": 15329,
+      "forks": 1936,
+      "language": "TypeScript",
+      "license": "MIT",
+      "pushedAt": "2026-11-20T00:50:11Z",
+      "topics": [
+        "framework",
+        "fullstack",
+        "javascript",
+        "react",
+        "route"
+      ],
+      "aiNote": "Dùng khi cần route có search params định kiểu và loader dữ liệu, tránh lỗi route do chuỗi không kiểm tra."
+    },
+    {
+      "id": "tremorlabs-tremor",
+      "fullName": "tremorlabs/tremor",
+      "name": "tremor",
+      "owner": "tremorlabs",
+      "category": "UI/UX & Motion",
+      "htmlUrl": "https://github.com/tremorlabs/tremor",
+      "description": "Bộ component React copy-paste để dựng dashboard và ứng dụng web hiện đại, tập trung vào chart và thẻ số liệu.",
+      "stars": 3705,
+      "forks": 200,
+      "language": "TypeScript",
+      "license": "Apache-2.0",
+      "pushedAt": "2025-10-10T13:08:24Z",
+      "topics": [
+        "components",
+        "dashboard",
+        "radix-ui",
+        "react",
+        "tailwindcss"
+      ],
+      "aiNote": "Copy component vào repo để sở hữu mã nguồn, sau đó chỉnh token màu cho khớp thương hiệu."
+    },
+    {
+      "id": "d3-d3",
+      "fullName": "d3/d3",
+      "name": "d3",
+      "owner": "d3",
+      "category": "UI/UX & Motion",
+      "htmlUrl": "https://github.com/d3/d3",
+      "description": "Thư viện trực quan hóa dữ liệu dùng SVG, Canvas và HTML, cung cấp scale, shape và transition ở mức thấp.",
+      "stars": 113976,
+      "forks": 22717,
+      "language": "Shell",
+      "license": "ISC",
+      "pushedAt": "2026-11-03T19:44:29Z",
+      "topics": [
+        "chart",
+        "charts",
+        "d3",
+        "data-visualization",
+        "svg"
+      ],
+      "aiNote": "Dùng D3 cho phần tính toán scale và path, còn render giao diện bằng React để giữ luồng dữ liệu một chiều."
+    },
+    {
+      "id": "withastro-astro",
+      "fullName": "withastro/astro",
+      "name": "astro",
+      "owner": "withastro",
+      "category": "UI/UX & Motion",
+      "htmlUrl": "https://github.com/withastro/astro",
+      "description": "Framework web cho website thiên nội dung, render HTML tĩnh mặc định và chỉ hydrate phần tương tác cần thiết.",
+      "stars": 64091,
+      "forks": 3934,
+      "language": "TypeScript",
+      "license": "Custom",
+      "pushedAt": "2026-11-20T13:04:13Z",
+      "topics": [
+        "astro",
+        "blog",
+        "browser",
+        "components",
+        "hybrid"
+      ],
+      "aiNote": "Dùng đảo island cho blog và trang marketing để giảm JavaScript gửi về client, chèn component React khi cần."
+    },
+    {
+      "id": "saadeghi-daisyui",
+      "fullName": "saadeghi/daisyui",
+      "name": "daisyui",
+      "owner": "saadeghi",
+      "category": "UI/UX & Motion",
+      "htmlUrl": "https://github.com/saadeghi/daisyui",
+      "description": "Thư viện component mã nguồn mở cho Tailwind CSS, cung cấp class thành phần và theme sẵn.",
+      "stars": 42912,
+      "forks": 1726,
+      "language": "JavaScript",
+      "license": "MIT",
+      "pushedAt": "2026-11-16T07:56:18Z",
+      "topics": [
+        "component",
+        "component-library",
+        "components",
+        "css",
+        "css-components"
+      ],
+      "aiNote": "Dùng class component của daisyUI cho form và modal để giảm CSS tự viết, chỉnh theme qua biến CSS."
+    },
+    {
+      "id": "airbnb-lottie-web",
+      "fullName": "airbnb/lottie-web",
+      "name": "lottie-web",
+      "owner": "airbnb",
+      "category": "UI/UX & Motion",
+      "htmlUrl": "https://github.com/airbnb/lottie-web",
+      "description": "Thư viện render animation After Effects dạng vector trên web, Android, iOS và React Native.",
+      "stars": 32532,
+      "forks": 2977,
+      "language": "JavaScript",
+      "license": "MIT",
+      "pushedAt": "2025-09-01T09:01:31Z",
+      "topics": [],
+      "aiNote": "Xuất file JSON từ After Effects rồi phát bằng lottie-web, giới hạn số animation đồng thời để giữ hiệu năng."
+    },
+    {
+      "id": "heroui-inc-heroui",
+      "fullName": "heroui-inc/heroui",
+      "name": "heroui",
+      "owner": "heroui-inc",
+      "category": "UI/UX & Motion",
+      "htmlUrl": "https://github.com/heroui-inc/heroui",
+      "description": "Thư viện UI React, trước đây là NextUI, với component có sẵn chuyển động và theme, tích hợp Tailwind CSS.",
+      "stars": 31271,
+      "forks": 2243,
+      "language": "TypeScript",
+      "license": "Apache-2.0",
+      "pushedAt": "2026-11-20T16:05:51Z",
+      "topics": [
+        "component-library",
+        "components",
+        "library",
+        "reactjs"
+      ],
+      "aiNote": "Dùng cho landing page cần component nhanh, cấu hình theme trong provider để đổi màu toàn hệ thống."
+    },
+    {
+      "id": "c15t-c15t",
+      "fullName": "c15t/c15t",
+      "name": "c15t",
+      "owner": "c15t",
+      "category": "UI/UX & Motion",
+      "htmlUrl": "https://github.com/c15t/c15t",
+      "description": "Trình quản lý đồng thuận cookie mã nguồn mở cho React, Next.js, Vue và JavaScript, hỗ trợ Google Consent Mode v2 và IAB TCF.",
+      "stars": 2039,
+      "forks": 283,
+      "language": "TypeScript",
+      "license": "Apache-2.0",
+      "pushedAt": "2026-11-20T14:56:43Z",
+      "topics": [
+        "astro",
+        "ccpa",
+        "cmp",
+        "consent-management",
+        "consent-mode"
+      ],
+      "aiNote": "Gắn banner đồng thuận trước khi tải script analytics, đọc trạng thái consent để chặn tracker đúng luật."
+    },
+    {
+      "id": "x1xhlol-system-prompts-and-models-of-ai-tools",
+      "fullName": "x1xhlol/system-prompts-and-models-of-ai-tools",
+      "name": "system-prompts-and-models-of-ai-tools",
+      "owner": "x1xhlol",
+      "category": "Skills, Rules & Prompts",
+      "htmlUrl": "https://github.com/x1xhlol/system-prompts-and-models-of-ai-tools",
+      "description": "Tập hợp system prompt, công cụ nội bộ và mô tả model của nhiều sản phẩm AI như Cursor, Claude Code, Devin và v0.",
+      "stars": 144789,
+      "forks": 34666,
+      "language": "TypeScript",
+      "license": "GPL-3.0",
+      "pushedAt": "2026-10-12T15:19:01Z",
+      "topics": [
+        "ai",
+        "bolt",
+        "cluely",
+        "copilot",
+        "cursor"
+      ],
+      "aiNote": "Đọc prompt thật để hiểu cách sản phẩm lớn ràng buộc agent, rồi viết lại quy tắc cho công cụ của mình."
+    },
+    {
+      "id": "dair-ai-prompt-engineering-guide",
+      "fullName": "dair-ai/Prompt-Engineering-Guide",
+      "name": "Prompt-Engineering-Guide",
+      "owner": "dair-ai",
+      "category": "Skills, Rules & Prompts",
+      "htmlUrl": "https://github.com/dair-ai/Prompt-Engineering-Guide",
+      "description": "Bộ hướng dẫn, bài báo, bài học và notebook về prompt engineering, context engineering, RAG và agent.",
+      "stars": 80236,
+      "forks": 8793,
+      "language": "MDX",
+      "license": "MIT",
+      "pushedAt": "2026-03-11T20:09:13Z",
+      "topics": [
+        "agent",
+        "agents",
+        "ai-agents",
+        "chatgpt",
+        "deep-learning"
+      ],
+      "aiNote": "Tra phần RAG và agent khi cần thiết kế pipeline, dùng notebook làm mẫu chạy thử trước khi áp vào code."
+    },
+    {
+      "id": "openai-openai-cookbook",
+      "fullName": "openai/openai-cookbook",
+      "name": "openai-cookbook",
+      "owner": "openai",
+      "category": "Skills, Rules & Prompts",
+      "htmlUrl": "https://github.com/openai/openai-cookbook",
+      "description": "Tập ví dụ và hướng dẫn dùng API OpenAI, kèm notebook cho từng tính năng và mẫu xử lý.",
+      "stars": 77249,
+      "forks": 13079,
+      "language": "Jupyter Notebook",
+      "license": "MIT",
+      "pushedAt": "2026-11-19T22:55:32Z",
+      "topics": [
+        "chatgpt",
+        "gpt-4",
+        "openai",
+        "openai-api"
+      ],
+      "aiNote": "Copy đoạn notebook sang script riêng để thử nhanh tham số model trước khi đưa vào ứng dụng."
+    },
+    {
+      "id": "danielmiessler-fabric",
+      "fullName": "danielmiessler/Fabric",
+      "name": "Fabric",
+      "owner": "danielmiessler",
+      "category": "Skills, Rules & Prompts",
+      "htmlUrl": "https://github.com/danielmiessler/Fabric",
+      "description": "Framework mã nguồn mở viết bằng Go, cung cấp hệ pattern prompt dùng lại để xử lý văn bản và dữ liệu bằng AI.",
+      "stars": 44683,
+      "forks": 4354,
+      "language": "Go",
+      "license": "MIT",
+      "pushedAt": "2026-11-20T03:17:55Z",
+      "topics": [
+        "ai",
+        "augmentation",
+        "flourishing",
+        "life",
+        "work"
+      ],
+      "aiNote": "Dùng pattern có sẵn qua CLI để tóm tắt và phân loại tài liệu, tự viết pattern riêng khi cần quy trình lặp lại."
+    },
+    {
+      "id": "github-awesome-copilot",
+      "fullName": "github/awesome-copilot",
+      "name": "awesome-copilot",
+      "owner": "github",
+      "category": "Skills, Rules & Prompts",
+      "htmlUrl": "https://github.com/github/awesome-copilot",
+      "description": "Tập hợp instruction, agent, skill và cấu hình do cộng đồng đóng góp cho GitHub Copilot.",
+      "stars": 41387,
+      "forks": 5395,
+      "language": "JavaScript",
+      "license": "MIT",
+      "pushedAt": "2026-11-20T03:13:57Z",
+      "topics": [
+        "agent-skills",
+        "agents",
+        "ai",
+        "awesome",
+        "custom-agents"
+      ],
+      "aiNote": "Chép instruction phù hợp vào repo để Copilot tuân theo quy ước code của dự án thay vì đoán mặc định."
+    },
+    {
+      "id": "blazity-next-enterprise",
+      "fullName": "Blazity/next-enterprise",
+      "name": "next-enterprise",
+      "owner": "Blazity",
+      "category": "Skills, Rules & Prompts",
+      "htmlUrl": "https://github.com/Blazity/next-enterprise",
+      "description": "Boilerplate Next.js cấp doanh nghiệp với Tailwind CSS, TypeScript, ESLint, Prettier và bộ công cụ test.",
+      "stars": 7470,
+      "forks": 1939,
+      "language": "TypeScript",
+      "license": "MIT",
+      "pushedAt": "2026-11-20T04:04:01Z",
+      "topics": [
+        "boilerplate",
+        "chatgpt",
+        "cva",
+        "eslint",
+        "jamstack"
+      ],
+      "aiNote": "Dùng làm điểm khởi đầu cho ứng dụng Next.js lớn, đọc cấu hình sẵn trước khi thêm thư viện mới."
+    },
+    {
+      "id": "firecrawl-firecrawl",
+      "fullName": "firecrawl/firecrawl",
+      "name": "firecrawl",
+      "owner": "firecrawl",
+      "category": "AI Agents & CLI",
+      "htmlUrl": "https://github.com/firecrawl/firecrawl",
+      "description": "Hạ tầng tri thức cho agent, gom tìm kiếm, scrape và hơn 550 nhà cung cấp dữ liệu sau một API.",
+      "stars": 204954,
+      "forks": 10743,
+      "language": "TypeScript",
+      "license": "AGPL-3.0",
+      "pushedAt": "2026-11-20T12:51:36Z",
+      "topics": [
+        "ai",
+        "ai-agents",
+        "ai-crawler",
+        "ai-scraping",
+        "ai-search"
+      ],
+      "aiNote": "Dùng để crawl tài liệu thành markdown sạch cho RAG, giới hạn phạm vi domain để tránh tốn credit."
+    },
+    {
+      "id": "goldbergyoni-nodebestpractices",
+      "fullName": "goldbergyoni/nodebestpractices",
+      "name": "nodebestpractices",
+      "owner": "goldbergyoni",
+      "category": "Skills, Rules & Prompts",
+      "htmlUrl": "https://github.com/goldbergyoni/nodebestpractices",
+      "description": "Danh sách thực hành tốt nhất cho Node.js, phân loại theo chủ đề từ cấu trúc dự án đến bảo mật và hiệu năng.",
+      "stars": 105756,
+      "forks": 10736,
+      "language": "Dockerfile",
+      "license": "CC-BY-SA-4.0",
+      "pushedAt": "2026-06-15T11:41:04Z",
+      "topics": [
+        "best-practices",
+        "es6",
+        "eslint",
+        "express",
+        "expressjs"
+      ],
+      "aiNote": "Dùng làm checklist review khi dựng service Node.js mới, chọn mục áp dụng thay vì đọc hết một lượt."
+    },
+    {
+      "id": "upstash-context7",
+      "fullName": "upstash/context7",
+      "name": "context7",
+      "owner": "upstash",
+      "category": "AI Agents & CLI",
+      "htmlUrl": "https://github.com/upstash/context7",
+      "description": "Nền tảng cung cấp tài liệu cập nhật cho agent AI qua MCP, tránh dùng API đã lỗi thời.",
+      "stars": 65176,
+      "forks": 3279,
+      "language": "TypeScript",
+      "license": "MIT",
+      "pushedAt": "2026-11-20T13:34:14Z",
+      "topics": [
+        "llm",
+        "mcp",
+        "mcp-server",
+        "vibe-coding"
+      ],
+      "aiNote": "Gắn MCP server context7 vào agent để tra tài liệu thư viện theo phiên bản, giảm lỗi do API cũ."
+    },
+    {
+      "id": "microsoft-playwright-mcp",
+      "fullName": "microsoft/playwright-mcp",
+      "name": "playwright-mcp",
+      "owner": "microsoft",
+      "category": "AI Agents & CLI",
+      "htmlUrl": "https://github.com/microsoft/playwright-mcp",
+      "description": "MCP server bọc Playwright, cho agent điều khiển trình duyệt và đọc cấu trúc accessibility của trang.",
+      "stars": 39933,
+      "forks": 3470,
+      "language": "TypeScript",
+      "license": "Apache-2.0",
+      "pushedAt": "2026-11-18T18:50:37Z",
+      "topics": [
+        "mcp",
+        "playwright"
+      ],
+      "aiNote": "Dùng để agent tự kiểm thử luồng giao diện, ưu tiên đọc accessibility snapshot thay vì selector dễ vỡ."
+    },
+    {
+      "id": "alan2207-bulletproof-react",
+      "fullName": "alan2207/bulletproof-react",
+      "name": "bulletproof-react",
+      "owner": "alan2207",
+      "category": "Skills, Rules & Prompts",
+      "htmlUrl": "https://github.com/alan2207/bulletproof-react",
+      "description": "Kiến trúc mẫu cho ứng dụng React production, tổ chức theo feature, tách tầng API và testing rõ ràng.",
+      "stars": 36078,
+      "forks": 3273,
+      "language": "TypeScript",
+      "license": "MIT",
+      "pushedAt": "2026-05-14T13:53:04Z",
+      "topics": [
+        "react",
+        "react-applications",
+        "react-architecture-patterns",
+        "react-best-practice",
+        "react-guidelines"
+      ],
+      "aiNote": "Theo cấu trúc thư mục này khi dự án phình to, giữ import một chiều giữa các feature để tránh phụ thuộc vòng."
+    },
+    {
+      "id": "huggingface-smolagents",
+      "fullName": "huggingface/smolagents",
+      "name": "smolagents",
+      "owner": "huggingface",
+      "category": "AI Agents & CLI",
+      "htmlUrl": "https://github.com/huggingface/smolagents",
+      "description": "Thư viện Python tối giản để dựng agent suy luận bằng cách viết và chạy code.",
+      "stars": 30460,
+      "forks": 3229,
+      "language": "Python",
+      "license": "Apache-2.0",
+      "pushedAt": "2026-11-20T08:00:45Z",
+      "topics": [],
+      "aiNote": "Dùng khi muốn agent thao tác dữ liệu linh hoạt, chạy trong sandbox vì agent sinh code thực thi."
+    },
+    {
+      "id": "browserbase-stagehand",
+      "fullName": "browserbase/stagehand",
+      "name": "stagehand",
+      "owner": "browserbase",
+      "category": "AI Agents & CLI",
+      "htmlUrl": "https://github.com/browserbase/stagehand",
+      "description": "SDK TypeScript trích xuất dữ liệu và thao tác trên website bằng hành vi điều khiển tự nhiên, dùng cùng Playwright.",
+      "stars": 26101,
+      "forks": 1835,
+      "language": "TypeScript",
+      "license": "MIT",
+      "pushedAt": "2026-11-20T01:41:09Z",
+      "topics": [
+        "agents",
+        "ai",
+        "ai-agents",
+        "browser-agent",
+        "browser-automation"
+      ],
+      "aiNote": "Kết hợp selector cứng cho bước ổn định và hành vi AI cho bước giao diện hay đổi."
+    },
+    {
+      "id": "modelcontextprotocol-inspector",
+      "fullName": "modelcontextprotocol/inspector",
+      "name": "inspector",
+      "owner": "modelcontextprotocol",
+      "category": "AI Agents & CLI",
+      "htmlUrl": "https://github.com/modelcontextprotocol/inspector",
+      "description": "Bộ công cụ kiểm thử tất định cho MCP server, kiểm tra tool, resource và prompt.",
+      "stars": 11341,
+      "forks": 1585,
+      "language": "TypeScript",
+      "license": "Custom",
+      "pushedAt": "2026-11-18T21:28:06Z",
+      "topics": [
+        "cli",
+        "debug",
+        "mcp",
+        "tool",
+        "tui"
+      ],
+      "aiNote": "Chạy inspector trước khi phát hành MCP server để xác nhận schema tool và kết quả trả về đúng."
+    },
+    {
+      "id": "comfy-org-comfyui",
+      "fullName": "Comfy-Org/ComfyUI",
+      "name": "ComfyUI",
+      "owner": "Comfy-Org",
+      "category": "Local LLM & DevTools",
+      "htmlUrl": "https://github.com/Comfy-Org/ComfyUI",
+      "description": "Giao diện đồ thị node cho mô hình diffusion, kèm backend và API chạy suy luận cục bộ.",
+      "stars": 147796,
+      "forks": 17669,
+      "language": "Python",
+      "license": "GPL-3.0",
+      "pushedAt": "2026-11-20T16:12:41Z",
+      "topics": [
+        "ai",
+        "comfy",
+        "comfyui",
+        "python",
+        "pytorch"
+      ],
+      "aiNote": "Dựng workflow bằng node rồi gọi qua API để tự động hóa sinh ảnh hàng loạt."
+    },
+    {
+      "id": "zed-industries-zed",
+      "fullName": "zed-industries/zed",
+      "name": "zed",
+      "owner": "zed-industries",
+      "category": "AI Agents & CLI",
+      "htmlUrl": "https://github.com/zed-industries/zed",
+      "description": "Trình soạn thảo mã hiệu năng cao viết bằng Rust, hỗ trợ cộng tác nhiều người và tích hợp agent AI.",
+      "stars": 95412,
+      "forks": 11798,
+      "language": "Rust",
+      "license": "Custom",
+      "pushedAt": "2026-11-20T16:10:27Z",
+      "topics": [
+        "gpui",
+        "rust-lang",
+        "text-editor",
+        "zed"
+      ],
+      "aiNote": "Dùng khi cần editor phản hồi nhanh trên repo lớn, cấu hình keymap và LSP theo ngôn ngữ chính."
+    },
+    {
+      "id": "ggml-org-whisper-cpp",
+      "fullName": "ggml-org/whisper.cpp",
+      "name": "whisper.cpp",
+      "owner": "ggml-org",
+      "category": "Local LLM & DevTools",
+      "htmlUrl": "https://github.com/ggml-org/whisper.cpp",
+      "description": "Bản chuyển mã model Whisper của OpenAI sang C/C++, chạy nhận dạng giọng nói cục bộ không cần GPU lớn.",
+      "stars": 55368,
+      "forks": 6337,
+      "language": "C++",
+      "license": "MIT",
+      "pushedAt": "2026-11-20T15:48:52Z",
+      "topics": [
+        "inference",
+        "openai",
+        "speech-recognition",
+        "speech-to-text",
+        "transformer"
+      ],
+      "aiNote": "Dùng để phiên âm offline, chọn model lượng tử hóa theo RAM và cắt audio thành đoạn ngắn."
+    },
+    {
+      "id": "letta-ai-letta",
+      "fullName": "letta-ai/letta",
+      "name": "letta",
+      "owner": "letta-ai",
+      "category": "AI Agents & CLI",
+      "htmlUrl": "https://github.com/letta-ai/letta",
+      "description": "Nền tảng cho agent có trạng thái, lưu bộ nhớ dài hạn và tự cập nhật qua thời gian.",
+      "stars": 25504,
+      "forks": 2684,
+      "language": "TypeScript",
+      "license": "Apache-2.0",
+      "pushedAt": "2026-10-18T22:28:04Z",
+      "topics": [
+        "ai",
+        "ai-agents",
+        "llm",
+        "llm-agent"
+      ],
+      "aiNote": "Dùng khi cần agent nhớ hội thoại cũ, thiết kế chiến lược nén bộ nhớ để context không phình."
+    },
+    {
+      "id": "triggerdotdev-trigger-dev",
+      "fullName": "triggerdotdev/trigger.dev",
+      "name": "trigger.dev",
+      "owner": "triggerdotdev",
+      "category": "AI Agents & CLI",
+      "htmlUrl": "https://github.com/triggerdotdev/trigger.dev",
+      "description": "Nền tảng chạy workflow và agent AI bền vững với retry, checkpoint và hạ tầng background job.",
+      "stars": 16791,
+      "forks": 1536,
+      "language": "TypeScript",
+      "license": "Apache-2.0",
+      "pushedAt": "2026-11-20T16:12:51Z",
+      "topics": [
+        "ai",
+        "ai-agent-framework",
+        "ai-agents",
+        "automation",
+        "background-jobs"
+      ],
+      "aiNote": "Đưa tác vụ dài như crawl hay gọi model vào task trigger.dev để không chặn request của người dùng."
+    },
+    {
+      "id": "e2b-dev-e2b",
+      "fullName": "e2b-dev/E2B",
+      "name": "E2B",
+      "owner": "e2b-dev",
+      "category": "AI Agents & CLI",
+      "htmlUrl": "https://github.com/e2b-dev/E2B",
+      "description": "Môi trường sandbox mã nguồn mở cô lập việc chạy code của agent, kèm công cụ thực tế.",
+      "stars": 14944,
+      "forks": 1180,
+      "language": "Python",
+      "license": "Apache-2.0",
+      "pushedAt": "2026-11-20T15:22:16Z",
+      "topics": [
+        "agent",
+        "ai",
+        "ai-agent",
+        "ai-agents",
+        "code-interpreter"
+      ],
+      "aiNote": "Luôn chạy code do model sinh trong sandbox E2B, giới hạn thời gian và quyền truy cập mạng."
+    },
+    {
+      "id": "inngest-inngest",
+      "fullName": "inngest/inngest",
+      "name": "inngest",
+      "owner": "inngest",
+      "category": "AI Agents & CLI",
+      "htmlUrl": "https://github.com/inngest/inngest",
+      "description": "Nền tảng điều phối workflow chạy step function có trạng thái trên serverless, server hoặc edge.",
+      "stars": 6060,
+      "forks": 394,
+      "language": "Go",
+      "license": "Custom",
+      "pushedAt": "2026-11-20T16:10:17Z",
+      "topics": [
+        "cli",
+        "event-driven",
+        "event-driven-architecture",
+        "queues",
+        "serverless"
+      ],
+      "aiNote": "Tách mỗi bước AI thành step riêng để retry độc lập, tránh chạy lại toàn bộ pipeline khi một bước lỗi."
+    },
+    {
+      "id": "huggingface-transformers",
+      "fullName": "huggingface/transformers",
+      "name": "transformers",
+      "owner": "huggingface",
+      "category": "Local LLM & DevTools",
+      "htmlUrl": "https://github.com/huggingface/transformers",
+      "description": "Framework định nghĩa model học máy cho văn bản, thị giác, âm thanh và đa phương thức, dùng cho cả suy luận và huấn luyện.",
+      "stars": 169321,
+      "forks": 35257,
+      "language": "Python",
+      "license": "Apache-2.0",
+      "pushedAt": "2026-11-20T16:08:39Z",
+      "topics": [
+        "audio",
+        "deep-learning",
+        "deepseek",
+        "gemma",
+        "glm"
+      ],
+      "aiNote": "Dùng pipeline() cho tác vụ phổ biến, chỉ can thiệp tokenizer và model khi cần tinh chỉnh."
+    },
+    {
+      "id": "supabase-supabase",
+      "fullName": "supabase/supabase",
+      "name": "supabase",
+      "owner": "supabase",
+      "category": "Local LLM & DevTools",
+      "htmlUrl": "https://github.com/supabase/supabase",
+      "description": "Nền tảng phát triển trên Postgres, cấp database riêng kèm auth, storage và API để dựng ứng dụng web, mobile và AI.",
+      "stars": 115196,
+      "forks": 15144,
+      "language": "TypeScript",
+      "license": "Apache-2.0",
+      "pushedAt": "2026-11-20T16:06:36Z",
+      "topics": [
+        "ai",
+        "alternative",
+        "auth",
+        "database",
+        "deno"
+      ],
+      "aiNote": "Dùng Row Level Security thay vì tự viết middleware phân quyền, kiểm tra policy trước khi mở bảng ra client."
+    },
+    {
+      "id": "astral-sh-uv",
+      "fullName": "astral-sh/uv",
+      "name": "uv",
+      "owner": "astral-sh",
+      "category": "Local LLM & DevTools",
+      "htmlUrl": "https://github.com/astral-sh/uv",
+      "description": "Trình quản lý package và dự án Python viết bằng Rust, cài dependency và tạo môi trường ảo rất nhanh.",
+      "stars": 92456,
+      "forks": 3944,
+      "language": "Rust",
+      "license": "Apache-2.0",
+      "pushedAt": "2026-11-20T15:18:11Z",
+      "topics": [
+        "packaging",
+        "python",
+        "resolver",
+        "uv"
+      ],
+      "aiNote": "Thay pip và venv bằng uv trong CI để giảm thời gian cài đặt, khóa phiên bản qua uv.lock."
+    },
+    {
+      "id": "vitejs-vite",
+      "fullName": "vitejs/vite",
+      "name": "vite",
+      "owner": "vitejs",
+      "category": "Local LLM & DevTools",
+      "htmlUrl": "https://github.com/vitejs/vite",
+      "description": "Công cụ frontend với dev server dùng ESM gốc và bước build bằng Rollup.",
+      "stars": 83997,
+      "forks": 10434,
+      "language": "TypeScript",
+      "license": "MIT",
+      "pushedAt": "2026-11-20T11:05:07Z",
+      "topics": [
+        "build-tool",
+        "dev-server",
+        "frontend",
+        "hmr",
+        "vite"
+      ],
+      "aiNote": "Cấu hình alias và biến môi trường trong vite.config, tách chunk thủ công khi bundle quá lớn."
+    },
+    {
+      "id": "drizzle-team-drizzle-orm",
+      "fullName": "drizzle-team/drizzle-orm",
+      "name": "drizzle-orm",
+      "owner": "drizzle-team",
+      "category": "Local LLM & DevTools",
+      "htmlUrl": "https://github.com/drizzle-team/drizzle-orm",
+      "description": "ORM TypeScript khai báo schema bằng code, sinh migration và query có type an toàn cho Postgres, MySQL và SQLite.",
+      "stars": 36323,
+      "forks": 1790,
+      "language": "TypeScript",
+      "license": "Apache-2.0",
+      "pushedAt": "2026-11-20T16:09:29Z",
+      "topics": [
+        "bunjs",
+        "mysql",
+        "nodejs",
+        "orm",
+        "postgres"
+      ],
+      "aiNote": "Dùng drizzle-kit sinh migration từ schema, tránh sửa database tay để type và bảng luôn khớp."
+    },
+    {
+      "id": "biomejs-biome",
+      "fullName": "biomejs/biome",
+      "name": "biome",
+      "owner": "biomejs",
+      "category": "Local LLM & DevTools",
+      "htmlUrl": "https://github.com/biomejs/biome",
+      "description": "Bộ công cụ cho dự án web gồm formatter và linter chạy qua CLI và LSP, viết bằng Rust.",
+      "stars": 26161,
+      "forks": 1459,
+      "language": "Rust",
+      "license": "Apache-2.0",
+      "pushedAt": "2026-11-20T15:16:01Z",
+      "topics": [
+        "css",
+        "formatter",
+        "javascript",
+        "json",
+        "jsx"
+      ],
+      "aiNote": "Thay ESLint và Prettier bằng một cấu hình biome.json để format và lint trong cùng một lần chạy."
+    },
+    {
+      "id": "vitest-dev-vitest",
+      "fullName": "vitest-dev/vitest",
+      "name": "vitest",
+      "owner": "vitest-dev",
+      "category": "Local LLM & DevTools",
+      "htmlUrl": "https://github.com/vitest-dev/vitest",
+      "description": "Framework kiểm thử chạy trên Vite, dùng chung cấu hình và cơ chế transform với bước build.",
+      "stars": 17414,
+      "forks": 2270,
+      "language": "TypeScript",
+      "license": "MIT",
+      "pushedAt": "2026-11-20T16:06:29Z",
+      "topics": [
+        "test",
+        "testing-tools",
+        "vite"
+      ],
+      "aiNote": "Dùng chung alias từ vite.config để test import giống môi trường chạy, tránh mock sai đường dẫn."
+    },
+    {
+      "id": "vercel-next-js",
+      "fullName": "vercel/next.js",
+      "name": "next.js",
+      "owner": "vercel",
+      "category": "Local LLM & DevTools",
+      "htmlUrl": "https://github.com/vercel/next.js",
+      "description": "Framework React với App Router, render phía server, route handler và tối ưu ảnh, font sẵn.",
+      "stars": 143628,
+      "forks": 32808,
+      "language": "JavaScript",
+      "license": "MIT",
+      "pushedAt": "2026-11-20T16:02:58Z",
+      "topics": [
+        "blog",
+        "browser",
+        "compiler",
+        "components",
+        "hybrid"
+      ],
+      "aiNote": "Đặt logic dữ liệu trong Server Component, chỉ dùng client component cho phần cần tương tác."
+    },
+    {
+      "id": "microsoft-playwright",
+      "fullName": "microsoft/playwright",
+      "name": "playwright",
+      "owner": "microsoft",
+      "category": "Local LLM & DevTools",
+      "htmlUrl": "https://github.com/microsoft/playwright",
+      "description": "Framework kiểm thử và tự động hóa web, điều khiển Chromium, Firefox và WebKit qua một API duy nhất.",
+      "stars": 100668,
+      "forks": 6939,
+      "language": "TypeScript",
+      "license": "Apache-2.0",
+      "pushedAt": "2026-11-20T01:19:22Z",
+      "topics": [
+        "automation",
+        "chrome",
+        "chromium",
+        "e2e-testing",
+        "electron"
+      ],
+      "aiNote": "Dùng locator theo role và text thay vì CSS dễ vỡ, chạy trace khi test flaky để xem bước lỗi."
     }
   ]
 }

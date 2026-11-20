@@ -3,6 +3,7 @@ import { LayoutGroup, MotionConfig } from 'motion/react';
 import { AppProvider, useAppStore } from './store/appStore';
 import { AppNavbar } from './components/layout/AppNavbar';
 import { AppFooter } from './components/layout/AppFooter';
+import { AmbientVideoBackdrop } from './components/layout/AmbientVideoBackdrop';
 import { AuthModal } from './components/public/AuthModal';
 import { NoticeStatusModal } from './components/public/NoticeStatusModal';
 import { ToastStack } from './components/public/ToastStack';
@@ -56,7 +57,7 @@ const ROUTE_META: Record<
   },
   explore: {
     title: 'Bàn soi Khám phá — F-Forum',
-    description: 'Soi 196 mẫu tương tác, không gian 3D, hiệu ứng, chuyển động, bố cục cùng 32 công cụ AI và 72 kho GitHub.',
+    description: 'Soi 196 mẫu tương tác, không gian 3D, hiệu ứng, chuyển động, bố cục cùng 32 công cụ AI và 122 kho GitHub.',
     path: '/explore',
   },
   experience: {
@@ -154,6 +155,7 @@ const AppShell: React.FC = () => {
     <MotionConfig reducedMotion={reducedMotion ? 'always' : 'user'}>
       <LayoutGroup>
         <div className="shell">
+          <AmbientVideoBackdrop />
           <a className="skip-link" href="#noi-dung">
             Tới nội dung
           </a>

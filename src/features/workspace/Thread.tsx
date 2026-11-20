@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
+import { Check, Copy, RotateCw } from 'lucide-react';
 import type { AIActivityState, AIStreamingStage, ChatMessage } from '../../types/index';
 import { formatClock } from './time';
 
@@ -50,15 +51,15 @@ interface ThreadProps {
 const MODE_TAG = /^\[Mode:\s*([A-Za-z]+)\]\s*/i;
 
 const MODE_LABELS: Record<string, string> = {
-  build: 'Dựng mới',
-  refine: 'Tinh chỉnh',
-  audit: 'Kiểm định',
+  build: 'Build',
+  refine: 'Refine',
+  audit: 'Audit',
 };
 
 const STREAM_STEPS: Array<{ id: 'routing' | 'generating' | 'checking'; label: string }> = [
-  { id: 'routing', label: '1. Định tuyến' },
-  { id: 'generating', label: '2. Sinh mã' },
-  { id: 'checking', label: '3. Kiểm định 6 lớp' },
+  { id: 'routing', label: 'Định tuyến' },
+  { id: 'generating', label: 'Sinh mã' },
+  { id: 'checking', label: 'Kiểm định' },
 ];
 
 export function stripModeTag(content: string): string {
@@ -112,6 +113,7 @@ export const Thread: React.FC<ThreadProps> = ({
   const scrollRef = useRef<HTMLDivElement>(null);
   const previewRef = useRef<HTMLPreElement>(null);
   const [liveElapsedMs, setLiveElapsedMs] = useState(0);
+  const [copiedId, setCopiedId] = useState<string | null>(null);
 
   const busy =
     activity === 'thinking' ||
@@ -164,6 +166,18 @@ export const Thread: React.FC<ThreadProps> = ({
     }
   }, [streamingPreview]);
 
+  const handleCopyContent = async (id: string, text: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopiedId(id);
+      window.setTimeout(() => {
+        setCopiedId((prev) => (prev === id ? null : prev));
+      }, 1600);
+    } catch {
+      return;
+    }
+  };
+
   const renderArenaCard = (
     turn: ArenaComparisonTurn,
     side: 'A' | 'B',
@@ -171,6 +185,7 @@ export const Thread: React.FC<ThreadProps> = ({
   ) => {
     const isApplied = turn.appliedSide === side;
     const isRunning = candidate.status === 'running';
+    const cardCopyId = `${turn.id}-${side}`;
     const previewFile =
       candidate.files.find((f) => f.path === 'styles.css') ||
       candidate.files.find((f) => f.path === 'index.html') ||
@@ -181,14 +196,14 @@ export const Thread: React.FC<ThreadProps> = ({
 
     return (
       <article
-        key={`${turn.id}-${side}`}
+        key={cardCopyId}
         className="ws-arena-card"
         data-side={side}
         data-applied={isApplied ? 'true' : undefined}
       >
         <header className="ws-arena-card-head">
           <div className="ws-arena-card-title">
-            <span className="ws-arena-badge">Model {side}</span>
+            <span className="ws-arena-badge">{side}</span>
             <strong className="ws-arena-model">{candidate.modelLabel}</strong>
           </div>
           <div className="ws-arena-metrics">
@@ -226,17 +241,37 @@ export const Thread: React.FC<ThreadProps> = ({
         )}
 
         <footer className="ws-arena-card-foot">
-          {isApplied && (
-            <span className="ws-arena-active-tag">Đang hiển thị trên Live View</span>
-          )}
-          <button
-            type="button"
-            className={isApplied ? 'btn btn-solid btn-sm' : 'btn btn-red btn-sm'}
-            disabled={isRunning}
-            onClick={() => onApplyArenaCandidate(turn.id, side)}
-          >
-            Áp dụng bản này
-          </button>
+          <span className="ws-arena-active-tag">
+            {isApplied ? 'Đang hiển thị' : 'Phương án chờ'}
+          </span>
+          <div className="ws-arena-card-actions">
+            <button
+              type="button"
+              className="ws-icon-pill"
+              aria-label={`Chép phản hồi Model ${side}`}
+              title={copiedId === cardCopyId ? 'Đã chép' : `Chép phản hồi Model ${side}`}
+              data-active={copiedId === cardCopyId ? 'true' : undefined}
+              onClick={() => void handleCopyContent(cardCopyId, candidate.message)}
+            >
+              {copiedId === cardCopyId ? (
+                <Check size={14} aria-hidden="true" />
+              ) : (
+                <Copy size={14} aria-hidden="true" />
+              )}
+            </button>
+
+            <button
+              type="button"
+              className={`ws-icon-pill ${isApplied ? 'ws-icon-pill--active' : 'ws-icon-pill--accent'}`}
+              disabled={isRunning}
+              aria-pressed={isApplied}
+              aria-label={isApplied ? `Đang áp dụng Model ${side}` : `Áp dụng Model ${side} vào Live View`}
+              title={isApplied ? 'Đang áp dụng trên Live View' : 'Áp dụng bản này vào Live View'}
+              onClick={() => onApplyArenaCandidate(turn.id, side)}
+            >
+              <Check size={14} aria-hidden="true" />
+            </button>
+          </div>
         </footer>
       </article>
     );
@@ -256,6 +291,8 @@ export const Thread: React.FC<ThreadProps> = ({
           const tokenCount = estimateMessageTokens(message);
           const elapsedLabel =
             message.role === 'assistant' ? estimateElapsedLabel(message, index) : null;
+          const plainContent =
+            message.role === 'user' ? stripModeTag(message.content) : message.content;
 
           return (
             <article key={message.id} className="ws-turn" data-role={message.role}>
@@ -265,30 +302,24 @@ export const Thread: React.FC<ThreadProps> = ({
                     ? userName
                     : message.role === 'system'
                       ? 'Hệ thống'
-                      : 'Arena AI'}
+                      : 'F-Forum AI'}
                 </span>
                 {modeLabel && <span className="ws-mode-tag">{modeLabel}</span>}
                 {message.modelUsed && <span className="ws-model-tag">{message.modelUsed}</span>}
-                {message.protocolUsed && (
-                  <span className="ws-proto-tag">{message.protocolUsed}</span>
-                )}
                 {message.role === 'assistant' && (
                   <>
                     {elapsedLabel && <span className="ws-pill-meta">{elapsedLabel}</span>}
-                    <span className="ws-pill-meta">3/3 bước</span>
                     <span className="ws-pill-meta">~{tokenCount} tok</span>
                   </>
                 )}
                 <time dateTime={message.createdAt}>{formatClock(message.createdAt)}</time>
               </header>
 
-              <p className="ws-turn-body">
-                {message.role === 'user' ? stripModeTag(message.content) : message.content}
-              </p>
+              <p className="ws-turn-body">{plainContent}</p>
 
               {message.fallback && (
                 <p className="ws-turn-flag">
-                  Đã tổng hợp qua bộ khung dự phòng cục bộ. Mở Model &amp; BYOK để gắn khóa API riêng.
+                  Tổng hợp cục bộ. Mở cấu hình BYOK để gắn khóa API riêng.
                 </p>
               )}
 
@@ -308,31 +339,48 @@ export const Thread: React.FC<ThreadProps> = ({
                 </ul>
               )}
 
-              {isLatestAssistant && (
-                <div className="ws-turn-actions">
+              <div className="ws-turn-actions">
+                <button
+                  type="button"
+                  className="ws-icon-pill"
+                  aria-label="Chép nội dung tin nhắn"
+                  title={copiedId === message.id ? 'Đã chép' : 'Chép nội dung'}
+                  data-active={copiedId === message.id ? 'true' : undefined}
+                  onClick={() => void handleCopyContent(message.id, plainContent)}
+                >
+                  {copiedId === message.id ? (
+                    <Check size={14} aria-hidden="true" />
+                  ) : (
+                    <Copy size={14} aria-hidden="true" />
+                  )}
+                </button>
+
+                {isLatestAssistant && (
                   <button
                     type="button"
-                    className="btn btn-line btn-sm"
+                    className="ws-icon-pill"
+                    aria-label="Tạo lại phản hồi"
+                    title="Tạo lại"
                     onClick={onRegenerate}
                     disabled={!canRegenerate}
                   >
-                    Tạo lại
+                    <RotateCw size={14} aria-hidden="true" />
                   </button>
-                </div>
-              )}
+                )}
 
-              {failed && message === lastMessage && (
-                <div className="ws-turn-actions">
+                {failed && message === lastMessage && (
                   <button
                     type="button"
-                    className="btn btn-line btn-sm"
+                    className="ws-icon-pill ws-icon-pill--accent"
+                    aria-label="Thử lại yêu cầu"
+                    title="Thử lại"
                     onClick={onRetry}
                     disabled={!canRetry}
                   >
-                    Thử lại
+                    <RotateCw size={14} aria-hidden="true" />
                   </button>
-                </div>
-              )}
+                )}
+              </div>
             </article>
           );
         })}
@@ -345,7 +393,7 @@ export const Thread: React.FC<ThreadProps> = ({
           >
             <div className="ws-arena-prompt-head">
               <span className="ws-role-badge" data-role="user">
-                So sánh 2 Model (Arena)
+                Arena A · B
               </span>
               <span className="ws-arena-prompt-text">{stripModeTag(turn.prompt)}</span>
               <time className="t-label" dateTime={turn.createdAt}>
@@ -362,7 +410,7 @@ export const Thread: React.FC<ThreadProps> = ({
 
         {untouched && !busy && (
           <section className="ws-starters" aria-label="Mẫu khởi tạo nhanh">
-            <p className="t-label">Gợi ý bắt đầu phiên Arena</p>
+            <p className="t-label">Bắt đầu nhanh</p>
             <ul>
               {starters.map((starter) => (
                 <li key={starter.label}>
@@ -385,7 +433,7 @@ export const Thread: React.FC<ThreadProps> = ({
             <div className="ws-turn ws-turn-busy ws-stream-card" data-role="assistant">
               <div className="ws-turn-meta">
                 <span className="ws-role-badge" data-role="assistant">
-                  Arena AI
+                  F-Forum AI
                 </span>
                 {modelUsed && <span className="t-label ws-model-tag">{modelUsed}</span>}
                 <span className="ws-pill-meta">{(liveElapsedMs / 1000).toFixed(1)}s</span>

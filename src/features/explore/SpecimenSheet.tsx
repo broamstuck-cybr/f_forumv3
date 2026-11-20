@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { X } from 'lucide-react';
+import { Monitor, Moon, RotateCw, Smartphone, Sun, Tablet, X, ZoomIn, ZoomOut } from 'lucide-react';
 import type { SourceCatalogItem } from '../../types/index';
 import { previewFor } from '../../ui/Media';
 import { useAppStore } from '../../store/appStore';
@@ -16,7 +16,6 @@ import {
   resolvePinUISource,
   sanitizeBrandText,
   sanitizeSnippetCode,
-  whiteLabelArchivePath,
   type MotionSiteFullEntry,
   type PinUISourceEntry,
   type PreviewTheme,
@@ -37,12 +36,6 @@ interface SpecimenSheetProps {
 }
 
 type CodeTab = 'html' | 'css' | 'spec';
-
-const VIEWPORTS: Array<{ value: PreviewViewport; label: string }> = [
-  { value: 1440, label: 'Desktop' },
-  { value: 768, label: '768px' },
-  { value: 390, label: '390px' },
-];
 
 interface ReactionBarProps {
   id: string;
@@ -94,6 +87,7 @@ export const SpecimenSheet: React.FC<SpecimenSheetProps> = ({
   const { theme, addToast } = useAppStore();
   const dialogRef = useRef<HTMLDialogElement>(null);
   const [viewport, setViewport] = useState<PreviewViewport>(1440);
+  const [stageZoomed, setStageZoomed] = useState(false);
   const [stageTheme, setStageTheme] = useState<PreviewTheme>(theme);
   const [nonce, setNonce] = useState(0);
   const [codeOpen, setCodeOpen] = useState(false);
@@ -245,45 +239,65 @@ export const SpecimenSheet: React.FC<SpecimenSheetProps> = ({
               {position} / {total}
             </span>
             <div className="ex-stage-controls" role="group" aria-label="Khung chạy thử">
-              {VIEWPORTS.map((vp) => (
-                <button
-                  key={vp.value}
-                  type="button"
-                  className="ex-text"
-                  aria-pressed={viewport === vp.value}
-                  onClick={() => setViewport(vp.value)}
-                >
-                  {vp.label}
-                </button>
-              ))}
               <button
                 type="button"
-                className="ex-text"
-                aria-pressed={stageTheme === 'light'}
-                onClick={() => setStageTheme('light')}
+                className="ex-stage-icon-btn"
+                aria-label={`Khung nhìn ${viewport}px — Bấm để đổi kích thước`}
+                title={`Khung nhìn ${viewport}px (1440 / 768 / 390)`}
+                onClick={() =>
+                  setViewport((prev) => (prev === 1440 ? 768 : prev === 768 ? 390 : 1440))
+                }
               >
-                Sáng
+                {viewport === 1440 ? (
+                  <Monitor size={16} aria-hidden="true" />
+                ) : viewport === 768 ? (
+                  <Tablet size={16} aria-hidden="true" />
+                ) : (
+                  <Smartphone size={16} aria-hidden="true" />
+                )}
               </button>
               <button
                 type="button"
-                className="ex-text"
-                aria-pressed={stageTheme === 'dark'}
-                onClick={() => setStageTheme('dark')}
+                className="ex-stage-icon-btn"
+                aria-pressed={stageZoomed}
+                aria-label={stageZoomed ? 'Thu nhỏ sân khấu về 100%' : 'Phóng to sân khấu 115%'}
+                title={stageZoomed ? 'Thu nhỏ sân khấu (100%)' : 'Phóng to sân khấu (115%)'}
+                onClick={() => setStageZoomed((z) => !z)}
               >
-                Tối
+                {stageZoomed ? (
+                  <ZoomOut size={16} aria-hidden="true" />
+                ) : (
+                  <ZoomIn size={16} aria-hidden="true" />
+                )}
               </button>
               <button
                 type="button"
-                className="ex-text"
+                className="ex-stage-icon-btn"
+                aria-label={stageTheme === 'dark' ? 'Chuyển sân khấu sang nền sáng' : 'Chuyển sân khấu sang nền tối'}
+                title={stageTheme === 'dark' ? 'Nền tối — Bấm để đổi nền sáng' : 'Nền sáng — Bấm để đổi nền tối'}
+                onClick={() => setStageTheme((prev) => (prev === 'dark' ? 'light' : 'dark'))}
+              >
+                {stageTheme === 'dark' ? (
+                  <Moon size={16} aria-hidden="true" />
+                ) : (
+                  <Sun size={16} aria-hidden="true" />
+                )}
+              </button>
+              <button
+                type="button"
+                className="ex-stage-icon-btn"
+                aria-label="Đặt lại sân khấu"
+                title="Đặt lại sân khấu chạy thử"
                 onClick={() => setNonce((n) => n + 1)}
               >
-                Đặt lại
+                <RotateCw size={16} aria-hidden="true" />
               </button>
             </div>
             <button
               type="button"
               className="icon-btn"
               aria-label="Đóng"
+              title="Đóng"
               onClick={() => dialogRef.current?.close()}
             >
               <X size={20} aria-hidden="true" />
@@ -293,7 +307,11 @@ export const SpecimenSheet: React.FC<SpecimenSheetProps> = ({
             className={`ex-spec-stage${stageTheme === 'light' ? ' ex-stage-paper' : ''}`}
             data-playground={isPinUI ? 'true' : 'false'}
           >
-            <div className="ex-bench-stage-frame" data-viewport={viewport}>
+            <div
+              className="ex-bench-stage-frame"
+              data-viewport={viewport}
+              data-zoomed={stageZoomed ? 'true' : 'false'}
+            >
               {isPinUI ? (
                 <PinUIPlayground
                   key={`${item.id}-${nonce}`}
@@ -347,14 +365,6 @@ export const SpecimenSheet: React.FC<SpecimenSheetProps> = ({
               <div>
                 <dt>phong cách</dt>
                 <dd>{item.style}</dd>
-              </div>
-              <div>
-                <dt>giấy phép</dt>
-                <dd>{sanitizeBrandText(item.license)}</dd>
-              </div>
-              <div>
-                <dt>mã mẫu</dt>
-                <dd>{whiteLabelArchivePath(item)}</dd>
               </div>
             </dl>
             <div className="ex-spec-actions">

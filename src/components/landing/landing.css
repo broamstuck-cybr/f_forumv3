@@ -7,6 +7,13 @@
     overflow-x: clip;
   }
 
+  html[data-ambient='on'] .lp,
+  html[data-ambient='on'] .lp-hero,
+  html[data-ambient='on'] .lp-closing,
+  html[data-ambient='on'] .lp-section:not(.scene-red) {
+    background: transparent;
+  }
+
   .lp-nav {
     position: fixed;
     inset-inline: 0;

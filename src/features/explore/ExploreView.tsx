@@ -2,7 +2,13 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { motion } from 'motion/react';
 import { useAppStore } from '../../store/appStore';
 import type { SourceLibraryName } from '../../types/index';
-import { LiquidTabs, SearchCard, type LiquidTabItem } from '../../components/pinui';
+import {
+  Chips,
+  LiquidTabs,
+  SearchCard,
+  type ChipItem,
+  type LiquidTabItem,
+} from '../../components/pinui';
 import { Mark } from '../../ui/Mark';
 import {
   LIBRARY_LABEL,
@@ -24,6 +30,15 @@ const MODES: Array<{ id: ExploreMode; label: string }> = [
 
 const RECENT_SEARCHES = ['Glass', '3D', 'Hero', 'Button', 'Pricing', 'Terminal'];
 
+const QUICK_CATEGORY_CHIPS: ChipItem[] = [
+  { id: '', label: 'Mọi chủ đề' },
+  { id: 'Hero', label: 'Hero & Mở đầu' },
+  { id: 'Card', label: 'Thẻ & Bento' },
+  { id: 'Button', label: 'Nút tương tác' },
+  { id: 'Three.js', label: 'WebGL & 3D' },
+  { id: 'Pricing', label: 'Bảng giá' },
+];
+
 function resolveIncomingMode(value: string | undefined | null): ExploreMode | null {
   if (value === 'leaderboard' || value === 'github' || value === 'repos') return 'repos';
   if (value === 'resources' || value === 'tools') return 'tools';
@@ -32,7 +47,7 @@ function resolveIncomingMode(value: string | undefined | null): ExploreMode | nu
 }
 
 export const ExploreView: React.FC = () => {
-  const { sourceCatalog, resourceLibrary, savedItemIds, openExperience } = useAppStore();
+  const { sourceCatalog, resourceLibrary, savedItemIds, openExperience, theme } = useAppStore();
   const calm = useCalm();
   const tabRefs = useRef<Array<HTMLButtonElement | null>>([]);
   const [mode, setMode] = useState<ExploreMode>(() => {
@@ -179,6 +194,15 @@ export const ExploreView: React.FC = () => {
               onChange={(nextId) => setLibrary(nextId as LibraryFilter)}
               ariaLabel="Nhóm mẫu giao diện"
               className="ex-pinui-tabs"
+            />
+            <Chips
+              items={QUICK_CATEGORY_CHIPS}
+              selectedIds={[search]}
+              onToggle={(chipId) => setSearch((prev) => (prev === chipId ? '' : chipId))}
+              multi={false}
+              variant="filter"
+              theme={theme}
+              className="ex-pinui-chips"
             />
           </div>
         ) : null}

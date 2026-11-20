@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { BookmarkPlus, RotateCcw, ShieldCheck } from 'lucide-react';
 import type { WorkspaceProject } from '../../types/index';
 import { ChecksPanel } from './ChecksPanel';
 import { DiffViewer, type DiffViewMode } from './DiffViewer';
@@ -50,7 +51,7 @@ export const ReviewZone: React.FC<ReviewZoneProps> = ({
             aria-pressed={tab === 'check'}
             onClick={() => onTabChange('check')}
           >
-            Kiểm định 6 lớp ({report ? `${report.passCount}/${report.results.length}` : '0/6'})
+            Kiểm định ({report ? `${report.passCount}/${report.results.length}` : '0/6'})
           </button>
           <button
             type="button"
@@ -63,7 +64,7 @@ export const ReviewZone: React.FC<ReviewZoneProps> = ({
               onTabChange('diff');
             }}
           >
-            Diff (+{totals.added} / −{totals.removed})
+            Diff (+{totals.added}/−{totals.removed})
           </button>
           <button
             type="button"
@@ -73,18 +74,30 @@ export const ReviewZone: React.FC<ReviewZoneProps> = ({
             aria-pressed={tab === 'files'}
             onClick={() => onTabChange('files')}
           >
-            Mốc lưu ({project.snapshots.length})
+            Mốc ({project.snapshots.length})
           </button>
         </div>
 
         <div className="ws-review-actions">
           {onCreateSnapshot && (
-            <button type="button" className="btn btn-line btn-sm" onClick={onCreateSnapshot}>
-              Lưu mốc
+            <button
+              type="button"
+              className="ws-icon-pill"
+              aria-label="Lưu mốc phiên"
+              title="Lưu mốc phiên"
+              onClick={onCreateSnapshot}
+            >
+              <BookmarkPlus size={15} aria-hidden="true" />
             </button>
           )}
-          <button type="button" className="btn btn-line btn-sm" onClick={onRunChecks}>
-            Chạy kiểm định
+          <button
+            type="button"
+            className="ws-icon-pill"
+            aria-label="Chạy kiểm định 6 lớp"
+            title="Chạy kiểm định 6 lớp"
+            onClick={onRunChecks}
+          >
+            <ShieldCheck size={15} aria-hidden="true" />
           </button>
         </div>
       </div>
@@ -113,7 +126,7 @@ export const ReviewZone: React.FC<ReviewZoneProps> = ({
         {tab === 'files' && (
           <div className="ws-snaps-panel">
             <div className="ws-snaps-head">
-              <span>Lịch sử mốc lưu dự án</span>
+              <span>Lịch sử mốc lưu</span>
               <span className="ws-count">{project.snapshots.length} mốc</span>
             </div>
             {project.snapshots.length === 0 ? (
@@ -131,10 +144,12 @@ export const ReviewZone: React.FC<ReviewZoneProps> = ({
                     {onRestoreSnapshot && (
                       <button
                         type="button"
-                        className="btn btn-line btn-sm"
+                        className="ws-icon-pill"
+                        aria-label={`Khôi phục ${snapshot.label}`}
+                        title="Khôi phục mốc này"
                         onClick={() => onRestoreSnapshot(snapshot.id)}
                       >
-                        Khôi phục
+                        <RotateCcw size={15} aria-hidden="true" />
                       </button>
                     )}
                   </li>

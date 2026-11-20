@@ -15,7 +15,7 @@ export const LandingPricing: React.FC<LandingPricingProps> = ({ onEnterApp }) =>
           <div className="lp-head-copy">
             <p className="t-label">truy cập mở cho học tập và phản biện</p>
             <h2 className="t-title">
-              Mở miễn phí, <Mark kind="box">minh bạch</Mark> giấy phép
+              <Mark kind="box">Mở miễn phí</Mark> toàn bộ mẫu &amp; mã nguồn
             </h2>
           </div>
         </div>

@@ -226,7 +226,7 @@ export const FAQ_ITEMS: Array<{ id: string; question: string; answer: string }> 
     id: 'f3',
     question: '196 giao diện và 6.770 chi tiết UI/UX đến từ đâu?',
     answer:
-      'Kho tham chiếu gồm 196 giao diện và mã nguồn, cùng 6.770 chi tiết UI/UX về bố cục, thành phần tương tác, cảnh 3D và chuyển động. Mỗi mục giữ đường dẫn gốc, thông tin tác giả và giấy phép công khai.',
+      'Thư viện gồm 196 giao diện, mã nguồn cùng 6.770 chi tiết UI/UX về bố cục, thành phần tương tác, cảnh 3D và chuyển động để người dùng xem, chạy thử và mang trực tiếp vào Workspace.',
   },
   {
     id: 'f4',

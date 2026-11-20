@@ -263,10 +263,6 @@ export const ToolIndex: React.FC<ToolIndexProps> = ({ query, onClearQuery, saved
                                   <dd>{item.compatibility}</dd>
                                 </div>
                                 <div>
-                                  <dt>giấy phép</dt>
-                                  <dd>{item.license}</dd>
-                                </div>
-                                <div>
                                   <dt>kiểm tra</dt>
                                   <dd>{formatDate(item.lastVerified)}</dd>
                                 </div>

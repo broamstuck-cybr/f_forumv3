@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from 'react';
+import { Archive, Pencil, Pin, PinOff, Plus, Trash2 } from 'lucide-react';
 import { SearchCard } from '../../components/pinui/SearchCard';
 import type { WorkspaceProject } from '../../types/index';
 import { formatStamp } from './time';
@@ -133,7 +134,7 @@ export const ProjectRail: React.FC<ProjectRailProps> = ({
                 </div>
               </div>
             ) : (
-              <>
+              <div className="ws-rail-row-wrap">
                 <button
                   type="button"
                   className="ws-rail-row"
@@ -150,38 +151,46 @@ export const ProjectRail: React.FC<ProjectRailProps> = ({
                   {onRename && (
                     <button
                       type="button"
-                      className="ws-rail-act"
+                      className="ws-rail-icon-act"
                       aria-label={`Đổi tên ${project.name}`}
+                      title="Đổi tên"
                       onClick={() => startRename(project)}
                     >
-                      Sửa
+                      <Pencil size={13} aria-hidden="true" />
                     </button>
                   )}
                   {onTogglePin && (
                     <button
                       type="button"
-                      className="ws-rail-act"
+                      className="ws-rail-icon-act"
                       aria-label={project.pinned ? `Bỏ ghim ${project.name}` : `Ghim ${project.name}`}
+                      title={project.pinned ? 'Bỏ ghim' : 'Ghim phiên'}
+                      aria-pressed={Boolean(project.pinned)}
                       onClick={() => onTogglePin(project.id)}
                     >
-                      {project.pinned ? 'Bỏ ghim' : 'Ghim'}
+                      {project.pinned ? (
+                        <PinOff size={13} aria-hidden="true" />
+                      ) : (
+                        <Pin size={13} aria-hidden="true" />
+                      )}
                     </button>
                   )}
                   {onDelete && (
                     <button
                       type="button"
-                      className="ws-rail-act ws-rail-act-danger"
+                      className="ws-rail-icon-act ws-rail-act-danger"
                       aria-label={`Xóa ${project.name}`}
+                      title="Xóa phiên"
                       onClick={() => {
                         setEditingId(null);
                         setConfirmDeleteId(project.id);
                       }}
                     >
-                      Xóa
+                      <Trash2 size={13} aria-hidden="true" />
                     </button>
                   )}
                 </div>
-              </>
+              </div>
             )}
           </li>
         );
@@ -193,8 +202,14 @@ export const ProjectRail: React.FC<ProjectRailProps> = ({
     <>
       <header className="ws-head ws-rail-head">
         <h2 className="ws-head-title">Phiên</h2>
-        <button type="button" className="btn btn-red btn-sm" onClick={onCreate}>
-          + Phiên mới
+        <button
+          type="button"
+          className="ws-icon-pill ws-icon-pill--accent"
+          aria-label="Tạo phiên mới"
+          title="Tạo phiên mới"
+          onClick={onCreate}
+        >
+          <Plus size={16} aria-hidden="true" />
         </button>
         {dismiss}
       </header>
@@ -203,7 +218,7 @@ export const ProjectRail: React.FC<ProjectRailProps> = ({
         <SearchCard
           value={query}
           onChange={setQuery}
-          placeholder="Tìm phiên hoặc chủ đề..."
+          placeholder="Tìm phiên..."
           compact
         />
       </div>
@@ -218,15 +233,20 @@ export const ProjectRail: React.FC<ProjectRailProps> = ({
 
       {archivedCount > 0 && (
         <footer className="ws-rail-foot">
-          <button
-            type="button"
-            className="btn btn-ghost btn-sm"
-            aria-pressed={showArchived}
-            onClick={() => setShowArchived((value) => !value)}
-          >
-            Lưu trữ
-          </button>
-          <span className="t-label">{archivedCount}</span>
+          <div className="ws-rail-foot-pair">
+            <button
+              type="button"
+              className="ws-icon-pill"
+              aria-label={showArchived ? 'Ẩn phiên lưu trữ' : 'Hiện phiên lưu trữ'}
+              title={showArchived ? 'Ẩn lưu trữ' : 'Xem phiên lưu trữ'}
+              aria-pressed={showArchived}
+              onClick={() => setShowArchived((value) => !value)}
+            >
+              <Archive size={14} aria-hidden="true" />
+            </button>
+            <span className="t-label">Lưu trữ</span>
+          </div>
+          <span className="ws-count">{archivedCount}</span>
         </footer>
       )}
     </>
