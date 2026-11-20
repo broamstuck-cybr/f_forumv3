@@ -9,13 +9,24 @@ import {
 import { useAppStore } from '../../store/appStore';
 import type { AttachedContextItem, CommunityPost } from '../../types/index';
 import { Media, previewFor } from '../../ui/Media';
+import {
+  Chips,
+  FileBox,
+  LiquidTabs,
+  TaskCard,
+  type TaskCardItem,
+  type TaskStatus,
+} from '../../components/pinui';
 import './profile.css';
 
 type ProfileTab = 'saved' | 'projects' | 'posts' | 'activity';
+type SavedFilter = 'all' | 'template' | 'resource' | 'community';
+type PostFilter = 'all' | 'qa' | 'showcase' | 'drops' | 'clubs';
 
 interface SavedEntry {
   id: string;
   savedId: string;
+  kind: 'template' | 'resource' | 'community';
   sourceLabel: string;
   title: string;
   subtitle: string;
@@ -50,11 +61,19 @@ const CHANNEL_LABELS: Record<string, string> = {
   clubs: 'Hội nhóm',
 };
 
-const PROFILE_TABS: Array<{ id: ProfileTab; label: string }> = [
-  { id: 'saved', label: 'Đã lưu' },
-  { id: 'projects', label: 'Dự án' },
-  { id: 'posts', label: 'Bài đăng' },
-  { id: 'activity', label: 'Hoạt động' },
+const SAVED_FILTER_CHIPS = [
+  { id: 'all', label: 'Tất cả' },
+  { id: 'template', label: 'Mẫu UI' },
+  { id: 'resource', label: 'Tài nguyên & Repo' },
+  { id: 'community', label: 'Tri thức' },
+];
+
+const POST_FILTER_CHIPS = [
+  { id: 'all', label: 'Tất cả' },
+  { id: 'qa', label: 'Hỏi đáp' },
+  { id: 'showcase', label: 'Trưng bày' },
+  { id: 'drops', label: 'Học liệu' },
+  { id: 'clubs', label: 'Hội nhóm' },
 ];
 
 const RE_PIN = new RegExp('pin\\s*ui', 'gi');
@@ -114,8 +133,11 @@ export const ProfileView: React.FC = () => {
     projects,
     activeProject,
     selectProject,
+    setActiveFilePath,
     savedItemIds,
+    likedItemIds,
     toggleSavedItem,
+    openExperience,
     openInWorkspace,
     forkPostToWorkspace,
     sourceCatalog,
@@ -123,9 +145,13 @@ export const ProfileView: React.FC = () => {
     communityPosts,
     quota,
     navigate,
+    theme,
   } = useAppStore();
 
   const [activeTab, setActiveTab] = useState<ProfileTab>('saved');
+  const [savedFilter, setSavedFilter] = useState<SavedFilter>('all');
+  const [postFilter, setPostFilter] = useState<PostFilter>('all');
+
   const userKey = currentUser?.id || 'guest';
   const bioStorageKey = `fforum_v3_profile_bio_${userKey}`;
   const statusStorageKey = `fforum_v3_profile_status_${userKey}`;
@@ -161,11 +187,6 @@ export const ProfileView: React.FC = () => {
         ? 'Thành viên'
         : 'Khách';
 
-  const totalFilesCount = useMemo(
-    () => projects.reduce((sum, proj) => sum + proj.files.length, 0),
-    [projects]
-  );
-
   const savedEntries = useMemo<SavedEntry[]>(() => {
     const entries: SavedEntry[] = [];
 
@@ -176,6 +197,7 @@ export const ProfileView: React.FC = () => {
         entries.push({
           id: `saved-${tpl.id}`,
           savedId: tpl.id,
+          kind: 'template',
           sourceLabel: libName,
           title: whiteLabelText(tpl.title),
           subtitle: whiteLabelText(tpl.category),
@@ -201,6 +223,7 @@ export const ProfileView: React.FC = () => {
         entries.push({
           id: `saved-${res.id}`,
           savedId: res.id,
+          kind: 'resource',
           sourceLabel: res.group,
           title: whiteLabelText(res.title),
           subtitle: whiteLabelText(res.category),
@@ -222,6 +245,7 @@ export const ProfileView: React.FC = () => {
         entries.push({
           id: `saved-${savedId}`,
           savedId,
+          kind: 'resource',
           sourceLabel: ranked.language || 'GitHub',
           title: ranked.fullName,
           subtitle: `${ranked.stars.toLocaleString('vi-VN')} sao`,
@@ -236,6 +260,7 @@ export const ProfileView: React.FC = () => {
         entries.push({
           id: `saved-${house.id}`,
           savedId: house.id,
+          kind: 'resource',
           sourceLabel: house.language,
           title: house.name,
           subtitle: house.fullName,
@@ -250,6 +275,7 @@ export const ProfileView: React.FC = () => {
         entries.push({
           id: `saved-${post.id}`,
           savedId: post.id,
+          kind: 'community',
           sourceLabel: CHANNEL_LABELS[post.channel] || post.category,
           title: whiteLabelText(post.title),
           subtitle: `@${post.author.handle}`,
@@ -261,6 +287,11 @@ export const ProfileView: React.FC = () => {
 
     return entries;
   }, [savedItemIds, sourceCatalog, resourceLibrary, communityPosts]);
+
+  const filteredSavedEntries = useMemo(() => {
+    if (savedFilter === 'all') return savedEntries;
+    return savedEntries.filter((entry) => entry.kind === savedFilter);
+  }, [savedEntries, savedFilter]);
 
   const userPosts = useMemo<CommunityPost[]>(() => {
     if (!currentUser) return [];
@@ -280,6 +311,11 @@ export const ProfileView: React.FC = () => {
       })
       .sort((a, b) => Date.parse(b.createdAt) - Date.parse(a.createdAt));
   }, [communityPosts, currentUser]);
+
+  const filteredUserPosts = useMemo(() => {
+    if (postFilter === 'all') return userPosts;
+    return userPosts.filter((post) => post.channel === postFilter);
+  }, [userPosts, postFilter]);
 
   const activityFeed = useMemo<ActivityEntry[]>(() => {
     const items: ActivityEntry[] = [];
@@ -319,6 +355,48 @@ export const ProfileView: React.FC = () => {
 
     return items.sort((a, b) => Date.parse(b.timestamp) - Date.parse(a.timestamp));
   }, [projects, userPosts]);
+
+  const builderTasks = useMemo<TaskCardItem[]>(() => {
+    const tasks: TaskCardItem[] = [];
+    for (const proj of projects.slice(0, 4)) {
+      const checkStatus = proj.checksReport?.overallStatus;
+      const mappedStatus: TaskStatus =
+        checkStatus === 'fail' ? 'failed' : checkStatus === 'warn' ? 'approval' : 'completed';
+      tasks.push({
+        id: `task-proj-${proj.id}`,
+        label: proj.name,
+        status: mappedStatus,
+        detail: proj.checksReport
+          ? `${proj.checksReport.passCount}/${proj.checksReport.results.length} kiểm định đạt · ${proj.files.length} tệp`
+          : `${proj.files.length} tệp mã nguồn`,
+      });
+      const latestProc = proj.processes[0];
+      if (latestProc) {
+        tasks.push({
+          id: `task-proc-${proj.id}-${latestProc.id}`,
+          label: latestProc.name,
+          status:
+            latestProc.status === 'running'
+              ? 'running'
+              : latestProc.status === 'failed'
+                ? 'failed'
+                : 'completed',
+          detail: latestProc.detail,
+        });
+      }
+    }
+    return tasks.slice(0, 6);
+  }, [projects]);
+
+  const profileTabs = useMemo(
+    () => [
+      { id: 'saved', label: 'Đã lưu', count: savedEntries.length },
+      { id: 'projects', label: 'Dự án', count: projects.length },
+      { id: 'posts', label: 'Bài viết', count: userPosts.length },
+      { id: 'activity', label: 'Hoạt động', count: activityFeed.length },
+    ],
+    [savedEntries.length, projects.length, userPosts.length, activityFeed.length]
+  );
 
   const openCommunityThread = (postId: string) => {
     try {
@@ -419,7 +497,7 @@ export const ProfileView: React.FC = () => {
                   maxLength={40}
                 />
               </div>
-              <div className="pf-field pf-field-wide">
+              <div className="pf-field">
                 <label htmlFor="pf-bio" className="t-label">
                   giới thiệu ngắn
                 </label>
@@ -442,67 +520,55 @@ export const ProfileView: React.FC = () => {
                 Hủy
               </button>
               <button type="submit" className="btn btn-red btn-sm">
-                Lưu
+                Lưu hồ sơ
               </button>
             </div>
           </form>
         )}
 
-        <dl className="pf-stats" aria-label="Số liệu thực">
-          <div className="pf-stat">
-            <dt className="t-label">Dự án</dt>
-            <dd>{projects.length}</dd>
-          </div>
-          <div className="pf-stat">
-            <dt className="t-label">Tệp mã</dt>
-            <dd>{totalFilesCount}</dd>
-          </div>
-          <div className="pf-stat">
-            <dt className="t-label">Bài viết</dt>
-            <dd>{userPosts.length}</dd>
-          </div>
+        <dl className="pf-stats" aria-label="Thống kê hồ sơ thực tế">
           <div className="pf-stat">
             <dt className="t-label">Đã lưu</dt>
             <dd className="pf-stat-accent">{savedItemIds.length}</dd>
           </div>
           <div className="pf-stat">
-            <dt className="t-label">Lượt AI</dt>
+            <dt className="t-label">Đã tim</dt>
+            <dd>{likedItemIds.length}</dd>
+          </div>
+          <div className="pf-stat">
+            <dt className="t-label">Dự án</dt>
+            <dd>{projects.length}</dd>
+          </div>
+          <div className="pf-stat">
+            <dt className="t-label">Hạn mức AI</dt>
             <dd>{quotaStatValue}</dd>
           </div>
         </dl>
       </header>
 
       <section className="wrap-wide pf-body" aria-label="Nội dung hồ sơ">
-        <div className="pf-tabs" role="tablist" aria-label="Mục hồ sơ">
-          {PROFILE_TABS.map((tab) => {
-            const selected = activeTab === tab.id;
-            return (
-              <button
-                key={tab.id}
-                type="button"
-                role="tab"
-                className="pf-tab"
-                aria-selected={selected}
-                onClick={() => setActiveTab(tab.id)}
-              >
-                <span>{tab.label}</span>
-                <span className="pf-tab-count">
-                  {tab.id === 'saved'
-                    ? savedEntries.length
-                    : tab.id === 'projects'
-                      ? projects.length
-                      : tab.id === 'posts'
-                        ? userPosts.length
-                        : activityFeed.length}
-                </span>
-              </button>
-            );
-          })}
+        <div className="pf-tabs-bar">
+          <LiquidTabs
+            tabs={profileTabs}
+            activeId={activeTab}
+            onChange={(id) => setActiveTab(id as ProfileTab)}
+            ariaLabel="Mục hồ sơ cá nhân"
+          />
         </div>
 
         {activeTab === 'saved' && (
           <div role="tabpanel" className="pf-panel">
-            {savedEntries.length === 0 ? (
+            {savedEntries.length > 0 && (
+              <Chips
+                items={SAVED_FILTER_CHIPS}
+                selectedIds={[savedFilter]}
+                multi={false}
+                theme={theme}
+                onToggle={(id) => setSavedFilter(id as SavedFilter)}
+              />
+            )}
+
+            {filteredSavedEntries.length === 0 ? (
               <div className="pf-empty">
                 <h2 className="t-title" style={{ fontSize: 'var(--text-xl)' }}>
                   Chưa có mục đã lưu
@@ -521,7 +587,7 @@ export const ProfileView: React.FC = () => {
               </div>
             ) : (
               <ul className="pf-grid">
-                {savedEntries.map((item) => {
+                {filteredSavedEntries.map((item) => {
                   const preview = item.previewId ? previewFor(item.previewId) : null;
                   return (
                     <li key={item.id} className="pf-item-card">
@@ -537,10 +603,17 @@ export const ProfileView: React.FC = () => {
                       <h3 className="pf-item-title">{item.title}</h3>
                       <p className="pf-item-desc">{item.summary}</p>
                       <div className="pf-item-actions">
+                        <button
+                          type="button"
+                          className="btn btn-red btn-sm"
+                          onClick={() => openExperience(item.savedId)}
+                        >
+                          Mở trải nghiệm
+                        </button>
                         {item.communityPost && (
                           <button
                             type="button"
-                            className="btn btn-red btn-sm"
+                            className="btn btn-line btn-sm"
                             onClick={() => openCommunityThread(item.communityPost!.id)}
                           >
                             Mở bài
@@ -561,7 +634,7 @@ export const ProfileView: React.FC = () => {
                         </button>
                         <button
                           type="button"
-                          className="btn btn-line btn-sm"
+                          className="btn btn-ghost btn-sm"
                           onClick={() => toggleSavedItem(item.savedId)}
                         >
                           Bỏ lưu
@@ -587,6 +660,17 @@ export const ProfileView: React.FC = () => {
                   }),
                   { added: 0, removed: 0 }
                 );
+                const fileTabs = proj.files.slice(0, 4).map((f) => ({
+                  id: f.path,
+                  label: f.path,
+                  meta: `${f.language} · ${f.content.split('\n').length} dòng`,
+                  onOpen: () => {
+                    selectProject(proj.id);
+                    setActiveFilePath(f.path);
+                    navigate('workspace');
+                  },
+                }));
+
                 return (
                   <li key={proj.id} className="pf-item-card" data-active={isActive ? 'true' : undefined}>
                     <div className="pf-item-head">
@@ -606,6 +690,18 @@ export const ProfileView: React.FC = () => {
                       </span>
                       <span>{proj.snapshots.length} mốc lưu</span>
                     </div>
+
+                    <FileBox
+                      title="Tệp mã nguồn"
+                      tabs={fileTabs}
+                      activeId={proj.activeFilePath}
+                      onSelect={(filePath) => {
+                        selectProject(proj.id);
+                        setActiveFilePath(filePath);
+                        navigate('workspace');
+                      }}
+                    />
+
                     <div className="pf-item-actions">
                       <button
                         type="button"
@@ -615,7 +711,7 @@ export const ProfileView: React.FC = () => {
                           navigate('workspace');
                         }}
                       >
-                        Workspace
+                        Mở Workspace
                       </button>
                     </div>
                   </li>
@@ -627,10 +723,20 @@ export const ProfileView: React.FC = () => {
 
         {activeTab === 'posts' && (
           <div role="tabpanel" className="pf-panel">
-            {userPosts.length === 0 ? (
+            {userPosts.length > 0 && (
+              <Chips
+                items={POST_FILTER_CHIPS}
+                selectedIds={[postFilter]}
+                multi={false}
+                theme={theme}
+                onToggle={(id) => setPostFilter(id as PostFilter)}
+              />
+            )}
+
+            {filteredUserPosts.length === 0 ? (
               <div className="pf-empty">
                 <h2 className="t-title" style={{ fontSize: 'var(--text-xl)' }}>
-                  Chưa có bài đăng hoặc tương tác
+                  Chưa có bài viết hoặc tương tác
                 </h2>
                 <p className="t-lead" style={{ fontSize: 'var(--text-sm)' }}>
                   {currentUser
@@ -658,7 +764,7 @@ export const ProfileView: React.FC = () => {
               </div>
             ) : (
               <ul className="pf-list">
-                {userPosts.map((post) => {
+                {filteredUserPosts.map((post) => {
                   const replies =
                     (post.acceptedAnswer ? 1 : 0) + (post.answers?.length || post.answersCount || 0);
                   return (
@@ -696,48 +802,61 @@ export const ProfileView: React.FC = () => {
 
         {activeTab === 'activity' && (
           <div role="tabpanel" className="pf-panel">
-            {activityFeed.length === 0 ? (
+            {activityFeed.length === 0 && builderTasks.length === 0 ? (
               <div className="pf-empty">
                 <p className="t-lead" style={{ fontSize: 'var(--text-sm)' }}>
                   Chưa ghi nhận hoạt động nào trong phiên này.
                 </p>
               </div>
             ) : (
-              <ol className="pf-timeline">
-                {activityFeed.map((act) => (
-                  <li key={act.id} className="pf-tl-item">
-                    <span className="tag">{act.kindLabel}</span>
-                    <div className="pf-tl-body">
-                      <span className="pf-tl-title">{act.title}</span>
-                      <span className="t-label">{act.detail}</span>
-                    </div>
-                    <time className="t-label pf-tl-time" dateTime={act.timestamp}>
-                      {formatDateTime(act.timestamp)}
-                    </time>
-                    {act.projectId && (
-                      <button
-                        type="button"
-                        className="btn btn-ghost btn-sm"
-                        onClick={() => {
-                          selectProject(act.projectId!);
-                          navigate('workspace');
-                        }}
-                      >
-                        Workspace
-                      </button>
-                    )}
-                    {act.communityPostId && (
-                      <button
-                        type="button"
-                        className="btn btn-ghost btn-sm"
-                        onClick={() => openCommunityThread(act.communityPostId!)}
-                      >
-                        Mở bài
-                      </button>
-                    )}
-                  </li>
-                ))}
-              </ol>
+              <div className="pf-activity-grid">
+                <TaskCard
+                  title="Tiến trình kiểm định & Xây dựng"
+                  subtitle="Tổng hợp trạng thái kiểm tra mã nguồn và tác vụ mới nhất."
+                  tasks={builderTasks}
+                />
+
+                <div className="pf-timeline-card">
+                  <h2 className="pf-item-title">Dòng thời gian hoạt động</h2>
+                  <ol className="pf-timeline">
+                    {activityFeed.map((act) => (
+                      <li key={act.id} className="pf-tl-item">
+                        <span className="tag">{act.kindLabel}</span>
+                        <div className="pf-tl-body">
+                          <span className="pf-tl-title">{act.title}</span>
+                          <span className="t-label">{act.detail}</span>
+                        </div>
+                        <div className="pf-tl-actions">
+                          <time className="t-label pf-tl-time" dateTime={act.timestamp}>
+                            {formatDateTime(act.timestamp)}
+                          </time>
+                          {act.projectId && (
+                            <button
+                              type="button"
+                              className="btn btn-ghost btn-sm"
+                              onClick={() => {
+                                selectProject(act.projectId!);
+                                navigate('workspace');
+                              }}
+                            >
+                              Workspace
+                            </button>
+                          )}
+                          {act.communityPostId && (
+                            <button
+                              type="button"
+                              className="btn btn-ghost btn-sm"
+                              onClick={() => openCommunityThread(act.communityPostId!)}
+                            >
+                              Mở bài
+                            </button>
+                          )}
+                        </div>
+                      </li>
+                    ))}
+                  </ol>
+                </div>
+              </div>
             )}
           </div>
         )}

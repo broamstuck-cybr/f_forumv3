@@ -1,0 +1,94 @@
+.pinui-stage {
+  --pinui-vh: clamp(540px, 80svh, 780px);
+  position: relative;
+  display: grid;
+  width: 100%;
+  min-height: 460px;
+  overflow: hidden;
+  container-type: inline-size;
+  border: 1px solid var(--border-subtle);
+  border-radius: 20px;
+  background: var(--bg-canvas);
+  color: var(--ink-primary);
+  font-family: var(--font-sans);
+  isolation: isolate;
+  transition: background-color 280ms ease, color 280ms ease;
+}
+
+.pinui-stage[data-compact] {
+  --pinui-vh: clamp(420px, 62svh, 560px);
+  min-height: 320px;
+}
+
+.pinui-stage__body {
+  position: relative;
+  display: grid;
+  min-width: 0;
+  place-items: center;
+  padding: 56px 24px 32px;
+}
+
+.pinui-stage[data-compact] .pinui-stage__body {
+  padding: 52px 16px 20px;
+}
+
+.pinui-stage[data-kind='block'] .pinui-stage__body {
+  display: block;
+  height: var(--pinui-vh);
+  padding: 0;
+  overflow: hidden;
+  contain: layout paint;
+}
+
+.pinui-stage[data-kind='block'] .pinui-stage__body > * {
+  min-height: 0;
+}
+
+.pinui-stage__toggle {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  z-index: 30;
+  display: inline-flex;
+  padding: 3px;
+  gap: 2px;
+  border: 1px solid var(--border-strong);
+  border-radius: 999px;
+  background: var(--bg-glass);
+  backdrop-filter: blur(10px);
+}
+
+.pinui-stage__toggle button {
+  min-height: 28px;
+  padding: 0 14px;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--ink-secondary);
+  font: 600 12px/1 var(--font-sans);
+  cursor: pointer;
+  transition: background-color 160ms ease, color 160ms ease;
+}
+
+.pinui-stage__toggle button[aria-pressed='true'] {
+  background: var(--bg-inverse);
+  color: var(--ink-inverse);
+}
+
+.pinui-stage__toggle button:focus-visible {
+  outline: 2px solid var(--accent-primary);
+  outline-offset: 2px;
+}
+
+.pinui-stage__status {
+  margin: 0;
+  font-size: 13px;
+  color: var(--ink-muted);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pinui-stage,
+  .pinui-stage__toggle button {
+    transition: none;
+  }
+}

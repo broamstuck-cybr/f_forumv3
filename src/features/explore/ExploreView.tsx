@@ -1,9 +1,16 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { motion } from 'motion/react';
 import { useAppStore } from '../../store/appStore';
+import type { SourceLibraryName } from '../../types/index';
+import { LiquidTabs, SearchCard, type LiquidTabItem } from '../../components/pinui';
 import { Mark } from '../../ui/Mark';
-import { RANKED_REPOS, type ExploreMode } from './catalog';
-import { PlateTable } from './PlateTable';
+import {
+  LIBRARY_LABEL,
+  LIBRARY_ORDER,
+  RANKED_REPOS,
+  type ExploreMode,
+} from './catalog';
+import { PlateTable, type LibraryFilter } from './PlateTable';
 import { RepoChart } from './RepoChart';
 import { ToolIndex } from './ToolIndex';
 import { useCalm } from './useCalm';
@@ -14,6 +21,8 @@ const MODES: Array<{ id: ExploreMode; label: string }> = [
   { id: 'tools', label: 'Công cụ' },
   { id: 'repos', label: 'Repo' },
 ];
+
+const RECENT_SEARCHES = ['Glass', '3D', 'Hero', 'Button', 'Pricing', 'Terminal'];
 
 function resolveIncomingMode(value: string | undefined | null): ExploreMode | null {
   if (value === 'leaderboard' || value === 'github' || value === 'repos') return 'repos';
@@ -30,6 +39,7 @@ export const ExploreView: React.FC = () => {
     if (typeof window === 'undefined') return 'plates';
     return resolveIncomingMode(window.sessionStorage.getItem('ff_explore_mode')) ?? 'plates';
   });
+  const [library, setLibrary] = useState<LibraryFilter>('all');
   const [search, setSearch] = useState('');
   const [savedOnly, setSavedOnly] = useState(false);
   const query = search.trim().toLowerCase();
@@ -55,6 +65,21 @@ export const ExploreView: React.FC = () => {
     repos: RANKED_REPOS.length,
   };
 
+  const libraryTabs: LiquidTabItem[] = useMemo(() => {
+    const byLib = new Map<SourceLibraryName, number>();
+    for (const item of sourceCatalog) {
+      byLib.set(item.sourceLibrary, (byLib.get(item.sourceLibrary) ?? 0) + 1);
+    }
+    return [
+      { id: 'all', label: 'Tất cả', count: sourceCatalog.length },
+      ...LIBRARY_ORDER.map((name) => ({
+        id: name,
+        label: LIBRARY_LABEL[name],
+        count: byLib.get(name) ?? 0,
+      })),
+    ];
+  }, [sourceCatalog]);
+
   const handleTabKey = (event: React.KeyboardEvent<HTMLButtonElement>, index: number) => {
     let next = -1;
     if (event.key === 'ArrowRight') next = (index + 1) % MODES.length;
@@ -77,26 +102,14 @@ export const ExploreView: React.FC = () => {
         </h1>
         <div className="ex-aside">
           <p className="ex-lede">Đặt mẫu lên bàn, soi từng bản, rồi mang vào Workspace.</p>
-          <div className="ex-search">
-            <label htmlFor="ex-search" className="t-label">
-              Tìm
-            </label>
-            <input
-              id="ex-search"
-              type="search"
-              className="ex-search-input"
-              value={search}
-              onChange={(event) => setSearch(event.target.value)}
-              placeholder="mẫu, công cụ, repo"
-              autoComplete="off"
-              spellCheck={false}
-            />
-            {search ? (
-              <button type="button" className="ex-text" onClick={clearSearch}>
-                Xóa
-              </button>
-            ) : null}
-          </div>
+          <SearchCard
+            value={search}
+            onChange={setSearch}
+            placeholder="Tìm mẫu, công cụ, repo..."
+            recentSearches={RECENT_SEARCHES}
+            onSelectRecent={(value) => setSearch(value)}
+            className="ex-pinui-search"
+          />
           <div className="ex-quick">
             <button
               type="button"
@@ -157,6 +170,18 @@ export const ExploreView: React.FC = () => {
             );
           })}
         </div>
+
+        {mode === 'plates' ? (
+          <div className="ex-lib-tabs-bar">
+            <LiquidTabs
+              tabs={libraryTabs}
+              activeId={library}
+              onChange={(nextId) => setLibrary(nextId as LibraryFilter)}
+              ariaLabel="Nhóm mẫu giao diện"
+              className="ex-pinui-tabs"
+            />
+          </div>
+        ) : null}
       </div>
 
       <motion.section
@@ -170,13 +195,33 @@ export const ExploreView: React.FC = () => {
         transition={{ duration: 0.42, ease: [0.25, 0.1, 0.25, 1] }}
       >
         {mode === 'plates' ? (
-          <PlateTable query={query} onClearQuery={clearSearch} savedOnly={savedOnly} onShowAll={() => setSavedOnly(false)} onToggleSavedOnly={() => setSavedOnly((v) => !v)} />
+          <PlateTable
+            query={query}
+            onClearQuery={clearSearch}
+            savedOnly={savedOnly}
+            onShowAll={() => setSavedOnly(false)}
+            onToggleSavedOnly={() => setSavedOnly((v) => !v)}
+            library={library}
+            onLibraryChange={setLibrary}
+          />
         ) : null}
         {mode === 'tools' ? (
-          <ToolIndex query={query} onClearQuery={clearSearch} savedOnly={savedOnly} onShowAll={() => setSavedOnly(false)} onToggleSavedOnly={() => setSavedOnly((v) => !v)} />
+          <ToolIndex
+            query={query}
+            onClearQuery={clearSearch}
+            savedOnly={savedOnly}
+            onShowAll={() => setSavedOnly(false)}
+            onToggleSavedOnly={() => setSavedOnly((v) => !v)}
+          />
         ) : null}
         {mode === 'repos' ? (
-          <RepoChart query={query} onClearQuery={clearSearch} savedOnly={savedOnly} onShowAll={() => setSavedOnly(false)} onToggleSavedOnly={() => setSavedOnly((v) => !v)} />
+          <RepoChart
+            query={query}
+            onClearQuery={clearSearch}
+            savedOnly={savedOnly}
+            onShowAll={() => setSavedOnly(false)}
+            onToggleSavedOnly={() => setSavedOnly((v) => !v)}
+          />
         ) : null}
       </motion.section>
     </div>

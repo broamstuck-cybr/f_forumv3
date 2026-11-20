@@ -1,25 +1,35 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import type { SourceCatalogItem } from '../../types/index';
 import { useAppStore } from '../../store/appStore';
-import { previewFor } from '../../ui/Media';
+import { PinUIPlayground } from '../../components/pinui';
+import { buildThreeUIInteractiveHtml } from '../../data/threeuiInteractiveDemos';
 import {
   LIBRARY_LABEL,
+  buildMotionThemeOverrideCss,
+  buildSnippetThemeOverrideCss,
   copyText,
+  extractInlineStyles,
+  fetchMotionSitesFullMap,
+  fetchPinUISourceMap,
+  getCachedMotionSitesFullMap,
+  getCachedPinUISourceMap,
   matchesQuery,
+  resolveMotionSiteEntry,
+  resolvePinUISource,
   sanitizeBrandText,
   sanitizeSnippetCode,
   shortTitle,
   templateContext,
   whiteLabelArchivePath,
+  type MotionSiteFullEntry,
+  type PinUISourceEntry,
   type PreviewTheme,
   type PreviewViewport,
 } from './catalog';
 import { SandboxPreview } from './SandboxPreview';
-import { SpecimenMedia } from './SpecimenMedia';
 import './explore.css';
 
 type CategoryTab = 'all' | 'pinui' | 'lucianlabs' | 'threeui' | 'motionsites' | 'codefronts' | 'saved';
-type BackdropMode = 'plain' | 'grid' | 'dots';
 type CodeTab = 'html' | 'css' | 'prompt';
 
 const CATEGORY_TABS: Array<{ id: CategoryTab; label: string }> = [
@@ -32,13 +42,10 @@ const CATEGORY_TABS: Array<{ id: CategoryTab; label: string }> = [
   { id: 'saved', label: 'Đã lưu' },
 ];
 
-const VIEWPORTS: PreviewViewport[] = [1440, 768, 390];
-const ACCENTS = [
-  { id: '#d83823', label: 'Đỏ son' },
-  { id: '#1d56d8', label: 'Lam điện' },
-  { id: '#188856', label: 'Ngọc lục' },
-  { id: '#c87a12', label: 'Hổ phách' },
-  { id: '#8a3bd8', label: 'Tím thạch' },
+const VIEWPORTS: Array<{ value: PreviewViewport; label: string }> = [
+  { value: 1440, label: 'Desktop' },
+  { value: 768, label: 'Tablet 768px' },
+  { value: 390, label: 'Mobile 390px' },
 ];
 
 export const ExperienceView: React.FC = () => {
@@ -65,20 +72,47 @@ export const ExperienceView: React.FC = () => {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [viewport, setViewport] = useState<PreviewViewport>(1440);
   const [stageTheme, setStageTheme] = useState<PreviewTheme>(theme);
-  const [backdrop, setBackdrop] = useState<BackdropMode>('grid');
-  const [scale, setScale] = useState(100);
-  const [padding, setPadding] = useState(24);
-  const [radius, setRadius] = useState(14);
-  const [speed, setSpeed] = useState(1);
-  const [accent, setAccent] = useState(ACCENTS[0].id);
   const [nonce, setNonce] = useState(0);
   const [codeTab, setCodeTab] = useState<CodeTab>('html');
+  const [copiedTarget, setCopiedTarget] = useState<'code' | 'prompt' | null>(null);
+
+  const [pinuiMap, setPinuiMap] = useState<Record<string, PinUISourceEntry> | null>(
+    () => getCachedPinUISourceMap()
+  );
+  const [motionMap, setMotionMap] = useState<Record<string, MotionSiteFullEntry> | null>(
+    () => getCachedMotionSitesFullMap()
+  );
+  const [datasetsLoading, setDatasetsLoading] = useState(
+    () => !getCachedPinUISourceMap() || !getCachedMotionSitesFullMap()
+  );
 
   const query = search.trim().toLowerCase();
 
   useEffect(() => {
     setStageTheme(theme);
   }, [theme]);
+
+  useEffect(() => {
+    let active = true;
+    if (pinuiMap && motionMap) {
+      setDatasetsLoading(false);
+      return;
+    }
+    setDatasetsLoading(true);
+    Promise.all([fetchPinUISourceMap(), fetchMotionSitesFullMap()])
+      .then(([loadedPinui, loadedMotion]) => {
+        if (!active) return;
+        setPinuiMap(loadedPinui);
+        setMotionMap(loadedMotion);
+        setDatasetsLoading(false);
+      })
+      .catch(() => {
+        if (active) setDatasetsLoading(false);
+      });
+    return () => {
+      active = false;
+    };
+  }, [pinuiMap, motionMap]);
 
   const savedCount = useMemo(
     () => sourceCatalog.filter((item) => savedItemIds.includes(item.id)).length,
@@ -110,60 +144,103 @@ export const ExperienceView: React.FC = () => {
     return filteredItems[0] ?? sourceCatalog[0] ?? null;
   }, [experienceItemId, sourceCatalog, filteredItems]);
 
-  const activeHasCode = Boolean(activeItem?.previewHtml);
-  const activeHtml = activeItem ? sanitizeSnippetCode(activeItem.previewHtml) : '';
-  const activeCss = activeItem ? sanitizeSnippetCode(activeItem.previewCss) : '';
-
-  useEffect(() => {
-    if (!activeItem) return;
-    setNonce((n) => n + 1);
-    setCodeTab(activeItem.previewHtml ? 'html' : activeItem.previewCss ? 'css' : 'prompt');
-  }, [activeItem?.id]);
-
-  const activePreview = activeItem ? previewFor(activeItem.id) : null;
   const activeTitle = activeItem ? sanitizeBrandText(activeItem.title) : 'Thành phần';
   const activeDesc = activeItem ? sanitizeBrandText(activeItem.description) : '';
   const activeLiked = activeItem ? isItemLiked(activeItem.id) : false;
   const activeSaved = activeItem ? savedItemIds.includes(activeItem.id) : false;
   const activeHearts = activeItem ? getHeartCount(activeItem.id) : 10;
 
-  const activePrompt = activeItem
-    ? sanitizeBrandText(activeItem.promptSpec) ||
-      `${activeTitle}\nNhóm: ${LIBRARY_LABEL[activeItem.sourceLibrary]}\nRuntime: ${activeItem.runtime}\nPhong cách: ${activeItem.style}\nTỉ lệ: ${scale}% · Đệm: ${padding}px · Bo góc: ${radius}px · Điểm nhấn: ${accent}\n\n${activeDesc}`
-    : '';
+  const library = activeItem?.sourceLibrary;
+  const isPinUI = library === 'pinui';
+  const isThreeUI = library === 'threeui';
+  const isMotion = library === 'motionsites';
 
-  const customVariablesBlock = `:root {\n  --ff-scale: ${(scale / 100).toFixed(2)};\n  --ff-pad: ${padding}px;\n  --ff-radius: ${radius}px;\n  --ff-accent: ${accent};\n  --ff-speed: ${speed};\n}`;
+  const pinuiSource = useMemo(
+    () => (activeItem && isPinUI ? resolvePinUISource(pinuiMap, activeItem.id) : null),
+    [activeItem, isPinUI, pinuiMap]
+  );
 
-  const customizedLiveCss = useMemo(() => {
-    if (!activeHasCode) return activeCss;
-    const scaleRatio = (scale / 100).toFixed(2);
-    const speedRule =
-      speed !== 1
-        ? `*,*::before,*::after{animation-duration:calc(1.2s / ${speed})!important;transition-duration:calc(280ms / ${speed})!important}`
-        : '';
-    return `${customVariablesBlock}\nbody{padding:${padding}px!important}\nbody>*{transform:scale(${scaleRatio});transform-origin:center;--accent:${accent};--primary:${accent};border-radius:${radius}px}\n${speedRule}\n${activeCss}`;
-  }, [activeHasCode, activeCss, customVariablesBlock, scale, padding, radius, accent, speed]);
+  const motionEntry = useMemo(
+    () => (activeItem && isMotion ? resolveMotionSiteEntry(motionMap, activeItem.id) : null),
+    [activeItem, isMotion, motionMap]
+  );
 
-  const displayCss = activeCss ? `${customVariablesBlock}\n\n${activeCss}` : '';
-  const activeCode = codeTab === 'html' ? activeHtml : codeTab === 'css' ? displayCss : activePrompt;
+  const threeInteractiveHtml = useMemo(
+    () =>
+      activeItem && isThreeUI
+        ? buildThreeUIInteractiveHtml(activeItem.id, activeTitle, activeItem.category, stageTheme)
+        : '',
+    [activeItem, isThreeUI, activeTitle, stageTheme]
+  );
+
+  const activeHtml = useMemo(() => {
+    if (!activeItem) return '';
+    if (isPinUI) return pinuiSource?.tsx ?? '';
+    if (isThreeUI) return threeInteractiveHtml;
+    if (isMotion) return motionEntry?.liveHtml ?? sanitizeSnippetCode(activeItem.previewHtml);
+    return sanitizeSnippetCode(activeItem.previewHtml);
+  }, [activeItem, isPinUI, isThreeUI, isMotion, pinuiSource, threeInteractiveHtml, motionEntry]);
+
+  const activeCss = useMemo(() => {
+    if (!activeItem) return '';
+    if (isPinUI) return pinuiSource?.css ?? '';
+    if (isThreeUI) return extractInlineStyles(threeInteractiveHtml);
+    if (isMotion) {
+      return extractInlineStyles(motionEntry?.liveHtml) || sanitizeSnippetCode(activeItem.previewCss);
+    }
+    return sanitizeSnippetCode(activeItem.previewCss);
+  }, [activeItem, isPinUI, isThreeUI, isMotion, pinuiSource, threeInteractiveHtml, motionEntry]);
+
+  const activePrompt = useMemo(() => {
+    if (!activeItem) return '';
+    if (isPinUI && pinuiSource?.prompt) return pinuiSource.prompt;
+    if (isMotion && motionEntry?.promptText) return motionEntry.promptText;
+    return (
+      sanitizeBrandText(activeItem.promptSpec) ||
+      `${activeTitle}\nNhóm: ${LIBRARY_LABEL[activeItem.sourceLibrary]}\nRuntime: ${activeItem.runtime}\nPhong cách: ${activeItem.style}\nTừ khóa: ${activeItem.tags.join(', ')}\n\n${activeDesc}`
+    );
+  }, [activeItem, isPinUI, isMotion, pinuiSource, motionEntry, activeTitle, activeDesc]);
+
+  const motionThemeOverride = useMemo(
+    () =>
+      motionEntry?.liveHtml ? buildMotionThemeOverrideCss(motionEntry.liveHtml, stageTheme) : '',
+    [motionEntry, stageTheme]
+  );
+
+  const snippetCssWithTheme = useMemo(() => {
+    if (!activeItem || isPinUI || isThreeUI || isMotion) return '';
+    const extra = buildSnippetThemeOverrideCss(
+      activeItem.sourceLibrary,
+      activeItem.previewCss,
+      stageTheme
+    );
+    return extra ? `${extra}\n${activeItem.previewCss ?? ''}` : activeItem.previewCss ?? '';
+  }, [activeItem, isPinUI, isThreeUI, isMotion, stageTheme]);
+
+  useEffect(() => {
+    if (!activeItem) return;
+    setNonce((n) => n + 1);
+    setCodeTab('html');
+    setCopiedTarget(null);
+  }, [activeItem?.id]);
+
+  const activeCode =
+    codeTab === 'html' ? activeHtml : codeTab === 'css' ? activeCss : activePrompt;
 
   const handleSelectItem = (item: SourceCatalogItem) => {
     openExperience(item.id);
     setDrawerOpen(false);
   };
 
-  const handleResetTune = () => {
-    setScale(100);
-    setPadding(24);
-    setRadius(14);
-    setSpeed(1);
-    setAccent(ACCENTS[0].id);
-    setNonce((n) => n + 1);
-  };
-
-  const handleCopy = async (content: string, label: string) => {
+  const handleCopy = async (content: string, kind: 'code' | 'prompt', label: string) => {
     if (!content) return;
     const ok = await copyText(content);
+    if (ok) {
+      setCopiedTarget(kind);
+      window.setTimeout(() => {
+        setCopiedTarget((prev) => (prev === kind ? null : prev));
+      }, 1800);
+    }
     addToast(
       ok
         ? { type: 'success', title: label, message: activeTitle }
@@ -177,15 +254,22 @@ export const ExperienceView: React.FC = () => {
       addToast({ type: 'info', title: 'Đã đính kèm từ trước', message: activeTitle });
       return;
     }
-    attachItemToWorkspace(templateContext(activeItem));
+    attachItemToWorkspace(templateContext(activeItem, activePrompt || undefined));
   };
+
+  const copyCodeContent =
+    codeTab === 'css' ? activeCss || activeHtml : activeHtml || activeCss;
 
   return (
     <div className="ex-xp">
       <header className="ex-xp-topbar">
         <div className="wrap-wide ex-xp-topbar-inner">
           <div className="ex-xp-lead">
-            <button type="button" className="btn btn-line ex-xp-back" onClick={() => navigate('explore')}>
+            <button
+              type="button"
+              className="btn btn-line ex-xp-back"
+              onClick={() => navigate('explore')}
+            >
               Quay lại Khám phá
             </button>
             <button
@@ -264,7 +348,9 @@ export const ExperienceView: React.FC = () => {
                 <button
                   type="button"
                   className="btn btn-solid"
-                  onClick={() => openInWorkspace(templateContext(activeItem))}
+                  onClick={() =>
+                    openInWorkspace(templateContext(activeItem, activePrompt || undefined))
+                  }
                 >
                   Mở Workspace
                 </button>
@@ -304,7 +390,7 @@ export const ExperienceView: React.FC = () => {
 
           <div className="ex-xp-list-meta">
             <span className="t-label">{filteredItems.length} mẫu hiển thị</span>
-            {(search || savedOnly || category !== 'all') ? (
+            {search || savedOnly || category !== 'all' ? (
               <button
                 type="button"
                 className="ex-text"
@@ -327,9 +413,12 @@ export const ExperienceView: React.FC = () => {
                 const liked = isItemLiked(item.id);
                 const hearts = getHeartCount(item.id);
                 const itemTitle = shortTitle(item);
-                const hasCode = Boolean(item.previewHtml);
                 return (
-                  <li key={item.id} className="ex-xp-item-row" data-active={selected ? 'true' : undefined}>
+                  <li
+                    key={item.id}
+                    className="ex-xp-item-row"
+                    data-active={selected ? 'true' : undefined}
+                  >
                     <button
                       type="button"
                       className="ex-xp-item-btn"
@@ -338,7 +427,7 @@ export const ExperienceView: React.FC = () => {
                     >
                       <span className="ex-xp-item-top">
                         <span className="t-label">{LIBRARY_LABEL[item.sourceLibrary]}</span>
-                        {hasCode ? <span className="t-label ex-plate-live">live</span> : null}
+                        <span className="t-label ex-plate-live">live</span>
                       </span>
                       <span className="ex-xp-item-title">{itemTitle}</span>
                       <span className="t-note">{item.category}</span>
@@ -375,298 +464,163 @@ export const ExperienceView: React.FC = () => {
           )}
         </aside>
 
-        <section className="ex-xp-center" aria-label="Sân khấu trải nghiệm">
-          <div className="ex-xp-toolbar">
-            <div className="ex-xp-tool-group" role="group" aria-label="Khung nhìn">
-              {VIEWPORTS.map((vp) => (
+        <div className="ex-xp-main">
+          <section className="ex-xp-center" aria-label="Sân khấu trải nghiệm">
+            <div className="ex-xp-toolbar">
+              <div className="ex-xp-tool-group" role="group" aria-label="Khung kích thước">
+                {VIEWPORTS.map((vp) => (
+                  <button
+                    key={vp.value}
+                    type="button"
+                    className="ex-text"
+                    aria-pressed={viewport === vp.value}
+                    onClick={() => setViewport(vp.value)}
+                  >
+                    {vp.label}
+                  </button>
+                ))}
+              </div>
+
+              <div className="ex-xp-tool-group" role="group" aria-label="Chủ đề sân khấu">
                 <button
-                  key={vp}
                   type="button"
                   className="ex-text"
-                  aria-pressed={viewport === vp}
-                  onClick={() => setViewport(vp)}
+                  aria-pressed={stageTheme === 'light'}
+                  onClick={() => setStageTheme('light')}
                 >
-                  {vp}px
+                  Sáng
                 </button>
-              ))}
-            </div>
-
-            <div className="ex-xp-tool-group" role="group" aria-label="Bề mặt sáng tối">
-              <button
-                type="button"
-                className="ex-text"
-                aria-pressed={stageTheme === 'light'}
-                onClick={() => setStageTheme('light')}
-              >
-                Sáng
-              </button>
-              <button
-                type="button"
-                className="ex-text"
-                aria-pressed={stageTheme === 'dark'}
-                onClick={() => setStageTheme('dark')}
-              >
-                Tối
-              </button>
-            </div>
-
-            <div className="ex-xp-tool-group" role="group" aria-label="Phông nền sân khấu">
-              <button
-                type="button"
-                className="ex-text"
-                aria-pressed={backdrop === 'plain'}
-                onClick={() => setBackdrop('plain')}
-              >
-                Trơn
-              </button>
-              <button
-                type="button"
-                className="ex-text"
-                aria-pressed={backdrop === 'grid'}
-                onClick={() => setBackdrop('grid')}
-              >
-                Lưới
-              </button>
-              <button
-                type="button"
-                className="ex-text"
-                aria-pressed={backdrop === 'dots'}
-                onClick={() => setBackdrop('dots')}
-              >
-                Chấm
-              </button>
-            </div>
-
-            <div className="ex-xp-tool-group" role="group" aria-label="Tỉ lệ và đệm nhanh">
-              <button
-                type="button"
-                className="ex-text"
-                aria-pressed={scale === 90}
-                onClick={() => setScale(90)}
-              >
-                90%
-              </button>
-              <button
-                type="button"
-                className="ex-text"
-                aria-pressed={scale === 100}
-                onClick={() => setScale(100)}
-              >
-                100%
-              </button>
-              <button
-                type="button"
-                className="ex-text"
-                aria-pressed={scale === 115}
-                onClick={() => setScale(115)}
-              >
-                115%
-              </button>
-              <button
-                type="button"
-                className="ex-text"
-                aria-pressed={padding === 16}
-                onClick={() => setPadding(padding === 16 ? 32 : 16)}
-              >
-                Đệm {padding}px
-              </button>
-              <button
-                type="button"
-                className="ex-text"
-                onClick={() => setNonce((n) => n + 1)}
-              >
-                Chạy lại
-              </button>
-            </div>
-          </div>
-
-          <div
-            className="ex-xp-stage"
-            data-theme={stageTheme}
-            data-backdrop={backdrop}
-          >
-            {activeItem ? (
-              <div
-                className="ex-xp-stage-frame"
-                style={
-                  {
-                    '--xp-vp': `${viewport}px`,
-                    '--xp-pad': `${padding}px`,
-                    '--xp-radius': `${radius}px`,
-                    '--xp-scale': (scale / 100).toFixed(2),
-                  } as React.CSSProperties
-                }
-              >
-                {activeHasCode ? (
-                  <SandboxPreview
-                    title={activeTitle}
-                    html={activeItem.previewHtml ?? ''}
-                    css={customizedLiveCss}
-                    theme={stageTheme}
-                    viewport={viewport}
-                    nonce={nonce}
-                  />
-                ) : activePreview ? (
-                  <div className="ex-xp-media-box">
-                    <SpecimenMedia
-                      key={`${activeItem.id}-${nonce}`}
-                      preview={activePreview}
-                      title={activeTitle}
-                      fallbackLabel={LIBRARY_LABEL[activeItem.sourceLibrary]}
-                      fit="contain"
-                      activePlay
-                    />
-                  </div>
-                ) : (
-                  <div className="ex-spec-type">
-                    <span className="ex-spec-word">{activeTitle}</span>
-                    <span className="t-label">{LIBRARY_LABEL[activeItem.sourceLibrary]}</span>
-                  </div>
-                )}
-              </div>
-            ) : null}
-          </div>
-
-          {activeItem ? (
-            <div className="ex-xp-summary">
-              <div className="ex-xp-summary-main">
-                <span className="t-label">
-                  {LIBRARY_LABEL[activeItem.sourceLibrary]} · {activeItem.category}
-                </span>
-                <h1 className="t-title ex-xp-title">{activeTitle}</h1>
-                <p className="ex-bench-desc">{activeDesc}</p>
-              </div>
-              <dl className="ex-meta">
-                <div>
-                  <dt>runtime</dt>
-                  <dd>{activeItem.runtime}</dd>
-                </div>
-                <div>
-                  <dt>phong cách</dt>
-                  <dd>{activeItem.style}</dd>
-                </div>
-                <div>
-                  <dt>giấy phép</dt>
-                  <dd>{sanitizeBrandText(activeItem.license)}</dd>
-                </div>
-                <div>
-                  <dt>mã hồ sơ</dt>
-                  <dd>{whiteLabelArchivePath(activeItem)}</dd>
-                </div>
-              </dl>
-            </div>
-          ) : null}
-        </section>
-
-        <aside className="ex-xp-inspector" aria-label="Bảng tùy chỉnh và mã nguồn">
-          {activeHasCode ? (
-            <section className="ex-xp-card" aria-labelledby="ex-xp-tune-heading">
-              <div className="ex-xp-card-head">
-                <h2 id="ex-xp-tune-heading" className="t-label">
-                  Tùy chỉnh
-                </h2>
-                <button type="button" className="ex-text" onClick={handleResetTune}>
+                <button
+                  type="button"
+                  className="ex-text"
+                  aria-pressed={stageTheme === 'dark'}
+                  onClick={() => setStageTheme('dark')}
+                >
+                  Tối
+                </button>
+                <button
+                  type="button"
+                  className="ex-text"
+                  onClick={() => setNonce((n) => n + 1)}
+                >
                   Đặt lại
                 </button>
               </div>
+            </div>
 
-              <div className="ex-xp-sliders">
-                <label className="ex-tune-field">
-                  <span className="t-label">Tỉ lệ hiển thị ({scale}%)</span>
-                  <input
-                    type="range"
-                    min={65}
-                    max={135}
-                    step={5}
-                    value={scale}
-                    onChange={(event) => setScale(Number(event.target.value))}
-                  />
-                </label>
-
-                <label className="ex-tune-field">
-                  <span className="t-label">Khoảng đệm ({padding}px)</span>
-                  <input
-                    type="range"
-                    min={0}
-                    max={64}
-                    step={4}
-                    value={padding}
-                    onChange={(event) => setPadding(Number(event.target.value))}
-                  />
-                </label>
-
-                <label className="ex-tune-field">
-                  <span className="t-label">Bo góc ({radius}px)</span>
-                  <input
-                    type="range"
-                    min={0}
-                    max={36}
-                    step={2}
-                    value={radius}
-                    onChange={(event) => setRadius(Number(event.target.value))}
-                  />
-                </label>
-
-                <label className="ex-tune-field">
-                  <span className="t-label">Tốc độ chuyển động ({speed}x)</span>
-                  <input
-                    type="range"
-                    min={0.5}
-                    max={2}
-                    step={0.25}
-                    value={speed}
-                    onChange={(event) => setSpeed(Number(event.target.value))}
-                  />
-                </label>
-
-                <div className="ex-tune-field">
-                  <span className="t-label">Điểm nhấn màu</span>
-                  <div className="ex-xp-swatches" role="group" aria-label="Chọn màu nhấn">
-                    {ACCENTS.map((item) => (
-                      <button
-                        key={item.id}
-                        type="button"
-                        className="ex-xp-swatch"
-                        style={{ '--swatch': item.id } as React.CSSProperties}
-                        aria-pressed={accent === item.id}
-                        onClick={() => setAccent(item.id)}
-                      >
-                        {item.label}
-                      </button>
-                    ))}
-                  </div>
+            <div
+              className="ex-xp-stage"
+              data-theme={stageTheme}
+              data-viewport={viewport}
+            >
+              {activeItem ? (
+                <div
+                  className="ex-xp-stage-frame"
+                  data-viewport={viewport}
+                  data-playground={isPinUI ? 'true' : 'false'}
+                >
+                  {isPinUI ? (
+                    <PinUIPlayground
+                      key={`${activeItem.id}-${nonce}`}
+                      itemId={activeItem.id}
+                      theme={stageTheme}
+                    />
+                  ) : isThreeUI ? (
+                    <SandboxPreview
+                      title={activeTitle}
+                      html={threeInteractiveHtml}
+                      css=""
+                      theme={stageTheme}
+                      viewport={viewport}
+                      nonce={nonce}
+                    />
+                  ) : isMotion ? (
+                    motionEntry?.liveHtml ? (
+                      <SandboxPreview
+                        title={activeTitle}
+                        html={motionEntry.liveHtml}
+                        css={motionThemeOverride}
+                        theme={stageTheme}
+                        viewport={viewport}
+                        nonce={nonce}
+                      />
+                    ) : (
+                      <div className="ex-xp-loading" role="status">
+                        <span className="t-label">
+                          {datasetsLoading
+                            ? 'Đang tải bản dựng chuyển động trực tiếp...'
+                            : 'Không tìm thấy bản dựng cho mẫu này'}
+                        </span>
+                      </div>
+                    )
+                  ) : (
+                    <SandboxPreview
+                      title={activeTitle}
+                      html={activeItem.previewHtml ?? ''}
+                      css={snippetCssWithTheme}
+                      theme={stageTheme}
+                      viewport={viewport}
+                      nonce={nonce}
+                    />
+                  )}
                 </div>
-              </div>
-            </section>
-          ) : null}
+              ) : null}
+            </div>
 
-          <section className="ex-xp-card" aria-label="Mã nguồn và Prompt">
+            {activeItem ? (
+              <div className="ex-xp-summary">
+                <div className="ex-xp-summary-main">
+                  <span className="t-label">
+                    {LIBRARY_LABEL[activeItem.sourceLibrary]} · {activeItem.category}
+                  </span>
+                  <h1 className="t-title ex-xp-title">{activeTitle}</h1>
+                  <p className="ex-bench-desc">{activeDesc}</p>
+                </div>
+                <dl className="ex-meta">
+                  <div>
+                    <dt>runtime</dt>
+                    <dd>{activeItem.runtime}</dd>
+                  </div>
+                  <div>
+                    <dt>phong cách</dt>
+                    <dd>{activeItem.style}</dd>
+                  </div>
+                  <div>
+                    <dt>giấy phép</dt>
+                    <dd>{sanitizeBrandText(activeItem.license)}</dd>
+                  </div>
+                  <div>
+                    <dt>mã hồ sơ</dt>
+                    <dd>{whiteLabelArchivePath(activeItem)}</dd>
+                  </div>
+                </dl>
+              </div>
+            ) : null}
+          </section>
+
+          <section className="ex-xp-card ex-xp-source-drawer" aria-label="Mã nguồn và Prompt nguyên bản">
             <div className="ex-code-tabs">
               <div className="ex-filter" role="tablist" aria-label="Ngăn mã nguồn">
-                {activeHtml ? (
-                  <button
-                    type="button"
-                    role="tab"
-                    aria-selected={codeTab === 'html'}
-                    className="ex-text"
-                    aria-pressed={codeTab === 'html'}
-                    onClick={() => setCodeTab('html')}
-                  >
-                    HTML / TSX
-                  </button>
-                ) : null}
-                {displayCss ? (
-                  <button
-                    type="button"
-                    role="tab"
-                    aria-selected={codeTab === 'css'}
-                    className="ex-text"
-                    aria-pressed={codeTab === 'css'}
-                    onClick={() => setCodeTab('css')}
-                  >
-                    CSS
-                  </button>
-                ) : null}
+                <button
+                  type="button"
+                  role="tab"
+                  aria-selected={codeTab === 'html'}
+                  className="ex-text"
+                  aria-pressed={codeTab === 'html'}
+                  onClick={() => setCodeTab('html')}
+                >
+                  TSX / HTML
+                </button>
+                <button
+                  type="button"
+                  role="tab"
+                  aria-selected={codeTab === 'css'}
+                  className="ex-text"
+                  aria-pressed={codeTab === 'css'}
+                  onClick={() => setCodeTab('css')}
+                >
+                  CSS
+                </button>
                 <button
                   type="button"
                   role="tab"
@@ -678,55 +632,54 @@ export const ExperienceView: React.FC = () => {
                   Prompt
                 </button>
               </div>
+
               <div className="ex-xp-copy-bar">
-                {(activeHtml || displayCss) ? (
-                  <button
-                    type="button"
-                    className="ex-text"
-                    onClick={() =>
-                      void handleCopy(
-                        codeTab === 'css' ? displayCss : activeHtml || displayCss,
-                        'Đã chép mã'
-                      )
-                    }
-                  >
-                    Chép mã
-                  </button>
-                ) : null}
                 <button
                   type="button"
                   className="ex-text"
-                  onClick={() => void handleCopy(activePrompt, 'Đã chép Prompt')}
+                  disabled={!copyCodeContent}
+                  onClick={() => void handleCopy(copyCodeContent, 'code', 'Đã chép mã')}
                 >
-                  Chép Prompt
+                  {copiedTarget === 'code' ? 'Đã chép' : 'Chép mã'}
+                </button>
+                <button
+                  type="button"
+                  className="ex-text"
+                  disabled={!activePrompt}
+                  onClick={() => void handleCopy(activePrompt, 'prompt', 'Đã chép Prompt')}
+                >
+                  {copiedTarget === 'prompt' ? 'Đã chép' : 'Chép Prompt'}
                 </button>
               </div>
             </div>
 
             <pre className="ex-code-pre ex-xp-pre">
-              <code>{activeCode}</code>
+              <code>
+                {activeCode ||
+                  (datasetsLoading && (isPinUI || isMotion)
+                    ? 'Đang tải mã nguồn nguyên bản...'
+                    : 'Không có dữ liệu cho ngăn này.')}
+              </code>
             </pre>
 
             {activeItem ? (
               <div className="ex-xp-card-foot">
-                <button
-                  type="button"
-                  className="btn btn-line"
-                  onClick={handleAttach}
-                >
+                <button type="button" className="btn btn-line" onClick={handleAttach}>
                   Đính kèm vào dự án
                 </button>
                 <button
                   type="button"
                   className="btn btn-solid"
-                  onClick={() => openInWorkspace(templateContext(activeItem))}
+                  onClick={() =>
+                    openInWorkspace(templateContext(activeItem, activePrompt || undefined))
+                  }
                 >
                   Mở Workspace
                 </button>
               </div>
             ) : null}
           </section>
-        </aside>
+        </div>
       </div>
     </div>
   );

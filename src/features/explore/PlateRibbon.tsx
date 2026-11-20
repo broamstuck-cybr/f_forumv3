@@ -17,6 +17,7 @@ interface PlateRibbonProps {
   drift: boolean;
   calm: boolean;
   onSelect: (item: SourceCatalogItem) => void;
+  onExperience: (item: SourceCatalogItem) => void;
 }
 
 interface DragState {
@@ -101,6 +102,7 @@ export const PlateRibbon: React.FC<PlateRibbonProps> = ({
   drift,
   calm,
   onSelect,
+  onExperience,
 }) => {
   const scrollerRef = useRef<HTMLDivElement>(null);
   const listRef = useRef<HTMLUListElement>(null);
@@ -166,6 +168,7 @@ export const PlateRibbon: React.FC<PlateRibbonProps> = ({
 
   const handlePointerDown = (event: React.PointerEvent<HTMLDivElement>) => {
     if (event.pointerType !== 'mouse' || event.button !== 0) return;
+    if ((event.target as HTMLElement).closest('.ex-plate-foot')) return;
     const el = scrollerRef.current;
     if (!el) return;
     dragRef.current = {
@@ -299,20 +302,29 @@ export const PlateRibbon: React.FC<PlateRibbonProps> = ({
                   <span className="plate ex-plate-frame ex-plate-type">
                     <span className="ex-plate-type-top">
                       <span className="t-label">{item.category}</span>
-                      {hasLive ? <span className="ex-live-dot" aria-hidden="true" /> : null}
+                      <span className="ex-live-dot" aria-hidden="true" />
                     </span>
                     <span className="ex-plate-word">{title}</span>
-                    <span className="t-label">{hasLive ? 'Chạy trực tiếp' : item.style}</span>
+                    <span className="t-label">{item.style}</span>
                   </span>
                 )}
                 <span className="ex-plate-cap" aria-hidden="true">
                   <span className="t-label">{String(index + 1).padStart(2, '0')}</span>
                   {preview || hasLive ? <span className="ex-plate-title">{title}</span> : null}
-                  {hasLive ? <span className="t-label ex-plate-live">live</span> : null}
+                  <span className="t-label ex-plate-live">live</span>
                   {saved ? <span className="t-note ex-plate-saved">đã lưu</span> : null}
                 </span>
               </button>
-              <ReactionBar id={item.id} title={title} className="ex-plate-react" />
+              <div className="ex-plate-foot">
+                <ReactionBar id={item.id} title={title} className="ex-plate-react" />
+                <button
+                  type="button"
+                  className="ex-plate-xp"
+                  onClick={() => onExperience(item)}
+                >
+                  Trải nghiệm
+                </button>
+              </div>
             </li>
           );
         })}

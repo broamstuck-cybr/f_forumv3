@@ -20,7 +20,7 @@ export function supportsSvgBackdrop(): boolean {
   const ua = navigator as Navigator & { userAgentData?: { brands?: Array<{ brand: string }> } };
   const isChromium = Boolean(
     ua.userAgentData?.brands?.some((b) => /chrom|edge|opera/i.test(b.brand)) ||
-      /Chrome|Edg\//.test(navigator.userAgent)
+      /Chrome|Edg[/]/.test(navigator.userAgent)
   );
   if (!isChromium) return false;
   return CSS.supports('backdrop-filter', 'url(#x)');

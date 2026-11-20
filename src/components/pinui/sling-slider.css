@@ -1,0 +1,132 @@
+.psling {
+  --psling-ink: var(--ink-primary);
+  --psling-muted: var(--ink-muted);
+  --psling-rail: var(--border-strong);
+  --psling-fill: var(--accent-primary);
+  --psling-thumb: var(--bg-high);
+  display: grid;
+  gap: 14px;
+  width: min(100%, 360px);
+  padding: 20px 22px 16px;
+  border: 1px solid var(--border-subtle);
+  border-radius: 22px;
+  background: var(--bg-surface);
+  box-shadow: var(--shadow-md);
+  color: var(--psling-ink);
+  font-family: var(--font-sans);
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.psling__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.psling__label {
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--psling-muted);
+}
+
+.psling__value {
+  font-family: var(--font-mono);
+  font-size: 28px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+
+.psling__value span {
+  margin-left: 2px;
+  font-size: 13px;
+  color: var(--psling-muted);
+}
+
+.psling__track {
+  position: relative;
+  height: 44px;
+  margin: 0 14px;
+  cursor: grab;
+  touch-action: none;
+  outline: none;
+}
+
+.psling__track:active {
+  cursor: grabbing;
+}
+
+.psling__track:focus-visible {
+  outline: 2px solid var(--psling-fill);
+  outline-offset: 6px;
+  border-radius: 12px;
+}
+
+.psling__rail,
+.psling__fill {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  height: 6px;
+  margin-top: -3px;
+  border-radius: 999px;
+}
+
+.psling__rail {
+  right: 0;
+  background: var(--psling-rail);
+  opacity: 0.55;
+}
+
+.psling__fill {
+  background: var(--psling-fill);
+}
+
+.psling__thumb {
+  position: absolute;
+  top: 50%;
+  left: -14px;
+  display: grid;
+  width: 28px;
+  height: 28px;
+  margin-top: -14px;
+  place-items: center;
+  border: 1px solid var(--border-strong);
+  border-radius: 50%;
+  background: var(--psling-thumb);
+  box-shadow: var(--shadow-md);
+  will-change: transform;
+}
+
+.psling__thumb[data-active] {
+  box-shadow: 0 0 0 6px var(--accent-soft), var(--shadow-md);
+}
+
+.psling__grip {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--psling-fill);
+}
+
+.psling__scale {
+  display: flex;
+  justify-content: space-between;
+  margin: 0 14px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--psling-muted);
+}
+
+.psling[data-theme='dark'] {
+  --psling-thumb: var(--bg-high);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .psling__thumb {
+    transition: none;
+  }
+}

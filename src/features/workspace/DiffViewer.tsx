@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import type { DiffEntry, WorkspaceFile } from '../../types/index';
 
 export type DiffViewMode = 'unified' | 'split' | 'edit';
@@ -13,9 +13,9 @@ export interface DiffViewerProps {
 }
 
 const VIEW_MODES: Array<{ id: DiffViewMode; label: string }> = [
-  { id: 'unified', label: 'Gộp' },
-  { id: 'split', label: 'Tách' },
-  { id: 'edit', label: 'Sửa' },
+  { id: 'unified', label: 'Gộp dòng' },
+  { id: 'split', label: 'So sánh 2 cột' },
+  { id: 'edit', label: 'Sửa mã' },
 ];
 
 const STATUS_LABELS: Record<DiffEntry['status'], string> = {
@@ -38,6 +38,10 @@ export const DiffViewer: React.FC<DiffViewerProps> = ({
   const [copiedPath, setCopiedPath] = useState<string | null>(null);
   const [hunkDecision, setHunkDecision] = useState<Record<string, 'accepted' | 'reverted'>>({});
 
+  useEffect(() => {
+    setViewMode(initialMode);
+  }, [initialMode]);
+
   const activeFile = useMemo(
     () => files.find((file) => file.path === activeFilePath) || files[0] || null,
     [files, activeFilePath]
@@ -53,7 +57,7 @@ export const DiffViewer: React.FC<DiffViewerProps> = ({
     try {
       await navigator.clipboard.writeText(activeFile.content);
       setCopiedPath(activeFile.path);
-      setTimeout(() => setCopiedPath(null), 1600);
+      window.setTimeout(() => setCopiedPath(null), 1600);
     } catch {
       return;
     }
@@ -86,7 +90,7 @@ export const DiffViewer: React.FC<DiffViewerProps> = ({
 
   return (
     <div className="ws-dv">
-      <nav className="ws-dv-files" aria-label="Tệp">
+      <nav className="ws-dv-files" aria-label="Danh sách tệp">
         <ul>
           {files.map((file) => {
             const entry = diffs.find((item) => item.path === file.path);
@@ -138,7 +142,7 @@ export const DiffViewer: React.FC<DiffViewerProps> = ({
             </button>
           )}
           <button type="button" className="btn btn-line btn-sm" onClick={() => void handleCopyCode()}>
-            {copiedPath === activeFile?.path ? 'Đã chép' : 'Sao chép'}
+            {copiedPath === activeFile?.path ? 'Đã chép' : 'Chép mã'}
           </button>
         </div>
 
@@ -148,7 +152,7 @@ export const DiffViewer: React.FC<DiffViewerProps> = ({
               {decision === 'accepted'
                 ? 'Đã chấp nhận thay đổi.'
                 : decision === 'reverted'
-                  ? 'Đã trả về bản cũ.'
+                  ? 'Đã hoàn tác về bản trước.'
                   : 'Giữ thay đổi của tệp này?'}
             </p>
             <button type="button" className="btn btn-solid btn-sm" onClick={handleAcceptHunk}>
@@ -201,7 +205,7 @@ export const DiffViewer: React.FC<DiffViewerProps> = ({
               </div>
             ))
           ) : (
-            <p className="ws-empty">Chưa có tệp.</p>
+            <p className="ws-empty">Chưa có tệp trong phiên này.</p>
           )}
         </div>
       </section>

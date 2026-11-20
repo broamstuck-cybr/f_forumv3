@@ -1,19 +1,32 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import type { SourceCatalogItem, SourceLibraryName } from '../../types/index';
 import { useAppStore } from '../../store/appStore';
+import { PinUIPlayground } from '../../components/pinui';
+import { buildThreeUIInteractiveHtml } from '../../data/threeuiInteractiveDemos';
 import { previewFor } from '../../ui/Media';
 import { Reveal } from '../../ui/Reveal';
 import {
   LIBRARY_LABEL,
   LIBRARY_ORDER,
   archiveCount,
+  buildMotionThemeOverrideCss,
+  buildSnippetThemeOverrideCss,
   copyText,
+  extractInlineStyles,
+  fetchMotionSitesFullMap,
+  fetchPinUISourceMap,
   formatCount,
+  getCachedMotionSitesFullMap,
+  getCachedPinUISourceMap,
   matchesQuery,
+  resolveMotionSiteEntry,
+  resolvePinUISource,
   sanitizeBrandText,
   sanitizeSnippetCode,
   templateContext,
   whiteLabelArchivePath,
+  type MotionSiteFullEntry,
+  type PinUISourceEntry,
   type PreviewTheme,
   type PreviewViewport,
 } from './catalog';
@@ -23,20 +36,34 @@ import { SpecimenMedia } from './SpecimenMedia';
 import { ReactionBar, SpecimenSheet } from './SpecimenSheet';
 import { useCalm } from './useCalm';
 
+export type LibraryFilter = 'all' | SourceLibraryName;
+type BenchTab = 'html' | 'css' | 'spec';
+
 interface PlateTableProps {
   query: string;
   onClearQuery: () => void;
   savedOnly: boolean;
   onShowAll: () => void;
   onToggleSavedOnly: () => void;
+  library?: LibraryFilter;
+  onLibraryChange?: (library: LibraryFilter) => void;
 }
 
-type LibraryFilter = 'all' | SourceLibraryName;
-type BenchTab = 'html' | 'css' | 'spec';
+const VIEWPORTS: Array<{ value: PreviewViewport; label: string }> = [
+  { value: 1440, label: 'Desktop' },
+  { value: 768, label: '768px' },
+  { value: 390, label: '390px' },
+];
 
-const VIEWPORTS: PreviewViewport[] = [390, 768, 1440];
-
-export const PlateTable: React.FC<PlateTableProps> = ({ query, onClearQuery, savedOnly, onShowAll, onToggleSavedOnly }) => {
+export const PlateTable: React.FC<PlateTableProps> = ({
+  query,
+  onClearQuery,
+  savedOnly,
+  onShowAll,
+  onToggleSavedOnly,
+  library: controlledLibrary,
+  onLibraryChange,
+}) => {
   const {
     sourceCatalog,
     savedItemIds,
@@ -52,19 +79,25 @@ export const PlateTable: React.FC<PlateTableProps> = ({ query, onClearQuery, sav
   const [coarse] = useState(
     () => typeof window !== 'undefined' && window.matchMedia('(pointer: coarse)').matches
   );
-  const [library, setLibrary] = useState<LibraryFilter>('all');
+  const [internalLibrary, setInternalLibrary] = useState<LibraryFilter>('all');
+  const library = controlledLibrary ?? internalLibrary;
+  const setLibrary = onLibraryChange ?? setInternalLibrary;
+
   const [driftOn, setDriftOn] = useState(true);
   const [activeId, setActiveId] = useState<string | null>(null);
   const [sheetOpen, setSheetOpen] = useState(false);
   const [viewport, setViewport] = useState<PreviewViewport>(1440);
   const [stageTheme, setStageTheme] = useState<PreviewTheme>(theme);
   const [nonce, setNonce] = useState(0);
-  const [benchScale, setBenchScale] = useState(100);
-  const [benchPad, setBenchPad] = useState(24);
-  const [benchRadius, setBenchRadius] = useState(12);
-  const [benchSpeed, setBenchSpeed] = useState(1);
   const [benchCodeOpen, setBenchCodeOpen] = useState(true);
   const [benchTab, setBenchTab] = useState<BenchTab>('html');
+  const [copiedCode, setCopiedCode] = useState(false);
+  const [pinuiMap, setPinuiMap] = useState<Record<string, PinUISourceEntry> | null>(
+    () => getCachedPinUISourceMap()
+  );
+  const [motionMap, setMotionMap] = useState<Record<string, MotionSiteFullEntry> | null>(
+    () => getCachedMotionSitesFullMap()
+  );
 
   const canDrift = !calm && !coarse;
 
@@ -81,18 +114,19 @@ export const PlateTable: React.FC<PlateTableProps> = ({ query, onClearQuery, sav
     () =>
       LIBRARY_ORDER.map((name) => {
         const all = sourceCatalog.filter((item) => item.sourceLibrary === name);
-        const items = all.filter((item) =>
-          (!savedOnly || savedItemIds.includes(item.id)) &&
-          matchesQuery(query, [
-            item.title,
-            item.description,
-            item.category,
-            item.subcategory,
-            item.runtime,
-            item.style,
-            LIBRARY_LABEL[item.sourceLibrary],
-            ...item.tags,
-          ])
+        const items = all.filter(
+          (item) =>
+            (!savedOnly || savedItemIds.includes(item.id)) &&
+            matchesQuery(query, [
+              item.title,
+              item.description,
+              item.category,
+              item.subcategory,
+              item.runtime,
+              item.style,
+              LIBRARY_LABEL[item.sourceLibrary],
+              ...item.tags,
+            ])
         );
         return { name, all, items };
       }),
@@ -118,8 +152,19 @@ export const PlateTable: React.FC<PlateTableProps> = ({ query, onClearQuery, sav
 
   useEffect(() => {
     if (!activeItem) return;
+    if (activeItem.sourceLibrary === 'pinui' && !pinuiMap) {
+      void fetchPinUISourceMap().then((loaded) => setPinuiMap(loaded));
+    }
+    if (activeItem.sourceLibrary === 'motionsites' && !motionMap) {
+      void fetchMotionSitesFullMap().then((loaded) => setMotionMap(loaded));
+    }
+  }, [activeItem?.id, activeItem?.sourceLibrary, pinuiMap, motionMap]);
+
+  useEffect(() => {
+    if (!activeItem) return;
     setNonce((n) => n + 1);
-    setBenchTab(activeItem.previewHtml ? 'html' : 'spec');
+    setBenchTab('html');
+    setCopiedCode(false);
   }, [activeItem?.id]);
 
   const handleSelectPlate = (item: SourceCatalogItem) => {
@@ -148,23 +193,82 @@ export const PlateTable: React.FC<PlateTableProps> = ({ query, onClearQuery, sav
   };
 
   const activePreview = activeItem ? previewFor(activeItem.id) : null;
-  const activeHasCode = Boolean(activeItem?.previewHtml);
   const activeTitle = activeItem ? sanitizeBrandText(activeItem.title) : '';
   const activeDesc = activeItem ? sanitizeBrandText(activeItem.description) : '';
-  const activeHtml = activeItem ? sanitizeSnippetCode(activeItem.previewHtml) : '';
-  const activeCss = activeItem ? sanitizeSnippetCode(activeItem.previewCss) : '';
-  const tunedCss = activeHasCode
-    ? `:root{--ff-scale:${(benchScale / 100).toFixed(2)};--ff-pad:${benchPad}px;--ff-radius:${benchRadius}px;--ff-speed:${benchSpeed}}body{padding:${benchPad}px!important}body>*{transform:scale(${(benchScale / 100).toFixed(2)});transform-origin:center}\n${activeCss}`
-    : activeCss;
-  const activeSpec = activeItem
-    ? sanitizeBrandText(activeItem.promptSpec) ||
+  const isPinUI = activeItem?.sourceLibrary === 'pinui';
+  const isThreeUI = activeItem?.sourceLibrary === 'threeui';
+  const isMotion = activeItem?.sourceLibrary === 'motionsites';
+
+  const pinuiSource = useMemo(
+    () => (activeItem && isPinUI ? resolvePinUISource(pinuiMap, activeItem.id) : null),
+    [activeItem, isPinUI, pinuiMap]
+  );
+
+  const motionEntry = useMemo(
+    () => (activeItem && isMotion ? resolveMotionSiteEntry(motionMap, activeItem.id) : null),
+    [activeItem, isMotion, motionMap]
+  );
+
+  const threeHtml = useMemo(
+    () =>
+      activeItem && isThreeUI
+        ? buildThreeUIInteractiveHtml(activeItem.id, activeTitle, activeItem.category, stageTheme)
+        : '',
+    [activeItem, isThreeUI, activeTitle, stageTheme]
+  );
+
+  const activeHtml = useMemo(() => {
+    if (!activeItem) return '';
+    if (isPinUI) return pinuiSource?.tsx ?? '';
+    if (isThreeUI) return threeHtml;
+    if (isMotion) return motionEntry?.liveHtml ?? sanitizeSnippetCode(activeItem.previewHtml);
+    return sanitizeSnippetCode(activeItem.previewHtml);
+  }, [activeItem, isPinUI, isThreeUI, isMotion, pinuiSource, threeHtml, motionEntry]);
+
+  const activeCss = useMemo(() => {
+    if (!activeItem) return '';
+    if (isPinUI) return pinuiSource?.css ?? '';
+    if (isThreeUI) return extractInlineStyles(threeHtml);
+    if (isMotion) return extractInlineStyles(motionEntry?.liveHtml) || sanitizeSnippetCode(activeItem.previewCss);
+    return sanitizeSnippetCode(activeItem.previewCss);
+  }, [activeItem, isPinUI, isThreeUI, isMotion, pinuiSource, threeHtml, motionEntry]);
+
+  const activePrompt = useMemo(() => {
+    if (!activeItem) return '';
+    if (isPinUI && pinuiSource?.prompt) return pinuiSource.prompt;
+    if (isMotion && motionEntry?.promptText) return motionEntry.promptText;
+    return (
+      sanitizeBrandText(activeItem.promptSpec) ||
       `${activeTitle}\nNhóm: ${LIBRARY_LABEL[activeItem.sourceLibrary]}\nRuntime: ${activeItem.runtime}\nPhong cách: ${activeItem.style}\n\n${activeDesc}`
-    : '';
-  const shownCode = benchTab === 'html' ? activeHtml : benchTab === 'css' ? activeCss : activeSpec;
+    );
+  }, [activeItem, isPinUI, isMotion, pinuiSource, motionEntry, activeTitle, activeDesc]);
+
+  const motionThemeOverride = useMemo(
+    () =>
+      motionEntry?.liveHtml ? buildMotionThemeOverrideCss(motionEntry.liveHtml, stageTheme) : '',
+    [motionEntry, stageTheme]
+  );
+
+  const snippetCssWithTheme = useMemo(() => {
+    if (!activeItem || isPinUI || isThreeUI || isMotion) return '';
+    const extra = buildSnippetThemeOverrideCss(
+      activeItem.sourceLibrary,
+      activeItem.previewCss,
+      stageTheme
+    );
+    return extra ? `${extra}\n${activeItem.previewCss ?? ''}` : activeItem.previewCss ?? '';
+  }, [activeItem, isPinUI, isThreeUI, isMotion, stageTheme]);
+
+  const shownCode =
+    benchTab === 'html' ? activeHtml : benchTab === 'css' ? activeCss : activePrompt;
 
   const handleCopyCode = async () => {
     if (!shownCode) return;
     const ok = await copyText(shownCode);
+    if (ok) {
+      setCopiedCode(true);
+      window.setTimeout(() => setCopiedCode(false), 1800);
+    }
     addToast(
       ok
         ? { type: 'success', title: 'Đã chép mã', message: activeTitle }
@@ -175,26 +279,30 @@ export const PlateTable: React.FC<PlateTableProps> = ({ query, onClearQuery, sav
   return (
     <>
       <div className="wrap-wide ex-controls">
-        <div className="ex-filter" role="group" aria-label="Lọc theo danh mục">
-          <button
-            type="button"
-            className="ex-text"
-            aria-pressed={library === 'all'}
-            onClick={() => setLibrary('all')}
-          >
-            Tất cả
-          </button>
-          {LIBRARY_ORDER.map((name) => (
-            <button
-              key={name}
-              type="button"
-              className="ex-text"
-              aria-pressed={library === name}
-              onClick={() => setLibrary(name)}
-            >
-              {LIBRARY_LABEL[name]}
-            </button>
-          ))}
+        <div className="ex-filter" role="group" aria-label="Bộ lọc nhanh">
+          {!onLibraryChange ? (
+            <>
+              <button
+                type="button"
+                className="ex-text"
+                aria-pressed={library === 'all'}
+                onClick={() => setLibrary('all')}
+              >
+                Tất cả
+              </button>
+              {LIBRARY_ORDER.map((name) => (
+                <button
+                  key={name}
+                  type="button"
+                  className="ex-text"
+                  aria-pressed={library === name}
+                  onClick={() => setLibrary(name)}
+                >
+                  {LIBRARY_LABEL[name]}
+                </button>
+              ))}
+            </>
+          ) : null}
           <button
             type="button"
             className="ex-text"
@@ -229,47 +337,45 @@ export const PlateTable: React.FC<PlateTableProps> = ({ query, onClearQuery, sav
                 <span className="t-label">
                   {String(activeIndex + 1).padStart(2, '0')} / {flat.length}
                 </span>
-                <span className="t-note">{activeHasCode ? 'chạy trực tiếp' : 'xem chuyển động'}</span>
+                <span className="t-note">
+                  {isThreeUI ? 'tương tác 3D' : isPinUI ? 'chạy trực tiếp React' : 'chạy trực tiếp'}
+                </span>
               </div>
               <div className="ex-stage-controls">
-                {activeHasCode ? (
-                  <>
-                    {VIEWPORTS.map((vp) => (
-                      <button
-                        key={vp}
-                        type="button"
-                        className="ex-text"
-                        aria-pressed={viewport === vp}
-                        onClick={() => setViewport(vp)}
-                      >
-                        {vp}
-                      </button>
-                    ))}
-                    <button
-                      type="button"
-                      className="ex-text"
-                      aria-pressed={stageTheme === 'dark'}
-                      onClick={() => setStageTheme('dark')}
-                    >
-                      Mực
-                    </button>
-                    <button
-                      type="button"
-                      className="ex-text"
-                      aria-pressed={stageTheme === 'light'}
-                      onClick={() => setStageTheme('light')}
-                    >
-                      Giấy
-                    </button>
-                    <button
-                      type="button"
-                      className="ex-text"
-                      onClick={() => setNonce((n) => n + 1)}
-                    >
-                      Chạy lại
-                    </button>
-                  </>
-                ) : null}
+                {VIEWPORTS.map((vp) => (
+                  <button
+                    key={vp.value}
+                    type="button"
+                    className="ex-text"
+                    aria-pressed={viewport === vp.value}
+                    onClick={() => setViewport(vp.value)}
+                  >
+                    {vp.label}
+                  </button>
+                ))}
+                <button
+                  type="button"
+                  className="ex-text"
+                  aria-pressed={stageTheme === 'light'}
+                  onClick={() => setStageTheme('light')}
+                >
+                  Sáng
+                </button>
+                <button
+                  type="button"
+                  className="ex-text"
+                  aria-pressed={stageTheme === 'dark'}
+                  onClick={() => setStageTheme('dark')}
+                >
+                  Tối
+                </button>
+                <button
+                  type="button"
+                  className="ex-text"
+                  onClick={() => setNonce((n) => n + 1)}
+                >
+                  Đặt lại
+                </button>
                 <button
                   type="button"
                   className="ex-text"
@@ -287,31 +393,65 @@ export const PlateTable: React.FC<PlateTableProps> = ({ query, onClearQuery, sav
               </div>
             </div>
 
-            <div className={`ex-bench-stage${stageTheme === 'light' ? ' ex-stage-paper' : ''}`}>
-              {activeHasCode ? (
-                <SandboxPreview
-                  title={activeTitle}
-                  html={activeItem.previewHtml ?? ''}
-                  css={tunedCss}
-                  theme={stageTheme}
-                  viewport={viewport}
-                  nonce={nonce}
-                />
-              ) : activePreview ? (
-                <SpecimenMedia
-                  key={activeItem.id}
-                  preview={activePreview}
-                  title={activeTitle}
-                  fallbackLabel={LIBRARY_LABEL[activeItem.sourceLibrary]}
-                  fit="contain"
-                  activePlay
-                />
-              ) : (
-                <div className="ex-spec-type">
-                  <span className="ex-spec-word">{activeTitle}</span>
-                  <span className="t-label">{LIBRARY_LABEL[activeItem.sourceLibrary]}</span>
-                </div>
-              )}
+            <div
+              className={`ex-bench-stage${stageTheme === 'light' ? ' ex-stage-paper' : ''}`}
+              data-playground={isPinUI ? 'true' : 'false'}
+              data-viewport={viewport}
+            >
+              <div
+                className="ex-bench-stage-frame"
+                data-viewport={viewport}
+              >
+                {isPinUI ? (
+                  <PinUIPlayground
+                    key={`${activeItem.id}-${nonce}`}
+                    itemId={activeItem.id}
+                    theme={stageTheme}
+                    compact
+                  />
+                ) : isThreeUI ? (
+                  <SandboxPreview
+                    title={activeTitle}
+                    html={threeHtml}
+                    css=""
+                    theme={stageTheme}
+                    viewport={viewport}
+                    nonce={nonce}
+                  />
+                ) : isMotion && motionEntry?.liveHtml ? (
+                  <SandboxPreview
+                    title={activeTitle}
+                    html={motionEntry.liveHtml}
+                    css={motionThemeOverride}
+                    theme={stageTheme}
+                    viewport={viewport}
+                    nonce={nonce}
+                  />
+                ) : activeItem.previewHtml ? (
+                  <SandboxPreview
+                    title={activeTitle}
+                    html={activeItem.previewHtml}
+                    css={snippetCssWithTheme}
+                    theme={stageTheme}
+                    viewport={viewport}
+                    nonce={nonce}
+                  />
+                ) : activePreview ? (
+                  <SpecimenMedia
+                    key={activeItem.id}
+                    preview={activePreview}
+                    title={activeTitle}
+                    fallbackLabel={LIBRARY_LABEL[activeItem.sourceLibrary]}
+                    fit="contain"
+                    activePlay
+                  />
+                ) : (
+                  <div className="ex-spec-type">
+                    <span className="ex-spec-word">{activeTitle}</span>
+                    <span className="t-label">{LIBRARY_LABEL[activeItem.sourceLibrary]}</span>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
 
@@ -352,7 +492,7 @@ export const PlateTable: React.FC<PlateTableProps> = ({ query, onClearQuery, sav
               <button
                 type="button"
                 className="btn btn-line"
-                onClick={() => openInWorkspace(templateContext(activeItem))}
+                onClick={() => openInWorkspace(templateContext(activeItem, activePrompt || undefined))}
               >
                 Dùng ngay
               </button>
@@ -374,55 +514,6 @@ export const PlateTable: React.FC<PlateTableProps> = ({ query, onClearQuery, sav
               </button>
             </div>
 
-            {activeHasCode ? (
-              <div className="ex-inline-tune" role="group" aria-label="Tùy chỉnh nhanh">
-                <label className="ex-tune-field">
-                  <span className="t-label">Tỉ lệ {benchScale}%</span>
-                  <input
-                    type="range"
-                    min={65}
-                    max={125}
-                    step={5}
-                    value={benchScale}
-                    onChange={(event) => setBenchScale(Number(event.target.value))}
-                  />
-                </label>
-                <label className="ex-tune-field">
-                  <span className="t-label">Đệm {benchPad}px</span>
-                  <input
-                    type="range"
-                    min={0}
-                    max={64}
-                    step={4}
-                    value={benchPad}
-                    onChange={(event) => setBenchPad(Number(event.target.value))}
-                  />
-                </label>
-                <label className="ex-tune-field">
-                  <span className="t-label">Bo góc {benchRadius}px</span>
-                  <input
-                    type="range"
-                    min={0}
-                    max={32}
-                    step={2}
-                    value={benchRadius}
-                    onChange={(event) => setBenchRadius(Number(event.target.value))}
-                  />
-                </label>
-                <label className="ex-tune-field">
-                  <span className="t-label">Tốc độ {benchSpeed}x</span>
-                  <input
-                    type="range"
-                    min={0.5}
-                    max={2}
-                    step={0.25}
-                    value={benchSpeed}
-                    onChange={(event) => setBenchSpeed(Number(event.target.value))}
-                  />
-                </label>
-              </div>
-            ) : null}
-
             {benchCodeOpen ? (
               <div className="ex-code-drawer">
                 <div className="ex-code-tabs">
@@ -436,7 +527,7 @@ export const PlateTable: React.FC<PlateTableProps> = ({ query, onClearQuery, sav
                         aria-pressed={benchTab === 'html'}
                         onClick={() => setBenchTab('html')}
                       >
-                        HTML
+                        {isPinUI ? 'TSX' : 'HTML'}
                       </button>
                     ) : null}
                     {activeCss ? (
@@ -459,7 +550,7 @@ export const PlateTable: React.FC<PlateTableProps> = ({ query, onClearQuery, sav
                       aria-pressed={benchTab === 'spec'}
                       onClick={() => setBenchTab('spec')}
                     >
-                      Đặc tả
+                      Prompt
                     </button>
                   </div>
                   <button
@@ -467,7 +558,7 @@ export const PlateTable: React.FC<PlateTableProps> = ({ query, onClearQuery, sav
                     className="ex-text"
                     onClick={() => void handleCopyCode()}
                   >
-                    Chép mã
+                    {copiedCode ? 'Đã chép' : 'Chép mã'}
                   </button>
                 </div>
                 <pre className="ex-code-pre">
@@ -544,6 +635,7 @@ export const PlateTable: React.FC<PlateTableProps> = ({ query, onClearQuery, sav
               drift={canDrift && driftOn && !sheetOpen}
               calm={calm}
               onSelect={handleSelectPlate}
+              onExperience={(item) => openExperience(item.id)}
             />
           </section>
         );

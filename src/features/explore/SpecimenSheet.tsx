@@ -1,14 +1,27 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { X } from 'lucide-react';
 import type { SourceCatalogItem } from '../../types/index';
 import { previewFor } from '../../ui/Media';
 import { useAppStore } from '../../store/appStore';
+import { PinUIPlayground } from '../../components/pinui';
+import { buildThreeUIInteractiveHtml } from '../../data/threeuiInteractiveDemos';
 import {
   LIBRARY_LABEL,
+  buildMotionThemeOverrideCss,
+  buildSnippetThemeOverrideCss,
   copyText,
+  extractInlineStyles,
+  fetchMotionSitesFullMap,
+  fetchPinUISourceMap,
+  getCachedMotionSitesFullMap,
+  getCachedPinUISourceMap,
+  resolveMotionSiteEntry,
+  resolvePinUISource,
   sanitizeBrandText,
   sanitizeSnippetCode,
   whiteLabelArchivePath,
+  type MotionSiteFullEntry,
+  type PinUISourceEntry,
   type PreviewTheme,
   type PreviewViewport,
 } from './catalog';
@@ -28,7 +41,11 @@ interface SpecimenSheetProps {
 
 type CodeTab = 'html' | 'css' | 'spec';
 
-const VIEWPORTS: PreviewViewport[] = [390, 768, 1440];
+const VIEWPORTS: Array<{ value: PreviewViewport; label: string }> = [
+  { value: 1440, label: 'Desktop' },
+  { value: 768, label: '768px' },
+  { value: 390, label: '390px' },
+];
 
 interface ReactionBarProps {
   id: string;
@@ -84,6 +101,13 @@ export const SpecimenSheet: React.FC<SpecimenSheetProps> = ({
   const [nonce, setNonce] = useState(0);
   const [codeOpen, setCodeOpen] = useState(false);
   const [codeTab, setCodeTab] = useState<CodeTab>('html');
+  const [copied, setCopied] = useState(false);
+  const [pinuiMap, setPinuiMap] = useState<Record<string, PinUISourceEntry> | null>(
+    () => getCachedPinUISourceMap()
+  );
+  const [motionMap, setMotionMap] = useState<Record<string, MotionSiteFullEntry> | null>(
+    () => getCachedMotionSitesFullMap()
+  );
 
   const isOpen = item !== null;
 
@@ -93,8 +117,19 @@ export const SpecimenSheet: React.FC<SpecimenSheetProps> = ({
 
   useEffect(() => {
     if (!item) return;
+    if (item.sourceLibrary === 'pinui' && !pinuiMap) {
+      void fetchPinUISourceMap().then((loaded) => setPinuiMap(loaded));
+    }
+    if (item.sourceLibrary === 'motionsites' && !motionMap) {
+      void fetchMotionSitesFullMap().then((loaded) => setMotionMap(loaded));
+    }
+  }, [item?.id, item?.sourceLibrary, pinuiMap, motionMap]);
+
+  useEffect(() => {
+    if (!item) return;
     setNonce((n) => n + 1);
-    setCodeTab(item.previewHtml ? 'html' : 'spec');
+    setCodeTab('html');
+    setCopied(false);
   }, [item?.id]);
 
   useEffect(() => {
@@ -134,20 +169,77 @@ export const SpecimenSheet: React.FC<SpecimenSheetProps> = ({
   };
 
   const preview = item ? previewFor(item.id) : null;
-  const hasLiveCode = Boolean(item?.previewHtml);
   const safeTitle = item ? sanitizeBrandText(item.title) : '';
   const safeDesc = item ? sanitizeBrandText(item.description) : '';
-  const safeHtml = item ? sanitizeSnippetCode(item.previewHtml) : '';
-  const safeCss = item ? sanitizeSnippetCode(item.previewCss) : '';
-  const safeSpec = item
-    ? sanitizeBrandText(item.promptSpec) ||
+  const isPinUI = item?.sourceLibrary === 'pinui';
+  const isThreeUI = item?.sourceLibrary === 'threeui';
+  const isMotion = item?.sourceLibrary === 'motionsites';
+
+  const pinuiSource = useMemo(
+    () => (item && isPinUI ? resolvePinUISource(pinuiMap, item.id) : null),
+    [item, isPinUI, pinuiMap]
+  );
+
+  const motionEntry = useMemo(
+    () => (item && isMotion ? resolveMotionSiteEntry(motionMap, item.id) : null),
+    [item, isMotion, motionMap]
+  );
+
+  const threeHtml = useMemo(
+    () =>
+      item && isThreeUI
+        ? buildThreeUIInteractiveHtml(item.id, safeTitle, item.category, stageTheme)
+        : '',
+    [item, isThreeUI, safeTitle, stageTheme]
+  );
+
+  const safeHtml = useMemo(() => {
+    if (!item) return '';
+    if (isPinUI) return pinuiSource?.tsx ?? '';
+    if (isThreeUI) return threeHtml;
+    if (isMotion) return motionEntry?.liveHtml ?? sanitizeSnippetCode(item.previewHtml);
+    return sanitizeSnippetCode(item.previewHtml);
+  }, [item, isPinUI, isThreeUI, isMotion, pinuiSource, threeHtml, motionEntry]);
+
+  const safeCss = useMemo(() => {
+    if (!item) return '';
+    if (isPinUI) return pinuiSource?.css ?? '';
+    if (isThreeUI) return extractInlineStyles(threeHtml);
+    if (isMotion) return extractInlineStyles(motionEntry?.liveHtml) || sanitizeSnippetCode(item.previewCss);
+    return sanitizeSnippetCode(item.previewCss);
+  }, [item, isPinUI, isThreeUI, isMotion, pinuiSource, threeHtml, motionEntry]);
+
+  const safeSpec = useMemo(() => {
+    if (!item) return '';
+    if (isPinUI && pinuiSource?.prompt) return pinuiSource.prompt;
+    if (isMotion && motionEntry?.promptText) return motionEntry.promptText;
+    return (
+      sanitizeBrandText(item.promptSpec) ||
       `${safeTitle}\nNhóm: ${LIBRARY_LABEL[item.sourceLibrary]}\nRuntime: ${item.runtime}\nPhong cách: ${item.style}\n\n${safeDesc}`
-    : '';
+    );
+  }, [item, isPinUI, isMotion, pinuiSource, motionEntry, safeTitle, safeDesc]);
+
+  const motionThemeOverride = useMemo(
+    () =>
+      motionEntry?.liveHtml ? buildMotionThemeOverrideCss(motionEntry.liveHtml, stageTheme) : '',
+    [motionEntry, stageTheme]
+  );
+
+  const snippetCssWithTheme = useMemo(() => {
+    if (!item || isPinUI || isThreeUI || isMotion) return '';
+    const extra = buildSnippetThemeOverrideCss(item.sourceLibrary, item.previewCss, stageTheme);
+    return extra ? `${extra}\n${item.previewCss ?? ''}` : item.previewCss ?? '';
+  }, [item, isPinUI, isThreeUI, isMotion, stageTheme]);
+
   const activeCode = codeTab === 'html' ? safeHtml : codeTab === 'css' ? safeCss : safeSpec;
 
   const handleCopyCode = async () => {
     if (!activeCode) return;
     const ok = await copyText(activeCode);
+    if (ok) {
+      setCopied(true);
+      window.setTimeout(() => setCopied(false), 1800);
+    }
     addToast(
       ok
         ? { type: 'success', title: 'Đã chép mã', message: safeTitle }
@@ -171,44 +263,42 @@ export const SpecimenSheet: React.FC<SpecimenSheetProps> = ({
             <span className="t-label">
               {position} / {total}
             </span>
-            {hasLiveCode ? (
-              <div className="ex-stage-controls" role="group" aria-label="Khung chạy thử">
-                {VIEWPORTS.map((vp) => (
-                  <button
-                    key={vp}
-                    type="button"
-                    className="ex-text"
-                    aria-pressed={viewport === vp}
-                    onClick={() => setViewport(vp)}
-                  >
-                    {vp}
-                  </button>
-                ))}
+            <div className="ex-stage-controls" role="group" aria-label="Khung chạy thử">
+              {VIEWPORTS.map((vp) => (
                 <button
+                  key={vp.value}
                   type="button"
                   className="ex-text"
-                  aria-pressed={stageTheme === 'dark'}
-                  onClick={() => setStageTheme('dark')}
+                  aria-pressed={viewport === vp.value}
+                  onClick={() => setViewport(vp.value)}
                 >
-                  Mực
+                  {vp.label}
                 </button>
-                <button
-                  type="button"
-                  className="ex-text"
-                  aria-pressed={stageTheme === 'light'}
-                  onClick={() => setStageTheme('light')}
-                >
-                  Giấy
-                </button>
-                <button
-                  type="button"
-                  className="ex-text"
-                  onClick={() => setNonce((n) => n + 1)}
-                >
-                  Chạy lại
-                </button>
-              </div>
-            ) : null}
+              ))}
+              <button
+                type="button"
+                className="ex-text"
+                aria-pressed={stageTheme === 'light'}
+                onClick={() => setStageTheme('light')}
+              >
+                Sáng
+              </button>
+              <button
+                type="button"
+                className="ex-text"
+                aria-pressed={stageTheme === 'dark'}
+                onClick={() => setStageTheme('dark')}
+              >
+                Tối
+              </button>
+              <button
+                type="button"
+                className="ex-text"
+                onClick={() => setNonce((n) => n + 1)}
+              >
+                Đặt lại
+              </button>
+            </div>
             <button
               type="button"
               className="icon-btn"
@@ -218,31 +308,61 @@ export const SpecimenSheet: React.FC<SpecimenSheetProps> = ({
               <X size={20} aria-hidden="true" />
             </button>
           </div>
-          <div className={`ex-spec-stage${stageTheme === 'light' ? ' ex-stage-paper' : ''}`}>
-            {hasLiveCode ? (
-              <SandboxPreview
-                title={safeTitle}
-                html={item.previewHtml ?? ''}
-                css={item.previewCss ?? ''}
-                theme={stageTheme}
-                viewport={viewport}
-                nonce={nonce}
-              />
-            ) : preview ? (
-              <SpecimenMedia
-                key={item.id}
-                preview={preview}
-                title={safeTitle}
-                fallbackLabel={LIBRARY_LABEL[item.sourceLibrary]}
-                fit="contain"
-                activePlay
-              />
-            ) : (
-              <div className="ex-spec-type">
-                <span className="ex-spec-word">{safeTitle}</span>
-                <span className="t-label">{LIBRARY_LABEL[item.sourceLibrary]}</span>
-              </div>
-            )}
+          <div
+            className={`ex-spec-stage${stageTheme === 'light' ? ' ex-stage-paper' : ''}`}
+            data-playground={isPinUI ? 'true' : 'false'}
+          >
+            <div className="ex-bench-stage-frame" data-viewport={viewport}>
+              {isPinUI ? (
+                <PinUIPlayground
+                  key={`${item.id}-${nonce}`}
+                  itemId={item.id}
+                  theme={stageTheme}
+                  compact
+                />
+              ) : isThreeUI ? (
+                <SandboxPreview
+                  title={safeTitle}
+                  html={threeHtml}
+                  css=""
+                  theme={stageTheme}
+                  viewport={viewport}
+                  nonce={nonce}
+                />
+              ) : isMotion && motionEntry?.liveHtml ? (
+                <SandboxPreview
+                  title={safeTitle}
+                  html={motionEntry.liveHtml}
+                  css={motionThemeOverride}
+                  theme={stageTheme}
+                  viewport={viewport}
+                  nonce={nonce}
+                />
+              ) : item.previewHtml ? (
+                <SandboxPreview
+                  title={safeTitle}
+                  html={item.previewHtml}
+                  css={snippetCssWithTheme}
+                  theme={stageTheme}
+                  viewport={viewport}
+                  nonce={nonce}
+                />
+              ) : preview ? (
+                <SpecimenMedia
+                  key={item.id}
+                  preview={preview}
+                  title={safeTitle}
+                  fallbackLabel={LIBRARY_LABEL[item.sourceLibrary]}
+                  fit="contain"
+                  activePlay
+                />
+              ) : (
+                <div className="ex-spec-type">
+                  <span className="ex-spec-word">{safeTitle}</span>
+                  <span className="t-label">{LIBRARY_LABEL[item.sourceLibrary]}</span>
+                </div>
+              )}
+            </div>
           </div>
           <div className="ex-spec-text">
             <h2 id="ex-spec-title" className="t-title ex-spec-title">
@@ -300,7 +420,7 @@ export const SpecimenSheet: React.FC<SpecimenSheetProps> = ({
                         aria-pressed={codeTab === 'html'}
                         onClick={() => setCodeTab('html')}
                       >
-                        HTML
+                        {isPinUI ? 'TSX' : 'HTML'}
                       </button>
                     ) : null}
                     {safeCss ? (
@@ -323,7 +443,7 @@ export const SpecimenSheet: React.FC<SpecimenSheetProps> = ({
                       aria-pressed={codeTab === 'spec'}
                       onClick={() => setCodeTab('spec')}
                     >
-                      Đặc tả
+                      Prompt
                     </button>
                   </div>
                   <button
@@ -331,7 +451,7 @@ export const SpecimenSheet: React.FC<SpecimenSheetProps> = ({
                     className="ex-text"
                     onClick={() => void handleCopyCode()}
                   >
-                    Chép mã
+                    {copied ? 'Đã chép' : 'Chép mã'}
                   </button>
                 </div>
                 <pre className="ex-code-pre">

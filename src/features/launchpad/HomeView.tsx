@@ -114,7 +114,6 @@ export const HomeView: React.FC<HomeViewProps> = () => {
     currentUser,
     projects,
     activeProjectId,
-    communityPosts,
     theme,
     navigate,
     createProject,
@@ -208,16 +207,6 @@ export const HomeView: React.FC<HomeViewProps> = () => {
     };
   };
 
-  const openCommunityPost = (postId: string) => {
-    try {
-      window.sessionStorage.setItem('ff_community_post_id', postId);
-    } catch {
-      void 0;
-    }
-    window.dispatchEvent(new CustomEvent('ff:community-post', { detail: postId }));
-    navigate('community');
-  };
-
   const openExploreLeaderboard = () => {
     try {
       window.sessionStorage.setItem('ff_explore_mode', 'leaderboard');
@@ -227,8 +216,6 @@ export const HomeView: React.FC<HomeViewProps> = () => {
     window.dispatchEvent(new CustomEvent('ff:explore-mode', { detail: 'leaderboard' }));
     navigate('explore');
   };
-
-  const recentHighlights = useMemo(() => communityPosts.slice(0, 4), [communityPosts]);
 
   return (
     <div className="hm">
@@ -366,44 +353,6 @@ export const HomeView: React.FC<HomeViewProps> = () => {
         onOpenShowcase={handleOpenShowcaseInWorkspace}
         onOpenLeaderboard={openExploreLeaderboard}
       />
-
-      <section aria-label="Tòa soạn phản biện" className="hm-band">
-        <div className="wrap-wide">
-          <div className="hm-band-head">
-            <div>
-              <p className="t-label">bài viết chọn lọc</p>
-              <h2 className="t-title">Tòa soạn phản biện</h2>
-            </div>
-            <button type="button" className="btn btn-line" onClick={() => navigate('community')}>
-              Tri thức
-            </button>
-          </div>
-
-          <ul className="hm-index">
-            {recentHighlights.map((post) => (
-              <li key={post.id} className="hm-row">
-                <div className="hm-row-main">
-                  <div className="hm-row-meta t-label">
-                    <span className="tag">{post.category}</span>
-                    <span>@{post.author.handle}</span>
-                  </div>
-                  <h3 className="hm-row-title">{post.title}</h3>
-                </div>
-                <div className="hm-row-side">
-                  <span className="t-label">{post.votes ?? post.likes ?? 0} tán thành</span>
-                  <button
-                    type="button"
-                    className="btn btn-line btn-sm"
-                    onClick={() => openCommunityPost(post.id)}
-                  >
-                    Đọc tiếp
-                  </button>
-                </div>
-              </li>
-            ))}
-          </ul>
-        </div>
-      </section>
     </div>
   );
 };

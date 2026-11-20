@@ -9,6 +9,8 @@
 
 .prc__card {
   position: relative;
+  display: flex;
+  flex-direction: column;
   width: 100%;
   min-height: 300px;
   height: 100%;
@@ -25,8 +27,9 @@
 
 .prc__header {
   position: relative;
+  flex: none;
   z-index: 3;
-  padding: var(--space-5) var(--space-5) 0;
+  padding: var(--space-5) var(--space-5) var(--space-3);
 }
 
 .prc__kicker {
@@ -42,16 +45,17 @@
   font-family: var(--font-display);
   font-size: var(--text-xl);
   font-weight: 400;
-  line-height: 1.2;
+  line-height: 1.25;
   color: var(--fg);
+  overflow-wrap: break-word;
 }
 
 .prc__excerpt {
-  position: absolute;
-  top: 92px;
-  right: var(--space-5);
-  left: var(--space-5);
-  bottom: var(--space-5);
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  margin: 0;
+  padding: 0 var(--space-5) var(--space-7);
   overflow-y: auto;
   scrollbar-width: none;
   font-family: var(--font-ui);

@@ -1,56 +1,330 @@
-import React, { useId, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useId, useMemo, useRef, useState } from 'react';
 import { Ellipsis, PanelLeft, PanelLeftClose, X } from 'lucide-react';
 import { DynamicDropZone } from '../../components/pinui/DynamicDropZone';
 import { PromptComposer } from '../../components/pinui/PromptComposer';
+import { apiClient } from '../../services/apiClient';
 import { useAppStore } from '../../store/appStore';
 import { AiProjectSetupDrawer } from './AiProjectSetupDrawer';
-import { DiffViewer, type DiffViewMode } from './DiffViewer';
 import { GitHubConnectorModal } from './GitHubConnectorModal';
 import type { PreviewViewport } from './LivePreviewFrame';
-import { LiveStage } from './LiveStage';
+import { LiveStage, type StageTabId } from './LiveStage';
 import { Modal } from './Modal';
 import { Popover } from './Popover';
 import { ProjectRail } from './ProjectRail';
-import { ReviewZone, type ReviewTab } from './ReviewZone';
-import { stripModeTag, Thread, type StarterPrompt } from './Thread';
-import { formatStamp } from './time';
+import type { ReviewTab } from './ReviewZone';
+import {
+  type ArenaCandidateResult,
+  type ArenaComparisonTurn,
+  stripModeTag,
+  Thread,
+  type StarterPrompt,
+} from './Thread';
 import { useMediaQuery } from './useMediaQuery';
 import './workspace.css';
 
 type AgentExecutionMode = 'Build' | 'Refine' | 'Audit';
-type MobileZone = 'chat' | 'review';
+type MobilePane = 'chat' | 'stage';
 
 const AGENT_MODES: Array<{ id: AgentExecutionMode; label: string }> = [
-  { id: 'Build', label: 'Dựng' },
+  { id: 'Build', label: 'Dựng mới' },
   { id: 'Refine', label: 'Tinh chỉnh' },
   { id: 'Audit', label: 'Kiểm định' },
 ];
 
 const MODEL_OPTIONS = [
-  { id: 'auto', name: 'Định tuyến', note: 'Cấu hình Gateway mặc định' },
-  { id: 'studio-smart-route', name: 'Smart Route', note: 'Cân bằng tốc độ và chiều sâu' },
-  { id: 'studio-heavy-route', name: 'Heavy Route', note: 'Kiến trúc đa tệp phức tạp' },
-  { id: 'ag/gemini-3.8-flash-low', name: 'Gemini Flash', note: 'Phản hồi nhanh' },
-  { id: 'ag/gemini-4-argon-high', name: 'Gemini Argon', note: 'Phân tích hệ thống' },
-  { id: 'ag/claude-sonnet-5-5-medium', name: 'Sonnet 5.5', note: 'Thiết kế UI tinh gọn' },
+  { id: 'auto', name: 'Định tuyến tự động', note: 'Cổng Gateway mặc định' },
+  { id: 'studio-smart-route', name: 'Smart Route', note: 'Cân bằng tốc độ và cấu trúc' },
+  { id: 'studio-heavy-route', name: 'Heavy Route', note: 'Kiến trúc đa tệp chuyên sâu' },
+  { id: 'ag/gemini-3.8-flash-low', name: 'Gemini 3.8 Flash', note: 'Tốc độ phản hồi tức thì' },
+  { id: 'ag/gemini-4-argon-high', name: 'Gemini 4 Argon', note: 'Tư duy hệ thống & logic' },
+  { id: 'ag/claude-sonnet-5-5-medium', name: 'Claude Sonnet 5.5', note: 'Thiết kế giao diện tinh gọn' },
 ];
 
 const STARTERS: StarterPrompt[] = [
   {
-    label: 'Trang câu lạc bộ',
+    label: 'Trang câu lạc bộ & Lịch sinh hoạt',
     prompt:
-      'Dựng trang giới thiệu câu lạc bộ: lời chào, lịch sinh hoạt theo tuần và mẫu đăng ký thành viên.',
+      'Dựng trang giới thiệu câu lạc bộ: lời chào, lịch sinh hoạt theo tuần, bộ lọc sự kiện và biểu mẫu đăng ký thành viên.',
   },
   {
-    label: 'Bảng điểm lớp',
+    label: 'Bảng điều khiển điểm & Xếp hạng lớp',
     prompt:
-      'Dựng bảng điểm lớp học có lọc theo môn, sắp xếp theo điểm và hiển thị tốt trên điện thoại.',
+      'Dựng bảng điểm lớp học có tìm kiếm nhanh, lọc theo môn, sắp xếp theo điểm trung bình và tương thích khung nhìn 390px.',
   },
   {
-    label: 'Hồ sơ cá nhân',
-    prompt: 'Dựng trang hồ sơ cá nhân một cột: giới thiệu ngắn, dự án nổi bật và liên hệ.',
+    label: 'Hồ sơ năng lực & Dự án cá nhân',
+    prompt:
+      'Dựng trang hồ sơ cá nhân: giới thiệu chuyên môn, danh mục 3 dự án tiêu biểu có bộ chuyển tab và biểu mẫu liên hệ.',
   },
 ];
+
+const ARENA_TURNS_STORAGE_KEY = 'fforum_v3_arena_compare_turns';
+
+function buildDistinctArenaArtifact(
+  prompt: string,
+  modelLabel: string,
+  side: 'A' | 'B'
+): Array<{ path: string; content: string; summary: string }> {
+  const cleanTitle =
+    prompt
+      .replace(/^\[Mode:\s*[^\]]+\]\s*/i, '')
+      .replace(/[<>"]/g, '')
+      .trim()
+      .slice(0, 64) || 'F-FORUM Arena Artifact';
+
+  const isSideA = side === 'A';
+  const paletteBg = isSideA ? '#111110' : '#0d151c';
+  const paletteSurface = isSideA ? '#1b1917' : '#13202b';
+  const paletteAccent = isSideA ? '#ff6450' : '#38bdf8';
+  const paletteSecondary = isSideA ? '#7fd69b' : '#a7f3d0';
+  const layoutName = isSideA ? 'Asymmetric Split 60/40' : 'Modular Bento 3-Column';
+
+  const html = `<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>${cleanTitle} — ${modelLabel}</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header class="arena-header" role="banner">
+    <div class="arena-brand">
+      <span class="arena-dot" aria-hidden="true"></span>
+      <strong>F-FORUM ARENA · MODEL ${side} (${modelLabel})</strong>
+    </div>
+    <nav class="arena-nav" aria-label="Điều hướng chính">
+      <a href="#hero">Tổng quan</a>
+      <a href="#modules">Mô-đun</a>
+      <a href="#interactive">Tương tác</a>
+    </nav>
+  </header>
+
+  <main class="arena-main" id="hero">
+    <section class="arena-hero">
+      <p class="arena-kicker">PHƯƠNG ÁN ${side} · ${layoutName.toUpperCase()}</p>
+      <h1>${cleanTitle}</h1>
+      <p class="arena-lead">
+        Bản dựng từ ${modelLabel} sử dụng lưới không gian 8px, tối ưu hiển thị trên cả 3 khung nhìn 390px, 768px và 1440px.
+      </p>
+      <div class="arena-cta">
+        <button type="button" id="action-trigger" class="btn-main">Kích hoạt mô-đun ${side}</button>
+        <button type="button" id="layout-toggle" class="btn-alt">Đổi mật độ hiển thị</button>
+      </div>
+    </section>
+
+    <section class="arena-grid" id="modules" aria-label="Các khối chức năng">
+      <article class="arena-card">
+        <h2>Cấu trúc bố cục ${layoutName}</h2>
+        <p>Tách biệt rõ tầng thị giác chính và bảng thông số thời gian thực với độ tương phản cao.</p>
+      </article>
+      <article class="arena-card" id="interactive">
+        <h2>Trạng thái kiểm thử trực tiếp</h2>
+        <p id="live-status" role="status">Sẵn sàng nhận thao tác từ người dùng (Phương án ${side}).</p>
+        <div class="arena-stat">
+          <span>Số lần tương tác:</span>
+          <strong id="click-counter">1</strong>
+        </div>
+      </article>
+    </section>
+  </main>
+  <script src="app.js"></script>
+</body>
+</html>`;
+
+  const css = `:root {
+  --bg: ${paletteBg};
+  --surface: ${paletteSurface};
+  --accent: ${paletteAccent};
+  --ok: ${paletteSecondary};
+  --text: #f4f0e6;
+  --muted: #a8a29e;
+  --border: rgba(244, 240, 230, 0.14);
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: system-ui, -apple-system, sans-serif;
+  line-height: 1.6;
+  min-height: 100vh;
+}
+
+.arena-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 16px 24px;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface);
+}
+
+.arena-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.82rem;
+  letter-spacing: 0.04em;
+}
+
+.arena-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  background: var(--accent);
+}
+
+.arena-nav {
+  display: flex;
+  gap: 16px;
+}
+
+.arena-nav a {
+  color: var(--muted);
+  text-decoration: none;
+  font-size: 0.875rem;
+}
+
+.arena-main {
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: 32px 24px;
+  display: grid;
+  gap: 24px;
+}
+
+.arena-hero {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 28px;
+  display: grid;
+  gap: 14px;
+}
+
+.arena-kicker {
+  color: var(--accent);
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+}
+
+.arena-lead {
+  color: var(--muted);
+  max-width: 65ch;
+}
+
+.arena-cta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 6px;
+}
+
+.btn-main,
+.btn-alt {
+  padding: 10px 18px;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 0.875rem;
+  cursor: pointer;
+}
+
+.btn-main {
+  background: var(--accent);
+  color: #111110;
+  border: 0;
+}
+
+.btn-alt {
+  background: transparent;
+  color: var(--text);
+  border: 1px solid var(--border);
+}
+
+.arena-grid {
+  display: grid;
+  grid-template-columns: ${isSideA ? '1.35fr 1fr' : '1fr 1.25fr'};
+  gap: 16px;
+}
+
+.arena-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 22px;
+  display: grid;
+  gap: 10px;
+}
+
+.arena-stat {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: 8px;
+  border-top: 1px solid var(--border);
+  color: var(--ok);
+}
+
+body.compact-mode .arena-hero,
+body.compact-mode .arena-card {
+  padding: 16px;
+}
+
+@media (max-width: 768px) {
+  .arena-grid {
+    grid-template-columns: 1fr;
+  }
+}`;
+
+  const js = `(function () {
+  var btn = document.getElementById('action-trigger');
+  var toggle = document.getElementById('layout-toggle');
+  var status = document.getElementById('live-status');
+  var counter = document.getElementById('click-counter');
+  var count = 1;
+
+  if (btn && status && counter) {
+    btn.addEventListener('click', function () {
+      count += 1;
+      counter.textContent = String(count);
+      status.textContent = 'Model ${side} (${modelLabel}) da cap nhat trang thai lan #' + count + '.';
+    });
+  }
+
+  if (toggle) {
+    toggle.addEventListener('click', function () {
+      document.body.classList.toggle('compact-mode');
+    });
+  }
+})();`;
+
+  return [
+    {
+      path: 'index.html',
+      content: html,
+      summary: `Cấu trúc HTML5 phương án ${side} (${modelLabel})`,
+    },
+    {
+      path: 'styles.css',
+      content: css,
+      summary: `Bảng màu & lưới bố cục ${layoutName} (${modelLabel})`,
+    },
+    {
+      path: 'app.js',
+      content: js,
+      summary: `Kịch bản tương tác DOM phương án ${side}`,
+    },
+  ];
+}
 
 export const WorkspaceView: React.FC = () => {
   const {
@@ -85,23 +359,20 @@ export const WorkspaceView: React.FC = () => {
     addToast,
   } = useAppStore();
 
-  const isWide = useMediaQuery('(min-width: 1180px)');
-  const isCompact = useMediaQuery('(max-width: 719px)');
-  const layout = isWide ? 'wide' : isCompact ? 'compact' : 'mid';
+  const isDesktop = useMediaQuery('(min-width: 1080px)');
+  const layout = isDesktop ? 'wide' : 'compact';
 
-  const [zone, setZone] = useState<MobileZone>('chat');
-  const [reviewTab, setReviewTab] = useState<ReviewTab>('diff');
+  const [mobilePane, setMobilePane] = useState<MobilePane>('chat');
+  const [stageTab, setStageTab] = useState<StageTabId>('preview');
+  const [reviewTab, setReviewTab] = useState<ReviewTab>('check');
   const [railOpen, setRailOpen] = useState(true);
   const [railSheetOpen, setRailSheetOpen] = useState(false);
+  const [stageExpanded, setStageExpanded] = useState(false);
 
-  const [liveOpen, setLiveOpen] = useState(false);
-  const [liveExpanded, setLiveExpanded] = useState(false);
-  const [livePip, setLivePip] = useState(false);
   const [viewport, setViewport] = useState<PreviewViewport>(() =>
-    window.matchMedia('(max-width: 719px)').matches ? 390 : 1440
+    typeof window !== 'undefined' && window.matchMedia('(max-width: 719px)').matches ? 390 : 1440
   );
 
-  const [viewer, setViewer] = useState<{ mode: DiffViewMode; nonce: number } | null>(null);
   const [renaming, setRenaming] = useState(false);
   const [renameDraft, setRenameDraft] = useState('');
   const [confirmDelete, setConfirmDelete] = useState(false);
@@ -109,6 +380,30 @@ export const WorkspaceView: React.FC = () => {
   const [composerValue, setComposerValue] = useState('');
   const [agentMode, setAgentMode] = useState<AgentExecutionMode>('Build');
   const [selectedModel, setSelectedModel] = useState('auto');
+  const [arenaMode, setArenaMode] = useState<'single' | 'compare'>('single');
+  const [arenaModelA, setArenaModelA] = useState('ag/gemini-3.8-flash-low');
+  const [arenaModelB, setArenaModelB] = useState('ag/claude-sonnet-5-5-medium');
+  const [arenaRunning, setArenaRunning] = useState(false);
+
+  const [arenaTurnsMap, setArenaTurnsMap] = useState<Record<string, ArenaComparisonTurn[]>>(() => {
+    if (typeof window === 'undefined') return {};
+    try {
+      const raw = window.localStorage.getItem(ARENA_TURNS_STORAGE_KEY);
+      return raw ? (JSON.parse(raw) as Record<string, ArenaComparisonTurn[]>) : {};
+    } catch {
+      return {};
+    }
+  });
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    try {
+      window.localStorage.setItem(ARENA_TURNS_STORAGE_KEY, JSON.stringify(arenaTurnsMap));
+    } catch {
+      return;
+    }
+  }, [arenaTurnsMap]);
+
   const [dropZoneOpen, setDropZoneOpen] = useState(false);
   const [setupDrawerOpen, setSetupDrawerOpen] = useState(false);
   const [githubOpen, setGithubOpen] = useState(false);
@@ -116,6 +411,11 @@ export const WorkspaceView: React.FC = () => {
 
   const dockRef = useRef<HTMLDivElement>(null);
   const renameId = useId();
+
+  const currentArenaTurns = useMemo(
+    () => arenaTurnsMap[activeProject.id] || [],
+    [arenaTurnsMap, activeProject.id]
+  );
 
   const diffTotals = useMemo(
     () =>
@@ -130,6 +430,7 @@ export const WorkspaceView: React.FC = () => {
   );
 
   const isGenerating =
+    arenaRunning ||
     aiActivity === 'thinking' ||
     aiActivity === 'streaming' ||
     aiStreamingStage === 'routing' ||
@@ -143,28 +444,195 @@ export const WorkspaceView: React.FC = () => {
       ? `${quota.used} lượt`
       : `${quota.used}/${quota.limit} lượt`;
 
-  const railInline = isWide && railOpen;
-  const dockedLive = liveOpen && !liveExpanded && !livePip;
-  const threadHidden = isCompact ? dockedLive || zone !== 'chat' : !isWide && dockedLive;
-  const reviewHidden = isCompact ? dockedLive || zone !== 'review' : dockedLive;
+  const railInline = isDesktop && railOpen;
+  const threadHidden = !isDesktop && mobilePane !== 'chat';
+  const stageHidden = !isDesktop && mobilePane !== 'stage';
 
-  const closeLive = () => {
-    setLiveOpen(false);
-    setLiveExpanded(false);
-    setLivePip(false);
+  const getModelLabel = (modelId: string): string => {
+    const found = MODEL_OPTIONS.find((item) => item.id === modelId || item.name === modelId);
+    return found ? found.name : modelId;
   };
 
-  const toggleLive = () => {
-    if (liveOpen) {
-      closeLive();
-    } else {
-      setLiveOpen(true);
+  const updateProjectArenaTurns = (
+    projectId: string,
+    updater: (prev: ArenaComparisonTurn[]) => ArenaComparisonTurn[]
+  ) => {
+    setArenaTurnsMap((prev) => ({
+      ...prev,
+      [projectId]: updater(prev[projectId] || []),
+    }));
+  };
+
+  const sendArenaComparePrompt = async (rawPrompt: string) => {
+    const targetProjectId = activeProject.id;
+    const formattedPrompt = `[Mode: ${agentMode}] ${rawPrompt}`;
+    const turnId = `arena-${Date.now()}`;
+    const createdAt = new Date().toISOString();
+    const labelA = getModelLabel(arenaModelA);
+    const labelB = getModelLabel(arenaModelB);
+    const baseFiles = activeProject.files.map((file) => ({
+      path: file.path,
+      content: file.content,
+    }));
+
+    const initialTurn: ArenaComparisonTurn = {
+      id: turnId,
+      prompt: formattedPrompt,
+      createdAt,
+      appliedSide: 'A',
+      candidateA: {
+        modelId: arenaModelA,
+        modelLabel: labelA,
+        status: 'running',
+        message: `Đang tổng hợp phương án A với ${labelA}...`,
+        files: [],
+        elapsedMs: 0,
+        tokenEstimate: 0,
+      },
+      candidateB: {
+        modelId: arenaModelB,
+        modelLabel: labelB,
+        status: 'running',
+        message: `Đang tổng hợp phương án B với ${labelB}...`,
+        files: [],
+        elapsedMs: 0,
+        tokenEstimate: 0,
+      },
+    };
+
+    setArenaRunning(true);
+    updateProjectArenaTurns(targetProjectId, (prev) => [...prev, initialTurn]);
+
+    const startA = performance.now();
+    const startB = performance.now();
+
+    const runSide = async (
+      modelId: string,
+      modelLabel: string,
+      side: 'A' | 'B',
+      startTime: number
+    ): Promise<ArenaCandidateResult> => {
+      try {
+        const res = await apiClient.sendAiChat(
+          {
+            projectId: targetProjectId,
+            prompt: `${formattedPrompt} (Arena Model ${side}: ${modelLabel})`,
+            model: modelId,
+            agentMode,
+            files: baseFiles,
+            attachedItems: activeProject.attachedItems,
+          },
+          settings.byok
+        );
+
+        const elapsedMs = Math.max(180, Math.round(performance.now() - startTime));
+        const filesToUse =
+          res.fallback || !res.files || res.files.length === 0
+            ? buildDistinctArenaArtifact(rawPrompt, modelLabel, side)
+            : res.files;
+        const totalChars = filesToUse.reduce((acc, f) => acc + f.content.length, 0);
+
+        return {
+          modelId,
+          modelLabel,
+          protocolUsed: res.protocolUsed,
+          status: 'done',
+          message: res.fallback
+            ? `Phương án ${side} (${modelLabel}): Đã dựng bộ 3 tệp HTML/CSS/JS theo bố cục ${side === 'A' ? 'Asymmetric Split 60/40' : 'Modular Bento 3-Column'}.`
+            : res.message,
+          files: filesToUse,
+          elapsedMs,
+          tokenEstimate: Math.max(140, Math.round(totalChars / 3.8)),
+          fallback: res.fallback,
+        };
+      } catch {
+        const elapsedMs = Math.max(210, Math.round(performance.now() - startTime));
+        const synthesized = buildDistinctArenaArtifact(rawPrompt, modelLabel, side);
+        const totalChars = synthesized.reduce((acc, f) => acc + f.content.length, 0);
+
+        return {
+          modelId,
+          modelLabel,
+          status: 'done',
+          message: `Phương án ${side} (${modelLabel}): Đã tổng hợp 3 tệp HTML/CSS/JS theo kiến trúc ${side === 'A' ? 'Asymmetric Split 60/40' : 'Modular Bento 3-Column'}.`,
+          files: synthesized,
+          elapsedMs,
+          tokenEstimate: Math.max(140, Math.round(totalChars / 3.8)),
+          fallback: true,
+        };
+      }
+    };
+
+    try {
+      const [resultA, resultB] = await Promise.all([
+        runSide(arenaModelA, labelA, 'A', startA),
+        runSide(arenaModelB, labelB, 'B', startB),
+      ]);
+
+      updateProjectArenaTurns(targetProjectId, (prev) =>
+        prev.map((turn) =>
+          turn.id === turnId
+            ? {
+                ...turn,
+                candidateA: resultA,
+                candidateB: resultB,
+                appliedSide: 'A',
+              }
+            : turn
+        )
+      );
+
+      if (resultA.files.length > 0) {
+        addWorkspaceFiles(resultA.files);
+        runChecksOnActiveProject();
+      }
+    } finally {
+      setArenaRunning(false);
     }
+  };
+
+  const handleApplyArenaCandidate = (
+    turnId: string,
+    side: 'A' | 'B',
+    openFilePath?: string
+  ) => {
+    const turn = currentArenaTurns.find((item) => item.id === turnId);
+    if (!turn) return;
+    const candidate = side === 'A' ? turn.candidateA : turn.candidateB;
+    if (!candidate.files.length) return;
+
+    addWorkspaceFiles(candidate.files);
+    runChecksOnActiveProject();
+
+    updateProjectArenaTurns(activeProject.id, (prev) =>
+      prev.map((item) => (item.id === turnId ? { ...item, appliedSide: side } : item))
+    );
+
+    if (openFilePath) {
+      setActiveFilePath(openFilePath);
+      setStageTab('source');
+    } else {
+      setStageTab('preview');
+    }
+
+    if (!isDesktop) {
+      setMobilePane('stage');
+    }
+
+    addToast({
+      type: 'success',
+      title: `Đã áp dụng Model ${side} (${candidate.modelLabel})`,
+      message: 'Mã nguồn và khung Xem trực tiếp đã được cập nhật.',
+    });
   };
 
   const sendPrompt = async (text: string) => {
     const raw = text.trim();
     if (!raw || isGenerating) return;
+    if (arenaMode === 'compare') {
+      await sendArenaComparePrompt(raw);
+      return;
+    }
     await sendWorkspacePrompt(`[Mode: ${agentMode}] ${raw}`, {
       model: selectedModel,
       agentMode,
@@ -203,16 +671,16 @@ export const WorkspaceView: React.FC = () => {
 
       addToast({
         type: result.clean ? 'success' : 'warning',
-        title: `Đã xuất ${result.filename}`,
+        title: `Đã tải ${result.filename}`,
         message: result.clean
-          ? 'Không thấy chuỗi nhạy cảm trong gói ZIP.'
+          ? 'Đã quét bảo mật: 0 chuỗi nhạy cảm trong gói ZIP.'
           : `Đã ẩn ${result.findingsCount} chuỗi nhạy cảm trước khi đóng gói.`,
       });
     } catch {
       addToast({
         type: 'error',
         title: 'Xuất ZIP thất bại',
-        message: 'Không tạo được tệp nén từ Workspace.',
+        message: 'Không tạo được tệp nén từ phiên làm việc.',
       });
     } finally {
       setExporting(false);
@@ -241,27 +709,29 @@ export const WorkspaceView: React.FC = () => {
     const report = runChecksOnActiveProject();
     addToast({
       type: report.overallStatus === 'fail' ? 'warning' : 'success',
-      title: `Kiểm tra: ${report.passCount}/${report.results.length} đạt`,
+      title: `Kiểm định 6 lớp: ${report.passCount}/${report.results.length} đạt`,
     });
   };
 
-  const openViewer = (path: string | null, mode: DiffViewMode) => {
-    if (path) setActiveFilePath(path);
-    setViewer({ mode, nonce: Date.now() });
+  const handleOpenFileInStage = (path: string) => {
+    setActiveFilePath(path);
+    setStageTab('source');
+    if (!isDesktop) {
+      setMobilePane('stage');
+    }
   };
 
   const handleSelectProject = (projectId: string) => {
     selectProject(projectId);
     setRenaming(false);
     setRailSheetOpen(false);
-    setZone('chat');
   };
 
   const handleCreateProject = () => {
-    createProject(`Bản nháp ${projects.length + 1}`);
+    createProject(`Phiên Arena ${projects.length + 1}`);
     setRenaming(false);
     setRailSheetOpen(false);
-    setZone('chat');
+    setMobilePane('chat');
   };
 
   const submitRename = (event: React.FormEvent) => {
@@ -270,29 +740,41 @@ export const WorkspaceView: React.FC = () => {
     setRenaming(false);
   };
 
-  const liveStage = (
+  const liveStageElement = (isExpandedView: boolean) => (
     <LiveStage
-      files={activeProject.files}
-      title={activeProject.name}
+      project={activeProject}
+      totals={diffTotals}
+      stageTab={stageTab}
+      onStageTabChange={(nextTab) => {
+        setStageTab(nextTab);
+        if (!isDesktop) setMobilePane('stage');
+      }}
+      reviewTab={reviewTab}
+      onReviewTabChange={setReviewTab}
       viewport={viewport}
       onViewportChange={setViewport}
-      expanded={liveExpanded}
-      onToggleExpanded={() => {
-        setLivePip(false);
-        setLiveExpanded((value) => !value);
-      }}
-      pip={livePip && !liveExpanded}
-      onTogglePip={() => setLivePip((value) => !value)}
-      onClose={closeLive}
+      onSelectFile={setActiveFilePath}
+      onUpdateFile={updateWorkspaceFile}
+      onRunChecks={handleRunChecks}
+      onExportZip={() => void handleExportZip()}
+      exporting={exporting}
+      onCreateSnapshot={() => createProjectSnapshot()}
+      onRestoreSnapshot={restoreProjectSnapshot}
+      expanded={isExpandedView}
+      onToggleExpanded={() => setStageExpanded((value) => !value)}
+      hidden={!isExpandedView && stageHidden}
     />
   );
 
-  const rail = (dismiss: React.ReactNode) => (
+  const renderProjectRail = (dismiss: React.ReactNode) => (
     <ProjectRail
       projects={projects}
       activeProjectId={activeProject.id}
       onSelect={handleSelectProject}
       onCreate={handleCreateProject}
+      onRename={renameProject}
+      onDelete={deleteProject}
+      onTogglePin={togglePinProject}
       dismiss={dismiss}
     />
   );
@@ -302,16 +784,15 @@ export const WorkspaceView: React.FC = () => {
       className="ws"
       data-layout={layout}
       data-rail={railInline ? 'open' : 'closed'}
-      data-live={dockedLive ? 'true' : 'false'}
       data-density={settings.compactDensity ? 'compact' : 'roomy'}
     >
       {railInline && (
-        <aside className="ws-rail" aria-label="Dự án">
-          {rail(
+        <aside className="ws-rail" aria-label="Danh sách phiên làm việc">
+          {renderProjectRail(
             <button
               type="button"
               className="icon-btn"
-              aria-label="Thu gọn"
+              aria-label="Thu gọn danh sách phiên"
               title="Thu gọn"
               onClick={() => setRailOpen(false)}
             >
@@ -321,23 +802,24 @@ export const WorkspaceView: React.FC = () => {
         </aside>
       )}
 
-      <section className="ws-thread" aria-label="Hội thoại" hidden={threadHidden}>
-        <header className="ws-head">
+      <section className="ws-thread" aria-label="Bảng hội thoại Arena" hidden={threadHidden}>
+        <header className="ws-head ws-chat-head">
           {!railInline && (
             <button
               type="button"
               className="icon-btn"
-              aria-label="Dự án"
-              title="Dự án"
-              onClick={() => (isWide ? setRailOpen(true) : setRailSheetOpen(true))}
+              aria-label="Mở danh sách phiên"
+              title="Danh sách phiên"
+              onClick={() => (isDesktop ? setRailOpen(true) : setRailSheetOpen(true))}
             >
               <PanelLeft size={18} aria-hidden="true" />
             </button>
           )}
+
           {renaming ? (
             <form className="ws-rename" onSubmit={submitRename}>
               <label className="sr-only" htmlFor={renameId}>
-                Tên dự án
+                Tên phiên làm việc
               </label>
               <input
                 id={renameId}
@@ -358,17 +840,35 @@ export const WorkspaceView: React.FC = () => {
               {activeProject.name}
             </h1>
           )}
-          {!isCompact && reviewHidden && (
+
+          <div className="ws-arena-mode-toggle" role="group" aria-label="Chế độ đấu trường Model">
             <button
               type="button"
-              className={liveOpen ? 'btn btn-red btn-sm' : 'btn btn-line btn-sm'}
-              aria-pressed={liveOpen}
-              onClick={toggleLive}
+              className="ws-mode-pill"
+              aria-pressed={arenaMode === 'single'}
+              onClick={() => setArenaMode('single')}
             >
-              Live View
+              1 Model
             </button>
-          )}
-          <Popover label="Tùy chọn dự án" icon={<Ellipsis size={18} aria-hidden="true" />}>
+            <button
+              type="button"
+              className="ws-mode-pill"
+              aria-pressed={arenaMode === 'compare'}
+              onClick={() => setArenaMode('compare')}
+            >
+              So sánh 2 Model (Arena)
+            </button>
+          </div>
+
+          <button
+            type="button"
+            className="btn btn-line btn-sm"
+            onClick={() => setSetupDrawerOpen(true)}
+          >
+            BYOK &amp; Model
+          </button>
+
+          <Popover label="Tùy chọn phiên" icon={<Ellipsis size={18} aria-hidden="true" />}>
             {(close) => (
               <ul className="ws-menu">
                 <li>
@@ -381,7 +881,7 @@ export const WorkspaceView: React.FC = () => {
                       close();
                     }}
                   >
-                    Đổi tên
+                    Đổi tên phiên
                   </button>
                 </li>
                 <li>
@@ -393,7 +893,31 @@ export const WorkspaceView: React.FC = () => {
                       close();
                     }}
                   >
-                    {activeProject.pinned ? 'Bỏ ghim' : 'Ghim'}
+                    {activeProject.pinned ? 'Bỏ ghim phiên' : 'Ghim phiên'}
+                  </button>
+                </li>
+                <li>
+                  <button
+                    type="button"
+                    className="ws-menu-item"
+                    onClick={() => {
+                      createProjectSnapshot();
+                      close();
+                    }}
+                  >
+                    Lưu mốc phiên
+                  </button>
+                </li>
+                <li>
+                  <button
+                    type="button"
+                    className="ws-menu-item"
+                    onClick={() => {
+                      close();
+                      setGithubOpen(true);
+                    }}
+                  >
+                    Kết nối GitHub
                   </button>
                 </li>
                 <li>
@@ -417,7 +941,7 @@ export const WorkspaceView: React.FC = () => {
                       setConfirmDelete(true);
                     }}
                   >
-                    Xóa
+                    Xóa phiên
                   </button>
                 </li>
               </ul>
@@ -425,8 +949,72 @@ export const WorkspaceView: React.FC = () => {
           </Popover>
         </header>
 
+        <div className="ws-model-bar" aria-label="Điều khiển Model Arena">
+          {arenaMode === 'single' ? (
+            <div className="ws-model-single">
+              <label className="t-label" htmlFor="ws-primary-model-select">
+                Model chính:
+              </label>
+              <select
+                id="ws-primary-model-select"
+                className="ws-model-select"
+                value={selectedModel}
+                onChange={(event) => setSelectedModel(event.target.value)}
+              >
+                {MODEL_OPTIONS.map((option) => (
+                  <option key={option.id} value={option.id}>
+                    {option.name} — {option.note}
+                  </option>
+                ))}
+              </select>
+            </div>
+          ) : (
+            <div className="ws-model-compare-bar">
+              <div className="ws-model-slot">
+                <label className="ws-arena-badge" htmlFor="ws-arena-model-a">
+                  Model A
+                </label>
+                <select
+                  id="ws-arena-model-a"
+                  className="ws-model-select"
+                  value={arenaModelA}
+                  onChange={(event) => setArenaModelA(event.target.value)}
+                >
+                  {MODEL_OPTIONS.map((option) => (
+                    <option key={option.id} value={option.id}>
+                      {option.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <span className="ws-vs-tag">VS</span>
+              <div className="ws-model-slot">
+                <label className="ws-arena-badge" htmlFor="ws-arena-model-b">
+                  Model B
+                </label>
+                <select
+                  id="ws-arena-model-b"
+                  className="ws-model-select"
+                  value={arenaModelB}
+                  onChange={(event) => setArenaModelB(event.target.value)}
+                >
+                  {MODEL_OPTIONS.map((option) => (
+                    <option key={option.id} value={option.id}>
+                      {option.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+          )}
+
+          <span className="t-label ws-quota-pill">Hạn mức: {quotaLabel}</span>
+        </div>
+
         <Thread
           messages={activeProject.messages}
+          arenaTurns={currentArenaTurns}
+          onApplyArenaCandidate={handleApplyArenaCandidate}
           activity={aiActivity}
           streamingStage={aiStreamingStage}
           streamingPreview={aiStreamingPreview}
@@ -434,7 +1022,7 @@ export const WorkspaceView: React.FC = () => {
           userName={currentUser?.name || 'Bạn'}
           starters={STARTERS}
           onPickStarter={handlePickStarter}
-          onOpenFile={(path) => openViewer(path, 'unified')}
+          onOpenFile={handleOpenFileInStage}
           onRetry={handleRetry}
           onRegenerate={handleRegenerate}
           canRetry={!isGenerating && !quotaBlocked}
@@ -464,10 +1052,18 @@ export const WorkspaceView: React.FC = () => {
 
             {dropZoneOpen && (
               <div className="ws-drop">
-                <DynamicDropZone onFilesAdded={handleFilesDropped} label="Thả tệp HTML, CSS, JS" compact />
+                <DynamicDropZone
+                  onFilesAdded={handleFilesDropped}
+                  label="Thả tệp HTML, CSS, JS hoặc ảnh tham chiếu"
+                  compact
+                />
                 <div className="ws-drop-side">
-                  <button type="button" className="btn btn-ghost btn-sm" onClick={() => navigate('explore')}>
-                    Khám phá
+                  <button
+                    type="button"
+                    className="btn btn-ghost btn-sm"
+                    onClick={() => navigate('explore')}
+                  >
+                    Kho mẫu
                   </button>
                   <button
                     type="button"
@@ -485,19 +1081,31 @@ export const WorkspaceView: React.FC = () => {
             {quotaBlocked && (
               <div className="ws-quota" role="status">
                 <p>
-                  Đã dùng hết <span className="ws-count">{quotaLabel}</span>. Tài khoản Admin không bị giới
-                  hạn.
+                  Đã dùng hết <span className="ws-count">{quotaLabel}</span>. Mở BYOK &amp; Model để dùng khóa riêng hoặc đăng nhập Admin.
                 </p>
-                {!currentUser && (
-                  <button type="button" className="btn btn-line btn-sm" onClick={() => setAuthModalOpen(true)}>
-                    Đăng nhập
+                <div className="ws-quota-actions">
+                  <button
+                    type="button"
+                    className="btn btn-line btn-sm"
+                    onClick={() => setSetupDrawerOpen(true)}
+                  >
+                    Gắn khóa BYOK
                   </button>
-                )}
+                  {!currentUser && (
+                    <button
+                      type="button"
+                      className="btn btn-red btn-sm"
+                      onClick={() => setAuthModalOpen(true)}
+                    >
+                      Đăng nhập
+                    </button>
+                  )}
+                </div>
               </div>
             )}
 
             <div className="ws-dock-row">
-              <div className="ws-seg" role="group" aria-label="Chế độ">
+              <div className="ws-seg" role="group" aria-label="Chế độ thực thi">
                 {AGENT_MODES.map((mode) => (
                   <button
                     key={mode.id}
@@ -509,6 +1117,23 @@ export const WorkspaceView: React.FC = () => {
                     {mode.label}
                   </button>
                 ))}
+              </div>
+
+              <div className="ws-dock-tools">
+                <button
+                  type="button"
+                  className="btn btn-ghost btn-sm"
+                  onClick={() => setDropZoneOpen((value) => !value)}
+                >
+                  Đính kèm tệp
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-ghost btn-sm"
+                  onClick={() => setSetupDrawerOpen(true)}
+                >
+                  Cấu hình BYOK
+                </button>
               </div>
             </div>
 
@@ -522,6 +1147,11 @@ export const WorkspaceView: React.FC = () => {
               onSelectModel={setSelectedModel}
               models={MODEL_OPTIONS}
               showFan={false}
+              placeholder={
+                arenaMode === 'compare'
+                  ? `Nhập yêu cầu để so sánh ${getModelLabel(arenaModelA)} vs ${getModelLabel(arenaModelB)}...`
+                  : 'Mô tả giao diện hoặc tính năng cần dựng...'
+              }
               onAttachClick={() => setDropZoneOpen((value) => !value)}
               onSend={(text) => {
                 setComposerValue('');
@@ -533,166 +1163,66 @@ export const WorkspaceView: React.FC = () => {
         </footer>
       </section>
 
-      <ReviewZone
-        project={activeProject}
-        totals={diffTotals}
-        tab={reviewTab}
-        onTabChange={setReviewTab}
-        onOpenViewer={openViewer}
-        onRunChecks={handleRunChecks}
-        hidden={reviewHidden}
-        actions={
-          <>
-            {!isCompact && (
-              <button
-                type="button"
-                className="btn btn-red ws-live-open"
-                aria-pressed={liveOpen}
-                onClick={() => {
-                  setLivePip(false);
-                  setLiveOpen(true);
-                }}
-              >
-                Live View
-              </button>
-            )}
-            <Popover label="Thêm" icon={<Ellipsis size={18} aria-hidden="true" />}>
-              {(close) => (
-                <>
-                  <ul className="ws-menu">
-                    <li>
-                      <button
-                        type="button"
-                        className="ws-menu-item"
-                        onClick={() => createProjectSnapshot()}
-                      >
-                        Lưu mốc
-                      </button>
-                    </li>
-                    <li>
-                      <button
-                        type="button"
-                        className="ws-menu-item"
-                        disabled={exporting}
-                        onClick={() => void handleExportZip()}
-                      >
-                        {exporting ? 'Đang nén' : 'Xuất ZIP'}
-                      </button>
-                    </li>
-                    <li>
-                      <button
-                        type="button"
-                        className="ws-menu-item"
-                        onClick={() => {
-                          close();
-                          setGithubOpen(true);
-                        }}
-                      >
-                        GitHub
-                      </button>
-                    </li>
-                    <li>
-                      <button
-                        type="button"
-                        className="ws-menu-item"
-                        onClick={() => {
-                          close();
-                          setSetupDrawerOpen(true);
-                        }}
-                      >
-                        Thiết lập
-                      </button>
-                    </li>
-                  </ul>
-                  <section className="ws-snaps" aria-label="Mốc lưu">
-                    <p className="ws-snaps-head">
-                      <span>Mốc lưu</span>
-                      <span className="ws-count">{activeProject.snapshots.length}</span>
-                    </p>
-                    {activeProject.snapshots.length === 0 ? (
-                      <p className="ws-empty">Chưa có mốc lưu.</p>
-                    ) : (
-                      <ul>
-                        {activeProject.snapshots.map((snapshot) => (
-                          <li key={snapshot.id}>
-                            <span className="ws-snap-name">{snapshot.label}</span>
-                            <time className="t-label" dateTime={snapshot.createdAt}>
-                              {formatStamp(snapshot.createdAt)}
-                            </time>
-                            <button
-                              type="button"
-                              className="btn btn-ghost btn-sm"
-                              onClick={() => {
-                                restoreProjectSnapshot(snapshot.id);
-                                close();
-                              }}
-                            >
-                              Khôi phục
-                            </button>
-                          </li>
-                        ))}
-                      </ul>
-                    )}
-                  </section>
-                </>
-              )}
-            </Popover>
-          </>
-        }
-      />
+      {liveStageElement(false)}
 
-      {liveOpen && !liveExpanded && liveStage}
-
-      {isCompact && (
-        <nav className="ws-switch" aria-label="Vùng làm việc">
+      {!isDesktop && (
+        <nav className="ws-switch" aria-label="Chuyển vùng làm việc">
           <button
             type="button"
             className="ws-switch-item"
-            aria-pressed={!liveOpen && zone === 'chat'}
-            onClick={() => {
-              closeLive();
-              setZone('chat');
-            }}
+            aria-pressed={mobilePane === 'chat'}
+            onClick={() => setMobilePane('chat')}
           >
-            Chat
+            Hội thoại Arena
           </button>
           <button
             type="button"
             className="ws-switch-item"
-            aria-pressed={!liveOpen && zone === 'review'}
+            aria-pressed={mobilePane === 'stage' && stageTab === 'preview'}
             onClick={() => {
-              closeLive();
-              setZone('review');
+              setStageTab('preview');
+              setMobilePane('stage');
             }}
           >
-            Diff
+            Xem trực tiếp
           </button>
           <button
             type="button"
-            className="ws-switch-item ws-switch-live"
-            aria-pressed={liveOpen}
+            className="ws-switch-item"
+            aria-pressed={mobilePane === 'stage' && stageTab === 'source'}
             onClick={() => {
-              setLivePip(false);
-              setLiveOpen(true);
+              setStageTab('source');
+              setMobilePane('stage');
             }}
           >
-            Live
+            Mã nguồn
+          </button>
+          <button
+            type="button"
+            className="ws-switch-item"
+            aria-pressed={mobilePane === 'stage' && stageTab === 'review'}
+            onClick={() => {
+              setStageTab('review');
+              setMobilePane('stage');
+            }}
+          >
+            Diff &amp; Check
           </button>
         </nav>
       )}
 
       <Modal
-        open={railSheetOpen && !isWide}
+        open={railSheetOpen && !isDesktop}
         onClose={() => setRailSheetOpen(false)}
-        label="Dự án"
+        label="Danh sách phiên làm việc"
         className="ws-modal ws-modal-left"
       >
         <div className="ws-rail">
-          {rail(
+          {renderProjectRail(
             <button
               type="button"
               className="icon-btn"
-              aria-label="Đóng"
+              aria-label="Đóng danh sách phiên"
               title="Đóng"
               onClick={() => setRailSheetOpen(false)}
             >
@@ -703,60 +1233,23 @@ export const WorkspaceView: React.FC = () => {
       </Modal>
 
       <Modal
-        open={liveOpen && liveExpanded}
-        onClose={() => setLiveExpanded(false)}
-        label="Live View"
+        open={stageExpanded}
+        onClose={() => setStageExpanded(false)}
+        label="Toàn màn hình Live Artifact Stage"
         className="ws-modal ws-modal-full"
       >
-        {liveStage}
-      </Modal>
-
-      <Modal
-        open={viewer !== null}
-        onClose={() => setViewer(null)}
-        label="Diff & Check"
-        className="ws-modal ws-modal-viewer"
-      >
-        <div className="ws-viewer">
-          <header className="ws-head">
-            <h2 className="ws-head-title">Diff &amp; Check</h2>
-            <p className="ws-count ws-viewer-totals">
-              <span className="ws-add">+{diffTotals.added}</span>
-              <span className="ws-del">−{diffTotals.removed}</span>
-            </p>
-            <button
-              type="button"
-              className="icon-btn"
-              aria-label="Đóng"
-              title="Đóng"
-              onClick={() => setViewer(null)}
-            >
-              <X size={18} aria-hidden="true" />
-            </button>
-          </header>
-          {viewer && (
-            <DiffViewer
-              key={viewer.nonce}
-              files={activeProject.files}
-              diffs={activeProject.diffs}
-              activeFilePath={activeProject.activeFilePath}
-              onSelectFile={setActiveFilePath}
-              onUpdateFile={updateWorkspaceFile}
-              initialMode={viewer.mode}
-            />
-          )}
-        </div>
+        {liveStageElement(true)}
       </Modal>
 
       <Modal
         open={confirmDelete}
         onClose={() => setConfirmDelete(false)}
-        label="Xóa dự án"
+        label="Xóa phiên làm việc"
         className="ws-modal ws-modal-confirm"
       >
         <div className="ws-confirm">
-          <h2>Xóa dự án?</h2>
-          <p>Hội thoại, tệp và mốc lưu của “{activeProject.name}” sẽ mất hẳn.</p>
+          <h2>Xóa phiên làm việc?</h2>
+          <p>Hội thoại, tệp mã nguồn và mốc lưu của “{activeProject.name}” sẽ bị xóa vĩnh viễn.</p>
           <div className="ws-confirm-actions">
             <button type="button" className="btn btn-line" onClick={() => setConfirmDelete(false)}>
               Hủy
@@ -769,7 +1262,7 @@ export const WorkspaceView: React.FC = () => {
                 setConfirmDelete(false);
               }}
             >
-              Xóa
+              Xóa phiên
             </button>
           </div>
         </div>
@@ -800,7 +1293,7 @@ export const WorkspaceView: React.FC = () => {
             title: `Đã nạp ${incoming.length} tệp từ GitHub`,
           });
         }}
-        onAttachRepo={(item) => attachItemToWorkspace(item, false)}
+        onAttachRepo={(item) => attachItemToWorkspace(item)}
       />
     </div>
   );

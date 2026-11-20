@@ -10,7 +10,6 @@ import React, {
 } from 'react';
 import {
   GLACIER_BOOKS,
-  GLACIER_BOOK_GROUPS,
   type GlacierBookMotif,
   type GlacierBookSettings,
   type GlacierBookSpec,
@@ -330,14 +329,16 @@ function Motif({ kind }: { kind: GlacierBookMotif }): React.JSX.Element {
 function BookSpine({ book }: { book: GlacierBookSpec }): React.JSX.Element {
   return (
     <div className="gb-sp-in">
+      <span className="gb-sp-band gb-sp-band--top" aria-hidden="true" />
       <div className="gb-sp-art">
         <Motif kind={book.motif} />
       </div>
       <div className="gb-sp-title">{book.title}</div>
       <div className="gb-sp-foot">
         <span className="gb-sp-code">{book.code}</span>
-        <span className="gb-sp-count">{book.countLabel}</span>
+        <span className="gb-sp-count">{book.editionTag.replace(/^ARCHIVAL EDITION\s*·\s*/i, 'ED · ')}</span>
       </div>
+      <span className="gb-sp-band gb-sp-band--bot" aria-hidden="true" />
     </div>
   );
 }
@@ -346,12 +347,14 @@ function BookCover({ book }: { book: GlacierBookSpec }): React.JSX.Element {
   return (
     <div className="gb-cv-in">
       <div className="gb-cv-top">
-        <span>GLACIER · {book.code}</span>
-        <span>{book.year}</span>
+        <span>{book.editionTag}</span>
+        <span>{book.code}</span>
       </div>
       <h3 className="gb-cv-title">{book.title}</h3>
       <div className="gb-cv-art">
-        <Motif kind={book.motif} />
+        <div className="gb-cv-art-inner">
+          <Motif kind={book.motif} />
+        </div>
       </div>
       <div className="gb-cv-bot">
         <span className="gb-cv-sub">{book.subtitleEn}</span>
@@ -376,7 +379,13 @@ const Tape = memo(function Tape({ v, setRef, onEnter, onLeave }: TapeProps): Rea
       className="gb-tape"
       data-v={v}
       aria-hidden="true"
-      style={{ '--ac': book.accent, '--sc': book.secondary } as React.CSSProperties}
+      style={
+        {
+          '--ac': book.accent,
+          '--sc': book.secondary,
+          '--book-paper': book.paperTone,
+        } as React.CSSProperties
+      }
       onPointerEnter={() => onEnter(v)}
       onPointerLeave={() => onLeave(v)}
     >
@@ -412,8 +421,10 @@ function BookDialog({ book, rect, onClosed, onNavigate, onLaunchPrompt }: Dialog
   const { getHeartCount, isItemLiked, toggleLikedItem, savedItemIds, toggleSavedItem } = useAppStore();
   const [vals, setVals] = useState<GlacierBookSettings>(book.settings);
   const [copied, setCopied] = useState('');
+  const [demoKey, setDemoKey] = useState(0);
   const sheetRef = useRef<HTMLDivElement | null>(null);
   const closeRef = useRef<HTMLButtonElement | null>(null);
+  const demoFrameRef = useRef<HTMLIFrameElement | null>(null);
   const circlesRef = useRef<Array<SVGCircleElement | null>>([]);
   const closingRef = useRef(false);
   const maskId = `gb-ink-${useId().replace(/[^a-zA-Z0-9]/g, '')}`;
@@ -422,6 +433,17 @@ function BookDialog({ book, rect, onClosed, onNavigate, onLaunchPrompt }: Dialog
   const saved = savedItemIds.includes(book.id);
   const cssText = useMemo(() => buildCss(book, vals), [book, vals]);
   const posterLines = useMemo(() => wrapTitle(book.title, 13), [book.title]);
+
+  const postSettingsToDemo = useCallback((settings: GlacierBookSettings) => {
+    demoFrameRef.current?.contentWindow?.postMessage(
+      { type: 'glacier:settings', settings },
+      '*'
+    );
+  }, []);
+
+  useEffect(() => {
+    postSettingsToDemo(vals);
+  }, [vals, postSettingsToDemo]);
 
   useLayoutEffect(() => {
     const sheet = sheetRef.current;
@@ -433,13 +455,13 @@ function BookDialog({ book, rect, onClosed, onNavigate, onLaunchPrompt }: Dialog
         { clipPath: insetFor(rect), transform: 'rotate(-4.5deg)' },
         { clipPath: 'inset(0px round 0px)', transform: 'rotate(0deg)' },
       ],
-      { duration: reduced ? 1 : 1050, easing: EASE_SHEET, fill: 'both' }
+      { duration: reduced ? 1 : 520, easing: EASE_SHEET, fill: 'both' }
     );
     if (!reduced) {
       sheet.querySelectorAll<HTMLElement>('[data-rise]').forEach((el, i) => {
         el.animate(
           [{ transform: 'translateY(110%)' }, { transform: 'translateY(0%)' }],
-          { duration: 900, delay: 620 + i * 75, easing: EASE, fill: 'both' }
+          { duration: 420, delay: 160 + i * 35, easing: EASE, fill: 'both' }
         );
       });
     }
@@ -454,12 +476,12 @@ function BookDialog({ book, rect, onClosed, onNavigate, onLaunchPrompt }: Dialog
       return undefined;
     }
     circles.forEach((c) => c?.setAttribute('r', '0'));
-    const t0 = performance.now() + 560;
+    const t0 = performance.now() + 200;
     let raf = 0;
     const step = (now: number) => {
       let done = true;
       circles.forEach((c, i) => {
-        const p = clamp01((now - t0 - i * 70) / 1250);
+        const p = clamp01((now - t0 - i * 45) / 800);
         if (p < 1) done = false;
         c?.setAttribute('r', String(720 * (1 - Math.pow(1 - p, 3))));
       });
@@ -483,7 +505,7 @@ function BookDialog({ book, rect, onClosed, onNavigate, onLaunchPrompt }: Dialog
         { clipPath: cs.clipPath, transform: cs.transform },
         { clipPath: insetFor(rect), transform: 'rotate(-4.5deg)' },
       ],
-      { duration: prefersReduced() ? 1 : 850, easing: EASE_SHEET, fill: 'both' }
+      { duration: prefersReduced() ? 1 : 480, easing: EASE_SHEET, fill: 'both' }
     );
     anim.onfinish = onClosed;
   }, [onClosed, rect]);
@@ -531,13 +553,10 @@ function BookDialog({ book, rect, onClosed, onNavigate, onLaunchPrompt }: Dialog
     close();
   };
 
-  const style = { '--ac': book.accent, '--sc': book.secondary } as React.CSSProperties;
-  const pvStyle = {
-    '--pv-blur': `${vals.blurPx}px`,
-    '--pv-op': vals.opacityPct / 100,
-    '--pv-rad': `${vals.radiusPx}px`,
-    '--pv-ms': `${vals.motionMs}ms`,
-    '--pv-grain': vals.grainPct / 100,
+  const style = {
+    '--ac': book.accent,
+    '--sc': book.secondary,
+    '--book-paper': book.paperTone,
   } as React.CSSProperties;
 
   return (
@@ -554,7 +573,7 @@ function BookDialog({ book, rect, onClosed, onNavigate, onLaunchPrompt }: Dialog
             Đóng
           </button>
           <span className="gb-lbl">
-            GLACIER ARCHIVE · {book.code}
+            {book.editionTag} · {book.code}
           </span>
           <span className="gb-lbl gb-bar-r">{book.subtitleEn}</span>
         </div>
@@ -608,7 +627,7 @@ function BookDialog({ book, rect, onClosed, onNavigate, onLaunchPrompt }: Dialog
                   <rect width={474} height={900} className="gb-pp-bg" />
                   <rect x={18} y={18} width={438} height={864} className="gb-pp-frame" />
                   <text x={38} y={56} className="gb-pp-mono" fontSize={13}>
-                    GLACIER ARCHIVE · {book.code}
+                    {book.editionTag} · {book.code}
                   </text>
                   <text x={436} y={56} textAnchor="end" className="gb-pp-mono" fontSize={13}>
                     {book.year}
@@ -636,20 +655,6 @@ function BookDialog({ book, rect, onClosed, onNavigate, onLaunchPrompt }: Dialog
                   </text>
                 </g>
               </svg>
-            </div>
-            <div className="gb-pv">
-              <span className="gb-lbl">Xem thử Glacier trực tiếp</span>
-              <div className="gb-pv-stage" style={pvStyle}>
-                <span className="gb-pv-blob gb-pv-b1" />
-                <span className="gb-pv-blob gb-pv-b2" />
-                <span className="gb-pv-blob gb-pv-b3" />
-                <div className="gb-pv-card">
-                  <strong>{book.title}</strong>
-                  <span>
-                    blur {vals.blurPx}px · {vals.opacityPct}% · r{vals.radiusPx} · {vals.motionMs}ms · hạt {vals.grainPct}%
-                  </span>
-                </div>
-              </div>
             </div>
           </aside>
           <div className="gb-right">
@@ -716,6 +721,32 @@ function BookDialog({ book, rect, onClosed, onNavigate, onLaunchPrompt }: Dialog
               </div>
             </Rise>
             <Rise>
+              <div className="gb-live">
+                <div className="gb-live-head">
+                  <span className="gb-lbl">Trải nghiệm tương tác trực tiếp · {book.editionTag}</span>
+                  <button
+                    type="button"
+                    className="gb-txt-btn"
+                    onClick={() => setDemoKey((k) => k + 1)}
+                  >
+                    Tải lại
+                  </button>
+                </div>
+                <div className="gb-live-stage">
+                  <iframe
+                    key={`${book.id}-${demoKey}`}
+                    ref={demoFrameRef}
+                    title={`Chạy thử ${book.title}`}
+                    srcDoc={book.liveDemoHtml}
+                    sandbox="allow-scripts"
+                    referrerPolicy="no-referrer"
+                    className="gb-live-iframe"
+                    onLoad={() => postSettingsToDemo(vals)}
+                  />
+                </div>
+              </div>
+            </Rise>
+            <Rise>
               <div className="gb-bench">
                 <div className="gb-bench-head">
                   <h3 className="gb-h3">Tùy chỉnh Glacier</h3>
@@ -778,14 +809,11 @@ export function GlacierBookShelf({ onNavigate, onLaunchPrompt }: GlacierBookShel
   const probeRef = useRef<HTMLDivElement | null>(null);
   const cursorRef = useRef<HTMLDivElement | null>(null);
   const ringRef = useRef<HTMLButtonElement | null>(null);
-  const tabsRef = useRef<HTMLDivElement | null>(null);
-  const tabEls = useRef<Array<HTMLButtonElement | null>>([]);
   const tapeEls = useRef<Array<HTMLDivElement | null>>([]);
   const capEls = useRef<Array<HTMLDivElement | null>>([]);
   const filterId = `gb-grain-${useId().replace(/[^a-zA-Z0-9]/g, '')}`;
   const [activeIdx, setActiveIdx] = useState(START_INDEX);
   const [dialog, setDialog] = useState<DialogState | null>(null);
-  const [indicator, setIndicator] = useState({ w: 0, x: 0 });
 
   const eng = useRef<Engine>({
     s: START_INDEX + COUNT,
@@ -822,10 +850,6 @@ export function GlacierBookShelf({ onNavigate, onLaunchPrompt }: GlacierBookShel
   });
 
   const activeBook = GLACIER_BOOKS[activeIdx];
-  const activeGroupIdx = Math.max(
-    0,
-    GLACIER_BOOK_GROUPS.findIndex((g) => g.id === activeBook.group)
-  );
 
   const setTapeRef = useCallback((v: number, el: HTMLDivElement | null) => {
     tapeEls.current[v] = el;
@@ -895,23 +919,6 @@ export function GlacierBookShelf({ onNavigate, onLaunchPrompt }: GlacierBookShel
     [goTo]
   );
 
-  const jumpToGroup = useCallback(
-    (groupId: string) => {
-      const e = eng.current;
-      const target =
-        groupId === 'all'
-          ? e.active === 0
-            ? START_INDEX
-            : 0
-          : GLACIER_BOOKS.findIndex((b) => b.group === groupId);
-      if (target < 0) return;
-      const base = Math.round(e.T);
-      const delta = mod(target - mod(base, COUNT) + 6, COUNT) - 6;
-      if (delta !== 0) goTo(base + delta);
-    },
-    [goTo]
-  );
-
   const openBook = useCallback(() => {
     const e = eng.current;
     if (e.modal) return;
@@ -941,19 +948,6 @@ export function GlacierBookShelf({ onNavigate, onLaunchPrompt }: GlacierBookShel
     swapCaption(GLACIER_BOOKS[START_INDEX], 1, true);
   }, [swapCaption]);
 
-  useLayoutEffect(() => {
-    const tab = tabEls.current[activeGroupIdx];
-    if (!tab) return;
-    setIndicator({ w: tab.offsetWidth, x: tab.offsetLeft });
-    const strip = tabsRef.current;
-    if (strip && strip.scrollWidth > strip.clientWidth) {
-      strip.scrollTo({
-        left: tab.offsetLeft - (strip.clientWidth - tab.offsetWidth) / 2,
-        behavior: eng.current.reduced ? 'auto' : 'smooth',
-      });
-    }
-  }, [activeGroupIdx]);
-
   useEffect(() => {
     const root = rootRef.current;
     const stage = stageRef.current;
@@ -977,8 +971,6 @@ export function GlacierBookShelf({ onNavigate, onLaunchPrompt }: GlacierBookShel
       root.style.setProperty('--h-px', `${H}px`);
       root.style.setProperty('--ws', `${e.ws}px`);
       root.style.setProperty('--d', `${e.d}px`);
-      const tab = tabEls.current[Math.max(0, GLACIER_BOOK_GROUPS.findIndex((g) => g.id === GLACIER_BOOKS[e.active].group))];
-      if (tab) setIndicator({ w: tab.offsetWidth, x: tab.offsetLeft });
     };
     measure();
     const ro = new ResizeObserver(measure);
@@ -1273,37 +1265,15 @@ export function GlacierBookShelf({ onNavigate, onLaunchPrompt }: GlacierBookShel
       <div ref={probeRef} className="gb-probe" aria-hidden="true" />
 
       <header className="gb-top">
-        <span className="gb-box gb-lbl gb-top-l">[ MỤC LỤC / GLACIER ]</span>
+        <span className="gb-box gb-lbl gb-top-l">TỦ SÁCH</span>
         <div className="gb-mark">
-          <span className="gb-mark-a">TỦ SÁCH TÀI NGUYÊN</span>
-          <span className="gb-mark-b">GLACIER ARCHIVE</span>
+          <span className="gb-mark-a">Tủ sách tài nguyên</span>
+          <span className="gb-mark-b">KÉO HOẶC CHỌN SÁCH ĐỂ CHẠY THỬ</span>
         </div>
-        <span className="gb-lbl gb-top-r">12 CUỐN · TÀI NGUYÊN TỔNG HỢP</span>
+        <span className="gb-lbl gb-top-r">
+          {String(activeIdx + 1).padStart(2, '0')} / {String(COUNT).padStart(2, '0')} · {activeBook.editionTag}
+        </span>
       </header>
-
-      <div ref={tabsRef} className="gb-tabs" role="tablist" aria-label="Nhóm sách">
-        <span
-          className="gb-ind"
-          aria-hidden="true"
-          style={{ width: indicator.w, transform: `translateX(${indicator.x}px)` }}
-        />
-        {GLACIER_BOOK_GROUPS.map((g, i) => (
-          <button
-            key={g.id}
-            ref={(el) => {
-              tabEls.current[i] = el;
-            }}
-            type="button"
-            role="tab"
-            aria-selected={i === activeGroupIdx}
-            className="gb-tab gb-lbl"
-            data-active={i === activeGroupIdx ? 'true' : 'false'}
-            onClick={() => jumpToGroup(g.id)}
-          >
-            {g.label}
-          </button>
-        ))}
-      </div>
 
       <div
         ref={stageRef}
