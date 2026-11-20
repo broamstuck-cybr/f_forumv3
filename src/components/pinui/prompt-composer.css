@@ -1,4 +1,3 @@
-/* Prompt Composer styles — ported from Pin UI (https://www.pinui.xyz/components/prompt-composer) · MIT License (c) Rachit Thakur / Shadcn Labs */
 .pcmp {
   --pcmp-ink: #141414;
   --pcmp-quiet: #a3a3a8;
@@ -150,6 +149,7 @@
 }
 
 .pcmp .pcmp__pill {
+  position: relative;
   display: inline-flex;
   align-items: center;
   gap: 6px;
@@ -162,7 +162,20 @@
   font-weight: 500;
   letter-spacing: -0.005em;
   white-space: nowrap;
+  cursor: pointer;
   transition: background-color 0.35s ease, color 0.2s ease;
+}
+
+.pcmp .pcmp__pillTrigger {
+  display: inline-flex;
+  align-items: center;
+}
+
+.pcmp .pcmp__pillTrigger::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
 }
 
 @media (hover: hover) {
@@ -175,6 +188,7 @@
   flex: none;
   width: 14px;
   height: 14px;
+  pointer-events: none;
 }
 
 .pcmp__pillName {
@@ -191,6 +205,7 @@
   width: 10px;
   height: 10px;
   opacity: 0.8;
+  pointer-events: none;
 }
 
 .pcmp__menu {
@@ -225,6 +240,20 @@
   padding: 8px 10px;
   border-radius: 9px;
   text-align: left;
+  cursor: pointer;
+}
+
+.pcmp .pcmp__optionTrigger {
+  flex: 1;
+  min-width: 0;
+  text-align: left;
+}
+
+.pcmp .pcmp__optionTrigger::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
 }
 
 .pcmp__optionHover {
@@ -232,6 +261,7 @@
   inset: 0;
   border-radius: 9px;
   background: var(--pcmp-option-hover);
+  pointer-events: none;
 }
 
 .pcmp__optionText {
@@ -260,6 +290,7 @@
   width: 14px;
   height: 14px;
   color: var(--pcmp-ink);
+  pointer-events: none;
 }
 
 .pcmp__field {
@@ -301,12 +332,25 @@
   }
 }
 
-.pcmp__cardFace {
+.pcmp .pcmp__cardFace {
   position: absolute;
   inset: 0;
   overflow: hidden;
   border-radius: inherit;
   background: linear-gradient(180deg, var(--pcmp-card) 0%, var(--pcmp-card) 45%, var(--pcmp-card-foot) 100%);
+}
+
+.pcmp .pcmp__cardTrigger {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  width: 100%;
+  height: 100%;
+  border-radius: inherit;
+}
+
+.pcmp .pcmp__cardTrigger:focus-visible {
+  outline-offset: -2px;
 }
 
 .pcmp__cardFace::after {
@@ -369,6 +413,7 @@
   left: 0;
   display: flex;
   justify-content: center;
+  pointer-events: none;
 }
 
 .pcmp__card--note .pcmp__artBox,
@@ -466,6 +511,7 @@
 }
 
 .pcmp .pcmp__chip {
+  position: relative;
   flex: none;
   display: inline-flex;
   align-items: center;
@@ -478,9 +524,26 @@
   white-space: nowrap;
 }
 
+.pcmp .pcmp__chipBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 14px;
+  height: 14px;
+  border-radius: 4px;
+}
+
+.pcmp .pcmp__chipBtn::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+}
+
 .pcmp__chipIcon {
   width: 14px;
   height: 14px;
+  pointer-events: none;
 }
 
 .pcmp__chipX {

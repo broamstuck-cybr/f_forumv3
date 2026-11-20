@@ -1,8 +1,19 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { X } from 'lucide-react';
 import type { SourceCatalogItem } from '../../types/index';
-import { Media, previewFor } from '../../ui/Media';
-import { LIBRARY_LABEL } from './catalog';
+import { previewFor } from '../../ui/Media';
+import { useAppStore } from '../../store/appStore';
+import {
+  LIBRARY_LABEL,
+  copyText,
+  sanitizeBrandText,
+  sanitizeSnippetCode,
+  whiteLabelArchivePath,
+  type PreviewTheme,
+  type PreviewViewport,
+} from './catalog';
+import { SandboxPreview } from './SandboxPreview';
+import { SpecimenMedia } from './SpecimenMedia';
 
 interface SpecimenSheetProps {
   item: SourceCatalogItem | null;
@@ -14,8 +25,11 @@ interface SpecimenSheetProps {
   onToggleSave: (item: SourceCatalogItem) => void;
   onUse: (item: SourceCatalogItem) => void;
   onAttach: (item: SourceCatalogItem) => void;
-  onCopyPath: (item: SourceCatalogItem) => void;
 }
+
+type CodeTab = 'html' | 'css' | 'spec';
+
+const VIEWPORTS: PreviewViewport[] = [390, 768, 1440];
 
 export const SpecimenSheet: React.FC<SpecimenSheetProps> = ({
   item,
@@ -27,10 +41,26 @@ export const SpecimenSheet: React.FC<SpecimenSheetProps> = ({
   onToggleSave,
   onUse,
   onAttach,
-  onCopyPath,
 }) => {
+  const { theme, addToast } = useAppStore();
   const dialogRef = useRef<HTMLDialogElement>(null);
+  const [viewport, setViewport] = useState<PreviewViewport>(1440);
+  const [stageTheme, setStageTheme] = useState<PreviewTheme>(theme);
+  const [nonce, setNonce] = useState(0);
+  const [codeOpen, setCodeOpen] = useState(false);
+  const [codeTab, setCodeTab] = useState<CodeTab>('html');
+
   const isOpen = item !== null;
+
+  useEffect(() => {
+    setStageTheme(theme);
+  }, [theme]);
+
+  useEffect(() => {
+    if (!item) return;
+    setNonce((n) => n + 1);
+    setCodeTab(item.previewHtml ? 'html' : 'spec');
+  }, [item?.id]);
 
   useEffect(() => {
     const dialog = dialogRef.current;
@@ -69,6 +99,26 @@ export const SpecimenSheet: React.FC<SpecimenSheetProps> = ({
   };
 
   const preview = item ? previewFor(item.id) : null;
+  const hasLiveCode = Boolean(item?.previewHtml);
+  const safeTitle = item ? sanitizeBrandText(item.title) : '';
+  const safeDesc = item ? sanitizeBrandText(item.description) : '';
+  const safeHtml = item ? sanitizeSnippetCode(item.previewHtml) : '';
+  const safeCss = item ? sanitizeSnippetCode(item.previewCss) : '';
+  const safeSpec = item
+    ? sanitizeBrandText(item.promptSpec) ||
+      `${safeTitle}\nNhóm: ${LIBRARY_LABEL[item.sourceLibrary]}\nRuntime: ${item.runtime}\nPhong cách: ${item.style}\n\n${safeDesc}`
+    : '';
+  const activeCode = codeTab === 'html' ? safeHtml : codeTab === 'css' ? safeCss : safeSpec;
+
+  const handleCopyCode = async () => {
+    if (!activeCode) return;
+    const ok = await copyText(activeCode);
+    addToast(
+      ok
+        ? { type: 'success', title: 'Đã chép mã', message: safeTitle }
+        : { type: 'error', title: 'Không chép được', message: safeTitle }
+    );
+  };
 
   return (
     <dialog
@@ -86,6 +136,44 @@ export const SpecimenSheet: React.FC<SpecimenSheetProps> = ({
             <span className="t-label">
               {position} / {total}
             </span>
+            {hasLiveCode ? (
+              <div className="ex-stage-controls" role="group" aria-label="Khung chạy thử">
+                {VIEWPORTS.map((vp) => (
+                  <button
+                    key={vp}
+                    type="button"
+                    className="ex-text"
+                    aria-pressed={viewport === vp}
+                    onClick={() => setViewport(vp)}
+                  >
+                    {vp}
+                  </button>
+                ))}
+                <button
+                  type="button"
+                  className="ex-text"
+                  aria-pressed={stageTheme === 'dark'}
+                  onClick={() => setStageTheme('dark')}
+                >
+                  Mực
+                </button>
+                <button
+                  type="button"
+                  className="ex-text"
+                  aria-pressed={stageTheme === 'light'}
+                  onClick={() => setStageTheme('light')}
+                >
+                  Giấy
+                </button>
+                <button
+                  type="button"
+                  className="ex-text"
+                  onClick={() => setNonce((n) => n + 1)}
+                >
+                  Chạy lại
+                </button>
+              </div>
+            ) : null}
             <button
               type="button"
               className="icon-btn"
@@ -95,33 +183,53 @@ export const SpecimenSheet: React.FC<SpecimenSheetProps> = ({
               <X size={20} aria-hidden="true" />
             </button>
           </div>
-          <div className="ex-spec-stage">
-            {preview ? (
-              <Media key={item.id} preview={preview} title={item.title} fit="contain" />
+          <div className={`ex-spec-stage${stageTheme === 'light' ? ' ex-stage-paper' : ''}`}>
+            {hasLiveCode ? (
+              <SandboxPreview
+                title={safeTitle}
+                html={item.previewHtml ?? ''}
+                css={item.previewCss ?? ''}
+                theme={stageTheme}
+                viewport={viewport}
+                nonce={nonce}
+              />
+            ) : preview ? (
+              <SpecimenMedia
+                key={item.id}
+                preview={preview}
+                title={safeTitle}
+                fallbackLabel={LIBRARY_LABEL[item.sourceLibrary]}
+                fit="contain"
+                activePlay
+              />
             ) : (
               <div className="ex-spec-type">
-                <span className="ex-spec-word">{item.title}</span>
-                <span className="t-label">Mẫu này chưa có ảnh xem trước.</span>
+                <span className="ex-spec-word">{safeTitle}</span>
+                <span className="t-label">{LIBRARY_LABEL[item.sourceLibrary]}</span>
               </div>
             )}
           </div>
           <div className="ex-spec-text">
             <h2 id="ex-spec-title" className="t-title ex-spec-title">
-              {item.title}
+              {safeTitle}
             </h2>
-            <p className="ex-spec-line">{item.description}</p>
+            <p className="ex-spec-line">{safeDesc}</p>
             <dl className="ex-meta ex-meta-stack">
               <div>
                 <dt>runtime</dt>
                 <dd>{item.runtime}</dd>
               </div>
               <div>
-                <dt>giấy phép</dt>
-                <dd>{item.license}</dd>
+                <dt>phong cách</dt>
+                <dd>{item.style}</dd>
               </div>
               <div>
-                <dt>đường dẫn</dt>
-                <dd>{item.archivePath}</dd>
+                <dt>giấy phép</dt>
+                <dd>{sanitizeBrandText(item.license)}</dd>
+              </div>
+              <div>
+                <dt>mã mẫu</dt>
+                <dd>{whiteLabelArchivePath(item)}</dd>
               </div>
             </dl>
             <div className="ex-spec-actions">
@@ -139,18 +247,67 @@ export const SpecimenSheet: React.FC<SpecimenSheetProps> = ({
               >
                 {saved ? 'Đã lưu' : 'Lưu'}
               </button>
-              <button type="button" className="btn btn-ghost" onClick={() => onCopyPath(item)}>
-                Chép đường dẫn
-              </button>
-              <a
+              <button
+                type="button"
                 className="btn btn-ghost"
-                href={item.officialUrl}
-                target="_blank"
-                rel="noreferrer noopener"
+                aria-expanded={codeOpen}
+                onClick={() => setCodeOpen((prev) => !prev)}
               >
-                Mở nguồn
-              </a>
+                {codeOpen ? 'Ẩn mã' : 'Xem mã'}
+              </button>
             </div>
+            {codeOpen ? (
+              <div className="ex-code-drawer">
+                <div className="ex-code-tabs">
+                  <div className="ex-filter" role="tablist" aria-label="Loại mã">
+                    {safeHtml ? (
+                      <button
+                        type="button"
+                        role="tab"
+                        aria-selected={codeTab === 'html'}
+                        className="ex-text"
+                        aria-pressed={codeTab === 'html'}
+                        onClick={() => setCodeTab('html')}
+                      >
+                        HTML
+                      </button>
+                    ) : null}
+                    {safeCss ? (
+                      <button
+                        type="button"
+                        role="tab"
+                        aria-selected={codeTab === 'css'}
+                        className="ex-text"
+                        aria-pressed={codeTab === 'css'}
+                        onClick={() => setCodeTab('css')}
+                      >
+                        CSS
+                      </button>
+                    ) : null}
+                    <button
+                      type="button"
+                      role="tab"
+                      aria-selected={codeTab === 'spec'}
+                      className="ex-text"
+                      aria-pressed={codeTab === 'spec'}
+                      onClick={() => setCodeTab('spec')}
+                    >
+                      Đặc tả
+                    </button>
+                  </div>
+                  <button
+                    type="button"
+                    className="ex-text"
+                    onClick={() => void handleCopyCode()}
+                  >
+                    Chép mã
+                  </button>
+                </div>
+                <pre className="ex-code-pre">
+                  <code>{activeCode}</code>
+                </pre>
+              </div>
+            ) : null}
             <div className="ex-spec-step">
               <button
                 type="button"

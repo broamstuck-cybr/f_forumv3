@@ -5,6 +5,7 @@ import { PromptComposer } from '../../components/pinui/PromptComposer';
 import { useAppStore } from '../../store/appStore';
 import { AiProjectSetupDrawer } from './AiProjectSetupDrawer';
 import { DiffViewer, type DiffViewMode } from './DiffViewer';
+import { GitHubConnectorModal } from './GitHubConnectorModal';
 import type { PreviewViewport } from './LivePreviewFrame';
 import { LiveStage } from './LiveStage';
 import { Modal } from './Modal';
@@ -67,11 +68,15 @@ export const WorkspaceView: React.FC = () => {
     attachItemToWorkspace,
     detachItemFromWorkspace,
     sendWorkspacePrompt,
+    regenerateLastPrompt,
     runChecksOnActiveProject,
     createProjectSnapshot,
     restoreProjectSnapshot,
     exportActiveProjectZip,
     aiActivity,
+    aiStreamingStage,
+    aiStreamingPreview,
+    aiModelUsed,
     quota,
     currentUser,
     settings,
@@ -91,6 +96,7 @@ export const WorkspaceView: React.FC = () => {
 
   const [liveOpen, setLiveOpen] = useState(false);
   const [liveExpanded, setLiveExpanded] = useState(false);
+  const [livePip, setLivePip] = useState(false);
   const [viewport, setViewport] = useState<PreviewViewport>(() =>
     window.matchMedia('(max-width: 719px)').matches ? 390 : 1440
   );
@@ -105,6 +111,7 @@ export const WorkspaceView: React.FC = () => {
   const [selectedModel, setSelectedModel] = useState('auto');
   const [dropZoneOpen, setDropZoneOpen] = useState(false);
   const [setupDrawerOpen, setSetupDrawerOpen] = useState(false);
+  const [githubOpen, setGithubOpen] = useState(false);
   const [exporting, setExporting] = useState(false);
 
   const dockRef = useRef<HTMLDivElement>(null);
@@ -122,7 +129,13 @@ export const WorkspaceView: React.FC = () => {
     [activeProject.diffs]
   );
 
-  const isGenerating = aiActivity === 'thinking' || aiActivity === 'streaming';
+  const isGenerating =
+    aiActivity === 'thinking' ||
+    aiActivity === 'streaming' ||
+    aiStreamingStage === 'routing' ||
+    aiStreamingStage === 'generating' ||
+    aiStreamingStage === 'checking';
+
   const quotaBlocked = !quota.unlimited && quota.exhausted;
   const quotaLabel = quota.unlimited
     ? 'không giới hạn'
@@ -131,23 +144,42 @@ export const WorkspaceView: React.FC = () => {
       : `${quota.used}/${quota.limit} lượt`;
 
   const railInline = isWide && railOpen;
-  const threadHidden = isCompact ? liveOpen || zone !== 'chat' : !isWide && liveOpen;
-  const reviewHidden = isCompact ? liveOpen || zone !== 'review' : liveOpen;
+  const dockedLive = liveOpen && !liveExpanded && !livePip;
+  const threadHidden = isCompact ? dockedLive || zone !== 'chat' : !isWide && dockedLive;
+  const reviewHidden = isCompact ? dockedLive || zone !== 'review' : dockedLive;
 
   const closeLive = () => {
     setLiveOpen(false);
     setLiveExpanded(false);
+    setLivePip(false);
+  };
+
+  const toggleLive = () => {
+    if (liveOpen) {
+      closeLive();
+    } else {
+      setLiveOpen(true);
+    }
   };
 
   const sendPrompt = async (text: string) => {
     const raw = text.trim();
     if (!raw || isGenerating) return;
-    await sendWorkspacePrompt(`[Mode: ${agentMode}] ${raw}`, { model: selectedModel, agentMode });
+    await sendWorkspacePrompt(`[Mode: ${agentMode}] ${raw}`, {
+      model: selectedModel,
+      agentMode,
+      stream: true,
+    });
   };
 
   const handleRetry = () => {
     const lastUserTurn = [...activeProject.messages].reverse().find((message) => message.role === 'user');
     if (lastUserTurn) void sendPrompt(stripModeTag(lastUserTurn.content));
+  };
+
+  const handleRegenerate = () => {
+    if (isGenerating || quotaBlocked) return;
+    void regenerateLastPrompt({ model: selectedModel, agentMode });
   };
 
   const handlePickStarter = (prompt: string) => {
@@ -245,7 +277,12 @@ export const WorkspaceView: React.FC = () => {
       viewport={viewport}
       onViewportChange={setViewport}
       expanded={liveExpanded}
-      onToggleExpanded={() => setLiveExpanded((value) => !value)}
+      onToggleExpanded={() => {
+        setLivePip(false);
+        setLiveExpanded((value) => !value);
+      }}
+      pip={livePip && !liveExpanded}
+      onTogglePip={() => setLivePip((value) => !value)}
       onClose={closeLive}
     />
   );
@@ -265,7 +302,7 @@ export const WorkspaceView: React.FC = () => {
       className="ws"
       data-layout={layout}
       data-rail={railInline ? 'open' : 'closed'}
-      data-live={liveOpen ? 'true' : 'false'}
+      data-live={dockedLive ? 'true' : 'false'}
       data-density={settings.compactDensity ? 'compact' : 'roomy'}
     >
       {railInline && (
@@ -317,7 +354,19 @@ export const WorkspaceView: React.FC = () => {
               </button>
             </form>
           ) : (
-            <h1 className="ws-head-title ws-title">{activeProject.name}</h1>
+            <h1 className="ws-head-title ws-title" title={activeProject.name}>
+              {activeProject.name}
+            </h1>
+          )}
+          {!isCompact && reviewHidden && (
+            <button
+              type="button"
+              className={liveOpen ? 'btn btn-red btn-sm' : 'btn btn-line btn-sm'}
+              aria-pressed={liveOpen}
+              onClick={toggleLive}
+            >
+              Live View
+            </button>
           )}
           <Popover label="Tùy chọn dự án" icon={<Ellipsis size={18} aria-hidden="true" />}>
             {(close) => (
@@ -379,12 +428,17 @@ export const WorkspaceView: React.FC = () => {
         <Thread
           messages={activeProject.messages}
           activity={aiActivity}
+          streamingStage={aiStreamingStage}
+          streamingPreview={aiStreamingPreview}
+          modelUsed={aiModelUsed}
           userName={currentUser?.name || 'Bạn'}
           starters={STARTERS}
           onPickStarter={handlePickStarter}
           onOpenFile={(path) => openViewer(path, 'unified')}
           onRetry={handleRetry}
+          onRegenerate={handleRegenerate}
           canRetry={!isGenerating && !quotaBlocked}
+          canRegenerate={!isGenerating && !quotaBlocked}
         />
 
         <footer className="ws-dock">
@@ -490,7 +544,15 @@ export const WorkspaceView: React.FC = () => {
         actions={
           <>
             {!isCompact && (
-              <button type="button" className="btn btn-red ws-live-open" onClick={() => setLiveOpen(true)}>
+              <button
+                type="button"
+                className="btn btn-red ws-live-open"
+                aria-pressed={liveOpen}
+                onClick={() => {
+                  setLivePip(false);
+                  setLiveOpen(true);
+                }}
+              >
                 Live View
               </button>
             )}
@@ -515,6 +577,18 @@ export const WorkspaceView: React.FC = () => {
                         onClick={() => void handleExportZip()}
                       >
                         {exporting ? 'Đang nén' : 'Xuất ZIP'}
+                      </button>
+                    </li>
+                    <li>
+                      <button
+                        type="button"
+                        className="ws-menu-item"
+                        onClick={() => {
+                          close();
+                          setGithubOpen(true);
+                        }}
+                      >
+                        GitHub
                       </button>
                     </li>
                     <li>
@@ -597,7 +671,10 @@ export const WorkspaceView: React.FC = () => {
             type="button"
             className="ws-switch-item ws-switch-live"
             aria-pressed={liveOpen}
-            onClick={() => setLiveOpen(true)}
+            onClick={() => {
+              setLivePip(false);
+              setLiveOpen(true);
+            }}
           >
             Live
           </button>
@@ -710,6 +787,20 @@ export const WorkspaceView: React.FC = () => {
             title: `Đã thêm ${incoming.length} tệp thiết lập`,
           });
         }}
+      />
+
+      <GitHubConnectorModal
+        open={githubOpen}
+        onClose={() => setGithubOpen(false)}
+        project={activeProject}
+        onInjectFiles={(incoming) => {
+          addWorkspaceFiles(incoming);
+          addToast({
+            type: 'success',
+            title: `Đã nạp ${incoming.length} tệp từ GitHub`,
+          });
+        }}
+        onAttachRepo={(item) => attachItemToWorkspace(item, false)}
       />
     </div>
   );

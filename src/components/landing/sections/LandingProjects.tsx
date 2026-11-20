@@ -19,27 +19,75 @@ interface StackingPlateProps {
   onExplore: () => void;
 }
 
+const WHITE_LABEL_OVERRIDES: Record<
+  string,
+  Partial<Pick<StackingProjectItem, 'category' | 'title' | 'subtitle' | 'liveUrl' | 'metrics' | 'previewHtml' | 'previewCss'>>
+> = {
+  'stack-sok': {
+    category: 'Kho Tri Thức',
+    title: 'Kho thành phần F-Forum',
+    subtitle:
+      'Kho lưu trữ 6.770 thành phần thực chiến chuẩn hóa từ 196 cấu trúc giao diện, giữ nguyên đường dẫn và giấy phép công khai.',
+    metrics: [
+      { label: 'Thành phần', value: '6.770' },
+      { label: 'Cấu trúc', value: '196' },
+      { label: 'Thẻ 3D', value: '1.485' },
+    ],
+    previewHtml:
+      '<div class="sok-card"><span class="sok-tag">6.770 MẪU · F-FORUM</span><h3>Kiến trúc Đa Cấu Trúc</h3><p>196 cấu trúc nền · 961 cảnh 3D · 400 vi chuyển động · 41 thành phần tương tác</p></div>',
+  },
+  'stack-shopify-winter': {
+    category: 'Giải Phẫu Hệ Thống',
+    title: 'Nhịp cuộn 12 chương',
+    subtitle:
+      'Bản giải phẫu kiến trúc cuộn đa tầng với hệ thống biến --st-* và 682 tài nguyên gốc được đo đạc từng phần.',
+    metrics: [
+      { label: 'Chương', value: '12' },
+      { label: 'Cập nhật', value: '199' },
+      { label: 'Tài nguyên', value: '682' },
+    ],
+  },
+  'stack-pinui-threeui': {
+    category: 'Vật Lý Giao Diện',
+    title: 'Chuyển động & Không gian 3D',
+    subtitle:
+      'Kết hợp chuyển động lò xo, cảnh không gian 3D và vi tương tác vào hệ ngôn ngữ thống nhất của F-Forum.',
+    liveUrl: 'https://github.com/broamstuck-cybr/f_forumv3',
+    metrics: [
+      { label: 'Tương tác', value: '41' },
+      { label: 'Cảnh 3D', value: '961' },
+      { label: 'Vi chuyển động', value: '400' },
+    ],
+  },
+};
+
+function sanitizeProject(project: StackingProjectItem): StackingProjectItem {
+  const override = WHITE_LABEL_OVERRIDES[project.id];
+  return override ? { ...project, ...override } : project;
+}
+
 function buildProjectSrcDoc(project: StackingProjectItem): string {
   const html = project.previewHtml || '';
   const css = project.previewCss || '';
   return `<!DOCTYPE html><html lang="vi"><head><meta charset="UTF-8" /><style>${css}</style></head><body>${html}</body></html>`;
 }
 
-const PINUI_THREEUI_FALLBACK_DOC =
-  '<!DOCTYPE html><html lang="vi"><head><meta charset="UTF-8" /><style>body{margin:0;min-height:100vh;display:grid;place-items:center;background:#121110;color:#efe9dd;font-family:system-ui,sans-serif}.pt-stage{width:min(380px,90vw);padding:24px;border:1px solid rgba(239,233,221,0.22);background:#1a1917}.pt-kicker{font-family:monospace;font-size:11px;color:#ff6450}.pt-stage h3{margin:10px 0 8px;font-family:Georgia,serif;font-size:20px;font-weight:400}.pt-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:14px}.pt-cell{padding:10px;border:1px solid rgba(239,233,221,0.14);background:#0c0b0a;font-family:monospace;font-size:11px;color:#efe9dd}</style></head><body><div class="pt-stage"><div class="pt-kicker">UNIFIED MOTION SYSTEM</div><h3>PinUI, ThreeUI, LucianLabs</h3><div class="pt-grid"><div class="pt-cell">41 PinUI</div><div class="pt-cell">961 ThreeUI</div><div class="pt-cell">400 Lucian</div></div></div></body></html>';
+const UNIFIED_FALLBACK_DOC =
+  '<!DOCTYPE html><html lang="vi"><head><meta charset="UTF-8" /><style>body{margin:0;min-height:100vh;display:grid;place-items:center;background:#121110;color:#efe9dd;font-family:system-ui,sans-serif}.pt-stage{width:min(380px,90vw);padding:24px;border:1px solid rgba(239,233,221,0.22);background:#1a1917}.pt-kicker{font-family:monospace;font-size:11px;color:#ff6450}.pt-stage h3{margin:10px 0 8px;font-family:Georgia,serif;font-size:20px;font-weight:400}.pt-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:14px}.pt-cell{padding:10px;border:1px solid rgba(239,233,221,0.14);background:#0c0b0a;font-family:monospace;font-size:11px;color:#efe9dd}</style></head><body><div class="pt-stage"><div class="pt-kicker">F-FORUM MOTION SYSTEM</div><h3>Lò xo, Cảnh 3D, Vi tương tác</h3><div class="pt-grid"><div class="pt-cell">41 Lò xo</div><div class="pt-cell">961 Cảnh 3D</div><div class="pt-cell">400 Vi mô</div></div></div></body></html>';
 
 const StackingPlate: React.FC<StackingPlateProps> = ({
-  project,
+  project: rawProject,
   index,
   total,
   progress,
   reduced,
   onExplore,
 }) => {
+  const project = sanitizeProject(rawProject);
   const targetScale = 1 - (total - 1 - index) * 0.03;
   const startRange = index / total;
   const scale = useTransform(progress, [startRange, 1], [1, targetScale]);
-  const mainSrcDoc = project.previewHtml ? buildProjectSrcDoc(project) : PINUI_THREEUI_FALLBACK_DOC;
+  const mainSrcDoc = project.previewHtml ? buildProjectSrcDoc(project) : UNIFIED_FALLBACK_DOC;
 
   return (
     <div className="lp-stack-slot" style={reduced ? undefined : { top: `calc(var(--nav-h) + ${16 + index * 22}px)` }}>
@@ -54,6 +102,7 @@ const StackingPlate: React.FC<StackingPlateProps> = ({
                   target="_blank"
                   rel="noopener noreferrer"
                   aria-label={`Mở kho ${project.title}`}
+                  title={`Mở kho ${project.title}`}
                   className="icon-btn"
                 >
                   <ArrowUpRight size={18} aria-hidden="true" />
@@ -106,6 +155,7 @@ const StackingPlate: React.FC<StackingPlateProps> = ({
                       alt={`${project.title} bản xem ${idx + 2}`}
                       loading="lazy"
                       decoding="async"
+                      referrerPolicy="no-referrer"
                       onError={(e) => {
                         e.currentTarget.style.opacity = '0';
                       }}

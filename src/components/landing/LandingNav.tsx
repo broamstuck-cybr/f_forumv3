@@ -59,6 +59,11 @@ export const LandingNav: React.FC<LandingNavProps> = ({
     scrollToSection(id);
   }, []);
 
+  const handleBrandClick = useCallback(() => {
+    setMenuOpen(false);
+    scrollToSection('top', 0);
+  }, []);
+
   useEffect(() => {
     if (!menuOpen) return;
     const previous = document.body.style.overflow;
@@ -86,17 +91,24 @@ export const LandingNav: React.FC<LandingNavProps> = ({
       </div>
 
       <div className="wrap-wide lp-nav-row">
-        <button
-          type="button"
-          className="nav__brand"
-          onClick={() => {
-            setMenuOpen(false);
-            onEnterApp();
-          }}
-          aria-label="F-Forum, vào ứng dụng"
-        >
-          <KineticLogo size={26} showWordmark />
-        </button>
+        <div className="nav__brand">
+          <button
+            type="button"
+            className="lp-brand-mark-btn"
+            onClick={handleBrandClick}
+            aria-label="F-Forum, về đầu trang"
+            title="Về đầu trang"
+          >
+            <KineticLogo size={26} />
+          </button>
+          <button
+            type="button"
+            className="lp-brand-text-btn"
+            onClick={handleBrandClick}
+          >
+            F-Forum
+          </button>
+        </div>
 
         <nav aria-label="Điều hướng chương" className="lp-nav-tabs">
           {LANDING_CHAPTERS.map((chapter) => (
@@ -131,6 +143,7 @@ export const LandingNav: React.FC<LandingNavProps> = ({
           className="icon-btn lp-burger"
           onClick={() => setMenuOpen(true)}
           aria-label="Mở menu"
+          title="Mở menu"
           aria-expanded={menuOpen}
         >
           <Menu size={20} strokeWidth={1.75} aria-hidden="true" />
@@ -157,6 +170,7 @@ export const LandingNav: React.FC<LandingNavProps> = ({
                 className="icon-btn"
                 onClick={() => setMenuOpen(false)}
                 aria-label="Đóng menu"
+                title="Đóng menu"
               >
                 <X size={20} strokeWidth={1.75} aria-hidden="true" />
               </button>

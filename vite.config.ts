@@ -5,6 +5,7 @@ import tailwindcss from '@tailwindcss/vite';
 export default defineConfig({
   plugins: [react(), tailwindcss()],
   build: {
+    chunkSizeWarningLimit: 850,
     rollupOptions: {
       output: {
         manualChunks(id) {
@@ -20,7 +21,13 @@ export default defineConfig({
           if (id.includes('node_modules/jszip')) {
             return 'vendor-zip';
           }
-          if (id.includes('/src/data/sourceCatalog.json') || id.includes('/src/data/repoLeaderboard.json')) {
+          if (id.includes('/src/data/repoLeaderboard.json')) {
+            return 'repo-data';
+          }
+          if (id.includes('/src/data/previewMap.json')) {
+            return 'preview-data';
+          }
+          if (id.includes('/src/data/sourceCatalog.json')) {
             return 'catalog-data';
           }
           return undefined;
@@ -32,7 +39,16 @@ export default defineConfig({
     port: 5173,
     proxy: {
       '/api': {
-        target: 'http://localhost:8787',
+        target: 'http://127.0.0.1:8787',
+        changeOrigin: true,
+      },
+    },
+  },
+  preview: {
+    port: 4173,
+    proxy: {
+      '/api': {
+        target: 'http://127.0.0.1:8787',
         changeOrigin: true,
       },
     },

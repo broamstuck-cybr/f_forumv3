@@ -76,6 +76,7 @@
 
   .st-row[data-wide='true'] {
     grid-template-columns: minmax(0, 1fr);
+    align-items: start;
   }
 
   .st-text {

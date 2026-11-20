@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ExternalLink, Maximize2, Minimize2, RotateCw, X } from 'lucide-react';
+import { ExternalLink, Maximize2, Minimize2, PictureInPicture2, RotateCw, X } from 'lucide-react';
 import type { WorkspaceFile } from '../../types/index';
 import {
   buildStandalonePreviewDoc,
@@ -15,6 +15,8 @@ interface LiveStageProps {
   onViewportChange: (viewport: PreviewViewport) => void;
   expanded: boolean;
   onToggleExpanded: () => void;
+  pip: boolean;
+  onTogglePip: () => void;
   onClose: () => void;
 }
 
@@ -25,6 +27,8 @@ export const LiveStage: React.FC<LiveStageProps> = ({
   onViewportChange,
   expanded,
   onToggleExpanded,
+  pip,
+  onTogglePip,
   onClose,
 }) => {
   const [reloadNonce, setReloadNonce] = useState(0);
@@ -42,7 +46,7 @@ export const LiveStage: React.FC<LiveStageProps> = ({
   };
 
   return (
-    <section className="ws-live" aria-label="Live View">
+    <section className="ws-live" data-pip={pip ? 'true' : undefined} aria-label="Live View">
       <header className="ws-head ws-live-bar">
         <h2 className="ws-head-title ws-live-title">Live View</h2>
         <div className="ws-seg" role="group" aria-label="Khổ màn hình">
@@ -77,6 +81,18 @@ export const LiveStage: React.FC<LiveStageProps> = ({
           >
             <ExternalLink size={18} aria-hidden="true" />
           </button>
+          {!expanded && (
+            <button
+              type="button"
+              className="icon-btn"
+              aria-label={pip ? 'Thu về bảng' : 'Cửa sổ nổi'}
+              title={pip ? 'Thu về bảng' : 'Cửa sổ nổi'}
+              aria-pressed={pip}
+              onClick={onTogglePip}
+            >
+              <PictureInPicture2 size={18} aria-hidden="true" />
+            </button>
+          )}
           <button
             type="button"
             className="icon-btn"

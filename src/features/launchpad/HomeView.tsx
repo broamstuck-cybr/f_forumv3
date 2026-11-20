@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
 import { useAppStore } from '../../store/appStore';
 import {
@@ -7,6 +7,7 @@ import {
   type PromptComposerModel,
 } from '../../components/pinui/PromptComposer';
 import { ScrollStoryEngine } from '../../components/launchpad/ScrollStoryEngine';
+import type { HomeMotionShowcaseItem } from '../../data/homeMotionShowcases';
 import { Mark } from '../../ui/Mark';
 import './home.css';
 
@@ -64,51 +65,60 @@ const BLUEPRINT_OPTIONS: Record<
 > = {
   landing: {
     title: 'Trang đích',
-    styles: ['Mực tối giản', 'Giấy biên tập', 'Tương phản cao'],
-    layouts: ['Bất đối xứng', 'Kể chuyện cuộn', 'Trưng bày mẫu'],
-    features: ['Live View cô lập', 'Hỏi đáp gấp mở', 'So sánh minh bạch'],
+    styles: ['Mực tối', 'Giấy ấm', 'Tương phản'],
+    layouts: ['Bất đối', 'Cuộn kể', 'Trưng bày'],
+    features: ['Live View', 'Gấp mở', 'So sánh'],
   },
   dashboard: {
     title: 'Dữ liệu',
-    styles: ['Bảng kỹ thuật', 'Báo cáo biên tập', 'Nhịp đo gọn'],
-    layouts: ['Thanh bên', 'Chia 60/40', 'Thẻ chuyển đổi'],
-    features: ['Bảng lọc thật', 'Kiểm định tự động', 'Xuất tệp sạch'],
+    styles: ['Kỹ thuật', 'Biên tập', 'Nhịp gọn'],
+    layouts: ['Thanh bên', 'Chia cột', 'Thẻ đổi'],
+    features: ['Bảng lọc', 'Kiểm định', 'Xuất tệp'],
   },
   'club-hub': {
     title: 'Hội nhóm',
     styles: ['Học đường', 'Mực đêm', 'Giấy ấm'],
-    layouts: ['Hồ sơ bàn giao', 'Dòng thời gian', 'Hai cột'],
+    layouts: ['Bàn giao', 'Dòng mốc', 'Hai cột'],
     features: ['Thành viên', 'Cột mốc', 'Đăng ký'],
   },
   'quiz-tools': {
     title: 'Phản biện',
     styles: ['Tĩnh tại', 'Xúc giác', 'Nghiên cứu'],
-    layouts: ['Trung tâm', 'Câu hỏi + ghi chú', 'Từng bước'],
-    features: ['Đối chiếu đáp án', 'Đếm thời gian', 'Phân tích'],
+    layouts: ['Trung tâm', 'Ghi chú', 'Từng bước'],
+    features: ['Đối chiếu', 'Đếm giờ', 'Phân tích'],
   },
   'design-code': {
     title: 'Mã nguồn',
-    styles: ['Token CSS', 'Bút đỏ', 'In ấn sắc nét'],
-    layouts: ['390/768/1440', 'Bất đối xứng', 'Soi Diff'],
-    features: ['HTML/CSS thuần', 'Focus A11y', 'Mực và Giấy'],
+    styles: ['Token CSS', 'Bút đỏ', 'In ấn'],
+    layouts: ['Đa khung', 'Bất đối', 'Soi Diff'],
+    features: ['HTML thuần', 'Focus A11y', 'Mực giấy'],
   },
 };
 
 function getTimeGreeting(): string {
   const hour = new Date().getHours();
-  if (hour < 12) return 'Buổi sáng tốt lành';
-  if (hour < 18) return 'Buổi chiều tĩnh tại';
-  return 'Buổi tối tập trung';
+  if (hour < 12) return 'Chào buổi sáng';
+  if (hour < 18) return 'Chào buổi chiều';
+  return 'Chào buổi tối';
+}
+
+function mapModelId(modelId: string): string {
+  if (modelId === 'fast') return 'ag/gemini-3.8-flash-low';
+  if (modelId === 'architect') return 'studio-heavy-route';
+  return 'auto';
 }
 
 export const HomeView: React.FC<HomeViewProps> = () => {
   const {
     currentUser,
     projects,
+    activeProjectId,
     communityPosts,
     theme,
     navigate,
+    createProject,
     selectProject,
+    addWorkspaceFiles,
     launchPromptToWorkspace,
   } = useAppStore();
 
@@ -120,6 +130,19 @@ export const HomeView: React.FC<HomeViewProps> = () => {
   const [bpLayoutIdx, setBpLayoutIdx] = useState(0);
   const [bpFeatureIdx, setBpFeatureIdx] = useState(0);
 
+  const pendingShowcaseRef = useRef<{
+    projectId: string;
+    files: Array<{ path: string; content: string; summary: string }>;
+  } | null>(null);
+
+  useEffect(() => {
+    const pending = pendingShowcaseRef.current;
+    if (!pending || activeProjectId !== pending.projectId) return;
+    pendingShowcaseRef.current = null;
+    addWorkspaceFiles(pending.files);
+    navigate('workspace');
+  }, [activeProjectId, addWorkspaceFiles, navigate]);
+
   const greeting = useMemo(() => {
     const prefix = getTimeGreeting();
     const who = currentUser?.name ? currentUser.name : 'bạn';
@@ -127,6 +150,8 @@ export const HomeView: React.FC<HomeViewProps> = () => {
   }, [currentUser?.name]);
 
   const activeBlueprint = selectedAction ? BLUEPRINT_OPTIONS[selectedAction] ?? null : null;
+  const activeModelMeta =
+    HOME_MODELS.find((m) => (m.id ?? m.name) === selectedModel) ?? HOME_MODELS[0];
 
   const assembleBlueprint = (actionId: string, sIdx: number, lIdx: number, fIdx: number) => {
     const bp = BLUEPRINT_OPTIONS[actionId];
@@ -135,7 +160,7 @@ export const HomeView: React.FC<HomeViewProps> = () => {
     const layout = bp.layouts[lIdx] ?? bp.layouts[0];
     const feature = bp.features[fIdx] ?? bp.features[0];
     setPromptText(
-      `Xây dựng ${bp.title} theo phong cách ${style}, bố cục ${layout}, tích hợp ${feature}, tương thích 390px/768px/1440px.`
+      `Xây dựng ${bp.title} theo phong cách ${style}, bố cục ${layout}, tích hợp ${feature}, tương thích 390px, 768px và 1440px.`
     );
   };
 
@@ -149,14 +174,39 @@ export const HomeView: React.FC<HomeViewProps> = () => {
     }
   };
 
-  const handleLaunch = (text: string) => {
-    const mappedModel =
-      selectedModel === 'fast'
-        ? 'ag/gemini-3.8-flash-low'
-        : selectedModel === 'architect'
-          ? 'studio-heavy-route'
-          : 'auto';
-    void launchPromptToWorkspace(text, [], { model: mappedModel });
+  const handleLaunch = (text: string, meta?: { action: string | null; model: string }) => {
+    const chosenModel = meta?.model || selectedModel;
+    void launchPromptToWorkspace(text, [], { model: mapModelId(chosenModel) });
+  };
+
+  const handleOpenShowcaseInWorkspace = (item: HomeMotionShowcaseItem) => {
+    const existing = projects.find(
+      (p) => !p.archived && p.attachedItems.some((attached) => attached.id === item.id)
+    );
+    if (existing) {
+      selectProject(existing.id);
+      navigate('workspace');
+      return;
+    }
+
+    const created = createProject(item.title, item.summaryVi, [
+      {
+        id: item.id,
+        kind: 'template',
+        title: item.title,
+        summary: item.summaryVi,
+        tags: [item.category, item.motionConfig.pattern],
+      },
+    ]);
+
+    pendingShowcaseRef.current = {
+      projectId: created.id,
+      files: item.files.map((file) => ({
+        path: file.path,
+        content: file.content,
+        summary: `${item.title} (${file.path})`,
+      })),
+    };
   };
 
   const openCommunityPost = (postId: string) => {
@@ -179,26 +229,63 @@ export const HomeView: React.FC<HomeViewProps> = () => {
     navigate('explore');
   };
 
+  const recentProjects = useMemo(() => projects.filter((p) => !p.archived).slice(0, 8), [projects]);
   const recentHighlights = useMemo(() => communityPosts.slice(0, 4), [communityPosts]);
 
   return (
     <div className="hm">
-      <section aria-label="Bàn khởi tạo F-Forum" className="hm-desk">
-        <div className="wrap hm-desk-inner">
-          <p className="t-label">{greeting}</p>
+      <section aria-label="Xưởng khởi chạy chuyển động" className="hm-desk">
+        <div className="wrap-wide hm-desk-inner">
+          <header className="hm-masthead">
+            <div className="hm-masthead-copy">
+              <p className="t-label hm-greeting">{greeting}</p>
+              <h1 className="hm-title">
+                <span className="t-script hm-cap">D</span>ựng nhịp{' '}
+                <Mark kind="underline" active>
+                  chuyển động
+                </Mark>{' '}
+                trên bàn máy thật.
+              </h1>
+              <p className="hm-lead">
+                Chọn một khung mẫu bên dưới để điền nhanh đặc tả kỹ thuật, hoặc gõ thẳng yêu cầu vào thanh lệnh; mọi
+                bản phác đều mở vào Workspace với khung chạy cô lập và đối chiếu từng dòng.
+              </p>
+            </div>
 
-          <h1 className="hm-title">
-            <span className="t-script hm-cap">B</span>ạn muốn{' '}
-            <Mark kind="underline" active>
-              kiểm chứng
-            </Mark>{' '}
-            ý tưởng nào hôm nay?
-          </h1>
-
-          <p className="hm-lead">
-            Chọn một thẻ tác vụ PinUI để dựng đặc tả không tốn lượt, hoặc mô tả trực tiếp để mở vào Workspace với Live
-            View và Diff &amp; Check.
-          </p>
+            <aside aria-label="Bảng chọn nhanh cấu trúc" className="hm-rack">
+              <div className="hm-rack-head">
+                <span className="t-label">khung dựng nhanh</span>
+                <span className="t-label hm-rack-model">{activeModelMeta.name}</span>
+              </div>
+              <div className="hm-presets" role="group" aria-label="Mẫu khởi tạo nhanh">
+                {HOME_ACTIONS.map((action) => (
+                  <button
+                    key={action.id}
+                    type="button"
+                    className="hm-preset"
+                    aria-pressed={selectedAction === action.id}
+                    onClick={() => handleActionSelect(selectedAction === action.id ? null : action.id)}
+                  >
+                    {action.label}
+                  </button>
+                ))}
+              </div>
+              <dl className="hm-rack-stats">
+                <div>
+                  <dt className="t-label">dự án</dt>
+                  <dd>{recentProjects.length}</dd>
+                </div>
+                <div>
+                  <dt className="t-label">bản mẫu</dt>
+                  <dd>8</dd>
+                </div>
+                <div>
+                  <dt className="t-label">khung đo</dt>
+                  <dd>390 · 768 · 1440</dd>
+                </div>
+              </dl>
+            </aside>
+          </header>
 
           <div className="hm-composer">
             <PromptComposer
@@ -228,7 +315,7 @@ export const HomeView: React.FC<HomeViewProps> = () => {
                 className="hm-blueprint"
               >
                 <div className="hm-blueprint-head">
-                  <span className="t-label">cấu trúc 0 lượt, {activeBlueprint.title}</span>
+                  <span className="t-label">cấu trúc 0 lượt · {activeBlueprint.title}</span>
                   <button
                     type="button"
                     className="btn btn-ghost btn-sm"
@@ -302,68 +389,65 @@ export const HomeView: React.FC<HomeViewProps> = () => {
               </motion.div>
             )}
           </AnimatePresence>
+
+          <div className="hm-rail-wrap">
+            <div className="hm-rail-head">
+              <div>
+                <p className="t-label">workspace cục bộ</p>
+                <h2 className="hm-rail-heading">Dự án gần đây</h2>
+              </div>
+              <button type="button" className="btn btn-line btn-sm" onClick={() => navigate('workspace')}>
+                Workspace
+              </button>
+            </div>
+
+            <div className="hm-proj-rail ff-scrollbar" role="list">
+              {recentProjects.map((proj) => {
+                const passCount = proj.checksReport?.passCount ?? 0;
+                const totalChecks = proj.checksReport?.results.length ?? 0;
+                return (
+                  <article key={proj.id} className="hm-proj-card" role="listitem">
+                    <div className="hm-proj-meta t-label">
+                      <span>{proj.files.length} tệp</span>
+                      <span>{new Date(proj.updatedAt).toLocaleDateString('vi-VN')}</span>
+                    </div>
+                    <h3 className="hm-proj-title">{proj.name}</h3>
+                    <p className="hm-proj-desc">{proj.description}</p>
+                    <div className="hm-proj-foot">
+                      <span className="tag tag-green">
+                        {totalChecks > 0 ? `${passCount}/${totalChecks} đạt` : 'sẵn sàng'}
+                      </span>
+                      <button
+                        type="button"
+                        className="btn btn-solid btn-sm"
+                        onClick={() => {
+                          selectProject(proj.id);
+                          navigate('workspace');
+                        }}
+                      >
+                        Mở lại
+                      </button>
+                    </div>
+                  </article>
+                );
+              })}
+            </div>
+          </div>
         </div>
       </section>
 
       <ScrollStoryEngine
         onNavigate={navigate}
-        onLaunchPrompt={launchPromptToWorkspace}
+        onLaunchPrompt={(prompt) => launchPromptToWorkspace(prompt, [], { model: mapModelId(selectedModel) })}
+        onOpenShowcase={handleOpenShowcaseInWorkspace}
         onOpenLeaderboard={openExploreLeaderboard}
       />
 
-      <section aria-label="Dự án gần đây" className="hm-band">
+      <section aria-label="Tòa soạn phản biện" className="hm-band">
         <div className="wrap-wide">
           <div className="hm-band-head">
             <div>
-              <p className="t-label">workspace cục bộ</p>
-              <h2 className="t-title">Dự án đang mở</h2>
-            </div>
-            <button type="button" className="btn btn-line" onClick={() => navigate('workspace')}>
-              Workspace
-            </button>
-          </div>
-
-          <ul className="hm-index">
-            {projects.slice(0, 5).map((proj) => {
-              const passCount = proj.checksReport?.passCount ?? 0;
-              const totalChecks = proj.checksReport?.results.length ?? 0;
-              return (
-                <li key={proj.id} className="hm-row">
-                  <div className="hm-row-main">
-                    <div className="hm-row-meta t-label">
-                      <span>{proj.files.length} tệp</span>
-                      <span>{new Date(proj.updatedAt).toLocaleDateString('vi-VN')}</span>
-                    </div>
-                    <h3 className="hm-row-title">{proj.name}</h3>
-                    <p className="hm-row-desc">{proj.description}</p>
-                  </div>
-                  <div className="hm-row-side">
-                    <span className="tag tag-green">
-                      {totalChecks > 0 ? `${passCount}/${totalChecks} đạt` : 'sẵn sàng'}
-                    </span>
-                    <button
-                      type="button"
-                      className="btn btn-solid btn-sm"
-                      onClick={() => {
-                        selectProject(proj.id);
-                        navigate('workspace');
-                      }}
-                    >
-                      Mở lại
-                    </button>
-                  </div>
-                </li>
-              );
-            })}
-          </ul>
-        </div>
-      </section>
-
-      <section aria-label="Tòa soạn Source of Knowledge" className="hm-band">
-        <div className="wrap-wide">
-          <div className="hm-band-head">
-            <div>
-              <p className="t-label">source of knowledge</p>
+              <p className="t-label">bài viết chọn lọc</p>
               <h2 className="t-title">Tòa soạn phản biện</h2>
             </div>
             <button type="button" className="btn btn-line" onClick={() => navigate('community')}>
@@ -383,13 +467,13 @@ export const HomeView: React.FC<HomeViewProps> = () => {
                 </div>
                 <div className="hm-row-side">
                   <span className="t-label">{post.votes ?? post.likes ?? 0} tán thành</span>
-                    <button
-                      type="button"
-                      className="btn btn-line btn-sm"
-                      onClick={() => openCommunityPost(post.id)}
-                    >
-                      Đọc tiếp
-                    </button>
+                  <button
+                    type="button"
+                    className="btn btn-line btn-sm"
+                    onClick={() => openCommunityPost(post.id)}
+                  >
+                    Đọc tiếp
+                  </button>
                 </div>
               </li>
             ))}

@@ -18,14 +18,15 @@ const ShowcasePlate: React.FC<{
   <article className="lp-plate-card">
     <div className="plate lp-plate-media">
       <div className="lp-plate-fallback" aria-hidden="true">
-        <span className="t-label">{item.source === 'motionsites' ? 'MotionSites' : 'SOURCEOFKNOWLEDGFORAI'}</span>
+        <span className="t-label">F-Forum</span>
         <span className="lp-plate-fallback-title">{item.title}</span>
       </div>
       <img
         src={item.imageUrl}
-        alt={`${item.title} — ${item.category}`}
+        alt={`${item.title}, ${item.category}`}
         loading="lazy"
         decoding="async"
+        referrerPolicy="no-referrer"
         onError={(e) => handleImageError(e, item.fallbackUrl)}
         className="lp-plate-img"
       />
@@ -44,6 +45,7 @@ const ShowcasePlate: React.FC<{
           target="_blank"
           rel="noopener noreferrer"
           aria-label={`Mở nguồn ${item.title}`}
+          title={`Mở nguồn ${item.title}`}
           className="icon-btn"
         >
           <ArrowUpRight size={17} aria-hidden="true" />
@@ -67,7 +69,6 @@ export const LandingShowcase: React.FC<LandingShowcaseProps> = ({ onNavigate }) 
 
   return (
     <section
-      id="san-pham"
       ref={sectionRef}
       aria-label="Không chỉ là hình ảnh, sản phẩm chạy thật"
       className="lp-section sheet scene-paper"
@@ -80,8 +81,7 @@ export const LandingShowcase: React.FC<LandingShowcaseProps> = ({ onNavigate }) 
               Sản phẩm <Mark kind="circle">chạy thật</Mark> từ kho tham chiếu
             </h2>
             <p className="t-lead">
-              21 chuyển động thực tế từ MotionSites cùng học liệu SOURCEOFKNOWLEDGFORAI — cuộn xuống để kéo hai dải bản
-              in ngược chiều, cuộn ngược để tua lại.
+              21 chuyển động thực tế từ kho F-Forum: cuộn xuống để kéo hai dải bản in ngược chiều, cuộn ngược để tua lại.
             </p>
           </div>
           <div className="lp-actions">

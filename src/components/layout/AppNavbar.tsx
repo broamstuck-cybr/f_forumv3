@@ -15,7 +15,6 @@ const PRIMARY_TABS: Array<{ id: AppRoute; label: string }> = [
   { id: 'explore', label: 'Khám phá' },
   { id: 'workspace', label: 'Workspace' },
   { id: 'community', label: 'Tri thức' },
-  { id: 'profile', label: 'Hồ sơ' },
 ];
 
 function userInitials(name: string): string {
@@ -76,11 +75,18 @@ export const AppNavbar: React.FC<AppNavbarProps> = () => {
   const limit = quota.limit ?? 15;
   const remaining = Math.max(0, quota.remaining ?? limit - quota.used);
   const low = !unlimited && remaining <= 3;
+  const avatarText = currentUser ? userInitials(currentUser.name) : 'K';
 
   const go = (route: AppRoute) => {
     setMenuOpen(false);
     setSheetOpen(false);
     navigate(route);
+  };
+
+  const openAuth = () => {
+    setMenuOpen(false);
+    setSheetOpen(false);
+    setAuthModalOpen(true);
   };
 
   const signOut = () => {
@@ -95,7 +101,13 @@ export const AppNavbar: React.FC<AppNavbarProps> = () => {
     <header className="nav">
       <div className="wrap-wide nav__row">
         <div className="flex items-center gap-4 min-w-0">
-          <button type="button" className="nav__brand" onClick={() => go('home')} aria-label="F-Forum, về trang chủ">
+          <button
+            type="button"
+            className="nav__brand"
+            onClick={() => go('landing')}
+            aria-label="F-Forum, về trang giới thiệu"
+            title="F-Forum"
+          >
             <KineticLogo size={26} activity={aiActivity} showWordmark />
           </button>
 
@@ -141,59 +153,66 @@ export const AppNavbar: React.FC<AppNavbarProps> = () => {
             className="icon-btn nav__account"
             onClick={() => go('settings')}
             aria-label="Cài đặt"
+            title="Cài đặt"
             data-active={currentRoute === 'settings'}
           >
             <Settings size={18} strokeWidth={1.75} aria-hidden="true" />
           </button>
 
-          {currentUser ? (
-            <div className="relative nav__account" ref={menuRef}>
-              <button
-                type="button"
-                className="nav__avatarBtn"
-                onClick={() => setMenuOpen((open) => !open)}
-                aria-haspopup="menu"
-                aria-expanded={menuOpen}
-                aria-label={`Tài khoản ${currentUser.name}`}
-              >
-                <span className="nav__avatar" aria-hidden="true">
-                  {userInitials(currentUser.name)}
-                </span>
-              </button>
-              <AnimatePresence>
-                {menuOpen && (
-                  <motion.div
-                    className="nav__menu"
-                    role="menu"
-                    initial={reduced ? { opacity: 0 } : { opacity: 0, scale: 0.96, y: -4 }}
-                    animate={{ opacity: 1, scale: 1, y: 0 }}
-                    exit={reduced ? { opacity: 0 } : { opacity: 0, scale: 0.97, y: -4 }}
-                    transition={{ duration: 0.16, ease: [0.2, 0.8, 0.2, 1] }}
-                  >
-                    <div className="nav__menuHead">
-                      <p className="nav__menuName">{currentUser.name}</p>
-                      <p className="t-label">{isAdmin ? 'quản trị' : 'thành viên'}</p>
-                    </div>
-                    <button type="button" role="menuitem" className="nav__menuItem" onClick={() => go('profile')}>
-                      Hồ sơ
+          <div className="relative nav__account" ref={menuRef}>
+            <button
+              type="button"
+              className="nav__avatarBtn"
+              onClick={() => setMenuOpen((open) => !open)}
+              aria-haspopup="menu"
+              aria-expanded={menuOpen}
+              aria-label={currentUser ? `Tài khoản ${currentUser.name}` : 'Tài khoản khách'}
+              title={currentUser ? currentUser.name : 'Khách'}
+            >
+              <span className="nav__avatar" data-guest={!currentUser} aria-hidden="true">
+                {avatarText}
+              </span>
+            </button>
+            <AnimatePresence>
+              {menuOpen && (
+                <motion.div
+                  className="nav__menu"
+                  role="menu"
+                  initial={reduced ? { opacity: 0 } : { opacity: 0, scale: 0.96, y: -4 }}
+                  animate={{ opacity: 1, scale: 1, y: 0 }}
+                  exit={reduced ? { opacity: 0 } : { opacity: 0, scale: 0.97, y: -4 }}
+                  transition={{ duration: 0.16, ease: [0.2, 0.8, 0.2, 1] }}
+                >
+                  <div className="nav__menuHead">
+                    <p className="nav__menuName">{currentUser ? currentUser.name : 'Khách'}</p>
+                    <p className="t-label">
+                      {currentUser ? (isAdmin ? 'quản trị' : 'thành viên') : 'phiên khách'}
+                    </p>
+                  </div>
+                  <button type="button" role="menuitem" className="nav__menuItem" onClick={() => go('profile')}>
+                    Hồ sơ
+                  </button>
+                  <button type="button" role="menuitem" className="nav__menuItem" onClick={() => go('settings')}>
+                    Cài đặt
+                  </button>
+                  {isAdmin && (
+                    <button type="button" role="menuitem" className="nav__menuItem" onClick={() => go('admin')}>
+                      Quản trị
                     </button>
-                    {isAdmin && (
-                      <button type="button" role="menuitem" className="nav__menuItem" onClick={() => go('admin')}>
-                        Quản trị
-                      </button>
-                    )}
+                  )}
+                  {currentUser ? (
                     <button type="button" role="menuitem" className="nav__menuItem" data-tone="red" onClick={signOut}>
                       Đăng xuất
                     </button>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
-          ) : (
-            <button type="button" className="btn btn-solid btn-sm nav__account" onClick={() => setAuthModalOpen(true)}>
-              Đăng nhập
-            </button>
-          )}
+                  ) : (
+                    <button type="button" role="menuitem" className="nav__menuItem" data-tone="red" onClick={openAuth}>
+                      Đăng nhập
+                    </button>
+                  )}
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
 
           <button
             ref={burgerRef}
@@ -201,6 +220,7 @@ export const AppNavbar: React.FC<AppNavbarProps> = () => {
             className="icon-btn nav__burger"
             onClick={() => setSheetOpen(true)}
             aria-label="Mở menu"
+            title="Mở menu"
             aria-expanded={sheetOpen}
           >
             <Menu size={20} strokeWidth={1.75} aria-hidden="true" />
@@ -221,13 +241,22 @@ export const AppNavbar: React.FC<AppNavbarProps> = () => {
             transition={{ duration: 0.24, ease: [0.2, 0.8, 0.2, 1] }}
           >
             <div className="navsheet__top">
-              <KineticLogo size={26} activity={aiActivity} showWordmark />
+              <button
+                type="button"
+                className="nav__brand"
+                onClick={() => go('landing')}
+                aria-label="F-Forum, về trang giới thiệu"
+                title="F-Forum"
+              >
+                <KineticLogo size={26} activity={aiActivity} showWordmark />
+              </button>
               <button
                 ref={closeRef}
                 type="button"
                 className="icon-btn"
                 onClick={() => setSheetOpen(false)}
                 aria-label="Đóng menu"
+                title="Đóng menu"
               >
                 <X size={20} strokeWidth={1.75} aria-hidden="true" />
               </button>
@@ -251,31 +280,40 @@ export const AppNavbar: React.FC<AppNavbarProps> = () => {
                 </motion.li>
               ))}
             </ul>
-            <div className="navsheet__foot">
-              <button type="button" className="btn btn-line" onClick={() => go('settings')}>
-                Cài đặt
-              </button>
-              {isAdmin && (
-                <button type="button" className="btn btn-line" onClick={() => go('admin')}>
-                  Quản trị
+            <div className="navsheet__account">
+              <div className="navsheet__identity">
+                <span className="nav__avatar" data-guest={!currentUser} aria-hidden="true">
+                  {avatarText}
+                </span>
+                <div>
+                  <p className="nav__menuName">{currentUser ? currentUser.name : 'Khách'}</p>
+                  <p className="t-label">
+                    {currentUser ? (isAdmin ? 'quản trị' : 'thành viên') : 'phiên khách'}
+                  </p>
+                </div>
+              </div>
+              <div className="navsheet__foot">
+                <button type="button" className="btn btn-line" onClick={() => go('profile')}>
+                  Hồ sơ
                 </button>
-              )}
-              {currentUser ? (
-                <button type="button" className="btn btn-ghost" onClick={signOut}>
-                  Đăng xuất
+                <button type="button" className="btn btn-line" onClick={() => go('settings')}>
+                  Cài đặt
                 </button>
-              ) : (
-                <button
-                  type="button"
-                  className="btn btn-solid"
-                  onClick={() => {
-                    setSheetOpen(false);
-                    setAuthModalOpen(true);
-                  }}
-                >
-                  Đăng nhập
-                </button>
-              )}
+                {isAdmin && (
+                  <button type="button" className="btn btn-line" onClick={() => go('admin')}>
+                    Quản trị
+                  </button>
+                )}
+                {currentUser ? (
+                  <button type="button" className="btn btn-ghost" onClick={signOut}>
+                    Đăng xuất
+                  </button>
+                ) : (
+                  <button type="button" className="btn btn-solid" onClick={openAuth}>
+                    Đăng nhập
+                  </button>
+                )}
+              </div>
             </div>
           </motion.div>
         )}

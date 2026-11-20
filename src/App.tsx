@@ -48,12 +48,12 @@ const ROUTE_META: Record<
   },
   home: {
     title: 'Trang chủ — F-Forum',
-    description: 'Khởi tạo nhanh đặc tả giao diện với PinUI Prompt Composer và kho mẫu chuyển động thực tế.',
+    description: 'Khởi tạo nhanh đặc tả giao diện với bộ soạn thảo nhắc lệnh và kho mẫu chuyển động thực tế.',
     path: '/home',
   },
   explore: {
     title: 'Bàn soi Khám phá — F-Forum',
-    description: 'Soi 6.770 mẫu từ PinUI, ThreeUI, MotionSites, LucianLabs, CodeFronts và bảng xếp hạng kho GitHub.',
+    description: 'Soi 196 mẫu tương tác, không gian 3D, hiệu ứng, chuyển động, bố cục cùng 32 công cụ AI và 72 kho GitHub.',
     path: '/explore',
   },
   workspace: {

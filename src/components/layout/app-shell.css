@@ -110,6 +110,18 @@
     font-size: var(--text-sm);
     font-weight: 600;
     line-height: 1;
+    border: 1px solid transparent;
+    transition: border-color var(--dur-2) var(--ease-ux), transform var(--dur-1) var(--ease-ux);
+  }
+
+  .nav__avatar[data-guest='true'] {
+    background: var(--bg-raised);
+    color: var(--fg);
+    border-color: var(--line-strong);
+  }
+
+  .nav__avatarBtn:hover .nav__avatar {
+    border-color: var(--red);
   }
 
   .nav__avatarBtn {
@@ -234,11 +246,25 @@
     font-style: italic;
   }
 
+  .navsheet__account {
+    margin-top: var(--space-7);
+    padding-top: var(--space-5);
+    border-top: 1px solid var(--line);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+  }
+
+  .navsheet__identity {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+  }
+
   .navsheet__foot {
     display: flex;
     flex-wrap: wrap;
     gap: var(--space-3);
-    margin-top: var(--space-7);
   }
 
   .shell {
@@ -316,22 +342,17 @@
     color: var(--red);
   }
 
-  .foot__mark {
-    font-family: var(--font-display);
-    font-size: clamp(4.5rem, 21vw, 19rem);
-    font-weight: 560;
-    font-variation-settings: 'SOFT' 100, 'WONK' 0;
-    letter-spacing: -0.055em;
-    line-height: 0.86;
-    color: var(--fg);
-    white-space: nowrap;
-    margin: var(--space-7) 0 0 -0.04em;
-    user-select: none;
+  .foot__graffiti {
+    margin-top: var(--space-7);
+    width: 100%;
+    overflow: hidden;
   }
 
-  .foot__mark i {
-    color: var(--red);
-    font-variation-settings: 'SOFT' 100, 'WONK' 1;
+  .foot__graffitiSvg {
+    width: 100%;
+    height: auto;
+    display: block;
+    user-select: none;
   }
 
   .foot__base {

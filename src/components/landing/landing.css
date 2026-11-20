@@ -47,6 +47,33 @@
     gap: var(--space-4);
   }
 
+  .nav__brand {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .lp-brand-mark-btn,
+  .lp-brand-text-btn {
+    border: 0;
+    padding: 0;
+    background: none;
+    color: var(--fg);
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+  }
+
+  .lp-brand-text-btn {
+    font-family: var(--font-display);
+    font-size: 1.15rem;
+    font-weight: 560;
+    letter-spacing: -0.02em;
+    line-height: 1;
+    white-space: nowrap;
+  }
+
   .lp-nav-tabs {
     display: none;
     align-items: center;
@@ -141,6 +168,72 @@
     gap: var(--space-3);
     padding-bottom: var(--space-2);
     border-bottom: 1px solid var(--line-strong);
+  }
+
+  .lp-assembly {
+    position: relative;
+    width: 100%;
+    max-width: 360px;
+    padding-top: 26px;
+  }
+
+  .lp-flight-svg {
+    position: absolute;
+    left: 0;
+    top: -18px;
+    width: 100%;
+    height: 92px;
+    overflow: visible;
+    pointer-events: none;
+    z-index: 3;
+  }
+
+  .lp-pixel-rail {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .lp-pixel-chip {
+    width: 38px;
+    height: 38px;
+    padding: 0;
+    border-radius: 8px;
+    border: 1px solid var(--line-strong);
+    background: #1f2430;
+    display: grid;
+    place-items: center;
+    cursor: pointer;
+    opacity: 0.36;
+    transform: scale(0.76, 1.18);
+    transition:
+      transform 480ms cubic-bezier(0.34, 1.45, 0.64, 1),
+      opacity 260ms var(--ease-ux),
+      border-color 220ms var(--ease-ux),
+      box-shadow 220ms var(--ease-ux);
+  }
+
+  .lp-pixel-chip[data-morphed='true'] {
+    opacity: 1;
+    transform: scale(1, 1);
+  }
+
+  .lp-pixel-chip[data-active='true'],
+  .lp-pixel-chip:hover {
+    border-color: #ddad95;
+    box-shadow: 0 8px 20px -8px rgba(125, 163, 187, 0.55);
+  }
+
+  .lp-hero-line {
+    display: inline;
+    transition: opacity 360ms var(--ease-out);
+  }
+
+  .lp-hero-line[data-visible='false'] {
+    opacity: 1;
   }
 
   .lp-cap {
@@ -332,41 +425,223 @@
     flex: none;
   }
 
-  .lp-manifesto-text {
-    margin: var(--space-6) 0 0;
-    font-family: var(--font-display);
-    font-size: clamp(1.75rem, 1.1rem + 2.6vw, 3.2rem);
-    font-weight: 380;
-    line-height: 1.28;
-    letter-spacing: -0.025em;
-    max-width: 34ch;
+  .lp-hm-root {
+    position: relative;
+    background: #121110;
+    color: #efe9dd;
   }
 
-  .lp-pillars {
-    margin: var(--space-8) 0 0;
-    padding: var(--space-6) 0 0;
-    list-style: none;
-    border-top: 1px solid var(--line);
+  .lp-hm-runway {
+    position: relative;
+    background: #121110;
+    color: #efe9dd;
+  }
+
+  .lp-hm-runway[data-horizontal='true'] {
+    height: 310vh;
+  }
+
+  .lp-hm-sticky {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: var(--space-6);
+    padding-block: clamp(72px, 10vw, 120px);
+  }
+
+  .lp-hm-runway[data-horizontal='true'] .lp-hm-sticky {
+    position: sticky;
+    top: 0;
+    height: 100dvh;
+    padding-block: calc(var(--nav-h) + var(--space-4)) var(--space-6);
+    overflow: hidden;
+  }
+
+  .lp-hm-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-5);
+  }
+
+  .lp-hm-meter {
+    width: min(240px, 42vw);
+    height: 2px;
+    background: rgba(239, 233, 221, 0.16);
+    overflow: hidden;
+    border-radius: var(--radius-pill);
+  }
+
+  .lp-hm-meter span {
+    display: block;
+    width: 100%;
+    height: 100%;
+    background: #ff6450;
+    transform-origin: left center;
+    transition: transform 90ms linear;
+  }
+
+  .lp-hm-track {
     display: grid;
     grid-template-columns: minmax(0, 1fr);
     gap: var(--space-6);
+    padding-inline: var(--gutter);
+    will-change: transform;
   }
 
-  .lp-pillar {
-    display: grid;
-    gap: var(--space-2);
-    align-content: start;
+  .lp-hm-runway[data-horizontal='true'] .lp-hm-track {
+    display: flex;
+    align-items: stretch;
+    gap: clamp(28px, 4vw, 56px);
+    padding-inline: var(--gutter);
+    width: max-content;
   }
 
-  .lp-pillar h3 {
-    font-size: var(--text-xl);
-    font-weight: 450;
+  .lp-hm-intro {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: var(--space-4);
+    max-width: 44ch;
   }
 
-  .lp-pillar p {
+  .lp-hm-runway[data-horizontal='true'] .lp-hm-intro {
+    flex: none;
+    width: clamp(300px, 34vw, 460px);
+  }
+
+  .lp-hm-title {
+    margin: 0;
+    font-family: var(--font-display);
+    font-size: clamp(2.2rem, 1.3rem + 3.2vw, 4.1rem);
+    font-weight: 380;
+    line-height: 1.08;
+    letter-spacing: -0.03em;
+    color: #efe9dd;
+  }
+
+  .lp-hm-lead {
+    font-size: var(--text-base);
+    line-height: 1.6;
+    color: #b5afa3;
+    max-width: 36ch;
+  }
+
+  .lp-hm-beat {
+    padding: clamp(22px, 3vw, 36px);
+    border-radius: 14px;
+    border: 1px solid rgba(239, 233, 221, 0.16);
+    background: #1a1917;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: var(--space-5);
+  }
+
+  .lp-hm-runway[data-horizontal='true'] .lp-hm-beat {
+    flex: none;
+    width: clamp(340px, 40vw, 540px);
+    min-height: clamp(320px, 44vh, 430px);
+  }
+
+  .lp-hm-beatTop {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: var(--space-4);
+  }
+
+  .lp-hm-index {
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+    color: #8e887e;
+  }
+
+  .lp-hm-badgeWrap {
+    width: 64px;
+    height: 64px;
+    flex: none;
+  }
+
+  .lp-hm-badgeSvg {
+    width: 100%;
+    height: 100%;
+    transform: scale(0.65) rotate(-10deg);
+    opacity: 0.4;
+    transition:
+      transform 560ms cubic-bezier(0.34, 1.56, 0.64, 1),
+      opacity 300ms ease;
+  }
+
+  .lp-hm-badgeSvg[data-active='true'] {
+    transform: scale(1.15) rotate(0deg);
+    opacity: 1;
+  }
+
+  .lp-hm-headline {
+    margin: 0;
+    font-family: var(--font-display);
+    font-size: clamp(1.35rem, 1rem + 1.5vw, 2.05rem);
+    font-weight: 420;
+    line-height: 1.2;
+    letter-spacing: -0.02em;
+    color: #efe9dd;
+  }
+
+  .lp-hm-words {
+    display: inline;
+  }
+
+  .lp-hm-word {
+    display: inline-block;
+    white-space: nowrap;
+    margin-right: 0.25em;
+  }
+
+  .lp-hm-char {
+    display: inline-block;
+    opacity: 0.14;
+    transform: translateY(0.55em) rotate(14deg);
+    transition:
+      transform 460ms cubic-bezier(0.16, 1, 0.3, 1),
+      opacity 320ms ease;
+  }
+
+  .lp-hm-char[data-dropped='true'] {
+    opacity: 1;
+    transform: translateY(0) rotate(0deg);
+  }
+
+  .lp-hm-body {
     font-size: var(--text-sm);
-    color: var(--fg-muted);
-    max-width: 38ch;
+    line-height: 1.6;
+    color: #b5afa3;
+  }
+
+  .lp-hm-stickers {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .lp-hm-sticker {
+    display: inline-flex;
+    align-items: center;
+    padding: 6px 12px;
+    border-radius: 999px;
+    border: 1px solid rgba(18, 17, 16, 0.2);
+    color: #121110;
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+    font-weight: 600;
+    opacity: 0;
+    transition:
+      transform 520ms cubic-bezier(0.34, 1.56, 0.64, 1),
+      opacity 260ms ease;
+  }
+
+  .lp-hm-sticker[data-popped='true'] {
+    opacity: 1;
   }
 
   .lp-desk {
@@ -707,10 +982,6 @@
       grid-template-columns: minmax(0, 1fr) auto;
     }
 
-    .lp-pillars {
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-    }
-
     .lp-open-sheet {
       grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.15fr);
     }
@@ -760,6 +1031,33 @@
   @media (prefers-reduced-motion: reduce) {
     .lp-stack-slot {
       position: static;
+    }
+
+    .lp-pixel-chip {
+      opacity: 1;
+      transform: none;
+    }
+
+    .lp-hm-runway[data-horizontal='true'] {
+      height: auto;
+    }
+
+    .lp-hm-runway[data-horizontal='true'] .lp-hm-sticky {
+      position: static;
+      height: auto;
+    }
+
+    .lp-hm-runway[data-horizontal='true'] .lp-hm-track {
+      display: grid;
+      width: auto;
+      transform: none !important;
+    }
+
+    .lp-hm-char,
+    .lp-hm-sticker,
+    .lp-hm-badgeSvg {
+      opacity: 1;
+      transform: none;
     }
   }
 }

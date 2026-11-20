@@ -1,12 +1,14 @@
 import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import type { SourceCatalogItem } from '../../types/index';
-import { Media, previewFor } from '../../ui/Media';
-import { shortTitle } from './catalog';
+import { previewFor } from '../../ui/Media';
+import { LIBRARY_LABEL, shortTitle } from './catalog';
+import { SpecimenMedia } from './SpecimenMedia';
 
 interface PlateRibbonProps {
   label: string;
   items: SourceCatalogItem[];
   savedIds: string[];
+  activeId: string | null;
   direction: 1 | -1;
   startAtEnd: boolean;
   drift: boolean;
@@ -28,6 +30,7 @@ export const PlateRibbon: React.FC<PlateRibbonProps> = ({
   label,
   items,
   savedIds,
+  activeId,
   direction,
   startAtEnd,
   drift,
@@ -190,34 +193,46 @@ export const PlateRibbon: React.FC<PlateRibbonProps> = ({
       >
         {items.map((item, index) => {
           const preview = previewFor(item.id);
+          const hasLive = Boolean(item.previewHtml);
           const saved = savedIds.includes(item.id);
+          const isActive = activeId === item.id;
           const title = shortTitle(item);
           return (
             <li key={item.id}>
               <button
                 type="button"
                 className="ex-plate"
+                data-active={isActive ? 'true' : undefined}
+                aria-pressed={isActive}
                 tabIndex={index === safeCursor ? 0 : -1}
-                aria-haspopup="dialog"
-                aria-label={saved ? `${item.title}, đã lưu` : item.title}
+                aria-label={saved ? `${title}, đã lưu` : title}
                 onFocus={() => setCursor(index)}
                 onClick={() => onSelect(item)}
               >
                 {preview ? (
                   <span className="plate ex-plate-frame">
                     <span className="ex-plate-shot">
-                      <Media preview={preview} title={item.title} />
+                      <SpecimenMedia
+                        preview={preview}
+                        title={title}
+                        fallbackLabel={LIBRARY_LABEL[item.sourceLibrary]}
+                      />
                     </span>
                   </span>
                 ) : (
                   <span className="plate ex-plate-frame ex-plate-type">
+                    <span className="ex-plate-type-top">
+                      <span className="t-label">{item.category}</span>
+                      {hasLive ? <span className="ex-live-dot" aria-hidden="true" /> : null}
+                    </span>
                     <span className="ex-plate-word">{title}</span>
-                    <span className="t-label">{item.category}</span>
+                    <span className="t-label">{hasLive ? 'Chạy trực tiếp' : item.style}</span>
                   </span>
                 )}
                 <span className="ex-plate-cap" aria-hidden="true">
                   <span className="t-label">{String(index + 1).padStart(2, '0')}</span>
                   {preview ? <span className="ex-plate-title">{title}</span> : null}
+                  {hasLive ? <span className="t-label ex-plate-live">live</span> : null}
                   {saved ? <span className="t-note ex-plate-saved">đã lưu</span> : null}
                 </span>
               </button>

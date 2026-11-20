@@ -23,6 +23,8 @@ export type DimensionView =
 
 export type AIActivityState = 'idle' | 'thinking' | 'streaming' | 'verified' | 'error';
 
+export type AIStreamingStage = 'idle' | 'routing' | 'generating' | 'checking' | 'done' | 'error';
+
 export type AIProtocol = 'openai-compatible' | 'anthropic' | 'gemini';
 
 export type ThemeMode = 'dark' | 'light';
@@ -452,6 +454,7 @@ export interface AIChatRequest {
   prompt: string;
   model?: string;
   agentMode?: string;
+  stream?: boolean;
   files: Array<{ path: string; content: string }>;
   attachedItems?: AttachedContextItem[];
   history?: Array<{ role: 'user' | 'assistant'; content: string }>;
@@ -470,4 +473,23 @@ export interface AIChatResponse {
   upstreamError?: string;
   modelUsed: string;
   protocolUsed: AIProtocol;
+}
+
+export interface AIStreamStageEvent {
+  stage: 'routing' | 'generating' | 'checking';
+  model: string;
+  protocol: AIProtocol;
+  detail?: string;
+}
+
+export interface AIStreamDeltaEvent {
+  text: string;
+}
+
+export interface AIStreamCallbacks {
+  onStage?: (event: AIStreamStageEvent) => void;
+  onDelta?: (event: AIStreamDeltaEvent) => void;
+  onResult?: (result: AIChatResponse) => void;
+  onError?: (error: { message: string; status?: number }) => void;
+  signal?: AbortSignal;
 }

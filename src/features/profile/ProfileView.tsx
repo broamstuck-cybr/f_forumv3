@@ -1,40 +1,109 @@
-import React, { useMemo, useState } from 'react';
-import { Magnify } from '../../components/pinui/Magnify';
-import { ReaderCard } from '../../components/pinui/ReaderCard';
-import { BROAMSTUCK_REPOS, SOURCE_KNOWLEDGE_BREAKDOWN } from '../../data/realShowcaseData';
-import { RANKED_REPOS, rankedRepoContext, rankedRepoSavedId, studioRepoContext } from '../explore/catalog';
+import React, { useEffect, useMemo, useState } from 'react';
+import { BROAMSTUCK_REPOS } from '../../data/realShowcaseData';
+import {
+  RANKED_REPOS,
+  rankedRepoContext,
+  rankedRepoSavedId,
+  studioRepoContext,
+} from '../explore/catalog';
 import { useAppStore } from '../../store/appStore';
-import { Mark } from '../../ui/Mark';
+import type { AttachedContextItem, CommunityPost } from '../../types/index';
 import { Media, previewFor } from '../../ui/Media';
 import './profile.css';
 
-interface PlateSpecimen {
+type ProfileTab = 'saved' | 'projects' | 'posts' | 'activity';
+
+interface SavedEntry {
   id: string;
-  origin: string;
+  savedId: string;
+  sourceLabel: string;
   title: string;
   subtitle: string;
   summary: string;
-  paragraphs: string[];
   previewId?: string;
-  projectId?: string;
-  savedId?: string;
-  communityPostId?: string;
-  repoContext?: ReturnType<typeof rankedRepoContext>;
+  context?: AttachedContextItem;
+  communityPost?: CommunityPost;
 }
 
-const FAN_TILTS = ['-1.6deg', '0.9deg', '-0.8deg', '1.4deg', '-1.1deg', '0.6deg'];
+interface ActivityEntry {
+  id: string;
+  timestamp: string;
+  kindLabel: string;
+  title: string;
+  detail: string;
+  projectId?: string;
+  communityPostId?: string;
+}
 
-function splitOrnateGrapheme(raw: string): { cap: string; rest: string } {
-  const text = raw.trim() || 'Không gian kiến tạo';
-  if (typeof Intl !== 'undefined' && 'Segmenter' in Intl) {
-    const segmenter = new Intl.Segmenter('vi', { granularity: 'grapheme' });
-    const first = segmenter.segment(text)[Symbol.iterator]().next().value;
-    const cap = first ? first.segment : text.slice(0, 1);
-    return { cap, rest: text.slice(cap.length) };
+const LIBRARY_LABELS: Record<string, string> = {
+  pinui: 'Tương tác',
+  threeui: 'Không gian 3D',
+  motionsites: 'Chuyển động',
+  lucianlabs: 'Hiệu ứng',
+  codefronts: 'Bố cục',
+};
+
+const CHANNEL_LABELS: Record<string, string> = {
+  qa: 'Hỏi đáp',
+  showcase: 'Trưng bày',
+  drops: 'Học liệu',
+  clubs: 'Hội nhóm',
+};
+
+const PROFILE_TABS: Array<{ id: ProfileTab; label: string }> = [
+  { id: 'saved', label: 'Đã lưu' },
+  { id: 'projects', label: 'Dự án' },
+  { id: 'posts', label: 'Bài đăng' },
+  { id: 'activity', label: 'Hoạt động' },
+];
+
+const RE_PIN = new RegExp('pin\\s*ui', 'gi');
+const RE_THREE = new RegExp('three\\s*ui', 'gi');
+const RE_MOTION = new RegExp('motion\\s*sites', 'gi');
+const RE_LUCIAN = new RegExp('lucian\\s*labs', 'gi');
+const RE_CODEFRONTS = new RegExp('code\\s*fronts', 'gi');
+
+function whiteLabelText(raw: string): string {
+  if (!raw) return '';
+  return raw
+    .replace(RE_PIN, 'Tương tác')
+    .replace(RE_THREE, 'Không gian 3D')
+    .replace(RE_MOTION, 'Chuyển động')
+    .replace(RE_LUCIAN, 'Hiệu ứng')
+    .replace(RE_CODEFRONTS, 'Bố cục');
+}
+
+function getInitials(name: string): string {
+  return (
+    name
+      .split(/\s+/)
+      .filter(Boolean)
+      .slice(0, 2)
+      .map((part) => part[0]?.toUpperCase() ?? '')
+      .join('') || 'F'
+  );
+}
+
+function formatDateTime(iso: string): string {
+  const ts = Date.parse(iso);
+  if (Number.isNaN(ts)) return iso.slice(0, 10);
+  return new Intl.DateTimeFormat('vi-VN', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  }).format(new Date(ts));
+}
+
+function readLocalProfileField(key: string, fallback: string): string {
+  if (typeof window === 'undefined') return fallback;
+  try {
+    const val = window.localStorage.getItem(key);
+    return val !== null ? val : fallback;
+  } catch {
+    return fallback;
   }
-  const match = text.match(/^[\p{L}\p{N}]\p{M}*/u);
-  const cap = match ? match[0] : text.slice(0, 1);
-  return { cap, rest: text.slice(cap.length) };
 }
 
 export const ProfileView: React.FC = () => {
@@ -48,361 +117,628 @@ export const ProfileView: React.FC = () => {
     savedItemIds,
     toggleSavedItem,
     openInWorkspace,
+    forkPostToWorkspace,
     sourceCatalog,
     resourceLibrary,
     communityPosts,
     quota,
-    theme,
     navigate,
   } = useAppStore();
 
-  const displayName = currentUser?.name?.trim() || 'Không gian kiến tạo';
-  const { cap, rest } = useMemo(() => splitOrnateGrapheme(displayName), [displayName]);
+  const [activeTab, setActiveTab] = useState<ProfileTab>('saved');
+  const userKey = currentUser?.id || 'guest';
+  const bioStorageKey = `fforum_v3_profile_bio_${userKey}`;
+  const statusStorageKey = `fforum_v3_profile_status_${userKey}`;
+
+  const defaultBio =
+    currentUser?.bio?.trim() ||
+    'Thiết kế giao diện, kiểm thử hộp cát và lưu trữ các thành phần web chuẩn hóa.';
+  const defaultStatus = currentUser ? 'Đang hoạt động' : 'Phiên cục bộ';
+
+  const [bio, setBio] = useState<string>(() => readLocalProfileField(bioStorageKey, defaultBio));
+  const [statusNote, setStatusNote] = useState<string>(() =>
+    readLocalProfileField(statusStorageKey, defaultStatus)
+  );
+  const [editingProfile, setEditingProfile] = useState(false);
+  const [bioDraft, setBioDraft] = useState(bio);
+  const [statusDraft, setStatusDraft] = useState(statusNote);
+
+  useEffect(() => {
+    const nextBio = readLocalProfileField(bioStorageKey, defaultBio);
+    const nextStatus = readLocalProfileField(statusStorageKey, defaultStatus);
+    setBio(nextBio);
+    setStatusNote(nextStatus);
+    setBioDraft(nextBio);
+    setStatusDraft(nextStatus);
+  }, [bioStorageKey, statusStorageKey, defaultBio, defaultStatus]);
+
+  const displayName = currentUser?.name?.trim() || 'Thành viên cục bộ';
+  const handle = currentUser?.username ? `@${currentUser.username}` : '@local_maker';
+  const roleLabel =
+    currentUser?.role === 'admin'
+      ? 'Quản trị'
+      : currentUser
+        ? 'Thành viên'
+        : 'Khách';
 
   const totalFilesCount = useMemo(
     () => projects.reduce((sum, proj) => sum + proj.files.length, 0),
     [projects]
   );
 
-  const specimens = useMemo<PlateSpecimen[]>(() => {
-    const list: PlateSpecimen[] = [];
-    const savedSet = new Set(savedItemIds);
+  const savedEntries = useMemo<SavedEntry[]>(() => {
+    const entries: SavedEntry[] = [];
 
     for (const savedId of savedItemIds) {
       const tpl = sourceCatalog.find((item) => item.id === savedId);
       if (tpl) {
-        list.push({
+        const libName = LIBRARY_LABELS[tpl.sourceLibrary] || 'Thư viện mẫu';
+        entries.push({
           id: `saved-${tpl.id}`,
-          origin: tpl.sourceLibrary,
-          title: tpl.title,
-          subtitle: tpl.category,
-          summary: tpl.description,
-          paragraphs: [
-            tpl.description,
-            `Thuộc thư viện ${tpl.sourceLibrary} với giấy phép ${tpl.license}. Đường dẫn lưu trữ: ${tpl.archivePath}.`,
-          ],
-          previewId: tpl.id,
           savedId: tpl.id,
+          sourceLabel: libName,
+          title: whiteLabelText(tpl.title),
+          subtitle: whiteLabelText(tpl.category),
+          summary: whiteLabelText(tpl.description),
+          previewId: tpl.id,
+          context: {
+            id: tpl.id,
+            kind: 'template',
+            title: whiteLabelText(tpl.title),
+            sourceLibrary: tpl.sourceLibrary,
+            summary: whiteLabelText(tpl.description),
+            payload:
+              tpl.promptSpec ||
+              `${tpl.archivePath}\nRuntime: ${tpl.runtime}\nStyle: ${tpl.style}`,
+            tags: tpl.tags,
+          },
         });
         continue;
       }
 
       const res = resourceLibrary.find((item) => item.id === savedId);
       if (res) {
-        list.push({
+        entries.push({
           id: `saved-${res.id}`,
-          origin: res.group,
-          title: res.title,
-          subtitle: res.category,
-          summary: res.description,
-          paragraphs: [
-            res.description,
-            `Nhóm tài nguyên ${res.group}, tương thích ${res.compatibility}, giấy phép ${res.license}.`,
-          ],
           savedId: res.id,
+          sourceLabel: res.group,
+          title: whiteLabelText(res.title),
+          subtitle: whiteLabelText(res.category),
+          summary: whiteLabelText(res.description),
+          context: {
+            id: res.id,
+            kind: 'resource',
+            title: whiteLabelText(res.title),
+            summary: whiteLabelText(res.description),
+            payload: res.snippet || `${res.title} (${res.officialUrl})`,
+            tags: res.tags,
+          },
         });
         continue;
       }
 
       const ranked = RANKED_REPOS.find((repo) => rankedRepoSavedId(repo) === savedId);
       if (ranked) {
-        list.push({
+        entries.push({
           id: `saved-${savedId}`,
-          origin: ranked.language || 'GitHub',
+          savedId,
+          sourceLabel: ranked.language || 'GitHub',
           title: ranked.fullName,
           subtitle: `${ranked.stars.toLocaleString('vi-VN')} sao`,
-          summary: ranked.description,
-          paragraphs: [
-            ranked.description,
-            `Nhóm ${ranked.category}, giấy phép ${ranked.license || 'không ghi'}, nguồn ${ranked.htmlUrl}.`,
-          ],
-          savedId,
-          repoContext: rankedRepoContext(ranked),
+          summary: whiteLabelText(ranked.description),
+          context: rankedRepoContext(ranked),
         });
         continue;
       }
 
       const house = BROAMSTUCK_REPOS.find((repo) => repo.id === savedId);
       if (house) {
-        list.push({
+        entries.push({
           id: `saved-${house.id}`,
-          origin: house.language,
+          savedId: house.id,
+          sourceLabel: house.language,
           title: house.name,
           subtitle: house.fullName,
-          summary: house.summaryVi,
-          paragraphs: [
-            house.summaryVi,
-            `Các tệp trọng tâm gồm ${house.keyPaths.join(', ')}. Nguồn ${house.htmlUrl}.`,
-          ],
-          savedId: house.id,
-          repoContext: studioRepoContext(house),
+          summary: whiteLabelText(house.summaryVi),
+          context: studioRepoContext(house),
         });
         continue;
       }
 
-      const post = communityPosts.find((item) => item.id === savedId);
+      const post = communityPosts.find((item) => item.id === savedId && !item.hidden);
       if (post) {
-        list.push({
+        entries.push({
           id: `saved-${post.id}`,
-          origin: post.category,
-          title: post.title,
-          subtitle: `@${post.author.handle}`,
-          summary: post.body || post.description || post.title,
-          paragraphs: [
-            post.body || post.description || post.title,
-            `Chuyên mục ${post.category} trong Source of Knowledge, đăng bởi ${post.author.name}.`,
-          ],
           savedId: post.id,
-          communityPostId: post.id,
+          sourceLabel: CHANNEL_LABELS[post.channel] || post.category,
+          title: whiteLabelText(post.title),
+          subtitle: `@${post.author.handle}`,
+          summary: whiteLabelText(post.body || post.description || post.title),
+          communityPost: post,
         });
       }
     }
 
-    projects.forEach((proj) => {
-      const fileNames = proj.files.map((f) => f.path).join(', ');
-      list.push({
-        id: `proj-${proj.id}`,
-        origin: 'Workspace',
+    return entries;
+  }, [savedItemIds, sourceCatalog, resourceLibrary, communityPosts]);
+
+  const userPosts = useMemo<CommunityPost[]>(() => {
+    if (!currentUser) return [];
+    const uid = currentUser.id;
+    const uname = currentUser.username;
+    return communityPosts
+      .filter((post) => {
+        if (post.hidden) return false;
+        if (post.author.id === uid || post.author.handle === uname) return true;
+        if (post.upvotedBy?.includes(uid)) return true;
+        if (post.acceptedAnswer?.author.id === uid || post.acceptedAnswer?.author.handle === uname) {
+          return true;
+        }
+        return Boolean(
+          post.answers?.some((ans) => ans.author.id === uid || ans.author.handle === uname)
+        );
+      })
+      .sort((a, b) => Date.parse(b.createdAt) - Date.parse(a.createdAt));
+  }, [communityPosts, currentUser]);
+
+  const activityFeed = useMemo<ActivityEntry[]>(() => {
+    const items: ActivityEntry[] = [];
+
+    for (const proj of projects) {
+      items.push({
+        id: `act-proj-${proj.id}`,
+        timestamp: proj.updatedAt,
+        kindLabel: 'Dự án',
         title: proj.name,
-        subtitle: `${proj.files.length} tệp mã nguồn`,
-        summary: proj.description || 'Bản dựng đang mở trong Workspace.',
-        paragraphs: [
-          proj.description || 'Bản dựng web cô lập trong Workspace, sẵn sàng kiểm chứng qua Live View và Diff & Check.',
-          fileNames
-            ? `Cấu trúc tệp hiện tại gồm ${fileNames}. Mọi thay đổi đều đi qua Diff & Check trước khi tải về.`
-            : 'Chưa có tệp mã nguồn trong phiên làm việc này.',
-        ],
+        detail: `${proj.files.length} tệp mã nguồn`,
         projectId: proj.id,
       });
-    });
 
-    for (const repo of BROAMSTUCK_REPOS.slice(0, 3)) {
-      if (savedSet.has(repo.id)) continue;
-      list.push({
-        id: `repo-${repo.id}`,
-        origin: repo.language,
-        title: repo.name,
-        subtitle: repo.fullName,
-        summary: repo.summaryVi,
-        paragraphs: [
-          repo.summaryVi,
-          `Các tệp trọng tâm gồm ${repo.keyPaths.join(', ')}. ${
-            repo.name === 'SOURCEOFKNOWLEDGFORAI'
-              ? `Tổng hợp ${SOURCE_KNOWLEDGE_BREAKDOWN.totalItems.toLocaleString('vi-VN')} thành phần từ ThreeUI, PinUI, MotionSites, LucianLabs và CodeFronts.`
-              : `Cập nhật gần nhất vào ${new Date(repo.pushedAt).toLocaleDateString('vi-VN')}.`
-          }`,
-        ],
-        repoContext: studioRepoContext(repo),
+      for (const snap of proj.snapshots.slice(0, 4)) {
+        items.push({
+          id: `act-snap-${proj.id}-${snap.id}`,
+          timestamp: snap.createdAt,
+          kindLabel: 'Mốc lưu',
+          title: snap.label,
+          detail: proj.name,
+          projectId: proj.id,
+        });
+      }
+    }
+
+    for (const post of userPosts) {
+      items.push({
+        id: `act-post-${post.id}`,
+        timestamp: post.createdAt,
+        kindLabel: CHANNEL_LABELS[post.channel] || 'Tri thức',
+        title: whiteLabelText(post.title),
+        detail: `${post.votes ?? post.likes ?? 0} tán thành`,
+        communityPostId: post.id,
       });
     }
 
-    return list;
-  }, [projects, savedItemIds, sourceCatalog, resourceLibrary, communityPosts]);
+    return items.sort((a, b) => Date.parse(b.timestamp) - Date.parse(a.timestamp));
+  }, [projects, userPosts]);
 
-  const [selectedId, setSelectedId] = useState<string>(() => specimens[0]?.id || '');
+  const openCommunityThread = (postId: string) => {
+    try {
+      window.sessionStorage.setItem('ff_community_post_id', postId);
+    } catch {
+      void 0;
+    }
+    window.dispatchEvent(new CustomEvent('ff:community-post', { detail: postId }));
+    navigate('community');
+  };
 
-  const selectedSpecimen = useMemo(
-    () => specimens.find((item) => item.id === selectedId) || specimens[0] || null,
-    [specimens, selectedId]
-  );
+  const handleSaveBio = (event: React.FormEvent) => {
+    event.preventDefault();
+    const nextBio = bioDraft.trim() || defaultBio;
+    const nextStatus = statusDraft.trim() || defaultStatus;
+    setBio(nextBio);
+    setStatusNote(nextStatus);
+    try {
+      window.localStorage.setItem(bioStorageKey, nextBio);
+      window.localStorage.setItem(statusStorageKey, nextStatus);
+    } catch {
+      void 0;
+    }
+    setEditingProfile(false);
+  };
+
+  const quotaStatValue = quota.unlimited
+    ? 'Không giới hạn'
+    : `${quota.remaining ?? 0}/${quota.limit ?? 15}`;
 
   return (
     <div className="pf">
-      <section aria-label="Trang bìa hồ sơ" className="pf-hero">
-        <div className="wrap-wide pf-hero-grid">
-          <div className="pf-hero-copy">
-            <div className="pf-meta t-label">
-              <span>trang bìa</span>
-              <span>{currentUser ? `@${currentUser.username}` : 'phiên cục bộ'}</span>
-              {currentUser?.role === 'admin' && <span className="tag tag-green">quản trị</span>}
-            </div>
+      <div className="pf-banner" aria-hidden="true" />
 
-            <h1 className="pf-title">
-              <span className="t-script pf-cap">{cap}</span>
-              {rest}
-            </h1>
-
-            <p className="pf-lead">
-              Lưu giữ các bản dựng đang đi qua Live View, số liệu thực của phiên và những tấm mẫu đã chọn từ bàn soi.
-            </p>
-
-            <div className="pf-actions">
-              <button type="button" className="btn btn-red" onClick={() => navigate('workspace')}>
-                Workspace
-              </button>
-              <button type="button" className="btn btn-line" onClick={() => navigate('settings')}>
-                Cài đặt
-              </button>
-              <button type="button" className="btn btn-line" onClick={() => navigate('explore')}>
-                Khám phá
-              </button>
-              {currentUser ? (
-                <button type="button" className="btn btn-ghost" onClick={() => void logout()}>
-                  Đăng xuất
-                </button>
-              ) : (
-                <button type="button" className="btn btn-ghost" onClick={() => setAuthModalOpen(true)}>
-                  Đăng nhập
-                </button>
-              )}
-            </div>
+      <header className="wrap-wide pf-header">
+        <div className="pf-identity">
+          <div className="pf-avatar" aria-hidden="true">
+            {getInitials(displayName)}
           </div>
 
-          <div className="pf-loupe">
-            <Magnify
-              glyph={cap}
-              microText="F-FORUM   LIVE VIEW   DIFF & CHECK   PINUI   THREEUI   MOTIONSITES   "
-              hintText="Di chuyển để soi chi tiết"
-              theme={theme}
-              size={300}
-            />
+          <div className="pf-id-main">
+            <div className="pf-id-badges">
+              <span className="tag tag-red">{roleLabel}</span>
+              <span className="t-label">{handle}</span>
+              <span className="tag">{statusNote}</span>
+            </div>
+            <h1 className="pf-name">{displayName}</h1>
+            <p className="pf-bio">{bio}</p>
+          </div>
+
+          <div className="pf-actions">
+            <button
+              type="button"
+              className="btn btn-line btn-sm"
+              onClick={() => {
+                setBioDraft(bio);
+                setStatusDraft(statusNote);
+                setEditingProfile((val) => !val);
+              }}
+            >
+              {editingProfile ? 'Đóng' : 'Sửa hồ sơ'}
+            </button>
+            <button type="button" className="btn btn-red btn-sm" onClick={() => navigate('workspace')}>
+              Workspace
+            </button>
+            <button type="button" className="btn btn-line btn-sm" onClick={() => navigate('settings')}>
+              Cài đặt
+            </button>
+            {currentUser ? (
+              <button type="button" className="btn btn-ghost btn-sm" onClick={() => void logout()}>
+                Đăng xuất
+              </button>
+            ) : (
+              <button
+                type="button"
+                className="btn btn-ghost btn-sm"
+                onClick={() => setAuthModalOpen(true)}
+              >
+                Đăng nhập
+              </button>
+            )}
           </div>
         </div>
-      </section>
 
-      <section aria-label="Bảng ấn ký số liệu thực" className="pf-colophon-band">
-        <div className="wrap-wide">
-          <dl className="pf-colophon">
-            <div>
-              <dt className="t-label">dự án workspace</dt>
-              <dd>{projects.length}</dd>
+        {editingProfile && (
+          <form className="pf-edit-form" onSubmit={handleSaveBio}>
+            <div className="pf-edit-grid">
+              <div className="pf-field">
+                <label htmlFor="pf-status" className="t-label">
+                  trạng thái
+                </label>
+                <input
+                  id="pf-status"
+                  type="text"
+                  className="field"
+                  value={statusDraft}
+                  onChange={(e) => setStatusDraft(e.target.value)}
+                  maxLength={40}
+                />
+              </div>
+              <div className="pf-field pf-field-wide">
+                <label htmlFor="pf-bio" className="t-label">
+                  giới thiệu ngắn
+                </label>
+                <input
+                  id="pf-bio"
+                  type="text"
+                  className="field"
+                  value={bioDraft}
+                  onChange={(e) => setBioDraft(e.target.value)}
+                  maxLength={180}
+                />
+              </div>
             </div>
-            <div>
-              <dt className="t-label">tệp mã nguồn</dt>
-              <dd>{totalFilesCount}</dd>
-            </div>
-            <div>
-              <dt className="t-label">mẫu đã lưu</dt>
-              <dd className="pf-colophon-red">{savedItemIds.length}</dd>
-            </div>
-            <div>
-              <dt className="t-label">{quota.unlimited ? 'bài viết tòa soạn' : 'lượt AI còn lại'}</dt>
-              <dd>{quota.unlimited ? communityPosts.length : `${quota.remaining ?? 0}/${quota.limit ?? 15}`}</dd>
-            </div>
-          </dl>
-        </div>
-      </section>
-
-      <section aria-label="Bản in đã lưu và dự án" className="pf-plates-band">
-        <div className="wrap-wide pf-plates-head">
-          <div>
-            <p className="t-label">tập bản in</p>
-            <h2 className="t-title">
-              Mẫu đã lưu và <Mark kind="underline">bản dựng</Mark>
-            </h2>
-          </div>
-          <span className="t-label">{activeProject.files.length} tệp đang mở</span>
-        </div>
-
-        {savedItemIds.length === 0 && (
-          <div className="wrap-wide">
-            <div className="pf-empty-note">
-              <p className="t-lead" style={{ fontSize: 'var(--text-sm)' }}>
-                Chưa có mẫu nào được lưu từ Bàn soi. Các dự án Workspace và kho tham chiếu cốt lõi đang hiển thị bên
-                dưới.
-              </p>
-              <button type="button" className="btn btn-line btn-sm" onClick={() => navigate('explore')}>
-                Mở bàn soi
+            <div className="pf-edit-actions">
+              <button
+                type="button"
+                className="btn btn-line btn-sm"
+                onClick={() => setEditingProfile(false)}
+              >
+                Hủy
+              </button>
+              <button type="submit" className="btn btn-red btn-sm">
+                Lưu
               </button>
             </div>
-          </div>
+          </form>
         )}
 
-        <div className="pf-fan no-scrollbar" role="list" aria-label="Các tấm bản in">
-          {specimens.map((item, idx) => {
-            const isSelected = selectedSpecimen?.id === item.id;
-            const preview = item.previewId ? previewFor(item.previewId) : null;
+        <dl className="pf-stats" aria-label="Số liệu thực">
+          <div className="pf-stat">
+            <dt className="t-label">Dự án</dt>
+            <dd>{projects.length}</dd>
+          </div>
+          <div className="pf-stat">
+            <dt className="t-label">Tệp mã</dt>
+            <dd>{totalFilesCount}</dd>
+          </div>
+          <div className="pf-stat">
+            <dt className="t-label">Bài viết</dt>
+            <dd>{userPosts.length}</dd>
+          </div>
+          <div className="pf-stat">
+            <dt className="t-label">Đã lưu</dt>
+            <dd className="pf-stat-accent">{savedItemIds.length}</dd>
+          </div>
+          <div className="pf-stat">
+            <dt className="t-label">Lượt AI</dt>
+            <dd>{quotaStatValue}</dd>
+          </div>
+        </dl>
+      </header>
+
+      <section className="wrap-wide pf-body" aria-label="Nội dung hồ sơ">
+        <div className="pf-tabs" role="tablist" aria-label="Mục hồ sơ">
+          {PROFILE_TABS.map((tab) => {
+            const selected = activeTab === tab.id;
             return (
               <button
-                key={item.id}
+                key={tab.id}
                 type="button"
-                role="listitem"
-                aria-pressed={isSelected}
-                onClick={() => setSelectedId(item.id)}
-                className="pf-card"
-                style={{ '--pf-tilt': FAN_TILTS[idx % FAN_TILTS.length] } as React.CSSProperties}
+                role="tab"
+                className="pf-tab"
+                aria-selected={selected}
+                onClick={() => setActiveTab(tab.id)}
               >
-                <div className="plate pf-card-media">
-                  {preview ? (
-                    <Media preview={preview} title={item.title} />
-                  ) : (
-                    <div className="pf-typo-plate">
-                      <span className="t-label">{item.origin}</span>
-                      <span className="pf-typo-title">{item.title}</span>
-                    </div>
-                  )}
-                </div>
-                <div className="pf-card-meta">
-                  <span className="pf-card-name">{item.title}</span>
-                  <span className="t-label">{item.origin}</span>
-                </div>
+                <span>{tab.label}</span>
+                <span className="pf-tab-count">
+                  {tab.id === 'saved'
+                    ? savedEntries.length
+                    : tab.id === 'projects'
+                      ? projects.length
+                      : tab.id === 'posts'
+                        ? userPosts.length
+                        : activityFeed.length}
+                </span>
               </button>
             );
           })}
         </div>
 
-        {selectedSpecimen && (
-          <div className="wrap-wide">
-            <div className="pf-focus">
-              <div className="pf-focus-info">
-                <p className="t-label">{selectedSpecimen.origin}</p>
-                <h3 className="t-title" style={{ fontSize: 'var(--text-2xl)' }}>
-                  {selectedSpecimen.title}
-                </h3>
+        {activeTab === 'saved' && (
+          <div role="tabpanel" className="pf-panel">
+            {savedEntries.length === 0 ? (
+              <div className="pf-empty">
+                <h2 className="t-title" style={{ fontSize: 'var(--text-xl)' }}>
+                  Chưa có mục đã lưu
+                </h2>
                 <p className="t-lead" style={{ fontSize: 'var(--text-sm)' }}>
-                  {selectedSpecimen.subtitle}
+                  Lưu mẫu giao diện từ Khám phá, kho mã nguồn hoặc bài thảo luận từ Tri thức để mở nhanh tại đây.
                 </p>
-                <div className="pf-actions">
-                  <button
-                    type="button"
-                    className="btn btn-solid"
-                    onClick={() => {
-                      if (selectedSpecimen.communityPostId) {
-                        try {
-                          window.sessionStorage.setItem('ff_community_post_id', selectedSpecimen.communityPostId);
-                        } catch {
-                          void 0;
-                        }
-                        window.dispatchEvent(
-                          new CustomEvent('ff:community-post', { detail: selectedSpecimen.communityPostId })
-                        );
-                        navigate('community');
-                        return;
-                      }
-                      if (selectedSpecimen.repoContext) {
-                        openInWorkspace(selectedSpecimen.repoContext);
-                        return;
-                      }
-                      if (selectedSpecimen.projectId) {
-                        selectProject(selectedSpecimen.projectId);
-                      }
-                      navigate('workspace');
-                    }}
-                  >
-                    {selectedSpecimen.communityPostId ? 'Mở bài' : 'Workspace'}
+                <div className="pf-empty-actions">
+                  <button type="button" className="btn btn-red btn-sm" onClick={() => navigate('explore')}>
+                    Khám phá
                   </button>
-                  {selectedSpecimen.savedId && (
-                    <button
-                      type="button"
-                      className="btn btn-line"
-                      onClick={() => toggleSavedItem(selectedSpecimen.savedId!)}
-                    >
-                      Bỏ lưu
-                    </button>
-                  )}
+                  <button type="button" className="btn btn-line btn-sm" onClick={() => navigate('community')}>
+                    Tri thức
+                  </button>
                 </div>
               </div>
+            ) : (
+              <ul className="pf-grid">
+                {savedEntries.map((item) => {
+                  const preview = item.previewId ? previewFor(item.previewId) : null;
+                  return (
+                    <li key={item.id} className="pf-item-card">
+                      {preview && (
+                        <div className="pf-item-media">
+                          <Media preview={preview} title={item.title} />
+                        </div>
+                      )}
+                      <div className="pf-item-head">
+                        <span className="tag">{item.sourceLabel}</span>
+                        <span className="t-label">{item.subtitle}</span>
+                      </div>
+                      <h3 className="pf-item-title">{item.title}</h3>
+                      <p className="pf-item-desc">{item.summary}</p>
+                      <div className="pf-item-actions">
+                        {item.communityPost && (
+                          <button
+                            type="button"
+                            className="btn btn-red btn-sm"
+                            onClick={() => openCommunityThread(item.communityPost!.id)}
+                          >
+                            Mở bài
+                          </button>
+                        )}
+                        <button
+                          type="button"
+                          className="btn btn-solid btn-sm"
+                          onClick={() => {
+                            if (item.communityPost) {
+                              forkPostToWorkspace(item.communityPost);
+                            } else if (item.context) {
+                              openInWorkspace(item.context);
+                            }
+                          }}
+                        >
+                          Workspace
+                        </button>
+                        <button
+                          type="button"
+                          className="btn btn-line btn-sm"
+                          onClick={() => toggleSavedItem(item.savedId)}
+                        >
+                          Bỏ lưu
+                        </button>
+                      </div>
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
+          </div>
+        )}
 
-              <div className="min-w-0">
-                <ReaderCard
-                  title={selectedSpecimen.title}
-                  subtitle={selectedSpecimen.origin}
-                  paragraphs={selectedSpecimen.paragraphs}
-                  openLabel="Đọc sâu"
-                  theme={theme}
-                />
+        {activeTab === 'projects' && (
+          <div role="tabpanel" className="pf-panel">
+            <ul className="pf-grid">
+              {projects.map((proj) => {
+                const isActive = proj.id === activeProject.id;
+                const diffTotals = proj.diffs.reduce(
+                  (acc, entry) => ({
+                    added: acc.added + entry.additions,
+                    removed: acc.removed + entry.deletions,
+                  }),
+                  { added: 0, removed: 0 }
+                );
+                return (
+                  <li key={proj.id} className="pf-item-card" data-active={isActive ? 'true' : undefined}>
+                    <div className="pf-item-head">
+                      {isActive && <span className="tag tag-red">Đang mở</span>}
+                      {proj.pinned && <span className="tag">Ghim</span>}
+                      {proj.archived && <span className="tag">Lưu trữ</span>}
+                      <time className="t-label pf-item-time" dateTime={proj.updatedAt}>
+                        {formatDateTime(proj.updatedAt)}
+                      </time>
+                    </div>
+                    <h3 className="pf-item-title">{proj.name}</h3>
+                    <p className="pf-item-desc">{proj.description}</p>
+                    <div className="pf-proj-metrics t-label">
+                      <span>{proj.files.length} tệp</span>
+                      <span>
+                        +{diffTotals.added} −{diffTotals.removed}
+                      </span>
+                      <span>{proj.snapshots.length} mốc lưu</span>
+                    </div>
+                    <div className="pf-item-actions">
+                      <button
+                        type="button"
+                        className="btn btn-solid btn-sm"
+                        onClick={() => {
+                          selectProject(proj.id);
+                          navigate('workspace');
+                        }}
+                      >
+                        Workspace
+                      </button>
+                    </div>
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
+        )}
+
+        {activeTab === 'posts' && (
+          <div role="tabpanel" className="pf-panel">
+            {userPosts.length === 0 ? (
+              <div className="pf-empty">
+                <h2 className="t-title" style={{ fontSize: 'var(--text-xl)' }}>
+                  Chưa có bài đăng hoặc tương tác
+                </h2>
+                <p className="t-lead" style={{ fontSize: 'var(--text-sm)' }}>
+                  {currentUser
+                    ? 'Tham gia đặt câu hỏi, trình diễn hộp cát hoặc phản hồi tại mục Tri thức.'
+                    : 'Đăng nhập để đồng bộ bài đăng và lịch sử phản hồi của bạn tại Tri thức.'}
+                </p>
+                <div className="pf-empty-actions">
+                  {!currentUser && (
+                    <button
+                      type="button"
+                      className="btn btn-red btn-sm"
+                      onClick={() => setAuthModalOpen(true)}
+                    >
+                      Đăng nhập
+                    </button>
+                  )}
+                  <button
+                    type="button"
+                    className="btn btn-line btn-sm"
+                    onClick={() => navigate('community')}
+                  >
+                    Tri thức
+                  </button>
+                </div>
               </div>
-            </div>
+            ) : (
+              <ul className="pf-list">
+                {userPosts.map((post) => {
+                  const replies =
+                    (post.acceptedAnswer ? 1 : 0) + (post.answers?.length || post.answersCount || 0);
+                  return (
+                    <li key={post.id} className="pf-row-card">
+                      <div className="pf-row-main">
+                        <div className="pf-item-head">
+                          <span className="tag">{CHANNEL_LABELS[post.channel] || post.channel}</span>
+                          <span className="tag tag-red">{whiteLabelText(post.category)}</span>
+                          {(post.isAccepted || post.acceptedAnswer) && (
+                            <span className="tag tag-green">Đạt chuẩn</span>
+                          )}
+                          <time className="t-label" dateTime={post.createdAt}>
+                            {formatDateTime(post.createdAt)}
+                          </time>
+                        </div>
+                        <h3 className="pf-item-title">{whiteLabelText(post.title)}</h3>
+                        <p className="t-label">
+                          {post.votes ?? post.likes ?? 0} tán thành · {replies} phản hồi
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        className="btn btn-line btn-sm"
+                        onClick={() => openCommunityThread(post.id)}
+                      >
+                        Mở bài
+                      </button>
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
+          </div>
+        )}
+
+        {activeTab === 'activity' && (
+          <div role="tabpanel" className="pf-panel">
+            {activityFeed.length === 0 ? (
+              <div className="pf-empty">
+                <p className="t-lead" style={{ fontSize: 'var(--text-sm)' }}>
+                  Chưa ghi nhận hoạt động nào trong phiên này.
+                </p>
+              </div>
+            ) : (
+              <ol className="pf-timeline">
+                {activityFeed.map((act) => (
+                  <li key={act.id} className="pf-tl-item">
+                    <span className="tag">{act.kindLabel}</span>
+                    <div className="pf-tl-body">
+                      <span className="pf-tl-title">{act.title}</span>
+                      <span className="t-label">{act.detail}</span>
+                    </div>
+                    <time className="t-label pf-tl-time" dateTime={act.timestamp}>
+                      {formatDateTime(act.timestamp)}
+                    </time>
+                    {act.projectId && (
+                      <button
+                        type="button"
+                        className="btn btn-ghost btn-sm"
+                        onClick={() => {
+                          selectProject(act.projectId!);
+                          navigate('workspace');
+                        }}
+                      >
+                        Workspace
+                      </button>
+                    )}
+                    {act.communityPostId && (
+                      <button
+                        type="button"
+                        className="btn btn-ghost btn-sm"
+                        onClick={() => openCommunityThread(act.communityPostId!)}
+                      >
+                        Mở bài
+                      </button>
+                    )}
+                  </li>
+                ))}
+              </ol>
+            )}
           </div>
         )}
       </section>

@@ -19,7 +19,7 @@ import {
   recordAiTelemetry,
   updateGatewayOverride,
 } from './adminStore.js';
-import { runAIGeneration } from './aiEngine.js';
+import { runAIGeneration, runAIGenerationStream } from './aiEngine.js';
 import {
   clearAuthCookies,
   getAuthenticatedUser,
@@ -112,19 +112,68 @@ export async function handleAiChat(req: Request, res: Response): Promise<void> {
     prompt,
     model: typeof body.model === 'string' ? body.model.trim() : undefined,
     agentMode: typeof body.agentMode === 'string' ? body.agentMode.trim() : undefined,
+    stream: body.stream === true,
     files: Array.isArray(body.files) ? body.files : [],
     attachedItems: Array.isArray(body.attachedItems) ? body.attachedItems : [],
     history: Array.isArray(body.history) ? body.history : [],
   };
 
-  const generated = await runAIGeneration(chatReq, req.headers);
-  recordAiTelemetry(generated.fallback ? 'fallback' : 'success');
-  await flushSupabaseWrites();
+  const acceptHeader = typeof req.headers.accept === 'string' ? req.headers.accept : '';
+  const wantsStream = body.stream === true || acceptHeader.includes('text/event-stream');
 
-  res.status(200).json({
-    ...generated,
-    quota: turnResult.quota,
+  if (!wantsStream) {
+    const generated = await runAIGeneration(chatReq, req.headers);
+    recordAiTelemetry(generated.fallback ? 'fallback' : 'success');
+    await flushSupabaseWrites();
+
+    res.status(200).json({
+      ...generated,
+      quota: turnResult.quota,
+    });
+    return;
+  }
+
+  res.status(200);
+  res.setHeader('Content-Type', 'text/event-stream; charset=utf-8');
+  res.setHeader('Cache-Control', 'no-cache, no-transform');
+  res.setHeader('Connection', 'keep-alive');
+  res.setHeader('X-Accel-Buffering', 'no');
+  res.flushHeaders?.();
+
+  let clientDisconnected = false;
+  res.on('close', () => {
+    if (!res.writableFinished) {
+      clientDisconnected = true;
+    }
   });
+
+  const writeSse = (event: string, data: unknown) => {
+    if (clientDisconnected || res.writableEnded) return;
+    res.write(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`);
+  };
+
+  try {
+    const generated = await runAIGenerationStream(chatReq, req.headers, {
+      onStage: (stageInfo) => writeSse('stage', stageInfo),
+      onDelta: (chunk) => writeSse('delta', { text: chunk }),
+    });
+    recordAiTelemetry(generated.fallback ? 'fallback' : 'success');
+    await flushSupabaseWrites();
+
+    writeSse('result', {
+      ...generated,
+      quota: turnResult.quota,
+    });
+    writeSse('done', { ok: true });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : 'AI stream failed';
+    writeSse('error', { message });
+    writeSse('done', { ok: false });
+  } finally {
+    if (!res.writableEnded) {
+      res.end();
+    }
+  }
 }
 
 export async function handleAuthAction(

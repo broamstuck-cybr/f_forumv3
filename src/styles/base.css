@@ -15,7 +15,7 @@
     font-family: var(--font-ui);
     font-size: var(--text-base);
     line-height: var(--leading-body);
-    font-feature-settings: 'ss01', 'cv11';
+    font-feature-settings: normal;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     text-rendering: optimizeLegibility;

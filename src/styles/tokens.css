@@ -1,8 +1,15 @@
 :root {
   --font-display: 'Fraunces Variable', 'Iowan Old Style', 'Palatino Linotype', Georgia, serif;
-  --font-ui: 'Manrope Variable', 'Segoe UI', system-ui, -apple-system, sans-serif;
+  --font-ui: 'Be Vietnam Pro', system-ui, -apple-system, 'Segoe UI', sans-serif;
   --font-mono: 'IBM Plex Mono', ui-monospace, 'SFMono-Regular', Menlo, monospace;
   --font-script: 'Imperial Script', 'Fraunces Variable', cursive;
+
+  --ink-dark: #121110;
+  --shell-bg: #f1ecea;
+  --harbour: #7da3bb;
+  --peach: #ddad95;
+  --lavender: #b0aec6;
+  --ice: #bad9e6;
 
   --text-2xs: 0.6875rem;
   --text-xs: 0.75rem;
@@ -75,8 +82,8 @@ html[data-theme='dark'],
   --bg-high: #242220;
   --bg-veil: rgba(18, 17, 16, 0.82);
   --fg: #efe9dd;
-  --fg-muted: #aaa498;
-  --fg-faint: #8a847a;
+  --fg-muted: #b5afa3;
+  --fg-faint: #8e887e;
   --fg-inverse: #17150f;
   --bg-inverse: #efe9dd;
   --line: rgba(239, 233, 221, 0.11);
@@ -85,6 +92,8 @@ html[data-theme='dark'],
   --red-fill: #d63a27;
   --on-red: #fffaf5;
   --red-soft: rgba(255, 100, 80, 0.14);
+  --harbour: #7da3bb;
+  --harbour-soft: rgba(125, 163, 187, 0.16);
   --green: #7fd69b;
   --green-soft: rgba(127, 214, 155, 0.13);
   --amber: #e9b44c;
@@ -102,18 +111,20 @@ html[data-theme='light'],
   --bg-raised: #fbf8f1;
   --bg-sunken: #eae5d8;
   --bg-high: #ffffff;
-  --bg-veil: rgba(244, 240, 230, 0.86);
+  --bg-veil: rgba(241, 236, 234, 0.88);
   --fg: #17150f;
-  --fg-muted: #57524a;
-  --fg-faint: #6f6a5e;
+  --fg-muted: #524d45;
+  --fg-faint: #696458;
   --fg-inverse: #f4f0e6;
   --bg-inverse: #17150f;
   --line: rgba(23, 21, 15, 0.13);
   --line-strong: rgba(23, 21, 15, 0.3);
   --red: #c42a18;
-  --red-fill: #c42a18;
+  --red-fill: #d63a27;
   --on-red: #fffaf5;
   --red-soft: rgba(196, 42, 24, 0.09);
+  --harbour: #2c5b78;
+  --harbour-soft: rgba(44, 91, 120, 0.11);
   --green: #1c7440;
   --green-soft: rgba(28, 116, 64, 0.1);
   --amber: #8a5a00;
@@ -142,6 +153,8 @@ html[data-theme='light'],
   --red-fill: #17150f;
   --on-red: #fffaf5;
   --red-soft: rgba(255, 250, 245, 0.14);
+  --harbour: #e6f3f8;
+  --harbour-soft: rgba(255, 250, 245, 0.16);
 }
 
 :root,

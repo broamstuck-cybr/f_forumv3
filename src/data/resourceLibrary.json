@@ -569,5 +569,546 @@
     "lastVerified": "2026-11-19",
     "status": "verified_tested",
     "description": "400 phần tử giao diện và vi chuyển động MIT kèm hệ thống biến --ux-* chuẩn mực."
+  },
+  {
+    "id": "res-claude-code",
+    "title": "Claude Code CLI",
+    "group": "AI Tools",
+    "category": "CLI Agent",
+    "tags": [
+      "platform:Terminal",
+      "tech:TypeScript",
+      "level:Intermediate",
+      "cost:Paid"
+    ],
+    "officialUrl": "https://github.com/anthropics/claude-code",
+    "license": "Commercial / Open Source CLI",
+    "compatibility": "macOS, Linux, Windows (WSL)",
+    "lastVerified": "2026-11-20",
+    "status": "verified_tested",
+    "description": "Tác tử dòng lệnh đọc trực tiếp cấu trúc mã nguồn, chạy lệnh kiểm thử và tạo bản vá git tại chỗ."
+  },
+  {
+    "id": "res-openai-codex-cli",
+    "title": "OpenAI Codex CLI",
+    "group": "AI Tools",
+    "category": "CLI Agent",
+    "tags": [
+      "platform:Terminal",
+      "tech:Rust",
+      "level:Intermediate",
+      "cost:Free"
+    ],
+    "officialUrl": "https://github.com/openai/codex",
+    "license": "Apache-2.0",
+    "compatibility": "macOS, Linux, Windows",
+    "lastVerified": "2026-11-20",
+    "status": "verified_tested",
+    "description": "Trình tác tử viết bằng Rust chạy cục bộ trong terminal với hộp cát cô lập mạng và quyền ghi tệp."
+  },
+  {
+    "id": "res-gemini-cli",
+    "title": "Gemini CLI",
+    "group": "AI Tools",
+    "category": "CLI Agent",
+    "tags": [
+      "platform:Terminal",
+      "tech:TypeScript",
+      "level:Beginner",
+      "cost:Free"
+    ],
+    "officialUrl": "https://github.com/google-gemini/gemini-cli",
+    "license": "Apache-2.0",
+    "compatibility": "Node.js 20+, macOS, Linux, Windows",
+    "lastVerified": "2026-11-20",
+    "status": "verified_tested",
+    "description": "Công cụ dòng lệnh mã nguồn mở kết nối trực tiếp mô hình Gemini với MCP server và trình tìm kiếm web."
+  },
+  {
+    "id": "res-windsurf-ide",
+    "title": "Windsurf Editor",
+    "group": "AI Tools",
+    "category": "IDE / Editor",
+    "tags": [
+      "platform:Windsurf",
+      "tech:TypeScript",
+      "level:Beginner",
+      "cost:Freemium"
+    ],
+    "officialUrl": "https://windsurf.com",
+    "license": "Proprietary",
+    "compatibility": "macOS, Linux, Windows",
+    "lastVerified": "2026-11-20",
+    "status": "verified_info",
+    "description": "Trình soạn thảo mã nguồn tích hợp Cascade đọc chéo nhiều tệp và theo dõi ngữ cảnh phiên làm việc."
+  },
+  {
+    "id": "res-cline-extension",
+    "title": "Cline Coding Agent",
+    "group": "AI Tools",
+    "category": "IDE Extension",
+    "tags": [
+      "platform:VSCode",
+      "tech:TypeScript",
+      "level:Intermediate",
+      "cost:Free"
+    ],
+    "officialUrl": "https://github.com/cline/cline",
+    "license": "Apache-2.0",
+    "compatibility": "VS Code, Cursor, OpenRouter, Ollama",
+    "lastVerified": "2026-11-20",
+    "status": "verified_tested",
+    "description": "Tiện ích VS Code thực thi lệnh terminal, kiểm tra diff từng tệp và xin phép người dùng trước mỗi thay đổi."
+  },
+  {
+    "id": "res-roo-code",
+    "title": "Roo Code",
+    "group": "AI Tools",
+    "category": "IDE Extension",
+    "tags": [
+      "platform:VSCode",
+      "tech:TypeScript",
+      "level:Intermediate",
+      "cost:Free"
+    ],
+    "officialUrl": "https://github.com/RooCodeInc/Roo-Code",
+    "license": "Apache-2.0",
+    "compatibility": "VS Code, BYOK Providers",
+    "lastVerified": "2026-11-20",
+    "status": "verified_info",
+    "description": "Trợ lý lập trình chia vai Code, Architect và Ask ngay trong thanh bên VS Code cùng cấu hình API tự chủ."
+  },
+  {
+    "id": "res-aider-chat",
+    "title": "Aider Pair Programmer",
+    "group": "AI Tools",
+    "category": "CLI Agent",
+    "tags": [
+      "platform:Terminal",
+      "tech:Python",
+      "level:Intermediate",
+      "cost:Free"
+    ],
+    "officialUrl": "https://aider.chat",
+    "license": "Apache-2.0",
+    "compatibility": "Python 3.10+, Git Repositories",
+    "lastVerified": "2026-11-20",
+    "status": "verified_tested",
+    "description": "Công cụ ghép đôi lập trình trên terminal tự lập bản đồ kho mã nguồn và tạo commit git sạch sau mỗi lượt sửa."
+  },
+  {
+    "id": "res-continue-dev",
+    "title": "Continue.dev",
+    "group": "AI Tools",
+    "category": "IDE Extension",
+    "tags": [
+      "platform:VSCode",
+      "tech:TypeScript",
+      "level:Beginner",
+      "cost:Free"
+    ],
+    "officialUrl": "https://www.continue.dev",
+    "license": "Apache-2.0",
+    "compatibility": "VS Code, JetBrains, Local LLMs",
+    "lastVerified": "2026-11-20",
+    "status": "verified_info",
+    "description": "Tiện ích gợi ý mã nguồn mở cho phép tự gắn mô hình cục bộ Ollama hoặc API doanh nghiệp riêng."
+  },
+  {
+    "id": "res-goose-agent",
+    "title": "Goose AI Agent",
+    "group": "AI Tools",
+    "category": "CLI Agent",
+    "tags": [
+      "platform:Terminal",
+      "tech:Rust",
+      "level:Intermediate",
+      "cost:Free"
+    ],
+    "officialUrl": "https://block.github.io/goose/",
+    "license": "Apache-2.0",
+    "compatibility": "macOS, Linux, Windows, MCP",
+    "lastVerified": "2026-11-20",
+    "status": "verified_info",
+    "description": "Tác tử máy tính mã nguồn mở của Block tự cài gói phụ thuộc, viết mã và gọi công cụ qua chuẩn MCP."
+  },
+  {
+    "id": "res-openhands-agent",
+    "title": "OpenHands Platform",
+    "group": "AI Tools",
+    "category": "Autonomous Agent",
+    "tags": [
+      "platform:Docker",
+      "tech:Python",
+      "level:Advanced",
+      "cost:Free"
+    ],
+    "officialUrl": "https://github.com/OpenHands/OpenHands",
+    "license": "MIT",
+    "compatibility": "Docker, Linux, macOS",
+    "lastVerified": "2026-11-20",
+    "status": "verified_info",
+    "description": "Môi trường hộp cát Docker nơi tác tử phần mềm tự chạy shell, mở trình duyệt và xử lý issue GitHub."
+  },
+  {
+    "id": "res-bolt-diy",
+    "title": "Bolt.diy Workspace",
+    "group": "AI Tools",
+    "category": "Web Builder",
+    "tags": [
+      "platform:Web",
+      "tech:TypeScript",
+      "level:Beginner",
+      "cost:Free"
+    ],
+    "officialUrl": "https://github.com/stackblitz-labs/bolt.diy",
+    "license": "MIT",
+    "compatibility": "WebContainers, Node.js, Multi-LLM",
+    "lastVerified": "2026-11-20",
+    "status": "verified_info",
+    "description": "Phiên bản mã nguồn mở chạy WebContainers trên trình duyệt để dựng và xem trước ứng dụng với khóa API riêng."
+  },
+  {
+    "id": "res-v0-vercel",
+    "title": "v0 by Vercel",
+    "group": "AI Tools",
+    "category": "UI Generator",
+    "tags": [
+      "platform:Web",
+      "tech:React",
+      "tech:Tailwind",
+      "level:Beginner",
+      "cost:Freemium"
+    ],
+    "officialUrl": "https://v0.app",
+    "license": "Proprietary",
+    "compatibility": "Next.js, React, shadcn/ui",
+    "lastVerified": "2026-11-20",
+    "status": "verified_info",
+    "description": "Trình sinh giao diện React và Tailwind trực quan kèm xem trước tức thì và xuất mã tương thích shadcn/ui."
+  },
+  {
+    "id": "res-lovable-dev",
+    "title": "Lovable App Builder",
+    "group": "AI Tools",
+    "category": "Web Builder",
+    "tags": [
+      "platform:Web",
+      "tech:React",
+      "tech:TypeScript",
+      "level:Beginner",
+      "cost:Freemium"
+    ],
+    "officialUrl": "https://lovable.dev",
+    "license": "Proprietary",
+    "compatibility": "React, Vite, Supabase, GitHub",
+    "lastVerified": "2026-11-20",
+    "status": "verified_info",
+    "description": "Môi trường tạo ứng dụng web trọn gói đồng bộ hai chiều với kho GitHub và cơ sở dữ liệu Supabase."
+  },
+  {
+    "id": "res-zed-ai",
+    "title": "Zed Editor AI",
+    "group": "AI Tools",
+    "category": "IDE / Editor",
+    "tags": [
+      "platform:Desktop",
+      "tech:Rust",
+      "level:Intermediate",
+      "cost:Freemium"
+    ],
+    "officialUrl": "https://zed.dev",
+    "license": "GPL-3.0 / Apache-2.0",
+    "compatibility": "macOS, Linux, Windows",
+    "lastVerified": "2026-11-20",
+    "status": "verified_info",
+    "description": "Trình soạn thảo hiệu năng cao viết bằng Rust có bảng trợ lý ngữ cảnh và giao thức Agent Client Protocol."
+  },
+  {
+    "id": "res-trae-ide",
+    "title": "Trae AI IDE",
+    "group": "AI Tools",
+    "category": "IDE / Editor",
+    "tags": [
+      "platform:Desktop",
+      "tech:TypeScript",
+      "level:Beginner",
+      "cost:Free"
+    ],
+    "officialUrl": "https://www.trae.ai",
+    "license": "Proprietary",
+    "compatibility": "macOS, Windows",
+    "lastVerified": "2026-11-20",
+    "status": "verified_info",
+    "description": "IDE miễn phí hỗ trợ chế độ Builder tự phân rã yêu cầu thành thay đổi trên nhiều tệp mã nguồn."
+  },
+  {
+    "id": "res-ollama-local",
+    "title": "Ollama Local Runtime",
+    "group": "AI Tools",
+    "category": "Local LLM",
+    "tags": [
+      "platform:Local",
+      "tech:Go",
+      "level:Beginner",
+      "cost:Free"
+    ],
+    "officialUrl": "https://ollama.com",
+    "license": "MIT",
+    "compatibility": "Linux, macOS, Windows, CUDA, Metal",
+    "lastVerified": "2026-11-20",
+    "status": "verified_tested",
+    "description": "Trình chạy mô hình ngôn ngữ lớn cục bộ qua một lệnh đơn, cung cấp API tương thích OpenAI trên máy cá nhân."
+  },
+  {
+    "id": "res-lm-studio",
+    "title": "LM Studio",
+    "group": "AI Tools",
+    "category": "Local LLM",
+    "tags": [
+      "platform:Desktop",
+      "tech:GGUF",
+      "level:Beginner",
+      "cost:Free"
+    ],
+    "officialUrl": "https://lmstudio.ai",
+    "license": "Proprietary (Free for Local Use)",
+    "compatibility": "macOS (MLX), Windows, Linux",
+    "lastVerified": "2026-11-20",
+    "status": "verified_info",
+    "description": "Ứng dụng desktop tải và chạy tệp mô hình GGUF hoặc MLX ngoại tuyến kèm máy chủ HTTP cục bộ."
+  },
+  {
+    "id": "res-open-webui",
+    "title": "Open WebUI",
+    "group": "AI Tools",
+    "category": "Chat Interface",
+    "tags": [
+      "platform:Web",
+      "tech:Python",
+      "level:Intermediate",
+      "cost:Free"
+    ],
+    "officialUrl": "https://openwebui.com",
+    "license": "Open WebUI License",
+    "compatibility": "Docker, Ollama, OpenAI API",
+    "lastVerified": "2026-11-20",
+    "status": "verified_info",
+    "description": "Giao diện web tự lưu trữ hỗ trợ RAG tài liệu, phân quyền người dùng và chuyển đổi nhiều đầu máy chủ LLM."
+  },
+  {
+    "id": "res-dify-platform",
+    "title": "Dify Workflow Studio",
+    "group": "AI Tools",
+    "category": "Workflow Builder",
+    "tags": [
+      "platform:Web",
+      "tech:Python",
+      "level:Intermediate",
+      "cost:Freemium"
+    ],
+    "officialUrl": "https://dify.ai",
+    "license": "Dify Open Source License",
+    "compatibility": "Docker, Cloud, Multi-LLM",
+    "lastVerified": "2026-11-20",
+    "status": "verified_info",
+    "description": "Nền tảng kéo thả quy trình AI kết hợp kho tri thức vector, nhánh điều kiện và xuất bản thành API."
+  },
+  {
+    "id": "res-flowise-ai",
+    "title": "Flowise Visual Builder",
+    "group": "AI Tools",
+    "category": "Workflow Builder",
+    "tags": [
+      "platform:Web",
+      "tech:TypeScript",
+      "level:Beginner",
+      "cost:Free"
+    ],
+    "officialUrl": "https://flowiseai.com",
+    "license": "Apache-2.0",
+    "compatibility": "Node.js, Docker, LangChain",
+    "lastVerified": "2026-11-20",
+    "status": "verified_info",
+    "description": "Trình dựng chuỗi tác tử và bộ truy xuất RAG bằng đồ thị nút trực quan trên nền Node.js."
+  },
+  {
+    "id": "res-n8n-ai",
+    "title": "n8n AI Automation",
+    "group": "AI Tools",
+    "category": "Workflow Automation",
+    "tags": [
+      "platform:Web",
+      "tech:TypeScript",
+      "level:Intermediate",
+      "cost:Freemium"
+    ],
+    "officialUrl": "https://n8n.io",
+    "license": "Sustainable Use License",
+    "compatibility": "Self-hosted Docker, Cloud",
+    "lastVerified": "2026-11-20",
+    "status": "verified_info",
+    "description": "Hệ thống tự động hóa 400+ kết nối dịch vụ tích hợp nút tác tử AI, bộ nhớ hội thoại và webhook."
+  },
+  {
+    "id": "res-langsmith",
+    "title": "LangSmith Observability",
+    "group": "AI Tools",
+    "category": "Evaluation & Tracing",
+    "tags": [
+      "platform:Web",
+      "tech:Python",
+      "tech:TypeScript",
+      "level:Intermediate",
+      "cost:Freemium"
+    ],
+    "officialUrl": "https://www.langchain.com/langsmith",
+    "license": "Proprietary",
+    "compatibility": "Python, JS/TS, OpenTelemetry",
+    "lastVerified": "2026-11-20",
+    "status": "verified_info",
+    "description": "Nền tảng ghi vết từng bước gọi công cụ của tác tử, đo độ trễ token và chạy bộ kiểm định prompt."
+  },
+  {
+    "id": "res-langfuse",
+    "title": "Langfuse Open Tracing",
+    "group": "AI Tools",
+    "category": "Evaluation & Tracing",
+    "tags": [
+      "platform:Web",
+      "tech:TypeScript",
+      "level:Intermediate",
+      "cost:Free"
+    ],
+    "officialUrl": "https://langfuse.com",
+    "license": "MIT",
+    "compatibility": "Self-hosted Docker, SDKs",
+    "lastVerified": "2026-11-20",
+    "status": "verified_info",
+    "description": "Công cụ giám sát phiên LLM mã nguồn mở quản lý phiên bản prompt, chi phí API và phản hồi người dùng."
+  },
+  {
+    "id": "res-promptfoo",
+    "title": "Promptfoo Eval Harness",
+    "group": "AI Tools",
+    "category": "Evaluation & Security",
+    "tags": [
+      "platform:Terminal",
+      "tech:TypeScript",
+      "level:Intermediate",
+      "cost:Free"
+    ],
+    "officialUrl": "https://www.promptfoo.dev",
+    "license": "MIT",
+    "compatibility": "Node.js, CI/CD, Red Teaming",
+    "lastVerified": "2026-11-20",
+    "status": "verified_tested",
+    "description": "Bộ kiểm thử hồi quy cho prompt và mô hình, hỗ trợ quét lỗ hổng prompt injection trong CI."
+  },
+  {
+    "id": "res-perplexity-search",
+    "title": "Perplexity Research Engine",
+    "group": "AI Tools",
+    "category": "Research Assistant",
+    "tags": [
+      "platform:Web",
+      "level:Beginner",
+      "cost:Freemium"
+    ],
+    "officialUrl": "https://www.perplexity.ai",
+    "license": "Proprietary",
+    "compatibility": "Web, iOS, Android, Sonar API",
+    "lastVerified": "2026-11-20",
+    "status": "verified_info",
+    "description": "Công cụ tổng hợp câu trả lời kèm trích dẫn URL nguồn trực tiếp phục vụ tra cứu tài liệu kỹ thuật."
+  },
+  {
+    "id": "res-notebooklm",
+    "title": "Google NotebookLM",
+    "group": "AI Tools",
+    "category": "Research Assistant",
+    "tags": [
+      "platform:Web",
+      "level:Beginner",
+      "cost:Free"
+    ],
+    "officialUrl": "https://notebooklm.google.com",
+    "license": "Proprietary",
+    "compatibility": "Web, PDF, Docs, YouTube",
+    "lastVerified": "2026-11-20",
+    "status": "verified_info",
+    "description": "Không gian đọc tài liệu bám sát nguồn giáo trình và bài báo, đánh dấu đoạn trích xuất gốc để đối chiếu."
+  },
+  {
+    "id": "res-mcp-inspector",
+    "title": "MCP Inspector",
+    "group": "AI Tools",
+    "category": "Protocol Debugger",
+    "tags": [
+      "platform:Web",
+      "tech:TypeScript",
+      "level:Intermediate",
+      "cost:Free"
+    ],
+    "officialUrl": "https://github.com/modelcontextprotocol/inspector",
+    "license": "MIT",
+    "compatibility": "Node.js, Stdio / SSE MCP Servers",
+    "lastVerified": "2026-11-20",
+    "status": "verified_tested",
+    "description": "Giao diện kiểm thử trực tiếp schema công cụ, tài nguyên và prompt từ mọi MCP server cục bộ."
+  },
+  {
+    "id": "res-anythingllm",
+    "title": "AnythingLLM Desktop",
+    "group": "AI Tools",
+    "category": "Local Knowledge",
+    "tags": [
+      "platform:Desktop",
+      "tech:JavaScript",
+      "level:Beginner",
+      "cost:Free"
+    ],
+    "officialUrl": "https://anythingllm.com",
+    "license": "MIT",
+    "compatibility": "macOS, Windows, Linux, Docker",
+    "lastVerified": "2026-11-20",
+    "status": "verified_info",
+    "description": "Ứng dụng lập chỉ mục tài liệu cục bộ thành không gian hỏi đáp riêng tư hỗ trợ đa nhà cung cấp mô hình."
+  },
+  {
+    "id": "res-browser-use",
+    "title": "Browser Use Agent",
+    "group": "AI Tools",
+    "category": "Browser Automation",
+    "tags": [
+      "platform:Python",
+      "tech:Python",
+      "level:Advanced",
+      "cost:Free"
+    ],
+    "officialUrl": "https://github.com/browser-use/browser-use",
+    "license": "MIT",
+    "compatibility": "Python 3.11+, Playwright",
+    "lastVerified": "2026-11-20",
+    "status": "verified_info",
+    "description": "Thư viện kết nối LLM thị giác với Playwright để đọc cây phần tử DOM và điều hướng trình duyệt tự động."
+  },
+  {
+    "id": "res-github-copilot",
+    "title": "GitHub Copilot",
+    "group": "AI Tools",
+    "category": "IDE Extension",
+    "tags": [
+      "platform:VSCode",
+      "tech:TypeScript",
+      "level:Beginner",
+      "cost:Freemium"
+    ],
+    "officialUrl": "https://github.com/features/copilot",
+    "license": "Proprietary",
+    "compatibility": "VS Code, JetBrains, Neovim, GitHub.com",
+    "lastVerified": "2026-11-20",
+    "status": "verified_info",
+    "description": "Trợ lý gợi ý mã nội tuyến và đánh giá pull request tích hợp trực tiếp trong hệ sinh thái GitHub."
   }
 ]

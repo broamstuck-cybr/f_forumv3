@@ -1,5 +1,6 @@
 import React from 'react';
 import type { AppRoute } from '../../types/index';
+import { StreetGraffitiMark } from '../brand/StreetGraffitiMark';
 import './app-shell.css';
 
 interface AppFooterProps {
@@ -17,13 +18,7 @@ const PRODUCT: Array<{ id: AppRoute; label: string }> = [
 const ACCOUNT: Array<{ id: AppRoute; label: string }> = [
   { id: 'profile', label: 'Hồ sơ' },
   { id: 'settings', label: 'Cài đặt' },
-  { id: 'landing', label: 'Câu chuyện' },
-];
-
-const SOURCES: Array<{ href: string; label: string }> = [
-  { href: 'https://github.com/broamstuck-cybr/SOURCEOFKNOWLEDGFORAI', label: 'Kho tri thức' },
-  { href: 'https://www.pinui.xyz/', label: 'Pin UI' },
-  { href: 'https://github.com/broamstuck-cybr/f_forumv3', label: 'Mã nguồn' },
+  { id: 'landing', label: 'Giới thiệu' },
 ];
 
 export const AppFooter: React.FC<AppFooterProps> = ({ onNavigate, onOpenNotice }) => {
@@ -59,16 +54,9 @@ export const AppFooter: React.FC<AppFooterProps> = ({ onNavigate, onOpenNotice }
                 ))}
               </ul>
             </nav>
-            <nav className="foot__col" aria-label="Nguồn">
-              <h3>nguồn</h3>
+            <nav className="foot__col" aria-label="Thông tin">
+              <h3>thông tin</h3>
               <ul>
-                {SOURCES.map((item) => (
-                  <li key={item.href}>
-                    <a className="foot__link" href={item.href} target="_blank" rel="noreferrer">
-                      {item.label}
-                    </a>
-                  </li>
-                ))}
                 <li>
                   <button type="button" className="foot__link" onClick={onOpenNotice}>
                     Ghi công
@@ -78,9 +66,9 @@ export const AppFooter: React.FC<AppFooterProps> = ({ onNavigate, onOpenNotice }
             </nav>
           </div>
         </div>
-        <p className="foot__mark" aria-hidden="true">
-          F<i>-</i>Forum
-        </p>
+        <div className="foot__graffiti">
+          <StreetGraffitiMark />
+        </div>
         <div className="foot__base">
           <p className="t-label">F-Forum v3, giấy phép MIT</p>
           <p className="t-label">F-Forum, 2026</p>

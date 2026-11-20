@@ -521,7 +521,7 @@ export const BROAMSTUCK_REPOS: BroamstuckRepoShowcase[] = [
     ],
     keyPaths: ['catalog.json', 'sources/lucianlabs/tokens.css', 'assets/previews/'],
     interactiveSnippet: {
-      label: 'LucianLabs Glass Button',
+      label: 'Nút kính lỏng LucianLabs',
       html: '<div class="stage"><button class="glass-cta" type="button">Khám phá mẫu</button></div>',
       css: 'body{margin:0;min-height:100vh;display:grid;place-items:center;background:#090a0d;font-family:system-ui,sans-serif}.glass-cta{padding:14px 28px;border-radius:999px;border:1px solid rgba(200,155,84,.45);background:linear-gradient(135deg,rgba(255,255,255,.12),rgba(200,155,84,.16));color:#f4f1ea;font-size:14px;font-weight:500;cursor:pointer;backdrop-filter:blur(14px)}',
     },
@@ -551,8 +551,8 @@ export const BROAMSTUCK_REPOS: BroamstuckRepoShowcase[] = [
       'src/components.css',
     ],
     interactiveSnippet: {
-      label: 'Shopify Winter --st-* Token Card',
-      html: '<article class="st-card"><div class="st-kicker">CHAPTER 01 · SIDEKICK</div><h2>19 cập nhật · 7.946 px</h2><p>Hệ thống giấy ấm #f7f7ee, mực #292919 và nhịp cuộn tuyến tính.</p></article>',
+      label: 'Thẻ biến --st-* Shopify Winter',
+      html: '<article class="st-card"><div class="st-kicker">CHƯƠNG 01 · SIDEKICK</div><h2>19 cập nhật · 7.946 px</h2><p>Hệ thống giấy ấm #f7f7ee, mực #292919 và nhịp cuộn tuyến tính.</p></article>',
       css: 'body{margin:0;min-height:100vh;display:grid;place-items:center;background:#f7f7ee;color:#292919;font-family:Georgia,serif}.st-card{max-width:340px;padding:28px;border:1px solid rgba(41,41,25,.24);border-radius:10px;background:#efeee2}.st-kicker{font-family:monospace;font-size:11px;letter-spacing:.12em;color:#ea1360}.st-card h2{margin:10px 0 8px;font-size:24px;font-weight:600}.st-card p{margin:0;font-size:14px;color:#4c4c3d;line-height:1.55}',
     },
   },
@@ -576,7 +576,7 @@ export const BROAMSTUCK_REPOS: BroamstuckRepoShowcase[] = [
     ],
     keyPaths: ['package.json', 'src/App.tsx', 'vercel.json'],
     interactiveSnippet: {
-      label: 'F-Forum Spatial Badge',
+      label: 'Huy hiệu F-Forum Live View',
       html: '<div class="ff-pill"><span class="ff-dot"></span><span>F-Forum · Live View</span></div>',
       css: 'body{margin:0;min-height:100vh;display:grid;place-items:center;background:#090a0d;font-family:system-ui,sans-serif}.ff-pill{display:inline-flex;align-items:center;gap:10px;padding:12px 20px;border-radius:999px;border:1px solid rgba(200,155,84,.4);background:#141720;color:#f4f1ea;font-size:13px}.ff-dot{width:8px;height:8px;border-radius:999px;background:#34d399}',
     },
@@ -600,8 +600,8 @@ export const BROAMSTUCK_REPOS: BroamstuckRepoShowcase[] = [
     ],
     keyPaths: ['EDUNEXT_BAS.user.js', 'EDUNEXT_BAS.console.js', 'SHA256SUMS.txt'],
     interactiveSnippet: {
-      label: 'Checksum Status Badge',
-      html: '<div class="chk"><strong>EDUNEXT_BAS v1.1.3</strong><span>SHA256 Verified</span></div>',
+      label: 'Huy hiệu kiểm định SHA256',
+      html: '<div class="chk"><strong>EDUNEXT_BAS v1.1.3</strong><span>Đã kiểm định SHA256</span></div>',
       css: 'body{margin:0;min-height:100vh;display:grid;place-items:center;background:#090a0d;color:#f4f1ea;font-family:monospace}.chk{display:flex;flex-direction:column;gap:6px;padding:18px 22px;border-radius:12px;border:1px solid rgba(52,211,153,.35);background:#0f1117}.chk span{font-size:12px;color:#34d399}',
     },
   },
@@ -623,8 +623,8 @@ export const BROAMSTUCK_REPOS: BroamstuckRepoShowcase[] = [
     ],
     keyPaths: ['edunext_ULTRA.user.js', 'eDuNeXt_FoRk_liteV1.0.7.js'],
     interactiveSnippet: {
-      label: 'Legacy Module Card',
-      html: '<div class="leg"><h3>edunext-legacy</h3><p>6 stars · JavaScript Userscript Archive</p></div>',
+      label: 'Thẻ mô-đun lưu trữ',
+      html: '<div class="leg"><h3>edunext-legacy</h3><p>6 sao · Kho lưu trữ kịch bản trình duyệt</p></div>',
       css: 'body{margin:0;min-height:100vh;display:grid;place-items:center;background:#090a0d;color:#f4f1ea;font-family:system-ui,sans-serif}.leg{padding:20px 24px;border-radius:14px;border:1px solid rgba(244,241,234,.14);background:#141720}.leg h3{margin:0 0 6px;font-size:16px}.leg p{margin:0;font-size:12px;color:#adb3bf}',
     },
   },
@@ -645,8 +645,8 @@ export const BROAMSTUCK_REPOS: BroamstuckRepoShowcase[] = [
     ],
     keyPaths: ['demo_resourcepack_v1.zip', 'resourcepack_v1.zip', 'edunext_bank/'],
     interactiveSnippet: {
-      label: 'Bundle Summary',
-      html: '<div class="rp"><strong>resourcepack_v1</strong><span>edunext_bank · study archive</span></div>',
+      label: 'Tóm tắt gói học liệu',
+      html: '<div class="rp"><strong>resourcepack_v1</strong><span>edunext_bank · kho học liệu</span></div>',
       css: 'body{margin:0;min-height:100vh;display:grid;place-items:center;background:#090a0d;color:#f4f1ea;font-family:monospace}.rp{display:flex;flex-direction:column;gap:4px;padding:18px 22px;border-radius:12px;border:1px solid rgba(244,241,234,.15);background:#141720}.rp span{font-size:12px;color:#c89b54}',
     },
   },
@@ -667,7 +667,7 @@ export const BROAMSTUCK_REPOS: BroamstuckRepoShowcase[] = [
     ],
     keyPaths: ['README.md'],
     interactiveSnippet: {
-      label: 'Socratic Prompt Card',
+      label: 'Thẻ câu hỏi Socratic',
       html: '<blockquote class="soc">“Đặt câu hỏi đúng trước khi viết dòng mã đầu tiên.”</blockquote>',
       css: 'body{margin:0;min-height:100vh;display:grid;place-items:center;background:#f7f5f0;color:#141413;font-family:Georgia,serif}.soc{max-width:320px;margin:0;padding:24px;border-left:2px solid #9a6e28;font-size:18px;font-style:italic;line-height:1.5}',
     },

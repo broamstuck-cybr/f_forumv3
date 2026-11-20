@@ -5,9 +5,9 @@ import { safeStorage } from '../../utils/storage';
 import { NoticeStatusModal } from '../public/NoticeStatusModal';
 import { LandingNav } from './LandingNav';
 import { LANDING_CHAPTERS } from './landingContent';
+import { TidewellStage } from './TidewellStage';
 import { scrollToSection, useActiveChapter, useLenisSmoothScroll } from './useLandingMotion';
 import { LandingHero } from './sections/LandingHero';
-import { LandingShowcase } from './sections/LandingShowcase';
 import { LandingManifesto } from './sections/LandingManifesto';
 import { LandingProjects } from './sections/LandingProjects';
 import { LandingPricing } from './sections/LandingPricing';
@@ -51,7 +51,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
 
   const handleFooterNavigate = (route: AppRoute) => {
     if (route === 'landing') {
-      scrollToSection('top');
+      scrollToSection('top', 0);
       return;
     }
     store.navigate(route);
@@ -89,7 +89,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
         onEnterApp={enterApp}
         onNavigate={navigateTo}
       />
-      <LandingShowcase onNavigate={navigateTo} />
+      <TidewellStage onNavigate={navigateTo} />
       <LandingManifesto onNavigate={navigateTo} />
       <LandingProjects onNavigate={navigateTo} />
       <LandingPricing onEnterApp={enterApp} />

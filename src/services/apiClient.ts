@@ -4,6 +4,9 @@ import type {
   AdminState,
   AIChatRequest,
   AIChatResponse,
+  AIStreamCallbacks,
+  AIStreamDeltaEvent,
+  AIStreamStageEvent,
   BYOKConfig,
   ClubHandoverDossier,
   CommunityChannel,
@@ -31,15 +34,14 @@ export function getOrCreateClientGuestId(): string {
   }
 }
 
-async function requestJson<T>(
-  path: string,
-  options: RequestInit = {},
+function buildApiHeaders(
+  extraHeaders?: Record<string, string>,
   byok?: BYOKConfig
-): Promise<T> {
+): Record<string, string> {
   const headers: Record<string, string> = {
     'content-type': 'application/json',
     'x-ff-guest-id': getOrCreateClientGuestId(),
-    ...((options.headers as Record<string, string>) || {}),
+    ...(extraHeaders || {}),
   };
 
   if (byok && byok.enabled && byok.apiKey.trim()) {
@@ -49,21 +51,55 @@ async function requestJson<T>(
     headers['x-ff-byok-protocol'] = byok.protocol;
   }
 
+  return headers;
+}
+
+async function createHttpError(response: Response): Promise<Error & { status?: number; payload?: unknown }> {
+  const data = (await response.json().catch(() => ({}))) as Record<string, unknown>;
+  const errMsg = typeof data.error === 'string' ? data.error : `HTTP ${response.status}`;
+  const err = new Error(errMsg) as Error & { status?: number; payload?: unknown };
+  err.status = response.status;
+  err.payload = data;
+  return err;
+}
+
+async function requestJson<T>(
+  path: string,
+  options: RequestInit = {},
+  byok?: BYOKConfig
+): Promise<T> {
+  const headers = buildApiHeaders((options.headers as Record<string, string>) || undefined, byok);
+
   const response = await fetch(path, {
     ...options,
     credentials: 'include',
     headers,
   });
 
-  const data = (await response.json().catch(() => ({}))) as Record<string, unknown>;
   if (!response.ok) {
-    const errMsg = typeof data.error === 'string' ? data.error : `HTTP ${response.status}`;
-    const err = new Error(errMsg) as Error & { status?: number; payload?: unknown };
-    err.status = response.status;
-    err.payload = data;
-    throw err;
+    throw await createHttpError(response);
   }
+  const data = (await response.json().catch(() => ({}))) as Record<string, unknown>;
   return data as T;
+}
+
+function parseSseFrame(rawFrame: string): { event: string; data: string } | null {
+  const lines = rawFrame.split('\n');
+  let event = 'message';
+  const dataLines: string[] = [];
+
+  for (const rawLine of lines) {
+    const line = rawLine.trimEnd();
+    if (!line || line.startsWith(':')) continue;
+    if (line.startsWith('event:')) {
+      event = line.slice(6).trim() || 'message';
+    } else if (line.startsWith('data:')) {
+      dataLines.push(line.slice(5).trimStart());
+    }
+  }
+
+  if (dataLines.length === 0) return null;
+  return { event, data: dataLines.join('\n') };
 }
 
 export const apiClient = {
@@ -90,6 +126,91 @@ export const apiClient = {
       },
       byok
     );
+  },
+
+  async streamAiChat(
+    payload: AIChatRequest,
+    byok?: BYOKConfig,
+    callbacks?: AIStreamCallbacks
+  ): Promise<AIChatResponse> {
+    const headers = buildApiHeaders({ accept: 'text/event-stream' }, byok);
+    const response = await fetch('/api/ai/chat', {
+      method: 'POST',
+      credentials: 'include',
+      headers,
+      body: JSON.stringify({ ...payload, stream: true }),
+      signal: callbacks?.signal,
+    });
+
+    if (!response.ok) {
+      const err = await createHttpError(response);
+      callbacks?.onError?.({ message: err.message, status: err.status });
+      throw err;
+    }
+
+    const contentType = response.headers.get('content-type') || '';
+    if (!contentType.includes('text/event-stream') || !response.body) {
+      const jsonResult = (await response.json()) as AIChatResponse;
+      callbacks?.onResult?.(jsonResult);
+      return jsonResult;
+    }
+
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder('utf-8');
+    let buffer = '';
+    let finalResult: AIChatResponse | null = null;
+    let streamError: string | null = null;
+
+    const handleFrame = (rawFrame: string) => {
+      const frame = parseSseFrame(rawFrame);
+      if (!frame) return;
+      try {
+        const parsed = JSON.parse(frame.data) as Record<string, unknown>;
+        if (frame.event === 'stage') {
+          callbacks?.onStage?.(parsed as unknown as AIStreamStageEvent);
+        } else if (frame.event === 'delta') {
+          callbacks?.onDelta?.(parsed as unknown as AIStreamDeltaEvent);
+        } else if (frame.event === 'result') {
+          finalResult = parsed as unknown as AIChatResponse;
+          callbacks?.onResult?.(finalResult);
+        } else if (frame.event === 'error') {
+          const msg = typeof parsed.message === 'string' ? parsed.message : 'AI stream failed';
+          streamError = msg;
+          callbacks?.onError?.({ message: msg });
+        }
+      } catch {
+        return;
+      }
+    };
+
+    while (true) {
+      const { value, done } = await reader.read();
+      if (done) break;
+      buffer += decoder.decode(value, { stream: true }).replace(/\r\n/g, '\n');
+      let boundary = buffer.indexOf('\n\n');
+      while (boundary >= 0) {
+        const rawFrame = buffer.slice(0, boundary);
+        buffer = buffer.slice(boundary + 2);
+        handleFrame(rawFrame);
+        boundary = buffer.indexOf('\n\n');
+      }
+    }
+
+    const trailing = decoder.decode();
+    if (trailing) {
+      buffer += trailing.replace(/\r\n/g, '\n');
+    }
+    if (buffer.trim()) {
+      handleFrame(buffer);
+    }
+
+    if (streamError && !finalResult) {
+      throw new Error(streamError);
+    }
+    if (!finalResult) {
+      throw new Error('AI stream ended without a result payload');
+    }
+    return finalResult;
   },
 
   fetchCurrentUser(): Promise<{ user: User | null; quota: QuotaState }> {

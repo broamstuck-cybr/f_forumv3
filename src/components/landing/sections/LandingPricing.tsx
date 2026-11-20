@@ -24,7 +24,7 @@ export const LandingPricing: React.FC<LandingPricingProps> = ({ onEnterApp }) =>
           <div className="lp-price-col">
             <div>
               <p className="t-label">phiên bản học thuật</p>
-              <p className="lp-price-num">0₫</p>
+              <p className="lp-price-num">0đ</p>
               <p className="t-label" style={{ marginTop: 'var(--space-2)' }}>
                 15 lượt AI tiêu chuẩn + BYOK
               </p>

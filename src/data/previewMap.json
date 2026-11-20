@@ -377,5 +377,306 @@
     "kind": "image",
     "src": "https://threeui.com/social/pages/three-js/structure-flow/emerald-horizon.jpg",
     "credit": "threeui.com"
+  },
+  "component/otp-input": {
+    "kind": "video",
+    "src": "https://www.pinui.xyz/clips/wall/otp-input-dark.mp4",
+    "poster": "https://www.pinui.xyz/clips/thumb/otp-input-dark.webp",
+    "credit": "pinui.xyz"
+  },
+  "ai-workflow": {
+    "kind": "video",
+    "src": "https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260511_131941_d136af49-e243-493a-be14-6ff3f24e09e6.mp4",
+    "credit": "motionsites.ai"
+  },
+  "audio-showcase": {
+    "kind": "video",
+    "src": "https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260611_183632_c311af08-e4b7-458f-81e7-79847a49b3d3.mp4",
+    "credit": "motionsites.ai"
+  },
+  "bold-studio": {
+    "kind": "video",
+    "src": "https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260606_154941_df1a96e1-a06f-450c-bd02-d863414cc1a0.mp4",
+    "credit": "motionsites.ai"
+  },
+  "camper-overnight": {
+    "kind": "video",
+    "src": "https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20261005_115704_e1b28e05-aef1-477c-924b-0c1d4612f86f.mp4",
+    "credit": "motionsites.ai"
+  },
+  "contact-cybernetic": {
+    "kind": "video",
+    "src": "https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260601_110537_3a579fa0-7bbc-4d94-9d25-0e816c7840f5.mp4",
+    "credit": "motionsites.ai"
+  },
+  "cozypaws": {
+    "kind": "image",
+    "src": "https://polo-pecan-73837341.figma.site/_assets/v11/e62173d41f91350a59628e8a9a55ae078a886fb9.png?w=128",
+    "credit": "motionsites.ai"
+  },
+  "creative-portfolio": {
+    "kind": "video",
+    "src": "https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260629_030107_874273ea-684a-4e90-bb96-8fdfde48d53d.mp4",
+    "credit": "motionsites.ai"
+  },
+  "cyberpunk-reveal": {
+    "kind": "image",
+    "src": "https://images.higgs.ai/?default=1&output=webp&url=https%3A%2F%2Fd8j0ntlcm91z4.cloudfront.net%2Fuser_38xzZboKViGWJOttwIXH07lWA1P%2Fhf_20260609_125121_afb71ce9-9c64-4c54-90b5-c89c0764c052.png&w=1920&q=85",
+    "credit": "motionsites.ai"
+  },
+  "equilibrium": {
+    "kind": "video",
+    "src": "https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260511_230229_7c9bc431-46cf-489a-948d-e8144d8eb5d4.mp4",
+    "credit": "motionsites.ai"
+  },
+  "immersive-ocean": {
+    "kind": "video",
+    "src": "https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260622_204221_5339e40b-e73d-4ab0-9c65-79c18c66fd50.mp4",
+    "credit": "motionsites.ai"
+  },
+  "impact-ventures": {
+    "kind": "video",
+    "src": "https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260622_204103_f607742e-09da-4cf5-bb06-4e67b0a531de.mp4",
+    "credit": "motionsites.ai"
+  },
+  "intelligentx": {
+    "kind": "video",
+    "src": "https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260603_132049_036591b8-6e92-4760-b94c-a7ea6eef315c.mp4",
+    "credit": "motionsites.ai"
+  },
+  "interactive-discovery": {
+    "kind": "image",
+    "src": "https://images.higgs.ai/?default=1&output=webp&url=https%3A%2F%2Fd8j0ntlcm91z4.cloudfront.net%2Fuser_38xzZboKViGWJOttwIXH07lWA1P%2Fhf_20260609_195923_b0ba8ace-1d1d-4f2c-9a28-1ab84b330680.png&w=1280&q=85",
+    "credit": "motionsites.ai"
+  },
+  "network-hero": {
+    "kind": "image",
+    "src": "https://images.higgs.ai/?default=1&output=webp&url=https%3A%2F%2Fd8j0ntlcm91z4.cloudfront.net%2Fuser_38xzZboKViGWJOttwIXH07lWA1P%2Fhf_20260624_111401_56af5012-2263-45d3-849a-8688084d7c2a.png&w=1280&q=85",
+    "credit": "motionsites.ai"
+  },
+  "organic-odyssey": {
+    "kind": "video",
+    "src": "https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260619_191346_9d19d66e-86a4-47f7-8dc6-712c1788c3b2.mp4",
+    "credit": "motionsites.ai"
+  },
+  "portal": {
+    "kind": "image",
+    "src": "https://motionsites.ai/assets/hero-portal-preview-DEscBr2T.gif",
+    "credit": "motionsites.ai"
+  },
+  "prosthetics-hero": {
+    "kind": "video",
+    "src": "https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260508_215831_c6a8989c-d716-4d8d-8745-e972a2eec711.mp4",
+    "credit": "motionsites.ai"
+  },
+  "retro-futurist": {
+    "kind": "video",
+    "src": "https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260530_042513_df96a13b-6155-4f6e-8b93-c9dee66fba08.mp4",
+    "credit": "motionsites.ai"
+  },
+  "stillmind": {
+    "kind": "video",
+    "src": "https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260702_081127_0992a171-d3c6-4978-8213-0ec5df8b6d63.mp4",
+    "credit": "motionsites.ai"
+  },
+  "3d-assets-amber-house-study": {
+    "kind": "image",
+    "src": "https://threeui.com/social/pages/3d-assets/amber-house-study.jpg",
+    "credit": "threeui.com"
+  },
+  "backgrounds-trochil-abyss": {
+    "kind": "image",
+    "src": "https://threeui.com/social/pages/backgrounds/trochil/abyss.jpg",
+    "credit": "threeui.com"
+  },
+  "buttons-amber-house-day-night": {
+    "kind": "image",
+    "src": "https://threeui.com/social/pages/buttons/amber-house-day-night.jpg",
+    "credit": "threeui.com"
+  },
+  "css-animated-top-dock": {
+    "kind": "image",
+    "src": "https://threeui.com/social/pages/css/animated-top-dock.jpg",
+    "credit": "threeui.com"
+  },
+  "hero-advanced-glass-material": {
+    "kind": "image",
+    "src": "https://threeui.com/social/pages/hero/advanced-glass-material.jpg",
+    "credit": "threeui.com"
+  },
+  "landing-pages-aera-01-landing-page": {
+    "kind": "image",
+    "src": "https://threeui.com/social/pages/landing-pages/aera-01-landing-page.jpg",
+    "credit": "threeui.com"
+  },
+  "motion-design-cathode-session-angles": {
+    "kind": "image",
+    "src": "https://threeui.com/social/pages/motion-design/cathode-session/angles.jpg",
+    "credit": "threeui.com"
+  },
+  "sections-about": {
+    "kind": "image",
+    "src": "https://threeui.com/social/pages/sections/about.jpg",
+    "credit": "threeui.com"
+  },
+  "text-animation-article-headings": {
+    "kind": "image",
+    "src": "https://threeui.com/social/pages/text-animation/article-headings.jpg",
+    "credit": "threeui.com"
+  },
+  "three-js-structure-flow-expanse-field": {
+    "kind": "image",
+    "src": "https://threeui.com/social/pages/three-js/structure-flow/expanse-field.jpg",
+    "credit": "threeui.com"
+  },
+  "ui-elements-line-illustrations-model": {
+    "kind": "image",
+    "src": "https://threeui.com/social/pages/ui-elements/line-illustrations/model.jpg",
+    "credit": "threeui.com"
+  },
+  "3d-assets-apple-devices": {
+    "kind": "image",
+    "src": "https://threeui.com/social/pages/3d-assets/apple-devices.jpg",
+    "credit": "threeui.com"
+  },
+  "backgrounds-terrain-plume-alpine": {
+    "kind": "image",
+    "src": "https://threeui.com/social/pages/backgrounds/terrain-plume/alpine.jpg",
+    "credit": "threeui.com"
+  },
+  "buttons-rectangle-buttons-aster-glass-access": {
+    "kind": "image",
+    "src": "https://threeui.com/social/pages/buttons/rectangle-buttons/aster-glass-access.jpg",
+    "credit": "threeui.com"
+  },
+  "css-animated-top-dock-modern": {
+    "kind": "image",
+    "src": "https://threeui.com/social/pages/css/animated-top-dock/modern.jpg",
+    "credit": "threeui.com"
+  },
+  "hero-anima": {
+    "kind": "image",
+    "src": "https://threeui.com/social/pages/hero/anima.jpg",
+    "credit": "threeui.com"
+  },
+  "landing-pages-aeris-pool-landing-page": {
+    "kind": "image",
+    "src": "https://threeui.com/social/pages/landing-pages/aeris-pool-landing-page.jpg",
+    "credit": "threeui.com"
+  },
+  "motion-design-ar-005-motion": {
+    "kind": "image",
+    "src": "https://threeui.com/social/pages/motion-design/ar-005-motion.jpg",
+    "credit": "threeui.com"
+  },
+  "sections-footers-section-aera-01-footers": {
+    "kind": "image",
+    "src": "https://threeui.com/social/pages/sections/footers/section-aera-01-footers.jpg",
+    "credit": "threeui.com"
+  },
+  "text-animation-article-headings-audio-wordmark": {
+    "kind": "image",
+    "src": "https://threeui.com/social/pages/text-animation/article-headings/audio-wordmark.jpg",
+    "credit": "threeui.com"
+  },
+  "three-js-heatmap-badge-canvas": {
+    "kind": "image",
+    "src": "https://threeui.com/social/pages/three-js/heatmap-badge/canvas.jpg",
+    "credit": "threeui.com"
+  },
+  "ui-elements-line-illustrations-airpods": {
+    "kind": "image",
+    "src": "https://threeui.com/social/pages/ui-elements/line-illustrations/airpods.jpg",
+    "credit": "threeui.com"
+  },
+  "3d-assets-aureon-assets-applications": {
+    "kind": "image",
+    "src": "https://threeui.com/social/pages/3d-assets/aureon-assets/applications.jpg",
+    "credit": "threeui.com"
+  },
+  "backgrounds-predictive-arc-amber-halftone": {
+    "kind": "image",
+    "src": "https://threeui.com/social/pages/backgrounds/predictive-arc/amber-halftone.jpg",
+    "credit": "threeui.com"
+  },
+  "buttons-rectangle-buttons-aster-glass-arrow": {
+    "kind": "image",
+    "src": "https://threeui.com/social/pages/buttons/rectangle-buttons/aster-glass-arrow.jpg",
+    "credit": "threeui.com"
+  },
+  "datacore-booking-hero": {
+    "kind": "image",
+    "src": "https://motionsites.ai/assets/hero-datacore-preview-DWeq7Ls3.gif",
+    "credit": "motionsites.ai"
+  },
+  "space-voyage": {
+    "kind": "image",
+    "src": "https://motionsites.ai/assets/hero-space-voyage-preview-eECLH3Yc.gif",
+    "credit": "motionsites.ai"
+  },
+  "design-rocket-email-hero": {
+    "kind": "image",
+    "src": "https://motionsites.ai/assets/hero-design-rocket-email-preview-DBed7Yfk.gif",
+    "credit": "motionsites.ai"
+  },
+  "nexacore-control": {
+    "kind": "image",
+    "src": "https://motionsites.ai/assets/hero-nexacore-preview-DtWEu8_f.gif",
+    "credit": "motionsites.ai"
+  },
+  "digitwist-hero": {
+    "kind": "image",
+    "src": "https://motionsites.ai/assets/hero-digitwist-preview-s2pJetjQ.gif",
+    "credit": "motionsites.ai"
+  },
+  "codenest-hero": {
+    "kind": "image",
+    "src": "https://motionsites.ai/assets/hero-codenest-preview-Cgppc2qV.gif",
+    "credit": "motionsites.ai"
+  },
+  "neuralyn-hero": {
+    "kind": "image",
+    "src": "https://motionsites.ai/assets/hero-neuralyn-preview-Br4FRDQA.gif",
+    "credit": "motionsites.ai"
+  },
+  "guardnet-benefits": {
+    "kind": "image",
+    "src": "https://motionsites.ai/assets/hero-guardnet-preview-DAQqiNXC.gif",
+    "credit": "motionsites.ai"
+  },
+  "orbis-nft-landing": {
+    "kind": "image",
+    "src": "https://motionsites.ai/assets/hero-orbis-nft-preview-C3wvh77a.gif",
+    "credit": "motionsites.ai"
+  },
+  "bloom-ai-hero": {
+    "kind": "image",
+    "src": "https://motionsites.ai/assets/hero-bloom-ai-preview-g6RcYLTl.gif",
+    "credit": "motionsites.ai"
+  },
+  "price-calculator": {
+    "kind": "image",
+    "src": "https://motionsites.ai/assets/hero-price-calculator-preview-Dak8DDgY.gif",
+    "credit": "motionsites.ai"
+  },
+  "digital-epoch-hero": {
+    "kind": "image",
+    "src": "https://motionsites.ai/assets/hero-digital-epoch-preview-B85ezqXO.gif",
+    "credit": "motionsites.ai"
+  },
+  "velorah-hero": {
+    "kind": "image",
+    "src": "https://motionsites.ai/assets/hero-velorah-preview-CJNTtbpd.gif",
+    "credit": "motionsites.ai"
+  },
+  "vertex": {
+    "kind": "image",
+    "src": "https://motionsites.ai/assets/hero-vertex-ai-preview-Da80y3xa.gif",
+    "credit": "motionsites.ai"
+  },
+  "taskly-hero": {
+    "kind": "image",
+    "src": "https://motionsites.ai/assets/hero-taskly-preview-Dq2MKaI0.gif",
+    "credit": "motionsites.ai"
   }
 }

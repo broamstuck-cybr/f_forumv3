@@ -19,6 +19,16 @@ export interface AIGenerationOutput {
   protocolUsed: AIProtocol;
 }
 
+export interface AIStreamHooks {
+  onStage?: (payload: {
+    stage: 'routing' | 'generating' | 'checking';
+    model: string;
+    protocol: AIProtocol;
+    detail?: string;
+  }) => void;
+  onDelta?: (chunk: string) => void;
+}
+
 interface EffectiveAIConfig {
   protocol: AIProtocol;
   baseUrl: string;
@@ -148,7 +158,7 @@ function buildDeterministicFallback(
   <header class="top-bar" role="banner">
     <div class="brand-lockup">
       <span class="aperture-dot" aria-hidden="true"></span>
-      <span class="brand-name">F-FORUM ARENA BUILD</span>
+      <span class="brand-name">F-FORUM LIVE BUILD</span>
     </div>
     <nav class="top-nav" aria-label="Primary Navigation">
       <a href="#overview" class="nav-link">Overview</a>
@@ -469,35 +479,165 @@ body.compact-density .module-card {
   };
 }
 
-async function readOpenAICompatibleText(resp: Response): Promise<string> {
-  const raw = await resp.text();
-  const trimmed = raw.trim();
-  if (!trimmed) return '';
-
-  if (trimmed.startsWith('data:') || trimmed.includes('\ndata:')) {
-    let assembled = '';
-    for (const line of trimmed.split(/\r?\n/)) {
-      const clean = line.trim();
-      if (!clean.startsWith('data:')) continue;
-      const payload = clean.slice(5).trim();
-      if (!payload || payload === '[DONE]') continue;
-      try {
-        const chunk = JSON.parse(payload) as {
-          choices?: Array<{ delta?: { content?: string }; message?: { content?: string } }>;
-        };
-        const delta = chunk.choices?.[0]?.delta?.content ?? chunk.choices?.[0]?.message?.content ?? '';
-        if (delta) assembled += delta;
-      } catch {
-        continue;
-      }
+async function consumeResponseLines(
+  resp: Response,
+  onLine: (line: string) => void
+): Promise<string> {
+  if (!resp.body) {
+    const raw = await resp.text();
+    for (const line of raw.split(/\r?\n/)) {
+      onLine(line);
     }
-    return assembled;
+    return raw;
   }
 
+  const reader = resp.body.getReader();
+  const decoder = new TextDecoder('utf-8');
+  let buffer = '';
+  let raw = '';
+
+  while (true) {
+    const { value, done } = await reader.read();
+    if (done) break;
+    const chunkText = decoder.decode(value, { stream: true });
+    raw += chunkText;
+    buffer += chunkText;
+    let newlineIndex = buffer.indexOf('\n');
+    while (newlineIndex >= 0) {
+      const line = buffer.slice(0, newlineIndex).replace(/\r$/, '');
+      buffer = buffer.slice(newlineIndex + 1);
+      onLine(line);
+      newlineIndex = buffer.indexOf('\n');
+    }
+  }
+
+  const trailing = decoder.decode();
+  if (trailing) {
+    raw += trailing;
+    buffer += trailing;
+  }
+  if (buffer) {
+    onLine(buffer.replace(/\r$/, ''));
+  }
+
+  return raw;
+}
+
+async function readOpenAICompatibleStream(
+  resp: Response,
+  onDelta?: (chunk: string) => void
+): Promise<string> {
+  let assembled = '';
+  let sawSseData = false;
+
+  const raw = await consumeResponseLines(resp, (line) => {
+    const clean = line.trim();
+    if (!clean.startsWith('data:')) return;
+    sawSseData = true;
+    const payload = clean.slice(5).trim();
+    if (!payload || payload === '[DONE]') return;
+    try {
+      const chunk = JSON.parse(payload) as {
+        choices?: Array<{ delta?: { content?: string }; message?: { content?: string } }>;
+      };
+      const delta = chunk.choices?.[0]?.delta?.content ?? chunk.choices?.[0]?.message?.content ?? '';
+      if (delta) {
+        assembled += delta;
+        onDelta?.(delta);
+      }
+    } catch {
+      return;
+    }
+  });
+
+  if (sawSseData) return assembled;
+
+  const trimmed = raw.trim();
+  if (!trimmed) return '';
   const data = JSON.parse(trimmed) as {
     choices?: Array<{ message?: { content?: string }; text?: string }>;
   };
-  return data.choices?.[0]?.message?.content || data.choices?.[0]?.text || '';
+  const text = data.choices?.[0]?.message?.content || data.choices?.[0]?.text || '';
+  if (text) onDelta?.(text);
+  return text;
+}
+
+async function readAnthropicStream(
+  resp: Response,
+  onDelta?: (chunk: string) => void
+): Promise<string> {
+  let assembled = '';
+  let sawSseData = false;
+
+  const raw = await consumeResponseLines(resp, (line) => {
+    const clean = line.trim();
+    if (!clean.startsWith('data:')) return;
+    sawSseData = true;
+    const payload = clean.slice(5).trim();
+    if (!payload || payload === '[DONE]') return;
+    try {
+      const event = JSON.parse(payload) as {
+        type?: string;
+        delta?: { type?: string; text?: string };
+      };
+      if (event.type === 'content_block_delta' && event.delta?.text) {
+        assembled += event.delta.text;
+        onDelta?.(event.delta.text);
+      }
+    } catch {
+      return;
+    }
+  });
+
+  if (sawSseData) return assembled;
+
+  const trimmed = raw.trim();
+  if (!trimmed) return '';
+  const data = JSON.parse(trimmed) as { content?: Array<{ text?: string }> };
+  const text = data.content?.[0]?.text || '';
+  if (text) onDelta?.(text);
+  return text;
+}
+
+async function readGeminiStream(
+  resp: Response,
+  onDelta?: (chunk: string) => void
+): Promise<string> {
+  let assembled = '';
+  let sawSseData = false;
+
+  const raw = await consumeResponseLines(resp, (line) => {
+    const clean = line.trim();
+    if (!clean.startsWith('data:')) return;
+    sawSseData = true;
+    const payload = clean.slice(5).trim();
+    if (!payload || payload === '[DONE]') return;
+    try {
+      const chunk = JSON.parse(payload) as {
+        candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }>;
+      };
+      const parts = chunk.candidates?.[0]?.content?.parts || [];
+      const text = parts.map((p) => p.text || '').join('');
+      if (text) {
+        assembled += text;
+        onDelta?.(text);
+      }
+    } catch {
+      return;
+    }
+  });
+
+  if (sawSseData) return assembled;
+
+  const trimmed = raw.trim();
+  if (!trimmed) return '';
+  const data = JSON.parse(trimmed) as {
+    candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }>;
+  };
+  const parts = data.candidates?.[0]?.content?.parts || [];
+  const text = parts.map((p) => p.text || '').join('');
+  if (text) onDelta?.(text);
+  return text;
 }
 
 function parseStructuredLLMResponse(
@@ -543,25 +683,53 @@ function parseStructuredLLMResponse(
   }
 }
 
-export async function runAIGeneration(
+export async function runAIGenerationStream(
   req: AIChatRequest,
-  headers: IncomingHttpHeaders
+  headers: IncomingHttpHeaders,
+  hooks?: AIStreamHooks
 ): Promise<AIGenerationOutput> {
   const config = resolveAIConfig(headers, req.model);
+  hooks?.onStage?.({
+    stage: 'routing',
+    model: config.model,
+    protocol: config.protocol,
+    detail: config.apiKey ? `${config.protocol}:${config.model}` : 'deterministic-fallback',
+  });
+
   if (!config.apiKey) {
-    return buildDeterministicFallback(
+    hooks?.onStage?.({
+      stage: 'generating',
+      model: config.model,
+      protocol: config.protocol,
+      detail: 'Deterministic synthesis',
+    });
+    const fallbackOut = buildDeterministicFallback(
       req,
       config,
       'Missing AI_API_KEY in server environment or BYOK header'
     );
+    hooks?.onDelta?.(fallbackOut.message);
+    hooks?.onStage?.({
+      stage: 'checking',
+      model: config.model,
+      protocol: config.protocol,
+    });
+    return fallbackOut;
   }
 
   const systemInstruction = buildSystemInstruction(config.systemPromptSuffix);
   const userContent = buildUserContextPrompt(req);
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 50000);
+  const streamUpstream = Boolean(hooks?.onDelta);
 
   try {
+    hooks?.onStage?.({
+      stage: 'generating',
+      model: config.model,
+      protocol: config.protocol,
+    });
+
     let responseText = '';
 
     if (config.protocol === 'anthropic') {
@@ -578,6 +746,7 @@ export async function runAIGeneration(
         body: JSON.stringify({
           model: config.model,
           max_tokens: 4096,
+          stream: streamUpstream,
           system: systemInstruction,
           messages: [{ role: 'user', content: userContent }],
         }),
@@ -587,10 +756,10 @@ export async function runAIGeneration(
         const errBody = await resp.text();
         throw new Error(`Anthropic HTTP ${resp.status}: ${sanitizeErrorText(errBody)}`);
       }
-      const data = (await resp.json()) as { content?: Array<{ text?: string }> };
-      responseText = data.content?.[0]?.text || '';
+      responseText = await readAnthropicStream(resp, hooks?.onDelta);
     } else if (config.protocol === 'gemini') {
-      const url = `${config.baseUrl}/models/${encodeURIComponent(config.model)}:generateContent?key=${encodeURIComponent(config.apiKey)}`;
+      const method = streamUpstream ? 'streamGenerateContent?alt=sse&' : 'generateContent?';
+      const url = `${config.baseUrl}/models/${encodeURIComponent(config.model)}:${method}key=${encodeURIComponent(config.apiKey)}`;
       const resp = await fetch(url, {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
@@ -604,10 +773,7 @@ export async function runAIGeneration(
         const errBody = await resp.text();
         throw new Error(`Gemini HTTP ${resp.status}: ${sanitizeErrorText(errBody)}`);
       }
-      const data = (await resp.json()) as {
-        candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }>;
-      };
-      responseText = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+      responseText = await readGeminiStream(resp, hooks?.onDelta);
     } else {
       const url = config.baseUrl.endsWith('/chat/completions')
         ? config.baseUrl
@@ -634,8 +800,14 @@ export async function runAIGeneration(
         const errBody = await resp.text();
         throw new Error(`OpenAI-Compatible HTTP ${resp.status}: ${sanitizeErrorText(errBody)}`);
       }
-      responseText = await readOpenAICompatibleText(resp);
+      responseText = await readOpenAICompatibleStream(resp, hooks?.onDelta);
     }
+
+    hooks?.onStage?.({
+      stage: 'checking',
+      model: config.model,
+      protocol: config.protocol,
+    });
 
     const structured = parseStructuredLLMResponse(responseText, config);
     if (!structured) {
@@ -652,4 +824,11 @@ export async function runAIGeneration(
   } finally {
     clearTimeout(timeout);
   }
+}
+
+export async function runAIGeneration(
+  req: AIChatRequest,
+  headers: IncomingHttpHeaders
+): Promise<AIGenerationOutput> {
+  return runAIGenerationStream(req, headers);
 }

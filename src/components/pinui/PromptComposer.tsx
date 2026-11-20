@@ -1,4 +1,3 @@
-/* Prompt Composer — ported from Pin UI (https://www.pinui.xyz/components/prompt-composer) · MIT License (c) Rachit Thakur / Shadcn Labs */
 import {
   useCallback,
   useEffect,
@@ -394,18 +393,12 @@ export function PromptComposer({
                   const near = h >= 0 && Math.abs(h - i) === 1;
                   const sinking = a.id === action || (a.id === "voice" && recording);
                   return (
-                    <motion.button
+                    <motion.div
                       key={a.id}
-                      type="button"
                       className={`pcmp__card pcmp__card--${a.id}`}
                       style={{ left: `calc(${CENTRES[i]}% - var(--pcmp-card-w) / 2)`, zIndex: lifted ? 10 : a.layer }}
-                      aria-label={a.label}
-                      tabIndex={fanUp ? 0 : -1}
                       aria-hidden={!fanUp}
                       onPointerEnter={(e) => e.pointerType === "mouse" && fanUp && setHovered(a.id)}
-                      onFocus={() => fanUp && setHovered(a.id)}
-                      onBlur={() => setHovered(null)}
-                      onClick={() => fanUp && pick(a.id)}
                       initial={reduced ? false : { y: "115%", rotate: 0, scale: 0.92 }}
                       animate={
                         fanUp
@@ -433,12 +426,21 @@ export function PromptComposer({
                       >
                         {(a.id === "note" || a.id === "event") && <span className="pcmp__band" />}
                         {a.id === "docs" && <span className="pcmp__peel" aria-hidden="true" />}
-                        <span className="pcmp__label">{a.label}</span>
                         <span className="pcmp__artBox">
                           <CardArt id={a.id} live={lifted} />
                         </span>
+                        <button
+                          type="button"
+                          className="pcmp__cardTrigger"
+                          tabIndex={fanUp ? 0 : -1}
+                          onFocus={() => fanUp && setHovered(a.id)}
+                          onBlur={() => setHovered(null)}
+                          onClick={() => fanUp && pick(a.id)}
+                        >
+                          <span className="pcmp__label">{a.label}</span>
+                        </button>
                       </motion.span>
-                    </motion.button>
+                    </motion.div>
                   );
                 })}
               </div>
@@ -467,12 +469,9 @@ export function PromptComposer({
                     >
                       <AnimatePresence mode="popLayout" initial={false}>
                         {picked && (
-                          <motion.button
+                          <motion.div
                             key={picked.id}
-                            type="button"
                             className={`pcmp__chip pcmp__chip--${picked.id}`}
-                            onClick={clearAction}
-                            aria-label={`Bỏ ${picked.label}`}
                             initial={reduced ? { opacity: 0 } : { opacity: 0, scale: 0.6, y: -10, filter: "blur(6px)" }}
                             animate={{ opacity: 1, scale: 1, y: 0, filter: "blur(0px)" }}
                             exit={reduced ? { opacity: 0 } : { opacity: 0, scale: 0.7, filter: "blur(6px)" }}
@@ -486,10 +485,18 @@ export function PromptComposer({
                           >
                             <ChipIcon id={picked.id} />
                             <span>{picked.label}</span>
-                            <svg className="pcmp__chipX" viewBox="0 0 12 12" fill="none" aria-hidden="true">
-                              <path d="m3.5 3.5 5 5m0-5-5 5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-                            </svg>
-                          </motion.button>
+                            <button
+                              type="button"
+                              className="pcmp__chipBtn"
+                              onClick={clearAction}
+                              aria-label={`Bỏ ${picked.label}`}
+                              title={`Bỏ ${picked.label}`}
+                            >
+                              <svg className="pcmp__chipX" viewBox="0 0 12 12" fill="none" aria-hidden="true">
+                                <path d="m3.5 3.5 5 5m0-5-5 5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                              </svg>
+                            </button>
+                          </motion.div>
                         )}
                       </AnimatePresence>
 
@@ -774,14 +781,9 @@ function ModelPill({
 
   return (
     <div className="pcmp__model" ref={ref}>
-      <motion.button
-        type="button"
+      <motion.div
         className="pcmp__pill"
         layout
-        aria-haspopup="listbox"
-        aria-expanded={open}
-        aria-controls={menuId}
-        onClick={onToggle}
         whileTap={reduced ? undefined : { scale: 0.95 }}
         transition={morph}
       >
@@ -793,24 +795,33 @@ function ModelPill({
           animate={{ rotate: model * 60 }}
           transition={morph}
         >
-                    {Array.from({ length: 6 }, (_, i) => (
+          {Array.from({ length: 6 }, (_, i) => (
             <circle key={i} cx="8" cy="3.9" r="2.6" fill="currentColor" transform={`rotate(${i * 60} 8 8)`} />
           ))}
           <circle cx="8" cy="8" r="2" fill="var(--pcmp-pill)" />
         </motion.svg>
-        <span className="pcmp__pillName">
-          <AnimatePresence mode="popLayout" initial={false}>
-            <motion.span
-              key={models[model].name}
-              initial={reduced ? { opacity: 0 } : { opacity: 0, y: 6, filter: "blur(4px)" }}
-              animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
-              exit={reduced ? { opacity: 0 } : { opacity: 0, y: -6, filter: "blur(4px)" }}
-              transition={{ ...morph, opacity: fade(), filter: fade() }}
-            >
-              {models[model].name}
-            </motion.span>
-          </AnimatePresence>
-        </span>
+        <button
+          type="button"
+          className="pcmp__pillTrigger"
+          aria-haspopup="listbox"
+          aria-expanded={open}
+          aria-controls={menuId}
+          onClick={onToggle}
+        >
+          <span className="pcmp__pillName">
+            <AnimatePresence mode="popLayout" initial={false}>
+              <motion.span
+                key={models[model].name}
+                initial={reduced ? { opacity: 0 } : { opacity: 0, y: 6, filter: "blur(4px)" }}
+                animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+                exit={reduced ? { opacity: 0 } : { opacity: 0, y: -6, filter: "blur(4px)" }}
+                transition={{ ...morph, opacity: fade(), filter: fade() }}
+              >
+                {models[model].name}
+              </motion.span>
+            </AnimatePresence>
+          </span>
+        </button>
         <motion.svg
           className="pcmp__caret"
           layout="position"
@@ -822,7 +833,7 @@ function ModelPill({
         >
           <path d="m2.5 4 2.5 2.5L7.5 4" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
         </motion.svg>
-      </motion.button>
+      </motion.div>
 
       <AnimatePresence>
         {open && (
@@ -838,15 +849,12 @@ function ModelPill({
             onPointerLeave={() => onHover(null)}
           >
             {models.map((m, i) => (
-              <motion.button
+              <motion.div
                 key={m.name}
-                type="button"
                 role="option"
                 aria-selected={i === model}
                 className="pcmp__option"
                 onPointerEnter={() => onHover(i)}
-                onFocus={() => onHover(i)}
-                onClick={() => onPick(i)}
                 initial={reduced ? false : { opacity: 0, y: 4 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{
@@ -856,10 +864,17 @@ function ModelPill({
                 }}
               >
                 {hover === i && <motion.span layoutId="pcmp-option-hover" className="pcmp__optionHover" transition={morph} />}
-                <span className="pcmp__optionText">
-                  <span className="pcmp__optionName">{m.name}</span>
-                  <span className="pcmp__optionNote">{m.note}</span>
-                </span>
+                <button
+                  type="button"
+                  className="pcmp__optionTrigger"
+                  onFocus={() => onHover(i)}
+                  onClick={() => onPick(i)}
+                >
+                  <span className="pcmp__optionText">
+                    <span className="pcmp__optionName">{m.name}</span>
+                    <span className="pcmp__optionNote">{m.note}</span>
+                  </span>
+                </button>
                 {i === model && (
                   <motion.svg
                     layoutId="pcmp-option-check"
@@ -872,7 +887,7 @@ function ModelPill({
                     <path d="m3 7.4 2.6 2.6L11 4.4" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" />
                   </motion.svg>
                 )}
-              </motion.button>
+              </motion.div>
             ))}
           </motion.div>
         )}

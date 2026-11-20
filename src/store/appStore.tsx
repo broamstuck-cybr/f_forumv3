@@ -12,6 +12,7 @@ import resourceLibraryJson from '../data/resourceLibrary.json';
 import communitySeedJson from '../data/communitySeed.json';
 import type {
   AIActivityState,
+  AIStreamingStage,
   AppRoute,
   AttachedContextItem,
   BYOKConfig,
@@ -112,7 +113,7 @@ function createStarterFiles(): WorkspaceFile[] {
 </head>
 <body>
   <header class="site-header" role="banner">
-    <div class="brand-title">F-FORUM ARENA</div>
+    <div class="brand-title">F-FORUM WORKSPACE</div>
     <nav class="site-nav" aria-label="Main">
       <a href="#stage">Stage</a>
       <a href="#metrics">Metrics</a>
@@ -491,8 +492,9 @@ export interface AppStoreContextValue {
   ) => Promise<void>;
   sendWorkspacePrompt: (
     prompt: string,
-    options?: { model?: string; agentMode?: string; attachedItems?: AttachedContextItem[] }
+    options?: { model?: string; agentMode?: string; attachedItems?: AttachedContextItem[]; stream?: boolean }
   ) => Promise<void>;
+  regenerateLastPrompt: (options?: { model?: string; agentMode?: string }) => Promise<void>;
   runChecksOnActiveProject: () => ChecksReport;
   createProjectSnapshot: (label?: string) => void;
   restoreProjectSnapshot: (snapshotId: string) => void;
@@ -502,6 +504,9 @@ export interface AppStoreContextValue {
   ) => Promise<{ blob: Blob; filename: string; clean: boolean; findingsCount: number }>;
   aiActivity: AIActivityState;
   setAiActivity: (state: AIActivityState) => void;
+  aiStreamingStage: AIStreamingStage;
+  aiStreamingPreview: string;
+  aiModelUsed: string | null;
   currentUser: User | null;
   quota: QuotaState;
   refreshAuthAndQuota: () => Promise<void>;
@@ -636,6 +641,9 @@ export const AppStoreProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   });
 
   const [aiActivity, setAiActivity] = useState<AIActivityState>('idle');
+  const [aiStreamingStage, setAiStreamingStage] = useState<AIStreamingStage>('idle');
+  const [aiStreamingPreview, setAiStreamingPreview] = useState<string>('');
+  const [aiModelUsed, setAiModelUsed] = useState<string | null>(null);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [quota, setQuota] = useState<QuotaState>(() => ({
     ...DEFAULT_QUOTA,
@@ -648,11 +656,23 @@ export const AppStoreProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const [toasts, setToasts] = useState<ToastItem[]>([]);
   const syncedProjectsRef = useRef<Map<string, WorkspaceProject>>(new Map());
   const hydratedUserIdRef = useRef<string | null>(null);
+  const streamAbortRef = useRef<AbortController | null>(null);
 
   const activeProject = useMemo(() => {
     const found = projects.find((p) => p.id === activeProjectId);
     return found || projects[0] || createInitialProject();
   }, [projects, activeProjectId]);
+
+  const activeProjectRef = useRef(activeProject);
+  activeProjectRef.current = activeProject;
+  const settingsRef = useRef(settings);
+  settingsRef.current = settings;
+
+  useEffect(() => {
+    return () => {
+      streamAbortRef.current?.abort();
+    };
+  }, []);
 
   const communityPosts = useMemo(
     () => [
@@ -1105,10 +1125,20 @@ export const AppStoreProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const sendWorkspacePrompt = useCallback(
     async (
       prompt: string,
-      options?: { model?: string; agentMode?: string; attachedItems?: AttachedContextItem[] }
+      options?: { model?: string; agentMode?: string; attachedItems?: AttachedContextItem[]; stream?: boolean }
     ) => {
       const trimmed = prompt.trim();
       if (!trimmed) return;
+
+      const projectSnapshot = activeProjectRef.current;
+      const targetProjectId = projectSnapshot.id;
+      const updateTargetProject = (updater: (proj: WorkspaceProject) => WorkspaceProject) => {
+        setProjects((prev) => prev.map((p) => (p.id === targetProjectId ? updater(p) : p)));
+      };
+
+      streamAbortRef.current?.abort();
+      const controller = new AbortController();
+      streamAbortRef.current = controller;
 
       const userMsgId = `msg-u-${Date.now()}`;
       const procId = `proc-ai-${Date.now()}`;
@@ -1119,11 +1149,17 @@ export const AppStoreProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         kind: 'ai_generation',
         status: 'running',
         startedAt,
-        detail: 'Calling multi-protocol AI Engine...',
+        detail: 'Routing multi-protocol AI Engine...',
       };
 
       setAiActivity('thinking');
-      updateActiveProject((proj) => ({
+      setAiStreamingStage('routing');
+      setAiStreamingPreview('');
+      if (options?.model && options.model !== 'auto') {
+        setAiModelUsed(options.model);
+      }
+
+      updateTargetProject((proj) => ({
         ...proj,
         updatedAt: startedAt,
         messages: [
@@ -1138,31 +1174,55 @@ export const AppStoreProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         processes: [runningProc, ...proj.processes].slice(0, 20),
       }));
 
+      const requestPayload = {
+        projectId: targetProjectId,
+        prompt: trimmed,
+        model: options?.model,
+        agentMode: options?.agentMode,
+        files: projectSnapshot.files.map((f) => ({ path: f.path, content: f.content })),
+        attachedItems: options?.attachedItems ?? projectSnapshot.attachedItems,
+        history: projectSnapshot.messages
+          .filter((m) => m.role === 'user' || m.role === 'assistant')
+          .slice(-6)
+          .map((m) => ({
+            role: m.role as 'user' | 'assistant',
+            content: m.content,
+          })),
+      };
+
       try {
-        setAiActivity('streaming');
-        const response = await apiClient.sendAiChat(
-          {
-            projectId: activeProject.id,
-            prompt: trimmed,
-            model: options?.model,
-            agentMode: options?.agentMode,
-            files: activeProject.files.map((f) => ({ path: f.path, content: f.content })),
-            attachedItems: options?.attachedItems ?? activeProject.attachedItems,
-            history: activeProject.messages
-              .filter((m) => m.role === 'user' || m.role === 'assistant')
-              .slice(-6)
-              .map((m) => ({
-                role: m.role as 'user' | 'assistant',
-                content: m.content,
-              })),
-          },
-          settings.byok
-        );
+        const useStream = options?.stream !== false;
+        const activeByok = settingsRef.current.byok;
+        const response = useStream
+          ? await apiClient.streamAiChat(requestPayload, activeByok, {
+              signal: controller.signal,
+              onStage: (ev) => {
+                setAiStreamingStage(ev.stage);
+                if (ev.model) setAiModelUsed(ev.model);
+                if (ev.stage === 'generating') {
+                  setAiActivity('streaming');
+                }
+              },
+              onDelta: (ev) => {
+                setAiActivity('streaming');
+                setAiStreamingPreview((prev) => (prev + ev.text).slice(-4000));
+              },
+            })
+          : await (() => {
+              setAiActivity('streaming');
+              setAiStreamingStage('generating');
+              return apiClient.sendAiChat(requestPayload, activeByok);
+            })();
+
+        if (controller.signal.aborted) return;
 
         setQuota(response.quota);
+        setAiModelUsed(response.modelUsed || null);
+        setAiStreamingStage('done');
+        setAiStreamingPreview('');
         const completedAt = new Date().toISOString();
 
-        updateActiveProject((proj) => {
+        updateTargetProject((proj) => {
           const previousFiles = proj.files;
           const updatedMap = new Map(previousFiles.map((f) => [f.path, f]));
 
@@ -1232,12 +1292,15 @@ export const AppStoreProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
         setAiActivity('verified');
       } catch (err) {
+        if (controller.signal.aborted) return;
         const errMsg = err instanceof Error ? err.message : 'Không thể kết nối AI Engine.';
         const failedAt = new Date().toISOString();
+        setAiStreamingStage('error');
+        setAiStreamingPreview('');
         setAiActivity('error');
         void refreshAuthAndQuota();
 
-        updateActiveProject((proj) => ({
+        updateTargetProject((proj) => ({
           ...proj,
           messages: [
             ...proj.messages,
@@ -1265,18 +1328,31 @@ export const AppStoreProvider: React.FC<{ children: React.ReactNode }> = ({ chil
           title: 'Yêu cầu AI bị từ chối',
           message: errMsg,
         });
+      } finally {
+        if (streamAbortRef.current === controller) {
+          streamAbortRef.current = null;
+        }
       }
     },
-    [
-      activeProject.id,
-      activeProject.files,
-      activeProject.attachedItems,
-      activeProject.messages,
-      settings.byok,
-      updateActiveProject,
-      refreshAuthAndQuota,
-      addToast,
-    ]
+    [refreshAuthAndQuota, addToast]
+  );
+
+  const regenerateLastPrompt = useCallback(
+    async (options?: { model?: string; agentMode?: string }) => {
+      const latestProject = activeProjectRef.current;
+      const lastUserTurn = [...latestProject.messages].reverse().find((m) => m.role === 'user');
+      if (!lastUserTurn) return;
+      const cleanContent = lastUserTurn.content.replace(/^\[Mode:\s*[^\]]+\]\s*/i, '').trim();
+      const promptText = options?.agentMode
+        ? `[Mode: ${options.agentMode}] ${cleanContent}`
+        : lastUserTurn.content;
+      await sendWorkspacePrompt(promptText, {
+        model: options?.model,
+        agentMode: options?.agentMode,
+        stream: true,
+      });
+    },
+    [sendWorkspacePrompt]
   );
 
   const launchPromptToWorkspace = useCallback(
@@ -1285,28 +1361,34 @@ export const AppStoreProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       attached: AttachedContextItem[] = [],
       options?: { model?: string }
     ) => {
-      let nextAttached = activeProject.attachedItems;
-      if (attached.length > 0 && !activeProject.archived) {
-        const existingIds = new Set(activeProject.attachedItems.map((a) => a.id));
+      const current = activeProjectRef.current;
+      let nextAttached = current.attachedItems;
+      if (attached.length > 0 && !current.archived) {
+        const existingIds = new Set(current.attachedItems.map((a) => a.id));
         const additions = attached.filter((a) => !existingIds.has(a.id));
         if (additions.length > 0) {
-          nextAttached = [...activeProject.attachedItems, ...additions];
-          updateActiveProject((proj) => {
-            const ids = new Set(proj.attachedItems.map((a) => a.id));
-            const added = attached.filter((a) => !ids.has(a.id));
-            return added.length > 0
-              ? { ...proj, attachedItems: [...proj.attachedItems, ...added] }
-              : proj;
-          });
+          nextAttached = [...current.attachedItems, ...additions];
+          const targetId = current.id;
+          setProjects((prev) =>
+            prev.map((proj) => {
+              if (proj.id !== targetId) return proj;
+              const ids = new Set(proj.attachedItems.map((a) => a.id));
+              const added = attached.filter((a) => !ids.has(a.id));
+              return added.length > 0
+                ? { ...proj, attachedItems: [...proj.attachedItems, ...added] }
+                : proj;
+            })
+          );
         }
       }
       navigate('workspace');
       await sendWorkspacePrompt(prompt, {
         attachedItems: nextAttached,
         model: options?.model,
+        stream: true,
       });
     },
-    [activeProject.attachedItems, activeProject.archived, updateActiveProject, navigate, sendWorkspacePrompt]
+    [navigate, sendWorkspacePrompt]
   );
 
   const createProjectSnapshot = useCallback(
@@ -1628,12 +1710,16 @@ export const AppStoreProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       detachItemFromWorkspace,
       launchPromptToWorkspace,
       sendWorkspacePrompt,
+      regenerateLastPrompt,
       runChecksOnActiveProject,
       createProjectSnapshot,
       restoreProjectSnapshot,
       exportActiveProjectZip,
       aiActivity,
       setAiActivity,
+      aiStreamingStage,
+      aiStreamingPreview,
+      aiModelUsed,
       currentUser,
       quota,
       refreshAuthAndQuota,
@@ -1689,11 +1775,15 @@ export const AppStoreProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       detachItemFromWorkspace,
       launchPromptToWorkspace,
       sendWorkspacePrompt,
+      regenerateLastPrompt,
       runChecksOnActiveProject,
       createProjectSnapshot,
       restoreProjectSnapshot,
       exportActiveProjectZip,
       aiActivity,
+      aiStreamingStage,
+      aiStreamingPreview,
+      aiModelUsed,
       currentUser,
       quota,
       refreshAuthAndQuota,

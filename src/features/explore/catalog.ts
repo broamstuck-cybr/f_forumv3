@@ -13,6 +13,8 @@ import type {
 } from '../../types/index';
 
 export type ExploreMode = 'plates' | 'tools' | 'repos';
+export type PreviewViewport = 390 | 768 | 1440;
+export type PreviewTheme = 'dark' | 'light';
 
 export interface RankedRepo {
   id: string;
@@ -48,17 +50,25 @@ export const STUDIO_REPOS: BroamstuckRepoShowcase[] = BROAMSTUCK_REPOS;
 export const LIBRARY_ORDER: SourceLibraryName[] = [
   'pinui',
   'threeui',
-  'motionsites',
   'lucianlabs',
+  'motionsites',
   'codefronts',
 ];
 
 export const LIBRARY_LABEL: Record<SourceLibraryName, string> = {
-  pinui: 'PinUI',
-  threeui: 'ThreeUI',
-  motionsites: 'MotionSites',
-  lucianlabs: 'LucianLabs',
-  codefronts: 'CodeFronts',
+  pinui: 'Tương tác',
+  threeui: 'Không gian 3D',
+  motionsites: 'Chuyển động',
+  lucianlabs: 'Hiệu ứng',
+  codefronts: 'Bố cục',
+};
+
+const LIBRARY_SLUG: Record<SourceLibraryName, string> = {
+  pinui: 'tuong-tac',
+  threeui: 'khong-gian-3d',
+  motionsites: 'chuyen-dong',
+  lucianlabs: 'hieu-ung',
+  codefronts: 'bo-cuc',
 };
 
 export const GROUP_ORDER: ResourceGroup[] = [
@@ -85,8 +95,8 @@ export const GROUP_LABEL: Record<ResourceGroup, string> = {
 
 export const REPO_CATEGORIES: Array<{ id: string; label: string }> = [
   { id: 'all', label: 'Tất cả' },
-  { id: 'Skills, Rules & Prompts', label: 'Skills' },
   { id: 'AI Agents & CLI', label: 'Agents' },
+  { id: 'Skills, Rules & Prompts', label: 'Skills' },
   { id: 'UI/UX & Motion', label: 'UI/UX' },
   { id: 'Local LLM & DevTools', label: 'Local LLM' },
 ];
@@ -118,14 +128,77 @@ export function matchesQuery(query: string, fields: Array<string | undefined>): 
   return fields.some((field) => (field ? field.toLowerCase().includes(query) : false));
 }
 
+export function sanitizeBrandText(input: string | undefined): string {
+  if (!input) return '';
+  return input
+    .replace(/PinUI Component Registry/gi, 'Bộ thành phần Tương tác')
+    .replace(/LucianLabs UX\/UI Tokens/gi, 'Hệ thống biến Hiệu ứng')
+    .replace(/\bpinui\.xyz\b/gi, 'f-forum.studio')
+    .replace(/\bthreeui\.com\b/gi, 'f-forum.studio')
+    .replace(/\bmotionsites\.ai\b/gi, 'f-forum.studio')
+    .replace(/\blucianlabs\.dev\b/gi, 'f-forum.studio')
+    .replace(/\bcodefronts\.com\b/gi, 'f-forum.studio')
+    .replace(/\bpinui\b/gi, 'Tương tác')
+    .replace(/\bthreeui\b/gi, 'Không gian 3D')
+    .replace(/\bmotionsites\b/gi, 'Chuyển động')
+    .replace(/\blucianlabs\b/gi, 'Hiệu ứng')
+    .replace(/\bcodefronts\b/gi, 'Bố cục')
+    .replace(/\bInter Tight\b/gi, 'Be Vietnam Pro')
+    .replace(/\bInter\b/g, 'Be Vietnam Pro');
+}
+
+export function sanitizeSnippetCode(raw: string | undefined): string {
+  if (!raw) return '';
+  return raw
+    .replace(/font-family:\s*'Be Vietnam Pro'/g, 'font-family:__BVP__')
+    .replace(/(?:new |if \()?'Be Vietnam Pro', section/g, (match) =>
+      match.replace("'Be Vietnam Pro', section", 'Intersection')
+    )
+    .replace(/>'Be Vietnam Pro', ACTION/g, '>INTERACTION')
+    .replace(/Po'Be Vietnam Pro', /g, 'Pointer')
+    .replace(/po'Be Vietnam Pro', /g, 'pointer')
+    .replace(/is'Be Vietnam Pro', /g, 'isInter')
+    .replace(/'Be Vietnam Pro', /g, 'inter')
+    .replace(/__BVP__/g, "'Be Vietnam Pro'")
+    .replace(/\/\*[\s\S]*?\*\//g, '')
+    .replace(/@import\s+url\([^)]*\)\s*;?/gi, '')
+    .replace(/<link[^>]+rel=["']stylesheet["'][^>]*>/gi, '')
+    .replace(/<script[^>]+src=["'][^"']+["'][^>]*>\s*<\/script>/gi, '')
+    .replace(/PinUI|ThreeUI|MotionSites|LucianLabs|CodeFronts/gi, 'F-Forum')
+    .replace(/\bInter Tight\b/gi, 'Be Vietnam Pro')
+    .replace(/font-family:\s*['"]?Inter['"]?/gi, "font-family:'Be Vietnam Pro'")
+    .trim();
+}
+
+export function compileSpecimenSrcDoc(
+  rawHtml: string | undefined,
+  rawCss: string | undefined,
+  theme: PreviewTheme
+): string {
+  const cleanHtml = sanitizeSnippetCode(rawHtml);
+  const cleanCss = sanitizeSnippetCode(rawCss);
+  const cspMeta =
+    '<meta http-equiv="Content-Security-Policy" content="default-src \'none\'; style-src \'unsafe-inline\'; script-src \'unsafe-inline\'; img-src data: https:; font-src data: https:;" />';
+  const fallbackBg = theme === 'dark' ? '#121110' : '#f4f0e6';
+  const fallbackFg = theme === 'dark' ? '#efe9dd' : '#17150f';
+  const baseCss = `html,body{margin:0;min-height:100%;box-sizing:border-box}body{min-height:100vh;display:grid;place-items:center;padding:24px;background:${fallbackBg};color:${fallbackFg};font-family:'Be Vietnam Pro',system-ui,-apple-system,sans-serif}`;
+  return `<!DOCTYPE html><html lang="vi" data-theme="${theme}"><head><meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1.0" />${cspMeta}<style>${baseCss}\n${cleanCss}</style></head><body>${cleanHtml}</body></html>`;
+}
+
+export function whiteLabelArchivePath(item: SourceCatalogItem): string {
+  return `f-forum/${LIBRARY_SLUG[item.sourceLibrary]}/${item.id}`;
+}
+
 export function templateContext(item: SourceCatalogItem): AttachedContextItem {
   return {
     id: item.id,
     kind: 'template',
-    title: item.title,
-    sourceLibrary: item.sourceLibrary,
-    summary: item.description,
-    payload: item.promptSpec || `${item.archivePath}\nRuntime: ${item.runtime}\nStyle: ${item.style}`,
+    title: sanitizeBrandText(item.title),
+    sourceLibrary: LIBRARY_LABEL[item.sourceLibrary],
+    summary: sanitizeBrandText(item.description),
+    payload:
+      sanitizeBrandText(item.promptSpec) ||
+      `${whiteLabelArchivePath(item)}\nRuntime: ${item.runtime}\nStyle: ${item.style}`,
     tags: item.tags,
   };
 }
@@ -134,9 +207,9 @@ export function resourceContext(item: ResourceItem): AttachedContextItem {
   return {
     id: item.id,
     kind: 'resource',
-    title: item.title,
-    summary: item.description,
-    payload: item.snippet || `${item.title} (${item.officialUrl})`,
+    title: sanitizeBrandText(item.title),
+    summary: sanitizeBrandText(item.description),
+    payload: sanitizeBrandText(item.snippet) || `${sanitizeBrandText(item.title)} (${item.officialUrl})`,
     tags: item.tags,
   };
 }
@@ -150,8 +223,8 @@ export function rankedRepoContext(repo: RankedRepo): AttachedContextItem {
     id: rankedRepoSavedId(repo),
     kind: 'resource',
     title: repo.fullName,
-    summary: repo.description,
-    payload: `GitHub Repository: ${repo.fullName}\nURL: ${repo.htmlUrl}\nStars: ${repo.stars} | Forks: ${repo.forks} | License: ${repo.license}\nSummary: ${repo.description}`,
+    summary: sanitizeBrandText(repo.description),
+    payload: `GitHub Repository: ${repo.fullName}\nURL: ${repo.htmlUrl}\nStars: ${repo.stars} | Forks: ${repo.forks} | License: ${repo.license}\nSummary: ${sanitizeBrandText(repo.description)}`,
     tags: ['platform:GitHub', `tech:${repo.language || 'OpenSource'}`, ...repo.topics.slice(0, 4)],
   };
 }
@@ -161,14 +234,14 @@ export function studioRepoContext(repo: BroamstuckRepoShowcase): AttachedContext
     id: repo.id,
     kind: 'resource',
     title: repo.fullName,
-    summary: repo.summaryVi,
-    payload: `GitHub Repository: ${repo.fullName}\nURL: ${repo.htmlUrl}\nLanguage: ${repo.language} | License: ${repo.license}\nKey paths: ${repo.keyPaths.join(', ')}\nSummary: ${repo.summaryVi}`,
+    summary: sanitizeBrandText(repo.summaryVi),
+    payload: `GitHub Repository: ${repo.fullName}\nURL: ${repo.htmlUrl}\nLanguage: ${repo.language} | License: ${repo.license}\nKey paths: ${repo.keyPaths.join(', ')}\nSummary: ${sanitizeBrandText(repo.summaryVi)}`,
     tags: ['platform:GitHub', `tech:${repo.language}`],
   };
 }
 
 export function shortTitle(item: SourceCatalogItem): string {
-  return item.title.replace(/\s+Three\.js Component/, '');
+  return sanitizeBrandText(item.title).replace(/\s+Three\.js Component/, '');
 }
 
 export async function copyText(text: string): Promise<boolean> {
