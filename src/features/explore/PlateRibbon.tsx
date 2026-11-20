@@ -1,8 +1,11 @@
 import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import type { SourceCatalogItem } from '../../types/index';
 import { previewFor } from '../../ui/Media';
+import { useAppStore } from '../../store/appStore';
 import { LIBRARY_LABEL, shortTitle } from './catalog';
+import { SandboxPreview } from './SandboxPreview';
 import { SpecimenMedia } from './SpecimenMedia';
+import { ReactionBar } from './SpecimenSheet';
 
 interface PlateRibbonProps {
   label: string;
@@ -23,8 +26,70 @@ interface DragState {
   moved: boolean;
 }
 
-const DRIFT_SPEED = 16;
+const DRIFT_SPEED = 19.2;
 const DRAG_THRESHOLD = 6;
+const LIVE_CANVAS_WIDTH = 900;
+const CALM_CSS = '*,*::before,*::after{animation:none!important;transition:none!important}';
+
+interface LiveThumbProps {
+  title: string;
+  html: string;
+  css: string;
+  calm: boolean;
+}
+
+const LiveThumb: React.FC<LiveThumbProps> = ({ title, html, css, calm }) => {
+  const { theme } = useAppStore();
+  const hostRef = useRef<HTMLSpanElement>(null);
+  const [visible, setVisible] = useState(false);
+  const [box, setBox] = useState({ scale: 0, height: 0 });
+
+  useEffect(() => {
+    const host = hostRef.current;
+    if (!host) return;
+    const io = new IntersectionObserver(
+      (entries) => setVisible(entries[entries.length - 1].isIntersecting),
+      { rootMargin: '160px' }
+    );
+    io.observe(host);
+    const ro = new ResizeObserver((entries) => {
+      const rect = entries[entries.length - 1].contentRect;
+      if (rect.width === 0) return;
+      const scale = rect.width / LIVE_CANVAS_WIDTH;
+      setBox({ scale, height: rect.height / scale });
+    });
+    ro.observe(host);
+    return () => {
+      io.disconnect();
+      ro.disconnect();
+    };
+  }, []);
+
+  return (
+    <span ref={hostRef} className="ex-live-thumb" data-ready={visible && box.scale > 0 ? 'true' : 'false'}>
+      {visible && box.scale > 0 ? (
+        <span
+          className="ex-live-canvas"
+          inert
+          style={{
+            width: LIVE_CANVAS_WIDTH,
+            height: box.height,
+            transform: `scale(${box.scale})`,
+          }}
+        >
+          <SandboxPreview
+            title={title}
+            html={html}
+            css={calm ? `${css}\n${CALM_CSS}` : css}
+            theme={theme}
+            viewport={1440}
+            nonce={0}
+          />
+        </span>
+      ) : null}
+    </span>
+  );
+};
 
 export const PlateRibbon: React.FC<PlateRibbonProps> = ({
   label,
@@ -219,6 +284,17 @@ export const PlateRibbon: React.FC<PlateRibbonProps> = ({
                       />
                     </span>
                   </span>
+                ) : hasLive ? (
+                  <span className="plate ex-plate-frame">
+                    <span className="ex-plate-shot">
+                      <LiveThumb
+                        title={title}
+                        html={item.previewHtml ?? ''}
+                        css={item.previewCss ?? ''}
+                        calm={calm}
+                      />
+                    </span>
+                  </span>
                 ) : (
                   <span className="plate ex-plate-frame ex-plate-type">
                     <span className="ex-plate-type-top">
@@ -231,11 +307,12 @@ export const PlateRibbon: React.FC<PlateRibbonProps> = ({
                 )}
                 <span className="ex-plate-cap" aria-hidden="true">
                   <span className="t-label">{String(index + 1).padStart(2, '0')}</span>
-                  {preview ? <span className="ex-plate-title">{title}</span> : null}
+                  {preview || hasLive ? <span className="ex-plate-title">{title}</span> : null}
                   {hasLive ? <span className="t-label ex-plate-live">live</span> : null}
                   {saved ? <span className="t-note ex-plate-saved">đã lưu</span> : null}
                 </span>
               </button>
+              <ReactionBar id={item.id} title={title} className="ex-plate-react" />
             </li>
           );
         })}

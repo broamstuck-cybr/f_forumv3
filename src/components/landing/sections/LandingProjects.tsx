@@ -1,210 +1,110 @@
-import React, { useRef } from 'react';
-import { motion, useScroll, useTransform, type MotionValue } from 'motion/react';
-import { ArrowUpRight } from 'lucide-react';
+import React, { useState } from 'react';
 import type { DimensionView } from '../../../types/index';
-import { STACKING_PROJECTS, type StackingProjectItem } from '../../../data/realShowcaseData';
+import { HOME_MOTION_SHOWCASES, type HomeMotionShowcaseItem } from '../../../data/homeMotionShowcases';
 import { Mark } from '../../../ui/Mark';
-import { usePrefersReducedMotion } from '../useLandingMotion';
+import { PROJECT_SHOWCASE_THUMBS, TIDEWELL_CARDS } from '../landingContent';
 
 interface LandingProjectsProps {
   onNavigate: (view: DimensionView) => void;
 }
 
-interface StackingPlateProps {
-  project: StackingProjectItem;
+const PROJECTS = HOME_MOTION_SHOWCASES.filter((item) => item.id in PROJECT_SHOWCASE_THUMBS);
+
+function languageSummary(item: HomeMotionShowcaseItem): string {
+  const langs = Array.from(new Set(item.files.map((f) => f.language.toUpperCase().replace('JAVASCRIPT', 'JS'))));
+  return langs.join(' · ');
+}
+
+const ProjectCard: React.FC<{
+  item: HomeMotionShowcaseItem;
   index: number;
-  total: number;
-  progress: MotionValue<number>;
-  reduced: boolean;
-  onExplore: () => void;
-}
-
-const WHITE_LABEL_OVERRIDES: Record<
-  string,
-  Partial<Pick<StackingProjectItem, 'category' | 'title' | 'subtitle' | 'liveUrl' | 'metrics' | 'previewHtml' | 'previewCss'>>
-> = {
-  'stack-sok': {
-    category: 'Kho Tri Thức',
-    title: 'Kho thành phần F-Forum',
-    subtitle:
-      'Kho lưu trữ 6.770 thành phần thực chiến chuẩn hóa từ 196 cấu trúc giao diện, giữ nguyên đường dẫn và giấy phép công khai.',
-    metrics: [
-      { label: 'Thành phần', value: '6.770' },
-      { label: 'Cấu trúc', value: '196' },
-      { label: 'Thẻ 3D', value: '1.485' },
-    ],
-    previewHtml:
-      '<div class="sok-card"><span class="sok-tag">6.770 MẪU · F-FORUM</span><h3>Kiến trúc Đa Cấu Trúc</h3><p>196 cấu trúc nền · 961 cảnh 3D · 400 vi chuyển động · 41 thành phần tương tác</p></div>',
-  },
-  'stack-shopify-winter': {
-    category: 'Giải Phẫu Hệ Thống',
-    title: 'Nhịp cuộn 12 chương',
-    subtitle:
-      'Bản giải phẫu kiến trúc cuộn đa tầng với hệ thống biến --st-* và 682 tài nguyên gốc được đo đạc từng phần.',
-    metrics: [
-      { label: 'Chương', value: '12' },
-      { label: 'Cập nhật', value: '199' },
-      { label: 'Tài nguyên', value: '682' },
-    ],
-  },
-  'stack-pinui-threeui': {
-    category: 'Vật Lý Giao Diện',
-    title: 'Chuyển động & Không gian 3D',
-    subtitle:
-      'Kết hợp chuyển động lò xo, cảnh không gian 3D và vi tương tác vào hệ ngôn ngữ thống nhất của F-Forum.',
-    liveUrl: 'https://github.com/broamstuck-cybr/f_forumv3',
-    metrics: [
-      { label: 'Tương tác', value: '41' },
-      { label: 'Cảnh 3D', value: '961' },
-      { label: 'Vi chuyển động', value: '400' },
-    ],
-  },
-};
-
-function sanitizeProject(project: StackingProjectItem): StackingProjectItem {
-  const override = WHITE_LABEL_OVERRIDES[project.id];
-  return override ? { ...project, ...override } : project;
-}
-
-function buildProjectSrcDoc(project: StackingProjectItem): string {
-  const html = project.previewHtml || '';
-  const css = project.previewCss || '';
-  return `<!DOCTYPE html><html lang="vi"><head><meta charset="UTF-8" /><style>${css}</style></head><body>${html}</body></html>`;
-}
-
-const UNIFIED_FALLBACK_DOC =
-  '<!DOCTYPE html><html lang="vi"><head><meta charset="UTF-8" /><style>body{margin:0;min-height:100vh;display:grid;place-items:center;background:#121110;color:#efe9dd;font-family:system-ui,sans-serif}.pt-stage{width:min(380px,90vw);padding:24px;border:1px solid rgba(239,233,221,0.22);background:#1a1917}.pt-kicker{font-family:monospace;font-size:11px;color:#ff6450}.pt-stage h3{margin:10px 0 8px;font-family:Georgia,serif;font-size:20px;font-weight:400}.pt-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:14px}.pt-cell{padding:10px;border:1px solid rgba(239,233,221,0.14);background:#0c0b0a;font-family:monospace;font-size:11px;color:#efe9dd}</style></head><body><div class="pt-stage"><div class="pt-kicker">F-FORUM MOTION SYSTEM</div><h3>Lò xo, Cảnh 3D, Vi tương tác</h3><div class="pt-grid"><div class="pt-cell">41 Lò xo</div><div class="pt-cell">961 Cảnh 3D</div><div class="pt-cell">400 Vi mô</div></div></div></body></html>';
-
-const StackingPlate: React.FC<StackingPlateProps> = ({
-  project: rawProject,
-  index,
-  total,
-  progress,
-  reduced,
-  onExplore,
-}) => {
-  const project = sanitizeProject(rawProject);
-  const targetScale = 1 - (total - 1 - index) * 0.03;
-  const startRange = index / total;
-  const scale = useTransform(progress, [startRange, 1], [1, targetScale]);
-  const mainSrcDoc = project.previewHtml ? buildProjectSrcDoc(project) : UNIFIED_FALLBACK_DOC;
+  onOpen: () => void;
+  onLive: () => void;
+}> = ({ item, index, onOpen, onLive }) => {
+  const thumb = TIDEWELL_CARDS.find((card) => card.id === PROJECT_SHOWCASE_THUMBS[item.id]);
+  const [src, setSrc] = useState(thumb?.imageUrl ?? item.fallbackUrl);
+  const [failed, setFailed] = useState(false);
 
   return (
-    <div className="lp-stack-slot" style={reduced ? undefined : { top: `calc(var(--nav-h) + ${16 + index * 22}px)` }}>
-      <motion.article style={reduced ? undefined : { scale }} className="lp-stack-card">
-        <div className="lp-stack-grid">
-          <div className="lp-stack-info">
-            <div className="lp-stack-top">
-              <div className="lp-stack-bar">
-                <span className="t-label">{project.category}</span>
-                <a
-                  href={project.liveUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  aria-label={`Mở kho ${project.title}`}
-                  title={`Mở kho ${project.title}`}
-                  className="icon-btn"
-                >
-                  <ArrowUpRight size={18} aria-hidden="true" />
-                </a>
-              </div>
-              <h3 className="lp-stack-title">{project.title}</h3>
-              <p className="t-lead">{project.subtitle}</p>
-            </div>
-
-            <div>
-              <dl className="lp-stack-metrics">
-                {project.metrics.slice(0, 3).map((m) => (
-                  <div key={m.label}>
-                    <dt className="t-label">{m.label}</dt>
-                    <dd>{m.value}</dd>
-                  </div>
-                ))}
-              </dl>
-
-              <div className="lp-actions" style={{ marginTop: 'var(--space-5)' }}>
-                <button type="button" className="btn btn-red" onClick={onExplore}>
-                  Khám phá
-                </button>
-              </div>
-            </div>
-          </div>
-
-          <div className="lp-stack-stage">
-            <div className="lp-stack-frame">
-              <iframe
-                title={`Xem trước ${project.title}`}
-                srcDoc={mainSrcDoc}
-                sandbox="allow-scripts"
-                referrerPolicy="no-referrer"
-                loading="lazy"
-              />
-            </div>
-
-            <div className="lp-stack-thumbs">
-              {project.images.slice(1, 3).map((imgUrl, idx) => {
-                const metric = project.metrics[idx] ?? project.metrics[0];
-                return (
-                  <div key={`${project.id}-sub-${idx}`} className="plate lp-stack-thumb">
-                    <div className="lp-plate-fallback" aria-hidden="true">
-                      <span className="t-label">{metric?.label}</span>
-                      <span className="lp-plate-fallback-title">{metric?.value}</span>
-                    </div>
-                    <img
-                      src={imgUrl}
-                      alt={`${project.title} bản xem ${idx + 2}`}
-                      loading="lazy"
-                      decoding="async"
-                      referrerPolicy="no-referrer"
-                      onError={(e) => {
-                        e.currentTarget.style.opacity = '0';
-                      }}
-                    />
-                  </div>
-                );
-              })}
-            </div>
-          </div>
+    <article className="lp-proj-card">
+      <div className="lp-proj-media">
+        <span className="lp-proj-index">{String(index + 1).padStart(2, '0')}</span>
+        <div className="lp-proj-fallback" aria-hidden="true">
+          {item.category}
         </div>
-      </motion.article>
-    </div>
+        <img
+          src={src}
+          alt={`Ảnh xem trước ${item.title}`}
+          loading="lazy"
+          decoding="async"
+          referrerPolicy="no-referrer"
+          data-failed={failed ? 'true' : undefined}
+          className="lp-proj-img"
+          onError={() => {
+            if (src !== item.fallbackUrl) setSrc(item.fallbackUrl);
+            else setFailed(true);
+          }}
+        />
+      </div>
+      <div className="lp-proj-body">
+        <p className="t-label">{item.category}</p>
+        <h3 className="lp-proj-title">{item.title}</h3>
+        <p className="lp-proj-text">{item.summaryVi}</p>
+        <dl className="lp-proj-specs">
+          <div>
+            <dt className="t-label">tệp mã</dt>
+            <dd>{item.files.length} tệp</dd>
+          </div>
+          <div>
+            <dt className="t-label">khung nhìn</dt>
+            <dd>390 · 768 · 1440</dd>
+          </div>
+          <div>
+            <dt className="t-label">chuyển động</dt>
+            <dd>{item.motionConfig.durationMs} ms</dd>
+          </div>
+        </dl>
+        <div className="lp-proj-chips">
+          <span className="lp-proj-chip">{languageSummary(item)}</span>
+          <span className="lp-proj-chip">{item.motionConfig.pattern}</span>
+        </div>
+        <div className="lp-proj-actions">
+          <button type="button" className="btn btn-red btn-sm" onClick={onOpen}>
+            Mở trong Khám phá
+          </button>
+          <button type="button" className="btn btn-line btn-sm" onClick={onLive}>
+            Thử Live View
+          </button>
+        </div>
+      </div>
+    </article>
   );
 };
 
 export const LandingProjects: React.FC<LandingProjectsProps> = ({ onNavigate }) => {
-  const reduced = usePrefersReducedMotion();
-  const stackRef = useRef<HTMLDivElement>(null);
-
-  const { scrollYProgress } = useScroll({
-    target: stackRef,
-    offset: ['start start', 'end end'],
-  });
-
   return (
-    <section id="du-an" aria-label="Dự án Thực chiến" className="lp-section sheet lp-sheet-lift scene-ink">
+    <section id="du-an" aria-label="Dự án thực chiến" className="lp-section sheet lp-sheet-lift scene-ink">
       <div className="wrap-wide">
         <div className="lp-head">
           <div className="lp-head-copy">
-            <p className="t-label">dữ liệu nguồn mở có thể truy vết</p>
+            <p className="t-label">mẫu có thể mở và chỉnh ngay</p>
             <h2 className="t-title">
-              Dự án thực chiến, <Mark kind="underline">xếp lớp</Mark> kiểm chứng
+              Dự án thực chiến, <Mark kind="underline">mở là chạy</Mark> được
             </h2>
             <p className="t-lead">
-              Mỗi hệ thống đều xuất phát từ kho lưu trữ mở và số liệu thật đã được kiểm đếm.
+              Mỗi mẫu gồm bản xem trước, bộ tệp HTML, CSS, JS tách riêng và thông số chuyển động để bạn chỉnh theo ý.
             </p>
           </div>
         </div>
 
-        <div ref={stackRef} className="lp-stack">
-          {STACKING_PROJECTS.map((project, idx) => (
-            <StackingPlate
-              key={project.id}
-              project={project}
+        <div className="lp-proj-grid">
+          {PROJECTS.map((item, idx) => (
+            <ProjectCard
+              key={item.id}
+              item={item}
               index={idx}
-              total={STACKING_PROJECTS.length}
-              progress={scrollYProgress}
-              reduced={reduced}
-              onExplore={() => onNavigate('explore')}
+              onOpen={() => onNavigate('explore')}
+              onLive={() => onNavigate('workspace')}
             />
           ))}
         </div>

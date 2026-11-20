@@ -17,6 +17,9 @@ const HomeView = lazy(() =>
 const ExploreView = lazy(() =>
   import('./features/explore/ExploreView').then((m) => ({ default: m.ExploreView }))
 );
+const ExperienceView = lazy(() =>
+  import('./features/explore/ExperienceView').then((m) => ({ default: m.ExperienceView }))
+);
 const WorkspaceView = lazy(() =>
   import('./features/workspace/WorkspaceView').then((m) => ({ default: m.WorkspaceView }))
 );
@@ -41,20 +44,25 @@ const ROUTE_META: Record<
   { title: string; description: string; path: string; noindex?: boolean }
 > = {
   landing: {
-    title: 'F-Forum — Viết bằng AI, chấm bằng bút đỏ',
+    title: 'F-Forum — Kho thiết kế, mã nguồn mở và không gian dựng Web/UI',
     description:
-      'F-Forum là không gian kiến tạo Web/UI với Live View cô lập, Diff & Check 6 lớp và kho 6.770 mẫu mã nguồn mở.',
+      'F-Forum là kho tham chiếu 6.770 mẫu giao diện và không gian dựng thử Web/UI chạy trực tiếp trên trình duyệt.',
     path: '/',
   },
   home: {
     title: 'Trang chủ — F-Forum',
-    description: 'Khởi tạo nhanh đặc tả giao diện với bộ soạn thảo nhắc lệnh và kho mẫu chuyển động thực tế.',
+    description: 'Khởi tạo đặc tả giao diện, khám phá mẫu chuyển động và kệ sách tài nguyên kỹ thuật.',
     path: '/home',
   },
   explore: {
     title: 'Bàn soi Khám phá — F-Forum',
     description: 'Soi 196 mẫu tương tác, không gian 3D, hiệu ứng, chuyển động, bố cục cùng 32 công cụ AI và 72 kho GitHub.',
     path: '/explore',
+  },
+  experience: {
+    title: 'Trải nghiệm thành phần — F-Forum',
+    description: 'Trải nghiệm trực tiếp thành phần giao diện, chỉnh thông số mã nguồn và lưu bookmark.',
+    path: '/explore/experience',
   },
   workspace: {
     title: 'Workspace — F-Forum',
@@ -137,6 +145,7 @@ const AppShell: React.FC = () => {
   const showFooter =
     currentRoute === 'home' ||
     currentRoute === 'explore' ||
+    currentRoute === 'experience' ||
     currentRoute === 'community' ||
     currentRoute === 'profile' ||
     currentRoute === 'settings';
@@ -168,6 +177,7 @@ const AppShell: React.FC = () => {
               )}
               {currentRoute === 'home' && <HomeView />}
               {currentRoute === 'explore' && <ExploreView />}
+              {currentRoute === 'experience' && <ExperienceView />}
               {currentRoute === 'workspace' && <WorkspaceView />}
               {currentRoute === 'community' && <CommunityView />}
               {currentRoute === 'profile' && <ProfileView />}

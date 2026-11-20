@@ -44,6 +44,16 @@ const STORAGE_PROJECTS_KEY = 'fforum_v3_workspace_projects';
 const STORAGE_ACTIVE_PROJECT_KEY = 'fforum_v3_active_project_id';
 const STORAGE_SETTINGS_KEY = 'fforum_v3_settings';
 const STORAGE_SAVED_ITEMS_KEY = 'fforum_v3_saved_items';
+const STORAGE_LIKED_ITEMS_KEY = 'fforum_v3_liked_items';
+
+function baseHeartCount(id: string): number {
+  let h = 2166136261;
+  for (let i = 0; i < id.length; i += 1) {
+    h ^= id.charCodeAt(i);
+    h = Math.imul(h, 16777619);
+  }
+  return 10 + ((h >>> 0) % 91);
+}
 
 const DEFAULT_SETTINGS: SettingsState = {
   theme: 'dark',
@@ -375,6 +385,7 @@ function parseRouteFromPathname(pathname: string): AppRoute {
   const clean = pathname.replace(/\/+$/, '') || '/';
   if (clean === '/') return 'landing';
   if (clean === '/home') return 'home';
+  if (clean === '/explore/experience') return 'experience';
   if (clean === '/explore') return 'explore';
   if (clean === '/workspace') return 'workspace';
   if (clean === '/community') return 'community';
@@ -384,8 +395,20 @@ function parseRouteFromPathname(pathname: string): AppRoute {
   return 'not-found';
 }
 
+function parseExperienceItemFromSearch(search: string): string | null {
+  if (!search) return null;
+  try {
+    const params = new URLSearchParams(search);
+    const val = params.get('item');
+    return val ? val.trim() : null;
+  } catch {
+    return null;
+  }
+}
+
 function routeToPathname(route: AppRoute): string {
   if (route === 'landing') return '/';
+  if (route === 'experience') return '/explore/experience';
   if (route === 'not-found') return '/404';
   return `/${route}`;
 }
@@ -395,6 +418,7 @@ function normalizeRouteTarget(target: AppRoute | DimensionView): AppRoute {
     target === 'landing' ||
     target === 'home' ||
     target === 'explore' ||
+    target === 'experience' ||
     target === 'workspace' ||
     target === 'community' ||
     target === 'profile' ||
@@ -466,6 +490,13 @@ export interface AppStoreContextValue {
   resourceLibrary: ResourceItem[];
   savedItemIds: string[];
   toggleSavedItem: (id: string) => void;
+  likedItemIds: string[];
+  toggleLikedItem: (id: string) => void;
+  isItemLiked: (id: string) => boolean;
+  getHeartCount: (id: string) => number;
+  experienceItemId: string | null;
+  setExperienceItemId: (id: string | null) => void;
+  openExperience: (itemId: string) => void;
   projects: WorkspaceProject[];
   activeProjectId: string;
   activeProject: WorkspaceProject;
@@ -572,6 +603,20 @@ export const AppStoreProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       return [];
     }
   });
+
+  const [likedItemIds, setLikedItemIds] = useState<string[]>(() => {
+    if (typeof window === 'undefined') return [];
+    try {
+      const raw = window.localStorage.getItem(STORAGE_LIKED_ITEMS_KEY);
+      return raw ? (JSON.parse(raw) as string[]) : [];
+    } catch {
+      return [];
+    }
+  });
+
+  const [experienceItemId, setExperienceItemId] = useState<string | null>(() =>
+    typeof window !== 'undefined' ? parseExperienceItemFromSearch(window.location.search) : null
+  );
 
   const [settings, setSettings] = useState<SettingsState>(() => {
     if (typeof window === 'undefined') return DEFAULT_SETTINGS;
@@ -688,6 +733,7 @@ export const AppStoreProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     if (typeof window === 'undefined') return;
     const handlePopState = () => {
       setCurrentRoute(parseRouteFromPathname(window.location.pathname));
+      setExperienceItemId(parseExperienceItemFromSearch(window.location.search));
     };
     window.addEventListener('popstate', handlePopState);
     return () => window.removeEventListener('popstate', handlePopState);
@@ -743,6 +789,15 @@ export const AppStoreProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       return;
     }
   }, [savedItemIds]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    try {
+      window.localStorage.setItem(STORAGE_LIKED_ITEMS_KEY, JSON.stringify(likedItemIds));
+    } catch {
+      return;
+    }
+  }, [likedItemIds]);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -852,6 +907,29 @@ export const AppStoreProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
   const toggleSavedItem = useCallback((id: string) => {
     setSavedItemIds((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
+  }, []);
+
+  const toggleLikedItem = useCallback((id: string) => {
+    setLikedItemIds((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
+  }, []);
+
+  const isItemLiked = useCallback((id: string) => likedItemIds.includes(id), [likedItemIds]);
+
+  const getHeartCount = useCallback(
+    (id: string) => baseHeartCount(id) + (likedItemIds.includes(id) ? 1 : 0),
+    [likedItemIds]
+  );
+
+  const openExperience = useCallback((itemId: string) => {
+    setExperienceItemId(itemId);
+    setCurrentRoute('experience');
+    if (typeof window !== 'undefined') {
+      const nextUrl = `/explore/experience?item=${encodeURIComponent(itemId)}`;
+      if (window.location.pathname + window.location.search !== nextUrl) {
+        window.history.pushState({}, '', nextUrl);
+      }
+      window.scrollTo({ top: 0, behavior: 'auto' });
+    }
   }, []);
 
   const updateActiveProject = useCallback(
@@ -1693,6 +1771,13 @@ export const AppStoreProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       resourceLibrary,
       savedItemIds,
       toggleSavedItem,
+      likedItemIds,
+      toggleLikedItem,
+      isItemLiked,
+      getHeartCount,
+      experienceItemId,
+      setExperienceItemId,
+      openExperience,
       projects,
       activeProjectId: activeProject.id,
       activeProject,
@@ -1759,6 +1844,13 @@ export const AppStoreProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       resourceLibrary,
       savedItemIds,
       toggleSavedItem,
+      likedItemIds,
+      toggleLikedItem,
+      isItemLiked,
+      getHeartCount,
+      experienceItemId,
+      setExperienceItemId,
+      openExperience,
       projects,
       activeProject,
       createProject,

@@ -16,8 +16,8 @@ export const LandingFAQ: React.FC<LandingFAQProps> = ({ onEnterApp }) => {
         <div className="wrap">
           <div className="lp-head">
             <div className="lp-head-copy">
-              <p className="t-label">hỏi đáp minh bạch</p>
-              <h2 className="t-title">Những câu hỏi cốt lõi trước khi bắt đầu</h2>
+              <p className="t-label">hỏi đáp</p>
+              <h2 className="t-title">Câu hỏi thường gặp trước khi bắt đầu</h2>
             </div>
           </div>
 
@@ -62,11 +62,10 @@ export const LandingFAQ: React.FC<LandingFAQProps> = ({ onEnterApp }) => {
             <aside className="lp-faq-aside">
               <p className="t-label">source of knowledge</p>
               <h3 className="t-title" style={{ fontSize: 'var(--text-2xl)' }}>
-                Đặt câu hỏi đúng và đối chiếu từng dòng
+                Mở mẫu, đọc mã, rồi hỏi cộng đồng
               </h3>
               <p className="t-lead" style={{ fontSize: 'var(--text-sm)' }}>
-                Mọi thảo luận trong Source of Knowledge đều gắn với bối cảnh thật, mã nguồn kiểm định và ghi nhận nguồn
-                gốc rõ ràng.
+                Thảo luận trong Source of Knowledge gắn với mẫu thật, mã nguồn đi kèm và nguồn gốc ghi rõ.
               </p>
               <div>
                 <button type="button" className="btn btn-red" onClick={onEnterApp}>
@@ -81,7 +80,7 @@ export const LandingFAQ: React.FC<LandingFAQProps> = ({ onEnterApp }) => {
       <section aria-label="Bắt đầu dựng ngay" className="lp-closing scene-red">
         <div className="wrap lp-closing-row">
           <h2 className="lp-closing-title">
-            Đặt câu hỏi đúng. Kiểm chứng <span className="t-italic">từng dòng.</span>
+            Chọn một mẫu, <span className="t-italic">sửa ngay trong Workspace.</span>
           </h2>
           <button type="button" className="btn btn-solid btn-lg" onClick={onEnterApp}>
             Mở Workspace

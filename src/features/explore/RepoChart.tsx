@@ -18,16 +18,20 @@ import {
   type PreviewTheme,
 } from './catalog';
 import { SandboxPreview } from './SandboxPreview';
+import { ReactionBar } from './SpecimenSheet';
 
 interface RepoChartProps {
   query: string;
   onClearQuery: () => void;
+  savedOnly: boolean;
+  onShowAll: () => void;
+  onToggleSavedOnly: () => void;
 }
 
 type SnippetTab = 'html' | 'css';
 
-export const RepoChart: React.FC<RepoChartProps> = ({ query, onClearQuery }) => {
-  const { savedItemIds, toggleSavedItem, attachItemToWorkspace, openInWorkspace, activeProject, addToast, theme } =
+export const RepoChart: React.FC<RepoChartProps> = ({ query, onClearQuery, savedOnly, onShowAll, onToggleSavedOnly }) => {
+  const { savedItemIds, attachItemToWorkspace, openInWorkspace, activeProject, addToast, theme } =
     useAppStore();
   const [category, setCategory] = useState('all');
   const [openId, setOpenId] = useState<string | null>(null);
@@ -37,10 +41,18 @@ export const RepoChart: React.FC<RepoChartProps> = ({ query, onClearQuery }) => 
   const [snippetCodeOpen, setSnippetCodeOpen] = useState(false);
   const [snippetTab, setSnippetTab] = useState<SnippetTab>('html');
 
+  const savedRepoCount = useMemo(
+    () =>
+      RANKED_REPOS.filter((repo) => savedItemIds.includes(rankedRepoSavedId(repo))).length +
+      STUDIO_REPOS.filter((repo) => savedItemIds.includes(repo.id)).length,
+    [savedItemIds]
+  );
+
   const repos = useMemo(
     () =>
       RANKED_REPOS.filter(
         (repo) =>
+          (!savedOnly || savedItemIds.includes(rankedRepoSavedId(repo))) &&
           (category === 'all' || repo.category === category) &&
           matchesQuery(query, [
             repo.fullName,
@@ -51,12 +63,13 @@ export const RepoChart: React.FC<RepoChartProps> = ({ query, onClearQuery }) => 
             ...repo.topics,
           ])
       ),
-    [category, query]
+    [category, query, savedOnly, savedItemIds]
   );
 
   const house = useMemo(
     () =>
       STUDIO_REPOS.filter((repo) =>
+        (!savedOnly || savedItemIds.includes(repo.id)) &&
         matchesQuery(query, [
           repo.fullName,
           sanitizeBrandText(repo.summaryVi),
@@ -64,7 +77,7 @@ export const RepoChart: React.FC<RepoChartProps> = ({ query, onClearQuery }) => 
           ...repo.keyPaths,
         ])
       ),
-    [query]
+    [query, savedOnly, savedItemIds]
   );
 
   const activeHouse =
@@ -120,6 +133,14 @@ export const RepoChart: React.FC<RepoChartProps> = ({ query, onClearQuery }) => 
               {option.label}
             </button>
           ))}
+          <button
+            type="button"
+            className="ex-text"
+            aria-pressed={savedOnly}
+            onClick={onToggleSavedOnly}
+          >
+            Đã lưu ({savedRepoCount})
+          </button>
         </div>
         <p className="t-label ex-chart-note">
           {RANKED_REPOS.length} kho xác thực · {agentCount} tác tử AI & CLI · cập nhật{' '}
@@ -135,7 +156,6 @@ export const RepoChart: React.FC<RepoChartProps> = ({ query, onClearQuery }) => 
         <section className="wrap-wide ex-podium" aria-label="Ba kho mã dẫn đầu">
           {podium.map((repo, index) => {
             const savedId = rankedRepoSavedId(repo);
-            const saved = savedItemIds.includes(savedId);
             const isOpen = openId === repo.id;
             const summary = sanitizeBrandText(repo.aiNote || repo.description);
             return (
@@ -181,14 +201,7 @@ export const RepoChart: React.FC<RepoChartProps> = ({ query, onClearQuery }) => 
                   >
                     Đính kèm
                   </button>
-                  <button
-                    type="button"
-                    className="ex-text"
-                    aria-pressed={saved}
-                    onClick={() => toggleSavedItem(savedId)}
-                  >
-                    {saved ? 'Đã lưu' : 'Lưu'}
-                  </button>
+                  <ReactionBar id={savedId} title={repo.fullName} showLabel />
                   <button
                     type="button"
                     className="ex-text"
@@ -222,7 +235,6 @@ export const RepoChart: React.FC<RepoChartProps> = ({ query, onClearQuery }) => 
             const rank = chartOffset + index;
             const isOpen = openId === repo.id;
             const savedId = rankedRepoSavedId(repo);
-            const saved = savedItemIds.includes(savedId);
             const width = TOP_STARS > 0 ? Math.sqrt(repo.stars / TOP_STARS) : 0;
             const cleanDesc = sanitizeBrandText(repo.description);
             const cleanNote = sanitizeBrandText(repo.aiNote);
@@ -292,14 +304,7 @@ export const RepoChart: React.FC<RepoChartProps> = ({ query, onClearQuery }) => 
                       >
                         Đính kèm
                       </button>
-                      <button
-                        type="button"
-                        className="ex-text"
-                        aria-pressed={saved}
-                        onClick={() => toggleSavedItem(savedId)}
-                      >
-                        {saved ? 'Đã lưu' : 'Lưu'}
-                      </button>
+                      <ReactionBar id={savedId} title={repo.fullName} showLabel />
                       <button
                         type="button"
                         className="ex-text"
@@ -336,7 +341,6 @@ export const RepoChart: React.FC<RepoChartProps> = ({ query, onClearQuery }) => 
           <div className="ex-house-grid">
             <ul className="ex-idx-panel ex-house-list">
               {house.map((repo) => {
-                const saved = savedItemIds.includes(repo.id);
                 const selected = activeHouse?.id === repo.id;
                 return (
                   <li
@@ -392,14 +396,7 @@ export const RepoChart: React.FC<RepoChartProps> = ({ query, onClearQuery }) => 
                       >
                         Đính kèm
                       </button>
-                      <button
-                        type="button"
-                        className="ex-text"
-                        aria-pressed={saved}
-                        onClick={() => toggleSavedItem(repo.id)}
-                      >
-                        {saved ? 'Đã lưu' : 'Lưu'}
-                      </button>
+                      <ReactionBar id={repo.id} title={repo.fullName} showLabel />
                       <a
                         className="ex-text"
                         href={repo.htmlUrl}
@@ -528,9 +525,18 @@ export const RepoChart: React.FC<RepoChartProps> = ({ query, onClearQuery }) => 
 
       {repos.length === 0 && house.length === 0 ? (
         <div className="wrap-wide ex-empty">
-          <p className="ex-empty-line">Không có repo nào khớp “{query}”.</p>
-          <button type="button" className="ex-text" onClick={onClearQuery}>
-            Xóa tìm
+          <p className="ex-empty-line">
+            {savedOnly ? 'Chưa có repo nào được lưu.' : `Không có repo nào khớp “${query}”.`}
+          </p>
+          <button
+            type="button"
+            className="ex-text"
+            onClick={() => {
+              onClearQuery();
+              onShowAll();
+            }}
+          >
+            Xem tất cả
           </button>
         </div>
       ) : null}

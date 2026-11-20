@@ -3,6 +3,8 @@
   --font-ui: 'Be Vietnam Pro', system-ui, -apple-system, 'Segoe UI', sans-serif;
   --font-mono: 'IBM Plex Mono', ui-monospace, 'SFMono-Regular', Menlo, monospace;
   --font-script: 'Imperial Script', 'Fraunces Variable', cursive;
+  --font-signature: 'WindSong', 'Imperial Script', cursive;
+  --font-book: 'Newsreader', 'Fraunces Variable', Georgia, serif;
 
   --ink-dark: #121110;
   --shell-bg: #f1ecea;

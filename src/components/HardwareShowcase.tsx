@@ -24,6 +24,7 @@ import {
   TITANIUM_FINISHES,
   type DynamicIslandMode,
   type SimulatorAppId,
+  type TitaniumFinishId,
 } from './simulator/simulatorTypes';
 import { FForumMobileApp } from './simulator/FForumMobileApp';
 import { NativeAppView } from './simulator/NativeApps';
@@ -58,14 +59,9 @@ function renderAppGlyph(appId: SimulatorAppId, fg: string) {
     case 'fforum':
       return (
         <svg viewBox="0 0 32 32" className="h-8 w-8" fill="none" aria-hidden="true">
-          <path d="M7 5h17v4.6H12v4.6h9.5v4.4H12V27H7V5Z" fill="#efe9dd" />
-          <path
-            d="M15.6 23.4l3.3 3.4 7.3-9.6"
-            stroke="#ff6450"
-            strokeWidth="2.6"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
+          <path d="M8 8.5L13.2 12.6V24.5L8 22V8.5Z" fill="#f4f1ea" />
+          <path d="M8 8.5L24.5 6.8L22.2 12.2L13.2 12.6L8 8.5Z" fill="#e5c384" />
+          <path d="M14.4 15.2L22.6 14.3L20.8 18.9L14.4 19.4V15.2Z" fill="#2dd4bf" />
         </svg>
       );
     case 'explore':
@@ -104,16 +100,20 @@ export const HardwareShowcase: React.FC<HardwareShowcaseProps> = ({
   const reduced = Boolean(useReducedMotion());
   const stageRef = useRef<HTMLDivElement>(null);
   const [scale, setScale] = useState(0.82);
+  const [finishId, setFinishId] = useState<TitaniumFinishId>('black');
   const [locked, setLocked] = useState(false);
   const [silentMode, setSilentMode] = useState(false);
   const [volumeLevel, setVolumeLevel] = useState(72);
   const [islandMode, setIslandMode] = useState<DynamicIslandMode>('idle');
   const [islandHint, setIslandHint] = useState('F-Forum');
   const [page, setPage] = useState<0 | 1>(0);
-  const [openApp, setOpenApp] = useState<SimulatorAppId | null>('fforum');
+  const [openApp, setOpenApp] = useState<SimulatorAppId | null>(null);
   const [clock, setClock] = useState(formatTime);
 
-  const finish = TITANIUM_FINISHES[0];
+  const finish = useMemo(
+    () => TITANIUM_FINISHES.find((f) => f.id === finishId) ?? TITANIUM_FINISHES[0],
+    [finishId]
+  );
 
   const today = useMemo(() => formatVietnameseDay(), []);
 
@@ -201,8 +201,6 @@ export const HardwareShowcase: React.FC<HardwareShowcaseProps> = ({
         : islandMode === 'timer' || islandMode === 'music' || islandMode === 'fforum'
           ? { width: 226, height: 36 }
           : { width: 88, height: 36 };
-
-  const isPaperApp = openApp === 'fforum' && !locked;
 
   return (
     <div ref={stageRef} className={`ios-sim-stage ${className}`}>
@@ -301,19 +299,13 @@ export const HardwareShowcase: React.FC<HardwareShowcaseProps> = ({
 
               <div className="absolute inset-x-0 top-0 z-[60] flex h-[54px] items-start justify-between pointer-events-none">
                 <span
-                  className={`absolute left-[38px] top-[17px] text-[17px] font-semibold leading-none transition-colors ${
-                    isPaperApp ? 'text-[#17150f]' : 'text-white'
-                  }`}
+                  className="absolute left-[38px] top-[17px] text-[17px] font-semibold leading-none text-white"
                   style={{ fontVariantNumeric: 'tabular-nums' }}
                 >
                   {clock}
                 </span>
 
-                <div
-                  className={`absolute right-[26px] top-[18px] flex items-center gap-1.5 transition-colors ${
-                    isPaperApp ? 'text-[#17150f]' : 'text-white'
-                  }`}
-                >
+                <div className="absolute right-[26px] top-[18px] flex items-center gap-1.5 text-white">
                   <svg width="19" height="12" viewBox="0 0 19 12" fill="currentColor" aria-hidden="true">
                     <rect x="0" y="8" width="3" height="4" rx="1" />
                     <rect x="4.5" y="6" width="3" height="6" rx="1" />
@@ -325,16 +317,8 @@ export const HardwareShowcase: React.FC<HardwareShowcaseProps> = ({
                     <path d="M4.2 7.1C6.6 5 10.4 5 12.8 7.1" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
                     <circle cx="8.5" cy="10.2" r="1.3" fill="currentColor" />
                   </svg>
-                  <div
-                    className={`relative flex h-[13px] w-[26px] items-center rounded-[4.2px] border p-[1.5px] ${
-                      isPaperApp ? 'border-[#17150f]/55' : 'border-white/55'
-                    }`}
-                  >
-                    <div
-                      className={`h-full w-[82%] rounded-[2px] ${
-                        isPaperApp ? 'bg-[#17150f]' : 'bg-white'
-                      }`}
-                    />
+                  <div className="relative flex h-[13px] w-[26px] items-center rounded-[4.2px] border border-white/55 p-[1.5px]">
+                    <div className="h-full w-[82%] rounded-[2px] bg-white" />
                   </div>
                 </div>
               </div>
@@ -620,15 +604,37 @@ export const HardwareShowcase: React.FC<HardwareShowcaseProps> = ({
                 }}
                 aria-label="Màn hình chính"
                 title="Màn hình chính"
-                className={`absolute bottom-[8px] left-1/2 z-[75] h-[5px] w-[139px] -translate-x-1/2 rounded-full border-0 p-0 cursor-pointer transition-colors ${
-                  isPaperApp ? 'bg-[#17150f]/80' : 'bg-white/95'
-                }`}
+                className="absolute bottom-[8px] left-1/2 z-[75] h-[5px] w-[139px] -translate-x-1/2 rounded-full border-0 bg-white/95 p-0 cursor-pointer"
               />
             </div>
           </div>
         </div>
       </div>
 
+      <div className="mt-5 flex items-center justify-center gap-3">
+        {TITANIUM_FINISHES.map((item) => {
+          const active = item.id === finishId;
+          return (
+            <button
+              key={item.id}
+              type="button"
+              onClick={() => setFinishId(item.id)}
+              aria-label={item.label}
+              title={item.label}
+              className="h-5 w-5 rounded-full border p-0 cursor-pointer transition-transform"
+              style={{
+                background: item.swatch,
+                borderColor: active ? '#c89b54' : 'rgba(255,255,255,0.28)',
+                transform: active ? 'scale(1.18)' : 'scale(1)',
+                boxShadow: active ? '0 0 0 2px rgba(200,155,84,0.35)' : 'none',
+              }}
+            />
+          );
+        })}
+        <span className="ml-1 text-[11px] font-mono text-[var(--fg-muted)]">
+          {finish.label} · {volumeLevel}%
+        </span>
+      </div>
     </div>
   );
 };

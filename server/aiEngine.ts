@@ -100,7 +100,7 @@ export function resolveAIConfig(
 
 function buildSystemInstruction(suffix: string): string {
   const base = [
-    'You are the F-FORUM v3 Arena Workspace Code Synthesis Engine.',
+    'You are the F-FORUM v3 Workspace Code Synthesis Engine.',
     'Respond ONLY with a valid JSON object matching this exact schema:',
     '{"message":"Concise technical summary of changes","files":[{"path":"index.html","content":"...","summary":"..."},{"path":"styles.css","content":"...","summary":"..."},{"path":"app.js","content":"...","summary":"..."}],"checksHint":["Viewport meta verified","Accessible contrast and semantic tags"]}',
     'Rules:',
@@ -449,7 +449,7 @@ body.compact-density .module-card {
 })();`;
 
   return {
-    message: `Đã tổng hợp bộ 3 tệp (index.html, styles.css, app.js) cho yêu cầu: "${cleanTitle}". (Chế độ Deterministic Template Synthesis do upstream API phản hồi: ${upstreamError})`,
+    message: `Đã tổng hợp bộ 3 tệp (index.html, styles.css, app.js) cho "${cleanTitle}". Hệ thống đang dùng bộ khung dự phòng do kết nối AI gặp sự cố (${upstreamError}). Mở Cài đặt -> Khóa riêng (BYOK) để dùng khóa API riêng hoặc kiểm tra AI_BASE_URL.`,
     files: [
       {
         path: 'index.html',
@@ -683,31 +683,47 @@ function parseStructuredLLMResponse(
   }
 }
 
+function isLoopbackUrl(url: string): boolean {
+  return /^https?:\/\/(127\.0\.0\.1|localhost|0\.0\.0\.0|\[::1\])(?::\d+)?(?:\/|$)/i.test(url.trim());
+}
+
+async function fetchWithRetry(url: string, init: RequestInit): Promise<Response> {
+  try {
+    return await fetch(url, init);
+  } catch (err) {
+    if (init.signal?.aborted) throw err;
+    return await fetch(url, init);
+  }
+}
+
 export async function runAIGenerationStream(
   req: AIChatRequest,
   headers: IncomingHttpHeaders,
   hooks?: AIStreamHooks
 ): Promise<AIGenerationOutput> {
   const config = resolveAIConfig(headers, req.model);
+  const runningOnCloud = Boolean(process.env.VERCEL);
+  const unreachableLoopback = runningOnCloud && isLoopbackUrl(config.baseUrl);
+  const canCallUpstream = Boolean(config.apiKey) && !unreachableLoopback;
+
   hooks?.onStage?.({
     stage: 'routing',
     model: config.model,
     protocol: config.protocol,
-    detail: config.apiKey ? `${config.protocol}:${config.model}` : 'deterministic-fallback',
+    detail: canCallUpstream ? `${config.protocol}:${config.model}` : 'deterministic-fallback',
   });
 
-  if (!config.apiKey) {
+  if (!canCallUpstream) {
     hooks?.onStage?.({
       stage: 'generating',
       model: config.model,
       protocol: config.protocol,
       detail: 'Deterministic synthesis',
     });
-    const fallbackOut = buildDeterministicFallback(
-      req,
-      config,
-      'Missing AI_API_KEY in server environment or BYOK header'
-    );
+    const reason = unreachableLoopback
+      ? 'AI_BASE_URL trên Vercel đang trỏ localhost/127.0.0.1; hãy đặt API công khai (OpenRouter/Gemini/OpenAI) hoặc bật Khóa riêng (BYOK) trong Cài đặt'
+      : 'Chưa cấu hình AI_API_KEY trên máy chủ hoặc khóa BYOK';
+    const fallbackOut = buildDeterministicFallback(req, config, reason);
     hooks?.onDelta?.(fallbackOut.message);
     hooks?.onStage?.({
       stage: 'checking',
@@ -720,7 +736,7 @@ export async function runAIGenerationStream(
   const systemInstruction = buildSystemInstruction(config.systemPromptSuffix);
   const userContent = buildUserContextPrompt(req);
   const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 50000);
+  const timeout = setTimeout(() => controller.abort(), 45000);
   const streamUpstream = Boolean(hooks?.onDelta);
 
   try {
@@ -736,7 +752,7 @@ export async function runAIGenerationStream(
       const url = config.baseUrl.endsWith('/messages')
         ? config.baseUrl
         : `${config.baseUrl}/v1/messages`;
-      const resp = await fetch(url, {
+      const resp = await fetchWithRetry(url, {
         method: 'POST',
         headers: {
           'content-type': 'application/json',
@@ -760,7 +776,7 @@ export async function runAIGenerationStream(
     } else if (config.protocol === 'gemini') {
       const method = streamUpstream ? 'streamGenerateContent?alt=sse&' : 'generateContent?';
       const url = `${config.baseUrl}/models/${encodeURIComponent(config.model)}:${method}key=${encodeURIComponent(config.apiKey)}`;
-      const resp = await fetch(url, {
+      const resp = await fetchWithRetry(url, {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({
@@ -778,12 +794,17 @@ export async function runAIGenerationStream(
       const url = config.baseUrl.endsWith('/chat/completions')
         ? config.baseUrl
         : `${config.baseUrl}/chat/completions`;
-      const resp = await fetch(url, {
+      const openAiHeaders: Record<string, string> = {
+        'content-type': 'application/json',
+        authorization: `Bearer ${config.apiKey}`,
+      };
+      if (config.baseUrl.includes('openrouter.ai')) {
+        openAiHeaders['HTTP-Referer'] = 'https://fforum3.vercel.app';
+        openAiHeaders['X-Title'] = 'F-Forum v3';
+      }
+      const resp = await fetchWithRetry(url, {
         method: 'POST',
-        headers: {
-          'content-type': 'application/json',
-          authorization: `Bearer ${config.apiKey}`,
-        },
+        headers: openAiHeaders,
         body: JSON.stringify({
           model: config.model,
           stream: true,

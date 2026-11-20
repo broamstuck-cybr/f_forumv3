@@ -6,6 +6,7 @@ import {
   type PromptComposerAction,
   type PromptComposerModel,
 } from '../../components/pinui/PromptComposer';
+import { DotMatrixHandsCanvas } from '../../components/launchpad/DotMatrixHandsCanvas';
 import { ScrollStoryEngine } from '../../components/launchpad/ScrollStoryEngine';
 import type { HomeMotionShowcaseItem } from '../../data/homeMotionShowcases';
 import { Mark } from '../../ui/Mark';
@@ -89,7 +90,7 @@ const BLUEPRINT_OPTIONS: Record<
   },
   'design-code': {
     title: 'Mã nguồn',
-    styles: ['Token CSS', 'Bút đỏ', 'In ấn'],
+    styles: ['Token CSS', 'Kiểm thử', 'In ấn'],
     layouts: ['Đa khung', 'Bất đối', 'Soi Diff'],
     features: ['HTML thuần', 'Focus A11y', 'Mực giấy'],
   },
@@ -150,8 +151,6 @@ export const HomeView: React.FC<HomeViewProps> = () => {
   }, [currentUser?.name]);
 
   const activeBlueprint = selectedAction ? BLUEPRINT_OPTIONS[selectedAction] ?? null : null;
-  const activeModelMeta =
-    HOME_MODELS.find((m) => (m.id ?? m.name) === selectedModel) ?? HOME_MODELS[0];
 
   const assembleBlueprint = (actionId: string, sIdx: number, lIdx: number, fIdx: number) => {
     const bp = BLUEPRINT_OPTIONS[actionId];
@@ -229,62 +228,31 @@ export const HomeView: React.FC<HomeViewProps> = () => {
     navigate('explore');
   };
 
-  const recentProjects = useMemo(() => projects.filter((p) => !p.archived).slice(0, 8), [projects]);
   const recentHighlights = useMemo(() => communityPosts.slice(0, 4), [communityPosts]);
 
   return (
     <div className="hm">
       <section aria-label="Xưởng khởi chạy chuyển động" className="hm-desk">
+        <DotMatrixHandsCanvas />
         <div className="wrap-wide hm-desk-inner">
           <header className="hm-masthead">
             <div className="hm-masthead-copy">
-              <p className="t-label hm-greeting">{greeting}</p>
+              <p className="t-label hm-greeting">{greeting} · xưởng thiết kế chuyển động</p>
               <h1 className="hm-title">
-                <span className="t-script hm-cap">D</span>ựng nhịp{' '}
-                <Mark kind="underline" active>
-                  chuyển động
-                </Mark>{' '}
-                trên bàn máy thật.
+                <span className="hm-title-quiet">Hi, how are you today?</span>
+                <span className="hm-title-ink">
+                  Hôm nay bạn muốn{' '}
+                  <Mark kind="underline" active>
+                    dựng giao diện
+                  </Mark>{' '}
+                  gì?
+                </span>
               </h1>
               <p className="hm-lead">
-                Chọn một khung mẫu bên dưới để điền nhanh đặc tả kỹ thuật, hoặc gõ thẳng yêu cầu vào thanh lệnh; mọi
-                bản phác đều mở vào Workspace với khung chạy cô lập và đối chiếu từng dòng.
+                Chọn một thẻ cấu trúc hoặc gõ thẳng yêu cầu vào thanh lệnh; mọi bản phác đều mở trực tiếp vào Workspace
+                kèm khung kiểm chứng 390 · 768 · 1440px.
               </p>
             </div>
-
-            <aside aria-label="Bảng chọn nhanh cấu trúc" className="hm-rack">
-              <div className="hm-rack-head">
-                <span className="t-label">khung dựng nhanh</span>
-                <span className="t-label hm-rack-model">{activeModelMeta.name}</span>
-              </div>
-              <div className="hm-presets" role="group" aria-label="Mẫu khởi tạo nhanh">
-                {HOME_ACTIONS.map((action) => (
-                  <button
-                    key={action.id}
-                    type="button"
-                    className="hm-preset"
-                    aria-pressed={selectedAction === action.id}
-                    onClick={() => handleActionSelect(selectedAction === action.id ? null : action.id)}
-                  >
-                    {action.label}
-                  </button>
-                ))}
-              </div>
-              <dl className="hm-rack-stats">
-                <div>
-                  <dt className="t-label">dự án</dt>
-                  <dd>{recentProjects.length}</dd>
-                </div>
-                <div>
-                  <dt className="t-label">bản mẫu</dt>
-                  <dd>8</dd>
-                </div>
-                <div>
-                  <dt className="t-label">khung đo</dt>
-                  <dd>390 · 768 · 1440</dd>
-                </div>
-              </dl>
-            </aside>
           </header>
 
           <div className="hm-composer">
@@ -389,50 +357,6 @@ export const HomeView: React.FC<HomeViewProps> = () => {
               </motion.div>
             )}
           </AnimatePresence>
-
-          <div className="hm-rail-wrap">
-            <div className="hm-rail-head">
-              <div>
-                <p className="t-label">workspace cục bộ</p>
-                <h2 className="hm-rail-heading">Dự án gần đây</h2>
-              </div>
-              <button type="button" className="btn btn-line btn-sm" onClick={() => navigate('workspace')}>
-                Workspace
-              </button>
-            </div>
-
-            <div className="hm-proj-rail ff-scrollbar" role="list">
-              {recentProjects.map((proj) => {
-                const passCount = proj.checksReport?.passCount ?? 0;
-                const totalChecks = proj.checksReport?.results.length ?? 0;
-                return (
-                  <article key={proj.id} className="hm-proj-card" role="listitem">
-                    <div className="hm-proj-meta t-label">
-                      <span>{proj.files.length} tệp</span>
-                      <span>{new Date(proj.updatedAt).toLocaleDateString('vi-VN')}</span>
-                    </div>
-                    <h3 className="hm-proj-title">{proj.name}</h3>
-                    <p className="hm-proj-desc">{proj.description}</p>
-                    <div className="hm-proj-foot">
-                      <span className="tag tag-green">
-                        {totalChecks > 0 ? `${passCount}/${totalChecks} đạt` : 'sẵn sàng'}
-                      </span>
-                      <button
-                        type="button"
-                        className="btn btn-solid btn-sm"
-                        onClick={() => {
-                          selectProject(proj.id);
-                          navigate('workspace');
-                        }}
-                      >
-                        Mở lại
-                      </button>
-                    </div>
-                  </article>
-                );
-              })}
-            </div>
-          </div>
         </div>
       </section>
 

@@ -31,8 +31,8 @@ const LANDING_COMPOSER_ACTIONS: PromptComposerAction[] = [
   },
   {
     id: 'quiz-tools',
-    label: 'Phản biện',
-    placeholder: 'Tạo công cụ đối chiếu giả định và bằng chứng theo phương pháp Socratic...',
+    label: 'Kiểm tra',
+    placeholder: 'Tạo công cụ so sánh hai phương án bố cục kèm bảng đối chiếu rõ ràng...',
     kind: 'voice',
   },
   {
@@ -80,16 +80,16 @@ const GeometricBadge: React.FC<{ kind: ManifestoBeat['badge']; active: boolean }
       </svg>
     );
   }
-  if (kind === 'redpen') {
+  if (kind === 'code') {
     return (
       <svg viewBox="0 0 88 88" className="lp-hm-badgeSvg" data-active={active} aria-hidden="true">
-        <circle cx="44" cy="44" r="34" fill="#EFCEBE" stroke="#121110" strokeWidth="2.5" />
-        <circle cx="44" cy="44" r="24" fill="#F1ECEA" stroke="#D63A27" strokeWidth="2.5" strokeDasharray="5 4" />
+        <rect x="8" y="14" width="72" height="60" rx="8" fill="#F1ECEA" stroke="#121110" strokeWidth="2.5" />
+        <rect x="8" y="14" width="72" height="14" rx="6" fill="#B0AEC6" stroke="#121110" strokeWidth="2.5" />
         <path
-          d="M31 45 L40 54 L59 33"
+          d="M30 44 L21 51 L30 58 M58 44 L67 51 L58 58 M46 40 L42 62"
           fill="none"
-          stroke="#D63A27"
-          strokeWidth="4.5"
+          stroke="#121110"
+          strokeWidth="3.5"
           strokeLinecap="round"
           strokeLinejoin="round"
         />
@@ -235,7 +235,7 @@ export const LandingManifesto: React.FC<LandingManifestoProps> = ({ onNavigate }
   };
 
   return (
-    <section id="tuyen-ngon" aria-label="Tuyên ngôn Tư duy Phản biện" className="lp-hm-root">
+    <section id="tuyen-ngon" aria-label="Bốn điều F-Forum giúp bạn làm được" className="lp-hm-root">
       <div
         ref={runwayRef}
         className="lp-hm-runway"
@@ -244,7 +244,7 @@ export const LandingManifesto: React.FC<LandingManifestoProps> = ({ onNavigate }
         <div className="lp-hm-sticky">
           <div className="wrap-wide lp-hm-header">
             <p className="t-label" style={{ color: '#b5afa3' }}>
-              tuyên ngôn kiểm chứng
+              cách F-Forum làm việc
             </p>
             <div className="lp-hm-meter" aria-hidden="true">
               <span style={{ transform: `scaleX(${isDesktopHorizontal ? Math.max(0.08, mp) : 1})` }} />
@@ -254,12 +254,12 @@ export const LandingManifesto: React.FC<LandingManifestoProps> = ({ onNavigate }
           <div ref={trackRef} className="lp-hm-track">
             <div className="lp-hm-intro">
               <h2 className="lp-hm-title">
-                Viết bằng AI.
+                Xem giao diện chạy thật.
                 <br />
-                Chấm bằng <span className="t-note">bút đỏ.</span>
+                Đọc mã, <span className="t-note">chia sẻ prompt.</span>
               </h2>
               <p className="lp-hm-lead">
-                Cuộn ngang qua 4 nguyên tắc cốt lõi biến ý tưởng thô thành giao diện có thể kiểm chứng.
+                Cuộn ngang qua 4 điều giúp bạn đi từ phác thảo đến sản phẩm nhanh và rõ hơn.
               </p>
             </div>
 
@@ -285,10 +285,10 @@ export const LandingManifesto: React.FC<LandingManifestoProps> = ({ onNavigate }
           <div className="lp-desk-head">
             <p className="t-label">khởi tạo trực tiếp</p>
             <h2 className="t-title">
-              Đặt câu hỏi lên bàn <Mark kind="underline">ngay tại đây</Mark>
+              Gõ ý tưởng của bạn <Mark kind="underline">ngay tại đây</Mark>
             </h2>
             <p className="t-lead">
-              Chọn một thẻ tác vụ hoặc gõ yêu cầu của bạn để mở thẳng Workspace cùng Live View và Diff &amp; Check.
+              Chọn một thẻ tác vụ hoặc mô tả giao diện bạn cần để mở thẳng Workspace cùng Live View và Diff &amp; Check.
             </p>
           </div>
 

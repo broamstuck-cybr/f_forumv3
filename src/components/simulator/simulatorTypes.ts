@@ -1,4 +1,4 @@
-export type TitaniumFinishId = 'black';
+export type TitaniumFinishId = 'black' | 'silver' | 'burgundy' | 'glacier';
 
 export interface TitaniumFinishSpec {
   id: TitaniumFinishId;
@@ -42,6 +42,30 @@ export const TITANIUM_FINISHES: TitaniumFinishSpec[] = [
     shellA: '#2a2b30',
     shellB: '#121316',
     antenna: 'rgba(255, 255, 255, 0.14)',
+  },
+  {
+    id: 'silver',
+    label: 'Titan Bạc',
+    swatch: '#d8d8dc',
+    shellA: '#e5e5ea',
+    shellB: '#b8b9c2',
+    antenna: 'rgba(20, 20, 25, 0.22)',
+  },
+  {
+    id: 'burgundy',
+    label: 'Titan Đỏ Rượu',
+    swatch: '#5c1f2d',
+    shellA: '#6c2637',
+    shellB: '#38121c',
+    antenna: 'rgba(255, 220, 228, 0.18)',
+  },
+  {
+    id: 'glacier',
+    label: 'Titan Băng Lam',
+    swatch: '#bcd6e8',
+    shellA: '#cbe0ee',
+    shellB: '#8fb1c8',
+    antenna: 'rgba(18, 34, 48, 0.2)',
   },
 ];
 

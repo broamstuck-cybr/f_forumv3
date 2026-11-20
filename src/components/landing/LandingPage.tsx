@@ -10,7 +10,6 @@ import { scrollToSection, useActiveChapter, useLenisSmoothScroll } from './useLa
 import { LandingHero } from './sections/LandingHero';
 import { LandingManifesto } from './sections/LandingManifesto';
 import { LandingProjects } from './sections/LandingProjects';
-import { LandingPricing } from './sections/LandingPricing';
 import { LandingFAQ } from './sections/LandingFAQ';
 import { LandingFooter } from './sections/LandingFooter';
 import './landing.css';
@@ -92,7 +91,6 @@ export const LandingPage: React.FC<LandingPageProps> = ({
       <TidewellStage onNavigate={navigateTo} />
       <LandingManifesto onNavigate={navigateTo} />
       <LandingProjects onNavigate={navigateTo} />
-      <LandingPricing onEnterApp={enterApp} />
       <LandingFAQ onEnterApp={enterApp} />
       <LandingFooter onNavigate={handleFooterNavigate} onOpenNotice={() => setNoticeOpen(true)} />
 

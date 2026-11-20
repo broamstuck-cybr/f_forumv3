@@ -30,6 +30,12 @@ export default defineConfig({
           if (id.includes('/src/data/sourceCatalog.json')) {
             return 'catalog-data';
           }
+          if (id.includes('/src/data/motionShowcaseCatalog.ts')) {
+            return 'motion-marquee-data';
+          }
+          if (id.includes('/src/data/glacierBooksData.ts')) {
+            return 'glacier-books-data';
+          }
           return undefined;
         },
       },

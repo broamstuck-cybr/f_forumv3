@@ -2,6 +2,7 @@ export type AppRoute =
   | 'landing'
   | 'home'
   | 'explore'
+  | 'experience'
   | 'workspace'
   | 'community'
   | 'profile'

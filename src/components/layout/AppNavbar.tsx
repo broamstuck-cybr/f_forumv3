@@ -113,7 +113,8 @@ export const AppNavbar: React.FC<AppNavbarProps> = () => {
 
           <nav aria-label="Điều hướng chính" className="nav__tabs">
             {PRIMARY_TABS.map((tab) => {
-              const active = currentRoute === tab.id;
+              const active =
+                currentRoute === tab.id || (tab.id === 'explore' && currentRoute === 'experience');
               return (
                 <button
                   key={tab.id}

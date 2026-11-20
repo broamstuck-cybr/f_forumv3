@@ -345,14 +345,67 @@
   .foot__graffiti {
     margin-top: var(--space-7);
     width: 100%;
-    overflow: hidden;
+    padding-block: clamp(14px, 2.8vw, 32px) clamp(22px, 4vw, 44px);
+    overflow: visible;
   }
 
-  .foot__graffitiSvg {
+  .foot__sig {
+    position: relative;
     width: 100%;
-    height: auto;
-    display: block;
-    user-select: none;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow: visible;
+    user-select: text;
+  }
+
+  .foot__sigText {
+    position: relative;
+    display: inline-block;
+    padding: 0.14em 0.24em 0.28em;
+    font-family: var(--font-signature);
+    font-size: clamp(2.65rem, 9.8vw, 8.2rem);
+    font-weight: 500;
+    line-height: 1.05;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--fg);
+    text-shadow:
+      0.03em 0.04em 0 var(--red),
+      0.06em 0.08em 0 rgba(125, 163, 187, 0.35);
+    transform: rotate(-3.2deg) skewX(-6deg);
+    transform-origin: center center;
+    overflow: visible;
+    user-select: text;
+    white-space: nowrap;
+  }
+
+  .foot__sigText::before {
+    content: '';
+    position: absolute;
+    left: 2%;
+    right: -3%;
+    bottom: 0.08em;
+    height: 0.34em;
+    border-bottom: 3px solid var(--red);
+    border-right: 2px solid var(--red);
+    border-radius: 40% 60% 68% 32% / 20% 25% 75% 80%;
+    transform: rotate(-2.1deg);
+    pointer-events: none;
+  }
+
+  .foot__sigText::after {
+    content: '';
+    position: absolute;
+    left: 14%;
+    right: 6%;
+    bottom: -0.04em;
+    height: 0.24em;
+    border-bottom: 2px solid #7da3bb;
+    border-radius: 50% 50% 60% 40% / 15% 15% 85% 85%;
+    transform: rotate(1.4deg);
+    opacity: 0.86;
+    pointer-events: none;
   }
 
   .foot__base {

@@ -23,7 +23,7 @@ function resolveIncomingMode(value: string | undefined | null): ExploreMode | nu
 }
 
 export const ExploreView: React.FC = () => {
-  const { sourceCatalog, resourceLibrary } = useAppStore();
+  const { sourceCatalog, resourceLibrary, savedItemIds, openExperience } = useAppStore();
   const calm = useCalm();
   const tabRefs = useRef<Array<HTMLButtonElement | null>>([]);
   const [mode, setMode] = useState<ExploreMode>(() => {
@@ -31,6 +31,7 @@ export const ExploreView: React.FC = () => {
     return resolveIncomingMode(window.sessionStorage.getItem('ff_explore_mode')) ?? 'plates';
   });
   const [search, setSearch] = useState('');
+  const [savedOnly, setSavedOnly] = useState(false);
   const query = search.trim().toLowerCase();
 
   useEffect(() => {
@@ -96,6 +97,26 @@ export const ExploreView: React.FC = () => {
               </button>
             ) : null}
           </div>
+          <div className="ex-quick">
+            <button
+              type="button"
+              className="ex-pill"
+              aria-pressed={savedOnly}
+              onClick={() => setSavedOnly((prev) => !prev)}
+            >
+              <span className="ex-mark-dot" aria-hidden="true" />
+              <span>Đã lưu ({savedItemIds.length})</span>
+            </button>
+            {sourceCatalog[0] ? (
+              <button
+                type="button"
+                className="ex-pill"
+                onClick={() => openExperience(sourceCatalog[0].id)}
+              >
+                Trải nghiệm thành phần
+              </button>
+            ) : null}
+          </div>
         </div>
       </header>
 
@@ -148,9 +169,15 @@ export const ExploreView: React.FC = () => {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.42, ease: [0.25, 0.1, 0.25, 1] }}
       >
-        {mode === 'plates' ? <PlateTable query={query} onClearQuery={clearSearch} /> : null}
-        {mode === 'tools' ? <ToolIndex query={query} onClearQuery={clearSearch} /> : null}
-        {mode === 'repos' ? <RepoChart query={query} onClearQuery={clearSearch} /> : null}
+        {mode === 'plates' ? (
+          <PlateTable query={query} onClearQuery={clearSearch} savedOnly={savedOnly} onShowAll={() => setSavedOnly(false)} onToggleSavedOnly={() => setSavedOnly((v) => !v)} />
+        ) : null}
+        {mode === 'tools' ? (
+          <ToolIndex query={query} onClearQuery={clearSearch} savedOnly={savedOnly} onShowAll={() => setSavedOnly(false)} onToggleSavedOnly={() => setSavedOnly((v) => !v)} />
+        ) : null}
+        {mode === 'repos' ? (
+          <RepoChart query={query} onClearQuery={clearSearch} savedOnly={savedOnly} onShowAll={() => setSavedOnly(false)} onToggleSavedOnly={() => setSavedOnly((v) => !v)} />
+        ) : null}
       </motion.section>
     </div>
   );

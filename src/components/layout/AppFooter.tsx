@@ -27,7 +27,7 @@ export const AppFooter: React.FC<AppFooterProps> = ({ onNavigate, onOpenNotice }
       <div className="wrap-wide">
         <div className="foot__grid">
           <p className="t-title" style={{ maxWidth: '16ch' }}>
-            Viết bằng AI. Chấm bằng <span className="t-note">bút đỏ.</span>
+            Từ phác thảo <span className="t-note">đến sản phẩm.</span>
           </p>
           <div className="foot__cols">
             <nav className="foot__col" aria-label="Sản phẩm">

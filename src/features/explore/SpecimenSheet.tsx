@@ -19,10 +19,9 @@ interface SpecimenSheetProps {
   item: SourceCatalogItem | null;
   position: number;
   total: number;
-  saved: boolean;
   onClose: () => void;
   onStep: (delta: 1 | -1) => void;
-  onToggleSave: (item: SourceCatalogItem) => void;
+  onExperience: (item: SourceCatalogItem) => void;
   onUse: (item: SourceCatalogItem) => void;
   onAttach: (item: SourceCatalogItem) => void;
 }
@@ -31,14 +30,50 @@ type CodeTab = 'html' | 'css' | 'spec';
 
 const VIEWPORTS: PreviewViewport[] = [390, 768, 1440];
 
+interface ReactionBarProps {
+  id: string;
+  title: string;
+  showLabel?: boolean;
+  className?: string;
+}
+
+export const ReactionBar: React.FC<ReactionBarProps> = ({ id, title, showLabel = false, className }) => {
+  const { savedItemIds, toggleSavedItem, toggleLikedItem, isItemLiked, getHeartCount } = useAppStore();
+  const liked = isItemLiked(id);
+  const saved = savedItemIds.includes(id);
+  return (
+    <span className={`ex-react${className ? ` ${className}` : ''}`}>
+      <button
+        type="button"
+        className="ex-react-btn"
+        aria-pressed={liked}
+        aria-label={`${liked ? 'Bỏ tim' : 'Thả tim'} ${title}`}
+        onClick={() => toggleLikedItem(id)}
+      >
+        <span className="ex-heart-dot" aria-hidden="true" />
+        <span className="ex-react-num">{getHeartCount(id)}</span>
+      </button>
+      <button
+        type="button"
+        className="ex-react-btn"
+        aria-pressed={saved}
+        aria-label={`${saved ? 'Bỏ lưu' : 'Lưu'} ${title}`}
+        onClick={() => toggleSavedItem(id)}
+      >
+        <span className="ex-mark-dot" aria-hidden="true" />
+        {showLabel ? <span>{saved ? 'Đã lưu' : 'Lưu'}</span> : null}
+      </button>
+    </span>
+  );
+};
+
 export const SpecimenSheet: React.FC<SpecimenSheetProps> = ({
   item,
   position,
   total,
-  saved,
   onClose,
   onStep,
-  onToggleSave,
+  onExperience,
   onUse,
   onAttach,
 }) => {
@@ -233,20 +268,16 @@ export const SpecimenSheet: React.FC<SpecimenSheetProps> = ({
               </div>
             </dl>
             <div className="ex-spec-actions">
-              <button type="button" className="btn btn-solid" onClick={() => onUse(item)}>
+              <button type="button" className="btn btn-solid" onClick={() => onExperience(item)}>
+                Trải nghiệm
+              </button>
+              <button type="button" className="btn btn-line" onClick={() => onUse(item)}>
                 Dùng ngay
               </button>
               <button type="button" className="btn btn-line" onClick={() => onAttach(item)}>
                 Đính kèm
               </button>
-              <button
-                type="button"
-                className="btn btn-line"
-                aria-pressed={saved}
-                onClick={() => onToggleSave(item)}
-              >
-                {saved ? 'Đã lưu' : 'Lưu'}
-              </button>
+              <ReactionBar id={item.id} title={safeTitle} showLabel />
               <button
                 type="button"
                 className="btn btn-ghost"

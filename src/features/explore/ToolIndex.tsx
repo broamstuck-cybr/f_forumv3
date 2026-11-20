@@ -9,10 +9,14 @@ import {
   resourceContext,
   sanitizeBrandText,
 } from './catalog';
+import { ReactionBar } from './SpecimenSheet';
 
 interface ToolIndexProps {
   query: string;
   onClearQuery: () => void;
+  savedOnly: boolean;
+  onShowAll: () => void;
+  onToggleSavedOnly: () => void;
 }
 
 type StatusFilter = 'all' | VerificationStatus;
@@ -33,11 +37,10 @@ const STATUS_CLASS: Record<VerificationStatus, string> = {
   unverified: 'ex-badge-muted',
 };
 
-export const ToolIndex: React.FC<ToolIndexProps> = ({ query, onClearQuery }) => {
+export const ToolIndex: React.FC<ToolIndexProps> = ({ query, onClearQuery, savedOnly, onShowAll, onToggleSavedOnly }) => {
   const {
     resourceLibrary,
     savedItemIds,
-    toggleSavedItem,
     attachItemToWorkspace,
     openInWorkspace,
     activeProject,
@@ -51,6 +54,11 @@ export const ToolIndex: React.FC<ToolIndexProps> = ({ query, onClearQuery }) => 
     setCatFilter('all');
   }, [openGroup]);
 
+  const savedToolCount = useMemo(
+    () => resourceLibrary.filter((item) => savedItemIds.includes(item.id)).length,
+    [resourceLibrary, savedItemIds]
+  );
+
   const groups = useMemo(
     () =>
       GROUP_ORDER.map((group) => ({
@@ -58,6 +66,7 @@ export const ToolIndex: React.FC<ToolIndexProps> = ({ query, onClearQuery }) => 
         entries: resourceLibrary.filter(
           (item: ResourceItem) =>
             item.group === group &&
+            (!savedOnly || savedItemIds.includes(item.id)) &&
             matchesQuery(query, [
               sanitizeBrandText(item.title),
               sanitizeBrandText(item.description),
@@ -67,7 +76,7 @@ export const ToolIndex: React.FC<ToolIndexProps> = ({ query, onClearQuery }) => 
             ])
         ),
       })),
-    [resourceLibrary, query]
+    [resourceLibrary, query, savedOnly, savedItemIds]
   );
 
   const total = groups.reduce((sum, entry) => sum + entry.entries.length, 0);
@@ -107,11 +116,22 @@ export const ToolIndex: React.FC<ToolIndexProps> = ({ query, onClearQuery }) => 
     return (
       <div className="wrap-wide ex-empty">
         <p className="ex-empty-line">
-          {query ? `Không có công cụ nào khớp “${query}”.` : 'Chưa có công cụ nào trong mục lục.'}
+          {savedOnly
+            ? 'Chưa có công cụ nào được lưu.'
+            : query
+              ? `Không có công cụ nào khớp “${query}”.`
+              : 'Chưa có công cụ nào trong mục lục.'}
         </p>
-        {query ? (
-          <button type="button" className="ex-text" onClick={onClearQuery}>
-            Xóa tìm
+        {query || savedOnly ? (
+          <button
+            type="button"
+            className="ex-text"
+            onClick={() => {
+              onClearQuery();
+              onShowAll();
+            }}
+          >
+            Xem tất cả
           </button>
         ) : null}
       </div>
@@ -149,6 +169,14 @@ export const ToolIndex: React.FC<ToolIndexProps> = ({ query, onClearQuery }) => 
             onClick={() => setStatusFilter('verified_info')}
           >
             Xác thực
+          </button>
+          <button
+            type="button"
+            className="ex-text"
+            aria-pressed={savedOnly}
+            onClick={onToggleSavedOnly}
+          >
+            Đã lưu ({savedToolCount})
           </button>
         </div>
         <p className="t-label">
@@ -207,7 +235,6 @@ export const ToolIndex: React.FC<ToolIndexProps> = ({ query, onClearQuery }) => 
                   {filteredEntries.length > 0 ? (
                     <ul className="ex-idx-list" aria-label={GROUP_LABEL[group]}>
                       {filteredEntries.map((item) => {
-                        const saved = savedItemIds.includes(item.id);
                         const title = sanitizeBrandText(item.title);
                         const description = sanitizeBrandText(item.description);
                         const snippet = sanitizeBrandText(item.snippet);
@@ -254,14 +281,7 @@ export const ToolIndex: React.FC<ToolIndexProps> = ({ query, onClearQuery }) => 
                               >
                                 Mở nguồn
                               </a>
-                              <button
-                                type="button"
-                                className="ex-text"
-                                aria-pressed={saved}
-                                onClick={() => toggleSavedItem(item.id)}
-                              >
-                                {saved ? 'Đã lưu' : 'Lưu'}
-                              </button>
+                              <ReactionBar id={item.id} title={title} showLabel />
                               <button
                                 type="button"
                                 className="ex-text"

@@ -1,12 +1,30 @@
 import React, { useEffect, useRef, useState } from 'react';
 import type { DimensionView } from '../../types/index';
-import { STAGE_CHIP_PREVIEW, TIDEWELL_CARDS, type KineticStageCard } from './landingContent';
+import {
+  STAGE_CHIP_PREVIEW,
+  STAGE_DIFFERENTIATORS,
+  STAGE_SHOWCASE_SHOTS,
+  TIDEWELL_CARDS,
+  type KineticStageCard,
+} from './landingContent';
 import { usePrefersReducedMotion } from './useLandingMotion';
 import './tidewell.css';
 
 interface TidewellStageProps {
   onNavigate: (view: DimensionView) => void;
 }
+
+type ViewportPreset = '390' | '768' | '1440';
+
+const VIEWPORT_PRESETS: Array<{ id: ViewportPreset; label: string; ratioLabel: string }> = [
+  { id: '390', label: '390', ratioLabel: '390px · Di động' },
+  { id: '768', label: '768', ratioLabel: '768px · Máy tính bảng' },
+  { id: '1440', label: '1440', ratioLabel: '1440px · Máy tính bàn' },
+];
+
+const SHOWCASE_CARDS: KineticStageCard[] = STAGE_SHOWCASE_SHOTS.map(
+  (id) => TIDEWELL_CARDS.find((c) => c.id === id) ?? TIDEWELL_CARDS[0]
+);
 
 const SCATTER_SLOTS: Array<[number, number, number]> = [
   [-0.42, -0.34, -9],
@@ -84,10 +102,56 @@ const StageCardView: React.FC<{
   );
 };
 
+const FrameSpecimenCard: React.FC<{
+  card: KineticStageCard;
+  active: boolean;
+  viewport: ViewportPreset;
+  onSelect: () => void;
+}> = ({ card, active, viewport, onSelect }) => {
+  const [src, setSrc] = useState(card.imageUrl);
+  const [failed, setFailed] = useState(false);
+
+  return (
+    <button
+      type="button"
+      className="tw-spec-card"
+      data-active={active}
+      onClick={onSelect}
+      aria-pressed={active}
+    >
+      <span className="tw-spec-media">
+        <img
+          src={src}
+          alt={card.title}
+          loading="eager"
+          decoding="async"
+          referrerPolicy="no-referrer"
+          data-failed={failed ? 'true' : undefined}
+          onError={() => {
+            if (src !== card.fallbackUrl) {
+              setSrc(card.fallbackUrl);
+            } else {
+              setFailed(true);
+            }
+          }}
+          className="tw-spec-img"
+        />
+        <span className="tw-spec-vp">{viewport}px</span>
+      </span>
+      <span className="tw-spec-meta">
+        <span className="tw-spec-cat">{card.category}</span>
+        <span className="tw-spec-title">{card.title}</span>
+      </span>
+    </button>
+  );
+};
+
 export const TidewellStage: React.FC<TidewellStageProps> = ({ onNavigate }) => {
   const reduced = usePrefersReducedMotion();
   const stageRef = useRef<HTMLElement>(null);
   const centerCopyRef = useRef<HTMLDivElement>(null);
+  const pass1Ref = useRef<HTMLDivElement>(null);
+  const pass2Ref = useRef<HTMLDivElement>(null);
   const cardRefs = useRef<Array<HTMLDivElement | null>>([]);
   const windowRef = useRef<HTMLDivElement>(null);
   const floatWrapRef = useRef<HTMLDivElement>(null);
@@ -95,6 +159,10 @@ export const TidewellStage: React.FC<TidewellStageProps> = ({ onNavigate }) => {
   const blackoutRef = useRef<HTMLDivElement>(null);
   const [chipSrc, setChipSrc] = useState(STAGE_CHIP_PREVIEW.imageUrl);
   const [chipFailed, setChipFailed] = useState(false);
+  const [activeViewport, setActiveViewport] = useState<ViewportPreset>('1440');
+  const [activeSpecimenId, setActiveSpecimenId] = useState<string>(SHOWCASE_CARDS[0]?.id ?? 'ff-space-voyage');
+
+  const activePreset = VIEWPORT_PRESETS.find((v) => v.id === activeViewport) ?? VIEWPORT_PRESETS[2];
 
   useEffect(() => {
     if (reduced || typeof window === 'undefined') return;
@@ -133,7 +201,8 @@ export const TidewellStage: React.FC<TidewellStageProps> = ({ onNavigate }) => {
       const scrollable = Math.max(1, rect.height - vh);
       const rawP = clamp(-rect.top / scrollable, 0, 1);
 
-      smoothP += (rawP - smoothP) * 0.14;
+      const stepGain = Math.abs(rawP - smoothP) > 0.25 ? 0.28 : 0.14;
+      smoothP += (rawP - smoothP) * stepGain;
       const p = Math.abs(rawP - smoothP) < 0.0005 ? rawP : smoothP;
 
       const isMobile = vw < 768;
@@ -228,13 +297,22 @@ export const TidewellStage: React.FC<TidewellStageProps> = ({ onNavigate }) => {
       }
 
       if (centerCopyRef.current) {
-        const copyIn = smoothstep(0.03, 0.14, p);
-        const copyOut = 1 - smoothstep(0.21, 0.28, p);
-        const wheelCopyIn = smoothstep(0.43, 0.5, p) * (1 - smoothstep(0.62, 0.68, p));
-        const copyOp = Math.max(copyIn * copyOut, wheelCopyIn);
-        const copyScale = lerp(0.95, 1, Math.max(copyIn, smoothstep(0.43, 0.5, p)));
+        const isWheelPass = p >= 0.35;
+        const scatterOp = smoothstep(0.03, 0.14, p) * (1 - smoothstep(0.22, 0.32, p));
+        const wheelOp = smoothstep(0.38, 0.46, p) * (1 - smoothstep(0.61, 0.67, p));
+        const copyOp = isWheelPass ? wheelOp : scatterOp;
+        const copyScale = lerp(0.95, 1, isWheelPass ? smoothstep(0.38, 0.46, p) : smoothstep(0.03, 0.14, p));
+
+        centerCopyRef.current.dataset.pass = isWheelPass ? '2' : '1';
         centerCopyRef.current.style.opacity = copyOp.toFixed(3);
         centerCopyRef.current.style.transform = `scale(${copyScale.toFixed(3)})`;
+
+        if (pass1Ref.current) {
+          pass1Ref.current.style.display = isWheelPass ? 'none' : 'block';
+        }
+        if (pass2Ref.current) {
+          pass2Ref.current.style.display = isWheelPass ? 'block' : 'none';
+        }
       }
 
       if (p < 0.62) {
@@ -305,7 +383,7 @@ export const TidewellStage: React.FC<TidewellStageProps> = ({ onNavigate }) => {
         <div id="san-pham" className="tw-anchor-product" aria-hidden="true" />
         <div className="wrap-wide">
           <div className="tw-center-copy" style={{ marginInline: 'auto', pointerEvents: 'auto' }}>
-            <p className="tw-kicker">quy trình kiến tạo</p>
+            <p className="tw-kicker">01 · phác thảo &amp; bố cục</p>
             <h2 className="tw-phrase">
               Từ phác thảo{' '}
               <span className="tw-chip">
@@ -321,7 +399,7 @@ export const TidewellStage: React.FC<TidewellStageProps> = ({ onNavigate }) => {
                 />
               </span>{' '}
               đến sản phẩm
-              <span className="tw-subphrase">dựng qua quy trình thực</span>
+              <span className="tw-subphrase">biến ý tưởng thành giao diện chạy thật trên trình duyệt</span>
             </h2>
           </div>
 
@@ -343,10 +421,10 @@ export const TidewellStage: React.FC<TidewellStageProps> = ({ onNavigate }) => {
               </div>
               <div className="lp-actions">
                 <button type="button" className="btn btn-line" onClick={() => onNavigate('explore')}>
-                  Khám phá
+                  Mở kho mẫu
                 </button>
                 <button type="button" className="btn btn-red" onClick={() => onNavigate('workspace')}>
-                  Live View
+                  Mở Live View
                 </button>
               </div>
             </div>
@@ -360,34 +438,52 @@ export const TidewellStage: React.FC<TidewellStageProps> = ({ onNavigate }) => {
     <section
       id="quy-trinh"
       ref={stageRef}
-      aria-label="Quy trình kiến tạo 12 mẫu và cửa sổ sản phẩm"
+      aria-label="Quy trình từ phác thảo đến mã nguồn và khung sản phẩm"
       className="tw-stage scene-paper"
     >
       <div id="san-pham" className="tw-anchor-product" aria-hidden="true" />
       <div className="tw-sticky">
         <div className="tw-grid-bg" aria-hidden="true" />
 
-        <div ref={centerCopyRef} className="tw-center-copy">
-          <p className="tw-kicker">quy trình 12 thành phần</p>
-          <h2 className="tw-phrase">
-            Từ phác thảo{' '}
-            <span className="tw-chip" aria-hidden="true">
-              <img
-                src={chipSrc}
-                alt=""
-                loading="eager"
-                referrerPolicy="no-referrer"
-                onError={() => {
-                  if (chipSrc !== STAGE_CHIP_PREVIEW.fallbackUrl) setChipSrc(STAGE_CHIP_PREVIEW.fallbackUrl);
-                  else setChipFailed(true);
-                }}
-                style={chipFailed ? { opacity: 0 } : undefined}
-              />
-            </span>{' '}
-            đến sản phẩm
-            <span className="tw-subphrase">dựng qua quy trình thực</span>
-          </h2>
-          <p className="tw-telemetry">196 cấu trúc · 6.770 mẫu · 6 phép kiểm</p>
+        <div ref={centerCopyRef} className="tw-center-copy" data-pass="1">
+          <div ref={pass1Ref} className="tw-pass-block" data-pass-id="1">
+            <p className="tw-kicker">01 · phác thảo &amp; bố cục</p>
+            <h2 className="tw-phrase">
+              Từ phác thảo{' '}
+              <span className="tw-chip" aria-hidden="true">
+                <img
+                  src={chipSrc}
+                  alt=""
+                  loading="eager"
+                  referrerPolicy="no-referrer"
+                  onError={() => {
+                    if (chipSrc !== STAGE_CHIP_PREVIEW.fallbackUrl) setChipSrc(STAGE_CHIP_PREVIEW.fallbackUrl);
+                    else setChipFailed(true);
+                  }}
+                  style={chipFailed ? { opacity: 0 } : undefined}
+                />
+              </span>{' '}
+              đến sản phẩm
+              <span className="tw-subphrase">biến ý tưởng thành giao diện chạy thật trên trình duyệt</span>
+            </h2>
+            <p className="tw-telemetry">196 giao diện tham khảo · 12 mẫu tiêu biểu</p>
+          </div>
+
+          <div ref={pass2Ref} className="tw-pass-block" data-pass-id="2" style={{ display: 'none' }}>
+            <p className="tw-kicker">02 · thông số &amp; mã nguồn</p>
+            <h2 className="tw-phrase">
+              Chỉnh thông số{' '}
+              <span className="tw-chip tw-chip--code" aria-hidden="true">
+                <span className="tw-chip-code-top">390 · 1440</span>
+                <span className="tw-chip-code-bot">HTML · CSS</span>
+              </span>{' '}
+              xuất mã sạch
+              <span className="tw-subphrase">
+                đọc cấu trúc tệp, đối chiếu khung nhìn và sao chép prompt cho cộng đồng
+              </span>
+            </h2>
+            <p className="tw-telemetry">6.770 chi tiết UI/UX · Sao chép Prompt · Tải gói ZIP</p>
+          </div>
         </div>
 
         <div className="tw-cards-layer">
@@ -411,74 +507,86 @@ export const TidewellStage: React.FC<TidewellStageProps> = ({ onNavigate }) => {
               <span>sandbox=&quot;allow-scripts&quot;</span>
             </div>
             <div className="tw-window-col">
-              <span>02 · DIFF &amp; CHECK</span>
+              <span>02 · ĐA KHUNG NHÌN</span>
               <span>390px / 768px / 1440px</span>
             </div>
             <div className="tw-window-col">
-              <span>03 · XUẤT BẢN</span>
-              <span>Quét khóa · Đóng gói ZIP</span>
+              <span>03 · MÃ SẠCH &amp; PROMPT</span>
+              <span>HTML · CSS · JS · ZIP</span>
             </div>
           </div>
 
           <div className="tw-corner-top">
-            <p className="tw-corner-label">01 · kiểm chứng trực tiếp</p>
+            <p className="tw-corner-label">01 · giao diện &amp; mã nguồn</p>
             <h3 className="tw-corner-title">Không chỉ là hình ảnh</h3>
           </div>
 
           <div ref={floatWrapRef} className="tw-float-wrap">
-            <div ref={floatFrameRef} className="tw-float-frame">
+            <div ref={floatFrameRef} className="tw-float-frame" data-viewport={activeViewport}>
               <div className="tw-frame-bar">
-                <div className="tw-frame-dots" aria-hidden="true">
-                  <span />
-                  <span />
-                  <span />
+                <div className="tw-frame-bar-left">
+                  <div className="tw-frame-dots" aria-hidden="true">
+                    <span />
+                    <span />
+                    <span />
+                  </div>
+                  <span className="tw-frame-bar-title">F-Forum · Khung xem trước giao diện</span>
                 </div>
-                <span>F-Forum · Live View &amp; Diff</span>
-                <span>0đ</span>
+                <div className="tw-vp-switch" role="group" aria-label="Chọn khung nhìn">
+                  {VIEWPORT_PRESETS.map((vp) => (
+                    <button
+                      key={vp.id}
+                      type="button"
+                      className="tw-vp-btn"
+                      data-active={activeViewport === vp.id}
+                      aria-pressed={activeViewport === vp.id}
+                      onClick={() => setActiveViewport(vp.id)}
+                    >
+                      {vp.label}
+                    </button>
+                  ))}
+                </div>
               </div>
+
               <div className="tw-frame-body">
-                <div className="tw-frame-preview">
-                  <div className="tw-frame-pane">
-                    <span style={{ color: '#ddad95' }}>NHẬT KÝ PHẢN BIỆN</span>
-                    <span style={{ color: '#efe9dd', fontSize: '13px', fontFamily: 'var(--font-display)' }}>
-                      Kiểm tra cấu trúc DOM và khung nhìn 390px
-                    </span>
-                    <span style={{ color: '#8e887e' }}>6 phép kiểm · 0 rò rỉ khóa</span>
-                  </div>
-                  <div className="tw-frame-pane">
-                    <span style={{ color: '#7da3bb' }}>BẢN DỰNG CÔ LẬP</span>
-                    <span style={{ color: '#7fd69b' }}>+ viewport meta hợp lệ</span>
-                    <span style={{ color: '#b5afa3' }}>noreferrer · no same-origin</span>
-                  </div>
+                <div className="tw-frame-gallery">
+                  {SHOWCASE_CARDS.map((card) => (
+                    <FrameSpecimenCard
+                      key={card.id}
+                      card={card}
+                      active={activeSpecimenId === card.id}
+                      viewport={activeViewport}
+                      onSelect={() => setActiveSpecimenId(card.id)}
+                    />
+                  ))}
                 </div>
-                <div className="tw-frame-checks">
-                  <div className="tw-frame-check">
-                    <span>HTML</span>
-                    <b>đạt</b>
-                  </div>
-                  <div className="tw-frame-check">
-                    <span>Cú pháp</span>
-                    <b>đạt</b>
-                  </div>
-                  <div className="tw-frame-check">
-                    <span>390px</span>
-                    <b>đạt</b>
-                  </div>
+
+                <div className="tw-frame-diffs">
+                  {STAGE_DIFFERENTIATORS.map((diff) => (
+                    <div key={diff.id} className="tw-diff-item">
+                      <span className="tw-diff-title">{diff.title}</span>
+                      <span className="tw-diff-text">{diff.text}</span>
+                    </div>
+                  ))}
                 </div>
+
                 <div className="tw-frame-actions">
-                  <button type="button" className="btn btn-line btn-sm" onClick={() => onNavigate('explore')}>
-                    Khám phá
-                  </button>
-                  <button type="button" className="btn btn-red btn-sm" onClick={() => onNavigate('workspace')}>
-                    Live View
-                  </button>
+                  <span className="tw-frame-status">{activePreset.ratioLabel} · 196 giao diện</span>
+                  <div className="tw-frame-btns">
+                    <button type="button" className="btn btn-line btn-sm" onClick={() => onNavigate('explore')}>
+                      Mở kho mẫu
+                    </button>
+                    <button type="button" className="btn btn-red btn-sm" onClick={() => onNavigate('workspace')}>
+                      Mở Live View
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
 
           <div className="tw-corner-bottom">
-            <p className="tw-corner-label">02 · thực thi cô lập</p>
+            <p className="tw-corner-label">02 · tùy biến trực tiếp</p>
             <h3 className="tw-corner-title">Sản phẩm chạy thật</h3>
           </div>
         </div>

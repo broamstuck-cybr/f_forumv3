@@ -29,7 +29,7 @@ const PIXEL_PALETTE: Record<string, string> = {
 const PIXEL_ICONS: PixelIconSpec[] = [
   {
     id: 'prompt',
-    label: 'Câu hỏi',
+    label: 'Ý tưởng',
     grid: [
       '.......BB',
       '.....BBBB',
@@ -89,7 +89,7 @@ const PIXEL_ICONS: PixelIconSpec[] = [
   },
   {
     id: 'check',
-    label: 'Bút đỏ',
+    label: 'Kiểm tra',
     grid: [
       'DDDDDDDDD',
       'DLLLLLLLD',
@@ -104,7 +104,7 @@ const PIXEL_ICONS: PixelIconSpec[] = [
   },
   {
     id: 'catalog',
-    label: '6.770 mẫu',
+    label: '6.770 chi tiết',
     grid: [
       'BBB..PPPP',
       'BLB..PLLP',
@@ -285,10 +285,10 @@ export const LandingHero: React.FC<LandingHeroProps> = ({
           <motion.div style={reduced ? undefined : { y: copyY }} className="lp-hero-copy">
             <p className="lp-kicker t-label">
               <span>F-Forum</span>
-              <span>học thuật, phản biện, kiến tạo web</span>
+              <span>xem trước, đọc mã, chia sẻ prompt</span>
             </p>
 
-            <div className="lp-assembly" aria-label="Chuỗi 7 bước kiểm định F-Forum">
+            <div className="lp-assembly" aria-label="Chuỗi 7 bước từ ý tưởng đến tệp xuất">
               {!reduced && planeState.opacity > 0.01 && (
                 <svg
                   className="lp-flight-svg"
@@ -359,19 +359,19 @@ export const LandingHero: React.FC<LandingHeroProps> = ({
 
             <h1 className="lp-hero-title">
               <span className="lp-hero-line" data-visible={activeCount >= 1}>
-                <span className="t-script lp-cap">K</span>hai phóng tư duy,
+                <span className="t-script lp-cap">T</span>ừ phác thảo đến sản phẩm,
               </span>{' '}
               <span className="lp-hero-line" data-visible={activeCount >= 3}>
                 <Mark kind="underline" active>
-                  kiểm chứng
+                  xem được
                 </Mark>{' '}
-                từng dòng mã.
+                cả mã nguồn.
               </span>
             </h1>
 
             <p className="lp-hero-lead">
-              F-Forum là không gian kiến tạo Web/UI cho học sinh, giảng viên và người thiết kế web: dựng bằng AI, chạy
-              thật trong Live View cô lập và chấm từng dòng bằng Diff &amp; Check.
+              F-Forum giúp học sinh, giảng viên và người làm web xem giao diện chạy thật, đọc mã HTML, CSS, JS sạch,
+              chỉnh thông số trực tiếp và chia sẻ prompt với cộng đồng.
             </p>
 
             <div className="lp-actions">
@@ -391,15 +391,15 @@ export const LandingHero: React.FC<LandingHeroProps> = ({
             <dl className="lp-colophon">
               <div>
                 <dt className="t-label">kho tham chiếu</dt>
-                <dd>6.770 mẫu</dd>
+                <dd>196 giao diện &amp; mã nguồn tham khảo · 6.770 chi tiết UI/UX</dd>
               </div>
               <div>
-                <dt className="t-label">kiểm định</dt>
-                <dd className="lp-colophon-accent">6 phép kiểm</dd>
+                <dt className="t-label">khả năng</dt>
+                <dd className="lp-colophon-accent">Xem code sạch · Sao chép Prompt · Tùy biến trực tiếp</dd>
               </div>
               <div>
-                <dt className="t-label">truy cập mở</dt>
-                <dd>0đ</dd>
+                <dt className="t-label">cộng đồng</dt>
+                <dd>195 người truy cập</dd>
               </div>
             </dl>
           </motion.div>

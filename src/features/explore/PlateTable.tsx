@@ -20,12 +20,15 @@ import {
 import { PlateRibbon } from './PlateRibbon';
 import { SandboxPreview } from './SandboxPreview';
 import { SpecimenMedia } from './SpecimenMedia';
-import { SpecimenSheet } from './SpecimenSheet';
+import { ReactionBar, SpecimenSheet } from './SpecimenSheet';
 import { useCalm } from './useCalm';
 
 interface PlateTableProps {
   query: string;
   onClearQuery: () => void;
+  savedOnly: boolean;
+  onShowAll: () => void;
+  onToggleSavedOnly: () => void;
 }
 
 type LibraryFilter = 'all' | SourceLibraryName;
@@ -33,13 +36,13 @@ type BenchTab = 'html' | 'css' | 'spec';
 
 const VIEWPORTS: PreviewViewport[] = [390, 768, 1440];
 
-export const PlateTable: React.FC<PlateTableProps> = ({ query, onClearQuery }) => {
+export const PlateTable: React.FC<PlateTableProps> = ({ query, onClearQuery, savedOnly, onShowAll, onToggleSavedOnly }) => {
   const {
     sourceCatalog,
     savedItemIds,
-    toggleSavedItem,
     attachItemToWorkspace,
     openInWorkspace,
+    openExperience,
     activeProject,
     addToast,
     theme,
@@ -56,7 +59,11 @@ export const PlateTable: React.FC<PlateTableProps> = ({ query, onClearQuery }) =
   const [viewport, setViewport] = useState<PreviewViewport>(1440);
   const [stageTheme, setStageTheme] = useState<PreviewTheme>(theme);
   const [nonce, setNonce] = useState(0);
-  const [benchCodeOpen, setBenchCodeOpen] = useState(false);
+  const [benchScale, setBenchScale] = useState(100);
+  const [benchPad, setBenchPad] = useState(24);
+  const [benchRadius, setBenchRadius] = useState(12);
+  const [benchSpeed, setBenchSpeed] = useState(1);
+  const [benchCodeOpen, setBenchCodeOpen] = useState(true);
   const [benchTab, setBenchTab] = useState<BenchTab>('html');
 
   const canDrift = !calm && !coarse;
@@ -65,11 +72,17 @@ export const PlateTable: React.FC<PlateTableProps> = ({ query, onClearQuery }) =
     setStageTheme(theme);
   }, [theme]);
 
+  const savedPlateCount = useMemo(
+    () => sourceCatalog.filter((item) => savedItemIds.includes(item.id)).length,
+    [sourceCatalog, savedItemIds]
+  );
+
   const ribbons = useMemo(
     () =>
       LIBRARY_ORDER.map((name) => {
         const all = sourceCatalog.filter((item) => item.sourceLibrary === name);
         const items = all.filter((item) =>
+          (!savedOnly || savedItemIds.includes(item.id)) &&
           matchesQuery(query, [
             item.title,
             item.description,
@@ -83,7 +96,7 @@ export const PlateTable: React.FC<PlateTableProps> = ({ query, onClearQuery }) =
         );
         return { name, all, items };
       }),
-    [sourceCatalog, query]
+    [sourceCatalog, query, savedOnly, savedItemIds]
   );
 
   const shown = ribbons.filter(
@@ -138,9 +151,11 @@ export const PlateTable: React.FC<PlateTableProps> = ({ query, onClearQuery }) =
   const activeHasCode = Boolean(activeItem?.previewHtml);
   const activeTitle = activeItem ? sanitizeBrandText(activeItem.title) : '';
   const activeDesc = activeItem ? sanitizeBrandText(activeItem.description) : '';
-  const activeSaved = activeItem ? savedItemIds.includes(activeItem.id) : false;
   const activeHtml = activeItem ? sanitizeSnippetCode(activeItem.previewHtml) : '';
   const activeCss = activeItem ? sanitizeSnippetCode(activeItem.previewCss) : '';
+  const tunedCss = activeHasCode
+    ? `:root{--ff-scale:${(benchScale / 100).toFixed(2)};--ff-pad:${benchPad}px;--ff-radius:${benchRadius}px;--ff-speed:${benchSpeed}}body{padding:${benchPad}px!important}body>*{transform:scale(${(benchScale / 100).toFixed(2)});transform-origin:center}\n${activeCss}`
+    : activeCss;
   const activeSpec = activeItem
     ? sanitizeBrandText(activeItem.promptSpec) ||
       `${activeTitle}\nNhóm: ${LIBRARY_LABEL[activeItem.sourceLibrary]}\nRuntime: ${activeItem.runtime}\nPhong cách: ${activeItem.style}\n\n${activeDesc}`
@@ -180,6 +195,14 @@ export const PlateTable: React.FC<PlateTableProps> = ({ query, onClearQuery }) =
               {LIBRARY_LABEL[name]}
             </button>
           ))}
+          <button
+            type="button"
+            className="ex-text"
+            aria-pressed={savedOnly}
+            onClick={onToggleSavedOnly}
+          >
+            Đã lưu ({savedPlateCount})
+          </button>
         </div>
         {canDrift ? (
           <button
@@ -252,7 +275,14 @@ export const PlateTable: React.FC<PlateTableProps> = ({ query, onClearQuery }) =
                   className="ex-text"
                   onClick={() => setSheetOpen(true)}
                 >
-                  Phóng to
+                  Xem nhanh
+                </button>
+                <button
+                  type="button"
+                  className="ex-text ex-text-strong"
+                  onClick={() => openExperience(activeItem.id)}
+                >
+                  Trải nghiệm
                 </button>
               </div>
             </div>
@@ -262,7 +292,7 @@ export const PlateTable: React.FC<PlateTableProps> = ({ query, onClearQuery }) =
                 <SandboxPreview
                   title={activeTitle}
                   html={activeItem.previewHtml ?? ''}
-                  css={activeItem.previewCss ?? ''}
+                  css={tunedCss}
                   theme={stageTheme}
                   viewport={viewport}
                   nonce={nonce}
@@ -315,6 +345,13 @@ export const PlateTable: React.FC<PlateTableProps> = ({ query, onClearQuery }) =
               <button
                 type="button"
                 className="btn btn-solid"
+                onClick={() => openExperience(activeItem.id)}
+              >
+                Trải nghiệm
+              </button>
+              <button
+                type="button"
+                className="btn btn-line"
                 onClick={() => openInWorkspace(templateContext(activeItem))}
               >
                 Dùng ngay
@@ -326,14 +363,7 @@ export const PlateTable: React.FC<PlateTableProps> = ({ query, onClearQuery }) =
               >
                 Đính kèm
               </button>
-              <button
-                type="button"
-                className="btn btn-line"
-                aria-pressed={activeSaved}
-                onClick={() => toggleSavedItem(activeItem.id)}
-              >
-                {activeSaved ? 'Đã lưu' : 'Lưu'}
-              </button>
+              <ReactionBar id={activeItem.id} title={activeTitle} showLabel />
               <button
                 type="button"
                 className="btn btn-ghost"
@@ -343,6 +373,55 @@ export const PlateTable: React.FC<PlateTableProps> = ({ query, onClearQuery }) =
                 {benchCodeOpen ? 'Ẩn mã' : 'Xem mã'}
               </button>
             </div>
+
+            {activeHasCode ? (
+              <div className="ex-inline-tune" role="group" aria-label="Tùy chỉnh nhanh">
+                <label className="ex-tune-field">
+                  <span className="t-label">Tỉ lệ {benchScale}%</span>
+                  <input
+                    type="range"
+                    min={65}
+                    max={125}
+                    step={5}
+                    value={benchScale}
+                    onChange={(event) => setBenchScale(Number(event.target.value))}
+                  />
+                </label>
+                <label className="ex-tune-field">
+                  <span className="t-label">Đệm {benchPad}px</span>
+                  <input
+                    type="range"
+                    min={0}
+                    max={64}
+                    step={4}
+                    value={benchPad}
+                    onChange={(event) => setBenchPad(Number(event.target.value))}
+                  />
+                </label>
+                <label className="ex-tune-field">
+                  <span className="t-label">Bo góc {benchRadius}px</span>
+                  <input
+                    type="range"
+                    min={0}
+                    max={32}
+                    step={2}
+                    value={benchRadius}
+                    onChange={(event) => setBenchRadius(Number(event.target.value))}
+                  />
+                </label>
+                <label className="ex-tune-field">
+                  <span className="t-label">Tốc độ {benchSpeed}x</span>
+                  <input
+                    type="range"
+                    min={0.5}
+                    max={2}
+                    step={0.25}
+                    value={benchSpeed}
+                    onChange={(event) => setBenchSpeed(Number(event.target.value))}
+                  />
+                </label>
+              </div>
+            ) : null}
 
             {benchCodeOpen ? (
               <div className="ex-code-drawer">
@@ -473,13 +552,18 @@ export const PlateTable: React.FC<PlateTableProps> = ({ query, onClearQuery }) =
       {shown.length === 0 ? (
         <div className="wrap-wide ex-empty">
           <p className="ex-empty-line">
-            {query ? `Không có mẫu nào khớp “${query}”.` : 'Danh mục này chưa có mẫu trên bàn.'}
+            {savedOnly
+              ? 'Chưa có mẫu nào được lưu.'
+              : query
+                ? `Không có mẫu nào khớp “${query}”.`
+                : 'Danh mục này chưa có mẫu trên bàn.'}
           </p>
           <button
             type="button"
             className="ex-text"
             onClick={() => {
               onClearQuery();
+              onShowAll();
               setLibrary('all');
             }}
           >
@@ -492,10 +576,9 @@ export const PlateTable: React.FC<PlateTableProps> = ({ query, onClearQuery }) =
         item={sheetItem}
         position={activeIndex + 1}
         total={flat.length}
-        saved={sheetItem ? savedItemIds.includes(sheetItem.id) : false}
         onClose={() => setSheetOpen(false)}
         onStep={handleStep}
-        onToggleSave={(item) => toggleSavedItem(item.id)}
+        onExperience={(item) => openExperience(item.id)}
         onUse={(item) => openInWorkspace(templateContext(item))}
         onAttach={handleAttach}
       />
