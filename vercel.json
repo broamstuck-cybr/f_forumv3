@@ -11,11 +11,24 @@
       "destination": "/api/$1"
     },
     {
-      "source": "/((?!api/|assets/|robots\\.txt|sitemap\\.xml|llms\\.txt|og-cover\\.png).*)",
+      "source": "/((?!api/|assets/|robots\\.txt|sitemap\\.xml|llms\\.txt|og-cover\\.png|iphone18-simulator\\.html).*)",
       "destination": "/index.html"
     }
   ],
   "headers": [
+    {
+      "source": "/iphone18-simulator\\.html",
+      "headers": [
+        {
+          "key": "Content-Type",
+          "value": "text/html; charset=utf-8"
+        },
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=3600"
+        }
+      ]
+    },
     {
       "source": "/assets/(.*)",
       "headers": [
