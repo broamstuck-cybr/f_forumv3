@@ -9,6 +9,7 @@ import {
   Minimize2,
   Monitor,
   RotateCw,
+  Share2,
   Smartphone,
   Tablet,
 } from 'lucide-react';
@@ -38,6 +39,7 @@ export interface LiveStageProps {
   onRunChecks: () => void;
   onExportZip: () => void;
   exporting: boolean;
+  onOpenPublish?: () => void;
   onCreateSnapshot: () => void;
   onRestoreSnapshot: (snapshotId: string) => void;
   expanded: boolean;
@@ -89,6 +91,7 @@ export const LiveStage: React.FC<LiveStageProps> = ({
   onRunChecks,
   onExportZip,
   exporting,
+  onOpenPublish,
   onCreateSnapshot,
   onRestoreSnapshot,
   expanded,
@@ -216,6 +219,18 @@ export const LiveStage: React.FC<LiveStageProps> = ({
           >
             <RotateCw size={15} aria-hidden="true" />
           </button>
+
+          {onOpenPublish && (
+            <button
+              type="button"
+              className="ws-icon-pill"
+              aria-label="Đăng bản dựng lên Tri thức"
+              title="Đăng lên Tri thức"
+              onClick={onOpenPublish}
+            >
+              <Share2 size={15} aria-hidden="true" />
+            </button>
+          )}
 
           <button
             type="button"

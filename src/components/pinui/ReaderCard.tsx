@@ -40,10 +40,10 @@ function splitOrnateParagraph(text: string): { prefix: string; cap: string; rest
 }
 
 const DEFAULT_PARAGRAPHS = [
-  'Một giao diện có giá trị không phô trương bằng hàng chục khối thẻ giống hệt nhau. Nó dẫn dắt ánh nhìn đi qua khoảng trống có chủ đích, nơi từng đường viền mảnh và độ tương phản vừa đủ tạo nên nhịp thở tĩnh tại.',
-  'Khi đọc sâu vào kiến trúc thành phần và hệ thống token, điều còn lại không phải là hiệu ứng hào nhoáng, mà là kỷ luật tỷ lệ, tốc độ phản hồi và sự chính xác của từng dữ liệu.',
-  'Người thiết kế có tư duy phản biện luôn tự hỏi: phần tử này tồn tại để giải quyết vấn đề gì, hay chỉ để lấp đầy khoảng trống của khung lưới mặc định.',
-  'Trong không gian F-Forum, mỗi mẫu giao diện đều có thể mở trực tiếp trên sân khấu kiểm định, đối chiếu từng dòng Diff & Check trước khi xuất bản.',
+  'Một bảng dữ liệu 5 cột hiển thị ổn trên màn hình 1440px, nhưng sang 390px sẽ đẩy cả trang tràn ngang nếu thiếu min-width: 0 trên track lưới. Tách cấu trúc thành thẻ dọc hoặc bảng cuộn cô lập giúp giữ đúng biên đọc mà không cắt chữ.',
+  'Thay vì đặt ba lớp backdrop-filter lên 500 phần tử cuộn liên tục, chỉ giữ kính mờ ở thanh điều hướng và hộp thoại nổi. Tốc độ khung hình tăng từ 35 lên 60 FPS trên laptop tầm trung, đồng thời tránh vệt đen ở góc bo tròn.',
+  'Bộ biến CSS dùng chung cho hai nền tối và sáng phải khóa độ tương phản chữ thường từ 4.5:1 trở lên ngay tại :root. Khi tách riêng màu bề mặt và viền, thành phần con đổi giao diện theo theme mà không cần ghi đè từng lớp.',
+  'Mỗi mẫu giao diện trong F-Forum đều đi kèm hộp cát chạy thử cô lập bằng thuộc tính sandbox="allow-scripts" và bộ kiểm tra tĩnh trước khi xuất bản. Bạn có thể đọc mã nguồn, đối chiếu diff từng dòng rồi nạp thẳng sang Workspace để chỉnh sửa.',
 ];
 
 const morphOpen: Transition = { type: 'spring', visualDuration: 0.46, bounce: 0.14 };

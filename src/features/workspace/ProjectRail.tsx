@@ -15,6 +15,26 @@ export interface ProjectRailProps {
   dismiss?: React.ReactNode;
 }
 
+type ProjectHealth = 'pass' | 'warn' | 'draft';
+
+function getProjectHealth(project: WorkspaceProject): ProjectHealth {
+  const report = project.checksReport;
+  if (!report) return 'draft';
+  if (report.failCount > 0 || report.warnCount > 0) return 'warn';
+  return 'pass';
+}
+
+function getProjectHealthTitle(project: WorkspaceProject, health: ProjectHealth): string {
+  const report = project.checksReport;
+  if (health === 'pass' && report) {
+    return `Đạt ${report.passCount}/${report.results.length} phép kiểm`;
+  }
+  if (health === 'warn' && report) {
+    return `${report.failCount} lỗi · ${report.warnCount} cảnh báo kiểm định`;
+  }
+  return 'Chưa chạy kiểm định';
+}
+
 export const ProjectRail: React.FC<ProjectRailProps> = ({
   projects,
   activeProjectId,
@@ -73,6 +93,8 @@ export const ProjectRail: React.FC<ProjectRailProps> = ({
         const isCurrent = project.id === activeProjectId;
         const isEditing = editingId === project.id;
         const isDeleting = confirmDeleteId === project.id;
+        const health = getProjectHealth(project);
+        const healthTitle = getProjectHealthTitle(project, health);
 
         return (
           <li
@@ -141,7 +163,15 @@ export const ProjectRail: React.FC<ProjectRailProps> = ({
                   aria-current={isCurrent ? 'true' : undefined}
                   onClick={() => onSelect(project.id)}
                 >
-                  <span className="ws-rail-name">{project.name}</span>
+                  <span className="ws-rail-name-row">
+                    <span
+                      className="ws-health-dot"
+                      data-health={health}
+                      title={healthTitle}
+                      aria-hidden="true"
+                    />
+                    <span className="ws-rail-name">{project.name}</span>
+                  </span>
                   <span className="ws-rail-meta">
                     <span>{project.files.length} tệp</span>
                     <time dateTime={project.updatedAt}>{formatStamp(project.updatedAt)}</time>

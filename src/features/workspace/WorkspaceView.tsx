@@ -1,12 +1,17 @@
 import React, { useEffect, useId, useMemo, useRef, useState } from 'react';
 import {
+  AlertTriangle,
+  ArrowUpRight,
+  CheckCircle2,
   Columns2,
   Ellipsis,
   MessageSquare,
   PanelLeft,
   PanelLeftClose,
   Paperclip,
+  Share2,
   SlidersHorizontal,
+  Wrench,
   X,
 } from 'lucide-react';
 import { Chips, type ChipItem } from '../../components/pinui/Chips';
@@ -14,6 +19,11 @@ import { DynamicDropZone } from '../../components/pinui/DynamicDropZone';
 import { PromptComposer } from '../../components/pinui/PromptComposer';
 import { apiClient } from '../../services/apiClient';
 import { useAppStore } from '../../store/appStore';
+import type {
+  CommunityPost,
+  CommunityShowcaseSnippet,
+  WorkspaceProject,
+} from '../../types/index';
 import { AiProjectSetupDrawer } from './AiProjectSetupDrawer';
 import { GitHubConnectorModal } from './GitHubConnectorModal';
 import type { PreviewViewport } from './LivePreviewFrame';
@@ -52,23 +62,120 @@ const MODEL_OPTIONS = [
 
 const STARTERS: StarterPrompt[] = [
   {
-    label: 'Trang câu lạc bộ & Lịch sinh hoạt',
+    label: 'Lịch sinh hoạt CLB & Đăng ký',
     prompt:
-      'Dựng trang giới thiệu câu lạc bộ: lời chào, lịch sinh hoạt theo tuần, bộ lọc sự kiện và biểu mẫu đăng ký thành viên.',
+      'Tạo trang câu lạc bộ gồm lịch họp theo tuần, bộ lọc sự kiện theo chủ đề và form đăng ký tham gia có kiểm tra email.',
   },
   {
-    label: 'Bảng điều khiển điểm & Xếp hạng lớp',
+    label: 'Bảng điểm & Xếp hạng lớp',
     prompt:
-      'Dựng bảng điểm lớp học có tìm kiếm nhanh, lọc theo môn, sắp xếp theo điểm trung bình và tương thích khung nhìn 390px.',
+      'Thiết kế bảng tra cứu điểm môn học: ô tìm theo tên, sắp xếp điểm trung bình tăng giảm và hiển thị gọn trên màn hình 390px.',
   },
   {
-    label: 'Hồ sơ năng lực & Dự án cá nhân',
+    label: 'Hồ sơ dự án cá nhân',
     prompt:
-      'Dựng trang hồ sơ cá nhân: giới thiệu chuyên môn, danh mục 3 dự án tiêu biểu có bộ chuyển tab và biểu mẫu liên hệ.',
+      'Xây trang hồ sơ kỹ sư phần mềm với thẻ dự án chuyển tab theo công nghệ, mục kinh nghiệm làm việc và biểu mẫu liên hệ trực tiếp.',
   },
 ];
 
 const ARENA_TURNS_STORAGE_KEY = 'fforum_v3_arena_compare_turns';
+const COMMUNITY_POSTS_STORAGE_KEY = 'fforum_v3_community_posts_v7';
+
+function derivePublishTags(project: WorkspaceProject): string {
+  const collected: string[] = [];
+  for (const item of project.attachedItems) {
+    if (item.tags) {
+      for (const tag of item.tags) {
+        const clean = tag.trim().toLowerCase();
+        if (clean && !collected.includes(clean)) {
+          collected.push(clean);
+        }
+      }
+    }
+  }
+  if (collected.length === 0) return 'html, css, ui';
+  return collected.slice(0, 5).join(', ');
+}
+
+function buildPublishSummary(project: WorkspaceProject): string {
+  const report = project.checksReport;
+  const checkNote = report
+    ? `Kiểm định ${report.passCount}/${report.results.length} phép kiểm đạt${report.failCount > 0 ? `, ${report.failCount} lỗi` : ''}${report.warnCount > 0 ? `, ${report.warnCount} cảnh báo` : ''}.`
+    : 'Chưa chạy kiểm định 6 lớp.';
+  const fileNames = project.files.map((file) => file.path).join(', ');
+  const baseDesc = project.description.trim();
+  return [
+    baseDesc || `Bản dựng từ phiên ${project.name}.`,
+    `Đóng gói ${project.files.length} tệp (${fileNames}). ${checkNote}`,
+  ].join(' ');
+}
+
+function packageDemoSnippet(project: WorkspaceProject): CommunityShowcaseSnippet {
+  const htmlFile =
+    project.files.find((file) => file.path === 'index.html') ||
+    project.files.find((file) => file.path.endsWith('.html'));
+  const cssFile =
+    project.files.find((file) => file.path === 'styles.css') ||
+    project.files.find((file) => file.path.endsWith('.css'));
+  const jsFile =
+    project.files.find((file) => file.path === 'app.js') ||
+    project.files.find((file) => file.path.endsWith('.js'));
+
+  const rawHtml = (htmlFile?.content || '').trim();
+  const cleanHtml = rawHtml
+    .replace(/<link[^>]+href=["'](?:\.\/)?styles\.css["'][^>]*>/gi, '')
+    .replace(/<script[^>]+src=["'](?:\.\/)?app\.js["'][^>]*>\s*<\/script>/gi, '')
+    .trim();
+
+  return {
+    html: cleanHtml || `<main><h1>${project.name}</h1></main>`,
+    css: (cssFile?.content || '').trim(),
+    js: (jsFile?.content || '').trim() || undefined,
+  };
+}
+
+function prependCommunityPostToLocalStorage(post: CommunityPost): void {
+  if (typeof window === 'undefined') return;
+  try {
+    const raw = window.localStorage.getItem(COMMUNITY_POSTS_STORAGE_KEY);
+    const existing = raw ? (JSON.parse(raw) as CommunityPost[]) : [];
+    const list = Array.isArray(existing) ? existing : [];
+    const next = [post, ...list.filter((entry) => entry.id !== post.id)];
+    window.localStorage.setItem(COMMUNITY_POSTS_STORAGE_KEY, JSON.stringify(next));
+  } catch {
+    return;
+  }
+}
+
+function buildEvalRepairPrompt(project: WorkspaceProject): string {
+  const report = project.checksReport;
+  if (!report) return '';
+  const flagged = report.results.filter(
+    (entry) => entry.status === 'fail' || entry.status === 'warn'
+  );
+  if (flagged.length === 0) return '';
+
+  const lines = flagged.map((entry) => {
+    const tag = entry.status === 'fail' ? 'LỖI' : 'CẢNH BÁO';
+    const details =
+      entry.issues.length > 0
+        ? entry.issues
+            .slice(0, 3)
+            .map((issue) =>
+              issue.line
+                ? `${issue.file}:${issue.line} (${issue.message})`
+                : `${issue.file} (${issue.message})`
+            )
+            .join('; ')
+        : entry.summary;
+    return `- [${tag}] ${entry.title}: ${details}`;
+  });
+
+  return [
+    'Sửa toàn bộ lỗi và cảnh báo kiểm định 6 lớp bên dưới, giữ nguyên bố cục đang hoạt động ổn định:',
+    ...lines,
+  ].join('\n');
+}
 
 function buildDistinctArenaArtifact(
   prompt: string,
@@ -306,7 +413,7 @@ body.compact-mode .arena-card {
     btn.addEventListener('click', function () {
       count += 1;
       counter.textContent = String(count);
-      status.textContent = 'Model ${side} (${modelLabel}) da cap nhat trang thai lan #' + count + '.';
+      status.textContent = 'Model ${side} (${modelLabel}) đã cập nhật trạng thái lần #' + count + '.';
     });
   }
 
@@ -427,9 +534,18 @@ export const WorkspaceView: React.FC = () => {
   const [setupDrawerOpen, setSetupDrawerOpen] = useState(false);
   const [githubOpen, setGithubOpen] = useState(false);
   const [exporting, setExporting] = useState(false);
+  const [publishOpen, setPublishOpen] = useState(false);
+  const [publishTitle, setPublishTitle] = useState('');
+  const [publishBody, setPublishBody] = useState('');
+  const [publishTags, setPublishTags] = useState('');
+  const [publishing, setPublishing] = useState(false);
+  const [publishedPostId, setPublishedPostId] = useState<string | null>(null);
 
   const dockRef = useRef<HTMLDivElement>(null);
   const renameId = useId();
+  const publishTitleId = useId();
+  const publishBodyId = useId();
+  const publishTagsId = useId();
 
   const currentArenaTurns = useMemo(
     () => arenaTurnsMap[activeProject.id] || [],
@@ -466,6 +582,12 @@ export const WorkspaceView: React.FC = () => {
   const railInline = isDesktop && railOpen;
   const threadHidden = !isDesktop && mobilePane !== 'chat';
   const stageHidden = !isDesktop && mobilePane !== 'stage';
+  const evalFailCount = activeProject.checksReport?.failCount ?? 0;
+  const evalWarnCount = activeProject.checksReport?.warnCount ?? 0;
+  const hasEvalIssues = evalFailCount > 0 || evalWarnCount > 0;
+  const checksPassLabel = activeProject.checksReport
+    ? `${activeProject.checksReport.passCount}/${activeProject.checksReport.results.length} phép kiểm đạt`
+    : 'Kiểm định 6 lớp';
 
   const getModelLabel = (modelId: string): string => {
     const found = MODEL_OPTIONS.find((item) => item.id === modelId || item.name === modelId);
@@ -744,6 +866,125 @@ export const WorkspaceView: React.FC = () => {
     }
   };
 
+  const handleOpenPreviewStage = () => {
+    setStageTab('preview');
+    if (!isDesktop) {
+      setMobilePane('stage');
+    }
+  };
+
+  const handleOpenDiffStage = () => {
+    setReviewTab('diff');
+    setStageTab('review');
+    if (!isDesktop) {
+      setMobilePane('stage');
+    }
+  };
+
+  const handleOpenChecksStage = () => {
+    setReviewTab('check');
+    setStageTab('review');
+    if (!isDesktop) {
+      setMobilePane('stage');
+    }
+  };
+
+  const handleGenerateFixPrompt = () => {
+    const prompt = buildEvalRepairPrompt(activeProject);
+    if (!prompt) return;
+    setAgentMode('Refine');
+    setComposerValue(prompt);
+    dockRef.current?.querySelector<HTMLElement>('textarea, input')?.focus();
+  };
+
+  const openPublishModal = () => {
+    setPublishTitle(activeProject.name);
+    setPublishBody(buildPublishSummary(activeProject));
+    setPublishTags(derivePublishTags(activeProject));
+    setPublishedPostId(null);
+    setPublishOpen(true);
+  };
+
+  const handleGoToCommunity = () => {
+    if (publishedPostId && typeof window !== 'undefined') {
+      try {
+        window.sessionStorage.setItem('ff_community_post_id', publishedPostId);
+      } catch {
+        void 0;
+      }
+    }
+    setPublishOpen(false);
+    navigate('community');
+  };
+
+  const handlePublishSubmit = async (event: React.FormEvent) => {
+    event.preventDefault();
+    const cleanTitle = publishTitle.trim();
+    if (!cleanTitle || publishing) return;
+
+    setPublishing(true);
+    const cleanBody = publishBody.trim() || buildPublishSummary(activeProject);
+    const parsedTags = publishTags
+      .split(',')
+      .map((tag) => tag.trim().toLowerCase())
+      .filter(Boolean);
+    const finalTags = parsedTags.length > 0 ? parsedTags : ['html', 'css', 'ui'];
+    const demoSnippet = packageDemoSnippet(activeProject);
+    const now = new Date().toISOString();
+
+    const fallbackPost: CommunityPost = {
+      id: `post-ws-${Date.now()}`,
+      channel: 'showcase',
+      title: cleanTitle,
+      body: cleanBody,
+      description: cleanBody,
+      category: 'Workspace Build',
+      tags: finalTags,
+      createdAt: now,
+      votes: 1,
+      likes: 1,
+      views: 1,
+      author: {
+        id: currentUser?.id || 'guest-builder',
+        name: currentUser?.name || 'Builder Cộng đồng',
+        handle: currentUser?.username || 'builder_vn',
+        role: currentUser?.role === 'admin' ? 'Điều hành' : 'Thành viên',
+      },
+      demoSnippet,
+      answers: [],
+    };
+
+    try {
+      let publishedPost = fallbackPost;
+      try {
+        const res = await apiClient.createCommunityPost({
+          channel: 'showcase',
+          title: cleanTitle,
+          body: cleanBody,
+          category: 'Workspace Build',
+          tags: finalTags,
+          demoSnippet,
+        });
+        publishedPost = {
+          ...res.post,
+          demoSnippet: res.post.demoSnippet || demoSnippet,
+        };
+      } catch {
+        publishedPost = fallbackPost;
+      }
+
+      prependCommunityPostToLocalStorage(publishedPost);
+      setPublishedPostId(publishedPost.id);
+      addToast({
+        type: 'success',
+        title: 'Đã đăng bản dựng lên Tri thức',
+        message: publishedPost.title,
+      });
+    } finally {
+      setPublishing(false);
+    }
+  };
+
   const handleSelectProject = (projectId: string) => {
     selectProject(projectId);
     setRenaming(false);
@@ -781,6 +1022,7 @@ export const WorkspaceView: React.FC = () => {
       onRunChecks={handleRunChecks}
       onExportZip={() => void handleExportZip()}
       exporting={exporting}
+      onOpenPublish={openPublishModal}
       onCreateSnapshot={() => createProjectSnapshot()}
       onRestoreSnapshot={restoreProjectSnapshot}
       expanded={isExpandedView}
@@ -1045,6 +1287,10 @@ export const WorkspaceView: React.FC = () => {
           starters={STARTERS}
           onPickStarter={handlePickStarter}
           onOpenFile={handleOpenFileInStage}
+          onOpenPreview={handleOpenPreviewStage}
+          onOpenDiff={handleOpenDiffStage}
+          onOpenChecks={handleOpenChecksStage}
+          checksPassLabel={checksPassLabel}
           onRetry={handleRetry}
           onRegenerate={handleRegenerate}
           canRetry={!isGenerating && !quotaBlocked}
@@ -1123,6 +1369,30 @@ export const WorkspaceView: React.FC = () => {
                     </button>
                   )}
                 </div>
+              </div>
+            )}
+
+            {hasEvalIssues && (
+              <div
+                className="ws-eval-bar"
+                data-severity={evalFailCount > 0 ? 'fail' : 'warn'}
+                role="status"
+              >
+                <span className="ws-eval-msg">
+                  <AlertTriangle size={14} aria-hidden="true" />
+                  <span>
+                    Phát hiện {evalFailCount} lỗi / {evalWarnCount} cảnh báo kiểm định
+                  </span>
+                </span>
+                <button
+                  type="button"
+                  className="ws-eval-btn"
+                  onClick={handleGenerateFixPrompt}
+                  disabled={isGenerating}
+                >
+                  <Wrench size={13} aria-hidden="true" />
+                  <span>Tạo lệnh sửa lỗi</span>
+                </button>
               </div>
             )}
 
@@ -1263,6 +1533,129 @@ export const WorkspaceView: React.FC = () => {
         className="ws-modal ws-modal-full"
       >
         {liveStageElement(true)}
+      </Modal>
+
+      <Modal
+        open={publishOpen}
+        onClose={() => setPublishOpen(false)}
+        label="Đăng bản dựng lên Tri thức"
+        className="ws-modal ws-modal-publish"
+      >
+        <div className="ws-publish">
+          <header className="ws-publish-head">
+            <div className="ws-publish-title-wrap">
+              <Share2 size={16} aria-hidden="true" />
+              <h2>Đăng lên Tri thức</h2>
+            </div>
+            <button
+              type="button"
+              className="ws-icon-pill"
+              aria-label="Đóng hộp thoại đăng bài"
+              title="Đóng"
+              onClick={() => setPublishOpen(false)}
+            >
+              <X size={15} aria-hidden="true" />
+            </button>
+          </header>
+
+          {publishedPostId ? (
+            <div className="ws-publish-done" role="status">
+              <div className="ws-publish-done-row">
+                <CheckCircle2 size={20} aria-hidden="true" />
+                <div>
+                  <p className="ws-publish-done-title">Bản dựng đã lên bảng Tri thức</p>
+                  <p className="ws-publish-done-sub">
+                    Mã HTML, CSS và JS kèm bản xem trước tương tác đã được đóng gói vào kênh Showcase.
+                  </p>
+                </div>
+              </div>
+              <div className="ws-publish-actions">
+                <button
+                  type="button"
+                  className="btn btn-line"
+                  onClick={() => setPublishOpen(false)}
+                >
+                  Ở lại Workspace
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-red"
+                  onClick={handleGoToCommunity}
+                >
+                  <span>Mở Tri thức</span>
+                  <ArrowUpRight size={15} aria-hidden="true" />
+                </button>
+              </div>
+            </div>
+          ) : (
+            <form className="ws-publish-form" onSubmit={(event) => void handlePublishSubmit(event)}>
+              <div className="ws-publish-field">
+                <label className="t-label" htmlFor={publishTitleId}>
+                  Tiêu đề bản dựng
+                </label>
+                <input
+                  id={publishTitleId}
+                  type="text"
+                  className="field"
+                  value={publishTitle}
+                  onChange={(event) => setPublishTitle(event.target.value)}
+                  required
+                  maxLength={120}
+                />
+              </div>
+
+              <div className="ws-publish-field">
+                <label className="t-label" htmlFor={publishBodyId}>
+                  Tóm tắt kỹ thuật
+                </label>
+                <textarea
+                  id={publishBodyId}
+                  className="field ws-publish-textarea"
+                  rows={3}
+                  value={publishBody}
+                  onChange={(event) => setPublishBody(event.target.value)}
+                />
+              </div>
+
+              <div className="ws-publish-field">
+                <label className="t-label" htmlFor={publishTagsId}>
+                  Thẻ phân loại (phân cách bằng dấu phẩy)
+                </label>
+                <input
+                  id={publishTagsId}
+                  type="text"
+                  className="field"
+                  value={publishTags}
+                  onChange={(event) => setPublishTags(event.target.value)}
+                  placeholder="html, css, ui"
+                />
+              </div>
+
+              <div className="ws-publish-meta">
+                <span>{checksPassLabel}</span>
+                <span>{activeProject.files.length} tệp đính kèm</span>
+              </div>
+
+              <div className="ws-publish-actions">
+                <button
+                  type="button"
+                  className="btn btn-line"
+                  onClick={() => setPublishOpen(false)}
+                  disabled={publishing}
+                >
+                  Hủy
+                </button>
+                <button
+                  type="submit"
+                  className="btn btn-red"
+                  disabled={publishing || !publishTitle.trim()}
+                >
+                  {publishing ? 'Đang đăng...' : 'Đăng bản dựng'}
+                </button>
+              </div>
+            </form>
+          )}
+        </div>
       </Modal>
 
       <Modal

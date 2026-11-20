@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Check, Copy, RotateCw } from 'lucide-react';
+import { Check, Copy, Eye, FileCode2, GitCompareArrows, RotateCw, ShieldCheck } from 'lucide-react';
 import type { AIActivityState, AIStreamingStage, ChatMessage } from '../../types/index';
 import { formatClock } from './time';
 
@@ -42,6 +42,10 @@ interface ThreadProps {
   starters: StarterPrompt[];
   onPickStarter: (prompt: string) => void;
   onOpenFile: (path: string) => void;
+  onOpenPreview?: () => void;
+  onOpenDiff?: () => void;
+  onOpenChecks?: () => void;
+  checksPassLabel?: string;
   onRetry: () => void;
   onRegenerate: () => void;
   canRetry: boolean;
@@ -105,6 +109,10 @@ export const Thread: React.FC<ThreadProps> = ({
   starters,
   onPickStarter,
   onOpenFile,
+  onOpenPreview,
+  onOpenDiff,
+  onOpenChecks,
+  checksPassLabel,
   onRetry,
   onRegenerate,
   canRetry,
@@ -324,19 +332,83 @@ export const Thread: React.FC<ThreadProps> = ({
               )}
 
               {message.changedFiles && message.changedFiles.length > 0 && (
-                <ul className="ws-turn-files" aria-label="Tệp đã cập nhật">
-                  {message.changedFiles.map((filePath) => (
-                    <li key={filePath}>
-                      <button
-                        type="button"
-                        className="ws-file-pill"
-                        onClick={() => onOpenFile(filePath)}
-                      >
-                        {filePath}
-                      </button>
-                    </li>
-                  ))}
-                </ul>
+                message.role === 'assistant' ? (
+                  <div className="ws-artifact-card" aria-label="Bản dựng tệp đã cập nhật">
+                    <div className="ws-artifact-head">
+                      <span className="ws-artifact-title">
+                        <FileCode2 size={14} aria-hidden="true" />
+                        <span>{message.changedFiles.length} tệp đã cập nhật</span>
+                      </span>
+                      <span className="ws-artifact-badge">
+                        <ShieldCheck size={12} aria-hidden="true" />
+                        <span>{checksPassLabel || 'Kiểm định 6 lớp'}</span>
+                      </span>
+                    </div>
+
+                    <ul className="ws-turn-files" aria-label="Tệp đã cập nhật">
+                      {message.changedFiles.map((filePath) => (
+                        <li key={filePath}>
+                          <button
+                            type="button"
+                            className="ws-file-pill"
+                            onClick={() => onOpenFile(filePath)}
+                          >
+                            {filePath}
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+
+                    {(onOpenPreview || onOpenDiff || onOpenChecks) && (
+                      <div className="ws-artifact-jumps" role="group" aria-label="Mở nhanh bản dựng">
+                        {onOpenPreview && (
+                          <button
+                            type="button"
+                            className="ws-artifact-jump"
+                            onClick={onOpenPreview}
+                          >
+                            <Eye size={13} aria-hidden="true" />
+                            <span>Xem trực tiếp</span>
+                          </button>
+                        )}
+                        {onOpenDiff && (
+                          <button
+                            type="button"
+                            className="ws-artifact-jump"
+                            onClick={onOpenDiff}
+                          >
+                            <GitCompareArrows size={13} aria-hidden="true" />
+                            <span>Soi Diff</span>
+                          </button>
+                        )}
+                        {onOpenChecks && (
+                          <button
+                            type="button"
+                            className="ws-artifact-jump"
+                            onClick={onOpenChecks}
+                          >
+                            <ShieldCheck size={13} aria-hidden="true" />
+                            <span>Kiểm 6 lớp</span>
+                          </button>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <ul className="ws-turn-files" aria-label="Tệp đã cập nhật">
+                    {message.changedFiles.map((filePath) => (
+                      <li key={filePath}>
+                        <button
+                          type="button"
+                          className="ws-file-pill"
+                          onClick={() => onOpenFile(filePath)}
+                        >
+                          {filePath}
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                )
               )}
 
               <div className="ws-turn-actions">
@@ -457,10 +529,10 @@ export const Thread: React.FC<ThreadProps> = ({
               ) : (
                 <p className="ws-turn-body">
                   {streamingStage === 'checking'
-                    ? 'Đang chạy kiểm định tự động 6 lớp...'
+                    ? 'Đang chạy kiểm định 6 lớp...'
                     : streamingStage === 'generating'
-                      ? 'Đang tổng hợp mã nguồn HTML, CSS, JS...'
-                      : 'Đang định tuyến Model & ngữ cảnh...'}
+                      ? 'Đang sinh mã HTML, CSS, JS...'
+                      : 'Đang định tuyến Model và ngữ cảnh...'}
                   <span className="ws-caret" aria-hidden="true" />
                 </p>
               )}

@@ -1,20 +1,22 @@
 # F-Forum v3
 
-> Kho mẫu thiết kế, mã nguồn mở và không gian dựng thử Web/UI chạy trực tiếp trên trình duyệt với Live View cô lập, kiểm định mã và xuất ZIP sạch.
+> Bàn dựng và kiểm định giao diện web trực tiếp trên trình duyệt với Live View cô lập, 6 phép kiểm Diff & Check, 196 giao diện, 6.770 chi tiết UI/UX, 122 kho GitHub tiếng Việt, 61 công cụ AI và 83 mẫu chuyển động.
 
 ## Main sections
 
-- [Trang giới thiệu](https://fforum3.vercel.app/): Câu chuyện sản phẩm theo từng chương, mô phỏng iPhone 18 Pro chạy ứng dụng F-Forum, 12 thành phần quy trình tương tác và hỏi đáp minh bạch.
-- [Trang chủ](https://fforum3.vercel.app/home): Khởi tạo đặc tả 0 lượt với nền tay chấm LED Dot-Matrix, 48 mẫu showcase chuyển động 4 hàng chéo tương tác Tim (10-100) + Prompt và Tủ sách tài nguyên Glacier 12 cuốn 3D.
-- [Bàn soi Khám phá & Trải nghiệm](https://fforum3.vercel.app/explore): Kho tham chiếu 196 mẫu tương tác trực tiếp (Tương tác, Không gian 3D, Hiệu ứng, Chuyển động, Bố cục), trang Trải nghiệm `/explore/experience`, Đã lưu Bookmark, 32+ công cụ AI và 72+ kho GitHub chọn lọc.
-- [Workspace](https://fforum3.vercel.app/workspace): Môi trường 3 vùng với AI SSE streaming, Live View cô lập (390px, 768px, 1440px), Diff & Check 6 lớp và xuất tệp ZIP quét bí mật.
-- [Source of Knowledge](https://fforum3.vercel.app/community): Diễn đàn thảo luận, trình diễn hộp cát, học liệu chuẩn hóa và hồ sơ chuyển giao câu lạc bộ.
+- [Trang giới thiệu](https://fforum3.vercel.app/): Câu chuyện sản phẩm theo từng chương, mô phỏng iPhone 18 Pro chạy ứng dụng F-Forum, 195 người truy cập đã ghi nhận, 12 thành phần quy trình tương tác và hỏi đáp minh bạch.
+- [Trang chủ](https://fforum3.vercel.app/home): Khởi tạo đặc tả 0 lượt với nền tay chấm LED Dot-Matrix, 83 mẫu chuyển động kèm prompt và Tủ sách tài nguyên Glacier 12 cuốn 3D.
+- [Bàn soi Khám phá](https://fforum3.vercel.app/explore): Kho tham chiếu 196 giao diện tương tác trực tiếp, 6.770 chi tiết UI/UX (Bố cục, Không gian 3D, Hiệu ứng, Chuyển động, Tương tác), 122 kho GitHub tiếng Việt và 61 công cụ AI đã kiểm chứng.
+- [Trải nghiệm tương tác](https://fforum3.vercel.app/explore/experience): Không gian chạy thử và đối chiếu trực tiếp các mẫu chuyển động, cảnh 3D cùng thành phần tương tác trước khi mở trong Workspace.
+- [Workspace](https://fforum3.vercel.app/workspace): Môi trường 3 vùng với AI SSE streaming, Live View cô lập (390px, 768px, 1440px), Diff & Check 6 phép kiểm và xuất tệp ZIP tự động che khóa bí mật.
+- [Tri thức (Source of Knowledge)](https://fforum3.vercel.app/community): Diễn đàn chia sẻ bản dựng từ Workspace, trình diễn hộp cát, học liệu chuẩn hóa và hồ sơ bàn giao câu lạc bộ.
 
 ## Key verifiable facts
 
-- Nhà phát triển: F-Forum (giấy phép MIT)
+- Nhà phát triển: F-Forum (giấy phép MIT, cập nhật 2026-11-21)
 - Mã nguồn: https://github.com/broamstuck-cybr/f_forumv3
-- Kho tham chiếu hợp nhất: https://github.com/broamstuck-cybr/SOURCEOFKNOWLEDGFORAI (6.770 thành phần: Bố cục 5.047, Không gian 3D 961, Hiệu ứng 400, Chuyển động 321, Tương tác 41)
+- Kho tham chiếu hợp nhất: https://github.com/broamstuck-cybr/SOURCEOFKNOWLEDGFORAI (6.770 chi tiết UI/UX: Bố cục 5.047, Không gian 3D 961, Hiệu ứng 400, Chuyển động 321, Tương tác 41)
+- Hệ sinh thái Bàn soi: 196 giao diện, 83 mẫu chuyển động, 122 kho GitHub tiếng Việt, 61 công cụ AI
 - Giải phẫu kiến trúc cuộn: https://github.com/broamstuck-cybr/shoptify-winter-reverser-engine (12 chương, 199 cập nhật, 682 tài nguyên)
-- Bảo mật Live View: iframe sandbox="allow-scripts" không dùng allow-same-origin, referrerPolicy="no-referrer"
-- Truy cập mở: 0 VND, 15 lượt tạo mã tiêu chuẩn mỗi phiên, hỗ trợ khóa API riêng (BYOK) lưu cục bộ trình duyệt
+- Bảo mật Live View & Diff & Check: iframe sandbox="allow-scripts" không dùng allow-same-origin, referrerPolicy="no-referrer", 6 phép kiểm tự động
+- Truy cập mở: 0 VND, 15 lượt miễn phí mỗi phiên, hỗ trợ khóa API riêng (BYOK) lưu cục bộ trình duyệt

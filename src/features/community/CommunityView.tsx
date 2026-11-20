@@ -5,8 +5,11 @@ import {
   Bookmark,
   BookOpen,
   Check,
+  Code2,
   Copy,
   Flag,
+  Hash,
+  HelpCircle,
   MessageSquare,
   Monitor,
   Moon,
@@ -24,6 +27,7 @@ import type {
   CommunityPost,
   CommunityShowcaseSnippet,
 } from '../../types/index';
+import communitySeedJson from '../../data/communitySeed.json';
 import { useAppStore } from '../../store/appStore';
 import {
   ChatRoom,
@@ -46,8 +50,18 @@ import { Modal } from '../workspace/Modal';
 import './community.css';
 
 type FeedTabId = 'all' | 'trending' | 'demos' | 'saved';
+type ChannelFilterId = 'all' | CommunityChannel | 'saved';
 type SortMode = 'newest' | 'top' | 'discussed';
 type CodeDisplayMode = 'collapsed' | 'live' | 'code';
+
+const CHANNEL_ITEMS: Array<{ id: ChannelFilterId; label: string }> = [
+  { id: 'all', label: 'tất-cả' },
+  { id: 'qa', label: 'hỏi-đáp' },
+  { id: 'showcase', label: 'trưng-bày' },
+  { id: 'drops', label: 'rules-prompt' },
+  { id: 'clubs', label: 'clb-dự-án' },
+  { id: 'saved', label: 'đã-lưu' },
+];
 
 const LOCAL_POSTS_STORAGE_KEY = 'fforum_v3_community_posts_v7';
 const LOCAL_REPLIES_STORAGE_KEY = 'fforum_v3_community_replies_v7';
@@ -87,26 +101,8 @@ const CHAT_HUES = ['#ff6450', '#7fd69b', '#7da3bb', '#e9b44c', '#b0aec6'];
 
 const SAMPLE_SNIPPET: CommunityShowcaseSnippet = {
   html: '<div class="builder-demo-card">\n  <div class="builder-demo-head">\n    <span class="builder-badge">Sandbox Live</span>\n    <span id="demo-counter" class="builder-counter">0 lượt chạy</span>\n  </div>\n  <h3 class="builder-title">Khối kiểm định tương tác thời gian thực</h3>\n  <p class="builder-desc">Nhấn nút bên dưới để kiểm tra phản hồi sự kiện JS trong khung cô lập.</p>\n  <button type="button" id="demo-trigger" class="builder-btn">Kích hoạt xung kiểm thử</button>\n</div>',
-  css: '.builder-demo-card { width: min(420px, 100%); padding: 20px; border-radius: 12px; border: 1px solid rgba(239, 233, 221, 0.22); background: #1a1917; color: #efe9dd; display: grid; gap: 12px; }\n.builder-demo-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; }\n.builder-badge { font-family: monospace; font-size: 11px; padding: 3px 8px; border-radius: 999px; background: rgba(255, 100, 80, 0.16); color: #ff6450; }\n.builder-counter { font-family: monospace; font-size: 12px; color: #7fd69b; }\n.builder-title { font-size: 17px; font-weight: 600; line-height: 1.3; }\n.builder-desc { font-size: 13px; line-height: 1.5; color: #b5afa3; }\n.builder-btn { padding: 10px 16px; border-radius: 8px; border: 1px solid #ff6450; background: #d63a27; color: #fffaf5; font-weight: 600; cursor: pointer; }',
+  css: '.builder-demo-card { width: min(380px, 100%); box-sizing: border-box; padding: 18px; border-radius: 12px; border: 1px solid rgba(239, 233, 221, 0.22); background: #1a1917; color: #efe9dd; display: grid; gap: 10px; }\n[data-theme="light"] .builder-demo-card { background: #fbf8f1; color: #17150f; border-color: rgba(23, 21, 15, 0.2); }\n.builder-demo-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; }\n.builder-badge { font-family: monospace; font-size: 11px; padding: 3px 8px; border-radius: 999px; background: rgba(255, 100, 80, 0.16); color: #ff6450; }\n.builder-counter { font-family: monospace; font-size: 12px; color: #7fd69b; }\n[data-theme="light"] .builder-counter { color: #1c7440; }\n.builder-title { margin: 0; font-size: 16px; font-weight: 600; line-height: 1.3; }\n.builder-desc { margin: 0; font-size: 13px; line-height: 1.5; color: #b5afa3; }\n[data-theme="light"] .builder-desc { color: #524d45; }\n.builder-btn { padding: 9px 14px; border-radius: 8px; border: 1px solid #ff6450; background: #d63a27; color: #fffaf5; font-weight: 600; cursor: pointer; }',
   js: '(function(){\n  var btn = document.getElementById("demo-trigger");\n  var out = document.getElementById("demo-counter");\n  var count = 0;\n  if (btn && out) {\n    btn.addEventListener("click", function() {\n      count += 1;\n      out.textContent = count + " lượt chạy";\n    });\n  }\n})();',
-};
-
-const ENRICHED_DEMOS: Record<string, CommunityShowcaseSnippet> = {
-  'sc-01': {
-    html: '<div class="lg-stage">\n  <button type="button" id="lg-btn" class="ux-liquid-btn">\n    <span class="ux-btn-label">Xác nhận giao dịch</span>\n  </button>\n  <p id="lg-status" class="lg-readout">Trạng thái: Sẵn sàng kích hoạt</p>\n</div>',
-    css: '.lg-stage { display: grid; place-items: center; gap: 14px; padding: 24px; }\n.ux-liquid-btn { position: relative; padding: 12px 24px; border-radius: 999px; background: rgba(255, 100, 80, 0.16); border: 1px solid rgba(255, 100, 80, 0.45); color: #efe9dd; font-size: 14px; font-weight: 600; cursor: pointer; transition: transform 0.2s cubic-bezier(0.2, 0.8, 0.2, 1), background-color 0.2s ease; }\n.ux-liquid-btn:hover { transform: translateY(-2px); background: rgba(255, 100, 80, 0.28); }\n.lg-readout { font-family: monospace; font-size: 12px; color: #7fd69b; }',
-    js: '(function(){\n  var btn = document.getElementById("lg-btn");\n  var status = document.getElementById("lg-status");\n  var step = 0;\n  if (btn && status) {\n    btn.addEventListener("click", function() {\n      step += 1;\n      status.textContent = "Đã xác nhận lệnh #" + step + " (Spring 220ms)";\n    });\n  }\n})();',
-  },
-  'sc-02': {
-    html: '<div class="ff-spotlight-card">\n  <div class="ff-card-header">\n    <span class="ff-badge">Realtime Telemetry</span>\n    <button type="button" id="bento-ping" class="ff-ping-btn">Lấy mẫu CPU</button>\n  </div>\n  <h4 class="ff-card-title">Hiệu năng hệ thống Bento</h4>\n  <p id="bento-metric" class="ff-card-body">Tài nguyên CPU giữ mức ổn định 11.4% · Khung hình 60 FPS.</p>\n</div>',
-    css: '.ff-spotlight-card { width: min(420px, 100%); padding: 22px; border-radius: 14px; background: #1a1917; border: 1px solid rgba(239, 233, 221, 0.18); color: #efe9dd; display: grid; gap: 10px; }\n.ff-card-header { display: flex; align-items: center; justify-content: space-between; gap: 8px; }\n.ff-badge { font-family: monospace; font-size: 11px; padding: 3px 9px; border-radius: 999px; background: rgba(127, 214, 155, 0.15); color: #7fd69b; }\n.ff-ping-btn { padding: 5px 10px; border-radius: 6px; border: 1px solid rgba(239, 233, 221, 0.25); background: #121110; color: #efe9dd; font-size: 11px; cursor: pointer; }\n.ff-card-title { font-size: 17px; font-weight: 600; }\n.ff-card-body { font-size: 13px; color: #b5afa3; line-height: 1.5; }',
-    js: '(function(){\n  var btn = document.getElementById("bento-ping");\n  var metric = document.getElementById("bento-metric");\n  var samples = ["9.8% · 60 FPS", "10.6% · 60 FPS", "11.2% · 60 FPS", "8.9% · 60 FPS"];\n  var idx = 0;\n  if (btn && metric) {\n    btn.addEventListener("click", function() {\n      idx = (idx + 1) % samples.length;\n      metric.textContent = "Tài nguyên CPU giữ mức ổn định " + samples[idx];\n    });\n  }\n})();',
-  },
-  'qa-02': {
-    html: '<div class="token-bridge-demo">\n  <div class="token-row">\n    <span class="token-name">--ux-surface-1</span>\n    <span id="token-val" class="token-chip">#1a1917 (Obsidian)</span>\n  </div>\n  <button type="button" id="token-swap" class="token-btn">Đổi cầu nối Token Sáng / Tối</button>\n</div>',
-    css: '.token-bridge-demo { width: min(400px, 100%); padding: 20px; border-radius: 10px; border: 1px solid rgba(239, 233, 221, 0.22); background: var(--demo-surface, #1a1917); color: var(--demo-ink, #efe9dd); display: grid; gap: 12px; transition: background-color 0.2s ease, color 0.2s ease; }\n.token-row { display: flex; justify-content: space-between; align-items: center; font-family: monospace; font-size: 12px; }\n.token-chip { padding: 3px 8px; border-radius: 4px; background: rgba(255, 100, 80, 0.16); color: #ff6450; }\n.token-btn { padding: 9px 14px; border-radius: 6px; border: 1px solid currentColor; background: transparent; color: inherit; font-size: 12px; font-weight: 600; cursor: pointer; }',
-    js: '(function(){\n  var box = document.querySelector(".token-bridge-demo");\n  var btn = document.getElementById("token-swap");\n  var val = document.getElementById("token-val");\n  var paper = false;\n  if (box && btn && val) {\n    btn.addEventListener("click", function() {\n      paper = !paper;\n      box.style.setProperty("--demo-surface", paper ? "#fbf8f1" : "#1a1917");\n      box.style.setProperty("--demo-ink", paper ? "#17150f" : "#efe9dd");\n      val.textContent = paper ? "#fbf8f1 (Editorial Stone)" : "#1a1917 (Obsidian)";\n    });\n  }\n})();',
-  },
 };
 
 const RE_PIN = new RegExp('pin\\s*ui', 'gi');
@@ -226,6 +222,7 @@ export const CommunityView: React.FC = () => {
   const postRefs = useRef<Record<string, HTMLLIElement | null>>({});
 
   const [feedTab, setFeedTab] = useState<FeedTabId>('all');
+  const [activeChannel, setActiveChannel] = useState<ChannelFilterId>('all');
   const [selectedTopic, setSelectedTopic] = useState<string>('all');
   const [authorFilter, setAuthorFilter] = useState<string | null>(null);
   const [sortMode, setSortMode] = useState<SortMode>('newest');
@@ -249,9 +246,7 @@ export const CommunityView: React.FC = () => {
   const [replyDrafts, setReplyDrafts] = useState<Record<string, string>>({});
   const [submittingReplyId, setSubmittingReplyId] = useState<string | null>(null);
 
-  const [codeModes, setCodeModes] = useState<Record<string, CodeDisplayMode>>({
-    'sc-01': 'live',
-  });
+  const [codeModes, setCodeModes] = useState<Record<string, CodeDisplayMode>>({});
   const [activeCodeFiles, setActiveCodeFiles] = useState<Record<string, string>>({});
   const [sandboxViewports, setSandboxViewports] = useState<Record<string, PreviewViewport>>({});
   const [sandboxThemes, setSandboxThemes] = useState<Record<string, PreviewTheme>>({});
@@ -320,6 +315,38 @@ export const CommunityView: React.FC = () => {
     }
   }, [recentSearches]);
 
+  const seedFallbackById = useMemo(() => {
+    const map = new Map<
+      string,
+      { demoSnippet?: CommunityShowcaseSnippet; answers: CommunityAnswer[] }
+    >();
+    const rawChannels =
+      (communitySeedJson as { channels?: Record<string, Array<Record<string, unknown>>> })
+        .channels || {};
+    for (const list of Object.values(rawChannels)) {
+      for (const item of list || []) {
+        const id = String(item.id || '');
+        if (!id) continue;
+        const answers: CommunityAnswer[] = [];
+        if (item.acceptedAnswer && typeof item.acceptedAnswer === 'object') {
+          answers.push(item.acceptedAnswer as CommunityAnswer);
+        }
+        if (Array.isArray(item.answers)) {
+          for (const ans of item.answers as CommunityAnswer[]) {
+            if (!answers.some((existing) => existing.id === ans.id)) {
+              answers.push(ans);
+            }
+          }
+        }
+        map.set(id, {
+          demoSnippet: item.demoSnippet as CommunityShowcaseSnippet | undefined,
+          answers,
+        });
+      }
+    }
+    return map;
+  }, []);
+
   const allPosts = useMemo<CommunityPost[]>(() => {
     const map = new Map<string, CommunityPost>();
     for (const lp of localPosts) {
@@ -330,26 +357,24 @@ export const CommunityView: React.FC = () => {
     for (const sp of communityPosts) {
       if (sp.hidden) continue;
       if (!map.has(sp.id)) {
-        const enrichedDemo = sp.demoSnippet
-          ? {
-              ...sp.demoSnippet,
-              ...(ENRICHED_DEMOS[sp.id]
-                ? {
-                    js: ENRICHED_DEMOS[sp.id].js,
-                    html: ENRICHED_DEMOS[sp.id].html,
-                    css: ENRICHED_DEMOS[sp.id].css,
-                  }
-                : {}),
+        const seedMeta = seedFallbackById.get(sp.id);
+        const mergedAnswers: CommunityAnswer[] = Array.isArray(sp.answers) ? [...sp.answers] : [];
+        if (seedMeta?.answers) {
+          for (const sa of seedMeta.answers) {
+            if (!mergedAnswers.some((existing) => existing.id === sa.id)) {
+              mergedAnswers.push(sa);
             }
-          : ENRICHED_DEMOS[sp.id];
+          }
+        }
         map.set(sp.id, {
           ...sp,
-          demoSnippet: enrichedDemo,
+          demoSnippet: sp.demoSnippet || seedMeta?.demoSnippet,
+          answers: mergedAnswers,
         });
       }
     }
     return Array.from(map.values());
-  }, [communityPosts, localPosts]);
+  }, [communityPosts, localPosts, seedFallbackById]);
 
   const getPostAnswers = useCallback(
     (post: CommunityPost): CommunityAnswer[] => {
@@ -405,6 +430,41 @@ export const CommunityView: React.FC = () => {
     () => allPosts.reduce((acc, post) => acc + getPostAnswers(post).length, 0),
     [allPosts, getPostAnswers]
   );
+
+  const channelCounts = useMemo<Record<ChannelFilterId, number>>(() => {
+    const counts: Record<ChannelFilterId, number> = {
+      all: allPosts.length,
+      qa: 0,
+      showcase: 0,
+      drops: 0,
+      clubs: 0,
+      saved: savedCommunityPosts.length,
+    };
+    for (const post of allPosts) {
+      if (post.channel === 'qa' || post.channel === 'showcase' || post.channel === 'drops' || post.channel === 'clubs') {
+        counts[post.channel] += 1;
+      }
+    }
+    return counts;
+  }, [allPosts, savedCommunityPosts.length]);
+
+  const handleSelectChannel = useCallback((channelId: ChannelFilterId) => {
+    setActiveChannel(channelId);
+    if (channelId === 'saved') {
+      setFeedTab('saved');
+    } else {
+      setFeedTab((prev) => (prev === 'saved' ? 'all' : prev));
+    }
+  }, []);
+
+  const handleSelectFeedTab = useCallback((tabId: FeedTabId) => {
+    setFeedTab(tabId);
+    if (tabId === 'saved') {
+      setActiveChannel('saved');
+    } else {
+      setActiveChannel((prev) => (prev === 'saved' ? 'all' : prev));
+    }
+  }, []);
 
   const feedTabItems = useMemo<LiquidTabItem[]>(
     () => [
@@ -551,10 +611,14 @@ export const CommunityView: React.FC = () => {
   const visiblePosts = useMemo<CommunityPost[]>(() => {
     let pool = allPosts;
 
+    if (activeChannel === 'saved' || feedTab === 'saved') {
+      pool = pool.filter((p) => savedItemIds.includes(p.id));
+    } else if (activeChannel !== 'all') {
+      pool = pool.filter((p) => p.channel === activeChannel);
+    }
+
     if (feedTab === 'demos') {
       pool = pool.filter((p) => Boolean(p.demoSnippet));
-    } else if (feedTab === 'saved') {
-      pool = pool.filter((p) => savedItemIds.includes(p.id));
     }
 
     if (selectedTopic !== 'all') {
@@ -596,6 +660,7 @@ export const CommunityView: React.FC = () => {
     });
   }, [
     allPosts,
+    activeChannel,
     feedTab,
     savedItemIds,
     selectedTopic,
@@ -765,6 +830,44 @@ export const CommunityView: React.FC = () => {
     });
   }, [activeProject, composeTitle, composeBody, addToast]);
 
+  const openQuickComposer = useCallback(
+    (mode: 'default' | 'showcase' | 'qa' | 'workspace') => {
+      if (mode === 'showcase') {
+        setComposeChannel('showcase');
+        setComposeCategory('Components');
+        setComposeIncludeCode(true);
+        setComposePreviewLive(true);
+      } else if (mode === 'qa') {
+        setComposeChannel('qa');
+        setComposeCategory('React / Frontend');
+        setComposeIncludeCode(false);
+        setComposePreviewLive(false);
+      } else if (mode === 'workspace') {
+        setComposeChannel('showcase');
+        setComposeCategory('Components');
+        handlePrefillFromWorkspace();
+      } else if (activeChannel === 'qa') {
+        setComposeChannel('qa');
+        setComposeCategory('React / Frontend');
+        setComposeIncludeCode(false);
+      } else if (activeChannel === 'showcase') {
+        setComposeChannel('showcase');
+        setComposeCategory('Components');
+        setComposeIncludeCode(true);
+      } else if (activeChannel === 'drops') {
+        setComposeChannel('drops');
+        setComposeCategory('Agent Rules');
+        setComposeIncludeCode(false);
+      } else if (activeChannel === 'clubs') {
+        setComposeChannel('clubs');
+        setComposeCategory('Hội nhóm');
+        setComposeIncludeCode(false);
+      }
+      setComposerOpen(true);
+    },
+    [activeChannel, handlePrefillFromWorkspace]
+  );
+
   const handleLoadSampleSnippet = useCallback(() => {
     setComposeIncludeCode(true);
     setComposeHtml(SAMPLE_SNIPPET.html);
@@ -864,6 +967,12 @@ export const CommunityView: React.FC = () => {
       if (feedTab === 'saved') {
         setFeedTab('all');
       }
+      if (
+        activeChannel === 'saved' ||
+        (activeChannel !== 'all' && activeChannel !== finalPost.channel)
+      ) {
+        setActiveChannel(finalPost.channel);
+      }
       setComposeTitle('');
       setComposeBody('');
       setComposeHtml('');
@@ -883,8 +992,9 @@ export const CommunityView: React.FC = () => {
     }
   };
 
-  const handleSubmitComment = async (event: React.FormEvent, post: CommunityPost) => {
+  const handleSubmitComment = async (event: React.FormEvent<HTMLFormElement>, post: CommunityPost) => {
     event.preventDefault();
+    const formEl = event.currentTarget;
     const draft = (replyDrafts[post.id] || '').trim();
     if (!draft) return;
 
@@ -910,6 +1020,10 @@ export const CommunityView: React.FC = () => {
       }));
       setReplyDrafts((prev) => ({ ...prev, [post.id]: '' }));
       setOpenCommentDrawers((prev) => ({ ...prev, [post.id]: true }));
+      const textareaEl = formEl.querySelector('textarea');
+      if (textareaEl) {
+        textareaEl.style.height = '';
+      }
 
       if (currentUser) {
         void answerPost(post.id, draft).catch(() => undefined);
@@ -1005,6 +1119,7 @@ export const CommunityView: React.FC = () => {
 
   const clearAllFilters = useCallback(() => {
     setFeedTab('all');
+    setActiveChannel('all');
     setSelectedTopic('all');
     setAuthorFilter(null);
     setSearchQuery('');
@@ -1013,6 +1128,7 @@ export const CommunityView: React.FC = () => {
 
   const hasActiveFilter =
     feedTab !== 'all' ||
+    activeChannel !== 'all' ||
     selectedTopic !== 'all' ||
     authorFilter !== null ||
     Boolean(searchQuery.trim());
@@ -1029,6 +1145,33 @@ export const CommunityView: React.FC = () => {
   return (
     <div className="cm">
       <div className="wrap-wide cm-shell">
+        <aside className="cm-rail-left" aria-label="Danh sách kênh Tri thức">
+          <div className="cm-channels-panel">
+            <span className="t-caps cm-channels-heading">Kênh Tri thức</span>
+            <nav className="cm-channels-nav" aria-label="Chọn kênh">
+              {CHANNEL_ITEMS.map((channel) => {
+                const active = activeChannel === channel.id;
+                return (
+                  <button
+                    key={channel.id}
+                    type="button"
+                    className="cm-channel-btn"
+                    aria-current={active ? 'page' : undefined}
+                    data-active={active ? 'true' : undefined}
+                    onClick={() => handleSelectChannel(channel.id)}
+                  >
+                    <span className="cm-channel-label">
+                      <Hash size={14} className="cm-channel-hash" aria-hidden="true" />
+                      <span>{channel.label}</span>
+                    </span>
+                    <span className="cm-channel-count">{channelCounts[channel.id]}</span>
+                  </button>
+                );
+              })}
+            </nav>
+          </div>
+        </aside>
+
         <main className="cm-main" aria-label="Luồng bài viết Tri thức">
           <header className="cm-hero-bar">
             <div className="cm-hero-top">
@@ -1039,7 +1182,7 @@ export const CommunityView: React.FC = () => {
               <button
                 type="button"
                 className="btn btn-red btn-sm cm-write-btn"
-                onClick={() => setComposerOpen(true)}
+                onClick={() => openQuickComposer('default')}
               >
                 Viết bài
               </button>
@@ -1092,7 +1235,7 @@ export const CommunityView: React.FC = () => {
                 <LiquidTabs
                   tabs={feedTabItems}
                   activeId={feedTab}
-                  onChange={(id) => setFeedTab(id as FeedTabId)}
+                  onChange={(id) => handleSelectFeedTab(id as FeedTabId)}
                   ariaLabel="Kênh bảng tin"
                 />
               </div>
@@ -1111,6 +1254,11 @@ export const CommunityView: React.FC = () => {
 
             {hasActiveFilter && (
               <div className="cm-active-filters">
+                {activeChannel !== 'all' && activeChannel !== 'saved' && (
+                  <span className="cm-filter-pill">
+                    #{CHANNEL_ITEMS.find((c) => c.id === activeChannel)?.label || activeChannel}
+                  </span>
+                )}
                 {feedTab !== 'all' && (
                   <span className="cm-filter-pill">
                     {feedTabItems.find((t) => t.id === feedTab)?.label}
@@ -1135,6 +1283,47 @@ export const CommunityView: React.FC = () => {
               </div>
             )}
           </header>
+
+          <section className="cm-quick-composer" aria-label="Tạo bài viết nhanh">
+            <div className="cm-quick-composer-top">
+              <span className="cm-avatar-chip" aria-hidden="true">
+                {authorInitials(currentUser?.name || 'Builder Cộng đồng')}
+              </span>
+              <button
+                type="button"
+                className="cm-quick-prompt-btn"
+                onClick={() => openQuickComposer('default')}
+              >
+                Bạn vừa dựng gì hay muốn mổ xẻ lỗi nào?
+              </button>
+            </div>
+            <div className="cm-quick-composer-actions">
+              <button
+                type="button"
+                className="cm-quick-action-btn"
+                onClick={() => openQuickComposer('showcase')}
+              >
+                <Code2 size={15} aria-hidden="true" />
+                <span>Chia sẻ demo</span>
+              </button>
+              <button
+                type="button"
+                className="cm-quick-action-btn"
+                onClick={() => openQuickComposer('qa')}
+              >
+                <HelpCircle size={15} aria-hidden="true" />
+                <span>Hỏi kỹ thuật</span>
+              </button>
+              <button
+                type="button"
+                className="cm-quick-action-btn"
+                onClick={() => openQuickComposer('workspace')}
+              >
+                <ArrowUpRight size={15} aria-hidden="true" />
+                <span>Nạp từ Workspace</span>
+              </button>
+            </div>
+          </section>
 
           {visiblePosts.length === 0 ? (
             <div className="cm-empty">
@@ -1165,13 +1354,16 @@ export const CommunityView: React.FC = () => {
                 const isSaved = savedItemIds.includes(post.id);
                 const isCommentsOpen = Boolean(openCommentDrawers[post.id]);
                 const hasCodeOrPayload = Boolean(post.demoSnippet || post.payload);
-                const currentCodeMode: CodeDisplayMode = codeModes[post.id] ?? 'collapsed';
+                const defaultCodeMode: CodeDisplayMode =
+                  post.demoSnippet && post.channel === 'showcase' ? 'live' : 'collapsed';
+                const currentCodeMode: CodeDisplayMode = codeModes[post.id] ?? defaultCodeMode;
                 const currentViewport: PreviewViewport = sandboxViewports[post.id] ?? 1440;
                 const currentPreviewTheme: PreviewTheme = sandboxThemes[post.id] ?? theme;
                 const currentNonce = sandboxNonces[post.id] ?? 0;
                 const solved =
                   Boolean(post.isAccepted || post.acceptedAnswer) ||
                   answers.some((a) => a.isAccepted);
+                const topAnswer = answers.find((a) => a.isAccepted) || answers[0] || null;
 
                 const codeFileTabs: FileBoxTab[] = post.demoSnippet
                   ? [
@@ -1342,11 +1534,11 @@ export const CommunityView: React.FC = () => {
                                   setCodeModes((prev) => ({
                                     ...prev,
                                     [post.id]:
-                                      prev[post.id] === 'live' ? 'collapsed' : 'live',
+                                      currentCodeMode === 'live' ? 'collapsed' : 'live',
                                   }))
                                 }
                               >
-                                {currentCodeMode === 'live' ? 'Đang chạy' : 'Chạy thử'}
+                                {currentCodeMode === 'live' ? 'Ẩn' : 'Chạy thử'}
                               </button>
                             )}
                             <button
@@ -1356,7 +1548,7 @@ export const CommunityView: React.FC = () => {
                               onClick={() =>
                                 setCodeModes((prev) => ({
                                   ...prev,
-                                  [post.id]: prev[post.id] === 'code' ? 'collapsed' : 'code',
+                                  [post.id]: currentCodeMode === 'code' ? 'collapsed' : 'code',
                                 }))
                               }
                             >
@@ -1589,6 +1781,42 @@ export const CommunityView: React.FC = () => {
                       </div>
                     </footer>
 
+                    {answers.length > 0 && topAnswer && (
+                      <div className="cm-thread-preview">
+                        <div className="cm-thread-rail" aria-hidden="true">
+                          <span className="cm-thread-spine" />
+                          <span className="cm-avatar-chip cm-avatar-chip--sm">
+                            {authorInitials(topAnswer.author.name)}
+                          </span>
+                        </div>
+                        <div className="cm-thread-content">
+                          <div className="cm-thread-head">
+                            <span className="cm-author-name">{topAnswer.author.name}</span>
+                            <span className="t-label">@{topAnswer.author.handle}</span>
+                            {topAnswer.isAccepted && (
+                              <span className="cm-solved-dot">Lời giải chuẩn</span>
+                            )}
+                          </div>
+                          <p className="cm-thread-excerpt">{whiteLabelText(topAnswer.content)}</p>
+                          <button
+                            type="button"
+                            className="cm-thread-more-btn"
+                            aria-expanded={isCommentsOpen}
+                            onClick={() =>
+                              setOpenCommentDrawers((prev) => ({
+                                ...prev,
+                                [post.id]: !prev[post.id],
+                              }))
+                            }
+                          >
+                            {isCommentsOpen
+                              ? 'Thu gọn phản hồi'
+                              : `Xem toàn bộ ${answers.length} phản hồi`}
+                          </button>
+                        </div>
+                      </div>
+                    )}
+
                     {isCommentsOpen && (
                       <div
                         className="cm-comments-drawer"
@@ -1645,14 +1873,22 @@ export const CommunityView: React.FC = () => {
                           <textarea
                             id={`cm-reply-${post.id}`}
                             rows={2}
-                            className="field cm-textarea"
+                            className="field cm-textarea cm-reply-autogrow"
                             value={replyDrafts[post.id] || ''}
-                            onChange={(e) =>
+                            onChange={(e) => {
+                              const el = e.currentTarget;
+                              const nextValue = el.value;
+                              if (!nextValue) {
+                                el.style.height = '';
+                              } else {
+                                el.style.height = 'auto';
+                                el.style.height = `${Math.min(el.scrollHeight, 220)}px`;
+                              }
                               setReplyDrafts((prev) => ({
                                 ...prev,
-                                [post.id]: e.target.value,
-                              }))
-                            }
+                                [post.id]: nextValue,
+                              }));
+                            }}
                             placeholder="Viết phản hồi kỹ thuật..."
                           />
                           <div className="cm-comment-form-row">
@@ -1686,7 +1922,7 @@ export const CommunityView: React.FC = () => {
               type="button"
               className="cm-metric-item"
               data-active={feedTab === 'all' ? 'true' : undefined}
-              onClick={() => setFeedTab('all')}
+              onClick={() => handleSelectFeedTab('all')}
             >
               <strong>{allPosts.length}</strong>
               <span>Bài</span>
@@ -1695,7 +1931,7 @@ export const CommunityView: React.FC = () => {
               type="button"
               className="cm-metric-item"
               data-active={feedTab === 'demos' ? 'true' : undefined}
-              onClick={() => setFeedTab('demos')}
+              onClick={() => handleSelectFeedTab('demos')}
             >
               <strong>{demoPosts.length}</strong>
               <span>Mã</span>
@@ -1704,7 +1940,7 @@ export const CommunityView: React.FC = () => {
               type="button"
               className="cm-metric-item"
               data-active={feedTab === 'trending' ? 'true' : undefined}
-              onClick={() => setFeedTab('trending')}
+              onClick={() => handleSelectFeedTab('trending')}
             >
               <strong>{totalCommentsCount}</strong>
               <span>Bình luận</span>
@@ -1713,7 +1949,7 @@ export const CommunityView: React.FC = () => {
               type="button"
               className="cm-metric-item"
               data-active={feedTab === 'saved' ? 'true' : undefined}
-              onClick={() => setFeedTab('saved')}
+              onClick={() => handleSelectFeedTab('saved')}
             >
               <strong>{savedCommunityPosts.length}</strong>
               <span>Đã lưu</span>
