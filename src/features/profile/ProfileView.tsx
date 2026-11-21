@@ -148,6 +148,7 @@ export const ProfileView: React.FC = () => {
     navigate,
     theme,
     viewingProfileUser,
+    openUserProfile,
     clearViewingProfileUser,
     addToast,
   } = useAppStore();
@@ -364,25 +365,27 @@ export const ProfileView: React.FC = () => {
   const activityFeed = useMemo<ActivityEntry[]>(() => {
     const items: ActivityEntry[] = [];
 
-    for (const proj of projects) {
-      items.push({
-        id: `act-proj-${proj.id}`,
-        timestamp: proj.updatedAt,
-        kindLabel: 'Dự án',
-        title: proj.name,
-        detail: `${proj.files.length} tệp mã nguồn`,
-        projectId: proj.id,
-      });
-
-      for (const snap of proj.snapshots.slice(0, 4)) {
+    if (!isOtherUser) {
+      for (const proj of projects) {
         items.push({
-          id: `act-snap-${proj.id}-${snap.id}`,
-          timestamp: snap.createdAt,
-          kindLabel: 'Mốc lưu',
-          title: snap.label,
-          detail: proj.name,
+          id: `act-proj-${proj.id}`,
+          timestamp: proj.updatedAt,
+          kindLabel: 'Dự án',
+          title: proj.name,
+          detail: `${proj.files.length} tệp mã nguồn`,
           projectId: proj.id,
         });
+
+        for (const snap of proj.snapshots.slice(0, 4)) {
+          items.push({
+            id: `act-snap-${proj.id}-${snap.id}`,
+            timestamp: snap.createdAt,
+            kindLabel: 'Mốc lưu',
+            title: snap.label,
+            detail: proj.name,
+            projectId: proj.id,
+          });
+        }
       }
     }
 
@@ -398,7 +401,7 @@ export const ProfileView: React.FC = () => {
     }
 
     return items.sort((a, b) => Date.parse(b.timestamp) - Date.parse(a.timestamp));
-  }, [projects, userPosts]);
+  }, [isOtherUser, projects, userPosts]);
 
   const builderTasks = useMemo<TaskCardItem[]>(() => {
     const tasks: TaskCardItem[] = [];
@@ -695,7 +698,18 @@ export const ProfileView: React.FC = () => {
                       )}
                       <div className="pf-item-head">
                         <span className="tag">{item.sourceLabel}</span>
-                        <span className="t-label">{item.subtitle}</span>
+                        {item.communityPost ? (
+                          <button
+                            type="button"
+                            className="cm-author-link"
+                            onClick={() => openUserProfile(item.communityPost!.author)}
+                            title={`Xem trang cá nhân của ${item.communityPost.author.name}`}
+                          >
+                            <span className="t-label">{item.subtitle}</span>
+                          </button>
+                        ) : (
+                          <span className="t-label">{item.subtitle}</span>
+                        )}
                       </div>
                       <h3 className="pf-item-title">{item.title}</h3>
                       <p className="pf-item-desc">{item.summary}</p>
@@ -908,14 +922,42 @@ export const ProfileView: React.FC = () => {
             ) : (
               <div className="pf-activity-grid">
                 <div className="pf-activity-side">
-                  <TaskCard
-                    title="Kiểm định & Xây dựng"
-                    subtitle="Trạng thái kiểm định mới nhất."
-                    tasks={builderTasks}
-                  />
-                  <div className="pf-calendar-wrap">
-                    <CalendarCard theme={theme} />
-                  </div>
+                  {isOtherUser ? (
+                    <div className="pf-social-card">
+                      <div className="pf-social-card-head">
+                        <span className="t-label">thành viên cộng đồng</span>
+                        <span className="tag tag-red">{roleLabel}</span>
+                      </div>
+                      <p className="t-lead" style={{ fontSize: 'var(--text-sm)', margin: 'var(--space-2) 0' }}>
+                        {displayName} ({handle}) đóng góp các kiến trúc giao diện, mẫu chuyển động và thảo luận trên Tri thức F-Forum.
+                      </p>
+                      <div className="pf-social-stats">
+                        <div>
+                          <strong>{userPosts.length}</strong>
+                          <span className="t-label">bài viết</span>
+                        </div>
+                        <div>
+                          <strong>{userPosts.reduce((acc, p) => acc + (p.votes ?? p.likes ?? 0), 0)}</strong>
+                          <span className="t-label">tán thành</span>
+                        </div>
+                        <div>
+                          <strong>{userPosts.reduce((acc, p) => acc + (p.answersCount ?? p.answers?.length ?? 0), 0)}</strong>
+                          <span className="t-label">thảo luận</span>
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    <>
+                      <TaskCard
+                        title="Kiểm định & Xây dựng"
+                        subtitle="Trạng thái kiểm định mới nhất."
+                        tasks={builderTasks}
+                      />
+                      <div className="pf-calendar-wrap">
+                        <CalendarCard theme={theme} />
+                      </div>
+                    </>
+                  )}
                 </div>
 
                 <div className="pf-timeline-card">

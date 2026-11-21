@@ -274,7 +274,7 @@ export const LandingHero: React.FC<LandingHeroProps> = ({
     offset: ['start start', 'end start'],
   });
 
-  const heroOpacity = useTransform(scrollYProgress, [0, 0.5, 0.88], [1, 0.92, 0]);
+  const heroOpacity = useTransform(scrollYProgress, [0, 0.75, 1], [1, 0.96, 0]);
   const copyY = useTransform(scrollYProgress, [0, 1], [0, -34]);
   const phoneY = useTransform(scrollYProgress, [0, 1], [0, -52]);
 

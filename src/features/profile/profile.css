@@ -57,7 +57,7 @@
     height: clamp(72px, 8vw, 94px);
     border: 2px solid var(--bg);
     outline: 1px solid var(--line-strong);
-    border-radius: var(--radius-md);
+    border-radius: var(--radius-pill);
     background: var(--bg-raised);
     color: var(--red);
     font-family: var(--font-display);
@@ -439,6 +439,46 @@
     .pf-activity-grid {
       grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.05fr);
     }
+  }
+
+  .pf-social-card {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+    padding: var(--space-5);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-lg);
+    background: var(--bg-card-surface);
+    box-shadow: var(--shadow-1);
+  }
+
+  .pf-social-card-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-2);
+    padding-bottom: var(--space-3);
+    border-bottom: 1px solid var(--line);
+  }
+
+  .pf-social-stats {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: var(--space-3);
+    padding-top: var(--space-3);
+    border-top: 1px solid var(--line);
+  }
+
+  .pf-social-stats > div {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .pf-social-stats strong {
+    font-size: var(--text-lg);
+    font-family: var(--font-mono);
+    color: var(--red);
   }
 
   @media (min-width: 1120px) {

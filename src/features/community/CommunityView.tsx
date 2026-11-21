@@ -1778,11 +1778,16 @@ export const CommunityView: React.FC = () => {
 
                     {answers.length > 0 && topAnswer && (
                       <div className="cm-thread-preview">
-                        <div className="cm-thread-rail" aria-hidden="true">
-                          <span className="cm-thread-spine" />
-                          <span className="cm-avatar-chip cm-avatar-chip--sm">
+                        <div className="cm-thread-rail">
+                          <span className="cm-thread-spine" aria-hidden="true" />
+                          <button
+                            type="button"
+                            className="cm-avatar-chip cm-avatar-chip--sm"
+                            onClick={() => openUserProfile(topAnswer.author)}
+                            title={`Xem hồ sơ của ${topAnswer.author.name} (@${topAnswer.author.handle})`}
+                          >
                             {authorInitials(topAnswer.author.name)}
-                          </span>
+                          </button>
                         </div>
                         <div className="cm-thread-content">
                           <div className="cm-thread-head">
@@ -1965,6 +1970,24 @@ export const CommunityView: React.FC = () => {
 
           {activeReaderPost && (
             <section className="cm-reader-wrap" aria-label="Trình đọc chi tiết">
+              <div className="cm-reader-author-bar">
+                <button
+                  type="button"
+                  className="cm-author-btn"
+                  onClick={() => openUserProfile(activeReaderPost.author)}
+                  title={`Xem trang cá nhân của ${activeReaderPost.author.name} (@${activeReaderPost.author.handle})`}
+                >
+                  <span className="cm-avatar-chip cm-avatar-chip--sm" aria-hidden="true">
+                    {authorInitials(activeReaderPost.author.name)}
+                  </span>
+                  <span className="cm-author-meta">
+                    <span className="cm-author-name">{activeReaderPost.author.name}</span>
+                    <span className="t-label">
+                      @{activeReaderPost.author.handle} · Tác giả bài viết
+                    </span>
+                  </span>
+                </button>
+              </div>
               <ReaderCard
                 title={whiteLabelText(activeReaderPost.title)}
                 subtitle={`${whiteLabelText(activeReaderPost.category)} · @${activeReaderPost.author.handle}`}

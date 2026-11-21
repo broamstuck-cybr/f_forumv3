@@ -527,6 +527,8 @@
     font-weight: 600;
     color: var(--fg);
     flex: none;
+    cursor: pointer;
+    padding: 0;
   }
 
   .cm-avatar-chip--sm {
@@ -1002,6 +1004,18 @@
 
   .cm-reader-wrap {
     min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+  }
+
+  .cm-reader-author-bar {
+    display: flex;
+    align-items: center;
+    padding: 6px 10px;
+    border: 1px solid var(--line);
+    border-radius: var(--radius-pill);
+    background: var(--bg-card-surface);
   }
 
   .cm-presence-card {

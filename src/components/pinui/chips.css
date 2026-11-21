@@ -18,7 +18,7 @@
   justify-content: center;
   gap: 6px;
   padding: 7px 14px;
-  border-radius: var(--pchips-corner, 12px);
+  border-radius: var(--pchips-corner, var(--radius-pill, 9999px));
   border: 1px solid var(--border-strong);
   background: var(--bg-surface);
   color: var(--ink-secondary);
