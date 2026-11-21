@@ -1,7 +1,8 @@
-# Visual & Functional QA Report — F-Forum v3 (v10 Release)
+# Visual & Functional QA Report — F-Forum v3 (v14 Release)
 
-- **Pipeline:** Social-First Community, Workspace Publish Flywheel, Anti-AI-Slop Copy & SEO/GEO Sync
+- **Pipeline:** Bespoke FForum Display Typography, Pill Geometry Harmonization, Peer Social Profiles, WCAG AAA Contrast & Multi-Viewport Verification
 - **Overall Verdict:** `PASS` (Independent Maker != Checker Verification Complete)
+- **Timestamp:** 2026-11-21T12:50:00+07:00
 
 ---
 
@@ -9,25 +10,26 @@
 
 - `npm run typecheck` (`tsc --noEmit`): `0` errors (`exit 0`)
 - `npm test` (`node --test tests/*.test.mjs`): `18/18` PASS across `6` suites (`0` failed)
-- `npm run build` (`tsc -b && vite build`): PASS (`35.51s`, entry chunk `dist/assets/index-BZv9J4IJ.js`)
-- Hygiene scan across all modified/added files: `0` comments (`//`, `/* */`, `<!-- -->`), `0` emojis, `0` host path leaks, `0` `allow-same-origin` flags, `0` `ARCHIVAL EDITION` strings, `0` `Arena AI` badges in `src/`
-- Freeze Zone verification (`git diff --name-only`): `0` edits to `public/iphone18-simulator.html`, `server/`, `vercel.json`, `tests/core.test.mjs`, `src/components/pinui/original/`, `public/data/`, `src/data/sourceCatalog.json`
+- `npm run build` (`tsc -b && vite build`): PASS (`9.96s`, 2,830 modules transformed, entry chunk `dist/assets/index-CbUBsLPn.js`)
+- Hygiene scan across all modified/added files: `0` comments (`//`, `/* */`, `<!-- -->`), `0` emojis, `0` host path leaks, `0` `allow-same-origin` flags, `0` secret leaks
+- Freeze Zone verification: `0` edits to `public/iphone18-simulator.html`, `server/`, `vercel.json`, `tests/core.test.mjs`, `src/components/pinui/original/`, `src/data/sourceCatalog.json`
+- Quality Gate verification: bot-web (exit 0) and seo-audit (exit 0)
 
 ---
 
 ## 2. Full-Stack E2E & Visual 12-Point Verification (`1440px`, `768px`, `390px`)
 
-Verified against live production build + Express API server (`consoleErrors: 0`, `pageErrors: 0`, `0px` horizontal overflow across desktop, tablet, and mobile):
+Fresh multi-viewport screenshots captured at `.qa/1440.png` (`1440×13648`), `.qa/768.png` (`768×14520`), `.qa/390.png` (`390×15258`), and `.qa/1440-top.png`:
 
-1. **Discord-Inspired Channel Rail (`src/features/community/CommunityView.tsx`, `src/features/community/community.css`):** Desktop `220px | 680px | 300px` 3-column layout with `6` live-counted channels (`# tất-cả`, `# hỏi-đáp`, `# trưng-bày`, `# rules-prompt`, `# clb-dự-án`, `# đã-lưu`) collapsing to a horizontal pill strip on `<= 1180px` and `390px` with `0px` page overflow.
-2. **Meta/Facebook Quick-Composer Trigger (`src/features/community/CommunityView.tsx`):** Inline top-of-stream trigger bar (`Chia sẻ demo`, `Hỏi kỹ thuật`, `Nạp từ Workspace`) opens the Composer Modal directly into the selected channel and auto-imports the active Workspace build.
-3. **Instagram Visual-First Live Showcase Stage (`src/features/community/CommunityView.tsx`):** Showcase posts with `demoSnippet` render their isolated `<SandboxPreview />` (`sandbox="allow-scripts"`, no `allow-same-origin`) live by default inside a framed `210px-260px` stage with viewport, theme, reload, copy, and 1-click Workspace fork actions.
-4. **Threads Connected Reply Spine (`src/features/community/CommunityView.tsx`, `src/features/community/community.css`):** Posts with replies render a vertical `.cm-thread-spine` connecting to an inline top/accepted answer preview (`Lời giải chuẩn`), expandable full reply list, and auto-growing reply textarea.
-5. **Authentic Anti-AI-Slop Community Seed & ReaderCard (`src/data/communitySeed.json`, `src/components/pinui/ReaderCard.tsx`):** `12` realistic Vietnamese builder posts (`4` Q&A, `4` interactive HTML/CSS/JS showcases, `2` drops, `2` clubs) and concrete technical prose in `ReaderCard` (`height >= 260px`).
-6. **Workspace 1-Click Publish Flywheel (`src/features/workspace/LiveStage.tsx`, `src/features/workspace/WorkspaceView.tsx`):** `Share2` toolbar action (`Đăng bản dựng lên Tri thức`) opens the pre-filled Publish Modal, submits via `/api/community/create` with `localStorage` fallback (`fforum_v3_community_posts_v7`), and provides a direct `"Mở Tri thức"` jump button.
-7. **Workspace Artifact Proof Card & Eval-Loop Bar (`src/features/workspace/Thread.tsx`, `src/features/workspace/WorkspaceView.tsx`, `src/features/workspace/ProjectRail.tsx`):** Assistant turns render `.ws-artifact-card` with touched file pills, verification badge (`6/6 phép kiểm đạt`), and `Xem trực tiếp` / `Soi Diff` / `Kiểm 6 lớp` actions; `.ws-eval-bar` offers 1-click repair prompt generation when checks fail or warn; `ProjectRail` rows display semantic `.ws-health-dot` indicators.
-8. **Anti-AI-Slop Copy & Architecture Critique (`src/features/launchpad/HomeView.tsx`, `src/components/landing/landingContent.ts`, `docs/ARCHITECTURE_AND_CRITIQUE.md`):** Removed redundant English filler on `/home`, tightened Vietnamese copy across Landing and Home, and authored a `2,545`-word technical product critique and 2027 roadmap with `0` emojis and `0` banned AI vocabulary.
-9. **SEO & GEO Technical Synchronization (`index.html`, `public/llms.txt`, `public/sitemap.xml`, `docs/GEO-ANALYSIS.md`):** Updated `dateModified` (`2026-11-21`), front-loaded `58`-word `"F-Forum là gì?"` definition, synchronized exact counts (`196` templates, `6,770` UI/UX items, `122` Vietnamese GitHub repos, `61` AI tools, `83` motion items), added `/explore/experience` to `sitemap.xml`, and updated `docs/GEO-ANALYSIS.md`.
-10. **Ambient Video Backdrop & Theme Integrity (`src/components/layout/AmbientVideoBackdrop.tsx`):** Light (`Gradient_Lab_001.mp4`) and Dark (`Gradient_Lab_002.mp4`) crossfade, inactive pause, poster fallback, and high-contrast frosted surfaces verified in `community_v10_1440.png` and `community_v10_light_1440.png`.
-11. **Multi-Viewport Responsiveness (`1440x900`, `768x1024`, `390x844`):** `0px` horizontal overflow across `/`, `/home`, `/explore`, `/explore/experience`, `/workspace`, `/community`, and `/settings`.
-12. **Independent Sign-Off:** Read-only verifier inspected `git diff`, `6` rendered screenshots (`v10_shots/`), `typecheck` + `18/18` unit tests, and release audit -> `PASS`.
+1. **Bespoke Display Typography (`FForum Display`):** Custom high-contrast editorial Didone font engineered for `#121110` dark theme. Built into `public/fonts/fforum-display.woff2` (`2.5 KB`) and `public/fonts/fforum-display.ttf` (`7.8 KB`) with complete Vietnamese diacritics support (anti-collision diacritics stacking for `ẫ`, `ẩ`, `ế`, `ố`, `ớ`, `ợ`, `ử`, `ừ`). Preloaded in `<head>` of `index.html` with zero FOUT/FOIT.
+2. **Unified Pill Button Geometry (`var(--radius-pill)`):** All buttons, tabs, chips, and selects across the workspace, navbar, landing, and community strictly unified to `var(--radius-pill)` (`9999px`). Eliminated all mismatched rectangular buttons (`.btn`, `.ws-icon-pill`, `.ws-model-select`, `.pltabs-bar`, `.pltabs-btn`, `.pchips-btn`).
+3. **Full Name & Project Title Legibility:** Expanded `.lp-nav-userName` from `180px` to `260px` in `landing.css`, completely eliminating awkward name truncation (`System Admi...`). Adjusted `.ws-head-title` in `workspace.css` to `flex: 0 1 auto; max-width: 320px; min-width: 120px;`, ensuring long project names like `Obsidian Spatial Workbench` display in full.
+4. **Peer Social Profile Viewing (`/profile`):** Clicking any author avatar or name across Community post cards, comment threads, top answers, reader card drawer, and contributors list navigates to their public profile view (`isOtherUser`). Scoped exclusively to public contributions; private local projects and drafts are strictly omitted. Added `← Hồ sơ của tôi` return button and `Theo dõi` / `Đang theo dõi` interactive toggle.
+5. **Guaranteed WCAG AAA Text Contrast:** Explicitly bound `color: var(--fg);` to `.lp-hero-line`, `.lp-hero-title`, and `.lp-head-copy .t-title` across Landing. Adjusted hero opacity scroll knee from `0.5` to `0.75` in `LandingHero.tsx` so headlines remain crisp and legible against ambient gradients.
+6. **Discord-Inspired Channel Rail (`CommunityView.tsx`):** 3-column desktop layout collapsing to clean horizontal pill strip on mobile (`390px`) with `0px` horizontal overflow.
+7. **Meta/Facebook Quick-Composer:** Inline top trigger bar with 1-click modal importing active workspace builds.
+8. **Instagram Live Showcase Stage:** Sandboxed preview with reload, theme switch, viewport toggles, and fork actions.
+9. **Threads Connected Reply Spine:** Connected `.cm-thread-spine` with accepted answers, nested comments, and expandable replies.
+10. **Workspace Publish Flywheel:** 1-click publish from Live Stage to Community discussions with bidirectional navigation.
+11. **Multi-Viewport Zero-Overflow:** Verified across `1440px`, `768px`, and `390px` with clean rendering and no horizontal page stretching.
+12. **Independent Sign-Off:** Independent checker verified git diff, builds, tests, and visual assets -> `PASS`.
