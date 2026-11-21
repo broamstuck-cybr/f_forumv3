@@ -8,9 +8,9 @@ import {
   Moon,
   Palette,
   Search,
-  Sparkles,
   Sun,
 } from 'lucide-react';
+import OriginalThemeSwitch from '../../components/pinui/original/theme-switch/ThemeSwitch';
 import type {
   AIProtocol,
   ProjectSetupTarget,
@@ -248,7 +248,7 @@ export const SettingsView: React.FC = () => {
     updateSettings,
     updateByok,
     theme,
-    toggleTheme,
+    setTheme,
     reducedMotion,
     setReducedMotion,
     savedItemIds,
@@ -449,17 +449,8 @@ export const SettingsView: React.FC = () => {
               <header className="st-section-head">
                 <div>
                   <h2 className="st-section-title">Giao diện & Hình nền</h2>
-                  <p className="st-hint">Chọn sắc độ, kích thước hiển thị và hiệu ứng chuyển sáng/tối toàn trang.</p>
+                  <p className="st-hint">Chọn sắc độ, kích thước hiển thị và hiệu ứng PinUI chuyển Sáng / Tối toàn trang.</p>
                 </div>
-                <button
-                  type="button"
-                  className="btn btn-line btn-sm"
-                  onClick={toggleTheme}
-                  title="Chuyển nhanh Đêm / Ngày và xem hiệu ứng toàn trang"
-                >
-                  <Sparkles size={14} aria-hidden="true" />
-                  <span>Đổi {theme === 'dark' ? 'Sáng' : 'Tối'} ngay</span>
-                </button>
               </header>
 
               <section className="st-panel" aria-label="Kích thước giao diện">
@@ -603,8 +594,8 @@ export const SettingsView: React.FC = () => {
               <section className="st-card" aria-label="Hiệu ứng chuyển đổi và chuyển động">
                 <div className="st-row st-row--first">
                   <div>
-                    <span className="st-label">Hiệu ứng chuyển Sáng / Tối toàn trang</span>
-                    <p className="st-hint">Áp dụng xuyên suốt trang mỗi khi đổi chế độ Đêm / Ngày.</p>
+                    <span className="st-label">Hiệu ứng chuyển Sáng / Tối toàn trang (PinUI)</span>
+                    <p className="st-hint">Chế độ chọn bên dưới đồng bộ trực tiếp với nút Đêm / Ngày trên thanh điều hướng.</p>
                   </div>
                   <Chips
                     items={EFFECT_CHIPS}
@@ -612,6 +603,17 @@ export const SettingsView: React.FC = () => {
                     multi={false}
                     theme={theme}
                     onToggle={(id) => updateSettings({ themeEffect: id as ThemeEffect })}
+                  />
+                </div>
+
+                <div className="st-pinui-theme-stage" aria-label="Thử trực tiếp PinUI ThemeSwitch gốc">
+                  <OriginalThemeSwitch
+                    key={currentEffect}
+                    theme={theme}
+                    defaultEffect={currentEffect === 'none' ? 'droplet' : currentEffect}
+                    sound={!reducedMotion}
+                    onEffectChange={(nextEffect) => updateSettings({ themeEffect: nextEffect })}
+                    onThemeChange={(nextTheme) => setTheme(nextTheme)}
                   />
                 </div>
 

@@ -1,4 +1,2 @@
 [request:1440] https://www.soundhelix.com/examples/audio/SoundHelix-Song-1.mp3 net::ERR_BLOCKED_BY_ORB
 [request:768] https://www.soundhelix.com/examples/audio/SoundHelix-Song-1.mp3 net::ERR_BLOCKED_BY_ORB
-[request:390] https://www.soundhelix.com/examples/audio/SoundHelix-Song-1.mp3 net::ERR_BLOCKED_BY_ORB
-[request:1440] https://www.soundhelix.com/examples/audio/SoundHelix-Song-1.mp3 net::ERR_BLOCKED_BY_ORB

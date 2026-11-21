@@ -662,4 +662,26 @@
     gap: var(--space-2);
     margin-top: var(--space-2);
   }
+
+  .st-pinui-theme-stage {
+    border-radius: 16px;
+    border: 1px solid var(--line);
+    overflow: hidden;
+  }
+
+  .st-pinui-theme-stage .pts {
+    height: 236px;
+    border-radius: 15px;
+  }
+
+  .st-pinui-theme-stage .pts__toggle {
+    margin-bottom: 28px;
+  }
+
+  .st-pinui-theme-stage .pts__effects {
+    left: 50%;
+    transform: translateX(-50%);
+    translate: none;
+    bottom: 20px;
+  }
 }

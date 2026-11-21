@@ -4,6 +4,7 @@ import { Menu, Moon, Sun, X } from 'lucide-react';
 import type { AppRoute } from '../../types/index';
 import { useAppStore } from '../../store/appStore';
 import { KineticLogo } from '../brand/KineticLogo';
+import { triggerPinuiThemeToggle } from './GlobalThemeAtmosphere';
 import './app-shell.css';
 
 export interface AppNavbarProps {
@@ -38,7 +39,6 @@ export const AppNavbar: React.FC<AppNavbarProps> = () => {
     setAuthModalOpen,
     logout,
     theme,
-    toggleTheme,
     clearViewingProfileUser,
   } = useAppStore();
   const reduced = Boolean(useReducedMotion());
@@ -164,7 +164,7 @@ export const AppNavbar: React.FC<AppNavbarProps> = () => {
           <button
             type="button"
             className="icon-btn nav__themeBtn"
-            onClick={toggleTheme}
+            onClick={(event) => triggerPinuiThemeToggle(event.currentTarget)}
             aria-label={themeToggleLabel}
             title={themeToggleLabel}
           >
@@ -332,7 +332,7 @@ export const AppNavbar: React.FC<AppNavbarProps> = () => {
                   <button
                     type="button"
                     className="icon-btn"
-                    onClick={toggleTheme}
+                    onClick={(event) => triggerPinuiThemeToggle(event.currentTarget)}
                     aria-label={themeToggleLabel}
                     title={themeToggleLabel}
                   >

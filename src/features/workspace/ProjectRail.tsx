@@ -1,15 +1,25 @@
 import React, { useMemo, useState } from 'react';
 import {
   Archive,
+  BookOpen,
+  ChevronDown,
+  ChevronRight,
+  Compass,
   GitBranch,
+  Home,
+  Moon,
   Pencil,
   Pin,
   PinOff,
   PlusCircle,
   Search,
+  Settings,
+  Sun,
   Trash2,
 } from 'lucide-react';
-import type { WorkspaceProject } from '../../types/index';
+import type { AppRoute, ThemeMode, WorkspaceProject } from '../../types/index';
+import { KineticLogo } from '../../components/brand/KineticLogo';
+import { triggerPinuiThemeToggle } from '../../components/layout/GlobalThemeAtmosphere';
 
 export interface ProjectRailProps {
   projects: WorkspaceProject[];
@@ -19,6 +29,10 @@ export interface ProjectRailProps {
   onRename?: (projectId: string, name: string) => void;
   onDelete?: (projectId: string) => void;
   onTogglePin?: (projectId: string) => void;
+  onNavigate?: (route: AppRoute) => void;
+  userName?: string;
+  quotaLabel?: string;
+  theme?: ThemeMode;
   dismiss?: React.ReactNode;
 }
 
@@ -39,10 +53,15 @@ export const ProjectRail: React.FC<ProjectRailProps> = ({
   onRename,
   onDelete,
   onTogglePin,
+  onNavigate,
+  userName = 'Khách',
+  quotaLabel,
+  theme = 'dark',
   dismiss,
 }) => {
   const [query, setQuery] = useState('');
   const [searchOpen, setSearchOpen] = useState(false);
+  const [moreOpen, setMoreOpen] = useState(false);
   const [showArchived, setShowArchived] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editDraft, setEditDraft] = useState('');
@@ -221,7 +240,15 @@ export const ProjectRail: React.FC<ProjectRailProps> = ({
   return (
     <>
       <header className="ws-head ws-rail-head">
-        <h2 className="ws-head-title">Phiên Arena</h2>
+        <button
+          type="button"
+          className="ws-rail-brand"
+          onClick={() => onNavigate?.('home')}
+          title="Về Trang chủ F-Forum"
+        >
+          <KineticLogo size={18} />
+          <span>Arena</span>
+        </button>
         {dismiss}
       </header>
 
@@ -230,6 +257,12 @@ export const ProjectRail: React.FC<ProjectRailProps> = ({
           <PlusCircle size={15} aria-hidden="true" />
           <span>New Chat</span>
         </button>
+        {onNavigate && (
+          <button type="button" className="ws-rail-nav-btn" onClick={() => onNavigate('explore')}>
+            <Compass size={15} aria-hidden="true" />
+            <span>Khám phá</span>
+          </button>
+        )}
         <button
           type="button"
           className="ws-rail-nav-btn"
@@ -239,6 +272,35 @@ export const ProjectRail: React.FC<ProjectRailProps> = ({
           <Search size={15} aria-hidden="true" />
           <span>Tìm kiếm</span>
         </button>
+        {onNavigate && (
+          <>
+            <button
+              type="button"
+              className="ws-rail-nav-btn ws-rail-nav-more"
+              aria-expanded={moreOpen}
+              onClick={() => setMoreOpen((v) => !v)}
+            >
+              {moreOpen ? <ChevronDown size={14} aria-hidden="true" /> : <ChevronRight size={14} aria-hidden="true" />}
+              <span>Xem thêm</span>
+            </button>
+            {moreOpen && (
+              <div className="ws-rail-more-group">
+                <button type="button" className="ws-rail-nav-btn" onClick={() => onNavigate('home')}>
+                  <Home size={14} aria-hidden="true" />
+                  <span>Trang chủ</span>
+                </button>
+                <button type="button" className="ws-rail-nav-btn" onClick={() => onNavigate('community')}>
+                  <BookOpen size={14} aria-hidden="true" />
+                  <span>Tri thức</span>
+                </button>
+                <button type="button" className="ws-rail-nav-btn" onClick={() => onNavigate('settings')}>
+                  <Settings size={14} aria-hidden="true" />
+                  <span>Cài đặt</span>
+                </button>
+              </div>
+            )}
+          </>
+        )}
         {searchOpen && (
           <input
             type="search"
@@ -281,6 +343,47 @@ export const ProjectRail: React.FC<ProjectRailProps> = ({
           </button>
         )}
       </div>
+
+      <footer className="ws-rail-foot">
+        <div className="ws-rail-user-card">
+          <button
+            type="button"
+            className="ws-rail-user-btn"
+            onClick={() => onNavigate?.('profile')}
+            title="Hồ sơ cá nhân"
+          >
+            <span className="ws-rail-avatar" aria-hidden="true">
+              {(userName.trim()[0] || 'K').toUpperCase()}
+            </span>
+            <span className="ws-rail-user-meta">
+              <span className="ws-rail-user-name">{userName}</span>
+              {quotaLabel && <span className="ws-rail-user-quota">{quotaLabel}</span>}
+            </span>
+          </button>
+          <button
+            type="button"
+            className="ws-rail-theme-btn"
+            onClick={(event) => triggerPinuiThemeToggle(event.currentTarget)}
+            aria-label={theme === 'dark' ? 'Chuyển sang Sáng' : 'Chuyển sang Tối'}
+            title={theme === 'dark' ? 'Chế độ Sáng' : 'Chế độ Tối'}
+          >
+            {theme === 'dark' ? <Sun size={14} aria-hidden="true" /> : <Moon size={14} aria-hidden="true" />}
+          </button>
+        </div>
+        {onNavigate && (
+          <div className="ws-rail-legal">
+            <button type="button" onClick={() => onNavigate('home')}>
+              Trang chủ
+            </button>
+            <button type="button" onClick={() => onNavigate('community')}>
+              Tri thức
+            </button>
+            <button type="button" onClick={() => onNavigate('settings')}>
+              Cài đặt
+            </button>
+          </div>
+        )}
+      </footer>
     </>
   );
 };

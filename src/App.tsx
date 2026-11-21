@@ -160,7 +160,7 @@ const AppShell: React.FC = () => {
     return () => window.clearTimeout(timer);
   }, [currentRoute, reducedMotion]);
 
-  const showNavbar = currentRoute !== 'landing' && currentRoute !== 'not-found';
+  const showNavbar = currentRoute !== 'landing' && currentRoute !== 'not-found' && currentRoute !== 'workspace';
   const showFooter =
     currentRoute === 'home' ||
     currentRoute === 'explore' ||

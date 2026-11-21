@@ -3,14 +3,12 @@ import {
   AlertTriangle,
   ArrowUpRight,
   CheckCircle2,
-  Columns2,
-  Ellipsis,
+  ChevronDown,
+  ChevronsLeft,
+  ChevronsRight,
   GitBranch,
-  MessageSquare,
   PanelLeft,
   PanelLeftClose,
-  PanelRightClose,
-  PanelRightOpen,
   Paperclip,
   Share2,
   SlidersHorizontal,
@@ -481,7 +479,8 @@ export const WorkspaceView: React.FC = () => {
   const [stageTab, setStageTab] = useState<StageTabId>('preview');
   const [reviewTab, setReviewTab] = useState<ReviewTab>('check');
   const [railOpen, setRailOpen] = useState(true);
-  const [rightOpen, setRightOpen] = useState(true);
+  const [rightMode, setRightMode] = useState<'compact' | 'split' | 'closed'>('compact');
+  const rightOpen = rightMode !== 'closed';
   const [railSheetOpen, setRailSheetOpen] = useState(false);
   const [stageExpanded, setStageExpanded] = useState(false);
 
@@ -541,7 +540,7 @@ export const WorkspaceView: React.FC = () => {
   const publishTagsId = useId();
 
   const [splitRatio, setSplitRatio] = useState<number>(() => {
-    if (typeof window === 'undefined') return 45;
+    if (typeof window === 'undefined') return 40;
     try {
       const saved = window.localStorage.getItem('fforum_ws_split_ratio');
       if (saved) {
@@ -551,7 +550,7 @@ export const WorkspaceView: React.FC = () => {
     } catch {
       void 0;
     }
-    return 45;
+    return 40;
   });
   const [isResizing, setIsResizing] = useState(false);
 
@@ -644,8 +643,10 @@ export const WorkspaceView: React.FC = () => {
 
   const railInline = isDesktop && railOpen;
   const stageInline = isDesktop && rightOpen;
+  const isSplitStage = isDesktop && rightMode === 'split';
+  const stageDataAttr = !isDesktop ? 'open' : rightMode;
   const threadHidden = !isDesktop && mobilePane !== 'chat';
-  const stageHidden = (isDesktop && !rightOpen) || (!isDesktop && mobilePane !== 'stage');
+  const stageHidden = (isDesktop && rightMode === 'closed') || (!isDesktop && mobilePane !== 'stage');
   const evalFailCount = activeProject.checksReport?.failCount ?? 0;
   const evalWarnCount = activeProject.checksReport?.warnCount ?? 0;
   const hasEvalIssues = evalFailCount > 0 || evalWarnCount > 0;
@@ -925,6 +926,7 @@ export const WorkspaceView: React.FC = () => {
   const handleOpenFileInStage = (path: string) => {
     setActiveFilePath(path);
     setStageTab('source');
+    setRightMode('split');
     if (!isDesktop) {
       setMobilePane('stage');
     }
@@ -932,6 +934,7 @@ export const WorkspaceView: React.FC = () => {
 
   const handleOpenPreviewStage = () => {
     setStageTab('preview');
+    setRightMode('split');
     if (!isDesktop) {
       setMobilePane('stage');
     }
@@ -940,6 +943,7 @@ export const WorkspaceView: React.FC = () => {
   const handleOpenDiffStage = () => {
     setReviewTab('diff');
     setStageTab('review');
+    setRightMode('split');
     if (!isDesktop) {
       setMobilePane('stage');
     }
@@ -948,6 +952,7 @@ export const WorkspaceView: React.FC = () => {
   const handleOpenChecksStage = () => {
     setReviewTab('check');
     setStageTab('review');
+    setRightMode('split');
     if (!isDesktop) {
       setMobilePane('stage');
     }
@@ -1091,6 +1096,15 @@ export const WorkspaceView: React.FC = () => {
       onRestoreSnapshot={restoreProjectSnapshot}
       expanded={isExpandedView}
       onToggleExpanded={() => setStageExpanded((value) => !value)}
+      compact={!isExpandedView && isDesktop && rightMode === 'compact'}
+      onEnterSplit={(nextTab, nextReview) => {
+        setStageTab(nextTab);
+        if (nextReview) setReviewTab(nextReview);
+        setRightMode('split');
+        if (!isDesktop) setMobilePane('stage');
+      }}
+      onExitSplit={() => setRightMode('compact')}
+      onOpenGithub={() => setGithubOpen(true)}
       hidden={!isExpandedView && stageHidden}
     />
   );
@@ -1104,6 +1118,10 @@ export const WorkspaceView: React.FC = () => {
       onRename={renameProject}
       onDelete={deleteProject}
       onTogglePin={togglePinProject}
+      onNavigate={navigate}
+      userName={currentUser?.name || 'Khách'}
+      quotaLabel={quotaLabel}
+      theme={settings.theme}
       dismiss={dismiss}
     />
   );
@@ -1114,7 +1132,7 @@ export const WorkspaceView: React.FC = () => {
       className="ws"
       data-layout={layout}
       data-rail={railInline ? 'open' : 'closed'}
-      data-stage={stageInline ? 'open' : 'closed'}
+      data-stage={stageDataAttr}
       data-density={settings.compactDensity ? 'compact' : 'roomy'}
       data-resizing={isResizing ? 'true' : undefined}
       style={{ '--ws-split-ratio': splitRatio } as React.CSSProperties}
@@ -1169,46 +1187,19 @@ export const WorkspaceView: React.FC = () => {
               </button>
             </form>
           ) : (
-            <h1 className="ws-head-title ws-title" title={activeProject.name}>
-              {activeProject.name}
-            </h1>
-          )}
-
-          <div className="ws-chat-controls">
-            <div className="ws-arena-mode-toggle" role="group" aria-label="Chế độ đấu trường Model">
-              <button
-                type="button"
-                className="ws-mode-icon"
-                aria-pressed={arenaMode === 'single'}
-                aria-label="Chế độ 1 Model"
-                title="1 Model"
-                onClick={() => setArenaMode('single')}
-              >
-                <MessageSquare size={14} aria-hidden="true" />
-              </button>
-              <button
-                type="button"
-                className="ws-mode-icon"
-                aria-pressed={arenaMode === 'compare'}
-                aria-label="Chế độ so sánh 2 Model (Arena A-B)"
-                title="So sánh 2 Model (Arena A-B)"
-                onClick={() => setArenaMode('compare')}
-              >
-                <Columns2 size={14} aria-hidden="true" />
-              </button>
-            </div>
-
-            <button
-              type="button"
-              className="ws-icon-pill"
-              aria-label="Cấu hình Model & BYOK"
-              title="Cấu hình Model & BYOK"
-              onClick={() => setSetupDrawerOpen(true)}
+            <Popover
+              label={`Phiên: ${activeProject.name}`}
+              triggerClassName="ws-arena-session-drop"
+              align="left"
+              trigger={
+                <>
+                  <h1 className="ws-head-title ws-title" title={activeProject.name}>
+                    {activeProject.name}
+                  </h1>
+                  <ChevronDown size={14} aria-hidden="true" />
+                </>
+              }
             >
-              <SlidersHorizontal size={15} aria-hidden="true" />
-            </button>
-
-            <Popover label="Tùy chọn phiên" icon={<Ellipsis size={16} aria-hidden="true" />}>
               {(close) => (
                 <div className="ws-menu-wrap">
                   <div className="ws-menu-quota">
@@ -1216,6 +1207,30 @@ export const WorkspaceView: React.FC = () => {
                     <span className="ws-count">{quotaLabel}</span>
                   </div>
                   <ul className="ws-menu">
+                    <li>
+                      <button
+                        type="button"
+                        className="ws-menu-item"
+                        onClick={() => {
+                          setArenaMode(arenaMode === 'single' ? 'compare' : 'single');
+                          close();
+                        }}
+                      >
+                        {arenaMode === 'single' ? 'Bật so sánh 2 Model (Arena A-B)' : 'Chuyển về 1 Model'}
+                      </button>
+                    </li>
+                    <li>
+                      <button
+                        type="button"
+                        className="ws-menu-item"
+                        onClick={() => {
+                          close();
+                          setSetupDrawerOpen(true);
+                        }}
+                      >
+                        Cấu hình Model &amp; BYOK
+                      </button>
+                    </li>
                     <li>
                       <button
                         type="button"
@@ -1293,19 +1308,21 @@ export const WorkspaceView: React.FC = () => {
                 </div>
               )}
             </Popover>
+          )}
 
+          <div className="ws-chat-controls">
             {isDesktop && (
               <button
                 type="button"
                 className="ws-icon-pill ws-icon-pill--sm"
-                aria-label={rightOpen ? 'Thu gọn khung Preview phải' : 'Mở khung Preview phải'}
-                title={rightOpen ? 'Thu gọn Preview' : 'Mở khung Preview'}
-                onClick={() => setRightOpen((v) => !v)}
+                aria-label={rightOpen ? 'Thu gọn panel workspace phải' : 'Mở panel workspace phải'}
+                title={rightOpen ? 'Thu gọn panel phải' : 'Mở panel phải'}
+                onClick={() => setRightMode(rightOpen ? 'closed' : 'compact')}
               >
                 {rightOpen ? (
-                  <PanelRightClose size={15} aria-hidden="true" />
+                  <ChevronsRight size={15} aria-hidden="true" />
                 ) : (
-                  <PanelRightOpen size={15} aria-hidden="true" />
+                  <ChevronsLeft size={15} aria-hidden="true" />
                 )}
               </button>
             )}
@@ -1564,7 +1581,7 @@ export const WorkspaceView: React.FC = () => {
         </footer>
       </section>
 
-      {isDesktop && layout === 'wide' && rightOpen && (
+      {isSplitStage && layout === 'wide' && (
         <div
           role="separator"
           aria-orientation="vertical"

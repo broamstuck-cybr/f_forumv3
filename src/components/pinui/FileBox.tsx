@@ -62,21 +62,27 @@ export const FileBox: React.FC<FileBoxProps> = ({
                 background: isActive ? 'var(--bg-elevated)' : 'var(--bg-panel)',
               }}
             >
-              <div className="h-1 w-full" style={{ background: accent, opacity: isActive ? 1 : 0.45 }} />
               <div className="flex items-center justify-between gap-2 px-3 py-2.5">
                 <button
                   type="button"
                   onClick={() => onSelect?.(tab.id)}
-                  className="flex-1 min-w-0 text-left bg-transparent border-0 p-0 cursor-pointer"
+                  className="flex-1 min-w-0 text-left bg-transparent border-0 p-0 cursor-pointer flex items-center gap-2.5"
                 >
-                  <div className="text-[13px] font-medium truncate" style={{ color: 'var(--ink-primary)' }}>
-                    {tab.label}
-                  </div>
-                  {tab.meta && (
-                    <div className="text-[11px] font-mono truncate mt-0.5" style={{ color: 'var(--ink-muted)' }}>
-                      {tab.meta}
+                  <span
+                    className="h-2 w-2 rounded-full shrink-0"
+                    style={{ background: accent, opacity: isActive ? 1 : 0.45 }}
+                    aria-hidden="true"
+                  />
+                  <span className="min-w-0 flex-1">
+                    <div className="text-[13px] font-medium truncate" style={{ color: 'var(--ink-primary)' }}>
+                      {tab.label}
                     </div>
-                  )}
+                    {tab.meta && (
+                      <div className="text-[11px] font-mono truncate mt-0.5" style={{ color: 'var(--ink-muted)' }}>
+                        {tab.meta}
+                      </div>
+                    )}
+                  </span>
                 </button>
                 {tab.onOpen && (
                   <button

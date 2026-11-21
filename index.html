@@ -157,114 +157,106 @@
         } catch (e) {}
       })();
     </script>
+    <style>
+      html,
+      body {
+        margin: 0;
+        min-height: 100%;
+        background: #121110;
+        color: #f3eee3;
+      }
+      html[data-theme='light'],
+      html[data-theme='light'] body {
+        background: #f4f0e6;
+        color: #14120e;
+      }
+      .ff-boot {
+        position: fixed;
+        inset: 0;
+        z-index: 95;
+        display: grid;
+        place-items: center;
+        padding: 24px;
+        background: rgba(12, 11, 10, 0.36);
+        backdrop-filter: blur(4px);
+      }
+      html[data-theme='light'] .ff-boot {
+        background: rgba(244, 240, 230, 0.42);
+      }
+      .ff-boot-card {
+        width: 248px;
+        padding: 24px 20px 20px;
+        border-radius: 26px;
+        border: 1px solid rgba(243, 238, 227, 0.22);
+        background: rgba(24, 23, 22, 0.9);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 10px;
+        text-align: center;
+        font-family: Georgia, serif;
+      }
+      html[data-theme='light'] .ff-boot-card {
+        border-color: rgba(20, 18, 14, 0.2);
+        background: rgba(251, 248, 241, 0.92);
+      }
+      .ff-boot-sys {
+        position: relative;
+        width: 140px;
+        height: 116px;
+      }
+      .ff-boot-ring {
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        width: var(--d);
+        height: var(--d);
+        margin: calc(var(--d) / -2) 0 0 calc(var(--d) / -2);
+        border-radius: 50%;
+        border: 1.5px solid rgba(243, 238, 227, 0.2);
+        transform: rotate(var(--tilt)) scaleY(0.38);
+      }
+      html[data-theme='light'] .ff-boot-ring {
+        border-color: rgba(20, 18, 14, 0.2);
+      }
+      .ff-boot-core {
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        width: 34px;
+        height: 34px;
+        margin: -17px 0 0 -17px;
+        border-radius: 50%;
+        background: radial-gradient(circle at 36% 32%, #fff8f0, #ff6450 58%, #8f1f14 100%);
+        box-shadow: 0 0 24px rgba(255, 100, 80, 0.55);
+      }
+      .ff-boot-title {
+        margin: 0;
+        font-size: 1.3rem;
+        font-weight: 600;
+      }
+      .ff-boot-sub {
+        margin: 0;
+        font-family: ui-monospace, monospace;
+        font-size: 11px;
+        opacity: 0.72;
+      }
+    </style>
   </head>
   <body>
     <div id="root">
-      <header>
-        <nav aria-label="Điều hướng F-Forum">
-          <a href="/">F-Forum</a>
-          <a href="/home">Trang chủ</a>
-          <a href="/explore">Khám phá</a>
-          <a href="/explore/experience">Trải nghiệm</a>
-          <a href="/workspace">Workspace</a>
-          <a href="/community">Tri thức</a>
-          <a href="/profile">Hồ sơ</a>
-          <a href="/settings">Cài đặt</a>
-        </nav>
-      </header>
-      <main>
-        <article>
-          <h1>F-Forum: Từ phác thảo đến sản phẩm, xem được cả mã nguồn</h1>
-          <h2>F-Forum là gì?</h2>
-          <p>
-            F-Forum là bàn dựng và kiểm định giao diện web trực tiếp trên trình duyệt cho học sinh, sinh viên, giảng viên
-            cùng vibe coder Việt Nam. Bạn chọn từ 196 giao diện hoặc 6.770 chi tiết UI/UX, mở mã HTML/CSS/JS trong
-            Workspace cô lập, chạy 6 phép kiểm Diff &amp; Check rồi đăng bản sửa lên Tri thức.
-          </p>
-          <h2>Kho tham chiếu 6.770 chi tiết UI/UX và hệ sinh thái mở</h2>
-          <p>
-            Bên cạnh 6.770 chi tiết UI/UX chia theo 5 nhóm gốc và 196 giao diện chạy trực tiếp, F-Forum biên tập sẵn 83
-            mẫu chuyển động kèm prompt, 122 kho GitHub tiếng Việt cùng 61 công cụ AI để người học tra cứu hoặc nạp thẳng
-            vào phiên dựng.
-          </p>
-          <table>
-            <thead>
-              <tr>
-                <th>Danh mục</th>
-                <th>Số lượng</th>
-                <th>Giấy phép / Nguồn</th>
-                <th>Vai trò trong chu trình Khám phá -&gt; Workspace -&gt; Tri thức</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td>Bố cục (CodeFronts)</td>
-                <td>5.047</td>
-                <td>Public Spec</td>
-                <td>Mẫu bố cục HTML và CSS chuẩn hóa</td>
-              </tr>
-              <tr>
-                <td>Không gian 3D (ThreeUI)</td>
-                <td>961</td>
-                <td>Catalogue Metadata</td>
-                <td>Cảnh WebGL, shader và chuyển động chiều sâu</td>
-              </tr>
-              <tr>
-                <td>Hiệu ứng (LucianLabs)</td>
-                <td>400</td>
-                <td>MIT</td>
-                <td>200 giao diện đầy đủ và 200 vi tương tác</td>
-              </tr>
-              <tr>
-                <td>Chuyển động (MotionSites)</td>
-                <td>321</td>
-                <td>Creative Spec</td>
-                <td>Nhịp cuộn trang đích và bố cục chuyển cảnh</td>
-              </tr>
-              <tr>
-                <td>Tương tác (PinUI)</td>
-                <td>41</td>
-                <td>MIT</td>
-                <td>Thành phần và khối tương tác nạp trực tiếp vào Workspace</td>
-              </tr>
-              <tr>
-                <td>Giao diện &amp; mẫu chuyển động</td>
-                <td>196 giao diện · 83 mẫu</td>
-                <td>MIT / Open Spec</td>
-                <td>Bản dựng chạy thử ngay kèm đặc tả prompt tiếng Việt</td>
-              </tr>
-              <tr>
-                <td>Kho GitHub &amp; công cụ AI</td>
-                <td>122 kho · 61 công cụ</td>
-                <td>Open Source / Curated</td>
-                <td>Xếp hạng kho mã nguồn và công cụ AI đã kiểm chứng</td>
-              </tr>
-            </tbody>
-          </table>
-          <h2>Chu trình Workspace -&gt; Diff &amp; Check -&gt; Tri thức với 6 phép kiểm</h2>
-          <ul>
-            <li>Cấu trúc HTML ngữ nghĩa và hệ thống landmark chuẩn tiếp cận.</li>
-            <li>Cú pháp JavaScript và kiểm tra lỗi thực thi trước khi nạp vào khung chạy.</li>
-            <li>Đối chiếu hiển thị trên ba khung nhìn chuẩn: 390px, 768px và 1440px.</li>
-            <li>Soát liên kết nội bộ cùng chính sách referrerPolicy=&quot;no-referrer&quot;.</li>
-            <li>Quét và tự động che khóa bí mật trước khi xuất gói ZIP hoặc chia sẻ lên Tri thức.</li>
-            <li>Định mức 15 lượt miễn phí mỗi phiên, hỗ trợ gắn khóa API cá nhân (BYOK) lưu cục bộ.</li>
-          </ul>
-          <h2>Hỏi đáp nhanh về F-Forum</h2>
-          <h3>F-Forum có miễn phí không?</h3>
-          <p>
-            Mỗi phiên khách hoặc tài khoản thành viên có sẵn 15 lượt miễn phí để sinh và sửa mã. Khi cần dùng nhiều hơn,
-            bạn gắn khóa API cá nhân (OpenAI-compatible, Anthropic hoặc Gemini) trong mục Cài đặt; trình duyệt lưu khóa
-            cục bộ và không bao giờ đưa vào tệp xuất ZIP.
-          </p>
-          <h3>Live View cô lập mã nguồn bằng cách nào?</h3>
-          <p>
-            Live View chạy mọi bản dựng trong iframe sandbox=&quot;allow-scripts&quot;, tắt quyền allow-same-origin và
-            đặt referrerPolicy=&quot;no-referrer&quot; để ngăn mã thử nghiệm can thiệp vào phiên làm việc chính.
-          </p>
-          <p>Cập nhật ngày 21/11/2026 bởi F-Forum · Mã nguồn mở MIT tại github.com/broamstuck-cybr/f_forumv3.</p>
-        </article>
-      </main>
+      <div class="ff-boot" role="status" aria-label="Đang tải F-Forum">
+        <div class="ff-boot-card">
+          <div class="ff-boot-sys" aria-hidden="true">
+            <div class="ff-boot-ring" style="--d: 124px; --tilt: -18deg"></div>
+            <div class="ff-boot-ring" style="--d: 92px; --tilt: 24deg"></div>
+            <div class="ff-boot-ring" style="--d: 66px; --tilt: -56deg"></div>
+            <span class="ff-boot-core"></span>
+          </div>
+          <p class="ff-boot-title">F-Forum</p>
+          <p class="ff-boot-sub">Đang nạp không gian...</p>
+        </div>
+      </div>
     </div>
     <script type="module" src="/src/main.tsx"></script>
   </body>

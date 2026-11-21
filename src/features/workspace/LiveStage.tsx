@@ -1,20 +1,26 @@
 import React, { useMemo, useState } from 'react';
 import {
   Check,
+  ChevronDown,
+  ChevronRight,
   Copy,
   Download,
   ExternalLink,
   Eye,
   FileCode2,
+  GitBranch,
   GitCompareArrows,
+  Globe,
   Maximize2,
   Minimize2,
   Monitor,
+  Plus,
   RotateCw,
   Share2,
   ShieldCheck,
   Smartphone,
   Tablet,
+  X,
 } from 'lucide-react';
 import { FileBox, type FileBoxTab } from '../../components/pinui/FileBox';
 import type { WorkspaceProject } from '../../types/index';
@@ -46,6 +52,10 @@ export interface LiveStageProps {
   onRestoreSnapshot: (snapshotId: string) => void;
   expanded: boolean;
   onToggleExpanded: () => void;
+  compact?: boolean;
+  onEnterSplit?: (tab: StageTabId, subReview?: ReviewTab) => void;
+  onExitSplit?: () => void;
+  onOpenGithub?: () => void;
   hidden?: boolean;
 }
 
@@ -110,10 +120,16 @@ export const LiveStage: React.FC<LiveStageProps> = ({
   onRestoreSnapshot,
   expanded,
   onToggleExpanded,
+  compact = false,
+  onEnterSplit,
+  onExitSplit,
+  onOpenGithub,
   hidden = false,
 }) => {
   const [reloadNonce, setReloadNonce] = useState(0);
   const [copiedFile, setCopiedFile] = useState<string | null>(null);
+  const [compactTab, setCompactTab] = useState<'diff' | 'checks'>('diff');
+  const [processesOpen, setProcessesOpen] = useState(false);
 
   const activeFile = useMemo(
     () =>
@@ -175,6 +191,182 @@ export const LiveStage: React.FC<LiveStageProps> = ({
   };
 
   const checkCount = project.checksReport ? project.checksReport.passCount : 6;
+  const totalCheckCount = project.checksReport ? project.checksReport.results.length : 6;
+
+  if (compact) {
+    return (
+      <aside className="ws-compact-aside" aria-label="Bảng trạng thái Arena" hidden={hidden}>
+        <div className="ws-compact-card">
+          <div className="ws-compact-head">
+            <div className="ws-compact-tabs" role="tablist" aria-label="Chuyển Diff hoặc Checks">
+              <button
+                type="button"
+                role="tab"
+                aria-selected={compactTab === 'diff'}
+                className="ws-compact-tab"
+                onClick={() => setCompactTab('diff')}
+              >
+                <span>Diff</span>
+                <span className="ws-arena-diff-stat">
+                  <span className="ws-add">+{totals.added}</span>
+                  <span className="ws-del">−{totals.removed}</span>
+                </span>
+              </button>
+              <button
+                type="button"
+                role="tab"
+                aria-selected={compactTab === 'checks'}
+                className="ws-compact-tab"
+                onClick={() => setCompactTab('checks')}
+              >
+                <span>Checks</span>
+                <span className="ws-arena-tab-count">
+                  {checkCount}/{totalCheckCount}
+                </span>
+              </button>
+            </div>
+            <button
+              type="button"
+              className="ws-compact-dl"
+              aria-label={exporting ? 'Đang nén ZIP' : 'Tải ZIP dự án'}
+              title={exporting ? 'Đang nén ZIP...' : 'Tải gói ZIP'}
+              disabled={exporting}
+              onClick={onExportZip}
+            >
+              <Download size={13} aria-hidden="true" />
+            </button>
+          </div>
+
+          <div className="ws-compact-preview-row">
+            <button
+              type="button"
+              className="ws-compact-preview-trigger"
+              onClick={() => onEnterSplit?.('preview')}
+              title="Mở Live Preview chia đôi màn hình (60%)"
+            >
+              <Globe size={14} className="ws-compact-globe" aria-hidden="true" />
+              <span className="ws-compact-preview-name">{project.name} preview</span>
+              <span className="ws-compact-preview-state">· Live</span>
+            </button>
+            <button
+              type="button"
+              className="ws-compact-refresh"
+              aria-label="Làm mới và mở Preview"
+              title="Khởi động lại Preview"
+              onClick={() => {
+                handleRefresh();
+                onEnterSplit?.('preview');
+              }}
+            >
+              <RotateCw size={12} aria-hidden="true" />
+            </button>
+          </div>
+
+          <button
+            type="button"
+            className="ws-compact-proc-btn"
+            aria-expanded={processesOpen}
+            onClick={() => setProcessesOpen((v) => !v)}
+          >
+            {processesOpen ? <ChevronDown size={13} aria-hidden="true" /> : <ChevronRight size={13} aria-hidden="true" />}
+            <span>Processes</span>
+            <span className="ws-compact-proc-badge">1</span>
+          </button>
+
+          {processesOpen && (
+            <button
+              type="button"
+              className="ws-compact-proc-item"
+              onClick={() => onEnterSplit?.('preview')}
+            >
+              <span className="ws-live-dot" aria-hidden="true" />
+              <span className="ws-compact-proc-label">Sandbox Preview · Fit</span>
+            </button>
+          )}
+
+          {compactTab === 'diff' ? (
+            <>
+              <ul className="ws-compact-files" aria-label="Tệp trong phiên">
+                {project.files.map((file) => {
+                  const diffEntry = project.diffs.find((d) => d.path === file.path);
+                  const adds = diffEntry?.additions ?? file.content.split(/\r?\n/).length;
+                  const dels = diffEntry?.deletions ?? 0;
+                  return (
+                    <li key={file.path}>
+                      <button
+                        type="button"
+                        className="ws-compact-file-row"
+                        onClick={() => {
+                          onSelectFile(file.path);
+                          onEnterSplit?.('source');
+                        }}
+                      >
+                        <span className="ws-compact-file-name">{file.path}</span>
+                        <span className="ws-arena-diff-stat">
+                          <span className="ws-add">+{adds}</span>
+                          {dels > 0 && <span className="ws-del">−{dels}</span>}
+                        </span>
+                      </button>
+                    </li>
+                  );
+                })}
+              </ul>
+              <button
+                type="button"
+                className="ws-compact-all-btn"
+                onClick={() => onEnterSplit?.('review', 'diff')}
+              >
+                <span>View all changes</span>
+                <ChevronRight size={14} aria-hidden="true" />
+              </button>
+            </>
+          ) : (
+            <div className="ws-compact-checks">
+              <div className="ws-compact-check-stat">
+                <ShieldCheck size={14} aria-hidden="true" />
+                <span>
+                  {checkCount}/{totalCheckCount} phép kiểm đạt chuẩn
+                </span>
+              </div>
+              <button
+                type="button"
+                className="ws-compact-all-btn"
+                onClick={() => onEnterSplit?.('review', 'check')}
+              >
+                <span>Mở bảng Checks chi tiết</span>
+                <ChevronRight size={14} aria-hidden="true" />
+              </button>
+            </div>
+          )}
+        </div>
+
+        <div className="ws-connectors-card">
+          <div className="ws-connectors-head">
+            <span>Connectors</span>
+            <button
+              type="button"
+              className="ws-compact-dl"
+              aria-label="Kết nối GitHub"
+              title="Kết nối GitHub"
+              onClick={onOpenGithub}
+            >
+              <Plus size={13} aria-hidden="true" />
+            </button>
+          </div>
+          <button type="button" className="ws-connector-row" onClick={onOpenGithub}>
+            <GitBranch size={14} aria-hidden="true" />
+            <span>GitHub</span>
+          </button>
+          {onOpenPublish && (
+            <button type="button" className="ws-connector-row" onClick={onOpenPublish}>
+              <Share2 size={14} aria-hidden="true" />
+              <span>Đăng Tri thức</span>
+            </button>
+          )}
+        </div>
+      </aside>
+    );
+  }
 
   return (
     <section
@@ -309,6 +501,18 @@ export const LiveStage: React.FC<LiveStageProps> = ({
               <Maximize2 size={14} aria-hidden="true" />
             )}
           </button>
+
+          {onExitSplit && (
+            <button
+              type="button"
+              className="ws-icon-pill ws-icon-pill--sm"
+              aria-label="Đóng chia đôi để về thẻ gọn"
+              title="Đóng Split-Pane"
+              onClick={onExitSplit}
+            >
+              <X size={14} aria-hidden="true" />
+            </button>
+          )}
         </div>
       </header>
 

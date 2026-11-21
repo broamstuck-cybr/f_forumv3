@@ -14,12 +14,12 @@ import type { SourceCatalogItem } from '../../types/index';
 import { useAppStore } from '../../store/appStore';
 import {
   Chips,
-  FileBox,
   Magnify,
   PinUIPlayground,
   type ChipItem,
   type FileBoxTab,
 } from '../../components/pinui';
+import OriginalFileBox from '../../components/pinui/original/file-box/FileBox';
 import { previewFor } from '../../ui/Media';
 import { SpecimenMedia } from './SpecimenMedia';
 import {
@@ -668,47 +668,67 @@ export const ExperienceView: React.FC = () => {
           </section>
 
           <section className="ex-xp-card ex-xp-source-drawer" aria-label="Mã nguồn và Prompt nguyên bản">
-            <div className="ex-code-filebox-wrap">
-              <FileBox
-                title="Tệp mã nguồn & Prompt"
-                tabs={fileBoxTabs}
-                activeId={codeTab}
-                onSelect={(nextId) => setCodeTab(nextId as CodeTab)}
-                className="ex-pinui-filebox"
-              />
-              <div className="ex-code-tabs">
-                <span className="t-label">
-                  {codeTab === 'html' ? 'TSX / HTML' : codeTab === 'css' ? 'CSS' : 'Prompt'}
-                </span>
-                <div className="ex-xp-copy-bar">
-                  <button
-                    type="button"
-                    className="ex-text"
-                    disabled={!copyCodeContent}
-                    onClick={() => void handleCopy(copyCodeContent, 'code', 'Đã chép mã')}
-                  >
-                    {copiedTarget === 'code' ? 'Đã chép' : 'Chép mã'}
-                  </button>
-                  <button
-                    type="button"
-                    className="ex-text"
-                    disabled={!activePrompt}
-                    onClick={() => void handleCopy(activePrompt, 'prompt', 'Đã chép Prompt')}
-                  >
-                    {copiedTarget === 'prompt' ? 'Đã chép' : 'Chép Prompt'}
-                  </button>
+            <div className="ex-source-split">
+              <div className="ex-source-box">
+                <OriginalFileBox
+                  theme={stageTheme}
+                  fill
+                  onPull={({ position }) =>
+                    setCodeTab(position <= 2 ? 'html' : position <= 4 ? 'css' : 'prompt')
+                  }
+                />
+                <span className="ex-source-box-cap">Kéo tập hồ sơ 3D để đổi ngăn mã nguồn</span>
+              </div>
+
+              <div className="ex-source-editor">
+                <div className="ex-source-editor-head">
+                  <div className="ex-source-tabs" role="tablist" aria-label="Tệp mã nguồn và Prompt">
+                    {fileBoxTabs.map((tab) => {
+                      const active = codeTab === tab.id;
+                      return (
+                        <button
+                          key={tab.id}
+                          type="button"
+                          role="tab"
+                          aria-selected={active}
+                          className="ex-source-tab"
+                          onClick={() => setCodeTab(tab.id as CodeTab)}
+                        >
+                          {tab.label}
+                        </button>
+                      );
+                    })}
+                  </div>
+                  <div className="ex-xp-copy-bar">
+                    <button
+                      type="button"
+                      className="ex-text"
+                      disabled={!copyCodeContent}
+                      onClick={() => void handleCopy(copyCodeContent, 'code', 'Đã chép mã')}
+                    >
+                      {copiedTarget === 'code' ? 'Đã chép' : 'Chép mã'}
+                    </button>
+                    <button
+                      type="button"
+                      className="ex-text"
+                      disabled={!activePrompt}
+                      onClick={() => void handleCopy(activePrompt, 'prompt', 'Đã chép Prompt')}
+                    >
+                      {copiedTarget === 'prompt' ? 'Đã chép' : 'Chép Prompt'}
+                    </button>
+                  </div>
                 </div>
+
+                <pre className="ex-code-pre ex-xp-pre">
+                  <code>
+                    {activeCode ||
+                      (datasetsLoading && (isPinUI || isMotion)
+                        ? 'Đang tải mã nguồn nguyên bản...'
+                        : 'Không có dữ liệu cho ngăn này.')}
+                  </code>
+                </pre>
               </div>
             </div>
-
-            <pre className="ex-code-pre ex-xp-pre">
-              <code>
-                {activeCode ||
-                  (datasetsLoading && (isPinUI || isMotion)
-                    ? 'Đang tải mã nguồn nguyên bản...'
-                    : 'Không có dữ liệu cho ngăn này.')}
-              </code>
-            </pre>
 
             {activeItem ? (
               <div className="ex-xp-card-foot">

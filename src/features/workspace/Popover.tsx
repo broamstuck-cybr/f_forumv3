@@ -2,11 +2,21 @@ import React, { useEffect, useId, useRef, useState } from 'react';
 
 interface PopoverProps {
   label: string;
-  icon: React.ReactNode;
+  icon?: React.ReactNode;
+  trigger?: React.ReactNode;
+  triggerClassName?: string;
+  align?: 'left' | 'right';
   children: (close: () => void) => React.ReactNode;
 }
 
-export const Popover: React.FC<PopoverProps> = ({ label, icon, children }) => {
+export const Popover: React.FC<PopoverProps> = ({
+  label,
+  icon,
+  trigger,
+  triggerClassName,
+  align = 'right',
+  children,
+}) => {
   const [open, setOpen] = useState(false);
   const hostRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
@@ -39,17 +49,17 @@ export const Popover: React.FC<PopoverProps> = ({ label, icon, children }) => {
       <button
         ref={buttonRef}
         type="button"
-        className="icon-btn"
+        className={triggerClassName || 'icon-btn'}
         aria-label={label}
         title={label}
         aria-expanded={open}
         aria-controls={panelId}
         onClick={() => setOpen((value) => !value)}
       >
-        {icon}
+        {trigger || icon}
       </button>
       {open && (
-        <div id={panelId} className="ws-pop-panel">
+        <div id={panelId} className="ws-pop-panel" data-align={align}>
           {children(close)}
         </div>
       )}

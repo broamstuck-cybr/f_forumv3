@@ -2,7 +2,8 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Monitor, Moon, RotateCw, Smartphone, Sun, Tablet, ZoomIn, ZoomOut } from 'lucide-react';
 import type { SourceCatalogItem, SourceLibraryName } from '../../types/index';
 import { useAppStore } from '../../store/appStore';
-import { FileBox, PinUIPlayground, type FileBoxTab } from '../../components/pinui';
+import { PinUIPlayground, type FileBoxTab } from '../../components/pinui';
+import OriginalFileBox from '../../components/pinui/original/file-box/FileBox';
 import { previewFor } from '../../ui/Media';
 import { Reveal } from '../../ui/Reveal';
 import {
@@ -515,30 +516,49 @@ export const PlateTable: React.FC<PlateTableProps> = ({
 
             {benchCodeOpen ? (
               <div className="ex-code-drawer">
-                <div className="ex-code-filebox-wrap">
-                  <FileBox
-                    title="Tệp mã nguồn & Prompt"
-                    tabs={fileBoxTabs}
-                    activeId={benchTab}
-                    onSelect={(nextId) => setBenchTab(nextId as BenchTab)}
-                    className="ex-pinui-filebox"
-                  />
-                  <div className="ex-code-tabs">
-                    <span className="t-label">
-                      {benchTab === 'html' ? (isPinUI ? 'TSX' : 'HTML') : benchTab === 'css' ? 'CSS' : 'Prompt'}
-                    </span>
-                    <button
-                      type="button"
-                      className="ex-text"
-                      onClick={() => void handleCopyCode()}
-                    >
-                      {copiedCode ? 'Đã chép' : 'Chép mã'}
-                    </button>
+                <div className="ex-source-split">
+                  <div className="ex-source-box">
+                    <OriginalFileBox
+                      theme={stageTheme}
+                      fill
+                      onPull={({ position }) =>
+                        setBenchTab(position <= 2 ? 'html' : position <= 4 ? 'css' : 'spec')
+                      }
+                    />
+                    <span className="ex-source-box-cap">Kéo tập hồ sơ 3D để đổi ngăn mã nguồn</span>
+                  </div>
+                  <div className="ex-source-editor">
+                    <div className="ex-source-editor-head">
+                      <div className="ex-source-tabs" role="tablist" aria-label="Tệp mã nguồn và Prompt">
+                        {fileBoxTabs.map((tab) => {
+                          const active = benchTab === tab.id;
+                          return (
+                            <button
+                              key={tab.id}
+                              type="button"
+                              role="tab"
+                              aria-selected={active}
+                              className="ex-source-tab"
+                              onClick={() => setBenchTab(tab.id as BenchTab)}
+                            >
+                              {tab.label}
+                            </button>
+                          );
+                        })}
+                      </div>
+                      <button
+                        type="button"
+                        className="ex-text"
+                        onClick={() => void handleCopyCode()}
+                      >
+                        {copiedCode ? 'Đã chép' : 'Chép mã'}
+                      </button>
+                    </div>
+                    <pre className="ex-code-pre">
+                      <code>{shownCode}</code>
+                    </pre>
                   </div>
                 </div>
-                <pre className="ex-code-pre">
-                  <code>{shownCode}</code>
-                </pre>
               </div>
             ) : null}
 
