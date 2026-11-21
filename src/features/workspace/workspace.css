@@ -3239,6 +3239,40 @@
   margin: 0;
 }
 
+.ws-arena-composer-shell .pcmp__row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-areas:
+    "field"
+    "pill";
+  row-gap: 2px;
+  column-gap: 0;
+  width: 100%;
+}
+
+.ws-arena-composer-shell .pcmp__fieldWrap {
+  grid-area: field;
+  width: 100%;
+  min-width: 0;
+}
+
+.ws-arena-composer-shell .pcmp__side {
+  grid-area: pill;
+  height: auto;
+  width: 100%;
+  padding: 6px 12px 8px;
+  border-top: 1px solid var(--line);
+  justify-content: flex-start;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.ws-arena-composer-shell .pcmp__menu {
+  top: auto;
+  bottom: calc(100% + 8px);
+  transform-origin: 20px 100%;
+}
+
 .ws-arena-composer-shell .pcmp__bar {
   border-radius: 0;
   background: transparent;
@@ -3246,7 +3280,7 @@
 }
 
 .ws-arena-composer-shell .pcmp__controls {
-  padding: 6px 12px 10px;
+  padding: 0;
   gap: 8px;
 }
 

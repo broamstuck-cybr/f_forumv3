@@ -1,4 +1,4 @@
-import React, { useEffect, useId, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useId, useMemo, useState } from 'react';
 import {
   Cpu,
   Database,
@@ -11,6 +11,7 @@ import {
   Sun,
 } from 'lucide-react';
 import OriginalThemeSwitch from '../../components/pinui/original/theme-switch/ThemeSwitch';
+import OriginalFileBox from '../../components/pinui/original/file-box/FileBox';
 import type {
   AIProtocol,
   ProjectSetupTarget,
@@ -22,10 +23,8 @@ import { useAppStore } from '../../store/appStore';
 import {
   Chips,
   DynamicDropZone,
-  FileBox,
   SelectionList,
   type DroppedFilePayload,
-  type FileBoxTab,
 } from '../../components/pinui';
 import { Modal } from '../workspace/Modal';
 import {
@@ -260,7 +259,7 @@ export const SettingsView: React.FC = () => {
   const [activeSection, setActiveSection] = useState<SectionId>('appearance');
   const [searchQuery, setSearchQuery] = useState('');
   const [presetFilter, setPresetFilter] = useState<PresetFilter>('all');
-  const [selectedDataCard, setSelectedDataCard] = useState<string>('projects');
+  const [dataFolderPos, setDataFolderPos] = useState<number>(1);
   const [uiScale, setUiScale] = useState<number>(() => readInitialScale());
   const [showApiKey, setShowApiKey] = useState(false);
   const [confirmReset, setConfirmReset] = useState(false);
@@ -328,31 +327,16 @@ export const SettingsView: React.FC = () => {
     });
   };
 
-  const dataTabs: FileBoxTab[] = [
-    {
-      id: 'projects',
-      label: 'Dự án Workspace',
-      meta: `${projects.length} dự án cục bộ`,
-      onOpen: () => navigate('workspace'),
-    },
-    {
-      id: 'saved',
-      label: 'Mục đã lưu',
-      meta: `${savedItemIds.length} mục đánh dấu`,
-      onOpen: () => navigate('profile'),
-    },
-  ];
-
-  const handleExportDownload = () => {
+  const handleExportDownload = useCallback(() => {
     downloadBackup(buildBackup(settings, projects, savedItemIds));
     addToast({
       type: 'success',
       title: 'Đã tải bản sao lưu JSON',
       message: 'Tệp không chứa khóa API cá nhân.',
     });
-  };
+  }, [settings, projects, savedItemIds, addToast]);
 
-  const handleCopyJson = async () => {
+  const handleCopyJson = useCallback(async () => {
     const json = JSON.stringify(buildBackup(settings, projects, savedItemIds), null, 2);
     try {
       await navigator.clipboard.writeText(json);
@@ -368,7 +352,51 @@ export const SettingsView: React.FC = () => {
         message: 'Hãy dùng nút Tải JSON.',
       });
     }
-  };
+  }, [settings, projects, savedItemIds, addToast]);
+
+  const archiveFolders = useMemo(
+    () => [
+      {
+        pos: 1,
+        label: 'Ngăn 1 · Dự án Workspace',
+        summary: `${projects.length} dự án đang lưu cục bộ trên trình duyệt.`,
+        actionLabel: 'Mở Workspace',
+        run: () => navigate('workspace'),
+      },
+      {
+        pos: 2,
+        label: 'Ngăn 2 · Mục đã lưu',
+        summary: `${savedItemIds.length} thành phần & mẫu được đánh dấu bookmark.`,
+        actionLabel: 'Xem trong Hồ sơ',
+        run: () => navigate('profile'),
+      },
+      {
+        pos: 3,
+        label: 'Ngăn 3 · Xuất tệp sao lưu JSON',
+        summary: 'Đóng gói dự án, thiết lập giao diện và bookmark (không chứa API key).',
+        actionLabel: 'Tải JSON',
+        run: handleExportDownload,
+      },
+      {
+        pos: 4,
+        label: 'Ngăn 4 · Sao chép JSON nhanh',
+        summary: 'Chép toàn bộ bản sao lưu cấu hình vào clipboard chỉ với một lần bấm.',
+        actionLabel: 'Chép JSON',
+        run: () => void handleCopyJson(),
+      },
+      {
+        pos: 5,
+        label: 'Ngăn 5 · Khôi phục / Đặt lại mặc định',
+        summary: 'Xóa dữ liệu cục bộ để đưa Workspace và Cài đặt về trạng thái sạch.',
+        actionLabel: 'Đặt lại dữ liệu',
+        danger: true,
+        run: () => setConfirmReset(true),
+      },
+    ],
+    [projects.length, savedItemIds.length, navigate, handleExportDownload, handleCopyJson]
+  );
+
+  const activeArchiveFolder = archiveFolders[Math.max(0, Math.min(4, dataFolderPos - 1))];
 
   const handleFilesDropped = (files: DroppedFilePayload[]) => {
     const first = files[0];
@@ -833,54 +861,71 @@ export const SettingsView: React.FC = () => {
             <section id="st-data" className="st-card" aria-labelledby={idFor('data')}>
               <div className="st-cardHead">
                 <h2 className="st-cardTitle" id={idFor('data')}>
-                  Sao lưu & Dữ liệu
+                  Kho lưu trữ &amp; Sao lưu cục bộ
                 </h2>
                 <span className="tag st-mono">
                   {projects.length} dự án · {savedItemIds.length} mục
                 </span>
               </div>
 
-              <div className="st-grid-2">
-                <div className="st-block">
-                  <FileBox
-                    title="Kho dữ liệu cục bộ"
-                    tabs={dataTabs}
-                    activeId={selectedDataCard}
-                    onSelect={(id) => setSelectedDataCard(id)}
+              <div className="st-archive-split">
+                <div className="st-archive-box">
+                  <OriginalFileBox
+                    theme={theme}
+                    onPull={({ position }) => setDataFolderPos(position)}
                   />
-                  <div className="st-exportActions">
-                    <button type="button" className="btn btn-solid btn-sm" onClick={handleExportDownload}>
-                      Tải JSON
-                    </button>
-                    <button type="button" className="btn btn-line btn-sm" onClick={() => void handleCopyJson()}>
-                      Chép JSON
-                    </button>
+                  <span className="st-archive-cap">Kéo từng ngăn màu để mở nhanh dữ liệu lưu trữ</span>
+                </div>
+
+                <div className="st-archive-detail">
+                  <div className="st-archive-pills" role="tablist" aria-label="5 ngăn lưu trữ cục bộ">
+                    {archiveFolders.map((item) => (
+                      <button
+                        key={item.pos}
+                        type="button"
+                        role="tab"
+                        aria-selected={dataFolderPos === item.pos}
+                        className="st-filter-btn"
+                        onClick={() => setDataFolderPos(item.pos)}
+                      >
+                        Ngăn {item.pos}
+                      </button>
+                    ))}
+                  </div>
+
+                  <div className="st-archive-panel">
+                    <h3>{activeArchiveFolder.label}</h3>
+                    <p className="st-hint">{activeArchiveFolder.summary}</p>
+                    <div className="st-exportActions">
+                      <button
+                        type="button"
+                        className={`btn btn-sm ${activeArchiveFolder.danger ? 'btn-red' : 'btn-solid'}`}
+                        onClick={activeArchiveFolder.run}
+                      >
+                        {activeArchiveFolder.actionLabel}
+                      </button>
+                      <button type="button" className="btn btn-line btn-sm" onClick={handleExportDownload}>
+                        Tải JSON
+                      </button>
+                      <button type="button" className="btn btn-line btn-sm" onClick={() => void handleCopyJson()}>
+                        Chép JSON
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="st-block">
+                    <span className="st-label">Khôi phục từ tệp JSON</span>
+                    <DynamicDropZone
+                      label="Thả tệp JSON sao lưu vào đây"
+                      onFilesAdded={handleFilesDropped}
+                    />
+                    {importError && (
+                      <p className="st-error" role="alert">
+                        {importError}
+                      </p>
+                    )}
                   </div>
                 </div>
-
-                <div className="st-block">
-                  <span className="st-label">Khôi phục từ JSON</span>
-                  <DynamicDropZone
-                    label="Thả tệp JSON sao lưu"
-                    onFilesAdded={handleFilesDropped}
-                  />
-                  {importError && (
-                    <p className="st-error" role="alert">
-                      {importError}
-                    </p>
-                  )}
-                </div>
-              </div>
-
-              <div className="st-row">
-                <span className="st-label">Đặt lại dữ liệu trình duyệt</span>
-                <button
-                  type="button"
-                  className="btn btn-line btn-sm st-danger"
-                  onClick={() => setConfirmReset(true)}
-                >
-                  Đặt lại dữ liệu
-                </button>
               </div>
             </section>
           )}

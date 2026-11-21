@@ -3,7 +3,6 @@ import { Monitor, Moon, RotateCw, Smartphone, Sun, Tablet, ZoomIn, ZoomOut } fro
 import type { SourceCatalogItem, SourceLibraryName } from '../../types/index';
 import { useAppStore } from '../../store/appStore';
 import { PinUIPlayground, type FileBoxTab } from '../../components/pinui';
-import OriginalFileBox from '../../components/pinui/original/file-box/FileBox';
 import { previewFor } from '../../ui/Media';
 import { Reveal } from '../../ui/Reveal';
 import {
@@ -516,48 +515,36 @@ export const PlateTable: React.FC<PlateTableProps> = ({
 
             {benchCodeOpen ? (
               <div className="ex-code-drawer">
-                <div className="ex-source-split">
-                  <div className="ex-source-box">
-                    <OriginalFileBox
-                      theme={stageTheme}
-                      fill
-                      onPull={({ position }) =>
-                        setBenchTab(position <= 2 ? 'html' : position <= 4 ? 'css' : 'spec')
-                      }
-                    />
-                    <span className="ex-source-box-cap">Kéo tập hồ sơ 3D để đổi ngăn mã nguồn</span>
-                  </div>
-                  <div className="ex-source-editor">
-                    <div className="ex-source-editor-head">
-                      <div className="ex-source-tabs" role="tablist" aria-label="Tệp mã nguồn và Prompt">
-                        {fileBoxTabs.map((tab) => {
-                          const active = benchTab === tab.id;
-                          return (
-                            <button
-                              key={tab.id}
-                              type="button"
-                              role="tab"
-                              aria-selected={active}
-                              className="ex-source-tab"
-                              onClick={() => setBenchTab(tab.id as BenchTab)}
-                            >
-                              {tab.label}
-                            </button>
-                          );
-                        })}
-                      </div>
-                      <button
-                        type="button"
-                        className="ex-text"
-                        onClick={() => void handleCopyCode()}
-                      >
-                        {copiedCode ? 'Đã chép' : 'Chép mã'}
-                      </button>
+                <div className="ex-source-editor">
+                  <div className="ex-source-editor-head">
+                    <div className="ex-source-tabs" role="tablist" aria-label="Tệp mã nguồn và Prompt">
+                      {fileBoxTabs.map((tab) => {
+                        const active = benchTab === tab.id;
+                        return (
+                          <button
+                            key={tab.id}
+                            type="button"
+                            role="tab"
+                            aria-selected={active}
+                            className="ex-source-tab"
+                            onClick={() => setBenchTab(tab.id as BenchTab)}
+                          >
+                            {tab.label}
+                          </button>
+                        );
+                      })}
                     </div>
-                    <pre className="ex-code-pre">
-                      <code>{shownCode}</code>
-                    </pre>
+                    <button
+                      type="button"
+                      className="ex-text"
+                      onClick={() => void handleCopyCode()}
+                    >
+                      {copiedCode ? 'Đã chép' : 'Chép mã'}
+                    </button>
                   </div>
+                  <pre className="ex-code-pre">
+                    <code>{shownCode}</code>
+                  </pre>
                 </div>
               </div>
             ) : null}

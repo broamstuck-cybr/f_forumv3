@@ -9,7 +9,6 @@ import {
   GitBranch,
   PanelLeft,
   PanelLeftClose,
-  Paperclip,
   Share2,
   SlidersHorizontal,
   Wrench,
@@ -1543,16 +1542,6 @@ export const WorkspaceView: React.FC = () => {
                         </button>
                       ))}
                     </div>
-                    <button
-                      type="button"
-                      className="ws-arena-mini-icon"
-                      aria-label="Đính kèm tệp"
-                      title="Đính kèm tệp"
-                      aria-pressed={dropZoneOpen}
-                      onClick={() => setDropZoneOpen((value) => !value)}
-                    >
-                      <Paperclip size={13} aria-hidden="true" />
-                    </button>
                     <button
                       type="button"
                       className="ws-arena-mini-icon"
