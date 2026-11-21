@@ -147,11 +147,30 @@ export const ProfileView: React.FC = () => {
     quota,
     navigate,
     theme,
+    viewingProfileUser,
+    clearViewingProfileUser,
+    addToast,
   } = useAppStore();
 
   const [activeTab, setActiveTab] = useState<ProfileTab>('saved');
   const [savedFilter, setSavedFilter] = useState<SavedFilter>('all');
   const [postFilter, setPostFilter] = useState<PostFilter>('all');
+  const [isFollowing, setIsFollowing] = useState(false);
+
+  const isOtherUser = Boolean(
+    viewingProfileUser &&
+      (!currentUser ||
+        (viewingProfileUser.handle.toLowerCase().replace(/^@/, '') !==
+          currentUser.username.toLowerCase().replace(/^@/, '') &&
+          viewingProfileUser.id !== currentUser.id))
+  );
+
+  useEffect(() => {
+    if (isOtherUser) {
+      setActiveTab('posts');
+      setIsFollowing(false);
+    }
+  }, [isOtherUser, viewingProfileUser]);
 
   const userKey = currentUser?.id || 'guest';
   const bioStorageKey = `fforum_v3_profile_bio_${userKey}`;
@@ -162,31 +181,44 @@ export const ProfileView: React.FC = () => {
     'Thiết kế giao diện và lưu trữ thành phần web.';
   const defaultStatus = currentUser ? 'Đang hoạt động' : 'Phiên cục bộ';
 
-  const [bio, setBio] = useState<string>(() => readLocalProfileField(bioStorageKey, defaultBio));
-  const [statusNote, setStatusNote] = useState<string>(() =>
+  const [ownBio, setOwnBio] = useState<string>(() => readLocalProfileField(bioStorageKey, defaultBio));
+  const [ownStatusNote, setOwnStatusNote] = useState<string>(() =>
     readLocalProfileField(statusStorageKey, defaultStatus)
   );
   const [editingProfile, setEditingProfile] = useState(false);
-  const [bioDraft, setBioDraft] = useState(bio);
-  const [statusDraft, setStatusDraft] = useState(statusNote);
+  const [bioDraft, setBioDraft] = useState(ownBio);
+  const [statusDraft, setStatusDraft] = useState(ownStatusNote);
 
   useEffect(() => {
     const nextBio = readLocalProfileField(bioStorageKey, defaultBio);
     const nextStatus = readLocalProfileField(statusStorageKey, defaultStatus);
-    setBio(nextBio);
-    setStatusNote(nextStatus);
+    setOwnBio(nextBio);
+    setOwnStatusNote(nextStatus);
     setBioDraft(nextBio);
     setStatusDraft(nextStatus);
   }, [bioStorageKey, statusStorageKey, defaultBio, defaultStatus]);
 
-  const displayName = currentUser?.name?.trim() || 'Thành viên cục bộ';
-  const handle = currentUser?.username ? `@${currentUser.username}` : '@local_maker';
-  const roleLabel =
-    currentUser?.role === 'admin'
+  const displayName = isOtherUser
+    ? viewingProfileUser!.name
+    : currentUser?.name?.trim() || 'Thành viên cục bộ';
+  const handle = isOtherUser
+    ? viewingProfileUser!.handle.startsWith('@')
+      ? viewingProfileUser!.handle
+      : `@${viewingProfileUser!.handle}`
+    : currentUser?.username
+      ? `@${currentUser.username}`
+      : '@local_maker';
+  const roleLabel = isOtherUser
+    ? viewingProfileUser!.role || 'Thành viên'
+    : currentUser?.role === 'admin'
       ? 'Quản trị'
       : currentUser
         ? 'Thành viên'
         : 'Khách';
+  const bio = isOtherUser
+    ? viewingProfileUser!.bio || 'Thành viên chia sẻ kiến trúc và mẫu giao diện trên Tri thức F-Forum.'
+    : ownBio;
+  const statusNote = isOtherUser ? 'Đang hoạt động trên F-Forum' : ownStatusNote;
 
   const savedEntries = useMemo<SavedEntry[]>(() => {
     const entries: SavedEntry[] = [];
@@ -295,6 +327,17 @@ export const ProfileView: React.FC = () => {
   }, [savedEntries, savedFilter]);
 
   const userPosts = useMemo<CommunityPost[]>(() => {
+    if (isOtherUser) {
+      const targetHandle = viewingProfileUser!.handle.toLowerCase().replace(/^@/, '');
+      const targetId = viewingProfileUser!.id;
+      return communityPosts
+        .filter((post) => {
+          if (post.hidden) return false;
+          if (targetId && post.author.id === targetId) return true;
+          return post.author.handle.toLowerCase().replace(/^@/, '') === targetHandle;
+        })
+        .sort((a, b) => Date.parse(b.createdAt) - Date.parse(a.createdAt));
+    }
     if (!currentUser) return [];
     const uid = currentUser.id;
     const uname = currentUser.username;
@@ -311,7 +354,7 @@ export const ProfileView: React.FC = () => {
         );
       })
       .sort((a, b) => Date.parse(b.createdAt) - Date.parse(a.createdAt));
-  }, [communityPosts, currentUser]);
+  }, [communityPosts, currentUser, isOtherUser, viewingProfileUser]);
 
   const filteredUserPosts = useMemo(() => {
     if (postFilter === 'all') return userPosts;
@@ -389,15 +432,20 @@ export const ProfileView: React.FC = () => {
     return tasks.slice(0, 6);
   }, [projects]);
 
-  const profileTabs = useMemo(
-    () => [
+  const profileTabs = useMemo(() => {
+    if (isOtherUser) {
+      return [
+        { id: 'posts', label: 'Bài viết & Tri thức', count: userPosts.length },
+        { id: 'activity', label: 'Dòng hoạt động', count: activityFeed.length },
+      ];
+    }
+    return [
       { id: 'saved', label: 'Đã lưu', count: savedEntries.length },
       { id: 'projects', label: 'Dự án', count: projects.length },
       { id: 'posts', label: 'Bài viết', count: userPosts.length },
       { id: 'activity', label: 'Hoạt động', count: activityFeed.length },
-    ],
-    [savedEntries.length, projects.length, userPosts.length, activityFeed.length]
-  );
+    ];
+  }, [isOtherUser, savedEntries.length, projects.length, userPosts.length, activityFeed.length]);
 
   const openCommunityThread = (postId: string) => {
     try {
@@ -411,10 +459,11 @@ export const ProfileView: React.FC = () => {
 
   const handleSaveBio = (event: React.FormEvent) => {
     event.preventDefault();
+    if (isOtherUser) return;
     const nextBio = bioDraft.trim() || defaultBio;
     const nextStatus = statusDraft.trim() || defaultStatus;
-    setBio(nextBio);
-    setStatusNote(nextStatus);
+    setOwnBio(nextBio);
+    setOwnStatusNote(nextStatus);
     try {
       window.localStorage.setItem(bioStorageKey, nextBio);
       window.localStorage.setItem(statusStorageKey, nextStatus);
@@ -449,40 +498,79 @@ export const ProfileView: React.FC = () => {
           </div>
 
           <div className="pf-actions">
-            <button
-              type="button"
-              className="btn btn-line btn-sm"
-              onClick={() => {
-                setBioDraft(bio);
-                setStatusDraft(statusNote);
-                setEditingProfile((val) => !val);
-              }}
-            >
-              {editingProfile ? 'Đóng' : 'Sửa hồ sơ'}
-            </button>
-            <button type="button" className="btn btn-red btn-sm" onClick={() => navigate('workspace')}>
-              Workspace
-            </button>
-            <button type="button" className="btn btn-line btn-sm" onClick={() => navigate('settings')}>
-              Cài đặt
-            </button>
-            {currentUser ? (
-              <button type="button" className="btn btn-ghost btn-sm" onClick={() => void logout()}>
-                Đăng xuất
-              </button>
+            {isOtherUser ? (
+              <>
+                <button
+                  type="button"
+                  className="btn btn-line btn-sm"
+                  onClick={() => clearViewingProfileUser()}
+                  title="Quay về hồ sơ cá nhân của bạn"
+                >
+                  ← Hồ sơ của tôi
+                </button>
+                <button
+                  type="button"
+                  className={`btn ${isFollowing ? 'btn-line' : 'btn-red'} btn-sm`}
+                  onClick={() => {
+                    setIsFollowing((v) => !v);
+                    addToast({
+                      type: 'info',
+                      title: isFollowing ? 'Bỏ theo dõi' : 'Đã theo dõi',
+                      message: isFollowing
+                        ? `Đã ngừng theo dõi @${viewingProfileUser!.handle}`
+                        : `Đang theo dõi các cập nhật từ ${displayName}`,
+                    });
+                  }}
+                >
+                  {isFollowing ? 'Đang theo dõi' : 'Theo dõi'}
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-line btn-sm"
+                  onClick={() => navigate('community')}
+                  title="Xem các bài viết trên Tri thức"
+                >
+                  Tri thức
+                </button>
+              </>
             ) : (
-              <button
-                type="button"
-                className="btn btn-ghost btn-sm"
-                onClick={() => setAuthModalOpen(true)}
-              >
-                Đăng nhập
-              </button>
+              <>
+                <button
+                  type="button"
+                  className="btn btn-line btn-sm"
+                  onClick={() => {
+                    setBioDraft(bio);
+                    setStatusDraft(statusNote);
+                    setEditingProfile((val) => !val);
+                  }}
+                >
+                  {editingProfile ? 'Đóng' : 'Sửa hồ sơ'}
+                </button>
+                <button type="button" className="btn btn-red btn-sm" onClick={() => navigate('workspace')}>
+                  Workspace
+                </button>
+                <button type="button" className="btn btn-line btn-sm" onClick={() => navigate('settings')}>
+                  Cài đặt
+                </button>
+                {currentUser ? (
+                  <button type="button" className="btn btn-ghost btn-sm" onClick={() => void logout()}>
+                    Đăng xuất
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    className="btn btn-ghost btn-sm"
+                    onClick={() => setAuthModalOpen(true)}
+                  >
+                    Đăng nhập
+                  </button>
+                )}
+              </>
             )}
           </div>
         </div>
 
-        {editingProfile && (
+        {!isOtherUser && editingProfile && (
           <form className="pf-edit-form" onSubmit={handleSaveBio}>
             <div className="pf-edit-grid">
               <div className="pf-field">
@@ -529,20 +617,28 @@ export const ProfileView: React.FC = () => {
 
         <dl className="pf-stats" aria-label="Thống kê hồ sơ thực tế">
           <div className="pf-stat">
-            <dt className="t-label">Đã lưu</dt>
-            <dd className="pf-stat-accent">{savedItemIds.length}</dd>
+            <dt className="t-label">{isOtherUser ? 'Bài viết' : 'Đã lưu'}</dt>
+            <dd className="pf-stat-accent">{isOtherUser ? userPosts.length : savedItemIds.length}</dd>
           </div>
           <div className="pf-stat">
-            <dt className="t-label">Đã tim</dt>
-            <dd>{likedItemIds.length}</dd>
+            <dt className="t-label">{isOtherUser ? 'Tán thành' : 'Đã tim'}</dt>
+            <dd>
+              {isOtherUser
+                ? userPosts.reduce((acc, p) => acc + (p.votes ?? p.likes ?? 0), 0)
+                : likedItemIds.length}
+            </dd>
           </div>
           <div className="pf-stat">
-            <dt className="t-label">Dự án</dt>
-            <dd>{projects.length}</dd>
+            <dt className="t-label">{isOtherUser ? 'Thảo luận' : 'Dự án'}</dt>
+            <dd>
+              {isOtherUser
+                ? userPosts.reduce((acc, p) => acc + (p.answersCount ?? p.answers?.length ?? 0), 0)
+                : projects.length}
+            </dd>
           </div>
           <div className="pf-stat">
-            <dt className="t-label">Hạn mức AI</dt>
-            <dd>{quotaStatValue}</dd>
+            <dt className="t-label">{isOtherUser ? 'Vai trò' : 'Hạn mức AI'}</dt>
+            <dd>{isOtherUser ? roleLabel : quotaStatValue}</dd>
           </div>
         </dl>
       </header>

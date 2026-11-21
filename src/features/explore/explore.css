@@ -47,7 +47,7 @@
 
   .ex-pinui-search .psearch-bar {
     min-height: 46px;
-    border-radius: var(--radius-sm);
+    border-radius: var(--radius-pill);
     border: 1px solid var(--line-strong);
     background: var(--bg-raised);
     color: var(--fg);
@@ -59,7 +59,7 @@
   }
 
   .ex-pinui-search .psearch-dropdown {
-    border-radius: var(--radius-sm);
+    border-radius: var(--radius-md);
     border-color: var(--line-strong);
     background: var(--bg-raised);
   }
@@ -81,7 +81,7 @@
     max-width: 100%;
     overflow-x: auto;
     overflow-y: hidden;
-    border-radius: var(--radius-sm);
+    border-radius: var(--radius-pill);
     border: 1px solid var(--line);
     background: var(--bg-raised);
   }

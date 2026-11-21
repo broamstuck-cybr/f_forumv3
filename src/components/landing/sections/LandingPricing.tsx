@@ -9,7 +9,7 @@ interface LandingPricingProps {
 
 export const LandingPricing: React.FC<LandingPricingProps> = ({ onEnterApp }) => {
   return (
-    <section id="bang-gia" aria-label="Truy cập Mở" className="lp-section sheet scene-paper">
+    <section id="bang-gia" aria-label="Truy cập Mở" className="lp-section sheet">
       <div className="wrap">
         <div className="lp-head">
           <div className="lp-head-copy">

@@ -65,7 +65,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
         onEnterApp={enterApp}
       />
 
-      <nav aria-label="Chỉ mục chương" className="lp-chapter-rail scene-ink">
+      <nav aria-label="Chỉ mục chương" className="lp-chapter-rail">
         {LANDING_CHAPTERS.map((chapter) => (
           <button
             key={chapter.id}

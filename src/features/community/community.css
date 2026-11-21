@@ -429,8 +429,8 @@
     font-size: var(--text-xs);
     font-weight: 600;
     cursor: pointer;
-    padding: 4px 8px;
-    border-radius: 8px;
+    padding: 4px 12px;
+    border-radius: var(--radius-pill);
     transition:
       color var(--dur-1) var(--ease-ux),
       background-color var(--dur-1) var(--ease-ux);
@@ -859,7 +859,7 @@
   .cm-icon-btn--sm {
     width: 28px;
     height: 28px;
-    border-radius: 8px;
+    border-radius: var(--radius-pill);
   }
 
   .cm-comments-drawer {
@@ -1016,6 +1016,56 @@
     list-style: none;
     display: grid;
     gap: 6px;
+  }
+
+  .cm-contrib-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .cm-contrib-view-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 36px;
+    padding: 0 10px;
+    border: 1px solid var(--line);
+    border-radius: var(--radius-pill);
+    background: transparent;
+    color: var(--fg-muted);
+    font-size: 11px;
+    font-weight: 600;
+    cursor: pointer;
+    flex: none;
+    transition:
+      border-color var(--dur-1) var(--ease-ux),
+      color var(--dur-1) var(--ease-ux),
+      background-color var(--dur-1) var(--ease-ux);
+  }
+
+  .cm-contrib-view-btn:hover {
+    border-color: var(--red);
+    color: var(--red);
+    background: var(--red-soft);
+  }
+
+  .cm-author-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    border: 0;
+    padding: 0;
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    cursor: pointer;
+    text-align: left;
+    transition: color var(--dur-1) var(--ease-ux);
+  }
+
+  .cm-author-link:hover .cm-author-name {
+    color: var(--red);
   }
 
   .cm-contrib-btn {

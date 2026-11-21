@@ -83,7 +83,7 @@ const ProjectCard: React.FC<{
 
 export const LandingProjects: React.FC<LandingProjectsProps> = ({ onNavigate }) => {
   return (
-    <section id="du-an" aria-label="Dự án thực chiến" className="lp-section sheet lp-sheet-lift scene-ink">
+    <section id="du-an" aria-label="Dự án thực chiến" className="lp-section sheet lp-sheet-lift">
       <div className="wrap-wide">
         <div className="lp-head">
           <div className="lp-head-copy">

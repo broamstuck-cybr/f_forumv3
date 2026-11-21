@@ -15,6 +15,17 @@ export interface LandingNavProps {
 
 const CHAPTER_IDS = LANDING_CHAPTERS.map((c) => c.id);
 
+function userInitials(name: string): string {
+  return (
+    name
+      .split(/\s+/)
+      .filter(Boolean)
+      .slice(0, 2)
+      .map((part) => part[0]?.toUpperCase() ?? '')
+      .join('') || 'U'
+  );
+}
+
 export const LandingNav: React.FC<LandingNavProps> = ({
   currentUser,
   onOpenLogin,
@@ -82,7 +93,7 @@ export const LandingNav: React.FC<LandingNavProps> = ({
   }, [menuOpen]);
 
   return (
-    <header className="lp-nav scene-ink" data-scrolled={scrolled}>
+    <header className="lp-nav" data-scrolled={scrolled}>
       <div className="lp-progress" aria-hidden="true">
         <motion.div
           className="lp-progress-bar"
@@ -126,7 +137,17 @@ export const LandingNav: React.FC<LandingNavProps> = ({
 
         <div className="lp-nav-actions">
           {currentUser ? (
-            <span className="lp-nav-user">{currentUser.name}</span>
+            <button
+              type="button"
+              className="lp-nav-userBtn"
+              onClick={onEnterApp}
+              title={`Đang đăng nhập: ${currentUser.name} · Mở Workspace`}
+            >
+              <span className="lp-nav-avatar" aria-hidden="true">
+                {userInitials(currentUser.name)}
+              </span>
+              <span className="lp-nav-userName">{currentUser.name}</span>
+            </button>
           ) : (
             <button type="button" className="btn btn-ghost btn-sm" onClick={onOpenLogin}>
               Đăng nhập
@@ -153,7 +174,7 @@ export const LandingNav: React.FC<LandingNavProps> = ({
       <AnimatePresence>
         {menuOpen && (
           <motion.div
-            className="navsheet scene-ink"
+            className="navsheet"
             role="dialog"
             aria-modal="true"
             aria-label="Menu điều hướng"

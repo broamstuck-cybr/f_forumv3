@@ -207,7 +207,7 @@
     min-height: 44px;
     padding: 0 var(--space-5);
     border: 1px solid transparent;
-    border-radius: var(--radius-sm);
+    border-radius: var(--radius-pill);
     font-family: var(--font-ui);
     font-size: var(--text-sm);
     font-weight: 650;
@@ -292,7 +292,7 @@
     height: 44px;
     flex: none;
     border: 1px solid transparent;
-    border-radius: var(--radius-sm);
+    border-radius: var(--radius-pill);
     background: transparent;
     color: var(--fg-muted);
     cursor: pointer;
@@ -369,9 +369,9 @@
     display: inline-flex;
     align-items: center;
     min-height: 24px;
-    padding: 0 var(--space-2);
+    padding: 0 var(--space-3);
     border: 1px solid var(--line-strong);
-    border-radius: var(--radius-xs);
+    border-radius: var(--radius-pill);
     font-family: var(--font-mono);
     font-size: var(--text-2xs);
     line-height: 1;

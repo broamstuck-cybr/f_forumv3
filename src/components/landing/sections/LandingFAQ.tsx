@@ -12,7 +12,7 @@ export const LandingFAQ: React.FC<LandingFAQProps> = ({ onEnterApp }) => {
 
   return (
     <>
-      <section id="faq" aria-label="Hỏi đáp thường gặp" className="lp-section scene-paper">
+      <section id="faq" aria-label="Hỏi đáp thường gặp" className="lp-section">
         <div className="wrap">
           <div className="lp-head">
             <div className="lp-head-copy">

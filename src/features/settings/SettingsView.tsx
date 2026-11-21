@@ -7,7 +7,6 @@ import {
   DynamicDropZone,
   FileBox,
   SelectionList,
-  SlingSlider,
   type DroppedFilePayload,
   type FileBoxTab,
 } from '../../components/pinui';
@@ -108,7 +107,6 @@ export const SettingsView: React.FC = () => {
   const [activeSection, setActiveSection] = useState<SectionId>('appearance');
   const [selectedDataCard, setSelectedDataCard] = useState<string>('projects');
   const [uiScale, setUiScale] = useState<number>(() => readInitialScale());
-  const [scaleKey, setScaleKey] = useState(0);
   const [showApiKey, setShowApiKey] = useState(false);
   const [confirmReset, setConfirmReset] = useState(false);
   const [pendingBackup, setPendingBackup] = useState<BackupPayload | null>(null);
@@ -313,34 +311,36 @@ export const SettingsView: React.FC = () => {
               />
             </div>
 
-            <div className="st-scaleBlock">
-              <div className="st-scaleHead">
+            <div className="st-row st-row--scale">
+              <div>
                 <span className="st-label">Cỡ chữ UI</span>
+                <p className="st-hint">Tỷ lệ chữ ({uiScale}%)</p>
+              </div>
+              <div className="st-scaleControls">
+                <Chips
+                  items={[
+                    { id: '90', label: '90%' },
+                    { id: '95', label: '95%' },
+                    { id: '100', label: '100%' },
+                    { id: '105', label: '105%' },
+                    { id: '110', label: '110%' },
+                    { id: '115', label: '115%' },
+                  ]}
+                  selectedIds={[String(uiScale)]}
+                  multi={false}
+                  theme={theme}
+                  onToggle={(id) => setUiScale(Number(id))}
+                />
                 {uiScale !== 100 && (
                   <button
                     type="button"
                     className="btn btn-ghost btn-sm"
-                    onClick={() => {
-                      setUiScale(100);
-                      setScaleKey((k) => k + 1);
-                    }}
+                    onClick={() => setUiScale(100)}
+                    title="Đặt lại cỡ chữ chuẩn 100%"
                   >
-                    Đặt lại 100%
+                    Đặt lại
                   </button>
                 )}
-              </div>
-              <div className="st-slider">
-                <SlingSlider
-                  key={`st-scale-${scaleKey}`}
-                  min={90}
-                  max={115}
-                  step={5}
-                  defaultValue={uiScale}
-                  label="Cỡ chữ UI"
-                  unit="%"
-                  theme={theme}
-                  onChange={(val) => setUiScale(val)}
-                />
               </div>
             </div>
           </section>

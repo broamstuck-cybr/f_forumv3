@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
-import { Menu, Moon, Sun, X } from 'lucide-react';
-import type { AppRoute, ThemePreference } from '../../types/index';
+import { CloudRain, Droplets, Menu, Moon, Sparkles, Sun, X } from 'lucide-react';
+import type { AppRoute, ThemeEffect, ThemePreference } from '../../types/index';
 import { useAppStore } from '../../store/appStore';
 import { KineticLogo } from '../brand/KineticLogo';
 import './app-shell.css';
@@ -47,6 +47,8 @@ export const AppNavbar: React.FC<AppNavbarProps> = () => {
     toggleTheme,
     settings,
     updateSettings,
+    addToast,
+    clearViewingProfileUser,
   } = useAppStore();
   const reduced = Boolean(useReducedMotion());
   const [menuOpen, setMenuOpen] = useState(false);
@@ -123,6 +125,27 @@ export const AppNavbar: React.FC<AppNavbarProps> = () => {
 
   const spring = reduced ? { duration: 0.01 } : { type: 'spring' as const, stiffness: 300, damping: 30 };
 
+  const currentEffect = settings.themeEffect || 'droplet';
+  const cycleThemeEffect = () => {
+    const cycleMap: Record<ThemeEffect, ThemeEffect> = {
+      droplet: 'rain',
+      rain: 'diwali',
+      diwali: 'droplet',
+    };
+    const next = cycleMap[currentEffect] || 'droplet';
+    updateSettings({ themeEffect: next });
+    const labels: Record<ThemeEffect, string> = {
+      droplet: 'Giọt nước',
+      rain: 'Mưa rơi',
+      diwali: 'Ánh sáng',
+    };
+    addToast({
+      type: 'info',
+      title: 'Chế độ hiệu ứng PinUI',
+      message: `Đã chuyển sang hiệu ứng ${labels[next]}`,
+    });
+  };
+
   return (
     <header className="nav">
       <div className="wrap-wide nav__row">
@@ -184,6 +207,28 @@ export const AppNavbar: React.FC<AppNavbarProps> = () => {
             )}
           </button>
 
+          <button
+            type="button"
+            className="icon-btn nav__modeBtn"
+            onClick={cycleThemeEffect}
+            aria-label={`Hiệu ứng nền: ${currentEffect} (nhấn để đổi)`}
+            title={
+              currentEffect === 'rain'
+                ? 'Hiệu ứng: Mưa rơi (Rain) · Nhấn đổi Ánh sáng'
+                : currentEffect === 'diwali'
+                  ? 'Hiệu ứng: Ánh sáng (Diwali) · Nhấn đổi Giọt nước'
+                  : 'Hiệu ứng: Giọt nước (Droplet) · Nhấn đổi Mưa rơi'
+            }
+          >
+            {currentEffect === 'rain' ? (
+              <CloudRain size={17} strokeWidth={1.75} aria-hidden="true" />
+            ) : currentEffect === 'diwali' ? (
+              <Sparkles size={17} strokeWidth={1.75} aria-hidden="true" />
+            ) : (
+              <Droplets size={17} strokeWidth={1.75} aria-hidden="true" />
+            )}
+          </button>
+
           <div className="relative nav__account" ref={menuRef}>
             <button
               type="button"
@@ -221,55 +266,15 @@ export const AppNavbar: React.FC<AppNavbarProps> = () => {
                     </span>
                   </div>
 
-                  <div className="nav__menuSection">
-                    <div className="nav__menuBlock">
-                      <span className="nav__menuSubLabel">Chủ đề</span>
-                      <div className="nav__seg" role="group" aria-label="Chọn chủ đề">
-                        {THEME_OPTIONS.map((opt) => (
-                          <button
-                            key={opt.id}
-                            type="button"
-                            className="nav__segBtn"
-                            aria-pressed={themePreference === opt.id}
-                            onClick={() => updateSettings({ themePreference: opt.id })}
-                          >
-                            {opt.label}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-
-                    <div className="nav__switchRow">
-                      <span className="nav__switchLabel">Nền video động</span>
-                      <button
-                        type="button"
-                        role="switch"
-                        aria-checked={ambientEnabled}
-                        aria-label="Nền video động"
-                        className="nav__switch"
-                        onClick={() => updateSettings({ ambientVideo: !ambientEnabled })}
-                      >
-                        <span className="nav__switchThumb" aria-hidden="true" />
-                      </button>
-                    </div>
-
-                    <div className="nav__switchRow">
-                      <span className="nav__switchLabel">Mật độ gọn</span>
-                      <button
-                        type="button"
-                        role="switch"
-                        aria-checked={settings.compactDensity}
-                        aria-label="Mật độ gọn"
-                        className="nav__switch"
-                        onClick={() => updateSettings({ compactDensity: !settings.compactDensity })}
-                      >
-                        <span className="nav__switchThumb" aria-hidden="true" />
-                      </button>
-                    </div>
-                  </div>
-
                   <div className="nav__menuNav">
-                    <button type="button" className="nav__menuItem" onClick={() => go('profile')}>
+                    <button
+                      type="button"
+                      className="nav__menuItem"
+                      onClick={() => {
+                        clearViewingProfileUser();
+                        go('profile');
+                      }}
+                    >
                       Hồ sơ
                     </button>
                     <button type="button" className="nav__menuItem" onClick={() => go('settings')}>
@@ -394,7 +399,14 @@ export const AppNavbar: React.FC<AppNavbarProps> = () => {
                 </div>
               </div>
               <div className="navsheet__foot">
-                <button type="button" className="btn btn-line" onClick={() => go('profile')}>
+                <button
+                  type="button"
+                  className="btn btn-line"
+                  onClick={() => {
+                    clearViewingProfileUser();
+                    go('profile');
+                  }}
+                >
                   Hồ sơ
                 </button>
                 <button type="button" className="btn btn-line" onClick={() => go('settings')}>

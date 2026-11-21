@@ -4,12 +4,15 @@ import {
   Copy,
   Download,
   ExternalLink,
+  Eye,
+  FileCode2,
   GitCompareArrows,
   Maximize2,
   Minimize2,
   Monitor,
   RotateCw,
   Share2,
+  ShieldCheck,
   Smartphone,
   Tablet,
 } from 'lucide-react';
@@ -103,12 +106,25 @@ export const LiveStage: React.FC<LiveStageProps> = ({
 
   const stageTabs = useMemo<LiquidTabItem[]>(
     () => [
-      { id: 'preview', label: 'Xem' },
-      { id: 'source', label: 'Mã', count: project.files.length },
+      {
+        id: 'preview',
+        label: '',
+        icon: <Eye size={15} strokeWidth={1.8} aria-hidden="true" />,
+        title: 'Xem trực tiếp (Live Preview)',
+      },
+      {
+        id: 'source',
+        label: '',
+        icon: <FileCode2 size={15} strokeWidth={1.8} aria-hidden="true" />,
+        count: project.files.length,
+        title: `Mã nguồn (${project.files.length} tệp)`,
+      },
       {
         id: 'review',
-        label: 'Kiểm',
+        label: '',
+        icon: <ShieldCheck size={15} strokeWidth={1.8} aria-hidden="true" />,
         count: project.checksReport ? project.checksReport.passCount : 6,
+        title: 'Kiểm định & Diff 6 lớp',
       },
     ],
     [project.files.length, project.checksReport]

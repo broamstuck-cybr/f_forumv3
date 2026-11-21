@@ -258,6 +258,7 @@ export interface CommunityAuthor {
   handle: string;
   avatarUrl?: string;
   role: string;
+  bio?: string;
 }
 
 export interface CommunityAnswer {

@@ -18,6 +18,7 @@ import type {
   BYOKConfig,
   ChecksReport,
   ClubHandoverDossier,
+  CommunityAuthor,
   CommunityChannelsData,
   CommunityPost,
   DimensionView,
@@ -593,6 +594,9 @@ export interface AppStoreContextValue {
   toasts: ToastItem[];
   addToast: (toast: { type?: ToastItem['type']; title: string; message?: string }) => void;
   dismissToast: (id: string) => void;
+  viewingProfileUser: CommunityAuthor | null;
+  openUserProfile: (author: CommunityAuthor) => void;
+  clearViewingProfileUser: () => void;
 }
 
 const AppStoreContext = createContext<AppStoreContextValue | null>(null);
@@ -875,6 +879,21 @@ export const AppStoreProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     },
     []
   );
+
+  const [viewingProfileUser, setViewingProfileUser] = useState<CommunityAuthor | null>(null);
+
+  const openUserProfile = useCallback((author: CommunityAuthor) => {
+    setViewingProfileUser(author);
+    setCurrentRoute('profile');
+    if (typeof window !== 'undefined') {
+      window.history.pushState({}, '', '/profile');
+      window.scrollTo({ top: 0, behavior: 'auto' });
+    }
+  }, []);
+
+  const clearViewingProfileUser = useCallback(() => {
+    setViewingProfileUser(null);
+  }, []);
 
   const dismissToast = useCallback((id: string) => {
     setToasts((prev) => prev.filter((t) => t.id !== id));
@@ -1907,6 +1926,9 @@ export const AppStoreProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       toasts,
       addToast,
       dismissToast,
+      viewingProfileUser,
+      openUserProfile,
+      clearViewingProfileUser,
     }),
     [
       currentRoute,
@@ -1975,6 +1997,9 @@ export const AppStoreProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       toasts,
       addToast,
       dismissToast,
+      viewingProfileUser,
+      openUserProfile,
+      clearViewingProfileUser,
     ]
   );
 

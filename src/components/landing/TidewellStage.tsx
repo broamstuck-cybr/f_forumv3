@@ -378,7 +378,7 @@ export const TidewellStage: React.FC<TidewellStageProps> = ({ onNavigate }) => {
         ref={stageRef}
         data-reduced="true"
         aria-label="Quy trình kiến tạo và sản phẩm F-Forum"
-        className="tw-stage scene-paper"
+        className="tw-stage"
       >
         <div id="san-pham" className="tw-anchor-product" aria-hidden="true" />
         <div className="wrap-wide">
@@ -439,7 +439,7 @@ export const TidewellStage: React.FC<TidewellStageProps> = ({ onNavigate }) => {
       id="quy-trinh"
       ref={stageRef}
       aria-label="Quy trình từ phác thảo đến mã nguồn và khung sản phẩm"
-      className="tw-stage scene-paper"
+      className="tw-stage"
     >
       <div id="san-pham" className="tw-anchor-product" aria-hidden="true" />
       <div className="tw-sticky">

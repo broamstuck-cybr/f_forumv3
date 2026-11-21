@@ -7,6 +7,8 @@ export interface LiquidTabItem {
   id: string;
   label: string;
   count?: number;
+  icon?: React.ReactNode;
+  title?: string;
 }
 
 export interface LiquidTabsProps {
@@ -65,6 +67,8 @@ export const LiquidTabs: React.FC<LiquidTabsProps> = ({
               data-active={isActive}
               className="pltabs-btn"
               onClick={() => onChange(tab.id)}
+              title={tab.title || tab.label}
+              aria-label={tab.title || tab.label}
             >
               {isActive && (
                 <motion.span
@@ -74,7 +78,12 @@ export const LiquidTabs: React.FC<LiquidTabsProps> = ({
                   aria-hidden="true"
                 />
               )}
-              <span>{tab.label}</span>
+              {tab.icon && (
+                <span className="inline-flex items-center justify-center shrink-0" aria-hidden="true">
+                  {tab.icon}
+                </span>
+              )}
+              {tab.label ? <span>{tab.label}</span> : null}
               {typeof tab.count === 'number' && (
                 <span
                   className="rounded-full px-1.5 py-0.5 text-[11px] font-mono leading-none"

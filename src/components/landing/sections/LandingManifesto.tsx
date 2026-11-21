@@ -280,7 +280,7 @@ export const LandingManifesto: React.FC<LandingManifestoProps> = ({ onNavigate }
         </div>
       </div>
 
-      <div className="lp-section sheet scene-paper">
+      <div className="lp-section sheet">
         <div className="wrap lp-desk">
           <div className="lp-desk-head">
             <p className="t-label">khởi tạo trực tiếp</p>

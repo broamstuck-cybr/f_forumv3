@@ -71,7 +71,7 @@ export const LandingShowcase: React.FC<LandingShowcaseProps> = ({ onNavigate }) 
     <section
       ref={sectionRef}
       aria-label="Không chỉ là hình ảnh, sản phẩm chạy thật"
-      className="lp-section sheet scene-paper"
+      className="lp-section sheet"
     >
       <div className="wrap-wide">
         <div className="lp-head">

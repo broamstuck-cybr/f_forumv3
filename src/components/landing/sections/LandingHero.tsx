@@ -279,7 +279,7 @@ export const LandingHero: React.FC<LandingHeroProps> = ({
   const phoneY = useTransform(scrollYProgress, [0, 1], [0, -52]);
 
   return (
-    <section id="top" ref={sectionRef} aria-label="Khởi đầu F-Forum" className="lp-hero scene-ink">
+    <section id="top" ref={sectionRef} aria-label="Khởi đầu F-Forum" className="lp-hero">
       <motion.div style={reduced ? undefined : { opacity: heroOpacity }} className="wrap-wide">
         <div className="lp-hero-grid">
           <motion.div style={reduced ? undefined : { y: copyY }} className="lp-hero-copy">

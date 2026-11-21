@@ -217,6 +217,7 @@ export const CommunityView: React.FC = () => {
     addToast,
     theme,
     reducedMotion,
+    openUserProfile,
   } = useAppStore();
 
   const postRefs = useRef<Record<string, HTMLLIElement | null>>({});
@@ -1423,14 +1424,8 @@ export const CommunityView: React.FC = () => {
                       <button
                         type="button"
                         className="cm-author-btn"
-                        onClick={() =>
-                          setAuthorFilter((prev) =>
-                            prev && prev.toLowerCase() === post.author.handle.toLowerCase()
-                              ? null
-                              : post.author.handle
-                          )
-                        }
-                        title={`Lọc bài của @${post.author.handle}`}
+                        onClick={() => openUserProfile(post.author)}
+                        title={`Xem trang cá nhân của ${post.author.name} (@${post.author.handle})`}
                       >
                         <span className="cm-avatar-chip" aria-hidden="true">
                           {authorInitials(post.author.name)}
@@ -1791,8 +1786,15 @@ export const CommunityView: React.FC = () => {
                         </div>
                         <div className="cm-thread-content">
                           <div className="cm-thread-head">
-                            <span className="cm-author-name">{topAnswer.author.name}</span>
-                            <span className="t-label">@{topAnswer.author.handle}</span>
+                            <button
+                              type="button"
+                              className="cm-author-link"
+                              onClick={() => openUserProfile(topAnswer.author)}
+                              title={`Xem hồ sơ của ${topAnswer.author.name} (@${topAnswer.author.handle})`}
+                            >
+                              <span className="cm-author-name">{topAnswer.author.name}</span>
+                              <span className="t-label">@{topAnswer.author.handle}</span>
+                            </button>
                             {topAnswer.isAccepted && (
                               <span className="cm-solved-dot">Lời giải chuẩn</span>
                             )}
@@ -1835,7 +1837,12 @@ export const CommunityView: React.FC = () => {
                                 data-accepted={ans.isAccepted ? 'true' : undefined}
                               >
                                 <div className="cm-comment-head">
-                                  <div className="cm-comment-author">
+                                  <button
+                                    type="button"
+                                    className="cm-author-link"
+                                    onClick={() => openUserProfile(ans.author)}
+                                    title={`Xem hồ sơ của ${ans.author.name} (@${ans.author.handle})`}
+                                  >
                                     <span className="cm-avatar-chip cm-avatar-chip--sm" aria-hidden="true">
                                       {authorInitials(ans.author.name)}
                                     </span>
@@ -1843,7 +1850,7 @@ export const CommunityView: React.FC = () => {
                                     <time className="t-label" dateTime={ans.createdAt}>
                                       {formatPostDate(ans.createdAt)}
                                     </time>
-                                  </div>
+                                  </button>
 
                                   {ans.isAccepted ? (
                                     <span className="cm-solved-dot">Lời giải chuẩn</span>
@@ -1982,7 +1989,7 @@ export const CommunityView: React.FC = () => {
                   authorFilter !== null &&
                   authorFilter.toLowerCase() === person.handle.toLowerCase();
                 return (
-                  <li key={person.handle}>
+                  <li key={person.handle} className="cm-contrib-item">
                     <button
                       type="button"
                       className="cm-contrib-btn"
@@ -1994,12 +2001,29 @@ export const CommunityView: React.FC = () => {
                             : person.handle
                         )
                       }
+                      title={`Lọc bài viết của @${person.handle}`}
                     >
                       <span className="cm-contrib-info">
                         <span className="cm-contrib-name">{person.name}</span>
                         <span className="cm-contrib-meta">@{person.handle}</span>
                       </span>
                       <span className="cm-contrib-score">{person.score}đ</span>
+                    </button>
+                    <button
+                      type="button"
+                      className="cm-contrib-view-btn"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        openUserProfile({
+                          id: person.handle,
+                          name: person.name,
+                          handle: person.handle,
+                          role: person.role,
+                        });
+                      }}
+                      title={`Xem trang cá nhân của ${person.name}`}
+                    >
+                      Hồ sơ
                     </button>
                   </li>
                 );

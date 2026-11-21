@@ -4,7 +4,9 @@ import {
   ArrowUpRight,
   CheckCircle2,
   Columns2,
+  Download,
   Ellipsis,
+  GitBranch,
   MessageSquare,
   PanelLeft,
   PanelLeftClose,
@@ -542,10 +544,81 @@ export const WorkspaceView: React.FC = () => {
   const [publishedPostId, setPublishedPostId] = useState<string | null>(null);
 
   const dockRef = useRef<HTMLDivElement>(null);
+  const wsContainerRef = useRef<HTMLDivElement>(null);
   const renameId = useId();
   const publishTitleId = useId();
   const publishBodyId = useId();
   const publishTagsId = useId();
+
+  const [splitRatio, setSplitRatio] = useState<number>(() => {
+    if (typeof window === 'undefined') return 45;
+    try {
+      const saved = window.localStorage.getItem('fforum_ws_split_ratio');
+      if (saved) {
+        const val = Number(saved);
+        if (!Number.isNaN(val) && val >= 20 && val <= 80) return val;
+      }
+    } catch {
+      void 0;
+    }
+    return 45;
+  });
+  const [isResizing, setIsResizing] = useState(false);
+
+  const startResizing = (downEvent: React.PointerEvent) => {
+    downEvent.preventDefault();
+    setIsResizing(true);
+
+    const onPointerMove = (e: PointerEvent) => {
+      if (!wsContainerRef.current) return;
+      const rect = wsContainerRef.current.getBoundingClientRect();
+      const railOffset = railOpen && isDesktop ? 240 : 0;
+      const usableWidth = rect.width - railOffset - 10;
+      if (usableWidth <= 100) return;
+      const currentX = e.clientX - rect.left - railOffset;
+      const newRatio = Math.round(Math.min(80, Math.max(20, (currentX / usableWidth) * 100)));
+      setSplitRatio(newRatio);
+      try {
+        window.localStorage.setItem('fforum_ws_split_ratio', String(newRatio));
+      } catch {
+        void 0;
+      }
+    };
+
+    const onPointerUp = () => {
+      setIsResizing(false);
+      window.removeEventListener('pointermove', onPointerMove);
+      window.removeEventListener('pointerup', onPointerUp);
+      window.removeEventListener('pointercancel', onPointerUp);
+    };
+
+    window.addEventListener('pointermove', onPointerMove);
+    window.addEventListener('pointerup', onPointerUp);
+    window.addEventListener('pointercancel', onPointerUp);
+  };
+
+  const cycleSplitPresets = () => {
+    const presets = [35, 50, 65, 45];
+    setSplitRatio((prev) => {
+      const idx = presets.indexOf(prev);
+      const next = presets[(idx + 1) % presets.length];
+      try {
+        window.localStorage.setItem('fforum_ws_split_ratio', String(next));
+      } catch {
+        void 0;
+      }
+      return next;
+    });
+  };
+
+  const handleShareToKnowledge = () => {
+    setPublishTitle(activeProject.name);
+    setPublishBody(
+      `Mẫu giao diện đa tệp "${activeProject.name}" được xây dựng và kiểm định trực tiếp trong F-Forum Workspace.`
+    );
+    setPublishTags('workspace, demo, ui-design');
+    setPublishOpen(true);
+  };
 
   const currentArenaTurns = useMemo(
     () => arenaTurnsMap[activeProject.id] || [],
@@ -1046,10 +1119,13 @@ export const WorkspaceView: React.FC = () => {
 
   return (
     <div
+      ref={wsContainerRef}
       className="ws"
       data-layout={layout}
       data-rail={railInline ? 'open' : 'closed'}
       data-density={settings.compactDensity ? 'compact' : 'roomy'}
+      data-resizing={isResizing ? 'true' : undefined}
+      style={{ '--ws-split-ratio': splitRatio } as React.CSSProperties}
     >
       {railInline && (
         <aside className="ws-rail" aria-label="Danh sách phiên làm việc">
@@ -1129,53 +1205,6 @@ export const WorkspaceView: React.FC = () => {
                 <Columns2 size={14} aria-hidden="true" />
               </button>
             </div>
-
-            {arenaMode === 'single' ? (
-              <select
-                id="ws-primary-model-select"
-                className="ws-model-select ws-model-select--inline"
-                aria-label="Chọn Model chính"
-                value={selectedModel}
-                onChange={(event) => setSelectedModel(event.target.value)}
-              >
-                {MODEL_OPTIONS.map((option) => (
-                  <option key={option.id} value={option.id}>
-                    {option.name}
-                  </option>
-                ))}
-              </select>
-            ) : (
-              <div className="ws-model-compare-bar" aria-label="Chọn 2 Model so sánh">
-                <span className="ws-arena-badge">A</span>
-                <select
-                  id="ws-arena-model-a"
-                  className="ws-model-select ws-model-select--slot"
-                  aria-label="Model A"
-                  value={arenaModelA}
-                  onChange={(event) => setArenaModelA(event.target.value)}
-                >
-                  {MODEL_OPTIONS.map((option) => (
-                    <option key={option.id} value={option.id}>
-                      {option.name}
-                    </option>
-                  ))}
-                </select>
-                <span className="ws-arena-badge">B</span>
-                <select
-                  id="ws-arena-model-b"
-                  className="ws-model-select ws-model-select--slot"
-                  aria-label="Model B"
-                  value={arenaModelB}
-                  onChange={(event) => setArenaModelB(event.target.value)}
-                >
-                  {MODEL_OPTIONS.map((option) => (
-                    <option key={option.id} value={option.id}>
-                      {option.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            )}
 
             <button
               type="button"
@@ -1396,6 +1425,77 @@ export const WorkspaceView: React.FC = () => {
               </div>
             )}
 
+            {arenaMode === 'compare' && (
+              <div className="ws-model-compare-bar" aria-label="Chọn 2 Model so sánh">
+                <span className="ws-arena-badge">A</span>
+                <select
+                  id="ws-arena-model-a"
+                  className="ws-model-select ws-model-select--slot"
+                  aria-label="Model A"
+                  value={arenaModelA}
+                  onChange={(event) => setArenaModelA(event.target.value)}
+                >
+                  {MODEL_OPTIONS.map((option) => (
+                    <option key={option.id} value={option.id}>
+                      {option.name}
+                    </option>
+                  ))}
+                </select>
+                <span className="ws-arena-badge">B</span>
+                <select
+                  id="ws-arena-model-b"
+                  className="ws-model-select ws-model-select--slot"
+                  aria-label="Model B"
+                  value={arenaModelB}
+                  onChange={(event) => setArenaModelB(event.target.value)}
+                >
+                  {MODEL_OPTIONS.map((option) => (
+                    <option key={option.id} value={option.id}>
+                      {option.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
+
+            <div className="ws-arena-status-bar">
+              <div className="ws-arena-repo-pills">
+                <span className="ws-arena-pill" title={`Dự án: ${activeProject.name}`}>
+                  <GitBranch size={13} className="shrink-0" aria-hidden="true" />
+                  <span className="ws-arena-pill-txt">{activeProject.name}</span>
+                </span>
+                <span className="ws-arena-pill" title="Nhánh hiện tại">
+                  <span className="text-[11px] font-mono opacity-70">↳</span>
+                  <span className="ws-arena-pill-txt">main</span>
+                </span>
+                <span className="ws-arena-pill ws-arena-pill--diff" title="Thay đổi mã nguồn (Diff)">
+                  <span className="text-emerald-500 font-mono font-bold">+{diffTotals.added}</span>
+                  <span className="text-rose-500 font-mono font-bold">-{diffTotals.removed}</span>
+                </span>
+              </div>
+              <div className="ws-arena-actions">
+                <button
+                  type="button"
+                  className="ws-arena-action-btn"
+                  onClick={() => void handleExportZip()}
+                  disabled={exporting}
+                  title="Xuất mã nguồn ZIP an toàn"
+                >
+                  <Download size={13} aria-hidden="true" />
+                  <span>Xuất ZIP</span>
+                </button>
+                <button
+                  type="button"
+                  className="ws-arena-action-btn ws-arena-action-btn--accent"
+                  onClick={handleShareToKnowledge}
+                  title="Chia sẻ mẫu giao diện này lên Tri thức cộng đồng"
+                >
+                  <Share2 size={13} aria-hidden="true" />
+                  <span>Đăng Tri thức</span>
+                </button>
+              </div>
+            </div>
+
             <div className="ws-dock-bar">
               <div className="ws-dock-chips">
                 <Chips
@@ -1444,7 +1544,7 @@ export const WorkspaceView: React.FC = () => {
               placeholder={
                 arenaMode === 'compare'
                   ? `So sánh ${getModelLabel(arenaModelA)} vs ${getModelLabel(arenaModelB)}...`
-                  : 'Mô tả giao diện hoặc tính năng cần dựng...'
+                  : 'What would you like to do? / Mô tả giao diện cần dựng...'
               }
               onAttachClick={() => setDropZoneOpen((value) => !value)}
               onSend={(text) => {
@@ -1456,6 +1556,28 @@ export const WorkspaceView: React.FC = () => {
           </div>
         </footer>
       </section>
+
+      {isDesktop && layout === 'wide' && (
+        <div
+          role="separator"
+          aria-orientation="vertical"
+          aria-valuenow={splitRatio}
+          aria-valuemin={20}
+          aria-valuemax={80}
+          aria-label="Kéo để thay đổi kích thước chia màn hình Arena"
+          tabIndex={0}
+          className={`ws-resizer ${isResizing ? 'is-dragging' : ''}`}
+          onPointerDown={startResizing}
+          onDoubleClick={cycleSplitPresets}
+          title={`Kéo đổi tỷ lệ (${splitRatio}% / ${100 - splitRatio}%) · Nhấp đúp để đổi mốc (35%, 50%, 65%)`}
+        >
+          <div className="ws-resizer-line" aria-hidden="true" />
+          <div className="ws-resizer-handle" aria-hidden="true" />
+          <div className="ws-resizer-badge" aria-hidden="true">
+            {splitRatio}%
+          </div>
+        </div>
+      )}
 
       {liveStageElement(false)}
 
