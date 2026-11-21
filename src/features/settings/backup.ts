@@ -57,7 +57,12 @@ function readPortableSettings(value: unknown): Partial<PortableSettings> {
   if (!isRecord(value)) return {};
   const result: Partial<PortableSettings> = {};
   if (value.theme === 'dark' || value.theme === 'light') result.theme = value.theme;
-  if (value.themeEffect === 'droplet' || value.themeEffect === 'rain' || value.themeEffect === 'diwali') {
+  if (
+    value.themeEffect === 'droplet' ||
+    value.themeEffect === 'rain' ||
+    value.themeEffect === 'diwali' ||
+    value.themeEffect === 'none'
+  ) {
     result.themeEffect = value.themeEffect;
   }
   if (typeof value.reducedMotion === 'boolean') result.reducedMotion = value.reducedMotion;

@@ -30,7 +30,17 @@ export type AIProtocol = 'openai-compatible' | 'anthropic' | 'gemini';
 
 export type ThemeMode = 'dark' | 'light';
 
-export type ThemeEffect = 'droplet' | 'rain' | 'diwali';
+export type ThemeEffect = 'droplet' | 'rain' | 'diwali' | 'none';
+
+export type WallpaperPreset =
+  | 'auto'
+  | 'dark'
+  | 'light'
+  | 'ember'
+  | 'harbour'
+  | 'aurora'
+  | 'constellation'
+  | 'indigo';
 
 export type UserRole = 'user' | 'admin' | 'SUPER_ADMIN' | 'CLUB_LEADER' | 'STUDENT';
 
@@ -417,6 +427,7 @@ export interface SettingsState {
   theme: ThemeMode;
   themePreference?: ThemePreference;
   ambientVideo?: boolean;
+  wallpaperPreset?: WallpaperPreset;
   autoRunChecks?: boolean;
   defaultViewport?: 1440 | 768 | 390;
   themeEffect?: ThemeEffect;

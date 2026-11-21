@@ -359,7 +359,8 @@ export const LandingHero: React.FC<LandingHeroProps> = ({
 
             <h1 className="lp-hero-title">
               <span className="lp-hero-line" data-visible={activeCount >= 1}>
-                <span className="t-script lp-cap">T</span>ừ phác thảo đến sản phẩm,
+                <span className="t-script lp-cap">T</span>ừ phác thảo đến{' '}
+                <em className="t-italic lp-hero-em">sản phẩm</em>,
               </span>{' '}
               <span className="lp-hero-line" data-visible={activeCount >= 3}>
                 <Mark kind="underline" active>

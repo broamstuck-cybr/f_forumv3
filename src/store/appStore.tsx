@@ -32,6 +32,7 @@ import type {
   ThemeMode,
   ToastItem,
   User,
+  WallpaperPreset,
   WorkspaceFile,
   WorkspaceProject,
 } from '../types/index';
@@ -67,6 +68,7 @@ const DEFAULT_SETTINGS: SettingsState = {
   theme: 'dark',
   themePreference: 'system',
   ambientVideo: true,
+  wallpaperPreset: 'ember',
   autoRunChecks: true,
   defaultViewport: 1440,
   themeEffect: 'droplet',
@@ -86,12 +88,16 @@ function applyThemeToDom(
   theme: ThemeMode,
   reducedMotion?: boolean,
   ambientVideo?: boolean,
-  compactDensity?: boolean
+  compactDensity?: boolean,
+  wallpaperPreset?: WallpaperPreset,
+  themeEffect?: ThemeEffect
 ): void {
   if (typeof document !== 'undefined') {
     const root = document.documentElement;
     root.setAttribute('data-theme', theme);
     root.setAttribute('data-ambient', ambientVideo === false ? 'off' : 'on');
+    root.setAttribute('data-wallpaper', wallpaperPreset || 'ember');
+    root.setAttribute('data-effect', themeEffect || 'droplet');
     root.setAttribute('data-density', compactDensity ? 'compact' : 'roomy');
     root.classList.toggle('dark', theme === 'dark');
     root.classList.toggle('light', theme === 'light');
@@ -681,15 +687,28 @@ export const AppStoreProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       const resolvedEffect: ThemeEffect =
         parsed.themeEffect === 'droplet' ||
         parsed.themeEffect === 'rain' ||
-        parsed.themeEffect === 'diwali'
+        parsed.themeEffect === 'diwali' ||
+        parsed.themeEffect === 'none'
           ? parsed.themeEffect
           : 'droplet';
+      const resolvedWallpaper: WallpaperPreset =
+        parsed.wallpaperPreset === 'auto' ||
+        parsed.wallpaperPreset === 'dark' ||
+        parsed.wallpaperPreset === 'light' ||
+        parsed.wallpaperPreset === 'ember' ||
+        parsed.wallpaperPreset === 'harbour' ||
+        parsed.wallpaperPreset === 'aurora' ||
+        parsed.wallpaperPreset === 'constellation' ||
+        parsed.wallpaperPreset === 'indigo'
+          ? parsed.wallpaperPreset
+          : 'ember';
       return {
         ...DEFAULT_SETTINGS,
         ...parsed,
         theme: resolvedTheme,
         themePreference: resolvedPref,
         themeEffect: resolvedEffect,
+        wallpaperPreset: resolvedWallpaper,
         byok: {
           ...DEFAULT_SETTINGS.byok,
           ...(parsed.byok || {}),
@@ -784,9 +803,18 @@ export const AppStoreProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       settings.theme,
       settings.reducedMotion,
       settings.ambientVideo !== false,
-      settings.compactDensity
+      settings.compactDensity,
+      settings.wallpaperPreset,
+      settings.themeEffect
     );
-  }, [settings.theme, settings.reducedMotion, settings.ambientVideo, settings.compactDensity]);
+  }, [
+    settings.theme,
+    settings.reducedMotion,
+    settings.ambientVideo,
+    settings.compactDensity,
+    settings.wallpaperPreset,
+    settings.themeEffect,
+  ]);
 
   useEffect(() => {
     if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') return undefined;
@@ -914,8 +942,12 @@ export const AppStoreProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const refreshAuthAndQuota = useCallback(async () => {
     try {
       const data = await apiClient.fetchCurrentUser();
-      setCurrentUser(data.user);
-      setQuota(data.quota);
+      if (data && 'user' in data) {
+        setCurrentUser(data.user ?? null);
+      }
+      if (data?.quota && typeof data.quota.unlimited === 'boolean') {
+        setQuota(data.quota);
+      }
     } catch {
       return;
     }
@@ -1366,7 +1398,9 @@ export const AppStoreProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
         if (controller.signal.aborted) return;
 
-        setQuota(response.quota);
+        if (response?.quota && typeof response.quota.unlimited === 'boolean') {
+          setQuota(response.quota);
+        }
         setAiModelUsed(response.modelUsed || null);
         setAiStreamingStage('done');
         setAiStreamingPreview('');
@@ -1648,7 +1682,9 @@ export const AppStoreProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     async (identifier: string, password: string): Promise<User> => {
       const res = await apiClient.loginUser({ identifier, password });
       setCurrentUser(res.user);
-      setQuota(res.quota);
+      if (res?.quota && typeof res.quota.unlimited === 'boolean') {
+        setQuota(res.quota);
+      }
       setAuthModalOpen(false);
       addToast({
         type: 'success',
@@ -1664,7 +1700,9 @@ export const AppStoreProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     async (username: string, password: string): Promise<User> => {
       const res = await apiClient.loginAdmin({ username, password });
       setCurrentUser(res.user);
-      setQuota(res.quota);
+      if (res?.quota && typeof res.quota.unlimited === 'boolean') {
+        setQuota(res.quota);
+      }
       setAuthModalOpen(false);
       addToast({
         type: 'success',
@@ -1685,7 +1723,9 @@ export const AppStoreProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     }): Promise<User> => {
       const res = await apiClient.registerUser(input);
       setCurrentUser(res.user);
-      setQuota(res.quota);
+      if (res?.quota && typeof res.quota.unlimited === 'boolean') {
+        setQuota(res.quota);
+      }
       setAuthModalOpen(false);
       addToast({
         type: 'success',
@@ -1700,7 +1740,9 @@ export const AppStoreProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const logout = useCallback(async () => {
     const res = await apiClient.logoutUser();
     setCurrentUser(null);
-    setQuota(res.quota);
+    if (res?.quota && typeof res.quota.unlimited === 'boolean') {
+      setQuota(res.quota);
+    }
     addToast({
       type: 'info',
       title: 'Đã đăng xuất phiên làm việc',

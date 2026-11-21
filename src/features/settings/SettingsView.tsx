@@ -1,6 +1,23 @@
-import React, { useEffect, useId, useState } from 'react';
-import { Eye, EyeOff } from 'lucide-react';
-import type { AIProtocol, ProjectSetupTarget, ThemePreference } from '../../types/index';
+import React, { useEffect, useId, useMemo, useState } from 'react';
+import {
+  Cpu,
+  Database,
+  Eye,
+  EyeOff,
+  LayoutTemplate,
+  Moon,
+  Palette,
+  Search,
+  Sparkles,
+  Sun,
+} from 'lucide-react';
+import type {
+  AIProtocol,
+  ProjectSetupTarget,
+  ThemeEffect,
+  ThemePreference,
+  WallpaperPreset,
+} from '../../types/index';
 import { useAppStore } from '../../store/appStore';
 import {
   Chips,
@@ -22,18 +39,152 @@ import {
 import './settings.css';
 
 type SectionId = 'appearance' | 'workspace' | 'ai' | 'data';
+type PresetFilter = 'all' | 'dark' | 'light';
 
-const SECTIONS: Array<{ id: SectionId; label: string }> = [
-  { id: 'appearance', label: 'Giao diện' },
-  { id: 'workspace', label: 'Workspace' },
-  { id: 'ai', label: 'AI & BYOK' },
-  { id: 'data', label: 'Dữ liệu' },
+interface PresetDefinition {
+  id: WallpaperPreset;
+  name: string;
+  desc: string;
+  tone: 'dark' | 'light' | 'auto';
+  targetTheme?: ThemePreference;
+  swatches: [string, string, string];
+  previewBg: string;
+  previewCard: string;
+  previewAccent: string;
+  ambient: boolean;
+}
+
+const PRESETS: PresetDefinition[] = [
+  {
+    id: 'auto',
+    name: 'Auto',
+    desc: 'Tự động đồng bộ Sáng hoặc Tối theo hệ thống thiết bị.',
+    tone: 'auto',
+    targetTheme: 'system',
+    swatches: ['#f4f0e6', '#121110', '#d63a27'],
+    previewBg: 'linear-gradient(125deg, #f4f0e6 50%, #191817 50%)',
+    previewCard: 'rgba(255,255,255,0.12)',
+    previewAccent: '#d63a27',
+    ambient: true,
+  },
+  {
+    id: 'dark',
+    name: 'Obsidian Dark',
+    desc: 'Nền tối chuẩn mực #121110, độ tương phản cao cho phiên làm việc dài.',
+    tone: 'dark',
+    targetTheme: 'dark',
+    swatches: ['#121110', '#d63a27', '#efe9dd'],
+    previewBg: '#121110',
+    previewCard: '#1c1b19',
+    previewAccent: '#d63a27',
+    ambient: false,
+  },
+  {
+    id: 'light',
+    name: 'Paper Ivory',
+    desc: 'Nền giấy kem ấm cao cấp, đọc rõ ràng dưới ánh sáng ban ngày.',
+    tone: 'light',
+    targetTheme: 'light',
+    swatches: ['#f4f0e6', '#c85a3a', '#191714'],
+    previewBg: '#f4f0e6',
+    previewCard: '#ffffff',
+    previewAccent: '#c85a3a',
+    ambient: false,
+  },
+  {
+    id: 'ember',
+    name: 'Ember',
+    desc: 'Nền Gradient Lab chuyển động mượt mà với ánh ấm hổ phách.',
+    tone: 'dark',
+    targetTheme: 'dark',
+    swatches: ['#1a1310', '#e07a3d', '#ffe9d6'],
+    previewBg: 'radial-gradient(circle at 30% 25%, rgba(224,122,61,0.52), #151210 72%)',
+    previewCard: 'rgba(32, 24, 20, 0.78)',
+    previewAccent: '#e07a3d',
+    ambient: true,
+  },
+  {
+    id: 'harbour',
+    name: 'Harbour Frost',
+    desc: 'Gradient Lab tông sáng dịu xanh ngọc và kem mờ sương.',
+    tone: 'light',
+    targetTheme: 'light',
+    swatches: ['#eef4f7', '#5386a6', '#18242e'],
+    previewBg: 'radial-gradient(circle at 70% 20%, rgba(125,163,187,0.45), #f2efe8 75%)',
+    previewCard: 'rgba(255, 255, 255, 0.84)',
+    previewAccent: '#467a99',
+    ambient: true,
+  },
+  {
+    id: 'aurora',
+    name: 'Aurora Mesh',
+    desc: 'Cực quang tương tác chuyển sắc nhẹ theo vị trí con trỏ chuột.',
+    tone: 'dark',
+    targetTheme: 'dark',
+    swatches: ['#0c0e18', '#5b8def', '#7ee8c0'],
+    previewBg: 'radial-gradient(circle at 25% 30%, rgba(91,141,239,0.5), rgba(126,232,192,0.22) 55%, #0b0d14 85%)',
+    previewCard: 'rgba(18, 22, 34, 0.76)',
+    previewAccent: '#7ee8c0',
+    ambient: true,
+  },
+  {
+    id: 'constellation',
+    name: 'Constellation',
+    desc: 'Mạng lưới tinh vân liên kết điểm sáng tương tác theo thao tác.',
+    tone: 'dark',
+    targetTheme: 'dark',
+    swatches: ['#0a0f1e', '#7da3bb', '#ffe082'],
+    previewBg: 'radial-gradient(circle at 60% 25%, rgba(125,163,187,0.34), #0a0f1e 75%)',
+    previewCard: 'rgba(14, 20, 38, 0.78)',
+    previewAccent: '#ffe082',
+    ambient: true,
+  },
+  {
+    id: 'indigo',
+    name: 'Midnight Indigo',
+    desc: 'Chiều sâu xanh lam đêm pha điểm nhấn ngọc lục bảo dịu mắt.',
+    tone: 'dark',
+    targetTheme: 'dark',
+    swatches: ['#080e1c', '#38bdf8', '#e2ecf8'],
+    previewBg: 'linear-gradient(145deg, #091326 0%, #101f3d 55%, #060a14 100%)',
+    previewCard: 'rgba(16, 28, 52, 0.82)',
+    previewAccent: '#38bdf8',
+    ambient: true,
+  },
 ];
 
-const THEME_CHIPS = [
-  { id: 'system', label: 'Theo hệ thống' },
-  { id: 'light', label: 'Sáng (Ban ngày)' },
-  { id: 'dark', label: 'Tối (Ban đêm)' },
+const SECTIONS: Array<{ id: SectionId; label: string; icon: React.ReactNode; keywords: string }> = [
+  {
+    id: 'appearance',
+    label: 'Giao diện & Nền',
+    icon: <Palette size={15} aria-hidden="true" />,
+    keywords: 'giao diện theme sáng tối hình nền preset aurora ember cỡ chữ hiệu ứng giọt nước mưa',
+  },
+  {
+    id: 'workspace',
+    label: 'Workspace',
+    icon: <LayoutTemplate size={15} aria-hidden="true" />,
+    keywords: 'workspace khung nhìn kiểm định 6 lớp xuất mã phím tắt',
+  },
+  {
+    id: 'ai',
+    label: 'AI & BYOK',
+    icon: <Cpu size={15} aria-hidden="true" />,
+    keywords: 'ai model gateway byok api key hạn mức',
+  },
+  {
+    id: 'data',
+    label: 'Dữ liệu & Sao lưu',
+    icon: <Database size={15} aria-hidden="true" />,
+    keywords: 'dữ liệu sao lưu json khôi phục đặt lại',
+  },
+];
+
+const EFFECT_CHIPS = [
+  { id: 'droplet', label: 'Giọt nước (Droplet)' },
+  { id: 'rain', label: 'Mưa rơi (Rain)' },
+  { id: 'diwali', label: 'Ánh sáng (Diwali)' },
+  { id: 'none', label: 'Tắt hiệu ứng' },
 ];
 
 const DENSITY_CHIPS = [
@@ -77,6 +228,7 @@ const SHORTCUTS = [
 ];
 
 const UI_SCALE_KEY = 'fforum_v3_ui_scale';
+const SCALE_OPTIONS = [90, 95, 100, 105, 110, 115];
 
 function readInitialScale(): number {
   if (typeof window === 'undefined') return 100;
@@ -96,6 +248,7 @@ export const SettingsView: React.FC = () => {
     updateSettings,
     updateByok,
     theme,
+    toggleTheme,
     reducedMotion,
     setReducedMotion,
     savedItemIds,
@@ -105,6 +258,8 @@ export const SettingsView: React.FC = () => {
   } = useAppStore();
 
   const [activeSection, setActiveSection] = useState<SectionId>('appearance');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [presetFilter, setPresetFilter] = useState<PresetFilter>('all');
   const [selectedDataCard, setSelectedDataCard] = useState<string>('projects');
   const [uiScale, setUiScale] = useState<number>(() => readInitialScale());
   const [showApiKey, setShowApiKey] = useState(false);
@@ -128,7 +283,8 @@ export const SettingsView: React.FC = () => {
   }, [uiScale]);
 
   const byok = settings.byok;
-  const themePreference: ThemePreference = settings.themePreference ?? 'system';
+  const currentWallpaper: WallpaperPreset = settings.wallpaperPreset || 'ember';
+  const currentEffect: ThemeEffect = settings.themeEffect || 'droplet';
   const ambientEnabled = settings.ambientVideo !== false;
   const autoRunChecks = settings.autoRunChecks !== false;
   const defaultViewport = String(settings.defaultViewport ?? 1440);
@@ -138,6 +294,39 @@ export const SettingsView: React.FC = () => {
     : quotaLimit === null
       ? `Đã dùng ${quota.used}`
       : `Còn ${quota.remaining ?? Math.max(0, quotaLimit - quota.used)}/${quotaLimit}`;
+
+  const activePreset = useMemo(
+    () => PRESETS.find((p) => p.id === currentWallpaper) || PRESETS[3],
+    [currentWallpaper]
+  );
+
+  const visiblePresets = useMemo(() => {
+    if (presetFilter === 'all') return PRESETS;
+    return PRESETS.filter((p) => p.tone === presetFilter || p.tone === 'auto');
+  }, [presetFilter]);
+
+  const filteredSections = useMemo(() => {
+    const q = searchQuery.trim().toLowerCase();
+    if (!q) return SECTIONS;
+    const matches = SECTIONS.filter(
+      (s) => s.label.toLowerCase().includes(q) || s.keywords.includes(q)
+    );
+    return matches.length > 0 ? matches : SECTIONS;
+  }, [searchQuery]);
+
+  const applyPreset = (preset: PresetDefinition) => {
+    const nextPref = preset.targetTheme || 'system';
+    updateSettings({
+      wallpaperPreset: preset.id,
+      themePreference: nextPref,
+      ambientVideo: preset.ambient,
+    });
+    addToast({
+      type: 'info',
+      title: `Đã đổi hình nền: ${preset.name}`,
+      message: preset.desc,
+    });
+  };
 
   const dataTabs: FileBoxTab[] = [
     {
@@ -153,14 +342,6 @@ export const SettingsView: React.FC = () => {
       onOpen: () => navigate('profile'),
     },
   ];
-
-  const jumpToSection = (id: SectionId) => {
-    setActiveSection(id);
-    const el = document.getElementById(`st-${id}`);
-    if (el) {
-      el.scrollIntoView({ behavior: reducedMotion ? 'auto' : 'smooth', block: 'start' });
-    }
-  };
 
   const handleExportDownload = () => {
     downloadBackup(buildBackup(settings, projects, savedItemIds));
@@ -229,339 +410,478 @@ export const SettingsView: React.FC = () => {
 
   return (
     <div className="st" data-density={settings.compactDensity ? 'compact' : 'roomy'}>
-      <div className="st-wrap">
-        <header className="st-head">
-          <div className="st-headMain">
-            <span className="t-label">cấu hình hệ thống</span>
-            <h1 className="t-title">Cài đặt</h1>
+      <div className="st-shell">
+        <aside className="st-sidebar" aria-label="Danh mục cài đặt">
+          <div className="st-sidebar-head">
+            <h1 className="st-sidebar-title">Cài đặt</h1>
+            <div className="st-search-box">
+              <Search size={14} aria-hidden="true" />
+              <input
+                type="search"
+                className="st-search-input"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Tìm cài đặt..."
+                aria-label="Tìm cài đặt"
+              />
+            </div>
           </div>
-          <nav className="st-pills" aria-label="Nhóm cài đặt">
-            {SECTIONS.map((sec) => (
+
+          <nav className="st-nav" aria-label="Nhóm cài đặt">
+            {filteredSections.map((sec) => (
               <button
                 key={sec.id}
                 type="button"
-                className="st-pill"
-                aria-current={activeSection === sec.id ? 'true' : undefined}
-                onClick={() => jumpToSection(sec.id)}
+                className="st-nav-item"
+                aria-current={activeSection === sec.id ? 'page' : undefined}
+                onClick={() => setActiveSection(sec.id)}
               >
-                {sec.label}
+                {sec.icon}
+                <span>{sec.label}</span>
               </button>
             ))}
           </nav>
-        </header>
+        </aside>
 
-        <div className="st-stack">
-          <section id="st-appearance" className="st-card" aria-labelledby={idFor('appearance')}>
-            <div className="st-cardHead">
-              <h2 className="st-cardTitle" id={idFor('appearance')}>
-                Giao diện & Hiển thị
-              </h2>
-              <span className="tag">{theme === 'dark' ? 'Tối' : 'Sáng'}</span>
-            </div>
-
-            <div className="st-row st-row--first">
-              <span className="st-label">Chủ đề</span>
-              <Chips
-                items={THEME_CHIPS}
-                selectedIds={[themePreference]}
-                multi={false}
-                theme={theme}
-                onToggle={(id) => updateSettings({ themePreference: id as ThemePreference })}
-              />
-            </div>
-
-            <div className="st-grid-2">
-              <div className="st-toggleCard">
-                <span className="st-label">Nền video động (Gradient Lab)</span>
+        <div className="st-main">
+          {activeSection === 'appearance' && (
+            <div className="st-stack">
+              <header className="st-section-head">
+                <div>
+                  <h2 className="st-section-title">Giao diện & Hình nền</h2>
+                  <p className="st-hint">Chọn sắc độ, kích thước hiển thị và hiệu ứng chuyển sáng/tối toàn trang.</p>
+                </div>
                 <button
                   type="button"
-                  role="switch"
-                  aria-checked={ambientEnabled}
-                  aria-label="Nền video động (Gradient Lab)"
-                  className="st-switch"
-                  onClick={() => updateSettings({ ambientVideo: !ambientEnabled })}
+                  className="btn btn-line btn-sm"
+                  onClick={toggleTheme}
+                  title="Chuyển nhanh Đêm / Ngày và xem hiệu ứng toàn trang"
                 >
-                  <span className="st-switchThumb" aria-hidden="true" />
+                  <Sparkles size={14} aria-hidden="true" />
+                  <span>Đổi {theme === 'dark' ? 'Sáng' : 'Tối'} ngay</span>
                 </button>
-              </div>
+              </header>
 
-              <div className="st-toggleCard">
-                <span className="st-label">Tiết kiệm chuyển động</span>
-                <button
-                  type="button"
-                  role="switch"
-                  aria-checked={reducedMotion}
-                  aria-label="Tiết kiệm chuyển động"
-                  className="st-switch"
-                  onClick={() => setReducedMotion(!reducedMotion)}
-                >
-                  <span className="st-switchThumb" aria-hidden="true" />
-                </button>
-              </div>
-            </div>
-
-            <div className="st-row">
-              <span className="st-label">Mật độ</span>
-              <Chips
-                items={DENSITY_CHIPS}
-                selectedIds={[settings.compactDensity ? 'compact' : 'roomy']}
-                multi={false}
-                theme={theme}
-                onToggle={(id) => updateSettings({ compactDensity: id === 'compact' })}
-              />
-            </div>
-
-            <div className="st-row st-row--scale">
-              <div>
-                <span className="st-label">Cỡ chữ UI</span>
-                <p className="st-hint">Tỷ lệ chữ ({uiScale}%)</p>
-              </div>
-              <div className="st-scaleControls">
-                <Chips
-                  items={[
-                    { id: '90', label: '90%' },
-                    { id: '95', label: '95%' },
-                    { id: '100', label: '100%' },
-                    { id: '105', label: '105%' },
-                    { id: '110', label: '110%' },
-                    { id: '115', label: '115%' },
-                  ]}
-                  selectedIds={[String(uiScale)]}
-                  multi={false}
-                  theme={theme}
-                  onToggle={(id) => setUiScale(Number(id))}
-                />
-                {uiScale !== 100 && (
-                  <button
-                    type="button"
-                    className="btn btn-ghost btn-sm"
-                    onClick={() => setUiScale(100)}
-                    title="Đặt lại cỡ chữ chuẩn 100%"
-                  >
-                    Đặt lại
-                  </button>
-                )}
-              </div>
-            </div>
-          </section>
-
-          <section id="st-workspace" className="st-card" aria-labelledby={idFor('workspace')}>
-            <div className="st-cardHead">
-              <h2 className="st-cardTitle" id={idFor('workspace')}>
-                Workspace & Vibe Coder
-              </h2>
-              <span className="tag st-mono">{defaultViewport}px</span>
-            </div>
-
-            <div className="st-row st-row--first">
-              <span className="st-label">Khung nhìn mặc định</span>
-              <Chips
-                items={VIEWPORT_CHIPS}
-                selectedIds={[defaultViewport]}
-                multi={false}
-                theme={theme}
-                onToggle={(id) =>
-                  updateSettings({ defaultViewport: Number(id) as 1440 | 768 | 390 })
-                }
-              />
-            </div>
-
-            <div className="st-row">
-              <span className="st-label">Tự chạy kiểm định 6 lớp</span>
-              <button
-                type="button"
-                role="switch"
-                aria-checked={autoRunChecks}
-                aria-label="Tự chạy kiểm định 6 lớp"
-                className="st-switch"
-                onClick={() => updateSettings({ autoRunChecks: !autoRunChecks })}
-              >
-                <span className="st-switchThumb" aria-hidden="true" />
-              </button>
-            </div>
-
-            <div className="st-row">
-              <span className="st-label">Mục tiêu xuất mã</span>
-              <Chips
-                items={EXPORT_TARGET_CHIPS}
-                selectedIds={[settings.defaultExportTarget]}
-                multi={false}
-                theme={theme}
-                onToggle={(id) => updateSettings({ defaultExportTarget: id as ProjectSetupTarget })}
-              />
-            </div>
-
-            <div className="st-row">
-              <span className="st-label">Phím tắt</span>
-              <ul className="st-shortcuts">
-                {SHORTCUTS.map((item) => (
-                  <li key={item.keys} className="st-shortcutItem">
-                    <kbd className="st-kbd">{item.keys}</kbd>
-                    <span>{item.desc}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          </section>
-
-          <section id="st-ai" className="st-card" aria-labelledby={idFor('ai')}>
-            <div className="st-cardHead">
-              <h2 className="st-cardTitle" id={idFor('ai')}>
-                AI Gateway & BYOK
-              </h2>
-              <span className={`tag ${!quota.unlimited && quota.exhausted ? 'tag-red' : 'tag-green'}`}>
-                {quotaText}
-              </span>
-            </div>
-
-            <div className="st-row st-row--first">
-              <span className="st-label">Nguồn kết nối</span>
-              <Chips
-                items={BYOK_MODE_CHIPS}
-                selectedIds={[byok.enabled ? 'byok' : 'shared']}
-                multi={false}
-                theme={theme}
-                onToggle={(id) => updateByok({ enabled: id === 'byok' })}
-              />
-            </div>
-
-            <div className="st-grid-2">
-              <div className="st-block">
-                <span className="st-label">Giao thức</span>
-                <SelectionList
-                  items={PROTOCOL_LIST}
-                  selectedId={byok.protocol}
-                  onSelect={(id) => updateByok({ protocol: id as AIProtocol })}
-                  ariaLabel="Chọn giao thức AI"
-                />
-              </div>
-
-              <div className="st-block">
-                <span className="st-label">Mô hình</span>
-                <SelectionList
-                  items={MODEL_LIST}
-                  selectedId={
-                    MODEL_LIST.some((m) => m.id === byok.model) ? byok.model : 'studio-smart-route'
-                  }
-                  onSelect={(id) => updateByok({ model: id })}
-                  ariaLabel="Chọn mô hình ưu tiên"
-                />
-              </div>
-            </div>
-
-            {byok.enabled && (
-              <div className="st-grid-2">
-                <label className="st-block" htmlFor={idFor('model')}>
-                  <span className="st-label">Tên mô hình tùy chỉnh</span>
-                  <input
-                    id={idFor('model')}
-                    type="text"
-                    className="field st-mono"
-                    value={byok.model}
-                    spellCheck={false}
-                    onChange={(e) => updateByok({ model: e.target.value })}
-                  />
-                </label>
-
-                <label className="st-block" htmlFor={idFor('url')}>
-                  <span className="st-label">Base URL</span>
-                  <input
-                    id={idFor('url')}
-                    type="url"
-                    className="field st-mono"
-                    value={byok.baseUrl}
-                    spellCheck={false}
-                    onChange={(e) => updateByok({ baseUrl: e.target.value })}
-                  />
-                </label>
-
-                <div className="st-block st-span2">
-                  <label className="st-label" htmlFor={idFor('key')}>
-                    Khóa API cá nhân
-                  </label>
-                  <div className="st-secret">
-                    <input
-                      id={idFor('key')}
-                      type={showApiKey ? 'text' : 'password'}
-                      className="field st-mono"
-                      value={byok.apiKey}
-                      autoComplete="off"
-                      spellCheck={false}
-                      placeholder="sk-..."
-                      onChange={(e) => updateByok({ apiKey: e.target.value })}
-                    />
+              <section className="st-panel" aria-label="Kích thước giao diện">
+                <div className="st-panel-label">
+                  <span>Kích thước giao diện</span>
+                  {uiScale !== 100 && (
                     <button
                       type="button"
-                      className="icon-btn"
-                      aria-label={showApiKey ? 'Ẩn khóa API' : 'Hiện khóa API'}
-                      title={showApiKey ? 'Ẩn khóa API' : 'Hiện khóa API'}
-                      aria-pressed={showApiKey}
-                      onClick={() => setShowApiKey((v) => !v)}
+                      className="st-link-reset"
+                      onClick={() => setUiScale(100)}
                     >
-                      {showApiKey ? <EyeOff size={18} aria-hidden="true" /> : <Eye size={18} aria-hidden="true" />}
+                      Đặt lại 100%
+                    </button>
+                  )}
+                </div>
+                <div className="st-size-seg" role="radiogroup" aria-label="Chọn tỷ lệ cỡ chữ">
+                  {SCALE_OPTIONS.map((size) => (
+                    <button
+                      key={size}
+                      type="button"
+                      role="radio"
+                      aria-checked={uiScale === size}
+                      className="st-size-btn"
+                      onClick={() => setUiScale(size)}
+                    >
+                      {size}%
+                    </button>
+                  ))}
+                </div>
+              </section>
+
+              <section className="st-panel st-active-preset" aria-label="Hình nền đang sử dụng">
+                <div
+                  className="st-preset-thumb st-preset-thumb--hero"
+                  style={{ background: activePreset.previewBg }}
+                  aria-hidden="true"
+                >
+                  <div className="st-mini-ui">
+                    <div className="st-mini-rail">
+                      <span style={{ background: activePreset.previewAccent }} />
+                      <span />
+                      <span />
+                    </div>
+                    <div className="st-mini-canvas" style={{ background: activePreset.previewCard }}>
+                      <div className="st-mini-line st-mini-line--lg" />
+                      <div className="st-mini-line st-mini-line--sm" />
+                      <div className="st-mini-cta" style={{ background: activePreset.previewAccent }} />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="st-active-info">
+                  <div className="st-active-title-row">
+                    <h3>{activePreset.name}</h3>
+                    <span className="tag">{theme === 'dark' ? 'Nền tối' : 'Nền sáng'}</span>
+                  </div>
+                  <p className="st-hint">{activePreset.desc}</p>
+                  <div className="st-swatches" aria-label="Bảng màu preset">
+                    {activePreset.swatches.map((hex) => (
+                      <span
+                        key={hex}
+                        className="st-swatch"
+                        style={{ backgroundColor: hex }}
+                        title={hex}
+                      />
+                    ))}
+                  </div>
+                </div>
+              </section>
+
+              <section className="st-presets-block" aria-label="Thư viện hình nền">
+                <div className="st-presets-bar">
+                  <span className="st-panel-label">
+                    <Palette size={15} aria-hidden="true" />
+                    <span>Chọn mẫu hình nền (Preset)</span>
+                  </span>
+                  <div className="st-filter-pills" role="group" aria-label="Lọc theo sắc độ">
+                    {(
+                      [
+                        { id: 'all', label: 'Tất cả' },
+                        { id: 'dark', label: 'Tối' },
+                        { id: 'light', label: 'Sáng' },
+                      ] as const
+                    ).map((f) => (
+                      <button
+                        key={f.id}
+                        type="button"
+                        className="st-filter-btn"
+                        aria-pressed={presetFilter === f.id}
+                        onClick={() => setPresetFilter(f.id)}
+                      >
+                        {f.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="st-presets-grid">
+                  {visiblePresets.map((preset) => {
+                    const selected = preset.id === currentWallpaper;
+                    return (
+                      <button
+                        key={preset.id}
+                        type="button"
+                        className="st-preset-item"
+                        aria-pressed={selected}
+                        onClick={() => applyPreset(preset)}
+                      >
+                        <div
+                          className="st-preset-thumb"
+                          style={{ background: preset.previewBg }}
+                          aria-hidden="true"
+                        >
+                          {preset.id === 'auto' ? (
+                            <div className="st-mini-auto">
+                              <Sun size={16} className="st-mini-auto-sun" />
+                              <Moon size={16} className="st-mini-auto-moon" />
+                            </div>
+                          ) : (
+                            <div className="st-mini-ui">
+                              <div className="st-mini-rail">
+                                <span style={{ background: preset.previewAccent }} />
+                                <span />
+                                <span />
+                              </div>
+                              <div className="st-mini-canvas" style={{ background: preset.previewCard }}>
+                                <div className="st-mini-line st-mini-line--lg" />
+                                <div className="st-mini-line st-mini-line--sm" />
+                                <div className="st-mini-cta" style={{ background: preset.previewAccent }} />
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                        <span className="st-preset-name">{preset.name}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </section>
+
+              <section className="st-card" aria-label="Hiệu ứng chuyển đổi và chuyển động">
+                <div className="st-row st-row--first">
+                  <div>
+                    <span className="st-label">Hiệu ứng chuyển Sáng / Tối toàn trang</span>
+                    <p className="st-hint">Áp dụng xuyên suốt trang mỗi khi đổi chế độ Đêm / Ngày.</p>
+                  </div>
+                  <Chips
+                    items={EFFECT_CHIPS}
+                    selectedIds={[currentEffect]}
+                    multi={false}
+                    theme={theme}
+                    onToggle={(id) => updateSettings({ themeEffect: id as ThemeEffect })}
+                  />
+                </div>
+
+                <div className="st-grid-2">
+                  <div className="st-toggleCard">
+                    <span className="st-label">Nền động mượt (Crossfade Loop)</span>
+                    <button
+                      type="button"
+                      role="switch"
+                      aria-checked={ambientEnabled}
+                      aria-label="Nền động mượt"
+                      className="st-switch"
+                      onClick={() => updateSettings({ ambientVideo: !ambientEnabled })}
+                    >
+                      <span className="st-switchThumb" aria-hidden="true" />
                     </button>
                   </div>
-                  {!byok.apiKey.trim() && (
-                    <p className="st-note">Chưa có khóa API, hệ thống dùng Gateway mặc định nếu còn lượt.</p>
+
+                  <div className="st-toggleCard">
+                    <span className="st-label">Tiết kiệm chuyển động</span>
+                    <button
+                      type="button"
+                      role="switch"
+                      aria-checked={reducedMotion}
+                      aria-label="Tiết kiệm chuyển động"
+                      className="st-switch"
+                      onClick={() => setReducedMotion(!reducedMotion)}
+                    >
+                      <span className="st-switchThumb" aria-hidden="true" />
+                    </button>
+                  </div>
+                </div>
+
+                <div className="st-row">
+                  <span className="st-label">Mật độ bố cục</span>
+                  <Chips
+                    items={DENSITY_CHIPS}
+                    selectedIds={[settings.compactDensity ? 'compact' : 'roomy']}
+                    multi={false}
+                    theme={theme}
+                    onToggle={(id) => updateSettings({ compactDensity: id === 'compact' })}
+                  />
+                </div>
+              </section>
+            </div>
+          )}
+
+          {activeSection === 'workspace' && (
+            <section id="st-workspace" className="st-card" aria-labelledby={idFor('workspace')}>
+              <div className="st-cardHead">
+                <h2 className="st-cardTitle" id={idFor('workspace')}>
+                  Workspace & Vibe Coder
+                </h2>
+                <span className="tag st-mono">{defaultViewport}px</span>
+              </div>
+
+              <div className="st-row st-row--first">
+                <span className="st-label">Khung nhìn mặc định</span>
+                <Chips
+                  items={VIEWPORT_CHIPS}
+                  selectedIds={[defaultViewport]}
+                  multi={false}
+                  theme={theme}
+                  onToggle={(id) =>
+                    updateSettings({ defaultViewport: Number(id) as 1440 | 768 | 390 })
+                  }
+                />
+              </div>
+
+              <div className="st-row">
+                <span className="st-label">Tự chạy kiểm định 6 lớp</span>
+                <button
+                  type="button"
+                  role="switch"
+                  aria-checked={autoRunChecks}
+                  aria-label="Tự chạy kiểm định 6 lớp"
+                  className="st-switch"
+                  onClick={() => updateSettings({ autoRunChecks: !autoRunChecks })}
+                >
+                  <span className="st-switchThumb" aria-hidden="true" />
+                </button>
+              </div>
+
+              <div className="st-row">
+                <span className="st-label">Mục tiêu xuất mã</span>
+                <Chips
+                  items={EXPORT_TARGET_CHIPS}
+                  selectedIds={[settings.defaultExportTarget]}
+                  multi={false}
+                  theme={theme}
+                  onToggle={(id) => updateSettings({ defaultExportTarget: id as ProjectSetupTarget })}
+                />
+              </div>
+
+              <div className="st-row">
+                <span className="st-label">Phím tắt</span>
+                <ul className="st-shortcuts">
+                  {SHORTCUTS.map((item) => (
+                    <li key={item.keys} className="st-shortcutItem">
+                      <kbd className="st-kbd">{item.keys}</kbd>
+                      <span>{item.desc}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </section>
+          )}
+
+          {activeSection === 'ai' && (
+            <section id="st-ai" className="st-card" aria-labelledby={idFor('ai')}>
+              <div className="st-cardHead">
+                <h2 className="st-cardTitle" id={idFor('ai')}>
+                  AI Gateway & BYOK
+                </h2>
+                <span className={`tag ${!quota.unlimited && quota.exhausted ? 'tag-red' : 'tag-green'}`}>
+                  {quotaText}
+                </span>
+              </div>
+
+              <div className="st-row st-row--first">
+                <span className="st-label">Nguồn kết nối</span>
+                <Chips
+                  items={BYOK_MODE_CHIPS}
+                  selectedIds={[byok.enabled ? 'byok' : 'shared']}
+                  multi={false}
+                  theme={theme}
+                  onToggle={(id) => updateByok({ enabled: id === 'byok' })}
+                />
+              </div>
+
+              <div className="st-grid-2">
+                <div className="st-block">
+                  <span className="st-label">Giao thức</span>
+                  <SelectionList
+                    items={PROTOCOL_LIST}
+                    selectedId={byok.protocol}
+                    onSelect={(id) => updateByok({ protocol: id as AIProtocol })}
+                    ariaLabel="Chọn giao thức AI"
+                  />
+                </div>
+
+                <div className="st-block">
+                  <span className="st-label">Mô hình</span>
+                  <SelectionList
+                    items={MODEL_LIST}
+                    selectedId={
+                      MODEL_LIST.some((m) => m.id === byok.model) ? byok.model : 'studio-smart-route'
+                    }
+                    onSelect={(id) => updateByok({ model: id })}
+                    ariaLabel="Chọn mô hình ưu tiên"
+                  />
+                </div>
+              </div>
+
+              {byok.enabled && (
+                <div className="st-grid-2">
+                  <label className="st-block" htmlFor={idFor('model')}>
+                    <span className="st-label">Tên mô hình tùy chỉnh</span>
+                    <input
+                      id={idFor('model')}
+                      type="text"
+                      className="field st-mono"
+                      value={byok.model}
+                      spellCheck={false}
+                      onChange={(e) => updateByok({ model: e.target.value })}
+                    />
+                  </label>
+
+                  <label className="st-block" htmlFor={idFor('url')}>
+                    <span className="st-label">Base URL</span>
+                    <input
+                      id={idFor('url')}
+                      type="url"
+                      className="field st-mono"
+                      value={byok.baseUrl}
+                      spellCheck={false}
+                      onChange={(e) => updateByok({ baseUrl: e.target.value })}
+                    />
+                  </label>
+
+                  <div className="st-block st-span2">
+                    <label className="st-label" htmlFor={idFor('key')}>
+                      Khóa API cá nhân
+                    </label>
+                    <div className="st-secret">
+                      <input
+                        id={idFor('key')}
+                        type={showApiKey ? 'text' : 'password'}
+                        className="field st-mono"
+                        value={byok.apiKey}
+                        autoComplete="off"
+                        spellCheck={false}
+                        placeholder="sk-..."
+                        onChange={(e) => updateByok({ apiKey: e.target.value })}
+                      />
+                      <button
+                        type="button"
+                        className="icon-btn"
+                        aria-label={showApiKey ? 'Ẩn khóa API' : 'Hiện khóa API'}
+                        title={showApiKey ? 'Ẩn khóa API' : 'Hiện khóa API'}
+                        aria-pressed={showApiKey}
+                        onClick={() => setShowApiKey((v) => !v)}
+                      >
+                        {showApiKey ? <EyeOff size={18} aria-hidden="true" /> : <Eye size={18} aria-hidden="true" />}
+                      </button>
+                    </div>
+                    {!byok.apiKey.trim() && (
+                      <p className="st-note">Chưa có khóa API, hệ thống dùng Gateway mặc định nếu còn lượt.</p>
+                    )}
+                  </div>
+                </div>
+              )}
+            </section>
+          )}
+
+          {activeSection === 'data' && (
+            <section id="st-data" className="st-card" aria-labelledby={idFor('data')}>
+              <div className="st-cardHead">
+                <h2 className="st-cardTitle" id={idFor('data')}>
+                  Sao lưu & Dữ liệu
+                </h2>
+                <span className="tag st-mono">
+                  {projects.length} dự án · {savedItemIds.length} mục
+                </span>
+              </div>
+
+              <div className="st-grid-2">
+                <div className="st-block">
+                  <FileBox
+                    title="Kho dữ liệu cục bộ"
+                    tabs={dataTabs}
+                    activeId={selectedDataCard}
+                    onSelect={(id) => setSelectedDataCard(id)}
+                  />
+                  <div className="st-exportActions">
+                    <button type="button" className="btn btn-solid btn-sm" onClick={handleExportDownload}>
+                      Tải JSON
+                    </button>
+                    <button type="button" className="btn btn-line btn-sm" onClick={() => void handleCopyJson()}>
+                      Chép JSON
+                    </button>
+                  </div>
+                </div>
+
+                <div className="st-block">
+                  <span className="st-label">Khôi phục từ JSON</span>
+                  <DynamicDropZone
+                    label="Thả tệp JSON sao lưu"
+                    onFilesAdded={handleFilesDropped}
+                  />
+                  {importError && (
+                    <p className="st-error" role="alert">
+                      {importError}
+                    </p>
                   )}
                 </div>
               </div>
-            )}
-          </section>
 
-          <section id="st-data" className="st-card" aria-labelledby={idFor('data')}>
-            <div className="st-cardHead">
-              <h2 className="st-cardTitle" id={idFor('data')}>
-                Sao lưu & Dữ liệu
-              </h2>
-              <span className="tag st-mono">
-                {projects.length} dự án · {savedItemIds.length} mục
-              </span>
-            </div>
-
-            <div className="st-grid-2">
-              <div className="st-block">
-                <FileBox
-                  title="Kho dữ liệu cục bộ"
-                  tabs={dataTabs}
-                  activeId={selectedDataCard}
-                  onSelect={(id) => setSelectedDataCard(id)}
-                />
-                <div className="st-exportActions">
-                  <button type="button" className="btn btn-solid btn-sm" onClick={handleExportDownload}>
-                    Tải JSON
-                  </button>
-                  <button type="button" className="btn btn-line btn-sm" onClick={() => void handleCopyJson()}>
-                    Chép JSON
-                  </button>
-                </div>
+              <div className="st-row">
+                <span className="st-label">Đặt lại dữ liệu trình duyệt</span>
+                <button
+                  type="button"
+                  className="btn btn-line btn-sm st-danger"
+                  onClick={() => setConfirmReset(true)}
+                >
+                  Đặt lại dữ liệu
+                </button>
               </div>
-
-              <div className="st-block">
-                <span className="st-label">Khôi phục từ JSON</span>
-                <DynamicDropZone
-                  label="Thả tệp JSON sao lưu"
-                  onFilesAdded={handleFilesDropped}
-                />
-                {importError && (
-                  <p className="st-error" role="alert">
-                    {importError}
-                  </p>
-                )}
-              </div>
-            </div>
-
-            <div className="st-row">
-              <span className="st-label">Đặt lại dữ liệu trình duyệt</span>
-              <button
-                type="button"
-                className="btn btn-line btn-sm st-danger"
-                onClick={() => setConfirmReset(true)}
-              >
-                Đặt lại dữ liệu
-              </button>
-            </div>
-          </section>
+            </section>
+          )}
         </div>
       </div>
 
@@ -596,9 +916,7 @@ export const SettingsView: React.FC = () => {
       >
         <div className="st-dialog-body">
           <h2>Đặt lại toàn bộ dữ liệu?</h2>
-          <p>
-            Toàn bộ dự án, mục đã lưu và thiết lập cục bộ sẽ bị xóa.
-          </p>
+          <p>Toàn bộ dự án, mục đã lưu và thiết lập cục bộ sẽ bị xóa.</p>
           <div className="st-dialog-actions">
             <button type="button" className="btn btn-line btn-sm" onClick={() => setConfirmReset(false)}>
               Hủy

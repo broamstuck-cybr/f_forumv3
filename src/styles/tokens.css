@@ -1,19 +1,10 @@
-@font-face {
-  font-family: 'FForum Display';
-  src: url('/fonts/fforum-display.woff2') format('woff2'),
-       url('/fonts/fforum-display.ttf') format('truetype');
-  font-weight: 400 700;
-  font-style: normal;
-  font-display: swap;
-}
-
 :root {
-  --font-display: 'FForum Display', 'Fraunces Variable', 'Iowan Old Style', 'Palatino Linotype', Georgia, serif;
+  --font-display: 'Cormorant Garamond', 'Fraunces Variable', 'Iowan Old Style', Georgia, serif;
   --font-ui: 'Be Vietnam Pro', system-ui, -apple-system, 'Segoe UI', sans-serif;
   --font-mono: 'IBM Plex Mono', ui-monospace, 'SFMono-Regular', Menlo, monospace;
-  --font-script: 'Imperial Script', 'Fraunces Variable', cursive;
-  --font-signature: 'WindSong', 'Imperial Script', cursive;
-  --font-book: 'Newsreader', 'Fraunces Variable', Georgia, serif;
+  --font-script: 'Ballet', 'Great Vibes', 'Imperial Script', cursive;
+  --font-signature: 'Great Vibes', 'Ballet', 'WindSong', cursive;
+  --font-book: 'Newsreader', 'Cormorant Garamond', Georgia, serif;
 
   --ink-dark: #121110;
   --shell-bg: #f1ecea;
@@ -175,6 +166,134 @@ html[data-theme='light'] .scene-paper,
   --red-soft: rgba(255, 250, 245, 0.14);
   --harbour: #e6f3f8;
   --harbour-soft: rgba(255, 250, 245, 0.16);
+}
+
+html[data-theme='dark'][data-wallpaper='harbour'],
+html[data-theme='dark'][data-wallpaper='harbour'] .scene-ink,
+html[data-theme='dark'][data-wallpaper='harbour'] .scene-paper {
+  --bg: #0e1317;
+  --bg-raised: #151c22;
+  --bg-sunken: #090d10;
+  --bg-high: #1d262f;
+  --bg-veil: rgba(14, 19, 23, 0.86);
+  --bg-glass-surface: rgba(21, 28, 34, 0.78);
+  --bg-card-surface: rgba(25, 34, 41, 0.84);
+  --red: #7fc1df;
+  --red-fill: #216686;
+  --red-soft: rgba(127, 193, 223, 0.16);
+  --on-red: #f8fcff;
+}
+
+html[data-theme='light'][data-wallpaper='harbour'],
+html[data-theme='light'][data-wallpaper='harbour'] .scene-ink,
+html[data-theme='light'][data-wallpaper='harbour'] .scene-paper {
+  --bg: #f1f5f7;
+  --bg-raised: #f8fbfc;
+  --bg-sunken: #e4ecf0;
+  --bg-high: #ffffff;
+  --bg-veil: rgba(241, 245, 247, 0.88);
+  --bg-glass-surface: rgba(248, 251, 252, 0.82);
+  --bg-card-surface: rgba(255, 255, 255, 0.9);
+  --red: #1c5b78;
+  --red-fill: #1c5b78;
+  --red-soft: rgba(28, 91, 120, 0.11);
+  --on-red: #f8fcff;
+}
+
+html[data-theme='dark'][data-wallpaper='aurora'],
+html[data-theme='dark'][data-wallpaper='aurora'] .scene-ink,
+html[data-theme='dark'][data-wallpaper='aurora'] .scene-paper {
+  --bg: #0c1312;
+  --bg-raised: #131d1b;
+  --bg-sunken: #070c0b;
+  --bg-high: #1b2825;
+  --bg-veil: rgba(12, 19, 18, 0.86);
+  --bg-glass-surface: rgba(19, 29, 27, 0.78);
+  --bg-card-surface: rgba(23, 35, 33, 0.84);
+  --red: #64d6aa;
+  --red-fill: #1b7857;
+  --red-soft: rgba(100, 214, 170, 0.16);
+  --on-red: #f5fffb;
+}
+
+html[data-theme='light'][data-wallpaper='aurora'],
+html[data-theme='light'][data-wallpaper='aurora'] .scene-ink,
+html[data-theme='light'][data-wallpaper='aurora'] .scene-paper {
+  --bg: #f1f6f3;
+  --bg-raised: #f8fbf9;
+  --bg-sunken: #e3ece7;
+  --bg-high: #ffffff;
+  --bg-veil: rgba(241, 246, 243, 0.88);
+  --bg-glass-surface: rgba(248, 251, 249, 0.82);
+  --bg-card-surface: rgba(255, 255, 255, 0.9);
+  --red: #15684b;
+  --red-fill: #15684b;
+  --red-soft: rgba(21, 104, 75, 0.11);
+  --on-red: #f5fffb;
+}
+
+html[data-theme='dark'][data-wallpaper='constellation'],
+html[data-theme='dark'][data-wallpaper='constellation'] .scene-ink,
+html[data-theme='dark'][data-wallpaper='constellation'] .scene-paper {
+  --bg: #0f1218;
+  --bg-raised: #161a23;
+  --bg-sunken: #090b0f;
+  --bg-high: #1f2531;
+  --bg-veil: rgba(15, 18, 24, 0.86);
+  --bg-glass-surface: rgba(22, 26, 35, 0.78);
+  --bg-card-surface: rgba(26, 31, 41, 0.84);
+  --red: #ebb956;
+  --red-fill: #96640e;
+  --red-soft: rgba(235, 185, 86, 0.16);
+  --on-red: #fffaf0;
+}
+
+html[data-theme='light'][data-wallpaper='constellation'],
+html[data-theme='light'][data-wallpaper='constellation'] .scene-ink,
+html[data-theme='light'][data-wallpaper='constellation'] .scene-paper {
+  --bg: #f6f3eb;
+  --bg-raised: #fcfaf4;
+  --bg-sunken: #ebe5d6;
+  --bg-high: #ffffff;
+  --bg-veil: rgba(246, 243, 235, 0.88);
+  --bg-glass-surface: rgba(252, 250, 244, 0.82);
+  --bg-card-surface: rgba(255, 253, 247, 0.9);
+  --red: #885606;
+  --red-fill: #885606;
+  --red-soft: rgba(136, 86, 6, 0.11);
+  --on-red: #fffaf0;
+}
+
+html[data-theme='dark'][data-wallpaper='indigo'],
+html[data-theme='dark'][data-wallpaper='indigo'] .scene-ink,
+html[data-theme='dark'][data-wallpaper='indigo'] .scene-paper {
+  --bg: #0c101a;
+  --bg-raised: #131928;
+  --bg-sunken: #070a11;
+  --bg-high: #1c2438;
+  --bg-veil: rgba(12, 16, 26, 0.86);
+  --bg-glass-surface: rgba(19, 25, 40, 0.78);
+  --bg-card-surface: rgba(23, 30, 48, 0.84);
+  --red: #7eaaf9;
+  --red-fill: #2454a6;
+  --red-soft: rgba(126, 170, 249, 0.16);
+  --on-red: #f7faff;
+}
+
+html[data-theme='light'][data-wallpaper='indigo'],
+html[data-theme='light'][data-wallpaper='indigo'] .scene-ink,
+html[data-theme='light'][data-wallpaper='indigo'] .scene-paper {
+  --bg: #f1f4fa;
+  --bg-raised: #f8faff;
+  --bg-sunken: #e4e9f5;
+  --bg-high: #ffffff;
+  --bg-veil: rgba(241, 244, 250, 0.88);
+  --bg-glass-surface: rgba(248, 250, 255, 0.82);
+  --bg-card-surface: rgba(255, 255, 255, 0.9);
+  --red: #214a96;
+  --red-fill: #214a96;
+  --red-soft: rgba(33, 74, 150, 0.11);
+  --on-red: #f7faff;
 }
 
 :root,

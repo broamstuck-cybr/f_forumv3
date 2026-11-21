@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
-import { CloudRain, Droplets, Menu, Moon, Sparkles, Sun, X } from 'lucide-react';
-import type { AppRoute, ThemeEffect, ThemePreference } from '../../types/index';
+import { Menu, Moon, Sun, X } from 'lucide-react';
+import type { AppRoute } from '../../types/index';
 import { useAppStore } from '../../store/appStore';
 import { KineticLogo } from '../brand/KineticLogo';
 import './app-shell.css';
@@ -15,12 +15,6 @@ const PRIMARY_TABS: Array<{ id: AppRoute; label: string }> = [
   { id: 'explore', label: 'Khám phá' },
   { id: 'workspace', label: 'Workspace' },
   { id: 'community', label: 'Tri thức' },
-];
-
-const THEME_OPTIONS: Array<{ id: ThemePreference; label: string }> = [
-  { id: 'dark', label: 'Tối' },
-  { id: 'light', label: 'Sáng' },
-  { id: 'system', label: 'Hệ thống' },
 ];
 
 function userInitials(name: string): string {
@@ -45,9 +39,6 @@ export const AppNavbar: React.FC<AppNavbarProps> = () => {
     logout,
     theme,
     toggleTheme,
-    settings,
-    updateSettings,
-    addToast,
     clearViewingProfileUser,
   } = useAppStore();
   const reduced = Boolean(useReducedMotion());
@@ -101,8 +92,6 @@ export const AppNavbar: React.FC<AppNavbarProps> = () => {
       ? `Đã dùng ${quota.used} lượt`
       : `${remaining}/${limit} lượt`;
   const avatarText = currentUser ? userInitials(currentUser.name) : 'K';
-  const themePreference: ThemePreference = settings.themePreference ?? 'system';
-  const ambientEnabled = settings.ambientVideo !== false;
   const themeToggleLabel = theme === 'dark' ? 'Chuyển sang chế độ sáng' : 'Chuyển sang chế độ tối';
 
   const go = (route: AppRoute) => {
@@ -124,27 +113,6 @@ export const AppNavbar: React.FC<AppNavbarProps> = () => {
   };
 
   const spring = reduced ? { duration: 0.01 } : { type: 'spring' as const, stiffness: 300, damping: 30 };
-
-  const currentEffect = settings.themeEffect || 'droplet';
-  const cycleThemeEffect = () => {
-    const cycleMap: Record<ThemeEffect, ThemeEffect> = {
-      droplet: 'rain',
-      rain: 'diwali',
-      diwali: 'droplet',
-    };
-    const next = cycleMap[currentEffect] || 'droplet';
-    updateSettings({ themeEffect: next });
-    const labels: Record<ThemeEffect, string> = {
-      droplet: 'Giọt nước',
-      rain: 'Mưa rơi',
-      diwali: 'Ánh sáng',
-    };
-    addToast({
-      type: 'info',
-      title: 'Chế độ hiệu ứng PinUI',
-      message: `Đã chuyển sang hiệu ứng ${labels[next]}`,
-    });
-  };
 
   return (
     <header className="nav">
@@ -204,28 +172,6 @@ export const AppNavbar: React.FC<AppNavbarProps> = () => {
               <Sun size={18} strokeWidth={1.75} aria-hidden="true" />
             ) : (
               <Moon size={18} strokeWidth={1.75} aria-hidden="true" />
-            )}
-          </button>
-
-          <button
-            type="button"
-            className="icon-btn nav__modeBtn"
-            onClick={cycleThemeEffect}
-            aria-label={`Hiệu ứng nền: ${currentEffect} (nhấn để đổi)`}
-            title={
-              currentEffect === 'rain'
-                ? 'Hiệu ứng: Mưa rơi (Rain) · Nhấn đổi Ánh sáng'
-                : currentEffect === 'diwali'
-                  ? 'Hiệu ứng: Ánh sáng (Diwali) · Nhấn đổi Giọt nước'
-                  : 'Hiệu ứng: Giọt nước (Droplet) · Nhấn đổi Mưa rơi'
-            }
-          >
-            {currentEffect === 'rain' ? (
-              <CloudRain size={17} strokeWidth={1.75} aria-hidden="true" />
-            ) : currentEffect === 'diwali' ? (
-              <Sparkles size={17} strokeWidth={1.75} aria-hidden="true" />
-            ) : (
-              <Droplets size={17} strokeWidth={1.75} aria-hidden="true" />
             )}
           </button>
 

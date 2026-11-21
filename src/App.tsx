@@ -4,6 +4,8 @@ import { AppProvider, useAppStore } from './store/appStore';
 import { AppNavbar } from './components/layout/AppNavbar';
 import { AppFooter } from './components/layout/AppFooter';
 import { AmbientVideoBackdrop } from './components/layout/AmbientVideoBackdrop';
+import { GlobalRouteLoader } from './components/layout/GlobalRouteLoader';
+import { GlobalThemeAtmosphere } from './components/layout/GlobalThemeAtmosphere';
 import { AuthModal } from './components/public/AuthModal';
 import { NoticeStatusModal } from './components/public/NoticeStatusModal';
 import { ToastStack } from './components/public/ToastStack';
@@ -107,9 +109,22 @@ function setMetaContent(selector: string, value: string): void {
   if (el) el.setAttribute('content', value);
 }
 
+const ROUTE_LOAD_LABELS: Record<string, string> = {
+  landing: 'Đang mở trang giới thiệu...',
+  home: 'Đang mở Trang chủ...',
+  explore: 'Đang mở Bàn soi Khám phá...',
+  experience: 'Đang nạp Trải nghiệm mẫu...',
+  workspace: 'Đang khởi động Workspace Arena...',
+  community: 'Đang mở Tri thức cộng đồng...',
+  profile: 'Đang mở Hồ sơ thành viên...',
+  settings: 'Đang mở Cài đặt hệ thống...',
+  admin: 'Đang mở Bảng điều khiển...',
+};
+
 const AppShell: React.FC = () => {
   const { currentRoute, navigate, currentUser, authModalOpen, setAuthModalOpen, reducedMotion } = useAppStore();
   const [noticeModalOpen, setNoticeModalOpen] = useState(false);
+  const [routeTransitioning, setRouteTransitioning] = useState(false);
   const mainRef = useRef<HTMLElement>(null);
   const firstRender = useRef(true);
 
@@ -137,10 +152,13 @@ const AppShell: React.FC = () => {
     }
     if (firstRender.current) {
       firstRender.current = false;
-      return;
+      return undefined;
     }
     mainRef.current?.focus({ preventScroll: true });
-  }, [currentRoute]);
+    setRouteTransitioning(true);
+    const timer = window.setTimeout(() => setRouteTransitioning(false), reducedMotion ? 120 : 340);
+    return () => window.clearTimeout(timer);
+  }, [currentRoute, reducedMotion]);
 
   const showNavbar = currentRoute !== 'landing' && currentRoute !== 'not-found';
   const showFooter =
@@ -156,6 +174,11 @@ const AppShell: React.FC = () => {
       <LayoutGroup>
         <div className="shell">
           <AmbientVideoBackdrop />
+          <GlobalThemeAtmosphere />
+          <GlobalRouteLoader
+            visible={routeTransitioning}
+            label={ROUTE_LOAD_LABELS[currentRoute] || 'Đang nạp trang...'}
+          />
           <a className="skip-link" href="#noi-dung">
             Tới nội dung
           </a>
@@ -164,9 +187,10 @@ const AppShell: React.FC = () => {
           <main id="noi-dung" ref={mainRef} tabIndex={-1} className="shell__main">
             <Suspense
               fallback={
-                <div className="wrap-wide" style={{ paddingBlock: 'var(--space-8)' }}>
-                  <p className="t-label">đang mở trang</p>
-                </div>
+                <GlobalRouteLoader
+                  visible
+                  label={ROUTE_LOAD_LABELS[currentRoute] || 'Đang nạp trang...'}
+                />
               }
             >
               {currentRoute === 'landing' && (

@@ -1,5 +1,16 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Check, Copy, Eye, FileCode2, GitCompareArrows, RotateCw, ShieldCheck } from 'lucide-react';
+import {
+  Check,
+  ChevronDown,
+  ChevronRight,
+  Copy,
+  Eye,
+  FileCode2,
+  GitCompareArrows,
+  RotateCw,
+  ShieldCheck,
+  Terminal,
+} from 'lucide-react';
 import type { AIActivityState, AIStreamingStage, ChatMessage } from '../../types/index';
 import { formatClock } from './time';
 
@@ -85,12 +96,6 @@ function stepRank(stage: AIStreamingStage): number {
   return -1;
 }
 
-function estimateMessageTokens(message: ChatMessage): number {
-  const baseChars = (message.content || '').length;
-  const filesBonus = (message.changedFiles?.length || 0) * 195;
-  return Math.max(48, Math.round(baseChars / 3.6) + filesBonus);
-}
-
 function estimateElapsedLabel(message: ChatMessage, index: number): string {
   const filesCount = message.changedFiles?.length || 1;
   const tenths = 6 + ((index * 3 + filesCount * 2) % 9);
@@ -105,7 +110,6 @@ export const Thread: React.FC<ThreadProps> = ({
   streamingStage,
   streamingPreview,
   modelUsed,
-  userName,
   starters,
   onPickStarter,
   onOpenFile,
@@ -122,50 +126,17 @@ export const Thread: React.FC<ThreadProps> = ({
   const previewRef = useRef<HTMLPreElement>(null);
   const [liveElapsedMs, setLiveElapsedMs] = useState(0);
   const [copiedId, setCopiedId] = useState<string | null>(null);
-
-  const busy =
-    activity === 'thinking' ||
-    activity === 'streaming' ||
-    streamingStage === 'routing' ||
-    streamingStage === 'generating' ||
-    streamingStage === 'checking';
+  const [expandedTools, setExpandedTools] = useState<Record<string, boolean>>({});
+  const busy = activity === 'thinking' || activity === 'streaming';
+  const failed = activity === 'error';
+  const untouched = messages.every((message) => message.role !== 'user') && arenaTurns.length === 0;
 
   useEffect(() => {
-    if (!busy) {
-      setLiveElapsedMs(0);
-      return;
+    const container = scrollRef.current;
+    if (container) {
+      container.scrollTop = container.scrollHeight;
     }
-    const started = performance.now();
-    const timer = window.setInterval(() => {
-      setLiveElapsedMs(Math.round(performance.now() - started));
-    }, 120);
-    return () => window.clearInterval(timer);
-  }, [busy]);
-
-  const lastMessage = messages[messages.length - 1];
-  const failed = !busy && lastMessage?.role === 'system';
-  const untouched = !messages.some((message) => message.role === 'user') && arenaTurns.length === 0;
-  const activeRank = stepRank(
-    streamingStage !== 'idle'
-      ? streamingStage
-      : activity === 'streaming'
-        ? 'generating'
-        : 'routing'
-  );
-
-  const lastAssistantId = (() => {
-    for (let i = messages.length - 1; i >= 0; i -= 1) {
-      if (messages[i].role === 'assistant') return messages[i].id;
-    }
-    return null;
-  })();
-
-  useEffect(() => {
-    const element = scrollRef.current;
-    if (element && (!untouched || busy || arenaTurns.length > 0)) {
-      element.scrollTop = element.scrollHeight;
-    }
-  }, [messages.length, arenaTurns.length, busy, untouched, streamingStage, streamingPreview]);
+  }, [messages.length, arenaTurns.length, activity, streamingPreview]);
 
   useEffect(() => {
     const pre = previewRef.current;
@@ -174,17 +145,35 @@ export const Thread: React.FC<ThreadProps> = ({
     }
   }, [streamingPreview]);
 
+  useEffect(() => {
+    if (!busy) {
+      setLiveElapsedMs(0);
+      return;
+    }
+    const startedAt = Date.now();
+    const timer = window.setInterval(() => {
+      setLiveElapsedMs(Date.now() - startedAt);
+    }, 100);
+    return () => window.clearInterval(timer);
+  }, [busy]);
+
   const handleCopyContent = async (id: string, text: string) => {
     try {
       await navigator.clipboard.writeText(text);
       setCopiedId(id);
-      window.setTimeout(() => {
-        setCopiedId((prev) => (prev === id ? null : prev));
-      }, 1600);
+      window.setTimeout(() => setCopiedId((prev) => (prev === id ? null : prev)), 1500);
     } catch {
       return;
     }
   };
+
+  const toggleToolGroup = (id: string) => {
+    setExpandedTools((prev) => ({ ...prev, [id]: !prev[id] }));
+  };
+
+  const lastMessage = messages[messages.length - 1];
+  const lastAssistantId = [...messages].reverse().find((message) => message.role === 'assistant')?.id;
+  const activeRank = stepRank(streamingStage);
 
   const renderArenaCard = (
     turn: ArenaComparisonTurn,
@@ -255,29 +244,29 @@ export const Thread: React.FC<ThreadProps> = ({
           <div className="ws-arena-card-actions">
             <button
               type="button"
-              className="ws-icon-pill"
+              className="ws-icon-pill ws-icon-pill--sm"
               aria-label={`Chép phản hồi Model ${side}`}
               title={copiedId === cardCopyId ? 'Đã chép' : `Chép phản hồi Model ${side}`}
               data-active={copiedId === cardCopyId ? 'true' : undefined}
               onClick={() => void handleCopyContent(cardCopyId, candidate.message)}
             >
               {copiedId === cardCopyId ? (
-                <Check size={14} aria-hidden="true" />
+                <Check size={13} aria-hidden="true" />
               ) : (
-                <Copy size={14} aria-hidden="true" />
+                <Copy size={13} aria-hidden="true" />
               )}
             </button>
 
             <button
               type="button"
-              className={`ws-icon-pill ${isApplied ? 'ws-icon-pill--active' : 'ws-icon-pill--accent'}`}
+              className={`ws-icon-pill ws-icon-pill--sm ${isApplied ? 'ws-icon-pill--active' : 'ws-icon-pill--accent'}`}
               disabled={isRunning}
               aria-pressed={isApplied}
               aria-label={isApplied ? `Đang áp dụng Model ${side}` : `Áp dụng Model ${side} vào Live View`}
               title={isApplied ? 'Đang áp dụng trên Live View' : 'Áp dụng bản này vào Live View'}
               onClick={() => onApplyArenaCandidate(turn.id, side)}
             >
-              <Check size={14} aria-hidden="true" />
+              <Check size={13} aria-hidden="true" />
             </button>
           </div>
         </footer>
@@ -287,43 +276,123 @@ export const Thread: React.FC<ThreadProps> = ({
 
   return (
     <div ref={scrollRef} className="ws-scroll">
-      <div className="ws-measure">
+      <div className="ws-measure ws-arena-stream">
+        {untouched && !busy && (
+          <section className="ws-arena-empty" aria-label="Khởi tạo phiên Arena">
+            <h2 className="ws-arena-empty-title">
+              Từ ý tưởng <em>đến bản dựng.</em>
+            </h2>
+            <p className="ws-arena-empty-sub">
+              Mô tả giao diện hoặc chọn một mẫu khởi đầu bên dưới để tạo mã nguồn & kiểm định ngay.
+            </p>
+            <ul className="ws-arena-suggest-list">
+              {starters.map((starter) => (
+                <li key={starter.label}>
+                  <button
+                    type="button"
+                    className="ws-arena-suggest-row"
+                    onClick={() => onPickStarter(starter.prompt)}
+                  >
+                    <FileCode2 size={15} aria-hidden="true" />
+                    <span className="ws-arena-suggest-label">{starter.label}</span>
+                    <span className="ws-arena-suggest-preview">{starter.prompt}</span>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
+
         {messages.map((message, index) => {
+          if (message.role === 'system' && untouched) {
+            return null;
+          }
+
+          const isUser = message.role === 'user';
           const isLatestAssistant =
             !busy &&
             !untouched &&
             message.role === 'assistant' &&
             message.id === lastAssistantId &&
             message === lastMessage;
-          const modeLabel = message.role === 'user' ? extractModeLabel(message.content) : null;
-          const tokenCount = estimateMessageTokens(message);
           const elapsedLabel =
             message.role === 'assistant' ? estimateElapsedLabel(message, index) : null;
-          const plainContent =
-            message.role === 'user' ? stripModeTag(message.content) : message.content;
+          const plainContent = isUser ? stripModeTag(message.content) : message.content;
+          const hasChangedFiles = Boolean(message.changedFiles && message.changedFiles.length > 0);
+          const isToolExpanded = Boolean(expandedTools[message.id]);
+
+          if (isUser) {
+            return (
+              <div key={message.id} className="ws-arena-user-row">
+                <div className="ws-arena-user-bubble">{plainContent}</div>
+              </div>
+            );
+          }
 
           return (
-            <article key={message.id} className="ws-turn" data-role={message.role}>
-              <header className="t-label ws-turn-meta">
-                <span className="ws-role-badge" data-role={message.role}>
-                  {message.role === 'user'
-                    ? userName
-                    : message.role === 'system'
-                      ? 'Hệ thống'
-                      : 'F-Forum AI'}
-                </span>
-                {modeLabel && <span className="ws-mode-tag">{modeLabel}</span>}
-                {message.modelUsed && <span className="ws-model-tag">{message.modelUsed}</span>}
-                {message.role === 'assistant' && (
-                  <>
-                    {elapsedLabel && <span className="ws-pill-meta">{elapsedLabel}</span>}
-                    <span className="ws-pill-meta">~{tokenCount} tok</span>
-                  </>
-                )}
-                <time dateTime={message.createdAt}>{formatClock(message.createdAt)}</time>
-              </header>
+            <article key={message.id} className="ws-arena-assistant-turn" data-role={message.role}>
+              {hasChangedFiles && (
+                <div className="ws-arena-tool-block">
+                  <button
+                    type="button"
+                    className="ws-arena-tool-toggle"
+                    aria-expanded={isToolExpanded}
+                    onClick={() => toggleToolGroup(message.id)}
+                  >
+                    {isToolExpanded ? (
+                      <ChevronDown size={13} aria-hidden="true" />
+                    ) : (
+                      <ChevronRight size={13} aria-hidden="true" />
+                    )}
+                    <Terminal size={13} aria-hidden="true" />
+                    <span>
+                      Ran commands {message.changedFiles!.length} · {checksPassLabel || '6/6 đạt'}
+                    </span>
+                  </button>
 
-              <p className="ws-turn-body">{plainContent}</p>
+                  {isToolExpanded && (
+                    <div className="ws-arena-tool-body">
+                      <ul className="ws-turn-files" aria-label="Tệp đã cập nhật">
+                        {message.changedFiles!.map((filePath) => (
+                          <li key={filePath}>
+                            <button
+                              type="button"
+                              className="ws-file-pill"
+                              onClick={() => onOpenFile(filePath)}
+                            >
+                              {filePath}
+                            </button>
+                          </li>
+                        ))}
+                      </ul>
+                      {(onOpenPreview || onOpenDiff || onOpenChecks) && (
+                        <div className="ws-artifact-jumps" role="group" aria-label="Mở nhanh bản dựng">
+                          {onOpenPreview && (
+                            <button type="button" className="ws-artifact-jump" onClick={onOpenPreview}>
+                              <Eye size={12} aria-hidden="true" />
+                              <span>Preview</span>
+                            </button>
+                          )}
+                          {onOpenDiff && (
+                            <button type="button" className="ws-artifact-jump" onClick={onOpenDiff}>
+                              <GitCompareArrows size={12} aria-hidden="true" />
+                              <span>Diff</span>
+                            </button>
+                          )}
+                          {onOpenChecks && (
+                            <button type="button" className="ws-artifact-jump" onClick={onOpenChecks}>
+                              <ShieldCheck size={12} aria-hidden="true" />
+                              <span>Checks</span>
+                            </button>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              <div className="ws-arena-assistant-prose">{plainContent}</div>
 
               {message.fallback && (
                 <p className="ws-turn-flag">
@@ -331,128 +400,55 @@ export const Thread: React.FC<ThreadProps> = ({
                 </p>
               )}
 
-              {message.changedFiles && message.changedFiles.length > 0 && (
-                message.role === 'assistant' ? (
-                  <div className="ws-artifact-card" aria-label="Bản dựng tệp đã cập nhật">
-                    <div className="ws-artifact-head">
-                      <span className="ws-artifact-title">
-                        <FileCode2 size={14} aria-hidden="true" />
-                        <span>{message.changedFiles.length} tệp đã cập nhật</span>
-                      </span>
-                      <span className="ws-artifact-badge">
-                        <ShieldCheck size={12} aria-hidden="true" />
-                        <span>{checksPassLabel || 'Kiểm định 6 lớp'}</span>
-                      </span>
-                    </div>
-
-                    <ul className="ws-turn-files" aria-label="Tệp đã cập nhật">
-                      {message.changedFiles.map((filePath) => (
-                        <li key={filePath}>
-                          <button
-                            type="button"
-                            className="ws-file-pill"
-                            onClick={() => onOpenFile(filePath)}
-                          >
-                            {filePath}
-                          </button>
-                        </li>
-                      ))}
-                    </ul>
-
-                    {(onOpenPreview || onOpenDiff || onOpenChecks) && (
-                      <div className="ws-artifact-jumps" role="group" aria-label="Mở nhanh bản dựng">
-                        {onOpenPreview && (
-                          <button
-                            type="button"
-                            className="ws-artifact-jump"
-                            onClick={onOpenPreview}
-                          >
-                            <Eye size={13} aria-hidden="true" />
-                            <span>Xem trực tiếp</span>
-                          </button>
-                        )}
-                        {onOpenDiff && (
-                          <button
-                            type="button"
-                            className="ws-artifact-jump"
-                            onClick={onOpenDiff}
-                          >
-                            <GitCompareArrows size={13} aria-hidden="true" />
-                            <span>Soi Diff</span>
-                          </button>
-                        )}
-                        {onOpenChecks && (
-                          <button
-                            type="button"
-                            className="ws-artifact-jump"
-                            onClick={onOpenChecks}
-                          >
-                            <ShieldCheck size={13} aria-hidden="true" />
-                            <span>Kiểm 6 lớp</span>
-                          </button>
-                        )}
-                      </div>
+              <footer className="ws-arena-turn-foot">
+                <div className="ws-arena-foot-left">
+                  <button
+                    type="button"
+                    className="ws-arena-ghost-icon"
+                    aria-label="Chép nội dung"
+                    title={copiedId === message.id ? 'Đã chép' : 'Chép nội dung'}
+                    onClick={() => void handleCopyContent(message.id, plainContent)}
+                  >
+                    {copiedId === message.id ? (
+                      <Check size={13} aria-hidden="true" />
+                    ) : (
+                      <Copy size={13} aria-hidden="true" />
                     )}
-                  </div>
-                ) : (
-                  <ul className="ws-turn-files" aria-label="Tệp đã cập nhật">
-                    {message.changedFiles.map((filePath) => (
-                      <li key={filePath}>
-                        <button
-                          type="button"
-                          className="ws-file-pill"
-                          onClick={() => onOpenFile(filePath)}
-                        >
-                          {filePath}
-                        </button>
-                      </li>
-                    ))}
-                  </ul>
-                )
-              )}
+                  </button>
 
-              <div className="ws-turn-actions">
-                <button
-                  type="button"
-                  className="ws-icon-pill"
-                  aria-label="Chép nội dung tin nhắn"
-                  title={copiedId === message.id ? 'Đã chép' : 'Chép nội dung'}
-                  data-active={copiedId === message.id ? 'true' : undefined}
-                  onClick={() => void handleCopyContent(message.id, plainContent)}
-                >
-                  {copiedId === message.id ? (
-                    <Check size={14} aria-hidden="true" />
-                  ) : (
-                    <Copy size={14} aria-hidden="true" />
+                  {isLatestAssistant && (
+                    <button
+                      type="button"
+                      className="ws-arena-ghost-icon"
+                      aria-label="Tạo lại phản hồi"
+                      title="Tạo lại"
+                      onClick={onRegenerate}
+                      disabled={!canRegenerate}
+                    >
+                      <RotateCw size={13} aria-hidden="true" />
+                    </button>
                   )}
-                </button>
 
-                {isLatestAssistant && (
-                  <button
-                    type="button"
-                    className="ws-icon-pill"
-                    aria-label="Tạo lại phản hồi"
-                    title="Tạo lại"
-                    onClick={onRegenerate}
-                    disabled={!canRegenerate}
-                  >
-                    <RotateCw size={14} aria-hidden="true" />
-                  </button>
-                )}
+                  {failed && message === lastMessage && (
+                    <button
+                      type="button"
+                      className="ws-arena-ghost-icon"
+                      aria-label="Thử lại"
+                      title="Thử lại"
+                      onClick={onRetry}
+                      disabled={!canRetry}
+                    >
+                      <RotateCw size={13} aria-hidden="true" />
+                    </button>
+                  )}
+                </div>
 
-                {failed && message === lastMessage && (
-                  <button
-                    type="button"
-                    className="ws-icon-pill ws-icon-pill--accent"
-                    aria-label="Thử lại yêu cầu"
-                    title="Thử lại"
-                    onClick={onRetry}
-                    disabled={!canRetry}
-                  >
-                    <RotateCw size={14} aria-hidden="true" />
-                  </button>
-                )}
-              </div>
+                <span className="ws-arena-foot-meta">
+                  {message.modelUsed ? `${message.modelUsed} · ` : ''}
+                  {elapsedLabel ? `${elapsedLabel} | ` : ''}
+                  {formatClock(message.createdAt)}
+                </span>
+              </footer>
             </article>
           );
         })}
@@ -463,14 +459,8 @@ export const Thread: React.FC<ThreadProps> = ({
             className="ws-arena-turn"
             aria-label={`So sánh 2 Model: ${turn.prompt}`}
           >
-            <div className="ws-arena-prompt-head">
-              <span className="ws-role-badge" data-role="user">
-                Arena A · B
-              </span>
-              <span className="ws-arena-prompt-text">{stripModeTag(turn.prompt)}</span>
-              <time className="t-label" dateTime={turn.createdAt}>
-                {formatClock(turn.createdAt)}
-              </time>
+            <div className="ws-arena-user-row">
+              <div className="ws-arena-user-bubble">{stripModeTag(turn.prompt)}</div>
             </div>
 
             <div className="ws-arena-grid">
@@ -480,35 +470,14 @@ export const Thread: React.FC<ThreadProps> = ({
           </section>
         ))}
 
-        {untouched && !busy && (
-          <section className="ws-starters" aria-label="Mẫu khởi tạo nhanh">
-            <p className="t-label">Bắt đầu nhanh</p>
-            <ul>
-              {starters.map((starter) => (
-                <li key={starter.label}>
-                  <button
-                    type="button"
-                    className="ws-starter"
-                    onClick={() => onPickStarter(starter.prompt)}
-                  >
-                    <span className="ws-starter-title">{starter.label}</span>
-                    <span className="ws-starter-desc">{starter.prompt}</span>
-                  </button>
-                </li>
-              ))}
-            </ul>
-          </section>
-        )}
-
         <div role="status" aria-live="polite">
           {busy && (
-            <div className="ws-turn ws-turn-busy ws-stream-card" data-role="assistant">
-              <div className="ws-turn-meta">
-                <span className="ws-role-badge" data-role="assistant">
-                  F-Forum AI
+            <div className="ws-arena-assistant-turn ws-stream-card">
+              <div className="ws-arena-tool-toggle">
+                <Terminal size={13} aria-hidden="true" />
+                <span>
+                  Đang chạy {modelUsed ? `(${modelUsed})` : ''} · {(liveElapsedMs / 1000).toFixed(1)}s
                 </span>
-                {modelUsed && <span className="t-label ws-model-tag">{modelUsed}</span>}
-                <span className="ws-pill-meta">{(liveElapsedMs / 1000).toFixed(1)}s</span>
                 <ol className="ws-stage-steps" aria-label="Tiến trình sinh mã">
                   {STREAM_STEPS.map((step, idx) => {
                     const state =
@@ -527,7 +496,7 @@ export const Thread: React.FC<ThreadProps> = ({
                   <span className="ws-caret" aria-hidden="true" />
                 </pre>
               ) : (
-                <p className="ws-turn-body">
+                <p className="ws-arena-assistant-prose">
                   {streamingStage === 'checking'
                     ? 'Đang chạy kiểm định 6 lớp...'
                     : streamingStage === 'generating'

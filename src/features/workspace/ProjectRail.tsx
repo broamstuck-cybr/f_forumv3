@@ -1,8 +1,15 @@
 import React, { useMemo, useState } from 'react';
-import { Archive, Pencil, Pin, PinOff, Plus, Trash2 } from 'lucide-react';
-import { SearchCard } from '../../components/pinui/SearchCard';
+import {
+  Archive,
+  GitBranch,
+  Pencil,
+  Pin,
+  PinOff,
+  PlusCircle,
+  Search,
+  Trash2,
+} from 'lucide-react';
 import type { WorkspaceProject } from '../../types/index';
-import { formatStamp } from './time';
 
 export interface ProjectRailProps {
   projects: WorkspaceProject[];
@@ -24,17 +31,6 @@ function getProjectHealth(project: WorkspaceProject): ProjectHealth {
   return 'pass';
 }
 
-function getProjectHealthTitle(project: WorkspaceProject, health: ProjectHealth): string {
-  const report = project.checksReport;
-  if (health === 'pass' && report) {
-    return `Đạt ${report.passCount}/${report.results.length} phép kiểm`;
-  }
-  if (health === 'warn' && report) {
-    return `${report.failCount} lỗi · ${report.warnCount} cảnh báo kiểm định`;
-  }
-  return 'Chưa chạy kiểm định';
-}
-
 export const ProjectRail: React.FC<ProjectRailProps> = ({
   projects,
   activeProjectId,
@@ -46,6 +42,7 @@ export const ProjectRail: React.FC<ProjectRailProps> = ({
   dismiss,
 }) => {
   const [query, setQuery] = useState('');
+  const [searchOpen, setSearchOpen] = useState(false);
   const [showArchived, setShowArchived] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editDraft, setEditDraft] = useState('');
@@ -94,7 +91,6 @@ export const ProjectRail: React.FC<ProjectRailProps> = ({
         const isEditing = editingId === project.id;
         const isDeleting = confirmDeleteId === project.id;
         const health = getProjectHealth(project);
-        const healthTitle = getProjectHealthTitle(project, health);
 
         return (
           <li
@@ -159,23 +155,17 @@ export const ProjectRail: React.FC<ProjectRailProps> = ({
               <div className="ws-rail-row-wrap">
                 <button
                   type="button"
-                  className="ws-rail-row"
+                  className="ws-rail-row ws-rail-row--flat"
                   aria-current={isCurrent ? 'true' : undefined}
                   onClick={() => onSelect(project.id)}
                 >
-                  <span className="ws-rail-name-row">
-                    <span
-                      className="ws-health-dot"
-                      data-health={health}
-                      title={healthTitle}
-                      aria-hidden="true"
-                    />
-                    <span className="ws-rail-name">{project.name}</span>
-                  </span>
-                  <span className="ws-rail-meta">
-                    <span>{project.files.length} tệp</span>
-                    <time dateTime={project.updatedAt}>{formatStamp(project.updatedAt)}</time>
-                  </span>
+                  <GitBranch size={13} className="ws-rail-branch-icon" aria-hidden="true" />
+                  <span className="ws-rail-name">{project.name}</span>
+                  <span
+                    className="ws-health-dot"
+                    data-health={health}
+                    aria-hidden="true"
+                  />
                 </button>
                 <div className="ws-rail-actions">
                   {onRename && (
@@ -186,7 +176,7 @@ export const ProjectRail: React.FC<ProjectRailProps> = ({
                       title="Đổi tên"
                       onClick={() => startRename(project)}
                     >
-                      <Pencil size={13} aria-hidden="true" />
+                      <Pencil size={12} aria-hidden="true" />
                     </button>
                   )}
                   {onTogglePin && (
@@ -194,14 +184,14 @@ export const ProjectRail: React.FC<ProjectRailProps> = ({
                       type="button"
                       className="ws-rail-icon-act"
                       aria-label={project.pinned ? `Bỏ ghim ${project.name}` : `Ghim ${project.name}`}
-                      title={project.pinned ? 'Bỏ ghim' : 'Ghim phiên'}
+                      title={project.pinned ? 'Bỏ ghim' : 'Ghim'}
                       aria-pressed={Boolean(project.pinned)}
                       onClick={() => onTogglePin(project.id)}
                     >
                       {project.pinned ? (
-                        <PinOff size={13} aria-hidden="true" />
+                        <PinOff size={12} aria-hidden="true" />
                       ) : (
-                        <Pin size={13} aria-hidden="true" />
+                        <Pin size={12} aria-hidden="true" />
                       )}
                     </button>
                   )}
@@ -210,13 +200,13 @@ export const ProjectRail: React.FC<ProjectRailProps> = ({
                       type="button"
                       className="ws-rail-icon-act ws-rail-act-danger"
                       aria-label={`Xóa ${project.name}`}
-                      title="Xóa phiên"
+                      title="Xóa"
                       onClick={() => {
                         setEditingId(null);
                         setConfirmDeleteId(project.id);
                       }}
                     >
-                      <Trash2 size={13} aria-hidden="true" />
+                      <Trash2 size={12} aria-hidden="true" />
                     </button>
                   )}
                 </div>
@@ -231,54 +221,66 @@ export const ProjectRail: React.FC<ProjectRailProps> = ({
   return (
     <>
       <header className="ws-head ws-rail-head">
-        <h2 className="ws-head-title">Phiên</h2>
-        <button
-          type="button"
-          className="ws-icon-pill ws-icon-pill--accent"
-          aria-label="Tạo phiên mới"
-          title="Tạo phiên mới"
-          onClick={onCreate}
-        >
-          <Plus size={16} aria-hidden="true" />
-        </button>
+        <h2 className="ws-head-title">Phiên Arena</h2>
         {dismiss}
       </header>
 
-      <div className="ws-rail-search">
-        <SearchCard
-          value={query}
-          onChange={setQuery}
-          placeholder="Tìm phiên..."
-          compact
-        />
+      <div className="ws-rail-quick">
+        <button type="button" className="ws-rail-nav-btn" onClick={onCreate}>
+          <PlusCircle size={15} aria-hidden="true" />
+          <span>New Chat</span>
+        </button>
+        <button
+          type="button"
+          className="ws-rail-nav-btn"
+          aria-expanded={searchOpen}
+          onClick={() => setSearchOpen((v) => !v)}
+        >
+          <Search size={15} aria-hidden="true" />
+          <span>Tìm kiếm</span>
+        </button>
+        {searchOpen && (
+          <input
+            type="search"
+            className="field ws-rail-inline-input"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Lọc phiên theo tên..."
+            aria-label="Lọc phiên theo tên"
+            autoFocus
+          />
+        )}
       </div>
 
-      <nav className="ws-rail-list" aria-label="Danh sách phiên làm việc">
-        {pinned.length > 0 && <p className="t-label ws-rail-cap">Đã ghim</p>}
-        {pinned.length > 0 && renderRows(pinned)}
-        {pinned.length > 0 && recent.length > 0 && <p className="t-label ws-rail-cap">Gần đây</p>}
-        {recent.length > 0 && renderRows(recent)}
-        {visible.length === 0 && <p className="ws-empty">Không tìm thấy phiên phù hợp.</p>}
-      </nav>
+      <div className="ws-rail-list">
+        {pinned.length > 0 && (
+          <section aria-label="Phiên đã ghim">
+            <p className="t-label ws-rail-cap">ĐÃ GHIM</p>
+            {renderRows(pinned)}
+          </section>
+        )}
 
-      {archivedCount > 0 && (
-        <footer className="ws-rail-foot">
-          <div className="ws-rail-foot-pair">
-            <button
-              type="button"
-              className="ws-icon-pill"
-              aria-label={showArchived ? 'Ẩn phiên lưu trữ' : 'Hiện phiên lưu trữ'}
-              title={showArchived ? 'Ẩn lưu trữ' : 'Xem phiên lưu trữ'}
-              aria-pressed={showArchived}
-              onClick={() => setShowArchived((value) => !value)}
-            >
-              <Archive size={14} aria-hidden="true" />
-            </button>
-            <span className="t-label">Lưu trữ</span>
-          </div>
-          <span className="ws-count">{archivedCount}</span>
-        </footer>
-      )}
+        <section aria-label="Phiên gần đây">
+          <p className="t-label ws-rail-cap">GẦN ĐÂY</p>
+          {recent.length > 0 ? (
+            renderRows(recent)
+          ) : (
+            <p className="ws-empty">Chưa có phiên nào.</p>
+          )}
+        </section>
+
+        {archivedCount > 0 && (
+          <button
+            type="button"
+            className="ws-rail-archive-toggle"
+            aria-pressed={showArchived}
+            onClick={() => setShowArchived((value) => !value)}
+          >
+            <Archive size={13} aria-hidden="true" />
+            <span>{showArchived ? 'Ẩn lưu trữ' : `Đã lưu trữ (${archivedCount})`}</span>
+          </button>
+        )}
+      </div>
     </>
   );
 };

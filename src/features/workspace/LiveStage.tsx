@@ -17,7 +17,6 @@ import {
   Tablet,
 } from 'lucide-react';
 import { FileBox, type FileBoxTab } from '../../components/pinui/FileBox';
-import { LiquidTabs, type LiquidTabItem } from '../../components/pinui/LiquidTabs';
 import type { WorkspaceProject } from '../../types/index';
 import {
   buildStandalonePreviewDoc,
@@ -50,33 +49,45 @@ export interface LiveStageProps {
   hidden?: boolean;
 }
 
-const VIEWPORT_CYCLE: PreviewViewport[] = [1440, 768, 390];
+const VIEWPORT_CYCLE: PreviewViewport[] = ['fit', 1440, 768, 390];
 
 function getViewportMeta(viewport: PreviewViewport): {
   next: PreviewViewport;
+  badge: string;
   label: string;
   title: string;
 } {
   const index = VIEWPORT_CYCLE.indexOf(viewport);
   const next = VIEWPORT_CYCLE[(index + 1) % VIEWPORT_CYCLE.length];
+  if (viewport === 'fit') {
+    return {
+      next,
+      badge: 'Fit',
+      label: 'Chế độ tràn khung (Fit 100%, nhấn chuyển Desktop 1440px)',
+      title: 'Tràn khung 100% · Nhấn test 1440px',
+    };
+  }
   if (viewport === 1440) {
     return {
       next,
+      badge: '1440',
       label: 'Đổi khung nhìn (hiện tại Desktop 1440px, kế tiếp Tablet 768px)',
-      title: 'Khung nhìn: Desktop 1440px · Nhấn để chuyển Tablet 768px',
+      title: 'Desktop 1440px · Nhấn chuyển 768px',
     };
   }
   if (viewport === 768) {
     return {
       next,
+      badge: '768',
       label: 'Đổi khung nhìn (hiện tại Tablet 768px, kế tiếp Mobile 390px)',
-      title: 'Khung nhìn: Tablet 768px · Nhấn để chuyển Mobile 390px',
+      title: 'Tablet 768px · Nhấn chuyển 390px',
     };
   }
   return {
     next,
-    label: 'Đổi khung nhìn (hiện tại Mobile 390px, kế tiếp Desktop 1440px)',
-    title: 'Khung nhìn: Mobile 390px · Nhấn để chuyển Desktop 1440px',
+    badge: '390',
+    label: 'Đổi khung nhìn (hiện tại Mobile 390px, kế tiếp Tràn khung Fit)',
+    title: 'Mobile 390px · Nhấn chuyển tràn khung',
   };
 }
 
@@ -103,32 +114,6 @@ export const LiveStage: React.FC<LiveStageProps> = ({
 }) => {
   const [reloadNonce, setReloadNonce] = useState(0);
   const [copiedFile, setCopiedFile] = useState<string | null>(null);
-
-  const stageTabs = useMemo<LiquidTabItem[]>(
-    () => [
-      {
-        id: 'preview',
-        label: '',
-        icon: <Eye size={15} strokeWidth={1.8} aria-hidden="true" />,
-        title: 'Xem trực tiếp (Live Preview)',
-      },
-      {
-        id: 'source',
-        label: '',
-        icon: <FileCode2 size={15} strokeWidth={1.8} aria-hidden="true" />,
-        count: project.files.length,
-        title: `Mã nguồn (${project.files.length} tệp)`,
-      },
-      {
-        id: 'review',
-        label: '',
-        icon: <ShieldCheck size={15} strokeWidth={1.8} aria-hidden="true" />,
-        count: project.checksReport ? project.checksReport.passCount : 6,
-        title: 'Kiểm định & Diff 6 lớp',
-      },
-    ],
-    [project.files.length, project.checksReport]
-  );
 
   const activeFile = useMemo(
     () =>
@@ -189,97 +174,139 @@ export const LiveStage: React.FC<LiveStageProps> = ({
     }
   };
 
+  const checkCount = project.checksReport ? project.checksReport.passCount : 6;
+
   return (
     <section
       className="ws-live"
-      aria-label="Không gian hiển thị & Mã nguồn"
+      aria-label="Không gian hiển thị & Mã nguồn Arena"
       hidden={hidden}
     >
-      <header className="ws-head ws-live-bar">
-        <div className="ws-live-tabs">
-          <LiquidTabs
-            tabs={stageTabs}
-            activeId={stageTab}
-            onChange={(id) => onStageTabChange(id as StageTabId)}
-            ariaLabel="Chế độ khung kết quả"
-          />
+      <header className="ws-head ws-arena-stage-bar">
+        <div className="ws-arena-stage-tabs" role="tablist" aria-label="Chế độ xem Arena">
+          <button
+            type="button"
+            role="tab"
+            aria-selected={stageTab === 'preview'}
+            className="ws-arena-tab"
+            data-active={stageTab === 'preview' ? 'true' : undefined}
+            onClick={() => onStageTabChange('preview')}
+            title="Xem trực tiếp bản dựng"
+          >
+            <span className="ws-live-dot" aria-hidden="true" />
+            <Eye size={13} aria-hidden="true" />
+            <span>Preview</span>
+          </button>
+
+          <button
+            type="button"
+            role="tab"
+            aria-selected={stageTab === 'source'}
+            className="ws-arena-tab"
+            data-active={stageTab === 'source' ? 'true' : undefined}
+            onClick={() => onStageTabChange('source')}
+            title={`Mã nguồn (${project.files.length} tệp)`}
+          >
+            <FileCode2 size={13} aria-hidden="true" />
+            <span>Code</span>
+            <span className="ws-arena-tab-count">{project.files.length}</span>
+          </button>
+
+          <button
+            type="button"
+            role="tab"
+            aria-selected={stageTab === 'review'}
+            className="ws-arena-tab"
+            data-active={stageTab === 'review' ? 'true' : undefined}
+            onClick={() => onStageTabChange('review')}
+            title="Diff & Kiểm định 6 lớp"
+          >
+            <ShieldCheck size={13} aria-hidden="true" />
+            <span>Diff</span>
+            <span className="ws-arena-diff-stat">
+              <span className="ws-add">+{totals.added}</span>
+              <span className="ws-del">−{totals.removed}</span>
+            </span>
+            <span className="ws-arena-tab-count">{checkCount}/6</span>
+          </button>
         </div>
 
-        <div className="ws-live-tools">
+        <div className="ws-arena-url-pill" aria-hidden="true">
+          <span>/</span>
+        </div>
+
+        <div className="ws-arena-stage-tools">
           <button
             type="button"
-            className="ws-icon-pill"
+            className="ws-stage-vp-btn"
             aria-label={vpMeta.label}
             title={vpMeta.title}
-            data-viewport={viewport}
             onClick={handleCycleViewport}
           >
-            {viewport === 1440 ? (
-              <Monitor size={16} aria-hidden="true" />
-            ) : viewport === 768 ? (
-              <Tablet size={16} aria-hidden="true" />
+            {viewport === 768 ? (
+              <Tablet size={13} aria-hidden="true" />
+            ) : viewport === 390 ? (
+              <Smartphone size={13} aria-hidden="true" />
             ) : (
-              <Smartphone size={16} aria-hidden="true" />
+              <Monitor size={13} aria-hidden="true" />
             )}
+            <span>{vpMeta.badge}</span>
           </button>
-          <span className="ws-vp-readout" aria-hidden="true">
-            {viewport}px
-          </span>
 
           <button
             type="button"
-            className="ws-icon-pill"
+            className="ws-icon-pill ws-icon-pill--sm"
             aria-label="Làm mới khung xem trực tiếp"
             title="Làm mới"
             onClick={handleRefresh}
           >
-            <RotateCw size={15} aria-hidden="true" />
+            <RotateCw size={14} aria-hidden="true" />
           </button>
 
           {onOpenPublish && (
             <button
               type="button"
-              className="ws-icon-pill"
+              className="ws-icon-pill ws-icon-pill--sm"
               aria-label="Đăng bản dựng lên Tri thức"
               title="Đăng lên Tri thức"
               onClick={onOpenPublish}
             >
-              <Share2 size={15} aria-hidden="true" />
+              <Share2 size={14} aria-hidden="true" />
             </button>
           )}
 
           <button
             type="button"
-            className="ws-icon-pill"
+            className="ws-icon-pill ws-icon-pill--sm"
             aria-label={exporting ? 'Đang nén gói ZIP' : 'Tải gói ZIP'}
             title={exporting ? 'Đang nén gói ZIP...' : 'Tải ZIP'}
             disabled={exporting}
             onClick={onExportZip}
           >
-            <Download size={15} aria-hidden="true" />
+            <Download size={14} aria-hidden="true" />
           </button>
 
           <button
             type="button"
-            className="ws-icon-pill"
+            className="ws-icon-pill ws-icon-pill--sm"
             aria-label="Mở bản xem trước ở tab mới"
             title="Mở tab mới"
             onClick={openInTab}
           >
-            <ExternalLink size={15} aria-hidden="true" />
+            <ExternalLink size={14} aria-hidden="true" />
           </button>
 
           <button
             type="button"
-            className="ws-icon-pill"
+            className="ws-icon-pill ws-icon-pill--sm"
             aria-label={expanded ? 'Thu nhỏ khung kết quả' : 'Mở toàn màn hình'}
             title={expanded ? 'Thu nhỏ' : 'Toàn màn hình'}
             onClick={onToggleExpanded}
           >
             {expanded ? (
-              <Minimize2 size={15} aria-hidden="true" />
+              <Minimize2 size={14} aria-hidden="true" />
             ) : (
-              <Maximize2 size={15} aria-hidden="true" />
+              <Maximize2 size={14} aria-hidden="true" />
             )}
           </button>
         </div>
@@ -321,7 +348,7 @@ export const LiveStage: React.FC<LiveStageProps> = ({
                   <div className="ws-source-actions">
                     <button
                       type="button"
-                      className="ws-icon-pill"
+                      className="ws-icon-pill ws-icon-pill--sm"
                       aria-label={copiedFile === activeFile?.path ? 'Đã chép mã nguồn' : 'Chép mã nguồn'}
                       title={copiedFile === activeFile?.path ? 'Đã chép mã' : 'Chép mã nguồn'}
                       disabled={!activeFile}
@@ -329,15 +356,15 @@ export const LiveStage: React.FC<LiveStageProps> = ({
                       onClick={() => void handleCopySource()}
                     >
                       {copiedFile === activeFile?.path ? (
-                        <Check size={15} aria-hidden="true" />
+                        <Check size={14} aria-hidden="true" />
                       ) : (
-                        <Copy size={15} aria-hidden="true" />
+                        <Copy size={14} aria-hidden="true" />
                       )}
                     </button>
 
                     <button
                       type="button"
-                      className="ws-icon-pill"
+                      className="ws-icon-pill ws-icon-pill--sm"
                       aria-label="So sánh Diff"
                       title="So sánh Diff"
                       onClick={() => {
@@ -345,7 +372,7 @@ export const LiveStage: React.FC<LiveStageProps> = ({
                         onStageTabChange('review');
                       }}
                     >
-                      <GitCompareArrows size={15} aria-hidden="true" />
+                      <GitCompareArrows size={14} aria-hidden="true" />
                     </button>
                   </div>
                 </div>

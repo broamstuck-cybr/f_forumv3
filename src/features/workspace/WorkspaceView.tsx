@@ -4,19 +4,19 @@ import {
   ArrowUpRight,
   CheckCircle2,
   Columns2,
-  Download,
   Ellipsis,
   GitBranch,
   MessageSquare,
   PanelLeft,
   PanelLeftClose,
+  PanelRightClose,
+  PanelRightOpen,
   Paperclip,
   Share2,
   SlidersHorizontal,
   Wrench,
   X,
 } from 'lucide-react';
-import { Chips, type ChipItem } from '../../components/pinui/Chips';
 import { DynamicDropZone } from '../../components/pinui/DynamicDropZone';
 import { PromptComposer } from '../../components/pinui/PromptComposer';
 import { apiClient } from '../../services/apiClient';
@@ -47,11 +47,7 @@ import './workspace.css';
 type AgentExecutionMode = 'Build' | 'Refine' | 'Audit';
 type MobilePane = 'chat' | 'stage';
 
-const AGENT_MODE_CHIPS: ChipItem[] = [
-  { id: 'Build', label: 'Build' },
-  { id: 'Refine', label: 'Refine' },
-  { id: 'Audit', label: 'Audit' },
-];
+const AGENT_MODE_OPTIONS: AgentExecutionMode[] = ['Build', 'Refine', 'Audit'];
 
 const MODEL_OPTIONS = [
   { id: 'auto', name: 'Tự động', note: 'Gateway mặc định' },
@@ -485,21 +481,15 @@ export const WorkspaceView: React.FC = () => {
   const [stageTab, setStageTab] = useState<StageTabId>('preview');
   const [reviewTab, setReviewTab] = useState<ReviewTab>('check');
   const [railOpen, setRailOpen] = useState(true);
+  const [rightOpen, setRightOpen] = useState(true);
   const [railSheetOpen, setRailSheetOpen] = useState(false);
   const [stageExpanded, setStageExpanded] = useState(false);
 
   const [viewport, setViewport] = useState<PreviewViewport>(() => {
-    if (settings.defaultViewport) return settings.defaultViewport;
     return typeof window !== 'undefined' && window.matchMedia('(max-width: 719px)').matches
       ? 390
-      : 1440;
+      : 'fit';
   });
-
-  useEffect(() => {
-    if (settings.defaultViewport) {
-      setViewport(settings.defaultViewport);
-    }
-  }, [settings.defaultViewport]);
 
   const [renaming, setRenaming] = useState(false);
   const [renameDraft, setRenameDraft] = useState('');
@@ -653,8 +643,9 @@ export const WorkspaceView: React.FC = () => {
       : `${quota.used}/${quota.limit} lượt`;
 
   const railInline = isDesktop && railOpen;
+  const stageInline = isDesktop && rightOpen;
   const threadHidden = !isDesktop && mobilePane !== 'chat';
-  const stageHidden = !isDesktop && mobilePane !== 'stage';
+  const stageHidden = (isDesktop && !rightOpen) || (!isDesktop && mobilePane !== 'stage');
   const evalFailCount = activeProject.checksReport?.failCount ?? 0;
   const evalWarnCount = activeProject.checksReport?.warnCount ?? 0;
   const hasEvalIssues = evalFailCount > 0 || evalWarnCount > 0;
@@ -1123,6 +1114,7 @@ export const WorkspaceView: React.FC = () => {
       className="ws"
       data-layout={layout}
       data-rail={railInline ? 'open' : 'closed'}
+      data-stage={stageInline ? 'open' : 'closed'}
       data-density={settings.compactDensity ? 'compact' : 'roomy'}
       data-resizing={isResizing ? 'true' : undefined}
       style={{ '--ws-split-ratio': splitRatio } as React.CSSProperties}
@@ -1301,6 +1293,22 @@ export const WorkspaceView: React.FC = () => {
                 </div>
               )}
             </Popover>
+
+            {isDesktop && (
+              <button
+                type="button"
+                className="ws-icon-pill ws-icon-pill--sm"
+                aria-label={rightOpen ? 'Thu gọn khung Preview phải' : 'Mở khung Preview phải'}
+                title={rightOpen ? 'Thu gọn Preview' : 'Mở khung Preview'}
+                onClick={() => setRightOpen((v) => !v)}
+              >
+                {rightOpen ? (
+                  <PanelRightClose size={15} aria-hidden="true" />
+                ) : (
+                  <PanelRightOpen size={15} aria-hidden="true" />
+                )}
+              </button>
+            )}
           </div>
         </header>
 
@@ -1458,106 +1466,105 @@ export const WorkspaceView: React.FC = () => {
               </div>
             )}
 
-            <div className="ws-arena-status-bar">
-              <div className="ws-arena-repo-pills">
-                <span className="ws-arena-pill" title={`Dự án: ${activeProject.name}`}>
-                  <GitBranch size={13} className="shrink-0" aria-hidden="true" />
-                  <span className="ws-arena-pill-txt">{activeProject.name}</span>
-                </span>
-                <span className="ws-arena-pill" title="Nhánh hiện tại">
-                  <span className="text-[11px] font-mono opacity-70">↳</span>
-                  <span className="ws-arena-pill-txt">main</span>
-                </span>
-                <span className="ws-arena-pill ws-arena-pill--diff" title="Thay đổi mã nguồn (Diff)">
-                  <span className="text-emerald-500 font-mono font-bold">+{diffTotals.added}</span>
-                  <span className="text-rose-500 font-mono font-bold">-{diffTotals.removed}</span>
-                </span>
+            <div className="ws-arena-composer-shell">
+              <div className="ws-arena-repo-strip">
+                <div className="ws-arena-repo-pills">
+                  <span className="ws-arena-repo-name" title={`Dự án: ${activeProject.name}`}>
+                    <GitBranch size={12} aria-hidden="true" />
+                    <span>{activeProject.name}</span>
+                  </span>
+                  <span className="ws-arena-branch-name" title="Nhánh hiện tại">
+                    ↳ main
+                  </span>
+                </div>
+
+                <div className="ws-arena-actions">
+                  <button
+                    type="button"
+                    className="ws-arena-diff-pill"
+                    onClick={handleOpenDiffStage}
+                    title="Mở bảng đối chiếu Diff"
+                  >
+                    <span className="ws-add">+{diffTotals.added}</span>
+                    <span className="ws-del">−{diffTotals.removed}</span>
+                    <span aria-hidden="true">›</span>
+                  </button>
+                  <button
+                    type="button"
+                    className="ws-arena-action-btn ws-arena-action-btn--accent"
+                    onClick={handleShareToKnowledge}
+                    title="Chia sẻ mẫu giao diện này lên Tri thức cộng đồng"
+                  >
+                    <Share2 size={12} aria-hidden="true" />
+                    <span>Đăng Tri thức</span>
+                  </button>
+                </div>
               </div>
-              <div className="ws-arena-actions">
-                <button
-                  type="button"
-                  className="ws-arena-action-btn"
-                  onClick={() => void handleExportZip()}
-                  disabled={exporting}
-                  title="Xuất mã nguồn ZIP an toàn"
-                >
-                  <Download size={13} aria-hidden="true" />
-                  <span>Xuất ZIP</span>
-                </button>
-                <button
-                  type="button"
-                  className="ws-arena-action-btn ws-arena-action-btn--accent"
-                  onClick={handleShareToKnowledge}
-                  title="Chia sẻ mẫu giao diện này lên Tri thức cộng đồng"
-                >
-                  <Share2 size={13} aria-hidden="true" />
-                  <span>Đăng Tri thức</span>
-                </button>
-              </div>
+
+              <PromptComposer
+                layoutId="ff-prompt-composer"
+                theme={settings.theme}
+                menuPlacement="up"
+                value={composerValue}
+                onChange={setComposerValue}
+                selectedModel={selectedModel}
+                onSelectModel={setSelectedModel}
+                models={MODEL_OPTIONS}
+                showFan={false}
+                extraControls={
+                  <div className="ws-arena-inline-controls">
+                    <div className="ws-arena-mode-inline" role="group" aria-label="Chế độ thực thi">
+                      {AGENT_MODE_OPTIONS.map((m) => (
+                        <button
+                          key={m}
+                          type="button"
+                          className="ws-arena-mode-chip"
+                          aria-pressed={agentMode === m}
+                          onClick={() => setAgentMode(m)}
+                        >
+                          {m}
+                        </button>
+                      ))}
+                    </div>
+                    <button
+                      type="button"
+                      className="ws-arena-mini-icon"
+                      aria-label="Đính kèm tệp"
+                      title="Đính kèm tệp"
+                      aria-pressed={dropZoneOpen}
+                      onClick={() => setDropZoneOpen((value) => !value)}
+                    >
+                      <Paperclip size={13} aria-hidden="true" />
+                    </button>
+                    <button
+                      type="button"
+                      className="ws-arena-mini-icon"
+                      aria-label="Cấu hình Model & BYOK"
+                      title="Cấu hình Model & BYOK"
+                      onClick={() => setSetupDrawerOpen(true)}
+                    >
+                      <SlidersHorizontal size={13} aria-hidden="true" />
+                    </button>
+                  </div>
+                }
+                placeholder={
+                  arenaMode === 'compare'
+                    ? `So sánh ${getModelLabel(arenaModelA)} vs ${getModelLabel(arenaModelB)}...`
+                    : 'Bạn muốn dựng hoặc sửa gì? (Enter để gửi)...'
+                }
+                onAttachClick={() => setDropZoneOpen((value) => !value)}
+                onSend={(text) => {
+                  setComposerValue('');
+                  void sendPrompt(text);
+                }}
+                disabled={isGenerating || quotaBlocked}
+              />
             </div>
-
-            <div className="ws-dock-bar">
-              <div className="ws-dock-chips">
-                <Chips
-                  items={AGENT_MODE_CHIPS}
-                  selectedIds={[agentMode]}
-                  onToggle={(id) => setAgentMode(id as AgentExecutionMode)}
-                  multi={false}
-                  variant="filter"
-                  theme={settings.theme}
-                />
-              </div>
-
-              <div className="ws-dock-icons">
-                <button
-                  type="button"
-                  className="ws-icon-pill"
-                  aria-label="Đính kèm tệp hoặc mở vùng thả tệp"
-                  title="Đính kèm tệp"
-                  aria-pressed={dropZoneOpen}
-                  onClick={() => setDropZoneOpen((value) => !value)}
-                >
-                  <Paperclip size={15} aria-hidden="true" />
-                </button>
-                <button
-                  type="button"
-                  className="ws-icon-pill"
-                  aria-label="Cấu hình Model & BYOK"
-                  title="Cấu hình Model & BYOK"
-                  onClick={() => setSetupDrawerOpen(true)}
-                >
-                  <SlidersHorizontal size={15} aria-hidden="true" />
-                </button>
-              </div>
-            </div>
-
-            <PromptComposer
-              layoutId="ff-prompt-composer"
-              theme={settings.theme}
-              menuPlacement="up"
-              value={composerValue}
-              onChange={setComposerValue}
-              selectedModel={selectedModel}
-              onSelectModel={setSelectedModel}
-              models={MODEL_OPTIONS}
-              showFan={false}
-              placeholder={
-                arenaMode === 'compare'
-                  ? `So sánh ${getModelLabel(arenaModelA)} vs ${getModelLabel(arenaModelB)}...`
-                  : 'What would you like to do? / Mô tả giao diện cần dựng...'
-              }
-              onAttachClick={() => setDropZoneOpen((value) => !value)}
-              onSend={(text) => {
-                setComposerValue('');
-                void sendPrompt(text);
-              }}
-              disabled={isGenerating || quotaBlocked}
-            />
           </div>
         </footer>
       </section>
 
-      {isDesktop && layout === 'wide' && (
+      {isDesktop && layout === 'wide' && rightOpen && (
         <div
           role="separator"
           aria-orientation="vertical"

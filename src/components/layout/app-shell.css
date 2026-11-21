@@ -523,59 +523,48 @@
     position: relative;
     width: 100%;
     display: flex;
+    flex-direction: column;
     justify-content: center;
     align-items: center;
     overflow: visible;
     user-select: text;
+    gap: 0;
   }
 
   .foot__sigText {
     position: relative;
     display: inline-block;
-    padding: 0.14em 0.24em 0.28em;
+    padding: 0.08em 0.34em 0.04em;
     font-family: var(--font-signature);
-    font-size: clamp(2.65rem, 9.8vw, 8.2rem);
-    font-weight: 500;
-    line-height: 1.05;
-    letter-spacing: 0.04em;
-    text-transform: uppercase;
+    font-size: clamp(3.4rem, 10.5vw, 8.8rem);
+    font-weight: 400;
+    line-height: 1.08;
+    letter-spacing: 0.01em;
+    text-transform: none;
     color: var(--fg);
     text-shadow:
-      0.03em 0.04em 0 var(--red),
-      0.06em 0.08em 0 rgba(125, 163, 187, 0.35);
-    transform: rotate(-3.2deg) skewX(-6deg);
+      0 2px 18px color-mix(in srgb, var(--red) 28%, transparent),
+      0.02em 0.03em 0 color-mix(in srgb, var(--red) 45%, transparent);
+    transform: rotate(-5.2deg) skewX(-7deg);
     transform-origin: center center;
     overflow: visible;
     user-select: text;
     white-space: nowrap;
   }
 
-  .foot__sigText::before {
-    content: '';
-    position: absolute;
-    left: 2%;
-    right: -3%;
-    bottom: 0.08em;
-    height: 0.34em;
-    border-bottom: 3px solid var(--red);
-    border-right: 2px solid var(--red);
-    border-radius: 40% 60% 68% 32% / 20% 25% 75% 80%;
-    transform: rotate(-2.1deg);
+  .foot__sigFlourish {
+    width: min(380px, 76vw);
+    height: auto;
+    margin-top: -0.9rem;
+    color: var(--red);
+    transform: rotate(-3.5deg);
+    overflow: visible;
     pointer-events: none;
+    opacity: 0.92;
   }
 
-  .foot__sigText::after {
-    content: '';
-    position: absolute;
-    left: 14%;
-    right: 6%;
-    bottom: -0.04em;
-    height: 0.24em;
-    border-bottom: 2px solid #7da3bb;
-    border-radius: 50% 50% 60% 40% / 15% 15% 85% 85%;
-    transform: rotate(1.4deg);
-    opacity: 0.86;
-    pointer-events: none;
+  .foot__sigStar {
+    transform-origin: 394px 23px;
   }
 
   .foot__base {

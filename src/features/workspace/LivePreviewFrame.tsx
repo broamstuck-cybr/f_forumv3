@@ -1,7 +1,7 @@
 import React, { useLayoutEffect, useMemo, useRef, useState } from 'react';
 import type { WorkspaceFile } from '../../types/index';
 
-export const PREVIEW_VIEWPORTS = [390, 768, 1440] as const;
+export const PREVIEW_VIEWPORTS = ['fit', 1440, 768, 390] as const;
 
 export type PreviewViewport = (typeof PREVIEW_VIEWPORTS)[number];
 
@@ -64,7 +64,6 @@ export function compileWorkspaceSrcDoc(files: WorkspaceFile[]): string {
   return doc;
 }
 
-
 function escapeAttribute(value: string): string {
   return value.replace(/&/g, '&amp;').replace(/"/g, '&quot;');
 }
@@ -96,14 +95,19 @@ export const LivePreviewFrame: React.FC<LivePreviewFrameProps> = ({
     return () => observer.disconnect();
   }, []);
 
-  const scale = area.width > 0 ? Math.min(1, area.width / viewport) : 1;
-  const shownWidth = Math.round(viewport * scale);
+  const isFit = viewport === 'fit';
+  const numericWidth = typeof viewport === 'number' ? viewport : area.width || 1024;
+  const scale = !isFit && area.width > 0 ? Math.min(1, area.width / numericWidth) : 1;
+  const shownWidth = isFit ? '100%' : Math.round(numericWidth * scale);
 
   return (
-    <div className="ws-frame-host">
-      <div ref={areaRef} className="ws-frame-area">
-        {area.width > 0 && (
-          <div className="ws-frame plate scene-paper" style={{ width: shownWidth, height: area.height }}>
+    <div className="ws-frame-host" data-fit={isFit ? 'true' : undefined}>
+      <div ref={areaRef} className="ws-frame-area" data-fit={isFit ? 'true' : undefined}>
+        {(isFit || area.width > 0) && (
+          <div
+            className="ws-frame plate scene-paper"
+            style={isFit ? { width: '100%', height: '100%' } : { width: shownWidth, height: area.height }}
+          >
             <div className="ws-frame-clip">
               <iframe
                 key={reloadNonce}
@@ -112,20 +116,26 @@ export const LivePreviewFrame: React.FC<LivePreviewFrameProps> = ({
                 sandbox="allow-scripts"
                 referrerPolicy="no-referrer"
                 className="ws-frame-doc"
-                style={{
-                  width: viewport,
-                  height: Math.round(area.height / scale),
-                  transform: `scale(${scale})`,
-                }}
+                style={
+                  isFit
+                    ? { width: '100%', height: '100%', transform: 'none' }
+                    : {
+                        width: numericWidth,
+                        height: Math.round(area.height / scale),
+                        transform: `scale(${scale})`,
+                      }
+                }
               />
             </div>
           </div>
         )}
       </div>
-      <p className="t-label ws-frame-note">
-        <span>{viewport} px</span>
-        {scale < 1 && <span>thu còn {Math.round(scale * 100)}%</span>}
-      </p>
+      {!isFit && (
+        <p className="t-label ws-frame-note">
+          <span>{viewport} px</span>
+          {scale < 1 && <span>thu còn {Math.round(scale * 100)}%</span>}
+        </p>
+      )}
     </div>
   );
 };
