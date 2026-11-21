@@ -1,5 +1,14 @@
+@font-face {
+  font-family: 'FForum Display';
+  src: url('/fonts/fforum-display.woff2') format('woff2'),
+       url('/fonts/fforum-display.ttf') format('truetype');
+  font-weight: 400 700;
+  font-style: normal;
+  font-display: swap;
+}
+
 :root {
-  --font-display: 'Fraunces Variable', 'Iowan Old Style', 'Palatino Linotype', Georgia, serif;
+  --font-display: 'FForum Display', 'Fraunces Variable', 'Iowan Old Style', 'Palatino Linotype', Georgia, serif;
   --font-ui: 'Be Vietnam Pro', system-ui, -apple-system, 'Segoe UI', sans-serif;
   --font-mono: 'IBM Plex Mono', ui-monospace, 'SFMono-Regular', Menlo, monospace;
   --font-script: 'Imperial Script', 'Fraunces Variable', cursive;
