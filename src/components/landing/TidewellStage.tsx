@@ -136,7 +136,9 @@ const FrameSpecimenCard: React.FC<{
           }}
           className="tw-spec-img"
         />
-        <span className="tw-spec-vp">{viewport}px</span>
+        <span className="tw-spec-vp">
+          {VIEWPORT_PRESETS.find((preset) => preset.id === viewport)?.label ?? 'Máy tính'}
+        </span>
       </span>
       <span className="tw-spec-meta">
         <span className="tw-spec-cat">{card.category}</span>

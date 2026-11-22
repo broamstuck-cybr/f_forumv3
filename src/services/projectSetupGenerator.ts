@@ -40,7 +40,7 @@ export function generateProjectSetupBundle(
     '',
     '## Core Guardrails',
     '- Preserve existing working layouts, semantic HTML5 landmarks, and CSS custom property tokens.',
-    '- Maintain an 8px spatial grid rhythm and verify responsive behavior across 390px, 768px, and 1440px viewports.',
+    '- Maintain an 8px spatial grid rhythm and verify responsive behavior across phone, tablet, and desktop viewports.',
     '- Never hardcode API keys, session secrets, or local filesystem paths inside source files.',
     '- Do not introduce emojis, generic marketing badges, or unrequested wrapper abstractions.',
     '- Run static checks (HTML structure, JavaScript syntax, internal links, secret scan) after every modification.',
@@ -62,7 +62,7 @@ export function generateProjectSetupBundle(
     '- [x] Step 1.2: Attach curated blueprints and templates from F-FORUM v3 Explore Library.',
     '- [x] Step 1.3: Automated static checks and secret audit ran inside Workspace.',
     '- [ ] Step 2.1: Extend interactive states and bind domain API endpoints.',
-    '- [ ] Step 2.2: Verify multi-viewport rendering (390px, 768px, 1440px) with zero console errors.',
+    '- [ ] Step 2.2: Verify multi-viewport rendering (phone, tablet, desktop) with zero console errors.',
   ].join('\n');
 
   const projectContextMd = [

@@ -40,7 +40,7 @@ function splitOrnateParagraph(text: string): { prefix: string; cap: string; rest
 }
 
 const DEFAULT_PARAGRAPHS = [
-  'Một bảng dữ liệu 5 cột hiển thị ổn trên màn hình 1440px, nhưng sang 390px sẽ đẩy cả trang tràn ngang nếu thiếu min-width: 0 trên track lưới. Tách cấu trúc thành thẻ dọc hoặc bảng cuộn cô lập giúp giữ đúng biên đọc mà không cắt chữ.',
+  'Một bảng dữ liệu 5 cột hiển thị ổn trên máy tính, nhưng trên điện thoại sẽ đẩy cả trang tràn ngang nếu thiếu min-width: 0 trên track lưới. Tách cấu trúc thành thẻ dọc hoặc bảng cuộn cô lập giúp giữ đúng biên đọc mà không cắt chữ.',
   'Thay vì đặt ba lớp backdrop-filter lên 500 phần tử cuộn liên tục, chỉ giữ kính mờ ở thanh điều hướng và hộp thoại nổi. Tốc độ khung hình tăng từ 35 lên 60 FPS trên laptop tầm trung, đồng thời tránh vệt đen ở góc bo tròn.',
   'Bộ biến CSS dùng chung cho hai nền tối và sáng phải khóa độ tương phản chữ thường từ 4.5:1 trở lên ngay tại :root. Khi tách riêng màu bề mặt và viền, thành phần con đổi giao diện theo theme mà không cần ghi đè từng lớp.',
   'Mỗi mẫu giao diện trong F-Forum đều đi kèm hộp cát chạy thử cô lập bằng thuộc tính sandbox="allow-scripts" và bộ kiểm tra tĩnh trước khi xuất bản. Bạn có thể đọc mã nguồn, đối chiếu diff từng dòng rồi nạp thẳng sang Workspace để chỉnh sửa.',

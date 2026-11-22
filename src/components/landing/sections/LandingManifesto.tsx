@@ -254,9 +254,9 @@ export const LandingManifesto: React.FC<LandingManifestoProps> = ({ onNavigate }
           <div ref={trackRef} className="lp-hm-track">
             <div className="lp-hm-intro">
               <h2 className="lp-hm-title">
-                Xem giao diện chạy thật.
+                Thử cho chắc.
                 <br />
-                Đọc mã, <span className="t-note">chia sẻ prompt.</span>
+                Ưng rồi <span className="t-note">mang về dùng.</span>
               </h2>
               <p className="lp-hm-lead">
                 Cuộn ngang qua 4 điều giúp bạn đi từ phác thảo đến sản phẩm nhanh và rõ hơn.

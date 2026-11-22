@@ -259,10 +259,16 @@ const DENSITY_CHIPS = [
 ];
 
 const VIEWPORT_CHIPS = [
-  { id: '1440', label: '1440px' },
-  { id: '768', label: '768px' },
-  { id: '390', label: '390px' },
+  { id: '1440', label: 'Máy tính' },
+  { id: '768', label: 'Máy tính bảng' },
+  { id: '390', label: 'Điện thoại' },
 ];
+
+const VIEWPORT_LABELS: Record<string, string> = {
+  '1440': 'Máy tính',
+  '768': 'Máy tính bảng',
+  '390': 'Điện thoại',
+};
 
 const EXPORT_TARGET_CHIPS = [
   { id: 'antigravity', label: 'Antigravity' },
@@ -762,7 +768,7 @@ export const SettingsView: React.FC = () => {
                 <h2 className="st-cardTitle" id={idFor('workspace')}>
                   Workspace & Vibe Coder
                 </h2>
-                <span className="tag st-mono">{defaultViewport}px</span>
+                <span className="tag st-mono">{VIEWPORT_LABELS[defaultViewport] ?? 'Máy tính'}</span>
               </div>
 
               <div className="st-row st-row--first">

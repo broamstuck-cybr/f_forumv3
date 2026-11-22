@@ -5,6 +5,12 @@ export const PREVIEW_VIEWPORTS = ['fit', 1440, 768, 390] as const;
 
 export type PreviewViewport = (typeof PREVIEW_VIEWPORTS)[number];
 
+const VIEWPORT_DEVICE_LABEL: Record<number, string> = {
+  1440: 'Máy tính',
+  768: 'Máy tính bảng',
+  390: 'Điện thoại',
+};
+
 export interface LivePreviewFrameProps {
   files: WorkspaceFile[];
   title: string;
@@ -160,7 +166,7 @@ export const LivePreviewFrame: React.FC<LivePreviewFrameProps> = ({
       </div>
       {!isFit && (
         <p className="t-label ws-frame-note">
-          <span>{viewport} px</span>
+          <span>{VIEWPORT_DEVICE_LABEL[viewport as number] ?? `${viewport} px`}</span>
           {scale < 1 && <span>thu còn {Math.round(scale * 100)}%</span>}
         </p>
       )}

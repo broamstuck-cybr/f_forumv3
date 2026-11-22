@@ -285,7 +285,7 @@ export const LandingHero: React.FC<LandingHeroProps> = ({
           <motion.div style={reduced ? undefined : { y: copyY }} className="lp-hero-copy">
             <p className="lp-kicker t-label">
               <span>F-Forum</span>
-              <span>xem trước, đọc mã, chia sẻ prompt</span>
+              <span>dựng thử, sửa ngay, mang về dùng</span>
             </p>
 
             <div className="lp-assembly" aria-label="Chuỗi 7 bước từ ý tưởng đến tệp xuất">
@@ -371,8 +371,8 @@ export const LandingHero: React.FC<LandingHeroProps> = ({
             </h1>
 
             <p className="lp-hero-lead">
-              F-Forum giúp học sinh, giảng viên và người làm web xem giao diện chạy thật, đọc mã HTML, CSS, JS sạch,
-              chỉnh thông số trực tiếp và chia sẻ prompt với cộng đồng.
+              F-Forum là chỗ học sinh, giảng viên và người làm web bấm thử giao diện trước khi dùng: mở là chạy
+              được, sửa vài dòng là thấy khác ngay, ưng rồi thì mang về dự án của mình.
             </p>
 
             <div className="lp-actions">

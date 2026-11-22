@@ -481,10 +481,11 @@
     padding: 2px 5px;
     border-radius: 4px;
     background: rgba(18, 17, 16, 0.84);
-    color: #7da3bb;
+    color: #a8c4d6;
     font-family: var(--font-mono);
     font-size: 9px;
     line-height: 1.1;
+    white-space: nowrap;
   }
 
   .tw-spec-meta {

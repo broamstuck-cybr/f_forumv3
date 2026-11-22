@@ -398,7 +398,7 @@ export const MOTION_MARQUEE_ITEMS: MotionMarqueeItem[] = [
       "Đa khung nhìn"
     ],
     "promptText": "Create a dark mode hero section for an AI website builder with the following exact specifications:\n## Technical Setup\n### Required Packages\nInstall these packages:\n- `motion` (version 12.23.24 or later) - for animations\n- `hls.js` (version 1.6.15 or later) - for video streaming\n- `lucide-react` (version 0.487.0 or later) - for icons\n### Fonts\nImport these Google Fonts:\n```css\n@import url('[asset-url]');\n```\n## Layout Structure\n### Navbar Component\nCreate a fixed, transparent navbar with:\n**Position & Styling:**\n- Fixed to top, full width, z-index 50\n- Background: fully transparent (bg-transparent)\n- Padding: px-6 py-4\n- Flexbox layout: items-center justify-between\n**Left Section:**\n- Sunburst icon (24x24px SVG) in white color\n**Center Section** (hidden on mobile, visible md:flex):\n- Navigation links: \"Products\" (with ChevronDown icon), \"Customer Stories\", \"Resources\", \"Pricing\"\n- Font: Instrument Sans, text-sm, font-medium\n- Color: text-white/80, hover:text-white\n- Gap: gap-8\n**Right Section:**\n- \"Book A Demo\" link (hidden on small screens, sm:block)\n- \"Get Started\" button: white background, black text, rounded-full, px-5 py-2.5, font-semibold\n### Hero Section Component",
-    "starterPrompt": "Xây dựng màn hình sản phẩm Digitwist với danh sách khối bên trái, sân khấu chỉnh sửa ở giữa và nút chuyển 390/768/1440px."
+    "starterPrompt": "Xây dựng màn hình sản phẩm Digitwist với danh sách khối bên trái, sân khấu chỉnh sửa ở giữa và nút chuyển giữa khung điện thoại, máy tính bảng và máy tính."
   },
   {
     "id": "ms-designpro-hero",
@@ -1190,6 +1190,6 @@ export const MOTION_MARQUEE_ITEMS: MotionMarqueeItem[] = [
       "Điều hướng"
     ],
     "promptText": "Build a single standalone index.html file: a full-screen hero section for \"Halden\", an expedition travel brand. Put the CSS in a <style> tag and the JS in a <script> tag, with no frameworks and no build step. Match every value below exactly.\n=====================================================================\n1. FONTS & GLOBAL\n=====================================================================\n- Google Fonts: Geist, weights 400 and 500.\n<link rel=\"preconnect\" href=\"[asset-url]\">\n<link rel=\"preconnect\" href=\"[asset-url]\" crossorigin>\n<link href=\"[asset-url]\" rel=\"stylesheet\">\n- font-family: \"Geist\", \"Plus Jakarta Sans\", system-ui, sans-serif; -webkit-font-smoothing: antialiased.\n- <title>: Halden Expeditions to the edge\n- Reset: * { box-sizing: border-box }, html/body margin 0; links inherit color with no underline; buttons have no background, border or padding, inherit font and color, cursor pointer; img display block.\n- :focus-visible { outline: 2px solid #fff; outline-offset: 3px; border-radius: 6px }\nCSS custom properties on :root:\n--ink: #0b1013 (body background)\n--panel: rgba(14, 19, 23, 0.84) (dropdown and mobile sheet background)",
-    "starterPrompt": "Thiết kế thanh điều hướng Atlas Nav 1 dòng gọn gàng trên desktop có bảng menu mở rộng và ngăn trượt toàn màn hình trên mobile 390px."
+    "starterPrompt": "Thiết kế thanh điều hướng Atlas Nav 1 dòng gọn gàng trên máy tính có bảng menu mở rộng và ngăn trượt toàn màn hình trên điện thoại."
   }
 ];

@@ -77,8 +77,8 @@ function getViewportMeta(viewport: PreviewViewport): {
     return {
       next,
       badge: 'Fit',
-      label: 'Chế độ tràn khung (Fit 100%, nhấn chuyển Desktop 1440px)',
-      title: 'Tràn khung 100% · Nhấn test 1440px',
+      label: 'Đang xem tràn khung. Bấm để chuyển sang khung máy tính.',
+      title: 'Tràn khung · Bấm để xem khung máy tính',
     };
   }
   if (viewport === 1440) {

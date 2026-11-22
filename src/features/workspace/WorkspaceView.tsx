@@ -64,7 +64,7 @@ const STARTERS: StarterPrompt[] = [
   {
     label: 'Bảng điểm & Xếp hạng lớp',
     prompt:
-      'Thiết kế bảng tra cứu điểm môn học: ô tìm theo tên, sắp xếp điểm trung bình tăng giảm và hiển thị gọn trên màn hình 390px.',
+      'Thiết kế bảng tra cứu điểm môn học: ô tìm theo tên, sắp xếp điểm trung bình tăng giảm và hiển thị gọn trên điện thoại.',
   },
   {
     label: 'Hồ sơ dự án cá nhân',

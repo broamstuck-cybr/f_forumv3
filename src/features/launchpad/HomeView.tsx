@@ -235,8 +235,8 @@ export const HomeView: React.FC<HomeViewProps> = () => {
                 </span>
               </h1>
               <p className="hm-lead">
-                Gõ yêu cầu hoặc chọn thẻ cấu trúc bên dưới. Mọi bản phác mở thẳng sang Workspace để chạy thử và kiểm 6
-                mục trên 390, 768 và 1440px.
+                Gõ yêu cầu hoặc chọn thẻ cấu trúc bên dưới. Mọi bản phác mở thẳng sang Workspace để chạy thử và soát
+                lại trên điện thoại, máy tính bảng lẫn máy tính.
               </p>
             </div>
           </header>

@@ -121,7 +121,7 @@ export const TaskCardDemo = () => (
       tasks={[
         { id: 't1', label: 'Gộp nhánh tính năng', status: 'completed', detail: 'Đã hợp nhất lúc 09:12' },
         { id: 't2', label: 'Chạy bộ kiểm thử', status: 'completed', detail: '148 ca đạt' },
-        { id: 't3', label: 'Dựng ảnh chụp 390, 768, 1440', status: 'running', detail: 'Đang chụp màn hình' },
+        { id: 't3', label: 'Dựng ảnh chụp ba khung hình', status: 'running', detail: 'Đang chụp màn hình' },
         { id: 't4', label: 'Duyệt bảo mật', status: 'approval', detail: 'Chờ chủ nhóm xác nhận' },
         { id: 't5', label: 'Đẩy lên máy chủ', status: 'waiting' },
       ]}

@@ -726,7 +726,7 @@ export const GLACIER_BOOKS: GlacierBookSpec[] = [
       {
         title: 'Khung soạn lệnh (Prompt Composer)',
         tag: 'COMPONENT · TSX',
-        detail: 'Khung nhập lệnh tự co giãn chiều cao với danh mục mô hình đóng mở theo quỹ đạo lò xo 420ms.',
+        detail: 'Khung nhập lệnh tự co giãn chiều cao, danh mục mô hình đóng mở theo quỹ đạo lò xo.',
       },
       {
         title: 'Thẻ hiện diện (Presence Cards)',
@@ -1553,7 +1553,7 @@ export const GLACIER_BOOKS: GlacierBookSpec[] = [
     title: 'Khung Đáp Ứng',
     subtitleEn: 'ADAPTIVE VIEWPORT FRAMES',
     group: 'ui',
-    groupLabel: '390–1440 PX',
+    groupLabel: 'Mọi khung hình',
     year: '2026',
     countLabel: '15 mẫu',
     accent: '#2E6B5E',
@@ -1571,7 +1571,7 @@ export const GLACIER_BOOKS: GlacierBookSpec[] = [
       '221',
     ],
     synopsisVi:
-      '15 mẫu khung đáp ứng đa kích thước đảm bảo 0px tràn ngang ở 390px, bố cục 2 cột ở 768px và lưới toàn cảnh ở 1440px.',
+      '15 mẫu khung co giãn theo màn hình: không tràn ngang trên điện thoại, chia hai cột trên máy tính bảng và mở thành lưới toàn cảnh trên máy tính.',
     creditVi: 'Đã kiểm tra trên khung điện thoại, máy tính bảng và máy tính.',
     settings: {
       blurPx: 12,
@@ -1584,7 +1584,7 @@ export const GLACIER_BOOKS: GlacierBookSpec[] = [
       {
         title: 'Thanh điều hướng 1 dòng (Single-Line Navbar)',
         tag: 'VIEWPORT · NAV',
-        detail: 'Giữ toàn bộ nút điều hướng nằm trên 1 dòng ngang, tự thu gọn nhãn phụ ở chiều rộng 390px.',
+        detail: 'Giữ toàn bộ nút điều hướng nằm trên 1 dòng ngang, tự thu gọn nhãn phụ trên khung điện thoại.',
       },
       {
         title: 'Lưới tự co giãn (Auto-Fit Fluid Grid)',
@@ -1592,7 +1592,7 @@ export const GLACIER_BOOKS: GlacierBookSpec[] = [
         detail: 'Dùng biểu thức repeat(auto-fit, minmax(min(100%, 280px), 1fr)) ngăn tràn ngang.',
       },
       {
-        title: 'Khung chuyển đổi 390/768/1440 (Viewport Switcher Stage)',
+        title: 'Khung chuyển đổi điện thoại / máy tính bảng / máy tính',
         tag: 'VIEWPORT · STAGE',
         detail: 'Hỗ trợ đổi trực tiếp chiều rộng khung nhìn giữa 3 mốc chuẩn ngay trong màn hình xem thử.',
       },
@@ -1626,7 +1626,7 @@ export const GLACIER_BOOKS: GlacierBookSpec[] = [
       paperTone: '#F1F7F5',
       editionTag: 'TẬP 11',
       settings: { blurPx: 12, opacityPct: 92, radiusPx: 16, motionMs: 340, grainPct: 6 },
-      modeLabels: ['Khung: 390px', 'Khung: 768px', 'Khung: 1440px'],
+      modeLabels: ['Khung: Điện thoại', 'Khung: Máy tính bảng', 'Khung: Máy tính'],
       unitLabels: ['Thanh đỉnh 1 dòng', 'Lưới Auto-Fit', '4 trạng thái'],
     }),
   },
@@ -1700,7 +1700,7 @@ export const GLACIER_BOOKS: GlacierBookSpec[] = [
   overflow: hidden;
 }`,
     promptTemplate:
-      'Tạo khung chạy thử mã HTML/CSS/JS có thanh công cụ chọn khung nhìn 390/768/1440px, nút chuyển nền Mực/Giấy, nút Chạy lại và bảng xem mã nguồn.',
+      'Tạo khung chạy thử mã HTML/CSS/JS có thanh công cụ chuyển giữa khung điện thoại, máy tính bảng và máy tính, nút chuyển nền Mực/Giấy, nút Chạy lại và bảng xem mã nguồn.',
     liveDemoHtml: buildGlacierBookLiveHtml({
       id: 'glacier-sandbox',
       code: 'VOL.12',

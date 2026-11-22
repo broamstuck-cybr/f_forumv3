@@ -154,7 +154,7 @@ function checkResponsiveLayout(files: WorkspaceFile[]): CheckResult {
           file: css.path,
           line: i + 1,
           severity: 'warning',
-          message: `Khai báo width cố định ${fixedWidthMatch[1]}px có nguy cơ tràn khung trên viewport 390px.`,
+          message: `Khai báo width cố định ${fixedWidthMatch[1]}px có nguy cơ tràn khung trên khung điện thoại.`,
           ruleId: 'RESP_FIXED_OVERFLOW',
         });
       }
@@ -169,7 +169,7 @@ function checkResponsiveLayout(files: WorkspaceFile[]): CheckResult {
     status,
     summary:
       issues.length === 0
-        ? 'Viewport meta và quy tắc chống tràn ngang (390px / 768px / 1440px) đạt chuẩn.'
+        ? 'Viewport meta và quy tắc chống tràn ngang trên điện thoại, máy tính bảng và máy tính đều đạt chuẩn.'
         : `Phát hiện ${issues.length} cảnh báo responsive/overflow.`,
     issues,
     checkedAt: new Date().toISOString(),
