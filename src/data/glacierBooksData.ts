@@ -771,7 +771,7 @@ export const GLACIER_BOOKS: GlacierBookSpec[] = [
   box-shadow: 0 18px 38px -12px rgba(31, 63, 176, 0.28);
 }`,
     promptTemplate:
-      'Thiết kế cụm thành phần tương tác lò xo gồm thanh chọn thẻ, thẻ trạng thái xếp lớp và khung nhập lệnh (--spring-ease: cubic-bezier(0.22, 1, 0.36, 1), 420ms), tương thích khung nhìn 390px và 1440px.',
+      'Thiết kế cụm thành phần tương tác có nhịp lò xo: thanh chọn thẻ, thẻ trạng thái xếp lớp và khung nhập lệnh, đọc tốt trên điện thoại và máy tính.',
     liveDemoHtml: buildGlacierBookLiveHtml({
       id: 'ui-spring',
       code: 'VOL.01',
@@ -1572,7 +1572,7 @@ export const GLACIER_BOOKS: GlacierBookSpec[] = [
     ],
     synopsisVi:
       '15 mẫu khung đáp ứng đa kích thước đảm bảo 0px tràn ngang ở 390px, bố cục 2 cột ở 768px và lưới toàn cảnh ở 1440px.',
-    creditVi: 'Được kiểm tra qua bộ đo tự động trên 3 khung nhìn 390px, 768px và 1440px.',
+    creditVi: 'Đã kiểm tra trên khung điện thoại, máy tính bảng và máy tính.',
     settings: {
       blurPx: 12,
       opacityPct: 92,
@@ -1615,7 +1615,7 @@ export const GLACIER_BOOKS: GlacierBookSpec[] = [
   gap: clamp(16px, 2.5vw, 28px);
 }`,
     promptTemplate:
-      'Xây dựng giao diện đáp ứng trên 390px, 768px và 1440px với lưới fluid grid không tràn ngang, thanh điều hướng 1 dòng và đủ 4 trạng thái dữ liệu.',
+      'Xây dựng giao diện co giãn theo màn hình, không tràn ngang, thanh điều hướng gọn một dòng và đủ bốn trạng thái dữ liệu.',
     liveDemoHtml: buildGlacierBookLiveHtml({
       id: 'ui-responsive',
       code: 'VOL.11',

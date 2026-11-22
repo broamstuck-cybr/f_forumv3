@@ -62,7 +62,7 @@ export const MOTION_MARQUEE_ITEMS: MotionMarqueeItem[] = [
       "Mở đầu"
     ],
     "promptText": "Create a single-page hero section with a fullscreen looping background video, glassmorphic navigation, and cinematic typography. Use React + Vite + Tailwind CSS + TypeScript with shadcn/ui.\nVideo Background:\nFullscreen <video> element with autoPlay, loop, muted, playsInline\nSource URL: [asset-url]\nPositioned absolute inset-0 w-full h-full object-cover z-0\nFonts:\nImport from Google Fonts: Instrumental Serif (display) and Plus Jakarta Sans weights 400/500 (body)\nCSS variables: --font-display: 'Instrument Serif', serif and --font-body: 'Plus Jakarta Sans', sans-serif\nBody uses var(--font-body), headings use inline fontFamily: \"'Instrument Serif', serif\"\nColor Theme (dark, HSL values for CSS variables):\n--background: 201 100% 13% (deep navy blue)\n--foreground: 0 0% 100% (white)\n--muted-foreground: 240 4% 66% (muted gray)\n--primary: 0 0% 100%, --primary-foreground: 0 0% 4%\n--secondary: 0 0% 10%, --muted: 0 0% 10%, --accent: 0 0% 10%\n--border: 0 0% 18%, --input: 0 0% 18%\nNavigation Bar:\nrelative z-10, flex row, justify-between, px-8 py-6, max-w-7xl mx-auto\nLogo: \"Velorah \" ( as <sup className=\"text-xs\">), text-3xl tracking-tight, Instrument Serif font, text-foreground",
-    "starterPrompt": "Dựng khung mở đầu Velorah với tiêu đề phân tầng, nền chuyển sắc tối và cụm nút hành động chính rõ ràng ở 390px và 1440px."
+    "starterPrompt": "Dựng khung mở đầu Velorah với tiêu đề phân tầng, nền chuyển sắc tối và cụm nút hành động chính rõ ràng trên cả điện thoại lẫn máy tính."
   },
   {
     "id": "ms-space-planet",

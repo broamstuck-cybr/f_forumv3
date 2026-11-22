@@ -2861,8 +2861,14 @@
   }
 
   .ws-icon-pill--sm {
-    width: 30px;
+    min-width: 30px;
     height: 30px;
+    /* nút khung nhìn giờ ghi tên khung bằng chữ, không còn số pixel */
+    width: auto;
+    gap: 5px;
+    padding-inline: 9px;
+    font-size: var(--text-2xs);
+    white-space: nowrap;
   }
 
   .ws-rail-quick {

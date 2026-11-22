@@ -47,7 +47,7 @@ export const HOME_MOTION_SHOWCASES: HomeMotionShowcaseItem[] = [
         path: 'index.html',
         language: 'html',
         content:
-          '<!doctype html><html lang="vi"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Space Voyage</title><link rel="stylesheet" href="styles.css"></head><body><main class="sv-stage"><div class="sv-orb" aria-hidden="true"></div><section class="sv-card"><p class="sv-kicker">CHƯƠNG 01 · QUỸ ĐẠO</p><h1>Hành trình vượt ngưỡng thị sai</h1><p class="sv-copy">Mỗi lớp giao diện dịch chuyển theo vector trỏ chuột nhưng vẫn khóa chặt khả năng đọc ở 390px và 1440px.</p><button class="sv-btn" type="button" id="svTrigger">Kích hoạt quỹ đạo</button></section></main><script src="app.js"></script></body></html>',
+          '<!doctype html><html lang="vi"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Space Voyage</title><link rel="stylesheet" href="styles.css"></head><body><main class="sv-stage"><div class="sv-orb" aria-hidden="true"></div><section class="sv-card"><p class="sv-kicker">CHƯƠNG 01 · QUỸ ĐẠO</p><h1>Hành trình vượt ngưỡng thị sai</h1><p class="sv-copy">Mỗi lớp giao diện dịch chuyển theo hướng con trỏ, nhưng chữ vẫn đứng yên đủ lâu để đọc.</p><button class="sv-btn" type="button" id="svTrigger">Kích hoạt quỹ đạo</button></section></main><script src="app.js"></script></body></html>',
       },
       {
         path: 'styles.css',

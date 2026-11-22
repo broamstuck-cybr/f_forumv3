@@ -20,7 +20,7 @@ const LANDING_COMPOSER_ACTIONS: PromptComposerAction[] = [
   {
     id: 'dashboard',
     label: 'Dữ liệu',
-    placeholder: 'Thiết kế không gian phân tích số liệu rõ ràng và tương thích 390px...',
+    placeholder: 'Một bảng phân tích số liệu dễ đọc, nhìn được trên điện thoại...',
     kind: 'note',
   },
   {

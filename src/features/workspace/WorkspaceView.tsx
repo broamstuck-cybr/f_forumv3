@@ -217,7 +217,7 @@ function buildDistinctArenaArtifact(
       <p class="arena-kicker">PHƯƠNG ÁN ${side} · ${layoutName.toUpperCase()}</p>
       <h1>${cleanTitle}</h1>
       <p class="arena-lead">
-        Bản dựng từ ${modelLabel} sử dụng lưới không gian 8px, tối ưu hiển thị trên cả 3 khung nhìn 390px, 768px và 1440px.
+        Bản dựng từ ${modelLabel} đã sẵn sàng, hiển thị gọn trên cả điện thoại lẫn máy tính.
       </p>
       <div class="arena-cta">
         <button type="button" id="action-trigger" class="btn-main">Kích hoạt mô-đun ${side}</button>

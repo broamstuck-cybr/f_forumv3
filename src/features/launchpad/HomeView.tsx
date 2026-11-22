@@ -158,7 +158,7 @@ export const HomeView: React.FC<HomeViewProps> = () => {
     const layout = bp.layouts[lIdx] ?? bp.layouts[0];
     const feature = bp.features[fIdx] ?? bp.features[0];
     setPromptText(
-      `Xây dựng ${bp.title} theo phong cách ${style}, bố cục ${layout}, tích hợp ${feature}, tương thích 390px, 768px và 1440px.`
+      `Dựng ${bp.title} theo phong cách ${style}, bố cục ${layout}, có ${feature}. Trang cần đọc tốt trên cả điện thoại lẫn máy tính.`
     );
   };
 

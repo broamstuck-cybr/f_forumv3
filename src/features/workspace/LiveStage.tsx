@@ -84,24 +84,24 @@ function getViewportMeta(viewport: PreviewViewport): {
   if (viewport === 1440) {
     return {
       next,
-      badge: '1440',
-      label: 'Đổi khung nhìn (hiện tại Desktop 1440px, kế tiếp Tablet 768px)',
-      title: 'Desktop 1440px · Nhấn chuyển 768px',
+      badge: 'Máy tính',
+      label: 'Đang xem ở khung máy tính. Bấm để chuyển sang khung máy tính bảng.',
+      title: 'Khung máy tính · Bấm để thu về máy tính bảng',
     };
   }
   if (viewport === 768) {
     return {
       next,
-      badge: '768',
-      label: 'Đổi khung nhìn (hiện tại Tablet 768px, kế tiếp Mobile 390px)',
-      title: 'Tablet 768px · Nhấn chuyển 390px',
+      badge: 'Máy tính bảng',
+      label: 'Đang xem ở khung máy tính bảng. Bấm để chuyển sang khung điện thoại.',
+      title: 'Khung máy tính bảng · Bấm để thu về điện thoại',
     };
   }
   return {
     next,
-    badge: '390',
-    label: 'Đổi khung nhìn (hiện tại Mobile 390px, kế tiếp Tràn khung Fit)',
-    title: 'Mobile 390px · Nhấn chuyển tràn khung',
+    badge: 'Điện thoại',
+    label: 'Đang xem ở khung điện thoại. Bấm để mở rộng hết khung.',
+    title: 'Khung điện thoại · Bấm để mở rộng',
   };
 }
 
