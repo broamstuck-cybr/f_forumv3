@@ -205,8 +205,10 @@ function sanitizeFullDocFonts(html: string): string {
     );
 }
 
+/* Ảnh tham chiếu của vài mẫu sống trên CDN ảnh; style phải được phép tải https
+   thì các lớp phủ dùng ảnh nền mới hiện đúng thay vì một khung nửa vời. */
 const SANDBOX_CSP =
-  '<meta http-equiv="Content-Security-Policy" content="default-src \'none\'; style-src \'unsafe-inline\' https:; script-src \'unsafe-inline\'; img-src data: https: blob:; media-src data: https: blob:; font-src data: https:; connect-src \'none\';" />';
+  '<meta http-equiv="Content-Security-Policy" content="default-src \'none\'; style-src \'unsafe-inline\' https:; script-src \'unsafe-inline\'; img-src data: https: blob:; media-src data: https: blob:; font-src data: https:; connect-src data: https: blob:;" />';
 
 export function compileSpecimenSrcDoc(
   rawHtml: string | undefined,

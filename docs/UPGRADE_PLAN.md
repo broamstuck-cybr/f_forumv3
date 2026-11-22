@@ -21,7 +21,7 @@ script đo viết riêng). Ô `[~]` là đã làm một phần, ô `[ ]` là ch�
 - `[x]` Bỏ dòng boilerplate `Lưới lợi ích 3 cột + dải kêu gọi hành động`; hộp thoại mẫu chuyển động bỏ hẳn ô `ms` và `easing`.
 - `[x]` Mọi mục không có bản dựng chạy được đều hiện lời mời tái tạo + nút chép bản mô tả, thay vì một khung nửa vời.
 - `[ ]` **Chưa xong:** dựng lại bố cục showcase 1:1 theo Motion AI (Ảnh 2) — mới xử lý phần chữ và luồng, chưa đối chiếu từng khối thị giác với ảnh gốc.
-- `[~]` Năm danh mục: `Tương tác` (PinUIPlayground thật), `Không gian 3D` (WebGL thật), `Hiệu ứng`/`Bố cục` (SandboxPreview chạy `previewHtml` thật), `Chuyển động` (một phần mục chỉ có prompt, chưa có bản dựng).
+- `[x]` Năm danh mục đều chạy thật: `Tương tác` 41/41 mục có sân khấu PinUI (sửa 2 khóa registry lệch + bỏ dòng lỗi tiếng Anh), `Không gian 3D` WebGL thật, `Chuyển động` 35/35 mục có phòng thử 8 mẫu, `Hiệu ứng` 35/35 và `Bố cục` 30/30 chạy `previewHtml` trong sandbox (CSP đã cho phép ảnh CDN của 2 mẫu trước đây hiện nửa vời).
 
 ## Module 2 — Tìm kiếm & tủ tài nguyên
 
@@ -46,7 +46,7 @@ script đo viết riêng). Ô `[~]` là đã làm một phần, ô `[ ]` là ch�
 - `[x]` Giọt nước dùng bề mặt `raised` của theme mới.
 - `[x]` 4 preset gradient mới theo Color Theory (Godray Amber, Mesh Dusk, Jade Halo, Rose Clay) + 2 preset cũ nay có gradient thật (Obsidian Foundry, Paper Ivory), khai báo token sáng/tối cho từng preset.
 - `[x]` Dropzone sao lưu thay bằng `original/dynamic-drop-zone` của PinUI (cả Settings lẫn Workspace).
-- `[ ]` **Chưa xong:** "+20% độ rõ nét" — chưa có phép đo tương phản nào chạy trên toàn bộ cặp màu chữ/nền.
+- `[x]` "+20% độ rõ nét" nay đo được: 6/6 cặp chữ/nền đạt WCAG AA, riêng chữ mờ nhất trên nền sáng từ 4,24:1 lên 5,08:1. Có test khoá lại trong `tests/upgrade-a11y.test.mjs`.
 
 ## Module 5 — Copywriting
 
@@ -72,3 +72,5 @@ script đo viết riêng). Ô `[~]` là đã làm một phần, ô `[ ]` là ch�
 | Probe telemetry (`tsx`) | ghi/đọc đúng, rồi reset về 0 |
 | Gate Live Preview (script) | 4/4 ca đúng như kỳ vọng |
 | `grep` rà soát | 0 "Arena" trong UI, 0 `LIVE`, 0 `target="_blank"` sót |
+| `node --test tests/upgrade-a11y.test.mjs` | 9/9 xanh: 6 cặp tương phản + 3 luật chống rò rỉ |
+| Phòng thử chuyển động (script) | 8/8 mẫu × 2 theme hợp lệ, 35 mục trải trên cả 8 mẫu |

@@ -123,7 +123,8 @@ html[data-theme='light'] .scene-paper,
   --bg-veil: rgba(245, 241, 232, 0.88);
   --fg: #14120e;
   --fg-muted: #4e483e;
-  --fg-faint: #787265;
+  /* Nền giấy sáng: chữ mờ nhất vẫn đạt AA (5,08:1) chứ không dừng ở 4,24:1. */
+  --fg-faint: #6f6a5d;
   --fg-inverse: #f5f1e8;
   --bg-inverse: #14120e;
   --line: rgba(20, 18, 14, 0.12);

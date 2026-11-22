@@ -1218,7 +1218,7 @@ export const WorkspaceView: React.FC = () => {
                           close();
                         }}
                       >
-                        {arenaMode === 'single' ? 'Bật so sánh 2 Model (Arena A-B)' : 'Chuyển về 1 Model'}
+                        {arenaMode === 'single' ? 'Bật so sánh hai mô hình' : 'Chuyển về 1 Model'}
                       </button>
                     </li>
                     <li>
