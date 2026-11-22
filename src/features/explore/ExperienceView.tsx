@@ -44,6 +44,7 @@ import {
 import { SandboxPreview } from './SandboxPreview';
 import { useCalm } from './useCalm';
 import { ThreeStage } from './ThreeStage';
+import { MotionLab } from './MotionLab';
 import './explore.css';
 
 type CategoryTab = 'all' | 'pinui' | 'lucianlabs' | 'threeui' | 'motionsites' | 'codefronts' | 'saved';
@@ -601,6 +602,15 @@ export const ExperienceView: React.FC = () => {
                       reduced={prefersReducedMotion}
                     />
                   ) : isMotion ? (
+                    <MotionLab
+                      key={`motion-${activeItem.id}`}
+                      title={activeTitle}
+                      tags={activeItem.tags}
+                      category={activeItem.category}
+                      theme={stageTheme}
+                      reduced={prefersReducedMotion}
+                    />
+                  ) : activePreview ? (
                     activePreview ? (
                       <SpecimenMedia
                         key={activeItem.id}

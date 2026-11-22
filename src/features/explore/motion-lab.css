@@ -1,0 +1,173 @@
+.mlab {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  min-width: 0;
+  height: 100%;
+  overflow-y: auto;
+  background: var(--bg-sunken);
+}
+
+.mlab-stage {
+  position: relative;
+  flex: 1;
+  min-height: 300px;
+  border-bottom: 1px solid var(--line);
+}
+
+.mlab-frame {
+  display: block;
+  width: 100%;
+  height: 100%;
+  min-height: 300px;
+  border: 0;
+  background: var(--bg);
+}
+
+.mlab-overlay {
+  position: absolute;
+  inset: var(--space-2) var(--space-2) auto var(--space-2);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  pointer-events: none;
+}
+
+.mlab-now {
+  padding: 4px 10px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-pill);
+  background: color-mix(in oklab, var(--bg-raised) 86%, transparent);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  font-family: var(--font-ui);
+  font-size: var(--text-2xs);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--fg-muted);
+}
+
+.mlab-tools {
+  display: inline-flex;
+  gap: 6px;
+  pointer-events: auto;
+}
+
+.mlab-tool {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-pill);
+  background: color-mix(in oklab, var(--bg-raised) 86%, transparent);
+  color: var(--fg-muted);
+  cursor: pointer;
+  transition: color var(--dur-2) var(--ease-ux), border-color var(--dur-2) var(--ease-ux);
+}
+
+.mlab-tool:hover {
+  color: var(--fg);
+  border-color: var(--red);
+}
+
+.mlab-bar {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 0 var(--space-4);
+}
+
+.mlab-chiprow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.mlab-chip {
+  min-height: 30px;
+  padding: 0 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-pill);
+  background: transparent;
+  color: var(--fg-muted);
+  font-family: var(--font-ui);
+  font-size: var(--text-xs);
+  cursor: pointer;
+  transition: background-color var(--dur-2) var(--ease-ux), color var(--dur-2) var(--ease-ux),
+    border-color var(--dur-2) var(--ease-ux);
+}
+
+.mlab-chip:hover {
+  color: var(--fg);
+  border-color: var(--line-strong);
+}
+
+.mlab-chip[aria-pressed='true'] {
+  background: var(--red-soft);
+  border-color: var(--red);
+  color: var(--fg);
+}
+
+.mlab-hint {
+  margin: 0;
+  font-size: var(--text-xs);
+  line-height: 1.55;
+  color: var(--fg-muted);
+}
+
+.mlab-kb {
+  color: var(--fg-faint);
+}
+
+.mlab-code {
+  border-top: 1px solid var(--line);
+  background: var(--bg);
+}
+
+.mlab-codebar {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px var(--space-4);
+  border-bottom: 1px solid var(--line);
+}
+
+.mlab-codetab {
+  min-height: 28px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--fg-faint);
+  font-family: var(--font-mono);
+  font-size: var(--text-2xs);
+  letter-spacing: 0.06em;
+  cursor: pointer;
+}
+
+.mlab-codetab[aria-selected='true'] {
+  background: var(--red-soft);
+  color: var(--fg);
+}
+
+.mlab-codenote {
+  margin-left: auto;
+  font-size: var(--text-2xs);
+  color: var(--fg-faint);
+}
+
+.mlab-pre {
+  margin: 0;
+  max-height: 180px;
+  overflow: auto;
+  padding: var(--space-3) var(--space-4);
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  line-height: 1.6;
+  color: var(--fg-muted);
+  white-space: pre-wrap;
+  word-break: break-word;
+}
