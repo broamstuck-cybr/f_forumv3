@@ -5,7 +5,7 @@ import {
   ChevronDown,
   ChevronRight,
   Compass,
-  GitBranch,
+  Folder,
   Home,
   Moon,
   Pencil,
@@ -178,7 +178,7 @@ export const ProjectRail: React.FC<ProjectRailProps> = ({
                   aria-current={isCurrent ? 'true' : undefined}
                   onClick={() => onSelect(project.id)}
                 >
-                  <GitBranch size={13} className="ws-rail-branch-icon" aria-hidden="true" />
+                  <Folder size={13} className="ws-rail-branch-icon" aria-hidden="true" />
                   <span className="ws-rail-name">{project.name}</span>
                   <span
                     className="ws-health-dot"
@@ -247,7 +247,7 @@ export const ProjectRail: React.FC<ProjectRailProps> = ({
           title="Về Trang chủ F-Forum"
         >
           <KineticLogo size={18} />
-          <span>Arena</span>
+          <span>F-Forum</span>
         </button>
         {dismiss}
       </header>
@@ -255,7 +255,7 @@ export const ProjectRail: React.FC<ProjectRailProps> = ({
       <div className="ws-rail-quick">
         <button type="button" className="ws-rail-nav-btn" onClick={onCreate}>
           <PlusCircle size={15} aria-hidden="true" />
-          <span>New Chat</span>
+          <span>Phiên mới</span>
         </button>
         {onNavigate && (
           <button type="button" className="ws-rail-nav-btn" onClick={() => onNavigate('explore')}>
@@ -356,7 +356,9 @@ export const ProjectRail: React.FC<ProjectRailProps> = ({
               {(userName.trim()[0] || 'K').toUpperCase()}
             </span>
             <span className="ws-rail-user-meta">
-              <span className="ws-rail-user-name">{userName}</span>
+              <span className="ws-rail-user-name" title={userName}>
+                {userName === 'System Administrator' ? 'Quản trị viên' : userName}
+              </span>
               {quotaLabel && <span className="ws-rail-user-quota">{quotaLabel}</span>}
             </span>
           </button>

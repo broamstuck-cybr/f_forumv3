@@ -2,7 +2,7 @@
   .lp {
     position: relative;
     width: 100%;
-    background: var(--bg);
+    background: transparent;
     color: var(--fg);
     overflow-x: clip;
   }
@@ -186,9 +186,6 @@
 
   .lp-nav-userName {
     white-space: nowrap;
-    max-width: 260px;
-    overflow: hidden;
-    text-overflow: ellipsis;
   }
 
   .lp-burger {
@@ -197,7 +194,7 @@
 
   .lp-hero {
     position: relative;
-    background: var(--bg);
+    background: transparent;
     color: var(--fg);
     padding-top: calc(var(--nav-h) + clamp(32px, 5vw, 72px));
     padding-bottom: clamp(56px, 8vw, 112px);
@@ -372,7 +369,7 @@
 
   .lp-section {
     position: relative;
-    background: var(--bg);
+    background: transparent;
     color: var(--fg);
     padding-block: var(--space-section);
   }
@@ -502,13 +499,13 @@
 
   .lp-hm-root {
     position: relative;
-    background: var(--bg);
+    background: transparent;
     color: var(--fg);
   }
 
   .lp-hm-runway {
     position: relative;
-    background: var(--bg);
+    background: transparent;
     color: var(--fg);
   }
 

@@ -3,7 +3,7 @@
     width: 100%;
     flex: 1;
     min-width: 0;
-    background: var(--bg);
+    background: transparent;
     color: var(--fg);
     padding-block: var(--space-6) var(--space-9);
   }
@@ -24,7 +24,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    background: var(--bg);
+    background: transparent;
     color: var(--fg);
   }
 
@@ -108,7 +108,7 @@
     font-weight: 420;
     line-height: 1.15;
     color: var(--fg);
-    font-variant-numeric: tabular-nums;
+    font-variant-numeric: lining-nums tabular-nums;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -179,16 +179,18 @@
 
   .adm-seg {
     display: inline-flex;
+    padding: 3px;
     border: 1px solid var(--line-strong);
-    border-radius: var(--radius-sm);
+    border-radius: var(--radius-pill);
     overflow: hidden;
     background: var(--bg-sunken);
   }
 
   .adm-seg-btn {
-    min-height: 32px;
+    min-height: 30px;
     padding: 0 var(--space-3);
     border: 0;
+    border-radius: var(--radius-pill);
     background: transparent;
     color: var(--fg-muted);
     font-size: var(--text-xs);
@@ -198,7 +200,7 @@
   }
 
   .adm-seg-btn + .adm-seg-btn {
-    border-left: 1px solid var(--line);
+    margin-left: 2px;
   }
 
   .adm-seg-btn[aria-pressed='true'] {
@@ -272,7 +274,7 @@
     font-family: var(--font-display);
     font-size: 1.85rem;
     line-height: 1.05;
-    font-variant-numeric: tabular-nums;
+    font-variant-numeric: lining-nums tabular-nums;
     color: var(--fg);
   }
 
@@ -547,5 +549,72 @@
     .adm-sys-grid {
       grid-template-columns: minmax(0, 1.2fr) minmax(0, 0.8fr);
     }
+  }
+
+  .adm-analytics-stack {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-5);
+  }
+
+  .adm-rings-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--space-4);
+    align-items: center;
+  }
+
+  @media (min-width: 560px) {
+    .adm-rings-layout {
+      grid-template-columns: 184px minmax(0, 1fr);
+    }
+  }
+
+  .adm-rings-svg-box {
+    position: relative;
+    width: 180px;
+    height: 180px;
+    margin-inline: auto;
+  }
+
+  .adm-rings-center {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    pointer-events: none;
+    padding: 0;
+  }
+
+  .adm-rings-center strong {
+    font-family: var(--font-display);
+    font-size: 1.35rem;
+    line-height: 1;
+    font-variant-numeric: lining-nums tabular-nums;
+    color: var(--fg);
+  }
+
+  .adm-trend-legend {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-3);
+    font-size: var(--text-xs);
+    color: var(--fg-muted);
+  }
+
+  .adm-trend-legend span {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+  }
+
+  .adm-trend-legend i {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 9999px;
   }
 }

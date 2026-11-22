@@ -17,7 +17,20 @@
   ],
   "headers": [
     {
-      "source": "/data/(.*)",
+      "source": "/data/vault/(.*)\\.jgz",
+      "headers": [
+        {
+          "key": "Content-Type",
+          "value": "application/octet-stream"
+        },
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=86400, immutable"
+        }
+      ]
+    },
+    {
+      "source": "/data/(.*)\\.json",
       "headers": [
         {
           "key": "Content-Type",

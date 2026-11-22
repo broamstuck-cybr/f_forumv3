@@ -9,7 +9,7 @@
     height: 100dvh;
     width: 100%;
     max-width: 100%;
-    background: var(--bg);
+    background: transparent;
     color: var(--fg);
     overflow: clip;
   }
@@ -2615,92 +2615,6 @@
     overflow-wrap: anywhere;
   }
 
-  .ws-gh-body {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-4);
-    padding: var(--space-4) var(--ws-pad) var(--space-6);
-    overflow-y: auto;
-  }
-
-  .ws-gh-form {
-    display: grid;
-    gap: var(--space-2);
-  }
-
-  .ws-gh-input-row {
-    display: flex;
-    gap: var(--space-2);
-    align-items: center;
-  }
-
-  .ws-gh-input-row .field {
-    flex: 1;
-    min-width: 0;
-  }
-
-  .ws-gh-error {
-    padding: var(--space-3);
-    border: 1px solid var(--red);
-    border-radius: 12px;
-    background: var(--red-soft);
-    color: var(--red);
-    font-size: var(--text-sm);
-  }
-
-  .ws-gh-card {
-    display: grid;
-    gap: var(--space-3);
-    padding: var(--space-4);
-    border: 1px solid var(--line-strong);
-    border-radius: 14px;
-    background: var(--bg);
-    overflow: hidden;
-  }
-
-  .ws-gh-card-head {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    justify-content: space-between;
-    gap: var(--space-3);
-  }
-
-  .ws-gh-repo-name {
-    font-family: var(--font-mono);
-    font-size: var(--text-sm);
-    font-weight: 600;
-  }
-
-  .ws-gh-desc {
-    font-size: var(--text-sm);
-    line-height: 1.55;
-    color: var(--fg-muted);
-  }
-
-  .ws-gh-files {
-    margin: 0;
-    padding: 0;
-    list-style: none;
-    border-top: 1px solid var(--line);
-  }
-
-  .ws-gh-file-row {
-    display: flex;
-    align-items: center;
-    gap: var(--space-3);
-    min-height: 40px;
-    border-bottom: 1px solid var(--line);
-    cursor: pointer;
-  }
-
-  .ws-gh-pre {
-    max-height: 240px;
-    border: 1px solid var(--line);
-    border-radius: 10px;
-    padding: var(--space-3);
-  }
-
   @keyframes ws-rise {
     from {
       opacity: 0;
@@ -3452,10 +3366,9 @@
 .ws-rail-user-name {
   font-size: 12px;
   font-weight: 600;
+  line-height: 1.25;
   color: var(--fg);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  overflow-wrap: anywhere;
 }
 
 .ws-rail-user-quota {
@@ -3516,22 +3429,17 @@
   display: none !important;
 }
 
-.ws-compact-card,
-.ws-connectors-card {
+.ws-compact-card {
   border: 1px solid var(--line);
   border-radius: 12px;
   background: color-mix(in srgb, var(--bg-raised) 92%, transparent);
   display: flex;
   flex-direction: column;
   overflow: hidden;
-}
-
-.ws-compact-card {
   max-height: min(100%, 580px);
 }
 
-.ws-compact-head,
-.ws-connectors-head {
+.ws-compact-head {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -3760,22 +3668,30 @@
   color: var(--green);
 }
 
-.ws-connector-row {
+.ws-stage-empty {
+  height: 100%;
+  min-height: 300px;
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 8px;
-  width: 100%;
-  padding: 8px 12px;
-  border: 0;
-  background: transparent;
+  justify-content: center;
+  gap: 12px;
+  padding: 32px 24px;
+  text-align: center;
   color: var(--fg-muted);
-  font-size: 12px;
-  font-weight: 550;
-  text-align: left;
-  cursor: pointer;
 }
 
-.ws-connector-row:hover {
-  background: color-mix(in srgb, var(--bg-card-surface) 75%, transparent);
+.ws-stage-empty h3 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 1.28rem;
+  font-weight: 500;
   color: var(--fg);
+}
+
+.ws-stage-empty p {
+  margin: 0;
+  max-width: 38ch;
+  font-size: 13px;
+  line-height: 1.6;
 }

@@ -811,7 +811,7 @@ export const GLACIER_BOOKS: GlacierBookSpec[] = [
     ],
     synopsisVi:
       'Tập hợp 55 cảnh dựng 3D WebGL, trường hạt quỹ đạo và lưới địa hình chiếu phối cảnh duy trì tốc độ 60 khung hình/giây trên trình duyệt.',
-    creditVi: 'Hệ thống hóa từ 55 mẫu không gian 3D và trường cấu trúc WebGL trong danh mục ThreeUI.',
+    creditVi: 'Hệ thống hóa từ 55 mẫu không gian 3D và trường cấu trúc WebGL trong kho F-Forum.',
     settings: {
       blurPx: 18,
       opacityPct: 78,

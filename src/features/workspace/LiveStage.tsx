@@ -1,20 +1,17 @@
 import React, { useMemo, useState } from 'react';
 import {
   Check,
-  ChevronDown,
   ChevronRight,
   Copy,
   Download,
   ExternalLink,
   Eye,
   FileCode2,
-  GitBranch,
   GitCompareArrows,
   Globe,
   Maximize2,
   Minimize2,
   Monitor,
-  Plus,
   RotateCw,
   Share2,
   ShieldCheck,
@@ -55,7 +52,7 @@ export interface LiveStageProps {
   compact?: boolean;
   onEnterSplit?: (tab: StageTabId, subReview?: ReviewTab) => void;
   onExitSplit?: () => void;
-  onOpenGithub?: () => void;
+  hasArtifact?: boolean;
   hidden?: boolean;
 }
 
@@ -123,13 +120,12 @@ export const LiveStage: React.FC<LiveStageProps> = ({
   compact = false,
   onEnterSplit,
   onExitSplit,
-  onOpenGithub,
+  hasArtifact = true,
   hidden = false,
 }) => {
   const [reloadNonce, setReloadNonce] = useState(0);
   const [copiedFile, setCopiedFile] = useState<string | null>(null);
   const [compactTab, setCompactTab] = useState<'diff' | 'checks'>('diff');
-  const [processesOpen, setProcessesOpen] = useState(false);
 
   const activeFile = useMemo(
     () =>
@@ -195,10 +191,10 @@ export const LiveStage: React.FC<LiveStageProps> = ({
 
   if (compact) {
     return (
-      <aside className="ws-compact-aside" aria-label="Bảng trạng thái Arena" hidden={hidden}>
+      <aside className="ws-compact-aside" aria-label="Bảng trạng thái bản dựng" hidden={hidden}>
         <div className="ws-compact-card">
           <div className="ws-compact-head">
-            <div className="ws-compact-tabs" role="tablist" aria-label="Chuyển Diff hoặc Checks">
+            <div className="ws-compact-tabs" role="tablist" aria-label="Chuyển Đối chiếu hoặc Kiểm định">
               <button
                 type="button"
                 role="tab"
@@ -206,7 +202,7 @@ export const LiveStage: React.FC<LiveStageProps> = ({
                 className="ws-compact-tab"
                 onClick={() => setCompactTab('diff')}
               >
-                <span>Diff</span>
+                <span>Đối chiếu</span>
                 <span className="ws-arena-diff-stat">
                   <span className="ws-add">+{totals.added}</span>
                   <span className="ws-del">−{totals.removed}</span>
@@ -219,7 +215,7 @@ export const LiveStage: React.FC<LiveStageProps> = ({
                 className="ws-compact-tab"
                 onClick={() => setCompactTab('checks')}
               >
-                <span>Checks</span>
+                <span>Kiểm định</span>
                 <span className="ws-arena-tab-count">
                   {checkCount}/{totalCheckCount}
                 </span>
@@ -242,17 +238,16 @@ export const LiveStage: React.FC<LiveStageProps> = ({
               type="button"
               className="ws-compact-preview-trigger"
               onClick={() => onEnterSplit?.('preview')}
-              title="Mở Live Preview chia đôi màn hình (60%)"
+              title="Mở khung xem trực tiếp chia đôi màn hình"
             >
               <Globe size={14} className="ws-compact-globe" aria-hidden="true" />
-              <span className="ws-compact-preview-name">{project.name} preview</span>
-              <span className="ws-compact-preview-state">· Live</span>
+              <span className="ws-compact-preview-name">Xem trực tiếp · {project.name}</span>
             </button>
             <button
               type="button"
               className="ws-compact-refresh"
-              aria-label="Làm mới và mở Preview"
-              title="Khởi động lại Preview"
+              aria-label="Làm mới và mở xem trực tiếp"
+              title="Làm mới khung xem trực tiếp"
               onClick={() => {
                 handleRefresh();
                 onEnterSplit?.('preview');
@@ -261,28 +256,6 @@ export const LiveStage: React.FC<LiveStageProps> = ({
               <RotateCw size={12} aria-hidden="true" />
             </button>
           </div>
-
-          <button
-            type="button"
-            className="ws-compact-proc-btn"
-            aria-expanded={processesOpen}
-            onClick={() => setProcessesOpen((v) => !v)}
-          >
-            {processesOpen ? <ChevronDown size={13} aria-hidden="true" /> : <ChevronRight size={13} aria-hidden="true" />}
-            <span>Processes</span>
-            <span className="ws-compact-proc-badge">1</span>
-          </button>
-
-          {processesOpen && (
-            <button
-              type="button"
-              className="ws-compact-proc-item"
-              onClick={() => onEnterSplit?.('preview')}
-            >
-              <span className="ws-live-dot" aria-hidden="true" />
-              <span className="ws-compact-proc-label">Sandbox Preview · Fit</span>
-            </button>
-          )}
 
           {compactTab === 'diff' ? (
             <>
@@ -316,7 +289,7 @@ export const LiveStage: React.FC<LiveStageProps> = ({
                 className="ws-compact-all-btn"
                 onClick={() => onEnterSplit?.('review', 'diff')}
               >
-                <span>View all changes</span>
+                <span>Xem mọi thay đổi</span>
                 <ChevronRight size={14} aria-hidden="true" />
               </button>
             </>
@@ -333,34 +306,20 @@ export const LiveStage: React.FC<LiveStageProps> = ({
                 className="ws-compact-all-btn"
                 onClick={() => onEnterSplit?.('review', 'check')}
               >
-                <span>Mở bảng Checks chi tiết</span>
+                <span>Mở bảng kiểm định chi tiết</span>
                 <ChevronRight size={14} aria-hidden="true" />
               </button>
             </div>
           )}
-        </div>
 
-        <div className="ws-connectors-card">
-          <div className="ws-connectors-head">
-            <span>Connectors</span>
+          {onOpenPublish && (
             <button
               type="button"
-              className="ws-compact-dl"
-              aria-label="Kết nối GitHub"
-              title="Kết nối GitHub"
-              onClick={onOpenGithub}
+              className="ws-compact-all-btn"
+              onClick={onOpenPublish}
             >
-              <Plus size={13} aria-hidden="true" />
-            </button>
-          </div>
-          <button type="button" className="ws-connector-row" onClick={onOpenGithub}>
-            <GitBranch size={14} aria-hidden="true" />
-            <span>GitHub</span>
-          </button>
-          {onOpenPublish && (
-            <button type="button" className="ws-connector-row" onClick={onOpenPublish}>
-              <Share2 size={14} aria-hidden="true" />
-              <span>Đăng Tri thức</span>
+              <span>Đăng lên Tri thức</span>
+              <Share2 size={13} aria-hidden="true" />
             </button>
           )}
         </div>
@@ -371,11 +330,11 @@ export const LiveStage: React.FC<LiveStageProps> = ({
   return (
     <section
       className="ws-live"
-      aria-label="Không gian hiển thị & Mã nguồn Arena"
+      aria-label="Không gian hiển thị & Mã nguồn"
       hidden={hidden}
     >
       <header className="ws-head ws-arena-stage-bar">
-        <div className="ws-arena-stage-tabs" role="tablist" aria-label="Chế độ xem Arena">
+        <div className="ws-arena-stage-tabs" role="tablist" aria-label="Chế độ xem bản dựng">
           <button
             type="button"
             role="tab"
@@ -385,9 +344,8 @@ export const LiveStage: React.FC<LiveStageProps> = ({
             onClick={() => onStageTabChange('preview')}
             title="Xem trực tiếp bản dựng"
           >
-            <span className="ws-live-dot" aria-hidden="true" />
             <Eye size={13} aria-hidden="true" />
-            <span>Preview</span>
+            <span>Xem trực tiếp</span>
           </button>
 
           <button
@@ -400,7 +358,7 @@ export const LiveStage: React.FC<LiveStageProps> = ({
             title={`Mã nguồn (${project.files.length} tệp)`}
           >
             <FileCode2 size={13} aria-hidden="true" />
-            <span>Code</span>
+            <span>Mã nguồn</span>
             <span className="ws-arena-tab-count">{project.files.length}</span>
           </button>
 
@@ -411,20 +369,16 @@ export const LiveStage: React.FC<LiveStageProps> = ({
             className="ws-arena-tab"
             data-active={stageTab === 'review' ? 'true' : undefined}
             onClick={() => onStageTabChange('review')}
-            title="Diff & Kiểm định 6 lớp"
+            title="Đối chiếu & Kiểm định 6 lớp"
           >
             <ShieldCheck size={13} aria-hidden="true" />
-            <span>Diff</span>
+            <span>Đối chiếu</span>
             <span className="ws-arena-diff-stat">
               <span className="ws-add">+{totals.added}</span>
               <span className="ws-del">−{totals.removed}</span>
             </span>
-            <span className="ws-arena-tab-count">{checkCount}/6</span>
+            <span className="ws-arena-tab-count">{checkCount}/{totalCheckCount}</span>
           </button>
-        </div>
-
-        <div className="ws-arena-url-pill" aria-hidden="true">
-          <span>/</span>
         </div>
 
         <div className="ws-arena-stage-tools">
@@ -517,14 +471,23 @@ export const LiveStage: React.FC<LiveStageProps> = ({
       </header>
 
       <div className="ws-stage-body">
-        {stageTab === 'preview' && (
-          <LivePreviewFrame
-            files={project.files}
-            title={project.name}
-            viewport={viewport}
-            reloadNonce={reloadNonce}
-          />
-        )}
+        {stageTab === 'preview' &&
+          (hasArtifact ? (
+            <LivePreviewFrame
+              files={project.files}
+              title={project.name}
+              viewport={viewport}
+              reloadNonce={reloadNonce}
+            />
+          ) : (
+            <div className="ws-stage-empty" role="status">
+              <Globe size={28} aria-hidden="true" />
+              <h3>Chưa có bản dựng web trong phiên này</h3>
+              <p>
+                Nhập mô tả giao diện ở khung chat để Agent sinh mã nguồn HTML/CSS/JS. Khung Xem trực tiếp sẽ tự động mở ngay khi tệp web được tạo.
+              </p>
+            </div>
+          ))}
 
         {stageTab === 'source' && (
           <div className="ws-source">

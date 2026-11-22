@@ -118,7 +118,7 @@ export const AiProjectSetupDrawer: React.FC<AiProjectSetupDrawerProps> = ({
                 <div>
                   <h3 className="ws-byok-title">Chế độ Khóa API riêng (BYOK)</h3>
                   <p className="ws-setup-hint">
-                    Kết nối trực tiếp tới cổng OpenAI, OpenRouter, Anthropic hoặc Gemini của bạn khi chạy Arena.
+                    Kết nối trực tiếp tới cổng OpenAI, OpenRouter, Anthropic hoặc Gemini của bạn khi chạy Agent.
                   </p>
                 </div>
                 <div className="ws-seg" role="group" aria-label="Trạng thái BYOK">

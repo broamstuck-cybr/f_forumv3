@@ -173,7 +173,7 @@ export const HOME_MOTION_SHOWCASES: HomeMotionShowcaseItem[] = [
         path: 'app.js',
         language: 'javascript',
         content:
-          "const datasets=[[{name:'CodeFronts',pct:92},{name:'ThreeUI',pct:78},{name:'LucianLabs',pct:85},{name:'PinUI',pct:100}],[{name:'CodeFronts',pct:64},{name:'ThreeUI',pct:95},{name:'LucianLabs',pct:72},{name:'PinUI',pct:88}]];let idx=0;const root=document.getElementById('tdBars');function render(){if(!root)return;root.innerHTML=datasets[idx].map((d)=>`<div class='td-row'><span>${d.name}</span><div class='td-track'><div class='td-fill' style='width:${d.pct}%'></div></div><strong>${d.pct}%</strong></div>`).join('');}const btn=document.getElementById('tdToggle');if(btn)btn.addEventListener('click',()=>{idx=(idx+1)%datasets.length;render();});render();",
+          "const datasets=[[{name:'Bố cục',pct:92},{name:'Không gian 3D',pct:78},{name:'Hiệu ứng',pct:85},{name:'Tương tác',pct:100}],[{name:'Bố cục',pct:64},{name:'Không gian 3D',pct:95},{name:'Hiệu ứng',pct:72},{name:'Tương tác',pct:88}]];let idx=0;const root=document.getElementById('tdBars');function render(){if(!root)return;root.innerHTML=datasets[idx].map((d)=>`<div class='td-row'><span>${d.name}</span><div class='td-track'><div class='td-fill' style='width:${d.pct}%'></div></div><strong>${d.pct}%</strong></div>`).join('');}const btn=document.getElementById('tdToggle');if(btn)btn.addEventListener('click',()=>{idx=(idx+1)%datasets.length;render();});render();",
       },
     ],
   },

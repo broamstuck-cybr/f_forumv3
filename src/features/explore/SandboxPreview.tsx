@@ -9,6 +9,7 @@ interface SandboxPreviewProps {
   title: string;
   html: string;
   css: string;
+  js?: string;
   theme: PreviewTheme;
   viewport: PreviewViewport;
   nonce: number;
@@ -19,14 +20,15 @@ export const SandboxPreview: React.FC<SandboxPreviewProps> = ({
   title,
   html,
   css,
+  js,
   theme,
   viewport,
   nonce,
   className,
 }) => {
   const srcDoc = useMemo(
-    () => compileSpecimenSrcDoc(html, css, theme),
-    [html, css, theme]
+    () => compileSpecimenSrcDoc(html, css, theme, js),
+    [html, css, theme, js]
   );
 
   return (

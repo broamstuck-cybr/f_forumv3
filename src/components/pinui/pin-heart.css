@@ -1,0 +1,113 @@
+.pheart {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 36px;
+  padding: 0 12px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: var(--bg-raised);
+  color: var(--fg-muted);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+  user-select: none;
+  transition: border-color 180ms ease, color 180ms ease, background-color 180ms ease, transform 120ms ease;
+}
+
+.pheart:hover {
+  border-color: var(--line-strong);
+  color: var(--fg);
+}
+
+.pheart:active {
+  transform: scale(0.92);
+}
+
+.pheart[aria-pressed='true'] {
+  border-color: color-mix(in srgb, var(--red) 45%, var(--line));
+  background: var(--red-soft);
+  color: var(--red);
+}
+
+.pheart__icoWrap {
+  position: relative;
+  display: inline-grid;
+  place-items: center;
+  width: 16px;
+  height: 16px;
+}
+
+.pheart__svg {
+  width: 16px;
+  height: 16px;
+  overflow: visible;
+  transition: transform 280ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.pheart[aria-pressed='true'] .pheart__svg {
+  transform: scale(1.12);
+}
+
+.pheart__sparks {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.pheart__spark {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: var(--red);
+  opacity: 0;
+  transform: translate(-50%, -50%) scale(0);
+}
+
+.pheart[data-burst='true'] .pheart__spark {
+  animation: pheart-burst 420ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.pheart__spark:nth-child(1) { --dx: 0px; --dy: -14px; }
+.pheart__spark:nth-child(2) { --dx: 10px; --dy: -10px; }
+.pheart__spark:nth-child(3) { --dx: 14px; --dy: 0px; }
+.pheart__spark:nth-child(4) { --dx: 10px; --dy: 10px; }
+.pheart__spark:nth-child(5) { --dx: 0px; --dy: 14px; }
+.pheart__spark:nth-child(6) { --dx: -10px; --dy: 10px; }
+.pheart__spark:nth-child(7) { --dx: -14px; --dy: 0px; }
+.pheart__spark:nth-child(8) { --dx: -10px; --dy: -10px; }
+
+@keyframes pheart-burst {
+  0% {
+    opacity: 0.95;
+    transform: translate(-50%, -50%) scale(0.6);
+  }
+  70% {
+    opacity: 0.85;
+  }
+  100% {
+    opacity: 0;
+    transform: translate(calc(-50% + var(--dx)), calc(-50% + var(--dy))) scale(0);
+  }
+}
+
+.pheart--compact {
+  min-height: 32px;
+  padding: 0 9px;
+  font-size: 11px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pheart__svg,
+  .pheart[data-burst='true'] .pheart__spark {
+    transition: none;
+    animation: none;
+  }
+}

@@ -56,98 +56,98 @@ interface PresetDefinition {
 const PRESETS: PresetDefinition[] = [
   {
     id: 'auto',
-    name: 'Auto',
-    desc: 'Tự động đồng bộ Sáng hoặc Tối theo hệ thống thiết bị.',
+    name: 'Tự động',
+    desc: 'Đồng bộ Sáng hoặc Tối theo hệ thống kèm dải sáng mềm.',
     tone: 'auto',
     targetTheme: 'system',
-    swatches: ['#f4f0e6', '#121110', '#d63a27'],
-    previewBg: 'linear-gradient(125deg, #f4f0e6 50%, #191817 50%)',
-    previewCard: 'rgba(255,255,255,0.12)',
-    previewAccent: '#d63a27',
+    swatches: ['#f5f1e8', '#121110', '#e04430'],
+    previewBg: 'conic-gradient(from 210deg at 35% 30%, #f5f1e8 0deg, #1b1917 180deg, #e04430 310deg)',
+    previewCard: 'rgba(255,255,255,0.14)',
+    previewAccent: '#e04430',
     ambient: true,
   },
   {
     id: 'dark',
-    name: 'Obsidian Dark',
-    desc: 'Nền tối chuẩn mực #121110, độ tương phản cao cho phiên làm việc dài.',
+    name: 'Obsidian Godray',
+    desc: 'Nền tối gốc #121110 điểm tia sáng hổ phách dịu, tương phản chữ rõ nét.',
     tone: 'dark',
     targetTheme: 'dark',
-    swatches: ['#121110', '#d63a27', '#efe9dd'],
-    previewBg: '#121110',
-    previewCard: '#1c1b19',
-    previewAccent: '#d63a27',
-    ambient: false,
+    swatches: ['#121110', '#ff6e5a', '#f8f4ec'],
+    previewBg: 'conic-gradient(from 215deg at 18% 12%, rgba(224,68,48,0.34), #121110 75deg, rgba(140,176,199,0.22) 170deg, #121110 290deg)',
+    previewCard: 'rgba(28, 26, 24, 0.88)',
+    previewAccent: '#ff6e5a',
+    ambient: true,
   },
   {
     id: 'light',
-    name: 'Paper Ivory',
-    desc: 'Nền giấy kem ấm cao cấp, đọc rõ ràng dưới ánh sáng ban ngày.',
+    name: 'Paper Sunburst',
+    desc: 'Nền giấy kem #f5f1e8 với ánh nắng sớm, đọc chữ lâu không mỏi mắt.',
     tone: 'light',
     targetTheme: 'light',
-    swatches: ['#f4f0e6', '#c85a3a', '#191714'],
-    previewBg: '#f4f0e6',
-    previewCard: '#ffffff',
-    previewAccent: '#c85a3a',
-    ambient: false,
+    swatches: ['#f5f1e8', '#c42a18', '#14120e'],
+    previewBg: 'radial-gradient(circle at 22% 18%, rgba(221,173,149,0.58), transparent 58%), radial-gradient(circle at 85% 82%, rgba(186,217,230,0.62), #f5f1e8 76%)',
+    previewCard: 'rgba(255, 253, 248, 0.92)',
+    previewAccent: '#c42a18',
+    ambient: true,
   },
   {
     id: 'ember',
-    name: 'Ember',
-    desc: 'Nền Gradient Lab chuyển động mượt mà với ánh ấm hổ phách.',
+    name: 'Ember Godray',
+    desc: 'Luồng sáng Godray hổ phách ấm kết hợp chiều sâu mực tối.',
     tone: 'dark',
     targetTheme: 'dark',
-    swatches: ['#1a1310', '#e07a3d', '#ffe9d6'],
-    previewBg: 'radial-gradient(circle at 30% 25%, rgba(224,122,61,0.52), #151210 72%)',
-    previewCard: 'rgba(32, 24, 20, 0.78)',
-    previewAccent: '#e07a3d',
+    swatches: ['#18120e', '#eb6e38', '#ffe0b8'],
+    previewBg: 'conic-gradient(from 205deg at 20% 8%, rgba(235,110,56,0.62) 0deg, #161210 68deg, rgba(255,178,102,0.35) 140deg, #12100f 240deg)',
+    previewCard: 'rgba(34, 24, 18, 0.82)',
+    previewAccent: '#eb6e38',
     ambient: true,
   },
   {
     id: 'harbour',
-    name: 'Harbour Frost',
-    desc: 'Gradient Lab tông sáng dịu xanh ngọc và kem mờ sương.',
+    name: 'Frost Prism',
+    desc: 'Lớp sương sáng xanh lam ngọc pha trắng kem dịu mắt.',
     tone: 'light',
     targetTheme: 'light',
-    swatches: ['#eef4f7', '#5386a6', '#18242e'],
-    previewBg: 'radial-gradient(circle at 70% 20%, rgba(125,163,187,0.45), #f2efe8 75%)',
-    previewCard: 'rgba(255, 255, 255, 0.84)',
-    previewAccent: '#467a99',
+    swatches: ['#eff4f7', '#1a5875', '#86c8e8'],
+    previewBg: 'conic-gradient(from 225deg at 78% 12%, rgba(125,185,218,0.55) 0deg, #eff4f7 82deg, rgba(218,240,248,0.65) 160deg, #e5eef3 260deg)',
+    previewCard: 'rgba(255, 255, 255, 0.88)',
+    previewAccent: '#1a5875',
     ambient: true,
   },
   {
     id: 'aurora',
     name: 'Aurora Mesh',
-    desc: 'Cực quang tương tác chuyển sắc nhẹ theo vị trí con trỏ chuột.',
+    desc: 'Bốn cực cầu cực quang ngọc lục bảo pha xanh lam chuyển động mượt.',
     tone: 'dark',
     targetTheme: 'dark',
-    swatches: ['#0c0e18', '#5b8def', '#7ee8c0'],
-    previewBg: 'radial-gradient(circle at 25% 30%, rgba(91,141,239,0.5), rgba(126,232,192,0.22) 55%, #0b0d14 85%)',
-    previewCard: 'rgba(18, 22, 34, 0.76)',
-    previewAccent: '#7ee8c0',
+    swatches: ['#0b1312', '#6ce0b3', '#5b8def'],
+    previewBg: 'radial-gradient(circle at 22% 24%, rgba(108,224,179,0.55), transparent 55%), radial-gradient(circle at 80% 70%, rgba(91,141,239,0.52), #0b1312 78%)',
+    previewCard: 'rgba(19, 31, 29, 0.82)',
+    previewAccent: '#6ce0b3',
     ambient: true,
   },
   {
     id: 'constellation',
-    name: 'Constellation',
-    desc: 'Mạng lưới tinh vân liên kết điểm sáng tương tác theo thao tác.',
+    name: 'Golden Nebula',
+    desc: 'Tinh vân ánh vàng mật ong tương tác theo vị trí trỏ chuột.',
     tone: 'dark',
     targetTheme: 'dark',
-    swatches: ['#0a0f1e', '#7da3bb', '#ffe082'],
-    previewBg: 'radial-gradient(circle at 60% 25%, rgba(125,163,187,0.34), #0a0f1e 75%)',
-    previewCard: 'rgba(14, 20, 38, 0.78)',
-    previewAccent: '#ffe082',
+    swatches: ['#0f1218', '#f2c05e', '#7da3bb'],
+    previewBg: 'conic-gradient(from 195deg at 52% 5%, rgba(242,192,94,0.48) 0deg, #0f1218 65deg, rgba(125,163,187,0.34) 150deg, #0f1218 250deg)',
+    previewCard: 'rgba(21, 26, 36, 0.84)',
+    previewAccent: '#f2c05e',
     ambient: true,
   },
   {
     id: 'indigo',
-    name: 'Midnight Indigo',
-    desc: 'Chiều sâu xanh lam đêm pha điểm nhấn ngọc lục bảo dịu mắt.',
+    name: 'Midnight Sapphire',
+    desc: 'Chiều sâu lam cobalt pha hào quang chàm dịu thị giác.',
     tone: 'dark',
     targetTheme: 'dark',
-    swatches: ['#080e1c', '#38bdf8', '#e2ecf8'],
-    previewBg: 'linear-gradient(145deg, #091326 0%, #101f3d 55%, #060a14 100%)',
-    previewCard: 'rgba(16, 28, 52, 0.82)',
-    previewAccent: '#38bdf8',
+    swatches: ['#0c101b', '#86b2ff', '#6366f1'],
+    previewBg: 'radial-gradient(circle at 20% 20%, rgba(56,189,248,0.45), transparent 56%), radial-gradient(circle at 82% 78%, rgba(99,102,241,0.5), #0c101b 78%)',
+    previewCard: 'rgba(18, 25, 44, 0.84)',
+    previewAccent: '#86b2ff',
     ambient: true,
   },
 ];
@@ -477,7 +477,7 @@ export const SettingsView: React.FC = () => {
               <header className="st-section-head">
                 <div>
                   <h2 className="st-section-title">Giao diện & Hình nền</h2>
-                  <p className="st-hint">Chọn sắc độ, kích thước hiển thị và hiệu ứng PinUI chuyển Sáng / Tối toàn trang.</p>
+                  <p className="st-hint">Chọn sắc độ, kích thước hiển thị và hiệu ứng chuyển Sáng / Tối toàn trang.</p>
                 </div>
               </header>
 
@@ -622,7 +622,7 @@ export const SettingsView: React.FC = () => {
               <section className="st-card" aria-label="Hiệu ứng chuyển đổi và chuyển động">
                 <div className="st-row st-row--first">
                   <div>
-                    <span className="st-label">Hiệu ứng chuyển Sáng / Tối toàn trang (PinUI)</span>
+                    <span className="st-label">Hiệu ứng chuyển Sáng / Tối toàn trang</span>
                     <p className="st-hint">Chế độ chọn bên dưới đồng bộ trực tiếp với nút Đêm / Ngày trên thanh điều hướng.</p>
                   </div>
                   <Chips
@@ -634,7 +634,7 @@ export const SettingsView: React.FC = () => {
                   />
                 </div>
 
-                <div className="st-pinui-theme-stage" aria-label="Thử trực tiếp PinUI ThemeSwitch gốc">
+                <div className="st-pinui-theme-stage" aria-label="Thử trực tiếp hiệu ứng chuyển Sáng Tối">
                   <OriginalThemeSwitch
                     key={currentEffect}
                     theme={theme}
@@ -916,7 +916,10 @@ export const SettingsView: React.FC = () => {
                   <div className="st-block">
                     <span className="st-label">Khôi phục từ tệp JSON</span>
                     <DynamicDropZone
-                      label="Thả tệp JSON sao lưu vào đây"
+                      label="Kéo thả tệp JSON sao lưu vào đây"
+                      hintText="Định dạng .json · Chỉ khôi phục cấu hình & dự án cục bộ"
+                      accept=".json,application/json"
+                      multiple={false}
                       onFilesAdded={handleFilesDropped}
                     />
                     {importError && (

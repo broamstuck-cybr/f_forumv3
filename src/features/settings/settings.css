@@ -4,7 +4,7 @@
     flex: 1;
     min-width: 0;
     padding-block: var(--space-5) var(--space-8);
-    background: var(--bg);
+    background: transparent;
     color: var(--fg);
   }
 
@@ -193,6 +193,20 @@
     border: 1px solid var(--line);
     background: var(--bg-sunken);
     align-self: flex-start;
+  }
+
+  @media (max-width: 520px) {
+    .st-size-seg {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      width: 100%;
+      border-radius: 14px;
+    }
+
+    .st-size-btn {
+      padding: 0 8px;
+      border-radius: 10px;
+    }
   }
 
   .st-size-btn {

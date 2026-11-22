@@ -28,12 +28,6 @@ const FALLBACK_ISOMETRIC =
 const FALLBACK_LIQUID_GLASS =
   'https://raw.githubusercontent.com/broamstuck-cybr/SOURCEOFKNOWLEDGFORAI/main/assets/previews/lucianlabs-liquid-glass-button.png';
 
-export const STAGE_CHIP_PREVIEW = {
-  imageUrl: 'https://www.pinui.xyz/clips/thumb/magnify.webp',
-  fallbackUrl: FALLBACK_LIQUID_GLASS,
-  label: 'Khung soi giao diện',
-};
-
 export const TIDEWELL_CARDS: KineticStageCard[] = [
   {
     id: 'ff-space-voyage',
@@ -145,40 +139,40 @@ export const MANIFESTO_BEATS: ManifestoBeat[] = [
   {
     id: 'beat-preview',
     headline: 'Chạy thử giao diện thật trước khi lấy mã.',
-    body: 'Mỗi mẫu trong 196 giao diện đều mở kèm bản xem trước tương tác và liên kết nguồn gốc; bạn kiểm tra trực tiếp từng chuyển động cùng trạng thái nút bấm thay vì nhìn ảnh chụp tĩnh.',
+    body: 'Mỗi mẫu giao diện đều chạy trực tiếp cùng trạng thái nút bấm và hiệu ứng thật ngay trên trình duyệt, không còn cảnh đoán qua ảnh chụp tĩnh.',
     stickers: [
       { label: 'Xem trước tương tác', bg: '#EFCEBE', tilt: -3 },
-      { label: 'Nguồn tham khảo', bg: '#BAD9E6', tilt: 2.5 },
+      { label: 'Chạy tại chỗ', bg: '#BAD9E6', tilt: 2.5 },
     ],
     badge: 'prism',
   },
   {
     id: 'beat-viewport',
-    headline: 'Đổi khung 390, 768 và 1440px ngay trên một màn hình.',
-    body: 'Live View cô lập mã trong iframe sandbox không chia sẻ quyền đồng nguồn. Bạn kéo thử bố cục ở ba độ rộng chuẩn mà không làm rò rỉ dữ liệu từ phiên đang mở.',
+    headline: 'Đổi khung Di động, Tablet và Desktop ngay trên một màn hình.',
+    body: 'Khung xem thử chạy tách biệt với trang chính. Bạn kéo thử bố cục trên từng cỡ màn hình mà không ảnh hưởng tới tài khoản hay dữ liệu đang mở.',
     stickers: [
-      { label: '390px · 768px · 1440px', bg: '#EBC9AE', tilt: -2 },
-      { label: 'Chạy cô lập', bg: '#DDAD95', tilt: 3 },
+      { label: 'Đa khung nhìn', bg: '#EBC9AE', tilt: -2 },
+      { label: 'Chạy tách biệt', bg: '#DDAD95', tilt: 3 },
     ],
     badge: 'viewport',
   },
   {
     id: 'beat-code',
     headline: 'Tách riêng HTML, CSS, JS để sửa trực tiếp tại chỗ.',
-    body: 'Workspace chia rõ từng tệp mã nguồn. Trước khi bạn tải gói ZIP, bộ Diff & Check chạy 6 phép kiểm để đối chiếu thay đổi và tự động che mọi khóa bí mật.',
+    body: 'Workspace chia rõ từng tệp mã nguồn. Trước khi bạn tải gói ZIP, bộ kiểm định tự động đối chiếu thay đổi và ẩn mọi khóa bí mật.',
     stickers: [
       { label: 'HTML · CSS · JS', bg: '#B0AEC6', tilt: 2 },
-      { label: '6 phép kiểm · Xuất ZIP', bg: '#EFCEBE', tilt: -2.5 },
+      { label: 'Kiểm định · Xuất ZIP', bg: '#EFCEBE', tilt: -2.5 },
     ],
     badge: 'code',
   },
   {
     id: 'beat-library',
-    headline: '6.770 chi tiết UI/UX, 196 giao diện và 122 kho GitHub tiếng Việt.',
-    body: 'Kho mở quy tụ thêm 61 công cụ AI cùng 83 mẫu chuyển động có sẵn prompt. Học sinh, sinh viên, giảng viên hay vibe coder đều mở được mã gốc để học cách dựng và gửi bản cải tiến lên Tri thức.',
+    headline: 'Kho linh kiện UI/UX chuẩn hóa và cộng đồng chia sẻ prompt.',
+    body: 'Học sinh, sinh viên, giảng viên và vibe coder đều mở được mã gốc để học cách dựng, tùy biến và đăng bản cải tiến lên Tri thức.',
     stickers: [
-      { label: '6.770 chi tiết UI/UX', bg: '#BAD9E6', tilt: -2 },
-      { label: '196 giao diện · 122 kho GitHub', bg: '#DDAD95', tilt: 2.5 },
+      { label: 'Thư viện mở', bg: '#BAD9E6', tilt: -2 },
+      { label: 'Cộng đồng Việt Nam', bg: '#DDAD95', tilt: 2.5 },
     ],
     badge: 'matrix',
   },
@@ -193,19 +187,10 @@ export const PROJECT_SHOWCASE_THUMBS: Record<string, string> = {
   'hms-luminex': 'ff-luminex',
 };
 
-export const STAGE_SHOWCASE_SHOTS: string[] = ['ff-space-voyage', 'ff-codenest', 'ff-aethera', 'ff-designpro'];
-
-export const STAGE_DIFFERENTIATORS: Array<{ id: string; title: string; text: string }> = [
-  { id: 'd1', title: 'Mã tách bạch', text: 'Tệp HTML, CSS, JS độc lập để chỉnh ngay tại chỗ' },
-  { id: 'd2', title: 'Prompt mở', text: 'Sao chép đặc tả gốc và đăng bản sửa lên Tri thức' },
-  { id: 'd3', title: 'Kiểm 6 mục', text: 'Soát HTML, JS, khung 390/768/1440px, liên kết, khóa và A11y' },
-  { id: 'd4', title: 'Hộp cát cô lập', text: 'Iframe sandbox tắt allow-same-origin, chặn rò rỉ phiên' },
-];
-
 export const OPEN_ACCESS_FEATURES: string[] = [
-  'Live View cô lập mã trong sandbox kèm 6 phép kiểm trên 390px, 768px và 1440px',
-  '196 giao diện tham khảo, 6.770 chi tiết UI/UX và 83 mẫu chuyển động kèm prompt',
-  'Danh mục 122 kho GitHub tiếng Việt cùng 61 công cụ AI đã kiểm chứng đường dẫn',
+  'Khung xem thử chạy tách biệt kèm bộ kiểm tra lỗi tự động',
+  'Kho linh kiện tương tác, hiệu ứng 3D, chuyển động và bố cục có sẵn prompt',
+  'Danh mục công cụ AI và kho mã nguồn đã chọn lọc phục vụ học tập',
   '15 lượt tạo mã miễn phí mỗi phiên, hỗ trợ gắn khóa API cá nhân lưu cục bộ',
 ];
 
@@ -214,19 +199,19 @@ export const FAQ_ITEMS: Array<{ id: string; question: string; answer: string }> 
     id: 'f1',
     question: 'F-Forum dùng để làm gì?',
     answer:
-      'F-Forum là bàn dựng và kiểm định giao diện web trực tiếp trên trình duyệt cho học sinh, sinh viên, giảng viên cùng vibe coder. Bạn chọn mẫu từ Bàn soi, mở mã HTML/CSS/JS trong Workspace để chỉnh sửa, chạy 6 phép kiểm rồi chia sẻ lại kết quả lên Tri thức.',
+      'F-Forum là bàn dựng và kiểm định giao diện web trực tiếp trên trình duyệt cho học sinh, sinh viên, giảng viên cùng vibe coder. Bạn chọn mẫu từ Bàn soi, mở mã HTML/CSS/JS trong Workspace để chỉnh sửa, kiểm tra tự động rồi chia sẻ lại kết quả lên Tri thức.',
   },
   {
     id: 'f2',
-    question: 'Live View và Diff & Check hoạt động ra sao?',
+    question: 'Khung xem trực tiếp và bộ kiểm định hoạt động ra sao?',
     answer:
-      'Live View nạp bản dựng vào iframe sandbox="allow-scripts" với referrerPolicy="no-referrer" và tắt hẳn allow-same-origin để cô lập trang chính. Khi bạn sửa mã, Diff & Check đối chiếu từng dòng thay đổi đồng thời chạy 6 phép kiểm: cấu trúc HTML, cú pháp JS, khung nhìn 390/768/1440px, liên kết nội bộ, quét khóa bí mật và tiêu chuẩn tiếp cận.',
+      'Bản dựng chạy trong khung xem thử tách biệt với trang chính để bảo vệ tài khoản đang đăng nhập. Khi bạn chỉnh sửa, hệ thống đối chiếu thay đổi và rà soát cấu trúc trang, lỗi kịch bản, bố cục đa màn hình, khóa bí mật và tiêu chuẩn tiếp cận.',
   },
   {
     id: 'f3',
-    question: 'Kho 196 giao diện, 6.770 chi tiết UI/UX và 122 kho GitHub gồm những gì?',
+    question: 'Kho tài nguyên trong F-Forum gồm những gì?',
     answer:
-      'Thư viện tổng hợp 6.770 chi tiết UI/UX chuẩn hóa, 196 giao diện chạy trực tiếp và 83 mẫu chuyển động có sẵn prompt. Ngoài ra, Bàn soi còn biên tập 122 kho GitHub tiếng Việt cùng 61 công cụ AI thực chiến để bạn tra cứu hoặc nạp thẳng vào Workspace.',
+      'Thư viện hợp nhất các linh kiện tương tác, bố cục web, hiệu ứng đổ bóng, cảnh 3D và chuyển động có sẵn prompt đặc tả, giúp bạn tra cứu hoặc nạp thẳng vào Workspace để tùy biến ngay.',
   },
   {
     id: 'f4',

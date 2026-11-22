@@ -4,6 +4,7 @@ import type { AdminState, AIProtocol, ModerationReportStatus } from '../../types
 import { apiClient } from '../../services/apiClient';
 import { useAppStore } from '../../store/appStore';
 import { Chips, LampSwitch, LiquidTabs, SearchCard, SelectionList, SlingSlider } from '../../components/pinui';
+import { AdminTelemetryCharts, formatUptime } from './AdminTelemetryCharts';
 import './admin.css';
 
 type AdminTab = 'analytics' | 'users' | 'system' | 'logs';
@@ -605,7 +606,6 @@ export const AdminView: React.FC = () => {
           <div className="adm-banner-top">
             <div>
               <div className="adm-banner-meta">
-                <span className="tag tag-green">Không giới hạn lượt AI</span>
                 <span className="t-label">Điều hành: {currentUser.username}</span>
                 {maintenanceReadOnly && <span className="tag tag-red">Khách chỉ đọc</span>}
               </div>
@@ -651,8 +651,8 @@ export const AdminView: React.FC = () => {
             </strong>
             <span className="adm-kpi-meta">
               {adminState
-                ? `Thành công ${adminState.telemetry.successfulAiRequests} · Fallback ${adminState.telemetry.fallbackAiRequests} · Chặn ${adminState.telemetry.quotaBlockedRequests}`
-                : 'Đang đọc telemetry'}
+                ? `Thành công ${adminState.telemetry.successfulAiRequests} · Dự phòng ${adminState.telemetry.fallbackAiRequests} · Chặn ${adminState.telemetry.quotaBlockedRequests}`
+                : 'Đang đồng bộ số liệu'}
             </span>
           </article>
 
@@ -664,14 +664,14 @@ export const AdminView: React.FC = () => {
             </span>
           </article>
 
-          <article className="adm-kpi">
+            <article className="adm-kpi">
             <span className="adm-kpi-label">Trạng thái Gateway</span>
             <strong className="adm-kpi-val" data-tone={adminState?.gateway.enabled ? 'jade' : undefined}>
-              {adminState?.gateway.enabled ? 'Runtime Bật' : 'Mặc định'}
+              {adminState?.gateway.enabled ? 'Đang bật' : 'Mặc định'}
             </strong>
             <span className="adm-kpi-meta">
               {adminState
-                ? `${adminState.gateway.model} · Uptime ${adminState.telemetry.uptimeSeconds}s`
+                ? `${adminState.gateway.model} · Hoạt động ${formatUptime(adminState.telemetry.uptimeSeconds)}`
                 : 'Đang kiểm tra kết nối'}
             </span>
           </article>
@@ -692,7 +692,13 @@ export const AdminView: React.FC = () => {
         </div>
 
         {activeTab === 'analytics' && (
-          <div className="adm-grid-2">
+          <div className="adm-analytics-stack">
+            <AdminTelemetryCharts
+              adminState={adminState}
+              totalUsedAcrossSubjects={totalUsedAcrossSubjects}
+              projectsCount={projects.length}
+            />
+            <div className="adm-grid-2">
             <section aria-label="Biểu đồ phân bổ lượt dùng AI" className="adm-card">
               <div className="adm-card-head">
                 <div>
@@ -993,7 +999,13 @@ export const AdminView: React.FC = () => {
                                 : ''
                           }`}
                         >
-                          {rep.status}
+                          {rep.status === 'approved'
+                            ? 'Đã duyệt'
+                            : rep.status === 'hidden'
+                              ? 'Đã ẩn'
+                              : rep.status === 'dismissed'
+                                ? 'Đã bỏ qua'
+                                : 'Chờ duyệt'}
                         </span>
                       </div>
                       <p className="text-xs" style={{ color: 'var(--fg-muted)' }}>
@@ -1057,6 +1069,7 @@ export const AdminView: React.FC = () => {
                 ))}
               </div>
             </section>
+            </div>
           </div>
         )}
 
@@ -1066,7 +1079,7 @@ export const AdminView: React.FC = () => {
               <div>
                 <h2 className="adm-card-title">Danh bạ tài khoản & Hạn mức AI</h2>
                 <p className="adm-card-sub">
-                  Tìm kiếm tức thì, đặt lại lượt hoặc cấp quyền Unlimited Bypass cho thành viên.
+                  Tìm kiếm nhanh, đặt lại lượt hoặc cấp quyền không giới hạn cho thành viên.
                 </p>
               </div>
               <span className="t-label">{filteredUsers.length} đối tượng</span>
@@ -1076,7 +1089,7 @@ export const AdminView: React.FC = () => {
               <SearchCard
                 value={userSearch}
                 onChange={setUserSearch}
-                placeholder="Lọc theo tên tài khoản, email, subjectId..."
+                placeholder="Lọc theo tên tài khoản, email hoặc mã định danh..."
                 compact
               />
               <Chips
@@ -1122,7 +1135,7 @@ export const AdminView: React.FC = () => {
                           <td>
                             <span className={`tag ${rec.role === 'admin' ? 'tag-green' : ''}`}>
                               {rec.role === 'admin'
-                                ? 'Admin · Unlimited'
+                                ? 'Quản trị'
                                 : rec.subjectType === 'guest'
                                   ? 'Khách'
                                   : 'Thành viên'}
@@ -1158,7 +1171,7 @@ export const AdminView: React.FC = () => {
                                   onClick={() => void handleToggleRole(rec.subjectId)}
                                   className={rec.role === 'admin' ? 'btn btn-ghost btn-sm' : 'btn btn-red btn-sm'}
                                 >
-                                  {rec.role === 'admin' ? 'Gỡ Unlimited' : 'Cấp Unlimited'}
+                                  {rec.role === 'admin' ? 'Gỡ quyền quản trị' : 'Cấp không giới hạn'}
                                 </button>
                               )}
                             </div>

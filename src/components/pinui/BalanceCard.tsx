@@ -601,10 +601,7 @@ export default function BalanceCard({ balance = 3400089.23, currency: initialCur
 
       {credit && (<div className="pbal__credit">
           <p className="pbal__creditText">
-            Inspiration from{" "}
-            <a className="pbal__creditLink" href="https://in.pinterest.com/pin/1056657131344579045/" target="_blank" rel="noopener noreferrer">
-              pinterest.com
-            </a>
+            Mẫu thẻ tương tác F-Forum
           </p>
 
           <button type="button" className="pbal__sfx" aria-pressed={audible} aria-label={audible ? "Mute the sound effects" : "Unmute the sound effects"} title={audible ? "Mute the sound effects" : "Unmute the sound effects"} onClick={() => setAudible((on) => !on)}>

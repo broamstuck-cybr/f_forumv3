@@ -35,7 +35,7 @@ const ProjectCard: React.FC<{
         <img
           src={src}
           alt={`Ảnh xem trước ${item.title}`}
-          loading="lazy"
+          loading="eager"
           decoding="async"
           referrerPolicy="no-referrer"
           data-failed={failed ? 'true' : undefined}
@@ -57,11 +57,11 @@ const ProjectCard: React.FC<{
           </div>
           <div>
             <dt className="t-label">khung nhìn</dt>
-            <dd>390 · 768 · 1440</dd>
+            <dd>Đáp ứng đa màn hình</dd>
           </div>
           <div>
-            <dt className="t-label">chuyển động</dt>
-            <dd>{item.motionConfig.durationMs} ms</dd>
+            <dt className="t-label">phong cách</dt>
+            <dd>{item.category}</dd>
           </div>
         </dl>
         <div className="lp-proj-chips">
@@ -92,7 +92,7 @@ export const LandingProjects: React.FC<LandingProjectsProps> = ({ onNavigate }) 
               Dự án thực chiến, <Mark kind="underline">mở là chạy</Mark> được
             </h2>
             <p className="t-lead">
-              Mỗi mẫu gồm bản xem trước, bộ tệp HTML, CSS, JS tách riêng và thông số chuyển động để bạn chỉnh theo ý.
+              Mở trực tiếp trên trình duyệt, xem cấu trúc gọn gàng và tùy biến ngay theo dự án của bạn.
             </p>
           </div>
         </div>

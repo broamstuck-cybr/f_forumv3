@@ -278,12 +278,31 @@ export interface CommunityAnswer {
   votes: number;
   content: string;
   isAccepted?: boolean;
+  parentId?: string;
 }
 
 export interface CommunityShowcaseSnippet {
   html: string;
   css: string;
   js?: string;
+}
+
+export interface CommunityPostImage {
+  id: string;
+  url: string;
+  alt: string;
+}
+
+export interface CommunityPollOption {
+  id: string;
+  label: string;
+  votes: number;
+}
+
+export interface CommunityPoll {
+  question: string;
+  options: CommunityPollOption[];
+  closesLabel?: string;
 }
 
 export interface ClubHandoverDossier {
@@ -314,6 +333,8 @@ export interface CommunityPost {
   likes?: number;
   views?: number;
   demoSnippet?: CommunityShowcaseSnippet;
+  images?: CommunityPostImage[];
+  poll?: CommunityPoll;
   forks?: number;
   fileType?: string;
   payload?: string;

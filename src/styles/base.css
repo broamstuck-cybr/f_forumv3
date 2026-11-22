@@ -11,6 +11,8 @@
     min-height: 100dvh;
     overflow-x: clip;
     background-color: var(--bg);
+    background-image: var(--ff-mesh-bg, none);
+    background-attachment: fixed;
     color: var(--fg);
     font-family: var(--font-ui);
     font-size: var(--text-base);
@@ -338,7 +340,7 @@
     min-height: 44px;
     padding: 0 var(--space-4);
     border: 1px solid var(--line-strong);
-    border-radius: var(--radius-sm);
+    border-radius: 14px;
     background: var(--bg-raised);
     color: var(--fg);
     font-size: var(--text-sm);
@@ -540,4 +542,32 @@ html.reduce-motion *::after {
   animation-iteration-count: 1 !important;
   transition-duration: 0.01ms !important;
   scroll-behavior: auto !important;
+}
+
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none;
+  mix-blend-mode: normal;
+}
+
+::view-transition-old(root) {
+  z-index: 1;
+}
+
+::view-transition-new(root) {
+  z-index: 2;
+}
+
+::view-transition-group(ff-theme-fx) {
+  z-index: 10;
+  pointer-events: none;
+  animation: none;
+}
+
+::view-transition-old(ff-theme-fx) {
+  display: none;
+}
+
+::view-transition-new(ff-theme-fx) {
+  animation: none;
 }

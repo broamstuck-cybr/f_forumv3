@@ -2,33 +2,44 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
   ArrowBigUp,
   ArrowUpRight,
+  BarChart3,
+  Bell,
   Bookmark,
   BookOpen,
   Check,
   Code2,
   Copy,
+  EyeOff,
   Flag,
   Hash,
   HelpCircle,
+  Image as ImageIcon,
   MessageSquare,
   Monitor,
   Moon,
+  MoreHorizontal,
+  Plus,
   RotateCw,
   Share2,
+  ShieldBan,
   Smartphone,
   Sun,
   Tablet,
+  Trash2,
+  VolumeX,
   X,
 } from 'lucide-react';
 import type {
   ClubHandoverDossier,
   CommunityAnswer,
   CommunityChannel,
+  CommunityPoll,
   CommunityPost,
+  CommunityPostImage,
   CommunityShowcaseSnippet,
 } from '../../types/index';
 import communitySeedJson from '../../data/communitySeed.json';
-import { useAppStore } from '../../store/appStore';
+import { formatUserDisplayName, useAppStore } from '../../store/appStore';
 import {
   ChatRoom,
   Chips,
@@ -47,9 +58,16 @@ import { SandboxPreview } from '../explore/SandboxPreview';
 import type { PreviewTheme, PreviewViewport } from '../explore/catalog';
 import { copyText } from '../explore/catalog';
 import { Modal } from '../workspace/Modal';
+import { CommunityPollCard } from './CommunityPollCard';
+import { CommunityOnboardingCard } from './CommunityOnboardingCard';
+import {
+  CommunityNotificationsModal,
+  type CommunityNotificationItem,
+} from './CommunityNotificationsModal';
 import './community.css';
 
-type FeedTabId = 'all' | 'trending' | 'demos' | 'saved';
+type FeedTabId = 'all' | 'following' | 'newest' | 'trending' | 'demos' | 'saved';
+const FOLLOWING_STORAGE_KEY = 'fforum_v3_following_handles';
 type ChannelFilterId = 'all' | CommunityChannel | 'saved';
 type SortMode = 'newest' | 'top' | 'discussed';
 type CodeDisplayMode = 'collapsed' | 'live' | 'code';
@@ -67,6 +85,75 @@ const LOCAL_POSTS_STORAGE_KEY = 'fforum_v3_community_posts_v7';
 const LOCAL_REPLIES_STORAGE_KEY = 'fforum_v3_community_replies_v7';
 const LOCAL_ACCEPTED_STORAGE_KEY = 'fforum_v3_community_accepted_v7';
 const LOCAL_RECENT_SEARCHES_KEY = 'fforum_v3_community_recent_searches_v7';
+const LOCAL_POLL_VOTES_KEY = 'fforum_v3_community_poll_votes_v1';
+const LOCAL_MODERATION_KEY = 'fforum_v3_community_moderation_v1';
+const LOCAL_NOTIF_READ_KEY = 'fforum_v3_community_notif_read_v1';
+const LOCAL_ONBOARDING_KEY = 'fforum_v3_community_onboarding_v1';
+const LOCAL_DRAFT_KEY = 'fforum_v3_community_draft_v1';
+const UNREAD_NOTIF_STORAGE_KEY = 'fforum_v3_unread_notifications';
+
+const MAX_COMPOSE_IMAGES = 4;
+
+interface ModerationPrefs {
+  hiddenPostIds: string[];
+  mutedHandles: string[];
+  blockedHandles: string[];
+}
+
+interface ComposeDraft {
+  title: string;
+  body: string;
+  tags: string;
+}
+
+const DEFAULT_SEED_POLL: CommunityPoll = {
+  question: 'Chủ đề bạn muốn cộng đồng tổng hợp mẫu chuẩn trong tuần này?',
+  closesLabel: 'Còn 3 ngày',
+  options: [
+    { id: 'opt-tokens', label: 'Hệ thống CSS Tokens sáng / tối', votes: 34 },
+    { id: 'opt-forms', label: 'Biểu mẫu & kiểm tra nhập liệu', votes: 21 },
+    { id: 'opt-mobile', label: 'Điều hướng di động 390px', votes: 29 },
+    { id: 'opt-3d', label: 'Cảnh 3D WebGL nhẹ dưới 60fps', votes: 14 },
+  ],
+};
+
+function compressImageFile(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onerror = () => reject(new Error('Không đọc được tệp ảnh.'));
+    reader.onload = () => {
+      const dataUrl = String(reader.result || '');
+      if (!dataUrl) {
+        reject(new Error('Tệp ảnh trống.'));
+        return;
+      }
+      const img = new Image();
+      img.onload = () => {
+        const maxSide = 720;
+        const scale = Math.min(1, maxSide / Math.max(img.width || 1, img.height || 1));
+        const w = Math.max(1, Math.round((img.width || maxSide) * scale));
+        const h = Math.max(1, Math.round((img.height || maxSide) * scale));
+        const canvas = document.createElement('canvas');
+        canvas.width = w;
+        canvas.height = h;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) {
+          resolve(dataUrl);
+          return;
+        }
+        ctx.drawImage(img, 0, 0, w, h);
+        try {
+          resolve(canvas.toDataURL('image/jpeg', 0.76));
+        } catch {
+          resolve(dataUrl);
+        }
+      };
+      img.onerror = () => resolve(dataUrl);
+      img.src = dataUrl;
+    };
+    reader.readAsDataURL(file);
+  });
+}
 
 const VIEWPORT_CYCLE: PreviewViewport[] = [1440, 768, 390];
 
@@ -245,6 +332,10 @@ export const CommunityView: React.FC = () => {
   const [selectedPostId, setSelectedPostId] = useState<string | null>(null);
   const [openCommentDrawers, setOpenCommentDrawers] = useState<Record<string, boolean>>({});
   const [replyDrafts, setReplyDrafts] = useState<Record<string, string>>({});
+  const [replyTargets, setReplyTargets] = useState<Record<string, { answerId: string; authorName: string } | null>>({});
+  const [followingHandles, setFollowingHandles] = useState<string[]>(() =>
+    loadJsonFromStorage<string[]>(FOLLOWING_STORAGE_KEY, ['minh_dev', 'linh_ux'])
+  );
   const [submittingReplyId, setSubmittingReplyId] = useState<string | null>(null);
 
   const [codeModes, setCodeModes] = useState<Record<string, CodeDisplayMode>>({});
@@ -258,16 +349,49 @@ export const CommunityView: React.FC = () => {
 
   const [composerOpen, setComposerOpen] = useState(false);
   const [composeChannel, setComposeChannel] = useState<CommunityChannel>('showcase');
-  const [composeTitle, setComposeTitle] = useState('');
-  const [composeBody, setComposeBody] = useState('');
+  const [initialDraft] = useState<ComposeDraft>(() =>
+    loadJsonFromStorage<ComposeDraft>(LOCAL_DRAFT_KEY, {
+      title: '',
+      body: '',
+      tags: 'react, css-tokens',
+    })
+  );
+  const [composeTitle, setComposeTitle] = useState(initialDraft.title);
+  const [composeBody, setComposeBody] = useState(initialDraft.body);
   const [composeCategory, setComposeCategory] = useState('React / Frontend');
-  const [composeTagsInput, setComposeTagsInput] = useState('react, css-tokens');
+  const [composeTagsInput, setComposeTagsInput] = useState(initialDraft.tags || 'react, css-tokens');
   const [composeIncludeCode, setComposeIncludeCode] = useState(false);
   const [composeHtml, setComposeHtml] = useState('');
   const [composeCss, setComposeCss] = useState('');
   const [composeJs, setComposeJs] = useState('');
   const [composePreviewLive, setComposePreviewLive] = useState(false);
+  const [composeIncludeImages, setComposeIncludeImages] = useState(false);
+  const [composeImages, setComposeImages] = useState<CommunityPostImage[]>([]);
+  const [composeImageUrl, setComposeImageUrl] = useState('');
+  const [composeIncludePoll, setComposeIncludePoll] = useState(false);
+  const [composePollQuestion, setComposePollQuestion] = useState('');
+  const [composePollOptions, setComposePollOptions] = useState<string[]>(['', '']);
   const [submittingPost, setSubmittingPost] = useState(false);
+
+  const [pollVotes, setPollVotes] = useState<Record<string, string>>(() =>
+    loadJsonFromStorage<Record<string, string>>(LOCAL_POLL_VOTES_KEY, {})
+  );
+  const [moderation, setModeration] = useState<ModerationPrefs>(() =>
+    loadJsonFromStorage<ModerationPrefs>(LOCAL_MODERATION_KEY, {
+      hiddenPostIds: [],
+      mutedHandles: [],
+      blockedHandles: [],
+    })
+  );
+  const [openMenuPostId, setOpenMenuPostId] = useState<string | null>(null);
+  const [lightboxImage, setLightboxImage] = useState<CommunityPostImage | null>(null);
+  const [notificationsOpen, setNotificationsOpen] = useState(false);
+  const [readNotifIds, setReadNotifIds] = useState<string[]>(() =>
+    loadJsonFromStorage<string[]>(LOCAL_NOTIF_READ_KEY, [])
+  );
+  const [onboardingDismissed, setOnboardingDismissed] = useState<boolean>(() =>
+    loadJsonFromStorage<boolean>(LOCAL_ONBOARDING_KEY, false)
+  );
 
   const [reportTarget, setReportTarget] = useState<CommunityPost | null>(null);
   const [reportReason, setReportReason] = useState('Thông tin sai lệch kỹ thuật hoặc spam');
@@ -315,6 +439,51 @@ export const CommunityView: React.FC = () => {
       return;
     }
   }, [recentSearches]);
+
+  useEffect(() => {
+    try {
+      window.localStorage.setItem(LOCAL_POLL_VOTES_KEY, JSON.stringify(pollVotes));
+    } catch {
+      return;
+    }
+  }, [pollVotes]);
+
+  useEffect(() => {
+    try {
+      window.localStorage.setItem(LOCAL_MODERATION_KEY, JSON.stringify(moderation));
+    } catch {
+      return;
+    }
+  }, [moderation]);
+
+  useEffect(() => {
+    try {
+      window.localStorage.setItem(LOCAL_NOTIF_READ_KEY, JSON.stringify(readNotifIds));
+    } catch {
+      return;
+    }
+  }, [readNotifIds]);
+
+  useEffect(() => {
+    try {
+      window.localStorage.setItem(LOCAL_ONBOARDING_KEY, JSON.stringify(onboardingDismissed));
+    } catch {
+      return;
+    }
+  }, [onboardingDismissed]);
+
+  useEffect(() => {
+    try {
+      const draft: ComposeDraft = {
+        title: composeTitle,
+        body: composeBody,
+        tags: composeTagsInput,
+      };
+      window.localStorage.setItem(LOCAL_DRAFT_KEY, JSON.stringify(draft));
+    } catch {
+      return;
+    }
+  }, [composeTitle, composeBody, composeTagsInput]);
 
   const seedFallbackById = useMemo(() => {
     const map = new Map<
@@ -374,11 +543,33 @@ export const CommunityView: React.FC = () => {
         });
       }
     }
-    return Array.from(map.values());
+    const list = Array.from(map.values());
+    // Attach default community poll to the first Q&A post if no post defines a poll yet
+    if (list.length > 0 && !list.some((p) => Boolean(p.poll))) {
+      const targetIdx = list.findIndex((p) => p.channel === 'qa');
+      const idx = targetIdx >= 0 ? targetIdx : 0;
+      list[idx] = { ...list[idx], poll: DEFAULT_SEED_POLL };
+    }
+    return list;
   }, [communityPosts, localPosts, seedFallbackById]);
+
+  const moderatedPosts = useMemo<CommunityPost[]>(() => {
+    const hiddenSet = new Set(moderation.hiddenPostIds);
+    const mutedSet = new Set(moderation.mutedHandles.map((h) => h.toLowerCase()));
+    const blockedSet = new Set(moderation.blockedHandles.map((h) => h.toLowerCase()));
+    return allPosts.filter((p) => {
+      if (hiddenSet.has(p.id)) return false;
+      const h = p.author.handle.toLowerCase();
+      if (mutedSet.has(h) || blockedSet.has(h)) return false;
+      return true;
+    });
+  }, [allPosts, moderation]);
+
+  const hiddenByModerationCount = allPosts.length - moderatedPosts.length;
 
   const getPostAnswers = useCallback(
     (post: CommunityPost): CommunityAnswer[] => {
+      const blockedSet = new Set(moderation.blockedHandles.map((h) => h.toLowerCase()));
       const list: CommunityAnswer[] = [];
       const acceptedOverrideId = localAcceptedMap[post.id];
       if (post.acceptedAnswer) {
@@ -408,9 +599,9 @@ export const CommunityView: React.FC = () => {
           });
         }
       }
-      return list;
+      return list.filter((ans) => !blockedSet.has(ans.author.handle.toLowerCase()));
     },
-    [localReplies, localAcceptedMap]
+    [localReplies, localAcceptedMap, moderation.blockedHandles]
   );
 
   const getPostScore = useCallback(
@@ -467,10 +658,26 @@ export const CommunityView: React.FC = () => {
     }
   }, []);
 
+  const toggleFollowHandle = useCallback((handle: string) => {
+    const clean = handle.trim().toLowerCase().replace(/^@/, '');
+    if (!clean) return;
+    setFollowingHandles((prev) => {
+      const exists = prev.some((h) => h.toLowerCase() === clean);
+      const next = exists ? prev.filter((h) => h.toLowerCase() !== clean) : [...prev, clean];
+      try {
+        window.localStorage.setItem(FOLLOWING_STORAGE_KEY, JSON.stringify(next));
+      } catch {
+        void 0;
+      }
+      return next;
+    });
+  }, []);
+
   const feedTabItems = useMemo<LiquidTabItem[]>(
     () => [
-      { id: 'all', label: 'Tất cả', count: allPosts.length },
-      { id: 'trending', label: 'Thịnh hành' },
+      { id: 'all', label: 'Dành cho bạn', count: allPosts.length },
+      { id: 'following', label: 'Đang theo dõi' },
+      { id: 'newest', label: 'Mới nhất' },
       { id: 'demos', label: 'Mã chạy thử', count: demoPosts.length },
       { id: 'saved', label: 'Đã lưu', count: savedCommunityPosts.length },
     ],
@@ -610,7 +817,7 @@ export const CommunityView: React.FC = () => {
   }, []);
 
   const visiblePosts = useMemo<CommunityPost[]>(() => {
-    let pool = allPosts;
+    let pool = moderatedPosts;
 
     if (activeChannel === 'saved' || feedTab === 'saved') {
       pool = pool.filter((p) => savedItemIds.includes(p.id));
@@ -620,6 +827,11 @@ export const CommunityView: React.FC = () => {
 
     if (feedTab === 'demos') {
       pool = pool.filter((p) => Boolean(p.demoSnippet));
+    }
+
+    if (feedTab === 'following') {
+      const followedSet = new Set(followingHandles.map((h) => h.toLowerCase()));
+      pool = pool.filter((p) => followedSet.has(p.author.handle.toLowerCase()));
     }
 
     if (selectedTopic !== 'all') {
@@ -648,21 +860,22 @@ export const CommunityView: React.FC = () => {
     }
 
     return [...pool].sort((a, b) => {
-      if (feedTab === 'trending' || sortMode === 'top') {
+      if (feedTab !== 'newest' && (feedTab === 'trending' || sortMode === 'top')) {
         const scoreA = getPostScore(a) * 2 + getPostAnswers(a).length * 3;
         const scoreB = getPostScore(b) * 2 + getPostAnswers(b).length * 3;
         if (scoreB !== scoreA) return scoreB - scoreA;
       }
-      if (sortMode === 'discussed') {
+      if (feedTab !== 'newest' && sortMode === 'discussed') {
         const diff = getPostAnswers(b).length - getPostAnswers(a).length;
         if (diff !== 0) return diff;
       }
       return Date.parse(b.createdAt) - Date.parse(a.createdAt);
     });
   }, [
-    allPosts,
+    moderatedPosts,
     activeChannel,
     feedTab,
+    followingHandles,
     savedItemIds,
     selectedTopic,
     matchesTopicFilter,
@@ -728,13 +941,101 @@ export const CommunityView: React.FC = () => {
     [reducedMotion]
   );
 
+  const notifications = useMemo<CommunityNotificationItem[]>(() => {
+    const readSet = new Set(readNotifIds);
+    const items: CommunityNotificationItem[] = [];
+    const firstQa = moderatedPosts.find((p) => p.channel === 'qa') || moderatedPosts[0];
+    const firstDemo = moderatedPosts.find((p) => Boolean(p.demoSnippet)) || moderatedPosts[0];
+    const pollPost = moderatedPosts.find((p) => Boolean(p.poll)) || moderatedPosts[0];
+
+    if (firstQa) {
+      const replies = getPostAnswers(firstQa);
+      const latest = replies[replies.length - 1];
+      items.push({
+        id: `notif-reply-${firstQa.id}-${replies.length}`,
+        group: 'replies',
+        postId: firstQa.id,
+        title: latest
+          ? `${latest.author.name} vừa phản hồi trong chủ đề`
+          : 'Chủ đề hỏi đáp có thảo luận mới',
+        detail: whiteLabelText(firstQa.title),
+        timeLabel: '2 giờ trước',
+        read: readSet.has(`notif-reply-${firstQa.id}-${replies.length}`),
+      });
+    }
+
+    if (firstDemo) {
+      items.push({
+        id: `notif-vote-${firstDemo.id}`,
+        group: 'votes',
+        postId: firstDemo.id,
+        title: `${getPostScore(firstDemo)} thành viên đã tán thành mã chạy thử`,
+        detail: whiteLabelText(firstDemo.title),
+        timeLabel: '4 giờ trước',
+        read: readSet.has(`notif-vote-${firstDemo.id}`),
+      });
+    }
+
+    if (pollPost && pollPost.poll) {
+      items.push({
+        id: `notif-poll-${pollPost.id}`,
+        group: 'community',
+        postId: pollPost.id,
+        title: 'Thăm dò cộng đồng đang mở bình chọn',
+        detail: pollPost.poll.question,
+        timeLabel: 'Hôm nay',
+        read: readSet.has(`notif-poll-${pollPost.id}`),
+      });
+    }
+
+    if (savedCommunityPosts[0]) {
+      items.push({
+        id: `notif-saved-${savedCommunityPosts[0].id}`,
+        group: 'votes',
+        postId: savedCommunityPosts[0].id,
+        title: 'Bài viết đã lưu có cập nhật mới',
+        detail: whiteLabelText(savedCommunityPosts[0].title),
+        timeLabel: 'Hôm qua',
+        read: readSet.has(`notif-saved-${savedCommunityPosts[0].id}`),
+      });
+    }
+
+    return items;
+  }, [moderatedPosts, readNotifIds, getPostAnswers, getPostScore, savedCommunityPosts]);
+
+  const unreadNotifCount = useMemo(
+    () => notifications.filter((n) => !n.read).length,
+    [notifications]
+  );
+
   useEffect(() => {
+    try {
+      window.localStorage.setItem(UNREAD_NOTIF_STORAGE_KEY, String(unreadNotifCount));
+      window.dispatchEvent(new CustomEvent('ff:community-unread', { detail: unreadNotifCount }));
+    } catch {
+      void 0;
+    }
+  }, [unreadNotifCount]);
+
+  useEffect(() => {
+    const handleAction = (action: string | null) => {
+      if (action === 'compose') {
+        setComposerOpen(true);
+      } else if (action === 'notifications') {
+        setNotificationsOpen(true);
+      }
+    };
     try {
       const pending = window.sessionStorage.getItem('ff_community_post_id');
       if (pending) {
         setSelectedPostId(pending);
         setOpenCommentDrawers((prev) => ({ ...prev, [pending]: true }));
         window.sessionStorage.removeItem('ff_community_post_id');
+      }
+      const pendingAction = window.sessionStorage.getItem('ff_community_action');
+      if (pendingAction) {
+        window.sessionStorage.removeItem('ff_community_action');
+        handleAction(pendingAction);
       }
       const params = new URLSearchParams(window.location.search);
       const fromUrl = params.get('post');
@@ -752,9 +1053,31 @@ export const CommunityView: React.FC = () => {
         setOpenCommentDrawers((prev) => ({ ...prev, [detail]: true }));
       }
     };
+    const onActionEvent = (event: Event) => {
+      const detail = (event as CustomEvent<string>).detail;
+      if (typeof detail === 'string') {
+        handleAction(detail);
+      }
+    };
     window.addEventListener('ff:community-post', onPostEvent);
-    return () => window.removeEventListener('ff:community-post', onPostEvent);
+    window.addEventListener('ff:community-action', onActionEvent);
+    return () => {
+      window.removeEventListener('ff:community-post', onPostEvent);
+      window.removeEventListener('ff:community-action', onActionEvent);
+    };
   }, []);
+
+  useEffect(() => {
+    if (!openMenuPostId) return;
+    const onDown = (event: PointerEvent) => {
+      const target = event.target as HTMLElement | null;
+      if (!target?.closest('.cm-mod-menu-wrap')) {
+        setOpenMenuPostId(null);
+      }
+    };
+    document.addEventListener('pointerdown', onDown);
+    return () => document.removeEventListener('pointerdown', onDown);
+  }, [openMenuPostId]);
 
   const recordRecentSearch = useCallback((term: string) => {
     const clean = term.trim();
@@ -831,8 +1154,194 @@ export const CommunityView: React.FC = () => {
     });
   }, [activeProject, composeTitle, composeBody, addToast]);
 
+  const handleVotePoll = useCallback(
+    (postId: string, optionId: string) => {
+      setPollVotes((prev) => ({
+        ...prev,
+        [postId]: prev[postId] === optionId ? '' : optionId,
+      }));
+    },
+    []
+  );
+
+  const handleHidePost = useCallback(
+    (post: CommunityPost) => {
+      setOpenMenuPostId(null);
+      setModeration((prev) => ({
+        ...prev,
+        hiddenPostIds: prev.hiddenPostIds.includes(post.id)
+          ? prev.hiddenPostIds
+          : [...prev.hiddenPostIds, post.id],
+      }));
+      addToast({
+        type: 'info',
+        title: 'Đã ẩn bài viết',
+        message: whiteLabelText(post.title),
+      });
+    },
+    [addToast]
+  );
+
+  const handleMuteAuthor = useCallback(
+    (handle: string, name: string) => {
+      const clean = handle.toLowerCase();
+      setOpenMenuPostId(null);
+      setModeration((prev) => ({
+        ...prev,
+        mutedHandles: prev.mutedHandles.includes(clean)
+          ? prev.mutedHandles
+          : [...prev.mutedHandles, clean],
+      }));
+      addToast({
+        type: 'info',
+        title: `Đã tắt tiếng @${handle}`,
+        message: `Bài viết của ${name} được ẩn khỏi bảng tin.`,
+      });
+    },
+    [addToast]
+  );
+
+  const handleBlockAuthor = useCallback(
+    (handle: string, name: string) => {
+      const clean = handle.toLowerCase();
+      setOpenMenuPostId(null);
+      setModeration((prev) => ({
+        ...prev,
+        blockedHandles: prev.blockedHandles.includes(clean)
+          ? prev.blockedHandles
+          : [...prev.blockedHandles, clean],
+      }));
+      addToast({
+        type: 'warning',
+        title: `Đã chặn @${handle}`,
+        message: `Bài viết và bình luận của ${name} đã bị ẩn.`,
+      });
+    },
+    [addToast]
+  );
+
+  const handleResetModeration = useCallback(() => {
+    setModeration({ hiddenPostIds: [], mutedHandles: [], blockedHandles: [] });
+    addToast({
+      type: 'success',
+      title: 'Đã khôi phục nội dung đã ẩn',
+    });
+  }, [addToast]);
+
+  const handleMarkAllNotifRead = useCallback(() => {
+    setReadNotifIds((prev) => Array.from(new Set([...prev, ...notifications.map((n) => n.id)])));
+  }, [notifications]);
+
+  const handleSelectNotification = useCallback(
+    (item: CommunityNotificationItem) => {
+      setReadNotifIds((prev) => (prev.includes(item.id) ? prev : [...prev, item.id]));
+      setNotificationsOpen(false);
+      focusAndScrollToPost(item.postId, item.group === 'replies');
+    },
+    [focusAndScrollToPost]
+  );
+
+  const handleComposeImageFiles = useCallback(
+    async (files: FileList | null) => {
+      if (!files || files.length === 0) return;
+      const slotsLeft = Math.max(0, MAX_COMPOSE_IMAGES - composeImages.length);
+      if (slotsLeft === 0) {
+        addToast({ type: 'warning', title: 'Tối đa 4 ảnh cho mỗi bài viết' });
+        return;
+      }
+      const picked = Array.from(files)
+        .filter((f) => f.type.startsWith('image/'))
+        .slice(0, slotsLeft);
+      if (picked.length === 0) return;
+      try {
+        const encoded = await Promise.all(
+          picked.map(async (file, idx) => ({
+            id: `img-${Date.now()}-${idx}`,
+            url: await compressImageFile(file),
+            alt: file.name.replace(/\.[^.]+$/, '') || `Ảnh đính kèm ${idx + 1}`,
+          }))
+        );
+        setComposeImages((prev) => [...prev, ...encoded].slice(0, MAX_COMPOSE_IMAGES));
+      } catch {
+        addToast({ type: 'error', title: 'Không thể xử lý tệp ảnh vừa chọn' });
+      }
+    },
+    [composeImages.length, addToast]
+  );
+
+  const handleAddComposeImageUrl = useCallback(() => {
+    const clean = composeImageUrl.trim();
+    if (!clean) return;
+    if (!/^https?:\/\/\S+$/i.test(clean)) {
+      addToast({ type: 'warning', title: 'Nhập liên kết ảnh bắt đầu bằng https://' });
+      return;
+    }
+    if (composeImages.length >= MAX_COMPOSE_IMAGES) {
+      addToast({ type: 'warning', title: 'Tối đa 4 ảnh cho mỗi bài viết' });
+      return;
+    }
+    setComposeImages((prev) => [
+      ...prev,
+      {
+        id: `img-url-${Date.now()}`,
+        url: clean,
+        alt: `Ảnh minh họa ${prev.length + 1}`,
+      },
+    ]);
+    setComposeImageUrl('');
+  }, [composeImageUrl, composeImages.length, addToast]);
+
+  const handleRemoveComposeImage = useCallback((id: string) => {
+    setComposeImages((prev) => prev.filter((img) => img.id !== id));
+  }, []);
+
+  const handleUpdatePollOption = useCallback((index: number, value: string) => {
+    setComposePollOptions((prev) => prev.map((opt, i) => (i === index ? value : opt)));
+  }, []);
+
+  const handleAddPollOption = useCallback(() => {
+    setComposePollOptions((prev) => (prev.length >= 4 ? prev : [...prev, '']));
+  }, []);
+
+  const handleRemovePollOption = useCallback((index: number) => {
+    setComposePollOptions((prev) => (prev.length <= 2 ? prev : prev.filter((_, i) => i !== index)));
+  }, []);
+
+  const handlePublishGreeting = useCallback(
+    (payload: { title: string; body: string; tags: string[] }) => {
+      const greetingPost: CommunityPost = {
+        id: `post-hello-${Date.now()}`,
+        channel: 'qa',
+        title: payload.title,
+        body: payload.body,
+        description: payload.body,
+        category: 'Giới thiệu thành viên',
+        tags: payload.tags,
+        createdAt: new Date().toISOString(),
+        votes: 1,
+        likes: 1,
+        views: 1,
+        author: {
+          id: currentUser?.id || 'guest-builder',
+          name: formatUserDisplayName(currentUser?.name, 'Thành viên mới'),
+          handle: currentUser?.username || 'builder_vn',
+          role: currentUser?.role === 'admin' ? 'Điều hành' : 'Thành viên',
+        },
+        answers: [],
+      };
+      setLocalPosts((prev) => [greetingPost, ...prev]);
+      setSelectedPostId(greetingPost.id);
+      addToast({
+        type: 'success',
+        title: 'Đã đăng bài chào hỏi đầu tiên',
+        message: greetingPost.title,
+      });
+    },
+    [currentUser, addToast]
+  );
+
   const openQuickComposer = useCallback(
-    (mode: 'default' | 'showcase' | 'qa' | 'workspace') => {
+    (mode: 'default' | 'showcase' | 'qa' | 'workspace' | 'poll' | 'images') => {
       if (mode === 'showcase') {
         setComposeChannel('showcase');
         setComposeCategory('Components');
@@ -847,6 +1356,14 @@ export const CommunityView: React.FC = () => {
         setComposeChannel('showcase');
         setComposeCategory('Components');
         handlePrefillFromWorkspace();
+      } else if (mode === 'poll') {
+        setComposeChannel('qa');
+        setComposeCategory('React / Frontend');
+        setComposeIncludePoll(true);
+      } else if (mode === 'images') {
+        setComposeChannel('showcase');
+        setComposeCategory('UI/UX & Tokens');
+        setComposeIncludeImages(true);
       } else if (activeChannel === 'qa') {
         setComposeChannel('qa');
         setComposeCategory('React / Frontend');
@@ -916,6 +1433,26 @@ export const CommunityView: React.FC = () => {
         }
       : undefined;
 
+    const validPollOptions = composePollOptions
+      .map((opt) => opt.trim())
+      .filter(Boolean)
+      .slice(0, 4);
+    const poll: CommunityPoll | undefined =
+      composeIncludePoll && validPollOptions.length >= 2
+        ? {
+            question: composePollQuestion.trim() || titleTrimmed,
+            closesLabel: 'Đang mở',
+            options: validPollOptions.map((label, idx) => ({
+              id: `opt-${Date.now()}-${idx}`,
+              label,
+              votes: 0,
+            })),
+          }
+        : undefined;
+
+    const images: CommunityPostImage[] | undefined =
+      composeImages.length > 0 ? composeImages.slice(0, MAX_COMPOSE_IMAGES) : undefined;
+
     const now = new Date().toISOString();
     const localNewPost: CommunityPost = {
       id: `post-local-${Date.now()}`,
@@ -931,11 +1468,13 @@ export const CommunityView: React.FC = () => {
       views: 1,
       author: {
         id: currentUser?.id || 'guest-builder',
-        name: currentUser?.name || 'Builder Cộng đồng',
+        name: formatUserDisplayName(currentUser?.name, 'Thành viên'),
         handle: currentUser?.username || 'builder_vn',
         role: currentUser?.role === 'admin' ? 'Điều hành' : 'Thành viên',
       },
       demoSnippet,
+      images,
+      poll,
       answers: [],
     };
 
@@ -954,6 +1493,8 @@ export const CommunityView: React.FC = () => {
           finalPost = {
             ...created,
             demoSnippet: localNewPost.demoSnippet || created.demoSnippet,
+            images: localNewPost.images,
+            poll: localNewPost.poll,
           };
         } catch {
           finalPost = localNewPost;
@@ -981,7 +1522,18 @@ export const CommunityView: React.FC = () => {
       setComposeJs('');
       setComposeIncludeCode(false);
       setComposePreviewLive(false);
+      setComposeIncludeImages(false);
+      setComposeImages([]);
+      setComposeImageUrl('');
+      setComposeIncludePoll(false);
+      setComposePollQuestion('');
+      setComposePollOptions(['', '']);
       setComposerOpen(false);
+      try {
+        window.localStorage.removeItem(LOCAL_DRAFT_KEY);
+      } catch {
+        void 0;
+      }
 
       addToast({
         type: 'success',
@@ -1000,19 +1552,22 @@ export const CommunityView: React.FC = () => {
     if (!draft) return;
 
     setSubmittingReplyId(post.id);
+    const replyTarget = replyTargets[post.id];
+    const finalContent = replyTarget ? `@${replyTarget.authorName} ${draft}` : draft;
     const now = new Date().toISOString();
     const newAnswer: CommunityAnswer = {
       id: `ans-local-${Date.now()}`,
       author: {
         id: currentUser?.id || 'guest-builder',
-        name: currentUser?.name || 'Builder Cộng đồng',
+        name: formatUserDisplayName(currentUser?.name, 'Thành viên'),
         handle: currentUser?.username || 'builder_vn',
         role: currentUser?.role === 'admin' ? 'Điều hành' : 'Thành viên',
       },
       createdAt: now,
       votes: 1,
-      content: draft,
-    };
+      content: finalContent,
+      ...(replyTarget ? { parentId: replyTarget.answerId } : {}),
+    } as CommunityAnswer;
 
     try {
       setLocalReplies((prev) => ({
@@ -1020,6 +1575,7 @@ export const CommunityView: React.FC = () => {
         [post.id]: [...(prev[post.id] || []), newAnswer],
       }));
       setReplyDrafts((prev) => ({ ...prev, [post.id]: '' }));
+      setReplyTargets((prev) => ({ ...prev, [post.id]: null }));
       setOpenCommentDrawers((prev) => ({ ...prev, [post.id]: true }));
       const textareaEl = formEl.querySelector('textarea');
       if (textareaEl) {
@@ -1180,13 +1736,31 @@ export const CommunityView: React.FC = () => {
                 <h1 className="cm-page-title">Tri thức</h1>
                 <span className="cm-count">{visiblePosts.length} bài</span>
               </div>
-              <button
-                type="button"
-                className="btn btn-red btn-sm cm-write-btn"
-                onClick={() => openQuickComposer('default')}
-              >
-                Viết bài
-              </button>
+              <div className="cm-hero-actions">
+                <button
+                  type="button"
+                  className="cm-icon-btn cm-bell-btn"
+                  aria-label={
+                    unreadNotifCount > 0
+                      ? `Thông báo (${unreadNotifCount} chưa đọc)`
+                      : 'Thông báo'
+                  }
+                  title="Thông báo cộng đồng"
+                  onClick={() => setNotificationsOpen(true)}
+                >
+                  <Bell size={17} aria-hidden="true" />
+                  {unreadNotifCount > 0 && (
+                    <span className="cm-bell-dot" aria-hidden="true" />
+                  )}
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-red btn-sm cm-write-btn"
+                  onClick={() => openQuickComposer('default')}
+                >
+                  Viết bài
+                </button>
+              </div>
             </div>
 
             <div className="cm-search-row">
@@ -1285,10 +1859,42 @@ export const CommunityView: React.FC = () => {
             )}
           </header>
 
+          {!onboardingDismissed && (
+            <CommunityOnboardingCard
+              followingHandles={followingHandles}
+              onToggleFollow={toggleFollowHandle}
+              onSelectInterestTopic={setSelectedTopic}
+              onSelectChannel={(ch) => handleSelectChannel(ch)}
+              onPublishGreeting={handlePublishGreeting}
+              onDismiss={() => setOnboardingDismissed(true)}
+            />
+          )}
+
+          {hiddenByModerationCount > 0 && (
+            <div className="cm-mod-banner" role="status">
+              <span className="cm-mod-banner-text">
+                Đang lọc kiểm duyệt: {moderation.hiddenPostIds.length} bài ẩn
+                {moderation.mutedHandles.length > 0
+                  ? ` · ${moderation.mutedHandles.length} tắt tiếng`
+                  : ''}
+                {moderation.blockedHandles.length > 0
+                  ? ` · ${moderation.blockedHandles.length} đã chặn`
+                  : ''}
+              </span>
+              <button
+                type="button"
+                className="cm-clear-btn"
+                onClick={handleResetModeration}
+              >
+                Khôi phục tất cả
+              </button>
+            </div>
+          )}
+
           <section className="cm-quick-composer" aria-label="Tạo bài viết nhanh">
             <div className="cm-quick-composer-top">
               <span className="cm-avatar-chip" aria-hidden="true">
-                {authorInitials(currentUser?.name || 'Builder Cộng đồng')}
+                {authorInitials(formatUserDisplayName(currentUser?.name, 'Thành viên'))}
               </span>
               <button
                 type="button"
@@ -1306,6 +1912,22 @@ export const CommunityView: React.FC = () => {
               >
                 <Code2 size={15} aria-hidden="true" />
                 <span>Chia sẻ demo</span>
+              </button>
+              <button
+                type="button"
+                className="cm-quick-action-btn"
+                onClick={() => openQuickComposer('images')}
+              >
+                <ImageIcon size={15} aria-hidden="true" />
+                <span>Ảnh (tối đa 4)</span>
+              </button>
+              <button
+                type="button"
+                className="cm-quick-action-btn"
+                onClick={() => openQuickComposer('poll')}
+              >
+                <BarChart3 size={15} aria-hidden="true" />
+                <span>Thăm dò</span>
               </button>
               <button
                 type="button"
@@ -1346,6 +1968,7 @@ export const CommunityView: React.FC = () => {
               </div>
             </div>
           ) : (
+            <>
             <ul className="cm-stream">
               {visiblePosts.map((post) => {
                 const isSelected = activeReaderPost?.id === post.id;
@@ -1439,6 +2062,20 @@ export const CommunityView: React.FC = () => {
                       </button>
 
                       <div className="cm-post-meta-right">
+                        <button
+                          type="button"
+                          className="cm-follow-pill"
+                          aria-pressed={followingHandles.some(
+                            (h) => h.toLowerCase() === post.author.handle.toLowerCase()
+                          )}
+                          onClick={() => toggleFollowHandle(post.author.handle)}
+                        >
+                          {followingHandles.some(
+                            (h) => h.toLowerCase() === post.author.handle.toLowerCase()
+                          )
+                            ? 'Đang theo dõi'
+                            : 'Theo dõi'}
+                        </button>
                         <span className="cm-cat-label">{whiteLabelText(post.category)}</span>
                         {solved && <span className="cm-solved-dot">Đạt chuẩn</span>}
                       </div>
@@ -1455,6 +2092,41 @@ export const CommunityView: React.FC = () => {
                     <p className="cm-post-body">
                       {whiteLabelText(post.body || post.description || '')}
                     </p>
+
+                    {post.images && post.images.length > 0 && (
+                      <div
+                        className="cm-gallery"
+                        data-count={Math.min(4, post.images.length)}
+                        aria-label={`Bộ ${post.images.length} ảnh đính kèm`}
+                      >
+                        {post.images.slice(0, 4).map((img) => (
+                          <button
+                            key={img.id}
+                            type="button"
+                            className="cm-gallery-item"
+                            onClick={() => setLightboxImage(img)}
+                            aria-label={`Phóng to ảnh ${img.alt}`}
+                          >
+                            <img
+                              src={img.url}
+                              alt={img.alt}
+                              loading="lazy"
+                              decoding="async"
+                              referrerPolicy="no-referrer"
+                            />
+                          </button>
+                        ))}
+                      </div>
+                    )}
+
+                    {post.poll && (
+                      <CommunityPollCard
+                        postId={post.id}
+                        poll={post.poll}
+                        selectedOptionId={pollVotes[post.id] || null}
+                        onVote={handleVotePoll}
+                      />
+                    )}
 
                     {post.channel === 'clubs' && post.activeDossier && (
                       <div className="cm-dossier">
@@ -1764,15 +2436,69 @@ export const CommunityView: React.FC = () => {
                           <ArrowUpRight size={16} aria-hidden="true" />
                         </button>
 
-                        <button
-                          type="button"
-                          className="cm-icon-btn cm-icon-btn--muted"
-                          aria-label="Báo cáo bài viết"
-                          title="Báo cáo"
-                          onClick={() => setReportTarget(post)}
-                        >
-                          <Flag size={15} aria-hidden="true" />
-                        </button>
+                        <div className="cm-mod-menu-wrap">
+                          <button
+                            type="button"
+                            className="cm-icon-btn cm-icon-btn--muted"
+                            aria-haspopup="menu"
+                            aria-expanded={openMenuPostId === post.id}
+                            aria-label="Kiểm duyệt bài viết (Ẩn, tắt tiếng, chặn, báo cáo)"
+                            title="Kiểm duyệt bài viết"
+                            onClick={() =>
+                              setOpenMenuPostId((prev) => (prev === post.id ? null : post.id))
+                            }
+                          >
+                            <MoreHorizontal size={16} aria-hidden="true" />
+                          </button>
+
+                          {openMenuPostId === post.id && (
+                            <div className="cm-mod-menu" role="menu" aria-label="Tác vụ kiểm duyệt">
+                              <button
+                                type="button"
+                                role="menuitem"
+                                className="cm-mod-menu-item"
+                                onClick={() => handleHidePost(post)}
+                              >
+                                <EyeOff size={14} aria-hidden="true" />
+                                <span>Ẩn bài viết</span>
+                              </button>
+                              <button
+                                type="button"
+                                role="menuitem"
+                                className="cm-mod-menu-item"
+                                onClick={() =>
+                                  handleMuteAuthor(post.author.handle, post.author.name)
+                                }
+                              >
+                                <VolumeX size={14} aria-hidden="true" />
+                                <span>Tắt tiếng @{post.author.handle}</span>
+                              </button>
+                              <button
+                                type="button"
+                                role="menuitem"
+                                className="cm-mod-menu-item cm-mod-menu-item--danger"
+                                onClick={() =>
+                                  handleBlockAuthor(post.author.handle, post.author.name)
+                                }
+                              >
+                                <ShieldBan size={14} aria-hidden="true" />
+                                <span>Chặn @{post.author.handle}</span>
+                              </button>
+                              <button
+                                type="button"
+                                role="menuitem"
+                                className="cm-mod-menu-item cm-mod-menu-item--danger"
+                                onClick={() => {
+                                  setOpenMenuPostId(null);
+                                  setReportTarget(post);
+                                }}
+                              >
+                                <Flag size={14} aria-hidden="true" />
+                                <span>Báo cáo bài viết</span>
+                              </button>
+                            </div>
+                          )}
+                        </div>
                       </div>
                     </footer>
 
@@ -1835,43 +2561,73 @@ export const CommunityView: React.FC = () => {
                           </p>
                         ) : (
                           <ul className="cm-comments-list">
-                            {answers.map((ans) => (
-                              <li
-                                key={ans.id}
-                                className="cm-comment-item"
-                                data-accepted={ans.isAccepted ? 'true' : undefined}
-                              >
-                                <div className="cm-comment-head">
-                                  <button
-                                    type="button"
-                                    className="cm-author-link"
-                                    onClick={() => openUserProfile(ans.author)}
-                                    title={`Xem hồ sơ của ${ans.author.name} (@${ans.author.handle})`}
-                                  >
-                                    <span className="cm-avatar-chip cm-avatar-chip--sm" aria-hidden="true">
-                                      {authorInitials(ans.author.name)}
-                                    </span>
-                                    <span className="cm-author-name">{ans.author.name}</span>
-                                    <time className="t-label" dateTime={ans.createdAt}>
-                                      {formatPostDate(ans.createdAt)}
-                                    </time>
-                                  </button>
-
-                                  {ans.isAccepted ? (
-                                    <span className="cm-solved-dot">Lời giải chuẩn</span>
-                                  ) : (
+                            {answers.map((ans) => {
+                              const withParent = ans as CommunityAnswer & { parentId?: string };
+                              let depth = 0;
+                              let cur = withParent.parentId;
+                              while (cur && depth < 3) {
+                                depth += 1;
+                                const p = answers.find((x) => x.id === cur) as
+                                  | (CommunityAnswer & { parentId?: string })
+                                  | undefined;
+                                cur = p?.parentId;
+                              }
+                              return (
+                                <li
+                                  key={ans.id}
+                                  className="cm-comment-item"
+                                  data-depth={depth}
+                                  data-accepted={ans.isAccepted ? 'true' : undefined}
+                                >
+                                  <div className="cm-comment-head">
                                     <button
                                       type="button"
-                                      className="cm-clear-btn"
-                                      onClick={() => void handleAcceptSolution(post, ans.id)}
+                                      className="cm-author-link"
+                                      onClick={() => openUserProfile(ans.author)}
+                                      title={`Xem hồ sơ của ${ans.author.name} (@${ans.author.handle})`}
                                     >
-                                      Đánh dấu chuẩn
+                                      <span className="cm-avatar-chip cm-avatar-chip--sm" aria-hidden="true">
+                                        {authorInitials(ans.author.name)}
+                                      </span>
+                                      <span className="cm-author-name">{ans.author.name}</span>
+                                      <time className="t-label" dateTime={ans.createdAt}>
+                                        {formatPostDate(ans.createdAt)}
+                                      </time>
                                     </button>
-                                  )}
-                                </div>
-                                <p className="cm-comment-text">{whiteLabelText(ans.content)}</p>
-                              </li>
-                            ))}
+
+                                    <div className="cm-comment-actions">
+                                      <button
+                                        type="button"
+                                        className="cm-clear-btn"
+                                        onClick={() =>
+                                          setReplyTargets((prev) => ({
+                                            ...prev,
+                                            [post.id]: {
+                                              answerId: ans.id,
+                                              authorName: ans.author.handle,
+                                            },
+                                          }))
+                                        }
+                                      >
+                                        Trả lời
+                                      </button>
+                                      {ans.isAccepted ? (
+                                        <span className="cm-solved-dot">Lời giải chuẩn</span>
+                                      ) : (
+                                        <button
+                                          type="button"
+                                          className="cm-clear-btn"
+                                          onClick={() => void handleAcceptSolution(post, ans.id)}
+                                        >
+                                          Đánh dấu chuẩn
+                                        </button>
+                                      )}
+                                    </div>
+                                  </div>
+                                  <p className="cm-comment-text">{whiteLabelText(ans.content)}</p>
+                                </li>
+                              );
+                            })}
                           </ul>
                         )}
 
@@ -1879,6 +2635,22 @@ export const CommunityView: React.FC = () => {
                           className="cm-comment-form"
                           onSubmit={(e) => void handleSubmitComment(e, post)}
                         >
+                          {replyTargets[post.id] && (
+                            <div className="cm-reply-target-bar">
+                              <span>
+                                Đang trả lời <strong>@{replyTargets[post.id]!.authorName}</strong>
+                              </span>
+                              <button
+                                type="button"
+                                className="cm-clear-btn"
+                                onClick={() =>
+                                  setReplyTargets((prev) => ({ ...prev, [post.id]: null }))
+                                }
+                              >
+                                Hủy
+                              </button>
+                            </div>
+                          )}
                           <label htmlFor={`cm-reply-${post.id}`} className="sr-only">
                             Viết bình luận
                           </label>
@@ -1925,6 +2697,10 @@ export const CommunityView: React.FC = () => {
                 );
               })}
             </ul>
+            <div className="cm-end-feed" role="status">
+              <span>Bạn đã xem hết bài mới</span>
+            </div>
+            </>
           )}
         </main>
 
@@ -2148,6 +2924,28 @@ export const CommunityView: React.FC = () => {
             >
               {composeIncludeCode ? 'Ẩn hộp mã' : 'Đính kèm mã chạy thử'}
             </button>
+            <button
+              type="button"
+              className="btn btn-line btn-sm"
+              aria-pressed={composeIncludeImages}
+              onClick={() => setComposeIncludeImages((prev) => !prev)}
+            >
+              <ImageIcon size={14} aria-hidden="true" />
+              <span>
+                {composeImages.length > 0
+                  ? `Ảnh (${composeImages.length}/${MAX_COMPOSE_IMAGES})`
+                  : 'Đính kèm ảnh'}
+              </span>
+            </button>
+            <button
+              type="button"
+              className="btn btn-line btn-sm"
+              aria-pressed={composeIncludePoll}
+              onClick={() => setComposeIncludePoll((prev) => !prev)}
+            >
+              <BarChart3 size={14} aria-hidden="true" />
+              <span>{composeIncludePoll ? 'Ẩn thăm dò' : 'Thăm dò ý kiến'}</span>
+            </button>
           </div>
 
           <div className="cm-composer-row">
@@ -2328,7 +3126,136 @@ export const CommunityView: React.FC = () => {
             </div>
           )}
 
+          {composeIncludeImages && (
+            <div className="cm-code-composer" aria-label="Đính kèm tối đa 4 ảnh">
+              <div className="cm-code-composer-bar">
+                <span className="t-label">
+                  Ảnh minh họa ({composeImages.length}/{MAX_COMPOSE_IMAGES})
+                </span>
+                <label className="btn btn-line btn-sm cm-file-label">
+                  <ImageIcon size={14} aria-hidden="true" />
+                  <span>Chọn ảnh từ máy</span>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    multiple
+                    disabled={composeImages.length >= MAX_COMPOSE_IMAGES}
+                    onChange={(e) => {
+                      void handleComposeImageFiles(e.target.files);
+                      e.target.value = '';
+                    }}
+                    className="sr-only"
+                  />
+                </label>
+              </div>
+
+              <div className="cm-img-url-row">
+                <label htmlFor="cm-img-url" className="sr-only">
+                  Dán liên kết ảnh
+                </label>
+                <input
+                  id="cm-img-url"
+                  type="url"
+                  className="field"
+                  value={composeImageUrl}
+                  onChange={(e) => setComposeImageUrl(e.target.value)}
+                  placeholder="Hoặc dán liên kết ảnh https://..."
+                  disabled={composeImages.length >= MAX_COMPOSE_IMAGES}
+                />
+                <button
+                  type="button"
+                  className="btn btn-line btn-sm"
+                  disabled={!composeImageUrl.trim() || composeImages.length >= MAX_COMPOSE_IMAGES}
+                  onClick={handleAddComposeImageUrl}
+                >
+                  Thêm ảnh
+                </button>
+              </div>
+
+              {composeImages.length > 0 && (
+                <div className="cm-compose-thumbs">
+                  {composeImages.map((img) => (
+                    <div key={img.id} className="cm-compose-thumb">
+                      <img src={img.url} alt={img.alt} />
+                      <button
+                        type="button"
+                        className="cm-compose-thumb-del"
+                        aria-label={`Gỡ ảnh ${img.alt}`}
+                        onClick={() => handleRemoveComposeImage(img.id)}
+                      >
+                        <X size={13} aria-hidden="true" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {composeIncludePoll && (
+            <div className="cm-code-composer" aria-label="Tạo thăm dò ý kiến">
+              <div className="cm-code-composer-bar">
+                <span className="t-label">Thăm dò ý kiến (2–4 lựa chọn)</span>
+                {composePollOptions.length < 4 && (
+                  <button
+                    type="button"
+                    className="btn btn-line btn-sm"
+                    onClick={handleAddPollOption}
+                  >
+                    <Plus size={13} aria-hidden="true" />
+                    <span>Thêm lựa chọn</span>
+                  </button>
+                )}
+              </div>
+
+              <div className="cm-field">
+                <label htmlFor="cm-poll-q" className="t-label">
+                  Câu hỏi thăm dò
+                </label>
+                <input
+                  id="cm-poll-q"
+                  type="text"
+                  className="field"
+                  value={composePollQuestion}
+                  onChange={(e) => setComposePollQuestion(e.target.value)}
+                  placeholder="Ví dụ: Bạn ưu tiên thư viện tạo hiệu ứng nào?"
+                />
+              </div>
+
+              <div className="cm-poll-builder-list">
+                {composePollOptions.map((opt, idx) => (
+                  <div key={idx} className="cm-poll-builder-row">
+                    <label htmlFor={`cm-poll-opt-${idx}`} className="sr-only">
+                      Lựa chọn {idx + 1}
+                    </label>
+                    <input
+                      id={`cm-poll-opt-${idx}`}
+                      type="text"
+                      className="field"
+                      value={opt}
+                      onChange={(e) => handleUpdatePollOption(idx, e.target.value)}
+                      placeholder={`Lựa chọn ${idx + 1}`}
+                    />
+                    {composePollOptions.length > 2 && (
+                      <button
+                        type="button"
+                        className="cm-icon-btn cm-icon-btn--sm"
+                        aria-label={`Xóa lựa chọn ${idx + 1}`}
+                        onClick={() => handleRemovePollOption(idx)}
+                      >
+                        <Trash2 size={14} aria-hidden="true" />
+                      </button>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
           <div className="cm-dialog-actions">
+            {(composeTitle.trim() || composeBody.trim()) && (
+              <span className="t-label cm-draft-note">Đã tự lưu bản nháp</span>
+            )}
             <button
               type="button"
               className="btn btn-line btn-sm"
@@ -2466,6 +3393,43 @@ export const CommunityView: React.FC = () => {
             </button>
           </div>
         </form>
+      </Modal>
+
+      <CommunityNotificationsModal
+        open={notificationsOpen}
+        notifications={notifications}
+        onClose={() => setNotificationsOpen(false)}
+        onMarkAllRead={handleMarkAllNotifRead}
+        onSelectNotification={handleSelectNotification}
+      />
+
+      <Modal
+        open={lightboxImage !== null}
+        onClose={() => setLightboxImage(null)}
+        label={lightboxImage?.alt || 'Xem ảnh phóng to'}
+        className="cm-dialog cm-dialog--lightbox"
+      >
+        {lightboxImage && (
+          <div className="cm-lightbox-body">
+            <div className="cm-dialog-head">
+              <span className="t-label">{lightboxImage.alt}</span>
+              <button
+                type="button"
+                className="cm-icon-btn"
+                aria-label="Đóng xem ảnh"
+                onClick={() => setLightboxImage(null)}
+              >
+                <X size={16} aria-hidden="true" />
+              </button>
+            </div>
+            <img
+              src={lightboxImage.url}
+              alt={lightboxImage.alt}
+              className="cm-lightbox-img"
+              referrerPolicy="no-referrer"
+            />
+          </div>
+        )}
       </Modal>
     </div>
   );

@@ -210,14 +210,13 @@ export const RepoChart: React.FC<RepoChartProps> = ({ query, onClearQuery, saved
                   >
                     {isOpen ? 'Thu gọn' : 'Chi tiết'}
                   </button>
-                  <a
+                  <button
+                    type="button"
                     className="ex-text"
-                    href={repo.htmlUrl}
-                    target="_blank"
-                    rel="noreferrer noopener"
+                    onClick={() => void handleCopy(repo.htmlUrl, 'Đã chép liên kết kho')}
                   >
-                    Mở nguồn
-                  </a>
+                    Chép URL
+                  </button>
                 </div>
               </article>
             );
@@ -308,14 +307,6 @@ export const RepoChart: React.FC<RepoChartProps> = ({ query, onClearQuery, saved
                       >
                         Chép link
                       </button>
-                      <a
-                        className="ex-text"
-                        href={repo.htmlUrl}
-                        target="_blank"
-                        rel="noreferrer noopener"
-                      >
-                        Mở nguồn
-                      </a>
                     </div>
                   </div>
                 ) : null}
@@ -389,14 +380,6 @@ export const RepoChart: React.FC<RepoChartProps> = ({ query, onClearQuery, saved
                         Đính kèm
                       </button>
                       <ReactionBar id={repo.id} title={repo.fullName} showLabel />
-                      <a
-                        className="ex-text"
-                        href={repo.htmlUrl}
-                        target="_blank"
-                        rel="noreferrer noopener"
-                      >
-                        Mở nguồn
-                      </a>
                     </div>
                   </li>
                 );

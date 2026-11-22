@@ -52,7 +52,10 @@ export interface MotionSiteFullEntry {
   title?: string;
   category?: string;
   promptText: string;
-  liveHtml: string;
+  liveHtml?: string;
+  css?: string;
+  code?: string;
+  codeLang?: string;
   tags?: string[];
 }
 
@@ -211,10 +214,12 @@ const SANDBOX_CSP =
 export function compileSpecimenSrcDoc(
   rawHtml: string | undefined,
   rawCss: string | undefined,
-  theme: PreviewTheme
+  theme: PreviewTheme,
+  rawJs?: string
 ): string {
   const source = (rawHtml ?? '').trim();
   const isFullDocument = /^\s*(?:<!doctype\s+html|<html[\s>])/i.test(source);
+  const safeInlineJs = (rawJs ?? '').trim().replace(/<\/script/gi, '<\\/script');
 
   if (isFullDocument) {
     let doc = sanitizeFullDocFonts(source);
@@ -241,6 +246,14 @@ export function compileSpecimenSrcDoc(
         doc += styleTag;
       }
     }
+    if (safeInlineJs) {
+      const scriptTag = `<script>${safeInlineJs}</script>`;
+      if (/<\/body>/i.test(doc)) {
+        doc = doc.replace(/<\/body>/i, `${scriptTag}</body>`);
+      } else {
+        doc += scriptTag;
+      }
+    }
     return doc;
   }
 
@@ -252,7 +265,8 @@ export function compileSpecimenSrcDoc(
   const bodyPadding = hasFullViewportWrapper ? '0' : '24px';
   const baseCss = `html,body{margin:0;min-height:100%;box-sizing:border-box}body{min-height:100dvh;display:grid;place-items:center;padding:${bodyPadding};background:${fallbackBg};color:${fallbackFg};font-family:'Be Vietnam Pro',system-ui,-apple-system,sans-serif}`;
   const syncThemeScript = `<script>(function(){var t="${theme}";var c=document.body.children;for(var i=0;i<c.length;i++){if(c[i].tagName!=="SCRIPT")c[i].setAttribute("data-theme",t);}})();</script>`;
-  return `<!DOCTYPE html><html lang="vi" data-theme="${theme}"><head><meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1.0" />${SANDBOX_CSP}<style>${baseCss}\n${cleanCss}</style></head><body data-theme="${theme}">${cleanHtml}${syncThemeScript}</body></html>`;
+  const userScript = safeInlineJs ? `<script>${safeInlineJs}</script>` : '';
+  return `<!DOCTYPE html><html lang="vi" data-theme="${theme}"><head><meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1.0" />${SANDBOX_CSP}<style>${baseCss}\n${cleanCss}</style></head><body data-theme="${theme}">${cleanHtml}${syncThemeScript}${userScript}</body></html>`;
 }
 
 let pinuiSourceCache: Record<string, PinUISourceEntry> | null = null;
@@ -331,9 +345,11 @@ export function resolveMotionSiteEntry(
 ): MotionSiteFullEntry | null {
   if (!map) return null;
   if (map[itemId]) return map[itemId];
-  if (map[`ms-${itemId}`]) return map[`ms-${itemId}`];
+  const bare = itemId.replace(/^ms-/, '');
+  if (map[bare]) return map[bare];
+  if (map[`ms-${bare}`]) return map[`ms-${bare}`];
   const values = Object.values(map);
-  return values.find((entry) => entry.slug === itemId || entry.id === itemId) ?? null;
+  return values.find((entry) => entry.slug === itemId || entry.slug === bare || entry.id === itemId) ?? null;
 }
 
 export function extractInlineStyles(html: string | undefined): string {

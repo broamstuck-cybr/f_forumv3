@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
-import { Menu, Moon, Sun, X } from 'lucide-react';
+import { Bell, Compass, Home, Menu, Moon, Plus, Sun, User as UserIcon, X } from 'lucide-react';
 import type { AppRoute } from '../../types/index';
 import { useAppStore } from '../../store/appStore';
 import { KineticLogo } from '../brand/KineticLogo';
@@ -44,9 +44,30 @@ export const AppNavbar: React.FC<AppNavbarProps> = () => {
   const reduced = Boolean(useReducedMotion());
   const [menuOpen, setMenuOpen] = useState(false);
   const [sheetOpen, setSheetOpen] = useState(false);
+  const [unreadCount, setUnreadCount] = useState<number>(() => {
+    if (typeof window === 'undefined') return 2;
+    try {
+      const raw = window.localStorage.getItem('fforum_v3_unread_notifications');
+      const parsed = raw !== null ? Number(raw) : 2;
+      return Number.isFinite(parsed) && parsed >= 0 ? parsed : 2;
+    } catch {
+      return 2;
+    }
+  });
   const menuRef = useRef<HTMLDivElement>(null);
   const burgerRef = useRef<HTMLButtonElement>(null);
   const closeRef = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => {
+    const onUnread = (event: Event) => {
+      const count = Number((event as CustomEvent<number>).detail);
+      if (Number.isFinite(count) && count >= 0) {
+        setUnreadCount(count);
+      }
+    };
+    window.addEventListener('ff:community-unread', onUnread);
+    return () => window.removeEventListener('ff:community-unread', onUnread);
+  }, []);
 
   useEffect(() => {
     if (!menuOpen) return;
@@ -91,7 +112,12 @@ export const AppNavbar: React.FC<AppNavbarProps> = () => {
     : limit === null
       ? `Đã dùng ${quota.used} lượt`
       : `${remaining}/${limit} lượt`;
-  const avatarText = currentUser ? userInitials(currentUser.name) : 'K';
+  const displayName = currentUser
+    ? currentUser.name === 'System Administrator'
+      ? 'Quản trị viên'
+      : currentUser.name
+    : 'Khách';
+  const avatarText = currentUser ? userInitials(displayName) : 'K';
   const themeToggleLabel = theme === 'dark' ? 'Chuyển sang chế độ sáng' : 'Chuyển sang chế độ tối';
 
   const go = (route: AppRoute) => {
@@ -115,6 +141,7 @@ export const AppNavbar: React.FC<AppNavbarProps> = () => {
   const spring = reduced ? { duration: 0.01 } : { type: 'spring' as const, stiffness: 300, damping: 30 };
 
   return (
+    <>
     <header className="nav">
       <div className="wrap-wide nav__row">
         <div className="flex items-center gap-4 min-w-0">
@@ -182,8 +209,8 @@ export const AppNavbar: React.FC<AppNavbarProps> = () => {
               onClick={() => setMenuOpen((open) => !open)}
               aria-haspopup="dialog"
               aria-expanded={menuOpen}
-              aria-label={currentUser ? `Tài khoản ${currentUser.name}` : 'Tài khoản khách'}
-              title={currentUser ? currentUser.name : 'Khách'}
+              aria-label={currentUser ? `Tài khoản ${displayName}` : 'Tài khoản khách'}
+              title={displayName}
             >
               <span className="nav__avatar" data-guest={!currentUser} aria-hidden="true">
                 {avatarText}
@@ -202,7 +229,7 @@ export const AppNavbar: React.FC<AppNavbarProps> = () => {
                 >
                   <div className="nav__menuHead">
                     <div className="nav__menuIdentity">
-                      <p className="nav__menuName">{currentUser ? currentUser.name : 'Khách'}</p>
+                      <p className="nav__menuName">{displayName}</p>
                       <p className="t-label">
                         {currentUser ? (isAdmin ? 'quản trị' : 'thành viên') : 'phiên khách'}
                       </p>
@@ -319,7 +346,7 @@ export const AppNavbar: React.FC<AppNavbarProps> = () => {
                     {avatarText}
                   </span>
                   <div className="min-w-0">
-                    <p className="nav__menuName">{currentUser ? currentUser.name : 'Khách'}</p>
+                    <p className="nav__menuName">{displayName}</p>
                     <p className="t-label">
                       {currentUser ? (isAdmin ? 'quản trị' : 'thành viên') : 'phiên khách'}
                     </p>
@@ -378,6 +405,90 @@ export const AppNavbar: React.FC<AppNavbarProps> = () => {
         )}
       </AnimatePresence>
     </header>
+
+    <nav className="mobile-bnav" aria-label="Điều hướng nhanh di động">
+      <button
+        type="button"
+        className="mobile-bnav__btn"
+        aria-current={currentRoute === 'home' ? 'page' : undefined}
+        onClick={() => go('home')}
+      >
+        <Home size={18} strokeWidth={1.85} aria-hidden="true" />
+        <span>Trang chủ</span>
+      </button>
+
+      <button
+        type="button"
+        className="mobile-bnav__btn"
+        aria-current={currentRoute === 'explore' || currentRoute === 'experience' ? 'page' : undefined}
+        onClick={() => go('explore')}
+      >
+        <Compass size={18} strokeWidth={1.85} aria-hidden="true" />
+        <span>Khám phá</span>
+      </button>
+
+      <button
+        type="button"
+        className="mobile-bnav__btn mobile-bnav__btn--compose"
+        aria-label="Đăng bài mới"
+        onClick={() => {
+          try {
+            window.sessionStorage.setItem('ff_community_action', 'compose');
+          } catch {
+            void 0;
+          }
+          if (currentRoute === 'community') {
+            window.dispatchEvent(new CustomEvent('ff:community-action', { detail: 'compose' }));
+          } else {
+            go('community');
+          }
+        }}
+      >
+        <span className="mobile-bnav__compose-badge" aria-hidden="true">
+          <Plus size={18} strokeWidth={2.2} />
+        </span>
+        <span>Đăng bài</span>
+      </button>
+
+      <button
+        type="button"
+        className="mobile-bnav__btn"
+        aria-label={unreadCount > 0 ? `Thông báo (${unreadCount} chưa đọc)` : 'Thông báo'}
+        aria-current={currentRoute === 'community' ? 'page' : undefined}
+        onClick={() => {
+          try {
+            window.sessionStorage.setItem('ff_community_action', 'notifications');
+          } catch {
+            void 0;
+          }
+          if (currentRoute === 'community') {
+            window.dispatchEvent(new CustomEvent('ff:community-action', { detail: 'notifications' }));
+          } else {
+            go('community');
+          }
+        }}
+      >
+        <span className="mobile-bnav__icon-wrap" aria-hidden="true">
+          <Bell size={18} strokeWidth={1.85} />
+          {unreadCount > 0 && <span className="mobile-bnav__dot" />}
+        </span>
+        <span>Thông báo</span>
+      </button>
+
+      <button
+        type="button"
+        className="mobile-bnav__btn"
+        aria-current={currentRoute === 'profile' ? 'page' : undefined}
+        onClick={() => {
+          clearViewingProfileUser();
+          go('profile');
+        }}
+      >
+        <UserIcon size={18} strokeWidth={1.85} aria-hidden="true" />
+        <span>Hồ sơ</span>
+      </button>
+    </nav>
+    </>
   );
 };
 

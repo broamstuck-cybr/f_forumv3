@@ -5,7 +5,7 @@
     min-width: 0;
     display: flex;
     flex-direction: column;
-    background: var(--bg);
+    background: transparent;
     color: var(--fg);
     padding-bottom: var(--space-section);
   }
@@ -166,7 +166,7 @@
     font-weight: 420;
     line-height: 1.1;
     color: var(--fg);
-    font-variant-numeric: tabular-nums;
+    font-variant-numeric: lining-nums tabular-nums;
   }
 
   .pf-stat dd.pf-stat-accent {

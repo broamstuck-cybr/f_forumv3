@@ -9,6 +9,7 @@ import {
   type ChipItem,
   type LiquidTabItem,
 } from '../../components/pinui';
+import OriginalFileBox from '../../components/pinui/original/file-box/FileBox';
 import { Mark } from '../../ui/Mark';
 import {
   LIBRARY_LABEL,
@@ -58,6 +59,13 @@ export const ExploreView: React.FC = () => {
   const [search, setSearch] = useState('');
   const [savedOnly, setSavedOnly] = useState(false);
   const query = search.trim().toLowerCase();
+
+  const enterVaultExperience = () => {
+    if (typeof window !== 'undefined' && search.trim()) {
+      window.sessionStorage.setItem('ff_experience_query', search.trim());
+    }
+    openExperience(sourceCatalog[0]?.id ?? 'vault');
+  };
 
   useEffect(() => {
     const stored = resolveIncomingMode(window.sessionStorage.getItem('ff_explore_mode'));
@@ -116,15 +124,32 @@ export const ExploreView: React.FC = () => {
           <span className="t-script ex-title-cap">B</span>àn soi
         </h1>
         <div className="ex-aside">
-          <p className="ex-lede">Đặt mẫu lên bàn, soi từng bản, rồi mang vào Workspace.</p>
-          <SearchCard
-            value={search}
-            onChange={setSearch}
-            placeholder="Tìm mẫu, công cụ, repo..."
-            recentSearches={RECENT_SEARCHES}
-            onSelectRecent={(value) => setSearch(value)}
-            className="ex-pinui-search"
-          />
+          <p className="ex-lede">Đặt mẫu lên bàn, thử trực tiếp, rồi mang vào Workspace.</p>
+          <div className="ex-search-dock">
+            <SearchCard
+              value={search}
+              onChange={setSearch}
+              placeholder="Tìm mẫu, thành phần, hiệu ứng, kho lưu trữ..."
+              recentSearches={RECENT_SEARCHES}
+              onSelectRecent={(value) => setSearch(value)}
+              compact
+              className="ex-pinui-search"
+            />
+            <button
+              type="button"
+              className="ex-vault-dock-btn"
+              onClick={enterVaultExperience}
+              title="Mở toàn bộ kho tài nguyên trong không gian trải nghiệm"
+            >
+              <span className="ex-vault-box-mini" aria-hidden="true">
+                <OriginalFileBox theme={theme} />
+              </span>
+              <span className="ex-vault-dock-copy">
+                <span className="ex-vault-hint-text">Nhiều quá? Đơn giản nha!!!</span>
+                <span className="ex-vault-dock-sub">Mở kho trải nghiệm</span>
+              </span>
+            </button>
+          </div>
           <div className="ex-quick">
             <button
               type="button"
@@ -135,15 +160,6 @@ export const ExploreView: React.FC = () => {
               <span className="ex-mark-dot" aria-hidden="true" />
               <span>Đã lưu ({savedItemIds.length})</span>
             </button>
-            {sourceCatalog[0] ? (
-              <button
-                type="button"
-                className="ex-pill"
-                onClick={() => openExperience(sourceCatalog[0].id)}
-              >
-                Trải nghiệm thành phần
-              </button>
-            ) : null}
           </div>
         </div>
       </header>

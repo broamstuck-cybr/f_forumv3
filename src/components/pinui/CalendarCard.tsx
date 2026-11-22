@@ -7,21 +7,21 @@ export type CalendarCardProps = {
     onChange?: (date: Date) => void;
 };
 const MONTHS = [
-    "January",
-    "February",
-    "March",
-    "April",
-    "May",
-    "June",
-    "July",
-    "August",
-    "September",
-    "October",
-    "November",
-    "December",
+    "Tháng 1",
+    "Tháng 2",
+    "Tháng 3",
+    "Tháng 4",
+    "Tháng 5",
+    "Tháng 6",
+    "Tháng 7",
+    "Tháng 8",
+    "Tháng 9",
+    "Tháng 10",
+    "Tháng 11",
+    "Tháng 12",
 ];
-const SHORT = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-const DAYS = ["M", "T", "W", "T", "F", "S", "S"];
+const SHORT = ["Th1", "Th2", "Th3", "Th4", "Th5", "Th6", "Th7", "Th8", "Th9", "Th10", "Th11", "Th12"];
+const DAYS = ["T2", "T3", "T4", "T5", "T6", "T7", "CN"];
 const MIN_YEAR = 1900;
 const MAX_YEAR = 2100;
 const SEGMENTS = 4;
@@ -180,7 +180,7 @@ function Calendar({ opening, today, theme, onChange, }: {
     };
     const monthKey = `${date.y}-${date.m}`;
     const dayText = String(date.d);
-    const label = `${MONTHS[date.m]} ${date.d}, ${date.y}`;
+    const label = `Ngày ${date.d} ${MONTHS[date.m]}, ${date.y}`;
     return (<div className="pcal" data-theme={theme}>
       <LayoutGroup id={`pcal-${group}`}>
         <motion.div className="pcal__shell" initial={reduced ? false : { opacity: 0, y: 14, scale: 0.97 }} animate={{ opacity: 1, y: 0, scale: 1 }} transition={{ ...morph, opacity: fade() }}>
@@ -192,7 +192,7 @@ function Calendar({ opening, today, theme, onChange, }: {
                   <Odometer value={dayText}/>
                 </span>
                 
-                <button type="button" className="pcal__monthBtn" aria-expanded={picking} aria-label={picking ? "Close the month and year picker" : `Change month or year — ${MONTHS[date.m]} ${date.y}`} onClick={openPicker}>
+                <button type="button" className="pcal__monthBtn" aria-expanded={picking} aria-label={picking ? "Đóng bộ chọn tháng năm" : `Đổi tháng hoặc năm — ${MONTHS[date.m]} ${date.y}`} onClick={openPicker}>
                   <span className="pcal__month" aria-hidden="true">
                     <AnimatePresence initial={false} mode="popLayout" custom={dir}>
                       <motion.span key={monthKey} className="pcal__monthName" custom={dir} variants={{
@@ -231,22 +231,22 @@ function Calendar({ opening, today, theme, onChange, }: {
               <AnimatePresence initial={false} mode="popLayout">
                 {picking ? (<motion.div key="picker" className="pcal__picker" initial={{ opacity: 0, scale: 0.96, filter: "blur(6px)" }} animate={{ opacity: 1, scale: 1, filter: "blur(0px)" }} exit={{ opacity: 0, scale: 0.96, filter: "blur(6px)" }} transition={{ ...morph, opacity: fade(), filter: fade() }} onKeyDown={onPickerKey}>
                     <div className="pcal__yearRow">
-                      <motion.button type="button" className="pcal__step" aria-label="Previous year" disabled={pickYear <= MIN_YEAR} onClick={() => stepYear(-1)} whileTap={reduced ? undefined : { scale: 0.86, x: -2 }} transition={morph}>
+                      <motion.button type="button" className="pcal__step" aria-label="Năm trước" disabled={pickYear <= MIN_YEAR} onClick={() => stepYear(-1)} whileTap={reduced ? undefined : { scale: 0.86, x: -2 }} transition={morph}>
                         <svg viewBox="0 0 12 12" fill="none" aria-hidden="true">
                           <path d="M7.5 3 4.5 6l3 3" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"/>
                         </svg>
                       </motion.button>
-                      <span className="pcal__yearBig" aria-live="polite" aria-label={`Year ${pickYear}`}>
+                      <span className="pcal__yearBig" aria-live="polite" aria-label={`Năm ${pickYear}`}>
                         <Odometer value={String(pickYear)} dir={yearDir}/>
                       </span>
-                      <motion.button type="button" className="pcal__step" aria-label="Next year" disabled={pickYear >= MAX_YEAR} onClick={() => stepYear(1)} whileTap={reduced ? undefined : { scale: 0.86, x: 2 }} transition={morph}>
+                      <motion.button type="button" className="pcal__step" aria-label="Năm sau" disabled={pickYear >= MAX_YEAR} onClick={() => stepYear(1)} whileTap={reduced ? undefined : { scale: 0.86, x: 2 }} transition={morph}>
                         <svg viewBox="0 0 12 12" fill="none" aria-hidden="true">
                           <path d="m4.5 3 3 3-3 3" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"/>
                         </svg>
                       </motion.button>
                     </div>
 
-                    <div className="pcal__months" role="grid" aria-label={`Months of ${pickYear}`} onPointerLeave={() => setMonthHover(null)}>
+                    <div className="pcal__months" role="grid" aria-label={`Các tháng năm ${pickYear}`} onPointerLeave={() => setMonthHover(null)}>
                       {SHORT.map((name, m) => {
                 const on = pickYear === date.y && m === date.m;
                 const now = today !== null && pickYear === today.y && m === today.m;
@@ -315,7 +315,7 @@ function CalendarIcon({ tears, day, onTear, onBack, }: {
 }) {
     const reduced = useReducedMotion();
     const marked = (day - 1) % 21;
-    return (<motion.button type="button" className="pcal__icon" aria-label="Next month" title="Next month (right-click for the previous one)" onClick={onTear} onContextMenu={(e) => {
+    return (<motion.button type="button" className="pcal__icon" aria-label="Tháng kế tiếp" title="Tháng kế tiếp (chuột phải để lùi tháng)" onClick={onTear} onContextMenu={(e) => {
             e.preventDefault();
             onBack();
         }} whileHover={reduced ? undefined : { y: -1.5, rotate: -2 }} whileTap={reduced ? undefined : { scale: 0.92 }} transition={morph}>

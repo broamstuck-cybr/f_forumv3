@@ -302,7 +302,6 @@ export const PlateRibbon: React.FC<PlateRibbonProps> = ({
                   <span className="plate ex-plate-frame ex-plate-type">
                     <span className="ex-plate-type-top">
                       <span className="t-label">{item.category}</span>
-                      <span className="ex-live-dot" aria-hidden="true" />
                     </span>
                     <span className="ex-plate-word">{title}</span>
                     <span className="t-label">{item.style}</span>
@@ -311,7 +310,6 @@ export const PlateRibbon: React.FC<PlateRibbonProps> = ({
                 <span className="ex-plate-cap" aria-hidden="true">
                   <span className="t-label">{String(index + 1).padStart(2, '0')}</span>
                   {preview || hasLive ? <span className="ex-plate-title">{title}</span> : null}
-                  <span className="t-label ex-plate-live">live</span>
                   {saved ? <span className="t-note ex-plate-saved">đã lưu</span> : null}
                 </span>
               </button>

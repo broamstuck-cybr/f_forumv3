@@ -6,6 +6,9 @@ import {
   type MotionMarqueeRow,
 } from '../../data/motionShowcaseCatalog';
 import { useAppStore } from '../../store/appStore';
+import { PinHeartButton } from '../pinui';
+import { SandboxPreview } from '../../features/explore/SandboxPreview';
+import type { PreviewTheme, PreviewViewport } from '../../features/explore/catalog';
 
 export interface MotionMarqueeGridProps {
   onLaunchPrompt: (prompt: string) => Promise<void> | void;
@@ -18,12 +21,16 @@ interface MotionSiteFullRecord {
   title: string;
   category: string;
   promptText: string;
-  sourceUrl?: string;
+  liveHtml?: string;
+  css?: string;
+  code?: string;
+  codeLang?: string;
   previewImage?: string;
   tags: string[];
 }
 
-type ModalTab = 'live' | 'prompt' | 'specs';
+type ModalTab = 'live' | 'code' | 'prompt' | 'specs';
+type CodeSubTab = 'code' | 'html' | 'css';
 
 const ROWS: readonly MotionMarqueeRow[] = [0, 1, 2, 3];
 
@@ -49,6 +56,31 @@ function loadMotionSitesFull(): Promise<Record<string, MotionSiteFullRecord>> {
   return motionSitesPromise;
 }
 
+function splitLiveHtmlCss(rawLiveHtml: string | undefined): { html: string; css: string } | null {
+  if (!rawLiveHtml || rawLiveHtml.trim().length === 0) return null;
+  const isFullDoc = /^\s*(?:<!doctype\s+html|<html[\s>])/i.test(rawLiveHtml);
+  if (isFullDoc) {
+    return { html: rawLiveHtml.trim(), css: '' };
+  }
+  const styleBlocks: string[] = [];
+  const html = rawLiveHtml
+    .replace(/<style[^>]*>([\s\S]*?)<\/style>/gi, (_m, cssBody: string) => {
+      if (cssBody && cssBody.trim()) styleBlocks.push(cssBody.trim());
+      return '';
+    })
+    .trim();
+  if (!html) return null;
+  return { html, css: styleBlocks.join('\n\n') };
+}
+
+function resolveMotionRecord(
+  map: Record<string, MotionSiteFullRecord>,
+  itemId: string
+): MotionSiteFullRecord | undefined {
+  const bare = itemId.replace(/^ms-/, '');
+  return map[itemId] || map[bare] || map[`ms-${bare}`];
+}
+
 const MarqueeThumb: React.FC<{
   item: MotionMarqueeItem;
   className?: string;
@@ -62,10 +94,15 @@ const MarqueeThumb: React.FC<{
   return (
     <div className={`mmq-thumb-host ${className}`.trim()}>
       {(!loaded || plateOnly) && (
-        <div className="mmq-thumb-plate" role={plateOnly ? 'img' : undefined} aria-label={plateOnly ? item.title : undefined} aria-hidden={plateOnly ? undefined : 'true'}>
+        <div
+          className="mmq-thumb-plate"
+          role={plateOnly ? 'img' : undefined}
+          aria-label={plateOnly ? item.title : undefined}
+          aria-hidden={plateOnly ? undefined : 'true'}
+        >
           <span className="t-label">{item.category}</span>
           <strong className="mmq-thumb-plate-title">{item.title}</strong>
-          <span className="t-label">{item.specs.layout}</span>
+          <span className="t-label">{item.summaryVi}</span>
         </div>
       )}
       {!plateOnly && (
@@ -101,6 +138,7 @@ export const MotionMarqueeGrid: React.FC<MotionMarqueeGridProps> = ({
     toggleLikedItem,
     isItemLiked,
     getHeartCount,
+    theme,
   } = useAppStore();
 
   const [fullMap, setFullMap] = useState<Record<string, MotionSiteFullRecord>>(
@@ -108,7 +146,16 @@ export const MotionMarqueeGrid: React.FC<MotionMarqueeGridProps> = ({
   );
   const [activeItem, setActiveItem] = useState<MotionMarqueeItem | null>(null);
   const [activeTab, setActiveTab] = useState<ModalTab>('live');
+  const [codeSubTab, setCodeSubTab] = useState<CodeSubTab>('code');
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [copiedCode, setCopiedCode] = useState(false);
+  const [viewport, setViewport] = useState<PreviewViewport>(1440);
+  const [stageTheme, setStageTheme] = useState<PreviewTheme>(theme);
+  const [nonce, setNonce] = useState(0);
+
+  useEffect(() => {
+    setStageTheme(theme);
+  }, [theme]);
 
   useEffect(() => {
     let cancelled = false;
@@ -140,7 +187,7 @@ export const MotionMarqueeGrid: React.FC<MotionMarqueeGridProps> = ({
   }, []);
 
   const getVerbatimPrompt = (item: MotionMarqueeItem): string => {
-    const rec = fullMap[item.id];
+    const rec = resolveMotionRecord(fullMap, item.id);
     if (rec && typeof rec.promptText === 'string' && rec.promptText.trim().length > 0) {
       return rec.promptText;
     }
@@ -150,10 +197,13 @@ export const MotionMarqueeGrid: React.FC<MotionMarqueeGridProps> = ({
   const handleOpenItem = (item: MotionMarqueeItem) => {
     setActiveItem(item);
     setActiveTab('live');
+    setCodeSubTab('code');
+    setCopiedCode(false);
+    setViewport(1440);
+    setNonce((n) => n + 1);
   };
 
-  const handleCopyPrompt = async (item: MotionMarqueeItem) => {
-    const text = getVerbatimPrompt(item);
+  const copyRawText = async (text: string): Promise<void> => {
     try {
       await navigator.clipboard.writeText(text);
     } catch {
@@ -166,10 +216,22 @@ export const MotionMarqueeGrid: React.FC<MotionMarqueeGridProps> = ({
       document.execCommand('copy');
       document.body.removeChild(ta);
     }
+  };
+
+  const handleCopyPrompt = async (item: MotionMarqueeItem) => {
+    const text = getVerbatimPrompt(item);
+    await copyRawText(text);
     setCopiedId(item.id);
     window.setTimeout(() => {
       setCopiedId((prev) => (prev === item.id ? null : prev));
     }, 2000);
+  };
+
+  const handleCopyCodeText = async (text: string) => {
+    if (!text) return;
+    await copyRawText(text);
+    setCopiedCode(true);
+    window.setTimeout(() => setCopiedCode(false), 1800);
   };
 
   const renderCard = (item: MotionMarqueeItem, isClone: boolean) => {
@@ -186,7 +248,7 @@ export const MotionMarqueeGrid: React.FC<MotionMarqueeGridProps> = ({
         <div className="mmq-card-media">
           <MarqueeThumb item={item} />
           <div className="mmq-card-veil" aria-hidden="true">
-            <span className="mmq-card-inspect">Xem ảnh gốc &amp; Prompt gốc</span>
+            <span className="mmq-card-inspect">Trải nghiệm tương tác &amp; Prompt</span>
           </div>
           <span className="mmq-card-badge">{item.category}</span>
         </div>
@@ -202,32 +264,49 @@ export const MotionMarqueeGrid: React.FC<MotionMarqueeGridProps> = ({
             }}
           >
             <span className="mmq-card-title">{item.title}</span>
-            <span className="mmq-card-sub">{item.specs.layout}</span>
+            <span className="mmq-card-sub">{item.summaryVi}</span>
           </button>
 
-          <button
-            type="button"
-            className="mmq-heart-btn"
-            tabIndex={isClone ? -1 : 0}
-            aria-pressed={liked}
-            aria-label={`${liked ? 'Bỏ thả tim' : 'Thả tim'} ${item.title} (${hearts})`}
-            onClick={(e) => {
-              e.stopPropagation();
-              toggleLikedItem(item.id);
-            }}
-          >
-            <span className="mmq-heart-icon" aria-hidden="true" />
-            <span className="mmq-heart-count">{hearts}</span>
-          </button>
+          <PinHeartButton
+            compact
+            liked={liked}
+            count={hearts}
+            ariaLabel={`${liked ? 'Bỏ tim' : 'Thả tim'} ${item.title} (${hearts})`}
+            onToggle={() => toggleLikedItem(item.id)}
+          />
         </div>
       </article>
     );
   };
 
-  const activeFull = activeItem ? fullMap[activeItem.id] : undefined;
+  const activeFull = activeItem ? resolveMotionRecord(fullMap, activeItem.id) : undefined;
   const activeVerbatimPrompt = activeItem ? getVerbatimPrompt(activeItem) : '';
   const activeTags = activeItem ? activeFull?.tags ?? activeItem.tags : [];
-  const activeSourceUrl = activeFull?.sourceUrl || '';
+  const liveParts = useMemo(
+    () => (activeItem ? splitLiveHtmlCss(activeFull?.liveHtml) : null),
+    [activeFull?.liveHtml, activeItem]
+  );
+  const activeCodeBlocks = useMemo(() => {
+    const list: Array<{ id: CodeSubTab; label: string; content: string }> = [];
+    if (activeFull?.code?.trim()) {
+      list.push({
+        id: 'code',
+        label: (activeFull.codeLang || 'TSX').toUpperCase(),
+        content: activeFull.code.trim(),
+      });
+    }
+    if (liveParts?.html) {
+      list.push({ id: 'html', label: 'HTML', content: liveParts.html });
+    }
+    const mergedCss = activeFull?.css?.trim() || liveParts?.css || '';
+    if (mergedCss) {
+      list.push({ id: 'css', label: 'CSS', content: mergedCss });
+    }
+    return list;
+  }, [activeFull, liveParts]);
+
+  const resolvedCodeBlock =
+    activeCodeBlocks.find((b) => b.id === codeSubTab) || activeCodeBlocks[0] || null;
 
   const modalLiked = activeItem ? isItemLiked(activeItem.id) : false;
   const modalHearts = activeItem ? getHeartCount(activeItem.id) : 0;
@@ -239,9 +318,9 @@ export const MotionMarqueeGrid: React.FC<MotionMarqueeGridProps> = ({
       <div className="wrap-wide">
         <header className="mmq-head">
           <div className="mmq-head-copy">
-            <h2 className="t-title">Tài nguyên đa dạng</h2>
+            <h2 className="t-title">Tài nguyên tương tác</h2>
             <p className="t-lead">
-              Chạm vào mẫu bất kỳ để tương tác trực tiếp trên trang web mẫu, đọc nguyên văn Prompt gốc hoặc mở ngay trong Workspace.
+              Mở bất kỳ mẫu nào bên dưới để thao tác trực tiếp trên giao diện thật, đọc prompt nguyên bản hoặc mang thẳng vào Workspace chỉnh sửa.
             </p>
           </div>
         </header>
@@ -303,21 +382,18 @@ export const MotionMarqueeGrid: React.FC<MotionMarqueeGridProps> = ({
                 <div className="mmq-modal-title-wrap">
                   <div className="mmq-modal-kicker">
                     <span className="tag tag-red">{activeItem.category}</span>
-                    <span className="t-label">{activeItem.specs.layout} · {activeItem.specs.responsive}</span>
+                    <span className="t-label">{activeItem.specs.layout}</span>
                   </div>
                   <h3 className="mmq-modal-title">{activeItem.title}</h3>
                 </div>
 
                 <div className="mmq-modal-head-actions">
-                  <button
-                    type="button"
-                    className="mmq-heart-btn mmq-heart-btn--modal"
-                    aria-pressed={modalLiked}
-                    onClick={() => toggleLikedItem(activeItem.id)}
-                  >
-                    <span className="mmq-heart-icon" aria-hidden="true" />
-                    <span className="mmq-heart-count">{modalHearts}</span>
-                  </button>
+                  <PinHeartButton
+                    liked={modalLiked}
+                    count={modalHearts}
+                    ariaLabel={`${modalLiked ? 'Bỏ tim' : 'Thả tim'} ${activeItem.title}`}
+                    onToggle={() => toggleLikedItem(activeItem.id)}
+                  />
 
                   <button
                     type="button"
@@ -372,6 +448,15 @@ export const MotionMarqueeGrid: React.FC<MotionMarqueeGridProps> = ({
                   <button
                     type="button"
                     role="tab"
+                    aria-selected={activeTab === 'code'}
+                    className="mmq-modal-tab"
+                    onClick={() => setActiveTab('code')}
+                  >
+                    Mã nguồn
+                  </button>
+                  <button
+                    type="button"
+                    role="tab"
                     aria-selected={activeTab === 'prompt'}
                     className="mmq-modal-tab"
                     onClick={() => setActiveTab('prompt')}
@@ -385,20 +470,43 @@ export const MotionMarqueeGrid: React.FC<MotionMarqueeGridProps> = ({
                     className="mmq-modal-tab"
                     onClick={() => setActiveTab('specs')}
                   >
-                    Thông số
+                    Kiến trúc
                   </button>
                 </div>
 
-                {activeTab === 'live' && activeSourceUrl && (
-                  <div className="mmq-vp-controls">
-                    <a
-                      href={activeSourceUrl}
-                      target="_blank"
-                      rel="noreferrer noopener"
-                      className="btn btn-line btn-sm"
+                {activeTab === 'live' && liveParts && (
+                  <div className="mmq-vp-controls" role="group" aria-label="Khung nhìn chạy thử">
+                    {(
+                      [
+                        { vp: 1440, label: 'Máy tính' },
+                        { vp: 768, label: 'Máy tính bảng' },
+                        { vp: 390, label: 'Điện thoại' },
+                      ] as Array<{ vp: PreviewViewport; label: string }>
+                    ).map((opt) => (
+                      <button
+                        key={opt.vp}
+                        type="button"
+                        className="mmq-vp-btn"
+                        aria-pressed={viewport === opt.vp}
+                        onClick={() => setViewport(opt.vp)}
+                      >
+                        {opt.label}
+                      </button>
+                    ))}
+                    <button
+                      type="button"
+                      className="mmq-vp-btn"
+                      onClick={() => setStageTheme((prev) => (prev === 'dark' ? 'light' : 'dark'))}
                     >
-                      Mở trang gốc
-                    </a>
+                      {stageTheme === 'dark' ? 'Nền tối' : 'Nền sáng'}
+                    </button>
+                    <button
+                      type="button"
+                      className="mmq-vp-btn"
+                      onClick={() => setNonce((n) => n + 1)}
+                    >
+                      Chạy lại
+                    </button>
                   </div>
                 )}
               </div>
@@ -406,12 +514,134 @@ export const MotionMarqueeGrid: React.FC<MotionMarqueeGridProps> = ({
               <div className="mmq-modal-body ff-scrollbar">
                 {activeTab === 'live' && (
                   <div className="mmq-live-pane">
-                    <img
-                      src={activeFull?.previewImage || activeItem.imageUrl}
-                      alt={`${activeItem.title} · ${activeItem.category}`}
-                      referrerPolicy="no-referrer"
-                      style={{ width: '100%', height: 'auto', display: 'block', borderRadius: 12 }}
-                    />
+                    {liveParts ? (
+                      <div className="mmq-modal-sandbox" data-viewport={viewport}>
+                        <SandboxPreview
+                          title={activeItem.title}
+                          html={liveParts.html}
+                          css={liveParts.css}
+                          theme={stageTheme}
+                          viewport={viewport}
+                          nonce={nonce}
+                        />
+                      </div>
+                    ) : (
+                      <div className="mmq-spec-preview">
+                        <div className="mmq-spec-preview-media">
+                          <MarqueeThumb item={activeItem} />
+                        </div>
+                        <div className="mmq-spec-preview-bar">
+                          <p className="mmq-prompt-note">{activeItem.summaryVi}</p>
+                          <div className="mmq-prompt-actions">
+                            {activeCodeBlocks.length > 0 && (
+                              <button
+                                type="button"
+                                className="btn btn-line btn-sm"
+                                onClick={() => setActiveTab('code')}
+                              >
+                                Xem Mã nguồn
+                              </button>
+                            )}
+                            <button
+                              type="button"
+                              className="btn btn-line btn-sm"
+                              onClick={() => setActiveTab('prompt')}
+                            >
+                              Đọc Prompt gốc
+                            </button>
+                            <button
+                              type="button"
+                              className="btn btn-red btn-sm"
+                              onClick={() => {
+                                const prompt = activeVerbatimPrompt;
+                                setActiveItem(null);
+                                void onLaunchPrompt(prompt);
+                              }}
+                            >
+                              Dựng trong Workspace
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {activeTab === 'code' && (
+                  <div className="mmq-modal-prompt-col">
+                    {resolvedCodeBlock ? (
+                      <>
+                        <div className="mmq-prompt-bar">
+                          <div className="mmq-code-subtabs" role="tablist" aria-label="Tệp mã nguồn">
+                            {activeCodeBlocks.map((block) => (
+                              <button
+                                key={block.id}
+                                type="button"
+                                role="tab"
+                                aria-selected={resolvedCodeBlock.id === block.id}
+                                className="mmq-vp-btn"
+                                aria-pressed={resolvedCodeBlock.id === block.id}
+                                onClick={() => setCodeSubTab(block.id)}
+                              >
+                                {block.label}
+                              </button>
+                            ))}
+                          </div>
+                          <div className="mmq-prompt-actions">
+                            <button
+                              type="button"
+                              className="btn btn-line btn-sm"
+                              onClick={() => void handleCopyCodeText(resolvedCodeBlock.content)}
+                            >
+                              {copiedCode ? 'Đã chép mã' : `Chép ${resolvedCodeBlock.label}`}
+                            </button>
+                            <button
+                              type="button"
+                              className="btn btn-red btn-sm"
+                              onClick={() => {
+                                const prompt = activeVerbatimPrompt;
+                                setActiveItem(null);
+                                void onLaunchPrompt(prompt);
+                              }}
+                            >
+                              Mở trong Workspace
+                            </button>
+                          </div>
+                        </div>
+                        <pre className="mmq-prompt-pre ff-scrollbar">
+                          <code>{resolvedCodeBlock.content}</code>
+                        </pre>
+                      </>
+                    ) : (
+                      <div className="mmq-prompt-bar">
+                        <div>
+                          <span className="t-label">Mẫu đặc tả Prompt</span>
+                          <p className="mmq-prompt-note">
+                            Tài nguyên gốc được cung cấp dưới dạng đặc tả Prompt đầy đủ để dựng mã trong Workspace.
+                          </p>
+                        </div>
+                        <div className="mmq-prompt-actions">
+                          <button
+                            type="button"
+                            className="btn btn-line btn-sm"
+                            onClick={() => setActiveTab('prompt')}
+                          >
+                            Mở Prompt gốc
+                          </button>
+                          <button
+                            type="button"
+                            className="btn btn-red btn-sm"
+                            onClick={() => {
+                              const prompt = activeVerbatimPrompt;
+                              setActiveItem(null);
+                              void onLaunchPrompt(prompt);
+                            }}
+                          >
+                            Mở trong Workspace
+                          </button>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 )}
 
@@ -420,7 +650,7 @@ export const MotionMarqueeGrid: React.FC<MotionMarqueeGridProps> = ({
                     <div className="mmq-prompt-bar">
                       <div>
                         <span className="t-label">
-                          Nguyên văn Prompt gốc (.md) · {activeVerbatimPrompt.length.toLocaleString('vi-VN')} ký tự
+                          Nguyên văn Prompt gốc · {activeVerbatimPrompt.length.toLocaleString('vi-VN')} ký tự
                         </span>
                         <p className="mmq-prompt-note">{activeItem.summaryVi}</p>
                       </div>
@@ -470,21 +700,13 @@ export const MotionMarqueeGrid: React.FC<MotionMarqueeGridProps> = ({
                         <dd>{activeItem.specs.motion}</dd>
                       </div>
                       <div>
-                        <dt className="t-label">Responsive</dt>
+                        <dt className="t-label">Hiển thị</dt>
                         <dd>{activeItem.specs.responsive}</dd>
-                      </div>
-                      <div>
-                        <dt className="t-label">Thời lượng</dt>
-                        <dd>{activeItem.specs.durationMs} ms</dd>
-                      </div>
-                      <div>
-                        <dt className="t-label">Easing</dt>
-                        <dd className="mmq-mono">{activeItem.specs.easing}</dd>
                       </div>
                     </dl>
 
                     <div className="mmq-tags-block">
-                      <span className="t-label">Từ khóa kỹ thuật</span>
+                      <span className="t-label">Từ khóa thành phần</span>
                       <div className="mmq-tags-list">
                         {activeTags.map((tag) => (
                           <span key={tag} className="tag">

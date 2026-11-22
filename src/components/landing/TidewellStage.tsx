@@ -1,598 +1,766 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { DimensionView } from '../../types/index';
+import { useAppStore } from '../../store/appStore';
 import {
-  STAGE_CHIP_PREVIEW,
-  STAGE_DIFFERENTIATORS,
-  STAGE_SHOWCASE_SHOTS,
-  TIDEWELL_CARDS,
-  type KineticStageCard,
-} from './landingContent';
+  REELMARK_POSTER_URL,
+  REELMARK_VIDEO_URL,
+  buildRandomInterleaved25,
+  buildRoundedQuadClipPath,
+  type ReelmarkExperienceCard,
+  type ReelmarkLibraryKind,
+} from '../../data/reelmarkCarouselData';
+import { PinUIPlayground } from '../pinui';
 import { usePrefersReducedMotion } from './useLandingMotion';
 import './tidewell.css';
 
-interface TidewellStageProps {
+export interface TidewellStageProps {
   onNavigate: (view: DimensionView) => void;
 }
 
-type ViewportPreset = '390' | '768' | '1440';
-
-const VIEWPORT_PRESETS: Array<{ id: ViewportPreset; label: string; ratioLabel: string }> = [
-  { id: '390', label: '390', ratioLabel: '390px · Di động' },
-  { id: '768', label: '768', ratioLabel: '768px · Máy tính bảng' },
-  { id: '1440', label: '1440', ratioLabel: '1440px · Máy tính bàn' },
-];
-
-const SHOWCASE_CARDS: KineticStageCard[] = STAGE_SHOWCASE_SHOTS.map(
-  (id) => TIDEWELL_CARDS.find((c) => c.id === id) ?? TIDEWELL_CARDS[0]
-);
-
-const SCATTER_SLOTS: Array<[number, number, number]> = [
-  [-0.42, -0.34, -9],
-  [0.42, -0.34, 8],
-  [-0.44, -0.04, -5],
-  [0.44, -0.04, 6],
-  [-0.41, 0.3, 7],
-  [0.41, 0.3, -8],
-  [-0.26, 0.38, -6],
-  [0.26, 0.38, 6],
-  [-0.25, -0.37, 5],
-  [0.25, -0.37, -5],
-  [0.0, 0.4, 3],
-  [0.0, -0.39, -3],
-];
-
-function clamp(v: number, lo: number, hi: number): number {
-  return v < lo ? lo : v > hi ? hi : v;
-}
-
-function smoothstep(edge0: number, edge1: number, x: number): number {
-  const t = clamp((x - edge0) / (edge1 - edge0), 0, 1);
-  return t * t * (3 - 2 * t);
-}
-
-function lerp(a: number, b: number, t: number): number {
-  return a + (b - a) * t;
-}
-
-const StageCardView: React.FC<{
-  card: KineticStageCard;
-  index: number;
-  cardRef?: (el: HTMLDivElement | null) => void;
-}> = ({ card, index, cardRef }) => {
-  const [src, setSrc] = useState(card.imageUrl);
-  const [loaded, setLoaded] = useState(false);
-  const [failed, setFailed] = useState(false);
-
-  return (
-    <div ref={cardRef} className="tw-card">
-      <div className="tw-card-media">
-        <div
-          className="tw-card-fallback"
-          data-loaded={loaded ? 'true' : undefined}
-          style={{
-            background: `radial-gradient(circle at 20% 20%, ${card.tone}38, transparent 62%), linear-gradient(155deg, #24221f 0%, #161513 100%)`,
-          }}
-          aria-hidden="true"
-        >
-          <span className="tw-card-fallback-tag">{card.category}</span>
-        </div>
-        <img
-          src={src}
-          alt={`${card.title}, ${card.category}`}
-          loading="eager"
-          decoding="async"
-          referrerPolicy="no-referrer"
-          data-failed={failed ? 'true' : undefined}
-          onLoad={() => setLoaded(true)}
-          onError={() => {
-            if (src !== card.fallbackUrl) {
-              setSrc(card.fallbackUrl);
-            } else {
-              setFailed(true);
-            }
-          }}
-          className="tw-card-img"
-        />
-      </div>
-      <div className="tw-card-foot">
-        <span className="tw-card-title">{card.title}</span>
-        <span className="tw-card-idx">{String(index + 1).padStart(2, '0')}</span>
-      </div>
-    </div>
-  );
-};
-
-const FrameSpecimenCard: React.FC<{
-  card: KineticStageCard;
-  active: boolean;
-  viewport: ViewportPreset;
-  onSelect: () => void;
-}> = ({ card, active, viewport, onSelect }) => {
-  const [src, setSrc] = useState(card.imageUrl);
-  const [failed, setFailed] = useState(false);
-
-  return (
-    <button
-      type="button"
-      className="tw-spec-card"
-      data-active={active}
-      onClick={onSelect}
-      aria-pressed={active}
-    >
-      <span className="tw-spec-media">
-        <img
-          src={src}
-          alt={card.title}
-          loading="eager"
-          decoding="async"
-          referrerPolicy="no-referrer"
-          data-failed={failed ? 'true' : undefined}
-          onError={() => {
-            if (src !== card.fallbackUrl) {
-              setSrc(card.fallbackUrl);
-            } else {
-              setFailed(true);
-            }
-          }}
-          className="tw-spec-img"
-        />
-        <span className="tw-spec-vp">{viewport}px</span>
-      </span>
-      <span className="tw-spec-meta">
-        <span className="tw-spec-cat">{card.category}</span>
-        <span className="tw-spec-title">{card.title}</span>
-      </span>
-    </button>
-  );
+export {
+  REELMARK_POSTER_URL,
+  REELMARK_VIDEO_URL,
+  buildRandomInterleaved25,
+  buildRoundedQuadClipPath,
+  type ReelmarkExperienceCard,
+  type ReelmarkLibraryKind,
 };
 
 export const TidewellStage: React.FC<TidewellStageProps> = ({ onNavigate }) => {
+  const { launchPromptToWorkspace, openExperience } = useAppStore();
   const reduced = usePrefersReducedMotion();
-  const stageRef = useRef<HTMLElement>(null);
-  const centerCopyRef = useRef<HTMLDivElement>(null);
-  const pass1Ref = useRef<HTMLDivElement>(null);
-  const pass2Ref = useRef<HTMLDivElement>(null);
-  const cardRefs = useRef<Array<HTMLDivElement | null>>([]);
-  const windowRef = useRef<HTMLDivElement>(null);
-  const floatWrapRef = useRef<HTMLDivElement>(null);
-  const floatFrameRef = useRef<HTMLDivElement>(null);
-  const blackoutRef = useRef<HTMLDivElement>(null);
-  const [chipSrc, setChipSrc] = useState(STAGE_CHIP_PREVIEW.imageUrl);
-  const [chipFailed, setChipFailed] = useState(false);
-  const [activeViewport, setActiveViewport] = useState<ViewportPreset>('1440');
-  const [activeSpecimenId, setActiveSpecimenId] = useState<string>(SHOWCASE_CARDS[0]?.id ?? 'ff-space-voyage');
 
-  const activePreset = VIEWPORT_PRESETS.find((v) => v.id === activeViewport) ?? VIEWPORT_PRESETS[2];
+  const [seed, setSeed] = useState<number>(() => Math.floor(Math.random() * 1000000) + 1);
+  const cards = useMemo(() => buildRandomInterleaved25(seed), [seed]);
+
+  const [activeIndex, setActiveIndex] = useState(0);
+  const [dragging, setDragging] = useState(false);
+  const [selectedCard, setSelectedCard] = useState<ReelmarkExperienceCard | null>(null);
+  const [videoReady, setVideoReady] = useState(false);
+
+  const frameRef = useRef<HTMLDivElement>(null);
+  const trackLayerRef = useRef<HTMLDivElement>(null);
+  const cardElsRef = useRef<Array<HTMLDivElement | null>>([]);
+  const tileHostElsRef = useRef<Array<HTMLDivElement | null>>([]);
+  const videoElsRef = useRef<Array<HTMLVideoElement | null>>([]);
+
+  const offsetRef = useRef<number>(0);
+  const velocityRef = useRef<number>(0);
+  const targetStepDeltaRef = useRef<number>(0);
+  const isDraggingRef = useRef<boolean>(false);
+  const pointerStartXRef = useRef<number>(0);
+  const pointerLastXRef = useRef<number>(0);
+  const pointerLastTimeRef = useRef<number>(0);
+  const dragDistanceRef = useRef<number>(0);
+
+  const PITCH = 196;
+  const TOTAL_CARDS = cards.length;
+  const RING_SPAN = TOTAL_CARDS * PITCH;
+
+  const stepCarousel = useCallback((direction: -1 | 1) => {
+    targetStepDeltaRef.current += direction * PITCH;
+    velocityRef.current = 0;
+  }, []);
+
+  const handleReshuffle = useCallback(() => {
+    isDraggingRef.current = false;
+    setDragging(false);
+    targetStepDeltaRef.current = 0;
+    velocityRef.current = 0;
+    setSeed((prev) => prev + Math.floor(Math.random() * 9973) + 17);
+  }, []);
 
   useEffect(() => {
-    if (reduced || typeof window === 'undefined') return;
+    if (reduced || typeof window === 'undefined') return undefined;
+    const frame = frameRef.current;
+    if (!frame || typeof frame.animate !== 'function') return undefined;
 
-    const n = TIDEWELL_CARDS.length;
-    const curX = new Float64Array(n);
-    const curY = new Float64Array(n);
-    const curRot = new Float64Array(n);
-    const curScale = new Float64Array(n).fill(1);
-    const curOp = new Float64Array(n).fill(1);
-
-    let smoothP = 0;
-    let pointerYaw = 0;
-    let targetYaw = 0;
-    let windowUnlocked = false;
-    let rafId = 0;
-
-    const onPointerMove = (e: PointerEvent) => {
-      const vw = window.innerWidth || 1440;
-      const nx = (e.clientX / vw) * 2 - 1;
-      targetYaw = clamp(nx * 10, -10, 10);
+    const anims: Animation[] = [];
+    const runAnim = (
+      selector: string,
+      keyframes: Keyframe[],
+      options: KeyframeAnimationOptions
+    ) => {
+      const els = frame.querySelectorAll<HTMLElement | SVGElement>(selector);
+      els.forEach((el) => {
+        if (typeof el.animate === 'function') {
+          anims.push(el.animate(keyframes, { fill: 'both', easing: 'cubic-bezier(0.22, 1, 0.36, 1)', ...options }));
+        }
+      });
     };
 
-    window.addEventListener('pointermove', onPointerMove, { passive: true });
+    runAnim('.rm-topbar', [{ opacity: 0, transform: 'translateY(-16px)' }, { opacity: 1, transform: 'translateY(0)' }], { duration: 420 });
+    runAnim('.rm-badge', [{ opacity: 0, transform: 'translateX(-50%) scale(0.86)' }, { opacity: 1, transform: 'translateX(-50%) scale(1)' }], { duration: 420, delay: 60 });
+    runAnim('.rm-headline-line1', [{ opacity: 0, transform: 'translateY(18px)', filter: 'blur(8px)' }, { opacity: 1, transform: 'translateY(0)', filter: 'blur(0px)' }], { duration: 480, delay: 110 });
+    runAnim('.rm-headline-line2', [{ opacity: 0, transform: 'translateY(18px)', filter: 'blur(8px)' }, { opacity: 1, transform: 'translateY(0)', filter: 'blur(0px)' }], { duration: 480, delay: 170 });
+    runAnim('.rm-subline', [{ opacity: 0, transform: 'translateX(-50%) translateY(14px)' }, { opacity: 1, transform: 'translateX(-50%) translateY(0)' }], { duration: 460, delay: 220 });
+    runAnim('.rm-carousel-layer', [{ opacity: 0, transform: 'translateY(26px)' }, { opacity: 1, transform: 'translateY(0)' }], { duration: 520, delay: 260 });
+    runAnim('.rm-cta-ring', [{ opacity: 0, transform: 'scale(0.86)' }, { opacity: 1, transform: 'scale(1)' }], { duration: 440, delay: 320 });
+    runAnim('.rm-note-beseen, .rm-note-zerocost', [{ opacity: 0 }, { opacity: 1 }], { duration: 420, delay: 360 });
 
-    const tick = (now: number) => {
-      const stage = stageRef.current;
-      if (!stage) {
-        rafId = requestAnimationFrame(tick);
-        return;
+    const clearStylesTimeout = window.setTimeout(() => {
+      anims.forEach((a) => a.cancel());
+    }, 950);
+
+    return () => {
+      window.clearTimeout(clearStylesTimeout);
+      anims.forEach((a) => a.cancel());
+    };
+  }, [reduced]);
+
+  useEffect(() => {
+    if (reduced) return undefined;
+    const master = videoElsRef.current[0];
+    if (!master) return undefined;
+
+    const syncAll = () => {
+      const t = master.currentTime;
+      for (let i = 1; i < videoElsRef.current.length; i += 1) {
+        const v = videoElsRef.current[i];
+        if (v && Math.abs(v.currentTime - t) > 0.18) {
+          try {
+            v.currentTime = t;
+          } catch {
+            void 0;
+          }
+        }
+      }
+    };
+
+    const interval = window.setInterval(syncAll, 1500);
+    return () => window.clearInterval(interval);
+  }, [reduced, cards]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return undefined;
+
+    let rafId = 0;
+    let prevTime = performance.now();
+
+    const clockAnim =
+      typeof document !== 'undefined' && typeof document.documentElement?.animate === 'function'
+        ? document.documentElement.animate([], { duration: 1e9 })
+        : null;
+
+    const tick = (nowFallback: number) => {
+      rafId = requestAnimationFrame(tick);
+      const clockNow =
+        clockAnim && typeof clockAnim.currentTime === 'number'
+          ? Number(clockAnim.currentTime)
+          : nowFallback;
+      const dt = Math.min(0.06, Math.max(0.001, (clockNow - prevTime) / 1000));
+      prevTime = clockNow;
+
+      const frameEl = frameRef.current;
+      const layerEl = trackLayerRef.current;
+      if (!frameEl || !layerEl) return;
+
+      const vw = window.innerWidth || 1440;
+      const vh = window.innerHeight || 1080;
+      const isPhone = vw <= 820;
+      const frameW = frameEl.clientWidth || vw;
+      const u = isPhone ? frameW / 640 : frameW > 0 ? frameW / 1440 : Math.min(vw / 1440, vh / 1080);
+
+      if (!isDraggingRef.current) {
+        if (Math.abs(targetStepDeltaRef.current) > 0.5) {
+          const stepChunk = targetStepDeltaRef.current * Math.min(1, dt * 11);
+          offsetRef.current += stepChunk;
+          targetStepDeltaRef.current -= stepChunk;
+        } else {
+          targetStepDeltaRef.current = 0;
+          if (Math.abs(velocityRef.current) > 1.5) {
+            offsetRef.current += velocityRef.current * dt;
+            velocityRef.current *= Math.pow(0.05, dt);
+          } else {
+            velocityRef.current = 0;
+            if (!reduced && !selectedCard) {
+              offsetRef.current -= 50 * dt;
+            }
+          }
+        }
       }
 
-      const rect = stage.getBoundingClientRect();
-      const vw = window.innerWidth || 1440;
-      const vh = window.innerHeight || 900;
-      const scrollable = Math.max(1, rect.height - vh);
-      const rawP = clamp(-rect.top / scrollable, 0, 1);
+      offsetRef.current = ((offsetRef.current % RING_SPAN) + RING_SPAN) % RING_SPAN;
 
-      const stepGain = Math.abs(rawP - smoothP) > 0.25 ? 0.28 : 0.14;
-      smoothP += (rawP - smoothP) * stepGain;
-      const p = Math.abs(rawP - smoothP) < 0.0005 ? rawP : smoothP;
+      let closestIdx = 0;
+      let closestDist = Infinity;
 
-      const isMobile = vw < 768;
-      const cw =
-        vw >= 960
-          ? Math.min(184, vw * 0.128)
-          : vw >= 768
-            ? Math.min(152, vw * 0.19)
-            : Math.min(104, vw * 0.27);
-      const ch = Math.round(cw * 1.24);
-
-      const minRingR = (1.05 * cw) / (2 * Math.sin(Math.PI / 12));
-      const maxFitR = isMobile ? Math.min((vw - cw * 0.88) * 0.48, vh * 0.3) : Math.min(vw * 0.4, vh * 0.42);
-      const R = isMobile ? maxFitR : Math.min(Math.max(minRingR, Math.min(vw, vh) * 0.36), maxFitR);
-      const rx = isMobile ? maxFitR : Math.min(vw * 0.45, 620);
-      const ry = isMobile ? maxFitR : Math.min(vh * 0.44, 395);
-      const effectiveCw = isMobile ? cw * 0.68 : cw;
-      const rawStep = 2 * Math.asin(clamp((1.05 * effectiveCw) / (2 * Math.max(1, R)), 0, 0.95));
-      const step = Math.min((Math.PI * 2) / 12, rawStep);
-
-      const scatterT = smoothstep(0.02, 0.22, p);
-      const gatherT = smoothstep(0.24, 0.36, p);
-      const orbitT = smoothstep(0.36, 0.48, p);
-      const wheelProg = clamp((p - 0.38) / 0.28, 0, 1);
-      const wheelRot = -3 * wheelProg;
-
-      let maxDeltaPx = 0;
-      let maxDeltaDeg = 0;
-
-      for (let i = 0; i < n; i += 1) {
-        const cardEl = cardRefs.current[i];
+      for (let i = 0; i < TOTAL_CARDS; i += 1) {
+        const cardEl = cardElsRef.current[i];
+        const tileHostEl = tileHostElsRef.current[i];
         if (!cardEl) continue;
 
-        const fanAngle = (i - (n - 1) / 2) * (isMobile ? 3.2 : 4.4);
-        const fanX = (i - (n - 1) / 2) * (isMobile ? 11 : 18);
-        const fanY = vh * 0.24 + Math.abs(i - (n - 1) / 2) * (isMobile ? 3 : 4.5);
+        let t = i * PITCH + offsetRef.current;
+        t = ((((t + RING_SPAN / 2) % RING_SPAN) + RING_SPAN) % RING_SPAN) - RING_SPAN / 2;
 
-        const slot = SCATTER_SLOTS[i % SCATTER_SLOTS.length];
-        const scatX = slot[0] * vw;
-        const scatY = slot[1] * vh;
-        const scatRot = slot[2];
-
-        const pileX = ((i % 3) - 1) * 4;
-        const pileY = (Math.floor(i / 3) - 1.5) * 3;
-        const pileRot = (i % 2 === 0 ? 1 : -1) * (i * 1.4);
-
-        const theta = i * step + wheelRot - Math.PI / 2;
-        const ringX = Math.cos(theta) * rx;
-        const ringY = Math.sin(theta) * ry;
-        const ringRot = (theta * 180) / Math.PI + 90;
-
-        let targetX = lerp(fanX, scatX, scatterT);
-        let targetY = lerp(fanY, scatY, scatterT);
-        let targetRot = lerp(fanAngle, scatRot, scatterT);
-        let targetScale = lerp(0.9, isMobile ? 0.92 : 0.98, scatterT);
-
-        if (p >= 0.24) {
-          targetX = lerp(targetX, pileX, gatherT);
-          targetY = lerp(targetY, pileY, gatherT);
-          targetRot = lerp(targetRot, pileRot, gatherT);
-          targetScale = lerp(targetScale, isMobile ? 0.84 : 0.92, gatherT);
+        const absT = Math.abs(t);
+        if (absT < closestDist) {
+          closestDist = absT;
+          closestIdx = i;
         }
 
-        if (p >= 0.36) {
-          targetX = lerp(targetX, ringX, orbitT);
-          targetY = lerp(targetY, ringY, orbitT);
-          targetRot = lerp(targetRot, ringRot, orbitT);
-          targetScale = lerp(targetScale, isMobile ? 0.82 : 0.96, orbitT);
+        if (absT > 940) {
+          cardEl.style.display = 'none';
+          continue;
         }
+        cardEl.style.display = 'block';
 
-        const w = 0.055 + (i % 4) * 0.008;
-        curX[i] += (targetX - curX[i]) * w;
-        curY[i] += (targetY - curY[i]) * w;
-        curRot[i] += (targetRot - curRot[i]) * w;
-        curScale[i] += (targetScale - curScale[i]) * w;
+        const pushedX = 720 + t * (1 + 0.083 * Math.pow(t / 706, 2));
+        const d = Math.abs(pushedX - 720) / 706;
+        const cardW = 170 + 48 * d * d;
 
-        const dx = Math.abs(targetX - curX[i]);
-        const dy = Math.abs(targetY - curY[i]);
-        const dRot = Math.abs(targetRot - curRot[i]);
-        maxDeltaPx = Math.max(maxDeltaPx, Math.hypot(dx, dy));
-        maxDeltaDeg = Math.max(maxDeltaDeg, dRot);
+        const xL = pushedX - cardW * 0.5;
+        const xR = pushedX + cardW * 0.5;
+        const qL = Math.abs(xL - 720) / 706;
+        const qR = Math.abs(xR - 720) / 706;
 
-        const targetOp = p > 0.68 ? clamp(1 - (p - 0.68) * 5, 0, 1) : 1;
-        curOp[i] += (targetOp - curOp[i]) * 0.14;
+        const hL = 280 + 92 * Math.pow(qL, 2.6);
+        const hR = 280 + 92 * Math.pow(qR, 2.6);
+        const layerHeight = layerEl.clientHeight || (isPhone ? 250 : 1080 * u);
+        const phoneCenterU = layerHeight / Math.max(0.2, u) * 0.5 + 8;
+        const cy = isPhone ? phoneCenterU - 10 * d * d : 687 - 12 * d * d;
 
-        cardEl.style.width = `${cw}px`;
-        cardEl.style.height = `${ch}px`;
-        cardEl.style.transform = `translate3d(calc(-50% + ${curX[i].toFixed(2)}px), calc(-50% + ${curY[i].toFixed(
-          2
-        )}px), 0) rotate(${curRot[i].toFixed(2)}deg) scale(${curScale[i].toFixed(3)})`;
-        cardEl.style.opacity = curOp[i].toFixed(3);
-      }
+        const boxH = Math.max(hL, hR);
+        const boxTop = cy - boxH * 0.5;
+        const topL = (cy - hL * 0.5 - boxTop) * u;
+        const topR = (cy - hR * 0.5 - boxTop) * u;
 
-      if (centerCopyRef.current) {
-        const isWheelPass = p >= 0.35;
-        const scatterOp = smoothstep(0.03, 0.14, p) * (1 - smoothstep(0.22, 0.32, p));
-        const wheelOp = smoothstep(0.38, 0.46, p) * (1 - smoothstep(0.61, 0.67, p));
-        const copyOp = isWheelPass ? wheelOp : scatterOp;
-        const copyScale = lerp(0.95, 1, isWheelPass ? smoothstep(0.38, 0.46, p) : smoothstep(0.03, 0.14, p));
+        const layerWidth = layerEl.clientWidth || vw;
+        const pxLeft = isPhone ? layerWidth * 0.5 + (xL - 720) * u : xL * u;
+        const pxTop = boxTop * u;
+        const pxW = cardW * u;
+        const pxH = boxH * u;
+        const pxHL = hL * u;
+        const pxHR = hR * u;
+        const cornerR = 15 * u;
 
-        centerCopyRef.current.dataset.pass = isWheelPass ? '2' : '1';
-        centerCopyRef.current.style.opacity = copyOp.toFixed(3);
-        centerCopyRef.current.style.transform = `scale(${copyScale.toFixed(3)})`;
+        cardEl.style.width = `${pxW.toFixed(1)}px`;
+        cardEl.style.height = `${pxH.toFixed(1)}px`;
+        cardEl.style.transform = `translate3d(${pxLeft.toFixed(1)}px, ${pxTop.toFixed(1)}px, 0)`;
+        cardEl.style.clipPath = buildRoundedQuadClipPath(pxW, topL, pxHL, topR, pxHR, cornerR);
+        cardEl.style.zIndex = String(100 - Math.round(d * 40));
 
-        if (pass1Ref.current) {
-          pass1Ref.current.style.display = isWheelPass ? 'none' : 'block';
-        }
-        if (pass2Ref.current) {
-          pass2Ref.current.style.display = isWheelPass ? 'block' : 'none';
+        if (tileHostEl) {
+          const tileIdx = i % 10;
+          const col = tileIdx % 5;
+          const row = Math.floor(tileIdx / 5);
+          const tileH = Math.max(pxH, pxW / 0.7111);
+          const tileW = tileH * 0.7111;
+          tileHostEl.style.width = `${(tileW * 5).toFixed(1)}px`;
+          tileHostEl.style.height = `${(tileH * 2).toFixed(1)}px`;
+          tileHostEl.style.transform = `translate3d(${(-col * tileW).toFixed(1)}px, ${(-row * tileH).toFixed(1)}px, 0)`;
         }
       }
 
-      if (p < 0.62) {
-        windowUnlocked = false;
-      } else if (p >= 0.66 && ((maxDeltaPx <= 3 && maxDeltaDeg <= 1) || p >= 0.72)) {
-        windowUnlocked = true;
-      }
-
-      const winEl = windowRef.current;
-      if (winEl) {
-        if (!windowUnlocked) {
-          winEl.style.opacity = '0';
-          winEl.style.pointerEvents = 'none';
-          winEl.style.clipPath = 'inset(32% 34% 32% 34% round 14px)';
-        } else {
-          const winOpen = smoothstep(0.66, 0.84, p);
-          const insetV = lerp(31, 0, winOpen);
-          const insetH = lerp(33, 0, winOpen);
-          const radius = lerp(14, 0, winOpen);
-          winEl.style.opacity = smoothstep(0.65, 0.7, p).toFixed(3);
-          winEl.style.pointerEvents = winOpen > 0.35 ? 'auto' : 'none';
-          winEl.style.clipPath = `inset(${insetV.toFixed(2)}% ${insetH.toFixed(2)}% ${insetV.toFixed(
-            2
-          )}% ${insetH.toFixed(2)}% round ${radius.toFixed(1)}px)`;
-        }
-      }
-
-      const q = clamp((p - 0.84) / 0.16, 0, 1);
-
-      if (floatWrapRef.current) {
-        const zoomScale = 1 + q * q * (isMobile ? 14 : 28);
-        const bobY = Math.sin(now * 0.0016) * 6 * (1 - q);
-        floatWrapRef.current.style.transform = `translate3d(0, ${bobY.toFixed(2)}px, 0) scale(${zoomScale.toFixed(3)})`;
-      }
-
-      if (floatFrameRef.current) {
-        pointerYaw += (targetYaw - pointerYaw) * 0.08;
-        const scrollYaw = Math.sin(p * Math.PI * 3) * 4 * (1 - q);
-        const totalYaw = clamp(pointerYaw + scrollYaw, -10, 10);
-        const pitch = Math.cos(now * 0.0011) * 2.2 * (1 - q);
-        floatFrameRef.current.style.transform = `rotateY(${totalYaw.toFixed(2)}deg) rotateX(${pitch.toFixed(2)}deg)`;
-      }
-
-      if (blackoutRef.current) {
-        const blackOp = smoothstep(0.42, 0.96, q);
-        blackoutRef.current.style.opacity = blackOp.toFixed(3);
-      }
-
-      rafId = requestAnimationFrame(tick);
+      setActiveIndex((prev) => (prev === closestIdx ? prev : closestIdx));
     };
 
     rafId = requestAnimationFrame(tick);
     return () => {
       if (rafId) cancelAnimationFrame(rafId);
-      window.removeEventListener('pointermove', onPointerMove);
+      clockAnim?.cancel();
     };
-  }, [reduced]);
+  }, [RING_SPAN, TOTAL_CARDS, reduced, selectedCard]);
 
-  if (reduced) {
-    return (
-      <section
-        id="quy-trinh"
-        ref={stageRef}
-        data-reduced="true"
-        aria-label="Quy trình kiến tạo và sản phẩm F-Forum"
-        className="tw-stage"
-      >
-        <div id="san-pham" className="tw-anchor-product" aria-hidden="true" />
-        <div className="wrap-wide">
-          <div className="tw-center-copy" style={{ marginInline: 'auto', pointerEvents: 'auto' }}>
-            <p className="tw-kicker">01 · phác thảo &amp; bố cục</p>
-            <h2 className="tw-phrase">
-              Từ phác thảo{' '}
-              <span className="tw-chip">
-                <img
-                  src={chipSrc}
-                  alt={STAGE_CHIP_PREVIEW.label}
-                  referrerPolicy="no-referrer"
-                  onError={() => {
-                    if (chipSrc !== STAGE_CHIP_PREVIEW.fallbackUrl) setChipSrc(STAGE_CHIP_PREVIEW.fallbackUrl);
-                    else setChipFailed(true);
-                  }}
-                  style={chipFailed ? { opacity: 0 } : undefined}
+  const handlePointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
+    if ((e.target as HTMLElement).closest('button')) return;
+    isDraggingRef.current = true;
+    setDragging(true);
+    targetStepDeltaRef.current = 0;
+    velocityRef.current = 0;
+    pointerStartXRef.current = e.clientX;
+    pointerLastXRef.current = e.clientX;
+    pointerLastTimeRef.current = performance.now();
+    dragDistanceRef.current = 0;
+    e.currentTarget.setPointerCapture?.(e.pointerId);
+  };
+
+  const handlePointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (!isDraggingRef.current) return;
+    const vw = window.innerWidth || 1440;
+    const vh = window.innerHeight || 1080;
+    const isPhone = vw <= 820;
+    const u = isPhone ? vw / 640 : Math.min(vw / 1440, vh / 1080);
+
+    const dxPx = e.clientX - pointerLastXRef.current;
+    const dxUnits = dxPx / Math.max(0.25, u);
+    const now = performance.now();
+    const dt = Math.max(0.004, (now - pointerLastTimeRef.current) / 1000);
+
+    offsetRef.current += dxUnits;
+    velocityRef.current = dxUnits / dt;
+    dragDistanceRef.current += Math.abs(dxPx);
+    pointerLastXRef.current = e.clientX;
+    pointerLastTimeRef.current = now;
+  };
+
+  const handlePointerUp = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (!isDraggingRef.current) return;
+    isDraggingRef.current = false;
+    setDragging(false);
+    e.currentTarget.releasePointerCapture?.(e.pointerId);
+  };
+
+  const handleCardClick = (card: ReelmarkExperienceCard) => {
+    if (dragDistanceRef.current > 10) return;
+    setSelectedCard(card);
+  };
+
+  const activeCard = cards[activeIndex] ?? cards[0];
+
+  const handleLaunchActiveInWorkspace = (card: ReelmarkExperienceCard) => {
+    setSelectedCard(null);
+    void launchPromptToWorkspace(card.promptText);
+  };
+
+  const handleOpenInExperienceView = (card: ReelmarkExperienceCard) => {
+    setSelectedCard(null);
+    openExperience(card.sourceId);
+  };
+
+  return (
+    <section
+      id="quy-trinh"
+      aria-label="Reelmark — Trải nghiệm dải thẻ cong 25 mẫu ngẫu nhiên xen kẽ PinUI và Motion AI"
+      className="rm-stage"
+    >
+      <div id="san-pham" className="rm-anchor-product" aria-hidden="true" />
+
+      <div className="rm-viewport">
+        <div ref={frameRef} className="rm-frame">
+          <header className="rm-topbar">
+            <button
+              type="button"
+              className="rm-logo"
+              onClick={() => onNavigate('explore')}
+            >
+              <svg
+                viewBox="0 0 28 28"
+                fill="none"
+                className="rm-logo-leaf"
+                aria-hidden="true"
+              >
+                <path
+                  d="M23.5 4.5C15.2 4.5 7.5 9.6 5.4 18.2C4.9 20.3 5.2 22.4 5.2 22.4C5.2 22.4 7.3 22.7 9.4 22.2C18 20.1 23.5 12.8 23.5 4.5Z"
+                  fill="currentColor"
                 />
-              </span>{' '}
-              đến sản phẩm
-              <span className="tw-subphrase">biến ý tưởng thành giao diện chạy thật trên trình duyệt</span>
-            </h2>
+                <path
+                  d="M5.5 22.5C10.5 16.5 15.8 12.2 22.2 8.5"
+                  stroke="#F5F8EF"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                />
+              </svg>
+              <span>Reelmark</span>
+            </button>
+
+            <nav className="rm-nav" aria-label="Điều hướng bộ sưu tập">
+              <button type="button" className="rm-nav-item" onClick={() => onNavigate('experience')}>
+                Brands
+              </button>
+              <button type="button" className="rm-nav-item" onClick={() => onNavigate('explore')}>
+                Creators
+              </button>
+              <button type="button" className="rm-nav-item" onClick={() => onNavigate('workspace')}>
+                Pricing
+              </button>
+              <button type="button" className="rm-nav-item" onClick={() => onNavigate('community')}>
+                Use Cases
+              </button>
+              <button type="button" className="rm-nav-item" onClick={handleReshuffle}>
+                Contact
+              </button>
+            </nav>
+
+            <button
+              type="button"
+              className="rm-btn-login"
+              onClick={handleReshuffle}
+              title="Trộn ngẫu nhiên 25 trải nghiệm PinUI & Motion AI"
+            >
+              Log in
+            </button>
+            <button
+              type="button"
+              className="rm-btn-signup"
+              onClick={() => onNavigate('explore')}
+            >
+              Sign up
+            </button>
+          </header>
+
+          <div className="rm-badge">
+            Trusted by 120,000+ indie makers · 25 mẫu PinUI &amp; Motion AI
           </div>
 
-          <div className="tw-reduced-grid">
-            {TIDEWELL_CARDS.map((card, index) => (
-              <div key={card.id} className="tw-reduced-card">
-                <div className="tw-reduced-media">
-                  <StageCardView card={card} index={index} />
+          <h2 className="rm-headline">
+            <span className="rm-headline-line1">Captivate Crowds</span>
+            <span className="rm-headline-line2">with Snackable Reels</span>
+          </h2>
+
+          <p className="rm-subline">
+            Grow your brand with short, snappy product clips by our handpicked video makers.
+            Kéo ngang dải thẻ cong hoặc nhấn &lt;- hay -&gt; để trải nghiệm 25 mẫu ngẫu nhiên xen kẽ giữa PinUI và Motion AI.
+          </p>
+
+          <svg
+            viewBox="0 0 44 48"
+            fill="none"
+            className="rm-doodle-slashes"
+            aria-hidden="true"
+          >
+            <path
+              d="M16 6 C12 18 8 30 4 42 M34 4 C29 17 24 30 19 43"
+              stroke="currentColor"
+              strokeWidth="3.2"
+              strokeLinecap="round"
+              className="rm-draw-path"
+            />
+          </svg>
+
+          <div className="rm-note-beseen" aria-hidden="true">
+            Be seen
+            <br />
+            with clips
+          </div>
+
+          <svg
+            viewBox="0 0 96 124"
+            fill="none"
+            className="rm-arrow-beseen"
+            aria-hidden="true"
+          >
+            <path
+              d="M42 6 C68 28 74 72 40 112"
+              stroke="currentColor"
+              strokeWidth="2.6"
+              strokeLinecap="round"
+              className="rm-draw-path"
+            />
+            <path
+              d="M35 98 L39 114 L55 107"
+              stroke="currentColor"
+              strokeWidth="2.6"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              className="rm-draw-path"
+            />
+          </svg>
+
+          <div
+            ref={trackLayerRef}
+            className="rm-carousel-layer"
+            data-dragging={dragging ? 'true' : 'false'}
+            role="region"
+            aria-label="Băng chuyền cong 25 trải nghiệm ngẫu nhiên xen kẽ từ PinUI và Motion AI"
+            tabIndex={0}
+            onPointerDown={handlePointerDown}
+            onPointerMove={handlePointerMove}
+            onPointerUp={handlePointerUp}
+            onPointerCancel={handlePointerUp}
+            onKeyDown={(e) => {
+              if (e.key === 'ArrowLeft') {
+                e.preventDefault();
+                stepCarousel(1);
+              } else if (e.key === 'ArrowRight') {
+                e.preventDefault();
+                stepCarousel(-1);
+              }
+            }}
+          >
+            {cards.map((card, idx) => (
+              <div
+                key={idx}
+                ref={(el) => {
+                  cardElsRef.current[idx] = el;
+                }}
+                className="rm-card"
+                role="button"
+                tabIndex={-1}
+                aria-label={`${card.library}: ${card.title} (${card.category})`}
+                onClick={() => handleCardClick(card)}
+              >
+                <div
+                  ref={(el) => {
+                    tileHostElsRef.current[idx] = el;
+                  }}
+                  className="rm-card-tile-host"
+                  aria-hidden="true"
+                >
+                  <img
+                    src={REELMARK_POSTER_URL}
+                    alt=""
+                    className="rm-card-poster"
+                    loading="eager"
+                    decoding="async"
+                  />
+                  {!reduced && (
+                    <video
+                      ref={(el) => {
+                        videoElsRef.current[idx] = el;
+                      }}
+                      src={REELMARK_VIDEO_URL}
+                      className="rm-card-video"
+                      data-ready={videoReady ? 'true' : 'false'}
+                      muted
+                      loop
+                      playsInline
+                      autoPlay
+                      onLoadedData={() => setVideoReady(true)}
+                    />
+                  )}
+                </div>
+
+                <img
+                  src={card.imageUrl}
+                  alt={card.title}
+                  className="rm-card-thumb"
+                  loading="lazy"
+                  decoding="async"
+                  referrerPolicy="no-referrer"
+                  onError={(e) => {
+                    const target = e.currentTarget;
+                    if (target.src !== card.fallbackUrl) {
+                      target.src = card.fallbackUrl;
+                    }
+                  }}
+                />
+
+                <div className="rm-card-shade" aria-hidden="true" />
+
+                <div className="rm-card-top">
+                  <span className="rm-card-lib" data-lib={card.library}>
+                    {card.library}
+                  </span>
+                  <span className="rm-card-num">
+                    {String(idx + 1).padStart(2, '0')}/25
+                  </span>
+                </div>
+
+                <div className="rm-card-bottom">
+                  <span className="rm-card-play" aria-hidden="true">
+                    <svg viewBox="0 0 16 16" width="13" height="13" fill="currentColor">
+                      <polygon points="4,2.5 13.5,8 4,13.5" />
+                    </svg>
+                  </span>
+                  <div className="rm-card-meta">
+                    <span className="rm-card-cat">{card.category}</span>
+                    <span className="rm-card-title">{card.title}</span>
+                  </div>
                 </div>
               </div>
             ))}
           </div>
 
-          <div className="tw-reduced-showcase">
-            <div style={{ display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px' }}>
-              <div>
-                <p className="tw-corner-label">Không chỉ là hình ảnh</p>
-                <h3 className="tw-corner-title">Sản phẩm chạy thật trong Live View</h3>
-              </div>
-              <div className="lp-actions">
-                <button type="button" className="btn btn-line" onClick={() => onNavigate('explore')}>
-                  Mở kho mẫu
-                </button>
-                <button type="button" className="btn btn-red" onClick={() => onNavigate('workspace')}>
-                  Mở Live View
-                </button>
-              </div>
-            </div>
+          <div className="rm-note-zerocost" aria-hidden="true">
+            Zero cost
           </div>
-        </div>
-      </section>
-    );
-  }
-
-  return (
-    <section
-      id="quy-trinh"
-      ref={stageRef}
-      aria-label="Quy trình từ phác thảo đến mã nguồn và khung sản phẩm"
-      className="tw-stage"
-    >
-      <div id="san-pham" className="tw-anchor-product" aria-hidden="true" />
-      <div className="tw-sticky">
-        <div className="tw-grid-bg" aria-hidden="true" />
-
-        <div ref={centerCopyRef} className="tw-center-copy" data-pass="1">
-          <div ref={pass1Ref} className="tw-pass-block" data-pass-id="1">
-            <p className="tw-kicker">01 · phác thảo &amp; bố cục</p>
-            <h2 className="tw-phrase">
-              Từ phác thảo{' '}
-              <span className="tw-chip" aria-hidden="true">
-                <img
-                  src={chipSrc}
-                  alt=""
-                  loading="eager"
-                  referrerPolicy="no-referrer"
-                  onError={() => {
-                    if (chipSrc !== STAGE_CHIP_PREVIEW.fallbackUrl) setChipSrc(STAGE_CHIP_PREVIEW.fallbackUrl);
-                    else setChipFailed(true);
-                  }}
-                  style={chipFailed ? { opacity: 0 } : undefined}
-                />
-              </span>{' '}
-              đến sản phẩm
-              <span className="tw-subphrase">biến ý tưởng thành giao diện chạy thật trên trình duyệt</span>
-            </h2>
-            <p className="tw-telemetry">196 giao diện tham khảo · 12 mẫu tiêu biểu</p>
-          </div>
-
-          <div ref={pass2Ref} className="tw-pass-block" data-pass-id="2" style={{ display: 'none' }}>
-            <p className="tw-kicker">02 · thông số &amp; mã nguồn</p>
-            <h2 className="tw-phrase">
-              Chỉnh thông số{' '}
-              <span className="tw-chip tw-chip--code" aria-hidden="true">
-                <span className="tw-chip-code-top">390 · 1440</span>
-                <span className="tw-chip-code-bot">HTML · CSS</span>
-              </span>{' '}
-              xuất mã sạch
-              <span className="tw-subphrase">
-                đọc cấu trúc tệp, đối chiếu khung nhìn và sao chép prompt cho cộng đồng
-              </span>
-            </h2>
-            <p className="tw-telemetry">6.770 chi tiết UI/UX · Sao chép Prompt · Tải gói ZIP</p>
-          </div>
-        </div>
-
-        <div className="tw-cards-layer">
-          {TIDEWELL_CARDS.map((card, index) => (
-            <StageCardView
-              key={card.id}
-              card={card}
-              index={index}
-              cardRef={(el) => {
-                cardRefs.current[index] = el;
-              }}
+          <svg
+            viewBox="0 0 48 36"
+            fill="none"
+            className="rm-arrow-zerocost"
+            aria-hidden="true"
+          >
+            <path
+              d="M4 28 C18 30 30 22 42 10"
+              stroke="currentColor"
+              strokeWidth="2.4"
+              strokeLinecap="round"
+              className="rm-draw-path"
             />
-          ))}
-        </div>
+            <path
+              d="M33 8 L43 9 L41 19"
+              stroke="currentColor"
+              strokeWidth="2.4"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              className="rm-draw-path"
+            />
+          </svg>
 
-        <div ref={windowRef} className="tw-window-shell" style={{ opacity: 0 }}>
-          <div className="tw-window-backdrop" aria-hidden="true" />
-          <div className="tw-window-stripes" aria-hidden="true">
-            <div className="tw-window-col">
-              <span>01 · LIVE VIEW</span>
-              <span>sandbox=&quot;allow-scripts&quot;</span>
-            </div>
-            <div className="tw-window-col">
-              <span>02 · ĐA KHUNG NHÌN</span>
-              <span>390px / 768px / 1440px</span>
-            </div>
-            <div className="tw-window-col">
-              <span>03 · MÃ SẠCH &amp; PROMPT</span>
-              <span>HTML · CSS · JS · ZIP</span>
-            </div>
+          <div className="rm-cta-ring">
+            <button
+              type="button"
+              className="rm-cta-btn"
+              onClick={() => setSelectedCard(activeCard)}
+            >
+              Make a Reel
+            </button>
           </div>
 
-          <div className="tw-corner-top">
-            <p className="tw-corner-label">01 · giao diện &amp; mã nguồn</p>
-            <h3 className="tw-corner-title">Không chỉ là hình ảnh</h3>
-          </div>
+          <div className="rm-arrow-controls" role="group" aria-label="Điều khiển lướt 25 trải nghiệm">
+            <button
+              type="button"
+              className="rm-step-btn"
+              onClick={() => stepCarousel(1)}
+              aria-label="Trải nghiệm trước (<-)"
+            >
+              <span>&lt;-</span>
+              <span>Trước</span>
+            </button>
 
-          <div ref={floatWrapRef} className="tw-float-wrap">
-            <div ref={floatFrameRef} className="tw-float-frame" data-viewport={activeViewport}>
-              <div className="tw-frame-bar">
-                <div className="tw-frame-bar-left">
-                  <div className="tw-frame-dots" aria-hidden="true">
-                    <span />
-                    <span />
-                    <span />
-                  </div>
-                  <span className="tw-frame-bar-title">F-Forum · Khung xem trước giao diện</span>
-                </div>
-                <div className="tw-vp-switch" role="group" aria-label="Chọn khung nhìn">
-                  {VIEWPORT_PRESETS.map((vp) => (
-                    <button
-                      key={vp.id}
-                      type="button"
-                      className="tw-vp-btn"
-                      data-active={activeViewport === vp.id}
-                      aria-pressed={activeViewport === vp.id}
-                      onClick={() => setActiveViewport(vp.id)}
-                    >
-                      {vp.label}
-                    </button>
-                  ))}
-                </div>
-              </div>
+            <span className="rm-active-pill" aria-live="polite">
+              {String(activeIndex + 1).padStart(2, '0')}/25 · {activeCard?.library} · {activeCard?.title}
+            </span>
 
-              <div className="tw-frame-body">
-                <div className="tw-frame-gallery">
-                  {SHOWCASE_CARDS.map((card) => (
-                    <FrameSpecimenCard
-                      key={card.id}
-                      card={card}
-                      active={activeSpecimenId === card.id}
-                      viewport={activeViewport}
-                      onSelect={() => setActiveSpecimenId(card.id)}
-                    />
-                  ))}
-                </div>
+            <button
+              type="button"
+              className="rm-step-btn"
+              onClick={() => stepCarousel(-1)}
+              aria-label="Trải nghiệm tiếp theo (->)"
+            >
+              <span>Tiếp</span>
+              <span>-&gt;</span>
+            </button>
 
-                <div className="tw-frame-diffs">
-                  {STAGE_DIFFERENTIATORS.map((diff) => (
-                    <div key={diff.id} className="tw-diff-item">
-                      <span className="tw-diff-title">{diff.title}</span>
-                      <span className="tw-diff-text">{diff.text}</span>
-                    </div>
-                  ))}
-                </div>
-
-                <div className="tw-frame-actions">
-                  <span className="tw-frame-status">{activePreset.ratioLabel} · 196 giao diện</span>
-                  <div className="tw-frame-btns">
-                    <button type="button" className="btn btn-line btn-sm" onClick={() => onNavigate('explore')}>
-                      Mở kho mẫu
-                    </button>
-                    <button type="button" className="btn btn-red btn-sm" onClick={() => onNavigate('workspace')}>
-                      Mở Live View
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div className="tw-corner-bottom">
-            <p className="tw-corner-label">02 · tùy biến trực tiếp</p>
-            <h3 className="tw-corner-title">Sản phẩm chạy thật</h3>
+            <button
+              type="button"
+              className="rm-step-btn"
+              onClick={handleReshuffle}
+              aria-label="Trộn ngẫu nhiên 25 trải nghiệm PinUI và Motion AI"
+            >
+              Trộn ngẫu nhiên
+            </button>
           </div>
         </div>
-
-        <div ref={blackoutRef} className="tw-blackout" style={{ opacity: 0 }} aria-hidden="true" />
       </div>
+
+      {selectedCard && (
+        <div
+          className="rm-modal-backdrop"
+          role="dialog"
+          aria-modal="true"
+          aria-label={`Trải nghiệm ${selectedCard.title}`}
+          onClick={() => setSelectedCard(null)}
+        >
+          <div className="rm-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="rm-modal-head">
+              <div className="rm-modal-title-group">
+                <span className="rm-modal-badge">{selectedCard.library}</span>
+                <h3 className="rm-modal-title">{selectedCard.title}</h3>
+                <span style={{ fontSize: 13, color: '#5e5e61' }}>· {selectedCard.category}</span>
+              </div>
+
+              <div className="rm-modal-actions">
+                <button
+                  type="button"
+                  className="rm-modal-btn"
+                  onClick={() => {
+                    const idx = cards.findIndex((c) => c.id === selectedCard.id);
+                    const prev = cards[(idx - 1 + cards.length) % cards.length];
+                    setSelectedCard(prev);
+                  }}
+                >
+                  &lt;- Mẫu trước
+                </button>
+                <button
+                  type="button"
+                  className="rm-modal-btn"
+                  onClick={() => {
+                    const idx = cards.findIndex((c) => c.id === selectedCard.id);
+                    const next = cards[(idx + 1) % cards.length];
+                    setSelectedCard(next);
+                  }}
+                >
+                  Mẫu tiếp -&gt;
+                </button>
+                <button
+                  type="button"
+                  className="rm-modal-btn"
+                  onClick={() => handleOpenInExperienceView(selectedCard)}
+                >
+                  Mở Bàn soi
+                </button>
+                <button
+                  type="button"
+                  className="rm-modal-btn rm-modal-btn--primary"
+                  onClick={() => handleLaunchActiveInWorkspace(selectedCard)}
+                >
+                  Dựng trong Workspace
+                </button>
+                <button
+                  type="button"
+                  className="rm-modal-btn"
+                  onClick={() => setSelectedCard(null)}
+                >
+                  Đóng
+                </button>
+              </div>
+            </div>
+
+            <div className="rm-modal-body">
+              <p style={{ fontSize: 14.5, color: '#3b423c', lineHeight: 1.55 }}>
+                {selectedCard.summaryVi}
+              </p>
+
+              <div className="rm-modal-stage">
+                {selectedCard.library === 'PinUI' ? (
+                  <div style={{ width: '100%', padding: 16 }}>
+                    <PinUIPlayground itemId={selectedCard.sourceId} theme="dark" />
+                  </div>
+                ) : (
+                  <div
+                    style={{
+                      width: '100%',
+                      padding: 24,
+                      display: 'grid',
+                      gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))',
+                      gap: 20,
+                      alignItems: 'center',
+                    }}
+                  >
+                    <img
+                      src={selectedCard.imageUrl}
+                      alt={selectedCard.title}
+                      style={{
+                        width: '100%',
+                        maxHeight: 320,
+                        objectFit: 'cover',
+                        borderRadius: 12,
+                        border: '1px solid rgba(255,255,255,0.14)',
+                      }}
+                      onError={(e) => {
+                        if (e.currentTarget.src !== selectedCard.fallbackUrl) {
+                          e.currentTarget.src = selectedCard.fallbackUrl;
+                        }
+                      }}
+                    />
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                      <span
+                        style={{
+                          fontSize: 11,
+                          fontWeight: 700,
+                          letterSpacing: '0.08em',
+                          textTransform: 'uppercase',
+                          color: '#dae7c7',
+                        }}
+                      >
+                        Đặc tả chuyển động · Motion AI
+                      </span>
+                      <pre
+                        style={{
+                          margin: 0,
+                          padding: 14,
+                          borderRadius: 10,
+                          background: 'rgba(255,255,255,0.06)',
+                          color: '#e5ece0',
+                          fontSize: 12.5,
+                          lineHeight: 1.5,
+                          whiteSpace: 'pre-wrap',
+                          maxHeight: 220,
+                          overflowY: 'auto',
+                        }}
+                      >
+                        {selectedCard.promptText}
+                      </pre>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </section>
   );
 };

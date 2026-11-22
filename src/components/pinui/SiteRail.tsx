@@ -1,6 +1,5 @@
 import React from 'react';
 import { motion, useReducedMotion } from 'motion/react';
-import { ArrowUpRight } from 'lucide-react';
 import './site-rail.css';
 
 export interface SiteRailLink {
@@ -77,21 +76,7 @@ export const SiteRail: React.FC<SiteRailProps> = ({
         )
       )}
 
-      {githubUrl && (
-        <>
-          <span className="rail__sep" aria-hidden="true" />
-          <a
-            href={githubUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="rail__ext"
-            aria-label="GitHub"
-            title="GitHub"
-          >
-            <ArrowUpRight className="h-3.5 w-3.5" aria-hidden="true" />
-          </a>
-        </>
-      )}
+      {githubUrl ? null : null}
     </motion.nav>
   );
 };

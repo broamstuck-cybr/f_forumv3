@@ -247,147 +247,23 @@ const ConstellationCanvasLayer: React.FC<{ theme: ThemeMode; reduced: boolean }>
   return <canvas ref={canvasRef} className="ambient-constellation-canvas" aria-hidden="true" />;
 };
 
-const SeamlessLoopVideo: React.FC<{
-  src: string;
-  poster: string;
-  active: boolean;
-}> = ({ src, poster, active }) => {
-  const videoARef = useRef<HTMLVideoElement | null>(null);
-  const videoBRef = useRef<HTMLVideoElement | null>(null);
-  const [slot, setSlot] = useState<'a' | 'b'>('a');
-  const [failed, setFailed] = useState(false);
-  const switchingRef = useRef(false);
-
-  useEffect(() => {
-    switchingRef.current = false;
-    setSlot('a');
-    const va = videoARef.current;
-    const vb = videoBRef.current;
-    if (!active) {
-      va?.pause();
-      vb?.pause();
-      return undefined;
-    }
-    if (va) {
-      va.currentTime = 0;
-      va.play().catch(() => undefined);
-    }
-    return undefined;
-  }, [src, active]);
-
-  useEffect(() => {
-    if (!active || failed) return undefined;
-    const activeEl = slot === 'a' ? videoARef.current : videoBRef.current;
-    const nextEl = slot === 'a' ? videoBRef.current : videoARef.current;
-    if (!activeEl || !nextEl) return undefined;
-
-    const onTimeUpdate = () => {
-      const dur = activeEl.duration;
-      if (!Number.isFinite(dur) || dur <= 2.4) return;
-      if (!switchingRef.current && activeEl.currentTime >= dur - LOOP_CROSSFADE_S) {
-        switchingRef.current = true;
-        nextEl.currentTime = 0.04;
-        nextEl.play().catch(() => undefined);
-        setSlot((prev) => (prev === 'a' ? 'b' : 'a'));
-        window.setTimeout(() => {
-          activeEl.pause();
-          activeEl.currentTime = 0;
-          switchingRef.current = false;
-        }, 1250);
-      }
-    };
-
-    activeEl.addEventListener('timeupdate', onTimeUpdate);
-    return () => activeEl.removeEventListener('timeupdate', onTimeUpdate);
-  }, [slot, active, failed, src]);
-
-  if (failed) {
-    return (
-      <img
-        className="ambient-layer ambient-layer--poster"
-        data-active={active ? 'true' : 'false'}
-        src={poster}
-        alt=""
-      />
-    );
-  }
-
-  return (
-    <>
-      <video
-        ref={videoARef}
-        className="ambient-layer ambient-layer--seamless"
-        data-active={active && slot === 'a' ? 'true' : 'false'}
-        src={src}
-        poster={poster}
-        muted
-        playsInline
-        preload={active ? 'auto' : 'metadata'}
-        onError={() => setFailed(true)}
-      />
-      <video
-        ref={videoBRef}
-        className="ambient-layer ambient-layer--seamless"
-        data-active={active && slot === 'b' ? 'true' : 'false'}
-        src={src}
-        poster={poster}
-        muted
-        playsInline
-        preload={active ? 'auto' : 'metadata'}
-        onError={() => setFailed(true)}
-      />
-    </>
-  );
-};
-
 export const AmbientVideoBackdrop: React.FC = () => {
   const { theme, settings, reducedMotion } = useAppStore();
   const ambientEnabled = settings.ambientVideo !== false;
-  const preset: WallpaperPreset = settings.wallpaperPreset || 'ember';
-  const [posterOnly, setPosterOnly] = useState<boolean>(() =>
-    shouldUseStaticPoster(ambientEnabled, reducedMotion)
-  );
-
-  useEffect(() => {
-    const syncStaticMode = () => {
-      setPosterOnly(shouldUseStaticPoster(ambientEnabled, reducedMotion));
-    };
-    syncStaticMode();
-    if (typeof window === 'undefined' || !window.matchMedia) return undefined;
-    const mqMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
-    mqMotion.addEventListener('change', syncStaticMode);
-    return () => mqMotion.removeEventListener('change', syncStaticMode);
-  }, [ambientEnabled, reducedMotion]);
-
-  if (!ambientEnabled && (preset === 'dark' || preset === 'light' || preset === 'auto')) {
-    return null;
-  }
-
-  const isVideoPreset =
-    preset === 'ember' || preset === 'harbour' || preset === 'auto';
-  const useLightAsset =
-    preset === 'harbour' || (preset === 'auto' && theme === 'light') || (preset === 'ember' && theme === 'light');
-  const activeVideoSrc = useLightAsset ? LIGHT_VIDEO : DARK_VIDEO;
-  const activePoster = useLightAsset ? LIGHT_POSTER : DARK_POSTER;
+  const preset: WallpaperPreset = settings.wallpaperPreset || 'dark';
 
   return (
-    <div className="ambient-backdrop" aria-hidden="true" data-mode={theme} data-preset={preset}>
-      {isVideoPreset && ambientEnabled && (
-        posterOnly ? (
-          <img
-            className="ambient-layer ambient-layer--poster"
-            data-active="true"
-            src={activePoster}
-            alt=""
-          />
-        ) : (
-          <SeamlessLoopVideo src={activeVideoSrc} poster={activePoster} active />
-        )
-      )}
-
+    <div
+      className="ambient-backdrop"
+      aria-hidden="true"
+      data-mode={theme}
+      data-preset={preset}
+      data-animated={ambientEnabled && !reducedMotion ? 'true' : 'false'}
+    >
+      <div className="ambient-mesh-layer" />
+      <div className="ambient-godray-layer" />
       {preset === 'aurora' && <AuroraCanvasLayer theme={theme} reduced={reducedMotion} />}
       {preset === 'constellation' && <ConstellationCanvasLayer theme={theme} reduced={reducedMotion} />}
-
       <div className="ambient-scrim" />
     </div>
   );

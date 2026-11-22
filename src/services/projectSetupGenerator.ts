@@ -22,7 +22,7 @@ export function generateProjectSetupBundle(
   const readmeMd = [
     `# ${project.name}`,
     '',
-    project.description || 'Synthesized multi-file web artifact exported from F-FORUM v3 Arena Workspace.',
+    project.description || 'Synthesized multi-file web artifact exported from F-FORUM v3 Workspace.',
     '',
     '## Architecture & Files',
     fileManifest,
@@ -60,7 +60,7 @@ export function generateProjectSetupBundle(
     '',
     '- [x] Step 1.1: Initialize HTML5 semantic entry (`index.html`), token stylesheet (`styles.css`), and runtime logic (`app.js`).',
     '- [x] Step 1.2: Attach curated blueprints and templates from F-FORUM v3 Explore Library.',
-    '- [x] Step 1.3: Execute automated static checks and secret audit in Arena Workspace.',
+    '- [x] Step 1.3: Execute automated static checks and secret audit in F-FORUM Workspace.',
     '- [ ] Step 2.1: Extend interactive states and bind domain API endpoints.',
     '- [ ] Step 2.2: Verify multi-viewport rendering (390px, 768px, 1440px) with zero console errors.',
   ].join('\n');

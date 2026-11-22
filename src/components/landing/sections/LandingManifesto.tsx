@@ -244,7 +244,7 @@ export const LandingManifesto: React.FC<LandingManifestoProps> = ({ onNavigate }
         <div className="lp-hm-sticky">
           <div className="wrap-wide lp-hm-header">
             <p className="t-label" style={{ color: '#b5afa3' }}>
-              cách F-Forum làm việc
+              vì sao chọn f-forum
             </p>
             <div className="lp-hm-meter" aria-hidden="true">
               <span style={{ transform: `scaleX(${isDesktopHorizontal ? Math.max(0.08, mp) : 1})` }} />
@@ -254,12 +254,12 @@ export const LandingManifesto: React.FC<LandingManifestoProps> = ({ onNavigate }
           <div ref={trackRef} className="lp-hm-track">
             <div className="lp-hm-intro">
               <h2 className="lp-hm-title">
-                Xem giao diện chạy thật.
+                Từ cảm hứng đến sản phẩm.
                 <br />
-                Đọc mã, <span className="t-note">chia sẻ prompt.</span>
+                Dựng web <span className="t-note">cùng cộng đồng.</span>
               </h2>
               <p className="lp-hm-lead">
-                Cuộn ngang qua 4 điều giúp bạn đi từ phác thảo đến sản phẩm nhanh và rõ hơn.
+                Bốn lát cắt giữ trọn nhịp sáng tạo: chạm vào giao diện sống, hiểu rõ cấu trúc bên dưới và cùng nhau hoàn thiện từng chi tiết.
               </p>
             </div>
 

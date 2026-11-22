@@ -1,12 +1,13 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
-import { useAppStore } from '../../store/appStore';
+import { formatUserDisplayName, useAppStore } from '../../store/appStore';
 import {
   PromptComposer,
   type PromptComposerAction,
   type PromptComposerModel,
 } from '../../components/pinui/PromptComposer';
 import { DotMatrixHandsCanvas } from '../../components/launchpad/DotMatrixHandsCanvas';
+import { IrisQrCornerSection } from '../../components/launchpad/IrisQrCornerSection';
 import { ScrollStoryEngine } from '../../components/launchpad/ScrollStoryEngine';
 import type { HomeMotionShowcaseItem } from '../../data/homeMotionShowcases';
 import { Mark } from '../../ui/Mark';
@@ -104,7 +105,7 @@ function getTimeGreeting(): string {
 }
 
 function mapModelId(modelId: string): string {
-  if (modelId === 'fast') return 'ag/gemini-3.8-flash-low';
+  if (modelId === 'fast') return 'gemini-2.5-flash';
   if (modelId === 'architect') return 'studio-heavy-route';
   return 'auto';
 }
@@ -145,7 +146,7 @@ export const HomeView: React.FC<HomeViewProps> = () => {
 
   const greeting = useMemo(() => {
     const prefix = getTimeGreeting();
-    const who = currentUser?.name ? currentUser.name : 'bạn';
+    const who = formatUserDisplayName(currentUser?.name, 'bạn');
     return `${prefix}, ${who}`;
   }, [currentUser?.name]);
 
@@ -158,7 +159,7 @@ export const HomeView: React.FC<HomeViewProps> = () => {
     const layout = bp.layouts[lIdx] ?? bp.layouts[0];
     const feature = bp.features[fIdx] ?? bp.features[0];
     setPromptText(
-      `Xây dựng ${bp.title} theo phong cách ${style}, bố cục ${layout}, tích hợp ${feature}, tương thích 390px, 768px và 1440px.`
+      `Xây dựng ${bp.title} theo phong cách ${style}, bố cục ${layout}, tích hợp ${feature}, hiển thị mạch lạc trên cả di động và máy tính.`
     );
   };
 
@@ -235,8 +236,7 @@ export const HomeView: React.FC<HomeViewProps> = () => {
                 </span>
               </h1>
               <p className="hm-lead">
-                Gõ yêu cầu hoặc chọn thẻ cấu trúc bên dưới. Mọi bản phác mở thẳng sang Workspace để chạy thử và kiểm 6
-                mục trên 390, 768 và 1440px.
+                Gõ yêu cầu hoặc chọn thẻ cấu trúc bên dưới. Mọi bản phác mở thẳng sang Workspace để chạy thử trực tiếp và kiểm tra chất lượng.
               </p>
             </div>
           </header>
@@ -352,6 +352,8 @@ export const HomeView: React.FC<HomeViewProps> = () => {
         onOpenShowcase={handleOpenShowcaseInWorkspace}
         onOpenLeaderboard={openExploreLeaderboard}
       />
+
+      <IrisQrCornerSection onNavigate={navigate} contextLabel="home" />
     </div>
   );
 };

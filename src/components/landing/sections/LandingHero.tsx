@@ -104,7 +104,7 @@ const PIXEL_ICONS: PixelIconSpec[] = [
   },
   {
     id: 'catalog',
-    label: '6.770 chi tiết',
+    label: 'Thư viện mẫu',
     grid: [
       'BBB..PPPP',
       'BLB..PLLP',
@@ -285,7 +285,7 @@ export const LandingHero: React.FC<LandingHeroProps> = ({
           <motion.div style={reduced ? undefined : { y: copyY }} className="lp-hero-copy">
             <p className="lp-kicker t-label">
               <span>F-Forum</span>
-              <span>xem trước, đọc mã, chia sẻ prompt</span>
+              <span>trải nghiệm mẫu sống, dựng web cùng cộng đồng</span>
             </p>
 
             <div className="lp-assembly" aria-label="Chuỗi 7 bước từ ý tưởng đến tệp xuất">
@@ -371,8 +371,7 @@ export const LandingHero: React.FC<LandingHeroProps> = ({
             </h1>
 
             <p className="lp-hero-lead">
-              F-Forum giúp học sinh, giảng viên và người làm web xem giao diện chạy thật, đọc mã HTML, CSS, JS sạch,
-              chỉnh thông số trực tiếp và chia sẻ prompt với cộng đồng.
+              F-Forum là sân chơi và kho tư liệu mở cho cộng đồng thiết kế, lập trình web — nơi bạn trải nghiệm trực tiếp từng thành phần, hiểu cách vận hành và đưa thẳng vào dự án thực tế.
             </p>
 
             <div className="lp-actions">
@@ -391,16 +390,16 @@ export const LandingHero: React.FC<LandingHeroProps> = ({
 
             <dl className="lp-colophon">
               <div>
-                <dt className="t-label">mẫu &amp; mã nguồn</dt>
-                <dd>196 giao diện chạy trực tiếp · 6.770 chi tiết UI/UX</dd>
+                <dt className="t-label">kho trải nghiệm</dt>
+                <dd>Thử tương tác trực tiếp ngay trên trình duyệt</dd>
               </div>
               <div>
-                <dt className="t-label">khả năng</dt>
-                <dd className="lp-colophon-accent">Xem code sạch · Sao chép Prompt · Tùy biến trực tiếp</dd>
+                <dt className="t-label">không gian dựng</dt>
+                <dd className="lp-colophon-accent">Tùy biến mã nguồn · Chép Prompt · Mở rộng dự án</dd>
               </div>
               <div>
                 <dt className="t-label">cộng đồng</dt>
-                <dd>195 người truy cập</dd>
+                <dd>Chia sẻ mẫu &amp; hỏi đáp kỹ thuật mở</dd>
               </div>
             </dl>
           </motion.div>

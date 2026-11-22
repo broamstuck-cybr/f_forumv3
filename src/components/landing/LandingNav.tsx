@@ -146,7 +146,9 @@ export const LandingNav: React.FC<LandingNavProps> = ({
               <span className="lp-nav-avatar" aria-hidden="true">
                 {userInitials(currentUser.name)}
               </span>
-              <span className="lp-nav-userName">{currentUser.name}</span>
+              <span className="lp-nav-userName">
+                {currentUser.name === 'System Administrator' ? 'Quản trị viên' : currentUser.name}
+              </span>
             </button>
           ) : (
             <button type="button" className="btn btn-ghost btn-sm" onClick={onOpenLogin}>

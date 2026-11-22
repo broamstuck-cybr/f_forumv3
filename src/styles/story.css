@@ -3,7 +3,7 @@
     position: relative;
     width: 100%;
     overflow-x: clip;
-    background: var(--bg);
+    background: transparent;
     color: var(--fg);
   }
 
@@ -449,7 +449,7 @@
   .mmq-modal-tab {
     min-height: 34px;
     padding: 0 var(--space-3);
-    border-radius: var(--radius-sm);
+    border-radius: 999px;
     border: 1px solid transparent;
     background: transparent;
     color: var(--fg-muted);
@@ -481,8 +481,8 @@
 
   .mmq-vp-btn {
     min-height: 30px;
-    padding: 0 10px;
-    border-radius: var(--radius-xs);
+    padding: 0 12px;
+    border-radius: 999px;
     border: 1px solid var(--line-strong);
     background: var(--bg);
     color: var(--fg-muted);
@@ -523,19 +523,32 @@
     justify-content: center;
     width: 100%;
     height: 100%;
-    min-height: 440px;
-    background: #0d0e11;
+    min-height: 460px;
+    background: #121110;
+  }
+
+  .mmq-modal-sandbox .ex-sandbox {
+    width: 100%;
+    height: 100%;
+    min-height: 460px;
+    flex: 1 1 auto;
+    display: flex;
+    align-items: stretch;
+    justify-content: center;
   }
 
   .mmq-modal-sandbox .ex-sandbox-viewport {
     width: min(100%, var(--ex-vp, 100%));
     height: 100%;
+    min-height: 460px;
+    flex: 0 1 auto;
     border-inline: 1px solid var(--line);
     transition: width var(--dur-2) var(--ease-out);
   }
 
   .mmq-modal-sandbox[data-viewport='1440'] .ex-sandbox-viewport {
     width: 100%;
+    flex: 1 1 auto;
     border-inline: 0;
   }
 
@@ -543,9 +556,38 @@
     display: block;
     width: 100%;
     height: 100%;
-    min-height: 440px;
+    min-height: 460px;
     border: 0;
     background: transparent;
+  }
+
+  .mmq-spec-preview {
+    display: grid;
+    gap: var(--space-4);
+  }
+
+  .mmq-spec-preview-media {
+    border: 1px solid var(--line);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    background: var(--bg-sunken);
+    aspect-ratio: 16 / 9;
+    max-height: 440px;
+  }
+
+  .mmq-spec-preview-bar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-3);
+  }
+
+  .mmq-code-subtabs {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
   }
 
   .mmq-modal-prompt-col,

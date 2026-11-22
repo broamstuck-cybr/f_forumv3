@@ -47,11 +47,11 @@ export const MOTION_MARQUEE_ITEMS: MotionMarqueeItem[] = [
     "category": "Hero & Giới thiệu",
     "imageUrl": "https://images.higgs.ai/?default=1&output=webp&url=https%3A%2F%2Fd8j0ntlcm91z4.cloudfront.net%2Fuser_38xzZboKViGWJOttwIXH07lWA1P%2Fhf_20261016_125845_ec7f8569-08dd-4a78-8310-9e094f5dd0a3.png&w=720&q=82",
     "fallbackUrl": "https://raw.githubusercontent.com/broamstuck-cybr/SOURCEOFKNOWLEDGFORAI/main/assets/previews/codefronts-course-card.png",
-    "summaryVi": "Khung mở đầu phân lớp thị giác với tiêu đề tương phản cao và cụm nút điều hướng nổi.",
+    "summaryVi": "Velorah mở ra phần giới thiệu mạch lạc, dễ đọc trên cả điện thoại lẫn máy tính.",
     "specs": {
-      "layout": "12 cột lệch tâm · Hero phân tầng",
+      "layout": "Cấu trúc mở đầu mạch lạc, nổi bật nội dung chính",
       "motion": "Trượt mượt theo trục Y + mờ dần lớp nền",
-      "responsive": "390 / 768 / 1440px",
+      "responsive": "Tự động co giãn đa thiết bị",
       "durationMs": 520,
       "easing": "cubic-bezier(0.22, 1, 0.36, 1)"
     },
@@ -62,7 +62,7 @@ export const MOTION_MARQUEE_ITEMS: MotionMarqueeItem[] = [
       "Mở đầu"
     ],
     "promptText": "Create a single-page hero section with a fullscreen looping background video, glassmorphic navigation, and cinematic typography. Use React + Vite + Tailwind CSS + TypeScript with shadcn/ui.\nVideo Background:\nFullscreen <video> element with autoPlay, loop, muted, playsInline\nSource URL: [asset-url]\nPositioned absolute inset-0 w-full h-full object-cover z-0\nFonts:\nImport from Google Fonts: Instrumental Serif (display) and Plus Jakarta Sans weights 400/500 (body)\nCSS variables: --font-display: 'Instrument Serif', serif and --font-body: 'Plus Jakarta Sans', sans-serif\nBody uses var(--font-body), headings use inline fontFamily: \"'Instrument Serif', serif\"\nColor Theme (dark, HSL values for CSS variables):\n--background: 201 100% 13% (deep navy blue)\n--foreground: 0 0% 100% (white)\n--muted-foreground: 240 4% 66% (muted gray)\n--primary: 0 0% 100%, --primary-foreground: 0 0% 4%\n--secondary: 0 0% 10%, --muted: 0 0% 10%, --accent: 0 0% 10%\n--border: 0 0% 18%, --input: 0 0% 18%\nNavigation Bar:\nrelative z-10, flex row, justify-between, px-8 py-6, max-w-7xl mx-auto\nLogo: \"Velorah \" ( as <sup className=\"text-xs\">), text-3xl tracking-tight, Instrument Serif font, text-foreground",
-    "starterPrompt": "Dựng khung mở đầu Velorah với tiêu đề phân tầng, nền chuyển sắc tối và cụm nút hành động chính rõ ràng ở 390px và 1440px."
+    "starterPrompt": "Dựng khung mở đầu Velorah với tiêu đề phân tầng, nền chuyển sắc tối và cụm nút hành động chính rõ ràng trên điện thoại lẫn máy tính."
   },
   {
     "id": "ms-space-planet",
@@ -71,11 +71,11 @@ export const MOTION_MARQUEE_ITEMS: MotionMarqueeItem[] = [
     "category": "Cảnh 3D",
     "imageUrl": "https://images.higgs.ai/?default=1&output=webp&url=https%3A%2F%2Fd8j0ntlcm91z4.cloudfront.net%2Fuser_38xzZboKViGWJOttwIXH07lWA1P%2Fhf_20260827_202133_508c64b8-a31e-4290-bdfc-1187df70e0a6.png&w=720&q=82",
     "fallbackUrl": "https://raw.githubusercontent.com/broamstuck-cybr/SOURCEOFKNOWLEDGFORAI/main/assets/previews/lucianlabs-isometric-data-blocks.png",
-    "summaryVi": "Cảnh hành tinh 3D xoay quanh trục nghiêng kết hợp lớp nhãn thông số quỹ đạo thời gian thực.",
+    "summaryVi": "Space planet giúp trình diễn khối cảnh không gian trực tiếp để người xem xoay góc nhìn ngay trên web.",
     "specs": {
-      "layout": "Khung dựng 3D toàn cảnh + lớp phủ HUD",
+      "layout": "Không gian 3D tương tác theo thao tác trỏ chuột",
       "motion": "Quay quỹ đạo liên tục + giảm chấn góc nhìn",
-      "responsive": "390 / 768 / 1440px",
+      "responsive": "Tự động co giãn đa thiết bị",
       "durationMs": 720,
       "easing": "cubic-bezier(0.16, 1, 0.3, 1)"
     },
@@ -95,11 +95,11 @@ export const MOTION_MARQUEE_ITEMS: MotionMarqueeItem[] = [
     "category": "Trình diễn sản phẩm",
     "imageUrl": "https://images.higgs.ai/?default=1&output=webp&url=https%3A%2F%2Fd8j0ntlcm91z4.cloudfront.net%2Fuser_38xzZboKViGWJOttwIXH07lWA1P%2Fhf_20261031_020340_4815bb8d-68c3-48c4-ad05-6307d085e896.png&w=720&q=85",
     "fallbackUrl": "https://raw.githubusercontent.com/broamstuck-cybr/SOURCEOFKNOWLEDGFORAI/main/assets/previews/lucianlabs-liquid-glass-button.png",
-    "summaryVi": "Bảng điều khiển phân tích mô hình với biểu đồ thời gian thực và luồng nhật ký xử lý.",
+    "summaryVi": "Vertex trực quan hóa luồng dữ liệu sản phẩm ngay trên màn hình để dễ thử nghiệm từng bước.",
     "specs": {
-      "layout": "Bố cục ứng dụng 3 vùng · Khung biểu đồ chính",
+      "layout": "Trực quan hóa luồng thao tác và dữ liệu sản phẩm",
       "motion": "Cập nhật đường cong mượt + chuyển tab tức thì",
-      "responsive": "390 / 768 / 1440px",
+      "responsive": "Tự động co giãn đa thiết bị",
       "durationMs": 380,
       "easing": "cubic-bezier(0.22, 1, 0.36, 1)"
     },
@@ -119,11 +119,11 @@ export const MOTION_MARQUEE_ITEMS: MotionMarqueeItem[] = [
     "category": "Kêu gọi hành động",
     "imageUrl": "https://images.higgs.ai/?default=1&output=webp&url=https%3A%2F%2Fd8j0ntlcm91z4.cloudfront.net%2Fuser_38xzZboKViGWJOttwIXH07lWA1P%2Fhf_20261029_050506_a830ff21-4c71-4272-bc39-b61cacb54463.png&w=720&q=85",
     "fallbackUrl": "https://threeui.com/social/pages/hero/advanced-glass-material.jpg",
-    "summaryVi": "Khối tổng hợp quyền lợi bảo mật doanh nghiệp kèm nút kích hoạt dùng thử và bảng cam kết SLA.",
+    "summaryVi": "Guardnet Benefits sắp xếp rõ giá trị cốt lõi và điểm nhấn hành động giúp người mới nắm ý chính ngay.",
     "specs": {
-      "layout": "Lưới lợi ích 3 cột + dải kêu gọi hành động",
+      "layout": "Nhấn mạnh giá trị cốt lõi kèm nút hành động rõ nét",
       "motion": "Nổi thẻ khi lướt chuột + sáng chỉ báo trạng thái",
-      "responsive": "390 / 768 / 1440px",
+      "responsive": "Tự động co giãn đa thiết bị",
       "durationMs": 420,
       "easing": "cubic-bezier(0.22, 1, 0.36, 1)"
     },
@@ -143,11 +143,11 @@ export const MOTION_MARQUEE_ITEMS: MotionMarqueeItem[] = [
     "category": "Bảng giá & Thẻ",
     "imageUrl": "https://images.higgs.ai/?default=1&output=webp&url=https%3A%2F%2Fd8j0ntlcm91z4.cloudfront.net%2Fuser_38xzZboKViGWJOttwIXH07lWA1P%2Fhf_20261029_050506_a830ff21-4c71-4272-bc39-b61cacb54463.png&w=720&q=85",
     "fallbackUrl": "https://threeui.com/social/pages/three-js/structure-flow/expanse-field.jpg",
-    "summaryVi": "Bảng tính chi phí linh hoạt theo quy mô người dùng và chu kỳ thanh toán tháng/năm có chiết khấu.",
+    "summaryVi": "Price Calculator giúp người dùng so sánh phương án nhanh và tự ước lượng cấu hình phù hợp.",
     "specs": {
-      "layout": "Thanh trượt quy mô + 3 cột gói cước so sánh",
+      "layout": "So sánh phương án trực tiếp qua thanh trượt",
       "motion": "Nội suy con số giá tiền mượt khi kéo thanh trượt",
-      "responsive": "390 / 768 / 1440px",
+      "responsive": "Tự động co giãn đa thiết bị",
       "durationMs": 360,
       "easing": "cubic-bezier(0.2, 0.8, 0.2, 1)"
     },
@@ -167,11 +167,11 @@ export const MOTION_MARQUEE_ITEMS: MotionMarqueeItem[] = [
     "category": "Chân trang & Điều hướng",
     "imageUrl": "https://images.higgs.ai/?default=1&output=webp&url=https%3A%2F%2Fd8j0ntlcm91z4.cloudfront.net%2Fuser_38xzZboKViGWJOttwIXH07lWA1P%2Fhf_20260430_115327_3f256636-9e63-4885-8d0b-09317dc2b0a5.png",
     "fallbackUrl": "https://threeui.com/social/pages/motion-design/cathode-session/angles.jpg",
-    "summaryVi": "Chân trang khổ lớn với chữ đồ họa toàn chiều ngang, lưới liên kết 4 cột và thanh trạng thái hệ thống.",
+    "summaryVi": "HAUL! gom gọn điều hướng cuối trang, giúp chuyển tiếp mạch lạc giữa các khu vực nội dung.",
     "specs": {
-      "layout": "Lưới liên kết 4 cột + chữ khổ lớn sát đáy",
+      "layout": "Điều hướng cuối trang gọn nhẹ và cân đối",
       "motion": "Gạch chân trượt mượt + lộ chữ lớn khi cuộn tới đáy",
-      "responsive": "390 / 768 / 1440px",
+      "responsive": "Tự động co giãn đa thiết bị",
       "durationMs": 460,
       "easing": "cubic-bezier(0.22, 1, 0.36, 1)"
     },
@@ -191,11 +191,11 @@ export const MOTION_MARQUEE_ITEMS: MotionMarqueeItem[] = [
     "category": "Hero & Giới thiệu",
     "imageUrl": "https://images.higgs.ai/?default=1&output=webp&url=https%3A%2F%2Fd8j0ntlcm91z4.cloudfront.net%2Fuser_38xzZboKViGWJOttwIXH07lWA1P%2Fhf_20260808_192942_e1086505-d7da-433b-a59b-8220f4e6c808.png&w=720&q=85",
     "fallbackUrl": "https://threeui.com/social/pages/landing-pages/aera-01-landing-page.jpg",
-    "summaryVi": "Bố cục mở đầu chủ đề không gian với chiều sâu thị sai và thanh điều hướng cố định.",
+    "summaryVi": "Space Voyage mở ra phần giới thiệu mạch lạc, dễ đọc trên cả điện thoại lẫn máy tính.",
     "specs": {
-      "layout": "Khung toàn màn hình · Tâm điểm thị sai",
+      "layout": "Cấu trúc mở đầu mạch lạc, nổi bật nội dung chính",
       "motion": "Trôi quỹ đạo chậm + xuất hiện chữ tuần tự",
-      "responsive": "390 / 768 / 1440px",
+      "responsive": "Tự động co giãn đa thiết bị",
       "durationMs": 640,
       "easing": "cubic-bezier(0.16, 1, 0.3, 1)"
     },
@@ -215,11 +215,11 @@ export const MOTION_MARQUEE_ITEMS: MotionMarqueeItem[] = [
     "category": "Cảnh 3D",
     "imageUrl": "https://images.higgs.ai/?default=1&output=webp&url=https%3A%2F%2Fd8j0ntlcm91z4.cloudfront.net%2Fuser_38xzZboKViGWJOttwIXH07lWA1P%2Fhf_20261031_020340_4815bb8d-68c3-48c4-ad05-6307d085e896.png&w=720&q=82",
     "fallbackUrl": "https://threeui.com/social/pages/sections/footers/section-aera-01-footers.jpg",
-    "summaryVi": "Cảnh hạt phát sáng chuyển động theo luồng nhiệt với tiêu đề đặt nổi trên lớp sương mờ.",
+    "summaryVi": "Phoenix ignis giúp trình diễn khối cảnh không gian trực tiếp để người xem xoay góc nhìn ngay trên web.",
     "specs": {
-      "layout": "Sân khấu hạt 3D + khung chữ căn đáy",
+      "layout": "Không gian 3D tương tác theo thao tác trỏ chuột",
       "motion": "Luồng hạt bốc lên + biến thiên độ sáng",
-      "responsive": "390 / 768 / 1440px",
+      "responsive": "Tự động co giãn đa thiết bị",
       "durationMs": 680,
       "easing": "cubic-bezier(0.22, 1, 0.36, 1)"
     },
@@ -239,11 +239,11 @@ export const MOTION_MARQUEE_ITEMS: MotionMarqueeItem[] = [
     "category": "Trình diễn sản phẩm",
     "imageUrl": "https://images.higgs.ai/?default=1&output=webp&url=https%3A%2F%2Fd8j0ntlcm91z4.cloudfront.net%2Fuser_38xzZboKViGWJOttwIXH07lWA1P%2Fhf_20260516_090123_74be96d4-9c1b-40cf-932a-96f4f4babed3.png&w=720&q=85",
     "fallbackUrl": "https://raw.githubusercontent.com/broamstuck-cybr/SOURCEOFKNOWLEDGFORAI/main/assets/previews/codefronts-course-card.png",
-    "summaryVi": "Trung tâm giám sát hạ tầng đám mây với sơ đồ nút mạng, trạng thái cụm máy chủ và cảnh báo.",
+    "summaryVi": "NexaCore Control trực quan hóa luồng dữ liệu sản phẩm ngay trên màn hình để dễ thử nghiệm từng bước.",
     "specs": {
-      "layout": "Lưới mô-đun giám sát · Thẻ trạng thái",
+      "layout": "Trực quan hóa luồng thao tác và dữ liệu sản phẩm",
       "motion": "Xung nhịp kết nối + mở rộng ngăn chi tiết",
-      "responsive": "390 / 768 / 1440px",
+      "responsive": "Tự động co giãn đa thiết bị",
       "durationMs": 400,
       "easing": "cubic-bezier(0.2, 0.8, 0.2, 1)"
     },
@@ -263,11 +263,11 @@ export const MOTION_MARQUEE_ITEMS: MotionMarqueeItem[] = [
     "category": "Kêu gọi hành động",
     "imageUrl": "https://images.higgs.ai/?default=1&output=webp&url=https%3A%2F%2Fd8j0ntlcm91z4.cloudfront.net%2Fuser_38xzZboKViGWJOttwIXH07lWA1P%2Fhf_20260514_154203_6c6f94dc-a07e-4ba5-8688-106f01ccd2c8.png&w=720&q=85",
     "fallbackUrl": "https://raw.githubusercontent.com/broamstuck-cybr/SOURCEOFKNOWLEDGFORAI/main/assets/previews/lucianlabs-isometric-data-blocks.png",
-    "summaryVi": "Khối đăng ký nhận bản tin thiết kế hàng tuần với biểu mẫu 1 trường nhập và thẻ xem trước số mới nhất.",
+    "summaryVi": "Email Marketing sắp xếp rõ giá trị cốt lõi và điểm nhấn hành động giúp người mới nắm ý chính ngay.",
     "specs": {
-      "layout": "Chia 2 cột: biểu mẫu đăng ký + bản xem trước",
+      "layout": "Nhấn mạnh giá trị cốt lõi kèm nút hành động rõ nét",
       "motion": "Kiểm tra email tức thì + chuyển trạng thái gửi",
-      "responsive": "390 / 768 / 1440px",
+      "responsive": "Tự động co giãn đa thiết bị",
       "durationMs": 380,
       "easing": "cubic-bezier(0.2, 0.8, 0.2, 1)"
     },
@@ -287,11 +287,11 @@ export const MOTION_MARQUEE_ITEMS: MotionMarqueeItem[] = [
     "category": "Bảng giá & Thẻ",
     "imageUrl": "https://images.higgs.ai/?default=1&output=webp&url=https%3A%2F%2Fd8j0ntlcm91z4.cloudfront.net%2Fuser_38xzZboKViGWJOttwIXH07lWA1P%2Fhf_20261114_023843_9fce0893-294b-4ede-8abb-5962c0f6f88a.png&w=720&q=82",
     "fallbackUrl": "https://raw.githubusercontent.com/broamstuck-cybr/SOURCEOFKNOWLEDGFORAI/main/assets/previews/lucianlabs-liquid-glass-button.png",
-    "summaryVi": "Lưới thẻ Bento quản lý danh mục tài sản số với biểu đồ dung lượng, thẻ phân loại và bộ lọc nhanh.",
+    "summaryVi": "Spatial Closet giúp người dùng so sánh phương án nhanh và tự ước lượng cấu hình phù hợp.",
     "specs": {
-      "layout": "Lưới Bento 4×3 · Thẻ kích thước đa dạng",
+      "layout": "So sánh phương án trực tiếp qua thanh trượt",
       "motion": "Co giãn bố cục khi lọc + nổi viền thẻ đang chọn",
-      "responsive": "390 / 768 / 1440px",
+      "responsive": "Tự động co giãn đa thiết bị",
       "durationMs": 420,
       "easing": "cubic-bezier(0.22, 1, 0.36, 1)"
     },
@@ -311,11 +311,11 @@ export const MOTION_MARQUEE_ITEMS: MotionMarqueeItem[] = [
     "category": "Chân trang & Điều hướng",
     "imageUrl": "https://d2ol7oe51mr4n9.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/4f690bd1-881a-4192-82f2-d714d34c8fb9.png",
     "fallbackUrl": "https://threeui.com/social/pages/hero/advanced-glass-material.jpg",
-    "summaryVi": "Chân trang biên tập tông ấm kết hợp thông tin liên hệ, giờ làm việc, bản đồ vị trí và mục lục trang.",
+    "summaryVi": "Heritage Grove gom gọn điều hướng cuối trang, giúp chuyển tiếp mạch lạc giữa các khu vực nội dung.",
     "specs": {
-      "layout": "Khung thông tin 2 tầng · Chia 5 cột cân đối",
+      "layout": "Điều hướng cuối trang gọn nhẹ và cân đối",
       "motion": "Chuyển màu liên kết mượt + cuộn mượt lên đầu trang",
-      "responsive": "390 / 768 / 1440px",
+      "responsive": "Tự động co giãn đa thiết bị",
       "durationMs": 420,
       "easing": "cubic-bezier(0.25, 1, 0.5, 1)"
     },
@@ -335,11 +335,11 @@ export const MOTION_MARQUEE_ITEMS: MotionMarqueeItem[] = [
     "category": "Hero & Giới thiệu",
     "imageUrl": "https://images.higgs.ai/?default=1&output=webp&url=https%3A%2F%2Fd8j0ntlcm91z4.cloudfront.net%2Fuser_38xzZboKViGWJOttwIXH07lWA1P%2Fhf_20261108_070809_9454266a-bcc7-474e-854a-bc5770e5ceb3.png&w=720&q=88",
     "fallbackUrl": "https://threeui.com/social/pages/three-js/structure-flow/expanse-field.jpg",
-    "summaryVi": "Cửa sổ trung tâm mở rộng theo cuộn trang kết hợp khung chữ biên tập sắc nét.",
+    "summaryVi": "Portal mở ra phần giới thiệu mạch lạc, dễ đọc trên cả điện thoại lẫn máy tính.",
     "specs": {
-      "layout": "Khung cửa sổ tâm điểm · Lưới đối xứng",
+      "layout": "Cấu trúc mở đầu mạch lạc, nổi bật nội dung chính",
       "motion": "Phóng khung khẩu độ theo tiến độ cuộn",
-      "responsive": "390 / 768 / 1440px",
+      "responsive": "Tự động co giãn đa thiết bị",
       "durationMs": 580,
       "easing": "cubic-bezier(0.22, 1, 0.36, 1)"
     },
@@ -359,11 +359,11 @@ export const MOTION_MARQUEE_ITEMS: MotionMarqueeItem[] = [
     "category": "Cảnh 3D",
     "imageUrl": "https://images.higgs.ai/?default=1&output=webp&url=https%3A%2F%2Fd8j0ntlcm91z4.cloudfront.net%2Fuser_38xzZboKViGWJOttwIXH07lWA1P%2Fhf_20260808_192942_e1086505-d7da-433b-a59b-8220f4e6c808.png&w=720&q=82",
     "fallbackUrl": "https://threeui.com/social/pages/motion-design/cathode-session/angles.jpg",
-    "summaryVi": "Vòng xoay thực thể hữu cơ sắp xếp theo quỹ đạo elip trong không gian ba chiều.",
+    "summaryVi": "Orbit Flora giúp trình diễn khối cảnh không gian trực tiếp để người xem xoay góc nhìn ngay trên web.",
     "specs": {
-      "layout": "Quỹ đạo elip 3D · Tâm chữ cố định",
+      "layout": "Không gian 3D tương tác theo thao tác trỏ chuột",
       "motion": "Xoay vòng thẻ theo vận tốc cuộn và kéo chuột",
-      "responsive": "390 / 768 / 1440px",
+      "responsive": "Tự động co giãn đa thiết bị",
       "durationMs": 620,
       "easing": "cubic-bezier(0.22, 1, 0.36, 1)"
     },
@@ -383,11 +383,11 @@ export const MOTION_MARQUEE_ITEMS: MotionMarqueeItem[] = [
     "category": "Trình diễn sản phẩm",
     "imageUrl": "https://images.higgs.ai/?default=1&output=webp&url=https%3A%2F%2Fd8j0ntlcm91z4.cloudfront.net%2Fuser_38xzZboKViGWJOttwIXH07lWA1P%2Fhf_20260728_050334_5b076e26-0ce7-4898-b432-d764190e448f.png&w=720&q=85",
     "fallbackUrl": "https://threeui.com/social/pages/landing-pages/aera-01-landing-page.jpg",
-    "summaryVi": "Trình dựng giao diện trực quan kéo thả khối thành phần kèm khung xem trước đa kích thước.",
+    "summaryVi": "Digitwist AI Builder trực quan hóa luồng dữ liệu sản phẩm ngay trên màn hình để dễ thử nghiệm từng bước.",
     "specs": {
-      "layout": "Khung soạn thảo 2 ngăn + thanh công cụ nổi",
+      "layout": "Trực quan hóa luồng thao tác và dữ liệu sản phẩm",
       "motion": "Khớp vị trí khối bằng lò xo + đổi khung nhìn",
-      "responsive": "390 / 768 / 1440px",
+      "responsive": "Tự động co giãn đa thiết bị",
       "durationMs": 420,
       "easing": "cubic-bezier(0.22, 1, 0.36, 1)"
     },
@@ -398,7 +398,7 @@ export const MOTION_MARQUEE_ITEMS: MotionMarqueeItem[] = [
       "Đa khung nhìn"
     ],
     "promptText": "Create a dark mode hero section for an AI website builder with the following exact specifications:\n## Technical Setup\n### Required Packages\nInstall these packages:\n- `motion` (version 12.23.24 or later) - for animations\n- `hls.js` (version 1.6.15 or later) - for video streaming\n- `lucide-react` (version 0.487.0 or later) - for icons\n### Fonts\nImport these Google Fonts:\n```css\n@import url('[asset-url]');\n```\n## Layout Structure\n### Navbar Component\nCreate a fixed, transparent navbar with:\n**Position & Styling:**\n- Fixed to top, full width, z-index 50\n- Background: fully transparent (bg-transparent)\n- Padding: px-6 py-4\n- Flexbox layout: items-center justify-between\n**Left Section:**\n- Sunburst icon (24x24px SVG) in white color\n**Center Section** (hidden on mobile, visible md:flex):\n- Navigation links: \"Products\" (with ChevronDown icon), \"Customer Stories\", \"Resources\", \"Pricing\"\n- Font: Instrument Sans, text-sm, font-medium\n- Color: text-white/80, hover:text-white\n- Gap: gap-8\n**Right Section:**\n- \"Book A Demo\" link (hidden on small screens, sm:block)\n- \"Get Started\" button: white background, black text, rounded-full, px-5 py-2.5, font-semibold\n### Hero Section Component",
-    "starterPrompt": "Xây dựng màn hình sản phẩm Digitwist với danh sách khối bên trái, sân khấu chỉnh sửa ở giữa và nút chuyển 390/768/1440px."
+    "starterPrompt": "Xây dựng màn hình sản phẩm Digitwist với danh sách khối bên trái, sân khấu chỉnh sửa ở giữa và nút chuyển mọi kích thước màn hình."
   },
   {
     "id": "ms-designpro-hero",
@@ -407,11 +407,11 @@ export const MOTION_MARQUEE_ITEMS: MotionMarqueeItem[] = [
     "category": "Kêu gọi hành động",
     "imageUrl": "https://images.higgs.ai/?default=1&output=webp&url=https%3A%2F%2Fd8j0ntlcm91z4.cloudfront.net%2Fuser_38xzZboKViGWJOttwIXH07lWA1P%2Fhf_20260727_225202_f9e684f3-dc19-469a-8142-eb391bfc601b.png&w=720&q=85",
     "fallbackUrl": "https://threeui.com/social/pages/sections/footers/section-aera-01-footers.jpg",
-    "summaryVi": "Khung chiêu sinh khóa học thực hành thiết kế giao diện với lộ trình tuần, học phí và nút giữ chỗ.",
+    "summaryVi": "DesignPro Academy sắp xếp rõ giá trị cốt lõi và điểm nhấn hành động giúp người mới nắm ý chính ngay.",
     "specs": {
-      "layout": "Khung tiêu điểm + thẻ lộ trình 4 chặng",
+      "layout": "Nhấn mạnh giá trị cốt lõi kèm nút hành động rõ nét",
       "motion": "Mở chi tiết từng tuần + nổi nút đăng ký",
-      "responsive": "390 / 768 / 1440px",
+      "responsive": "Tự động co giãn đa thiết bị",
       "durationMs": 440,
       "easing": "cubic-bezier(0.22, 1, 0.36, 1)"
     },
@@ -431,11 +431,11 @@ export const MOTION_MARQUEE_ITEMS: MotionMarqueeItem[] = [
     "category": "Bảng giá & Thẻ",
     "imageUrl": "https://images.higgs.ai/?default=1&output=webp&url=https%3A%2F%2Fd8j0ntlcm91z4.cloudfront.net%2Fuser_38xzZboKViGWJOttwIXH07lWA1P%2Fhf_20261106_084005_ab0d1fcf-a93f-4e32-a277-1523e1768fbe.png&w=720&q=82",
     "fallbackUrl": "https://raw.githubusercontent.com/broamstuck-cybr/SOURCEOFKNOWLEDGFORAI/main/assets/previews/codefronts-course-card.png",
-    "summaryVi": "Bộ thẻ xếp chồng có thể lật chuyển mượt mà để so sánh các gói quyền lợi và thông số kỹ thuật.",
+    "summaryVi": "Card Stack giúp người dùng so sánh phương án nhanh và tự ước lượng cấu hình phù hợp.",
     "specs": {
-      "layout": "Ngăn xếp thẻ 3 lớp · Điều hướng tiến/lùi",
+      "layout": "So sánh phương án trực tiếp qua thanh trượt",
       "motion": "Đẩy thẻ đầu ra sau với quán tính lò xo",
-      "responsive": "390 / 768 / 1440px",
+      "responsive": "Tự động co giãn đa thiết bị",
       "durationMs": 460,
       "easing": "cubic-bezier(0.22, 1, 0.36, 1)"
     },
@@ -455,11 +455,11 @@ export const MOTION_MARQUEE_ITEMS: MotionMarqueeItem[] = [
     "category": "Chân trang & Điều hướng",
     "imageUrl": "https://d2ol7oe51mr4n9.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/139344bb-585a-4867-9a31-94cbfad8f6d9.jpg",
     "fallbackUrl": "https://raw.githubusercontent.com/broamstuck-cybr/SOURCEOFKNOWLEDGFORAI/main/assets/previews/lucianlabs-isometric-data-blocks.png",
-    "summaryVi": "Chân trang kỹ thuật tối giản có đèn báo trạng thái máy chủ, bộ chọn ngôn ngữ và sơ đồ tài liệu.",
+    "summaryVi": "Koru Tech Footer gom gọn điều hướng cuối trang, giúp chuyển tiếp mạch lạc giữa các khu vực nội dung.",
     "specs": {
-      "layout": "Lưới kỹ thuật viền 1px · 4 nhóm tài liệu",
+      "layout": "Điều hướng cuối trang gọn nhẹ và cân đối",
       "motion": "Nhấp nháy đèn trạng thái xanh + mở menu ngôn ngữ",
-      "responsive": "390 / 768 / 1440px",
+      "responsive": "Tự động co giãn đa thiết bị",
       "durationMs": 360,
       "easing": "cubic-bezier(0.2, 0.8, 0.2, 1)"
     },
@@ -479,11 +479,11 @@ export const MOTION_MARQUEE_ITEMS: MotionMarqueeItem[] = [
     "category": "Hero & Giới thiệu",
     "imageUrl": "https://images.higgs.ai/?default=1&output=webp&url=https%3A%2F%2Fd8j0ntlcm91z4.cloudfront.net%2Fuser_38xzZboKViGWJOttwIXH07lWA1P%2Fhf_20261107_110008_97f7187c-1b33-4746-ac94-dc00336495be.png&w=720&q=88",
     "fallbackUrl": "https://raw.githubusercontent.com/broamstuck-cybr/SOURCEOFKNOWLEDGFORAI/main/assets/previews/lucianlabs-liquid-glass-button.png",
-    "summaryVi": "Trang giới thiệu studio thiết kế theo lưới tạp chí với nhịp chữ serif và khoảng trắng rộng.",
+    "summaryVi": "Aethera Studio mở ra phần giới thiệu mạch lạc, dễ đọc trên cả điện thoại lẫn máy tính.",
     "specs": {
-      "layout": "Lưới biên tập 4 cột · Khoảng thở lớn",
+      "layout": "Cấu trúc mở đầu mạch lạc, nổi bật nội dung chính",
       "motion": "Lật dòng tiêu đề + chuyển ảnh mượt",
-      "responsive": "390 / 768 / 1440px",
+      "responsive": "Tự động co giãn đa thiết bị",
       "durationMs": 480,
       "easing": "cubic-bezier(0.25, 1, 0.5, 1)"
     },
@@ -503,11 +503,11 @@ export const MOTION_MARQUEE_ITEMS: MotionMarqueeItem[] = [
     "category": "Cảnh 3D",
     "imageUrl": "https://images.higgs.ai/?default=1&output=webp&url=https%3A%2F%2Fd8j0ntlcm91z4.cloudfront.net%2Fuser_38xzZboKViGWJOttwIXH07lWA1P%2Fhf_20261102_045255_3cb4b3c2-3cb5-4af9-93b4-bd88f2f883c3.png",
     "fallbackUrl": "https://threeui.com/social/pages/hero/advanced-glass-material.jpg",
-    "summaryVi": "Chuyển động sinh học trôi nổi theo nhịp cuộn dọc kết hợp hiệu ứng khúc xạ bề mặt nước.",
+    "summaryVi": "Jellyfish Scroll giúp trình diễn khối cảnh không gian trực tiếp để người xem xoay góc nhìn ngay trên web.",
     "specs": {
-      "layout": "Lớp cảnh sâu 3 tầng · Cuộn đồng bộ",
+      "layout": "Không gian 3D tương tác theo thao tác trỏ chuột",
       "motion": "Bồng bềnh theo hàm sin + lệch pha khi cuộn",
-      "responsive": "390 / 768 / 1440px",
+      "responsive": "Tự động co giãn đa thiết bị",
       "durationMs": 700,
       "easing": "cubic-bezier(0.25, 1, 0.5, 1)"
     },
@@ -527,11 +527,11 @@ export const MOTION_MARQUEE_ITEMS: MotionMarqueeItem[] = [
     "category": "Trình diễn sản phẩm",
     "imageUrl": "https://images.higgs.ai/?default=1&output=webp&url=https%3A%2F%2Fd8j0ntlcm91z4.cloudfront.net%2Fuser_38xzZboKViGWJOttwIXH07lWA1P%2Fhf_20261108_192006_dd6f50c5-96f1-4366-a0b9-0e4a09cf5b0d.png&w=720&q=85",
     "fallbackUrl": "https://threeui.com/social/pages/three-js/structure-flow/expanse-field.jpg",
-    "summaryVi": "Không gian làm việc xử lý dữ liệu âm thanh và ngôn ngữ với sóng phổ trực quan.",
+    "summaryVi": "Neuralyn trực quan hóa luồng dữ liệu sản phẩm ngay trên màn hình để dễ thử nghiệm từng bước.",
     "specs": {
-      "layout": "Khung sóng âm trung tâm + thẻ chỉ số 4 cột",
+      "layout": "Trực quan hóa luồng thao tác và dữ liệu sản phẩm",
       "motion": "Dao động cột sóng + trượt thanh tiến trình",
-      "responsive": "390 / 768 / 1440px",
+      "responsive": "Tự động co giãn đa thiết bị",
       "durationMs": 450,
       "easing": "cubic-bezier(0.25, 1, 0.5, 1)"
     },
@@ -551,11 +551,11 @@ export const MOTION_MARQUEE_ITEMS: MotionMarqueeItem[] = [
     "category": "Kêu gọi hành động",
     "imageUrl": "https://images.higgs.ai/?default=1&output=webp&url=https%3A%2F%2Fd8j0ntlcm91z4.cloudfront.net%2Fuser_38xzZboKViGWJOttwIXH07lWA1P%2Fhf_20261021_093215_b7826239-e451-4e15-b42b-d6bcf9497a32.png&w=720&q=82",
     "fallbackUrl": "https://threeui.com/social/pages/motion-design/cathode-session/angles.jpg",
-    "summaryVi": "Khung đặt lịch tư vấn kỹ thuật trực tiếp tích hợp bộ chọn ngày giờ và xác nhận múi giờ tự động.",
+    "summaryVi": "Datacore Booking sắp xếp rõ giá trị cốt lõi và điểm nhấn hành động giúp người mới nắm ý chính ngay.",
     "specs": {
-      "layout": "Khung thông tin + lịch chọn khung giờ",
+      "layout": "Nhấn mạnh giá trị cốt lõi kèm nút hành động rõ nét",
       "motion": "Chuyển bước chọn ngày -> giờ -> xác nhận mượt",
-      "responsive": "390 / 768 / 1440px",
+      "responsive": "Tự động co giãn đa thiết bị",
       "durationMs": 400,
       "easing": "cubic-bezier(0.22, 1, 0.36, 1)"
     },
@@ -575,11 +575,11 @@ export const MOTION_MARQUEE_ITEMS: MotionMarqueeItem[] = [
     "category": "Bảng giá & Thẻ",
     "imageUrl": "https://images.higgs.ai/?default=1&output=webp&url=https%3A%2F%2Fd8j0ntlcm91z4.cloudfront.net%2Fuser_38xzZboKViGWJOttwIXH07lWA1P%2Fhf_20260709_152331_bd312d1a-1f20-46b9-9b68-12bcdcf6d53e.png",
     "fallbackUrl": "https://threeui.com/social/pages/landing-pages/aera-01-landing-page.jpg",
-    "summaryVi": "Bảng thẻ thông số tốc độ, thời gian vòng đua và thứ hạng đội đua trình bày theo lưới kỹ thuật.",
+    "summaryVi": "F1 Racing Hub giúp người dùng so sánh phương án nhanh và tự ước lượng cấu hình phù hợp.",
     "specs": {
-      "layout": "Lưới thẻ telemetry 4 cột · Số liệu monospace",
+      "layout": "So sánh phương án trực tiếp qua thanh trượt",
       "motion": "Cập nhật thanh tốc độ + đổi vòng đua đang xem",
-      "responsive": "390 / 768 / 1440px",
+      "responsive": "Tự động co giãn đa thiết bị",
       "durationMs": 380,
       "easing": "cubic-bezier(0.16, 1, 0.3, 1)"
     },
@@ -599,11 +599,11 @@ export const MOTION_MARQUEE_ITEMS: MotionMarqueeItem[] = [
     "category": "Chân trang & Điều hướng",
     "imageUrl": "https://d2ol7oe51mr4n9.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/4ec0de15-9d60-43b1-a76e-7d721f094fd6.jpg",
     "fallbackUrl": "https://threeui.com/social/pages/sections/footers/section-aera-01-footers.jpg",
-    "summaryVi": "Chân trang hệ điều hành đám mây tích hợp phím tắt điều hướng nhanh, thông tin phiên bản và nhật ký phát hành.",
+    "summaryVi": "NimbusOS Footer gom gọn điều hướng cuối trang, giúp chuyển tiếp mạch lạc giữa các khu vực nội dung.",
     "specs": {
-      "layout": "Thanh thông số phiên bản + lưới điều hướng",
+      "layout": "Điều hướng cuối trang gọn nhẹ và cân đối",
       "motion": "Sáng viền thẻ phiên bản + sao chép lệnh cài đặt",
-      "responsive": "390 / 768 / 1440px",
+      "responsive": "Tự động co giãn đa thiết bị",
       "durationMs": 400,
       "easing": "cubic-bezier(0.22, 1, 0.36, 1)"
     },
@@ -623,11 +623,11 @@ export const MOTION_MARQUEE_ITEMS: MotionMarqueeItem[] = [
     "category": "Hero & Giới thiệu",
     "imageUrl": "https://images.higgs.ai/?default=1&output=webp&url=https%3A%2F%2Fd8j0ntlcm91z4.cloudfront.net%2Fuser_38xzZboKViGWJOttwIXH07lWA1P%2Fhf_20260801_104316_80b428ea-dc99-4399-afb3-8ccb7b34b2d0.png&w=720&q=85",
     "fallbackUrl": "https://raw.githubusercontent.com/broamstuck-cybr/SOURCEOFKNOWLEDGFORAI/main/assets/previews/codefronts-course-card.png",
-    "summaryVi": "Hồ sơ năng lực studio kiến trúc số với khung trưng bày tác phẩm và chỉ số trực quan.",
+    "summaryVi": "Asme mở ra phần giới thiệu mạch lạc, dễ đọc trên cả điện thoại lẫn máy tính.",
     "specs": {
-      "layout": "Chia đôi bất đối xứng 5/7 · Khung dự án",
+      "layout": "Cấu trúc mở đầu mạch lạc, nổi bật nội dung chính",
       "motion": "Trượt thẻ ngang + đổi trạng thái con trỏ",
-      "responsive": "390 / 768 / 1440px",
+      "responsive": "Tự động co giãn đa thiết bị",
       "durationMs": 460,
       "easing": "cubic-bezier(0.22, 1, 0.36, 1)"
     },
@@ -647,11 +647,11 @@ export const MOTION_MARQUEE_ITEMS: MotionMarqueeItem[] = [
     "category": "Cảnh 3D",
     "imageUrl": "https://images.higgs.ai/?default=1&output=webp&url=https%3A%2F%2Fd8j0ntlcm91z4.cloudfront.net%2Fuser_38xzZboKViGWJOttwIXH07lWA1P%2Fhf_20261109_023150_cc5c0d10-d6fc-429d-9245-a05e69771f45.png&w=720&q=82",
     "fallbackUrl": "https://raw.githubusercontent.com/broamstuck-cybr/SOURCEOFKNOWLEDGFORAI/main/assets/previews/lucianlabs-isometric-data-blocks.png",
-    "summaryVi": "Ma trận điểm ảnh tương tác biến đổi mật độ và độ cao khi di chuyển con trỏ qua vùng lưới.",
+    "summaryVi": "Pixel Garden giúp trình diễn khối cảnh không gian trực tiếp để người xem xoay góc nhìn ngay trên web.",
     "specs": {
-      "layout": "Lưới ma trận điểm · Khung điều khiển góc",
+      "layout": "Không gian 3D tương tác theo thao tác trỏ chuột",
       "motion": "Gợn sóng điểm ảnh theo bán kính con trỏ",
-      "responsive": "390 / 768 / 1440px",
+      "responsive": "Tự động co giãn đa thiết bị",
       "durationMs": 420,
       "easing": "cubic-bezier(0.2, 0.8, 0.2, 1)"
     },
@@ -671,11 +671,11 @@ export const MOTION_MARQUEE_ITEMS: MotionMarqueeItem[] = [
     "category": "Trình diễn sản phẩm",
     "imageUrl": "https://images.higgs.ai/?default=1&output=webp&url=https%3A%2F%2Fd8j0ntlcm91z4.cloudfront.net%2Fuser_38xzZboKViGWJOttwIXH07lWA1P%2Fhf_20260725_120544_94be5de4-0f4f-494c-bb78-c532290040a6.png&w=720&q=85",
     "fallbackUrl": "https://raw.githubusercontent.com/broamstuck-cybr/SOURCEOFKNOWLEDGFORAI/main/assets/previews/lucianlabs-liquid-glass-button.png",
-    "summaryVi": "Trình quản lý quy trình tự động hóa kết nối các bước tác vụ bằng đường dẫn trực quan.",
+    "summaryVi": "Nexora Automation trực quan hóa luồng dữ liệu sản phẩm ngay trên màn hình để dễ thử nghiệm từng bước.",
     "specs": {
-      "layout": "Sơ đồ luồng ngang · Thẻ bước tác vụ",
+      "layout": "Trực quan hóa luồng thao tác và dữ liệu sản phẩm",
       "motion": "Chạy điểm sáng dọc đường nối khi kích hoạt",
-      "responsive": "390 / 768 / 1440px",
+      "responsive": "Tự động co giãn đa thiết bị",
       "durationMs": 480,
       "easing": "cubic-bezier(0.22, 1, 0.36, 1)"
     },
@@ -695,11 +695,11 @@ export const MOTION_MARQUEE_ITEMS: MotionMarqueeItem[] = [
     "category": "Kêu gọi hành động",
     "imageUrl": "https://images.higgs.ai/?default=1&output=webp&url=https%3A%2F%2Fd8j0ntlcm91z4.cloudfront.net%2Fuser_38xzZboKViGWJOttwIXH07lWA1P%2Fhf_20260514_154203_6c6f94dc-a07e-4ba5-8688-106f01ccd2c8.png&w=720&q=82",
     "fallbackUrl": "https://threeui.com/social/pages/hero/advanced-glass-material.jpg",
-    "summaryVi": "Tuyên ngôn ra mắt sản phẩm kết hợp cột mốc phát triển và lời mời tham gia danh sách chờ ưu tiên.",
+    "summaryVi": "LaunchEx About sắp xếp rõ giá trị cốt lõi và điểm nhấn hành động giúp người mới nắm ý chính ngay.",
     "specs": {
-      "layout": "Trục cột mốc dọc + hộp đăng ký danh sách chờ",
+      "layout": "Nhấn mạnh giá trị cốt lõi kèm nút hành động rõ nét",
       "motion": "Sáng dần cột mốc khi cuộn + phản hồi gửi form",
-      "responsive": "390 / 768 / 1440px",
+      "responsive": "Tự động co giãn đa thiết bị",
       "durationMs": 460,
       "easing": "cubic-bezier(0.25, 1, 0.5, 1)"
     },
@@ -719,11 +719,11 @@ export const MOTION_MARQUEE_ITEMS: MotionMarqueeItem[] = [
     "category": "Bảng giá & Thẻ",
     "imageUrl": "https://images.higgs.ai/?default=1&output=webp&url=https%3A%2F%2Fd8j0ntlcm91z4.cloudfront.net%2Fuser_38xzZboKViGWJOttwIXH07lWA1P%2Fhf_20261108_190717_6580d844-f3b0-4240-8b4a-239355685fc9.png&w=720&q=85",
     "fallbackUrl": "https://threeui.com/social/pages/three-js/structure-flow/expanse-field.jpg",
-    "summaryVi": "Bảng thẻ điều khoản và biểu phí giao dịch minh bạch với thanh tìm kiếm mục lục và tóm tắt nhanh.",
+    "summaryVi": "Vela Terms giúp người dùng so sánh phương án nhanh và tự ước lượng cấu hình phù hợp.",
     "specs": {
-      "layout": "Cột mục lục cố định + lưới thẻ biểu phí",
+      "layout": "So sánh phương án trực tiếp qua thanh trượt",
       "motion": "Cuộn neo mượt tới từng mục + mở rộng giải thích",
-      "responsive": "390 / 768 / 1440px",
+      "responsive": "Tự động co giãn đa thiết bị",
       "durationMs": 360,
       "easing": "cubic-bezier(0.2, 0.8, 0.2, 1)"
     },
@@ -743,11 +743,11 @@ export const MOTION_MARQUEE_ITEMS: MotionMarqueeItem[] = [
     "category": "Chân trang & Điều hướng",
     "imageUrl": "https://d2ol7oe51mr4n9.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/af6deff1-d678-4dc6-ae24-2880b16cdb20.jpg",
     "fallbackUrl": "https://threeui.com/social/pages/motion-design/cathode-session/angles.jpg",
-    "summaryVi": "Chân trang tương phản cao với đồng hồ múi giờ các văn phòng, liên kết mạng xã hội và bản quyền.",
+    "summaryVi": "Offline gom gọn điều hướng cuối trang, giúp chuyển tiếp mạch lạc giữa các khu vực nội dung.",
     "specs": {
-      "layout": "Dải đồng hồ 3 múi giờ + cột điều hướng đôi",
+      "layout": "Điều hướng cuối trang gọn nhẹ và cân đối",
       "motion": "Cập nhật kim giây thời gian thực + gạch chân liên kết",
-      "responsive": "390 / 768 / 1440px",
+      "responsive": "Tự động co giãn đa thiết bị",
       "durationMs": 380,
       "easing": "cubic-bezier(0.2, 0.8, 0.2, 1)"
     },
@@ -767,11 +767,11 @@ export const MOTION_MARQUEE_ITEMS: MotionMarqueeItem[] = [
     "category": "Hero & Giới thiệu",
     "imageUrl": "https://images.higgs.ai/?default=1&output=webp&url=https%3A%2F%2Fd8j0ntlcm91z4.cloudfront.net%2Fuser_38xzZboKViGWJOttwIXH07lWA1P%2Fhf_20261113_115509_577e7e29-0e80-43e6-93ac-e6cf71972818.png&w=720&q=85",
     "fallbackUrl": "https://threeui.com/social/pages/landing-pages/aera-01-landing-page.jpg",
-    "summaryVi": "Giao diện mở đầu nền tảng trợ lý thông minh với khung nhập lệnh trực tiếp và thẻ gợi ý.",
+    "summaryVi": "Bloom AI mở ra phần giới thiệu mạch lạc, dễ đọc trên cả điện thoại lẫn máy tính.",
     "specs": {
-      "layout": "Trục dọc tâm điểm · Khung nhập lệnh nổi",
+      "layout": "Cấu trúc mở đầu mạch lạc, nổi bật nội dung chính",
       "motion": "Sáng viền xung nhịp + gõ chữ tuần tự",
-      "responsive": "390 / 768 / 1440px",
+      "responsive": "Tự động co giãn đa thiết bị",
       "durationMs": 440,
       "easing": "cubic-bezier(0.2, 0.8, 0.2, 1)"
     },
@@ -791,11 +791,11 @@ export const MOTION_MARQUEE_ITEMS: MotionMarqueeItem[] = [
     "category": "Cảnh 3D",
     "imageUrl": "https://images.higgs.ai/?default=1&output=webp&url=https%3A%2F%2Fd8j0ntlcm91z4.cloudfront.net%2Fuser_38xzZboKViGWJOttwIXH07lWA1P%2Fhf_20261102_042056_1a704ff7-b0e5-4a9f-bbda-62392b819fb6.png&w=720&q=82",
     "fallbackUrl": "https://threeui.com/social/pages/sections/footers/section-aera-01-footers.jpg",
-    "summaryVi": "Cuộn trưng bày bộ sưu tập theo trục Z đưa từng khung hình tiến về phía người xem.",
+    "summaryVi": "Runway Lookbook giúp trình diễn khối cảnh không gian trực tiếp để người xem xoay góc nhìn ngay trên web.",
     "specs": {
-      "layout": "Trục chiều sâu Z · Khung ảnh toàn cảnh",
+      "layout": "Không gian 3D tương tác theo thao tác trỏ chuột",
       "motion": "Tiến lớp ảnh theo trục Z + khóa tiêu cự",
-      "responsive": "390 / 768 / 1440px",
+      "responsive": "Tự động co giãn đa thiết bị",
       "durationMs": 650,
       "easing": "cubic-bezier(0.16, 1, 0.3, 1)"
     },
@@ -815,11 +815,11 @@ export const MOTION_MARQUEE_ITEMS: MotionMarqueeItem[] = [
     "category": "Trình diễn sản phẩm",
     "imageUrl": "https://images.higgs.ai/?default=1&output=webp&url=https%3A%2F%2Fd8j0ntlcm91z4.cloudfront.net%2Fuser_38xzZboKViGWJOttwIXH07lWA1P%2Fhf_20261107_005547_8a9e6889-76aa-4688-81b5-4452d9afa4ad.png&w=720&q=85",
     "fallbackUrl": "https://raw.githubusercontent.com/broamstuck-cybr/SOURCEOFKNOWLEDGFORAI/main/assets/previews/codefronts-course-card.png",
-    "summaryVi": "Ứng dụng lập kế hoạch ngày chia theo khung giờ trực quan, danh sách ưu tiên và đồng hồ tập trung.",
+    "summaryVi": "ADHD Planner trực quan hóa luồng dữ liệu sản phẩm ngay trên màn hình để dễ thử nghiệm từng bước.",
     "specs": {
-      "layout": "Lịch trục dọc + cột việc ưu tiên + bộ đếm",
+      "layout": "Trực quan hóa luồng thao tác và dữ liệu sản phẩm",
       "motion": "Đánh dấu hoàn thành mượt + co giãn khối giờ",
-      "responsive": "390 / 768 / 1440px",
+      "responsive": "Tự động co giãn đa thiết bị",
       "durationMs": 360,
       "easing": "cubic-bezier(0.2, 0.8, 0.2, 1)"
     },
@@ -839,11 +839,11 @@ export const MOTION_MARQUEE_ITEMS: MotionMarqueeItem[] = [
     "category": "Kêu gọi hành động",
     "imageUrl": "https://images.higgs.ai/?default=1&output=webp&url=https%3A%2F%2Fd8j0ntlcm91z4.cloudfront.net%2Fuser_38xzZboKViGWJOttwIXH07lWA1P%2Fhf_20261030_025250_100df7b8-31fd-4614-aa4a-c1b7d5b6b273.png",
     "fallbackUrl": "https://raw.githubusercontent.com/broamstuck-cybr/SOURCEOFKNOWLEDGFORAI/main/assets/previews/lucianlabs-isometric-data-blocks.png",
-    "summaryVi": "Khối kêu gọi tham gia cộng đồng sáng tạo với bản đồ thành viên điểm chấm và nút kết nối nhanh.",
+    "summaryVi": "Kindred Dot Hands sắp xếp rõ giá trị cốt lõi và điểm nhấn hành động giúp người mới nắm ý chính ngay.",
     "specs": {
-      "layout": "Đồ họa ma trận điểm + khung kêu gọi trung tâm",
+      "layout": "Nhấn mạnh giá trị cốt lõi kèm nút hành động rõ nét",
       "motion": "Nhấp nháy nút điểm thành viên + phóng nhẹ nút chính",
-      "responsive": "390 / 768 / 1440px",
+      "responsive": "Tự động co giãn đa thiết bị",
       "durationMs": 480,
       "easing": "cubic-bezier(0.22, 1, 0.36, 1)"
     },
@@ -863,11 +863,11 @@ export const MOTION_MARQUEE_ITEMS: MotionMarqueeItem[] = [
     "category": "Bảng giá & Thẻ",
     "imageUrl": "https://d2ol7oe51mr4n9.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/f1631235-0a76-464d-8f1d-2c4b48a997d5.jpg",
     "fallbackUrl": "https://raw.githubusercontent.com/broamstuck-cybr/SOURCEOFKNOWLEDGFORAI/main/assets/previews/lucianlabs-liquid-glass-button.png",
-    "summaryVi": "Thẻ két sắt lưu trữ tài sản số kèm bảng phân bổ danh mục, lịch sử biến động và cấp độ bảo chứng.",
+    "summaryVi": "Vaultra giúp người dùng so sánh phương án nhanh và tự ước lượng cấu hình phù hợp.",
     "specs": {
-      "layout": "Thẻ tổng tài sản + 3 thẻ chỉ số bảo chứng",
+      "layout": "So sánh phương án trực tiếp qua thanh trượt",
       "motion": "Đổ đầy thanh tỷ lệ phân bổ + đổi đơn vị hiển thị",
-      "responsive": "390 / 768 / 1440px",
+      "responsive": "Tự động co giãn đa thiết bị",
       "durationMs": 420,
       "easing": "cubic-bezier(0.22, 1, 0.36, 1)"
     },
@@ -887,11 +887,11 @@ export const MOTION_MARQUEE_ITEMS: MotionMarqueeItem[] = [
     "category": "Chân trang & Điều hướng",
     "imageUrl": "https://images.higgs.ai/?default=1&output=webp&url=https%3A%2F%2Fd8j0ntlcm91z4.cloudfront.net%2Fuser_38xzZboKViGWJOttwIXH07lWA1P%2Fhf_20261021_093821_db49f268-cd69-4ac0-b92b-e0b8a7062322.png&w=720&q=82",
     "fallbackUrl": "https://threeui.com/social/pages/hero/advanced-glass-material.jpg",
-    "summaryVi": "Chân trang nền tảng vận chuyển và triển khai phần mềm với băng chuyền số liệu và cột liên kết sản phẩm.",
+    "summaryVi": "Shipcraft Footer gom gọn điều hướng cuối trang, giúp chuyển tiếp mạch lạc giữa các khu vực nội dung.",
     "specs": {
-      "layout": "Khung CTA cuối trang + lưới 4 cột + thanh pháp lý",
+      "layout": "Điều hướng cuối trang gọn nhẹ và cân đối",
       "motion": "Nổi nút bắt đầu miễn phí + hiệu ứng di chuột liên kết",
-      "responsive": "390 / 768 / 1440px",
+      "responsive": "Tự động co giãn đa thiết bị",
       "durationMs": 420,
       "easing": "cubic-bezier(0.22, 1, 0.36, 1)"
     },
@@ -911,11 +911,11 @@ export const MOTION_MARQUEE_ITEMS: MotionMarqueeItem[] = [
     "category": "Hero & Giới thiệu",
     "imageUrl": "https://images.higgs.ai/?default=1&output=webp&url=https%3A%2F%2Fd8j0ntlcm91z4.cloudfront.net%2Fuser_38xzZboKViGWJOttwIXH07lWA1P%2Fhf_20261109_013341_08629ffd-6ab5-44a8-bec8-f1939ab3a6cd.png&w=720&q=88",
     "fallbackUrl": "https://threeui.com/social/pages/three-js/structure-flow/expanse-field.jpg",
-    "summaryVi": "Bố cục kỷ nguyên số kết hợp lưới tọa độ mảnh, đồng hồ trạng thái và tiêu đề khổ rộng.",
+    "summaryVi": "Digital Epoch mở ra phần giới thiệu mạch lạc, dễ đọc trên cả điện thoại lẫn máy tính.",
     "specs": {
-      "layout": "Lưới tọa độ kỹ thuật · Viền 1px",
+      "layout": "Cấu trúc mở đầu mạch lạc, nổi bật nội dung chính",
       "motion": "Quét đường lưới + nhảy bộ đếm số liệu",
-      "responsive": "390 / 768 / 1440px",
+      "responsive": "Tự động co giãn đa thiết bị",
       "durationMs": 500,
       "easing": "cubic-bezier(0.16, 1, 0.3, 1)"
     },
@@ -935,11 +935,11 @@ export const MOTION_MARQUEE_ITEMS: MotionMarqueeItem[] = [
     "category": "Cảnh 3D",
     "imageUrl": "https://images.higgs.ai/?default=1&output=webp&url=https%3A%2F%2Fd8j0ntlcm91z4.cloudfront.net%2Fuser_38xzZboKViGWJOttwIXH07lWA1P%2Fhf_20261102_040343_a73684b4-3f71-4613-a843-c8be80fb1211.png&w=720&q=82",
     "fallbackUrl": "https://threeui.com/social/pages/motion-design/cathode-session/angles.jpg",
-    "summaryVi": "Mô phỏng góc chiếu sáng mặt trời đổi màu bầu trời và bóng đổ kiến trúc theo thanh trượt giờ.",
+    "summaryVi": "Solar Fog giúp trình diễn khối cảnh không gian trực tiếp để người xem xoay góc nhìn ngay trên web.",
     "specs": {
-      "layout": "Khung kiến trúc 3D + thanh trượt thời gian",
+      "layout": "Không gian 3D tương tác theo thao tác trỏ chuột",
       "motion": "Nội suy góc chiếu sáng và nhiệt độ màu",
-      "responsive": "390 / 768 / 1440px",
+      "responsive": "Tự động co giãn đa thiết bị",
       "durationMs": 560,
       "easing": "cubic-bezier(0.22, 1, 0.36, 1)"
     },
@@ -959,11 +959,11 @@ export const MOTION_MARQUEE_ITEMS: MotionMarqueeItem[] = [
     "category": "Trình diễn sản phẩm",
     "imageUrl": "https://images.higgs.ai/?default=1&output=webp&url=https%3A%2F%2Fd8j0ntlcm91z4.cloudfront.net%2Fuser_38xzZboKViGWJOttwIXH07lWA1P%2Fhf_20261113_115509_577e7e29-0e80-43e6-93ac-e6cf71972818.png&w=720&q=82",
     "fallbackUrl": "https://threeui.com/social/pages/landing-pages/aera-01-landing-page.jpg",
-    "summaryVi": "Cửa hàng sản phẩm sáng tạo với bộ lọc màu sắc trực quan, thẻ sản phẩm bo góc và giỏ hàng nhanh.",
+    "summaryVi": "Kids Store trực quan hóa luồng dữ liệu sản phẩm ngay trên màn hình để dễ thử nghiệm từng bước.",
     "specs": {
-      "layout": "Lưới sản phẩm 3 cột + thanh lọc nổi",
+      "layout": "Trực quan hóa luồng thao tác và dữ liệu sản phẩm",
       "motion": "Phóng nhẹ ảnh khi di chuột + trượt ngăn giỏ hàng",
-      "responsive": "390 / 768 / 1440px",
+      "responsive": "Tự động co giãn đa thiết bị",
       "durationMs": 400,
       "easing": "cubic-bezier(0.22, 1, 0.36, 1)"
     },
@@ -983,11 +983,11 @@ export const MOTION_MARQUEE_ITEMS: MotionMarqueeItem[] = [
     "category": "Kêu gọi hành động",
     "imageUrl": "https://images.higgs.ai/?default=1&output=webp&url=https%3A%2F%2Fd8j0ntlcm91z4.cloudfront.net%2Fuser_38xzZboKViGWJOttwIXH07lWA1P%2Fhf_20260725_120544_94be5de4-0f4f-494c-bb78-c532290040a6.png&w=720&q=82",
     "fallbackUrl": "https://threeui.com/social/pages/sections/footers/section-aera-01-footers.jpg",
-    "summaryVi": "Trình cấu hình không gian làm việc theo nhu cầu kèm nút yêu cầu báo giá chi tiết theo diện tích.",
+    "summaryVi": "Custom Spaces sắp xếp rõ giá trị cốt lõi và điểm nhấn hành động giúp người mới nắm ý chính ngay.",
     "specs": {
-      "layout": "Khung tùy chỉnh trực quan + thẻ tóm tắt yêu cầu",
+      "layout": "Nhấn mạnh giá trị cốt lõi kèm nút hành động rõ nét",
       "motion": "Đổi thông số diện tích/chi phí tức thì khi chọn",
-      "responsive": "390 / 768 / 1440px",
+      "responsive": "Tự động co giãn đa thiết bị",
       "durationMs": 420,
       "easing": "cubic-bezier(0.2, 0.8, 0.2, 1)"
     },
@@ -1007,11 +1007,11 @@ export const MOTION_MARQUEE_ITEMS: MotionMarqueeItem[] = [
     "category": "Bảng giá & Thẻ",
     "imageUrl": "https://d2ol7oe51mr4n9.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/19548534-c502-431f-904d-24d31b17c471.jpg",
     "fallbackUrl": "https://raw.githubusercontent.com/broamstuck-cybr/SOURCEOFKNOWLEDGFORAI/main/assets/previews/codefronts-course-card.png",
-    "summaryVi": "Bộ thẻ gói dịch vụ tài chính doanh nghiệp trên nền xanh đậm với bảng đối chiếu hạn mức chi tiết.",
+    "summaryVi": "Cobalt Hour giúp người dùng so sánh phương án nhanh và tự ước lượng cấu hình phù hợp.",
     "specs": {
-      "layout": "3 thẻ gói dịch vụ + bảng đối chiếu tính năng",
+      "layout": "So sánh phương án trực tiếp qua thanh trượt",
       "motion": "Nổi thẻ gói khuyên dùng + đổi hạn mức theo quy mô",
-      "responsive": "390 / 768 / 1440px",
+      "responsive": "Tự động co giãn đa thiết bị",
       "durationMs": 400,
       "easing": "cubic-bezier(0.22, 1, 0.36, 1)"
     },
@@ -1031,11 +1031,11 @@ export const MOTION_MARQUEE_ITEMS: MotionMarqueeItem[] = [
     "category": "Chân trang & Điều hướng",
     "imageUrl": "https://d2ol7oe51mr4n9.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/4a917d4c-123f-4b68-8125-b201961b7791.jpg",
     "fallbackUrl": "https://raw.githubusercontent.com/broamstuck-cybr/SOURCEOFKNOWLEDGFORAI/main/assets/previews/lucianlabs-isometric-data-blocks.png",
-    "summaryVi": "Chân trang doanh nghiệp hiện đại với thẻ chứng nhận bảo mật, danh mục giải pháp và biểu mẫu liên hệ nhanh.",
+    "summaryVi": "Vantix Footer gom gọn điều hướng cuối trang, giúp chuyển tiếp mạch lạc giữa các khu vực nội dung.",
     "specs": {
-      "layout": "Cột giới thiệu + 3 cột giải pháp + huy hiệu chuẩn",
+      "layout": "Điều hướng cuối trang gọn nhẹ và cân đối",
       "motion": "Hiệu ứng sáng nhẹ huy hiệu + chuyển trạng thái liên kết",
-      "responsive": "390 / 768 / 1440px",
+      "responsive": "Tự động co giãn đa thiết bị",
       "durationMs": 400,
       "easing": "cubic-bezier(0.22, 1, 0.36, 1)"
     },
@@ -1055,11 +1055,11 @@ export const MOTION_MARQUEE_ITEMS: MotionMarqueeItem[] = [
     "category": "Hero & Giới thiệu",
     "imageUrl": "https://images.higgs.ai/?default=1&output=webp&url=https%3A%2F%2Fd8j0ntlcm91z4.cloudfront.net%2Fuser_38xzZboKViGWJOttwIXH07lWA1P%2Fhf_20261107_130252_7b1b8485-d5c5-440c-8921-f5ae01054c6a.png&w=720&q=90",
     "fallbackUrl": "https://raw.githubusercontent.com/broamstuck-cybr/SOURCEOFKNOWLEDGFORAI/main/assets/previews/lucianlabs-liquid-glass-button.png",
-    "summaryVi": "Mặt phẳng giao diện hiệu ứng tán xạ ánh sáng cạnh viền với độ tương phản chữ đạt chuẩn.",
+    "summaryVi": "Luminex mở ra phần giới thiệu mạch lạc, dễ đọc trên cả điện thoại lẫn máy tính.",
     "specs": {
-      "layout": "Tấm kính tối · Điểm sáng hướng tâm",
+      "layout": "Cấu trúc mở đầu mạch lạc, nổi bật nội dung chính",
       "motion": "Dịch chuyển luồng sáng theo vị trí trỏ chuột",
-      "responsive": "390 / 768 / 1440px",
+      "responsive": "Tự động co giãn đa thiết bị",
       "durationMs": 540,
       "easing": "cubic-bezier(0.22, 1, 0.36, 1)"
     },
@@ -1079,11 +1079,11 @@ export const MOTION_MARQUEE_ITEMS: MotionMarqueeItem[] = [
     "category": "Cảnh 3D",
     "imageUrl": "https://images.higgs.ai/?default=1&output=webp&url=https%3A%2F%2Fd8j0ntlcm91z4.cloudfront.net%2Fuser_38xzZboKViGWJOttwIXH07lWA1P%2Fhf_20260405_171918_4a5edc79-d78f-4637-ac8b-53c43c220606.png&w=720&q=82",
     "fallbackUrl": "https://threeui.com/social/pages/hero/advanced-glass-material.jpg",
-    "summaryVi": "Khối lăng kính đa diện tán sắc ánh sáng khi xoay nhẹ theo chuyển động nghiêng của chuột.",
+    "summaryVi": "Prisma Creative Studio giúp trình diễn khối cảnh không gian trực tiếp để người xem xoay góc nhìn ngay trên web.",
     "specs": {
-      "layout": "Tâm điểm lăng kính 3D · Lưới thông tin 3 cột",
+      "layout": "Không gian 3D tương tác theo thao tác trỏ chuột",
       "motion": "Nghiêng trục X/Y + dịch dải phổ màu",
-      "responsive": "390 / 768 / 1440px",
+      "responsive": "Tự động co giãn đa thiết bị",
       "durationMs": 540,
       "easing": "cubic-bezier(0.22, 1, 0.36, 1)"
     },
@@ -1103,11 +1103,11 @@ export const MOTION_MARQUEE_ITEMS: MotionMarqueeItem[] = [
     "category": "Trình diễn sản phẩm",
     "imageUrl": "https://images.higgs.ai/?default=1&output=webp&url=https%3A%2F%2Fd8j0ntlcm91z4.cloudfront.net%2Fuser_38xzZboKViGWJOttwIXH07lWA1P%2Fhf_20261109_013341_08629ffd-6ab5-44a8-bec8-f1939ab3a6cd.png",
     "fallbackUrl": "https://threeui.com/social/pages/three-js/structure-flow/expanse-field.jpg",
-    "summaryVi": "Trang ra mắt bộ sưu tập giới hạn với đồng hồ đếm ngược, bộ chọn phiên bản và xem chi tiết góc chụp.",
+    "summaryVi": "Balloon Drop trực quan hóa luồng dữ liệu sản phẩm ngay trên màn hình để dễ thử nghiệm từng bước.",
     "specs": {
-      "layout": "Sân khấu sản phẩm lớn + cột đặt hàng",
+      "layout": "Trực quan hóa luồng thao tác và dữ liệu sản phẩm",
       "motion": "Chuyển góc ảnh mượt + phản hồi nút chọn cỡ",
-      "responsive": "390 / 768 / 1440px",
+      "responsive": "Tự động co giãn đa thiết bị",
       "durationMs": 440,
       "easing": "cubic-bezier(0.22, 1, 0.36, 1)"
     },
@@ -1127,11 +1127,11 @@ export const MOTION_MARQUEE_ITEMS: MotionMarqueeItem[] = [
     "category": "Kêu gọi hành động",
     "imageUrl": "https://images.higgs.ai/?default=1&output=webp&url=https%3A%2F%2Fd8j0ntlcm91z4.cloudfront.net%2Fuser_38xzZboKViGWJOttwIXH07lWA1P%2Fhf_20261107_011718_f1fd2b4c-d260-44ae-a0a2-8256134a4c35.png",
     "fallbackUrl": "https://threeui.com/social/pages/motion-design/cathode-session/angles.jpg",
-    "summaryVi": "Khối liên hệ hợp tác dành cho nhà thiết kế độc lập với lịch trống theo tháng và nút sao chép email.",
+    "summaryVi": "Designer Portfolio sắp xếp rõ giá trị cốt lõi và điểm nhấn hành động giúp người mới nắm ý chính ngay.",
     "specs": {
-      "layout": "Thẻ trạng thái nhận việc + danh mục dịch vụ",
+      "layout": "Nhấn mạnh giá trị cốt lõi kèm nút hành động rõ nét",
       "motion": "Phản hồi sao chép clipboard + trượt thẻ dự án",
-      "responsive": "390 / 768 / 1440px",
+      "responsive": "Tự động co giãn đa thiết bị",
       "durationMs": 390,
       "easing": "cubic-bezier(0.22, 1, 0.36, 1)"
     },
@@ -1151,11 +1151,11 @@ export const MOTION_MARQUEE_ITEMS: MotionMarqueeItem[] = [
     "category": "Bảng giá & Thẻ",
     "imageUrl": "https://d2ol7oe51mr4n9.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/82e7eb75-c65f-490a-99b5-f3d1cad54200.webp",
     "fallbackUrl": "https://threeui.com/social/pages/landing-pages/aera-01-landing-page.jpg",
-    "summaryVi": "Bảng thẻ doanh thu thương mại điện tử, tỷ lệ chuyển đổi và cấu hình cổng thanh toán đa tiền tệ.",
+    "summaryVi": "Sellix giúp người dùng so sánh phương án nhanh và tự ước lượng cấu hình phù hợp.",
     "specs": {
-      "layout": "Lưới thẻ KPI + bảng phí theo phương thức",
+      "layout": "So sánh phương án trực tiếp qua thanh trượt",
       "motion": "Chuyển tab tiền tệ mượt + làm nổi dòng đang trỏ",
-      "responsive": "390 / 768 / 1440px",
+      "responsive": "Tự động co giãn đa thiết bị",
       "durationMs": 380,
       "easing": "cubic-bezier(0.2, 0.8, 0.2, 1)"
     },
@@ -1175,11 +1175,11 @@ export const MOTION_MARQUEE_ITEMS: MotionMarqueeItem[] = [
     "category": "Chân trang & Điều hướng",
     "imageUrl": "https://images.higgs.ai/?default=1&output=webp&url=https%3A%2F%2Fd8j0ntlcm91z4.cloudfront.net%2Fuser_38xzZboKViGWJOttwIXH07lWA1P%2Fhf_20260928_144652_9eaf1d6a-3e8d-4460-bd5b-0ec7221685a0.png&w=720&q=82",
     "fallbackUrl": "https://threeui.com/social/pages/sections/footers/section-aera-01-footers.jpg",
-    "summaryVi": "Hệ thống thanh điều hướng cố định thông minh kèm bảng menu mở rộng đa cột và ngăn điều hướng di động.",
+    "summaryVi": "Atlas Nav gom gọn điều hướng cuối trang, giúp chuyển tiếp mạch lạc giữa các khu vực nội dung.",
     "specs": {
-      "layout": "Thanh đỉnh 1 dòng + bảng Mega Menu 3 cột",
+      "layout": "Điều hướng cuối trang gọn nhẹ và cân đối",
       "motion": "Bung bảng menu mượt + biến đổi nút 3 gạch trên mobile",
-      "responsive": "390 / 768 / 1440px",
+      "responsive": "Tự động co giãn đa thiết bị",
       "durationMs": 340,
       "easing": "cubic-bezier(0.22, 1, 0.36, 1)"
     },

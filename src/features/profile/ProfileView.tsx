@@ -6,7 +6,7 @@ import {
   rankedRepoSavedId,
   studioRepoContext,
 } from '../explore/catalog';
-import { useAppStore } from '../../store/appStore';
+import { formatUserDisplayName, useAppStore } from '../../store/appStore';
 import type { AttachedContextItem, CommunityPost } from '../../types/index';
 import { Media, previewFor } from '../../ui/Media';
 import {
@@ -126,6 +126,20 @@ function readLocalProfileField(key: string, fallback: string): string {
   }
 }
 
+const FOLLOWING_STORAGE_KEY = 'fforum_v3_following_handles';
+
+function readFollowingHandles(): string[] {
+  if (typeof window === 'undefined') return ['minh_dev', 'linh_ux'];
+  try {
+    const raw = window.localStorage.getItem(FOLLOWING_STORAGE_KEY);
+    if (!raw) return ['minh_dev', 'linh_ux'];
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed.filter((x): x is string => typeof x === 'string') : [];
+  } catch {
+    return [];
+  }
+}
+
 export const ProfileView: React.FC = () => {
   const {
     currentUser,
@@ -156,7 +170,7 @@ export const ProfileView: React.FC = () => {
   const [activeTab, setActiveTab] = useState<ProfileTab>('saved');
   const [savedFilter, setSavedFilter] = useState<SavedFilter>('all');
   const [postFilter, setPostFilter] = useState<PostFilter>('all');
-  const [isFollowing, setIsFollowing] = useState(false);
+  const [followingHandles, setFollowingHandles] = useState<string[]>(readFollowingHandles);
 
   const isOtherUser = Boolean(
     viewingProfileUser &&
@@ -166,10 +180,16 @@ export const ProfileView: React.FC = () => {
           viewingProfileUser.id !== currentUser.id))
   );
 
+  const targetHandleClean = viewingProfileUser
+    ? viewingProfileUser.handle.toLowerCase().replace(/^@/, '')
+    : '';
+  const isFollowing = Boolean(
+    targetHandleClean && followingHandles.some((h) => h.toLowerCase() === targetHandleClean)
+  );
+
   useEffect(() => {
     if (isOtherUser) {
       setActiveTab('posts');
-      setIsFollowing(false);
     }
   }, [isOtherUser, viewingProfileUser]);
 
@@ -200,8 +220,8 @@ export const ProfileView: React.FC = () => {
   }, [bioStorageKey, statusStorageKey, defaultBio, defaultStatus]);
 
   const displayName = isOtherUser
-    ? viewingProfileUser!.name
-    : currentUser?.name?.trim() || 'Thành viên cục bộ';
+    ? formatUserDisplayName(viewingProfileUser!.name, 'Thành viên')
+    : formatUserDisplayName(currentUser?.name, 'Thành viên cục bộ');
   const handle = isOtherUser
     ? viewingProfileUser!.handle.startsWith('@')
       ? viewingProfileUser!.handle
@@ -515,7 +535,17 @@ export const ProfileView: React.FC = () => {
                   type="button"
                   className={`btn ${isFollowing ? 'btn-line' : 'btn-red'} btn-sm`}
                   onClick={() => {
-                    setIsFollowing((v) => !v);
+                    if (!targetHandleClean) return;
+                    const nextFollow = !isFollowing;
+                    const updated = nextFollow
+                      ? [...new Set([...followingHandles, targetHandleClean])]
+                      : followingHandles.filter((h) => h.toLowerCase() !== targetHandleClean);
+                    setFollowingHandles(updated);
+                    try {
+                      window.localStorage.setItem(FOLLOWING_STORAGE_KEY, JSON.stringify(updated));
+                    } catch {
+                      void 0;
+                    }
                     addToast({
                       type: 'info',
                       title: isFollowing ? 'Bỏ theo dõi' : 'Đã theo dõi',
@@ -714,13 +744,15 @@ export const ProfileView: React.FC = () => {
                       <h3 className="pf-item-title">{item.title}</h3>
                       <p className="pf-item-desc">{item.summary}</p>
                       <div className="pf-item-actions">
-                        <button
-                          type="button"
-                          className="btn btn-red btn-sm"
-                          onClick={() => openExperience(item.savedId)}
-                        >
-                          Mở trải nghiệm
-                        </button>
+                        {item.kind === 'template' && (
+                          <button
+                            type="button"
+                            className="btn btn-red btn-sm"
+                            onClick={() => openExperience(item.savedId)}
+                          >
+                            Mở trải nghiệm
+                          </button>
+                        )}
                         {item.communityPost && (
                           <button
                             type="button"

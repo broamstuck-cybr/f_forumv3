@@ -33,7 +33,7 @@ import { ReactionBar, SpecimenSheet } from './SpecimenSheet';
 import { useCalm } from './useCalm';
 
 export type LibraryFilter = 'all' | SourceLibraryName;
-type BenchTab = 'html' | 'css' | 'spec';
+type BenchTab = 'html' | 'css' | 'code' | 'spec';
 
 interface PlateTableProps {
   query: string;
@@ -203,16 +203,27 @@ export const PlateTable: React.FC<PlateTableProps> = ({
   const activeHtml = useMemo(() => {
     if (!activeItem) return '';
     if (isPinUI) return pinuiSource?.tsx ?? '';
-    if (isThreeUI || isMotion) return '';
+    if (isMotion && motionEntry?.liveHtml && motionEntry.liveHtml.length > (activeItem.previewHtml?.length ?? 0)) {
+      return sanitizeSnippetCode(motionEntry.liveHtml);
+    }
     return sanitizeSnippetCode(activeItem.previewHtml);
-  }, [activeItem, isPinUI, isThreeUI, isMotion, pinuiSource]);
+  }, [activeItem, isPinUI, isMotion, pinuiSource, motionEntry]);
 
   const activeCss = useMemo(() => {
     if (!activeItem) return '';
     if (isPinUI) return pinuiSource?.css ?? '';
-    if (isThreeUI || isMotion) return '';
+    if (isMotion && motionEntry?.css && !activeItem.previewCss) {
+      return sanitizeSnippetCode(motionEntry.css);
+    }
     return sanitizeSnippetCode(activeItem.previewCss);
-  }, [activeItem, isPinUI, isThreeUI, isMotion, pinuiSource]);
+  }, [activeItem, isPinUI, isMotion, pinuiSource, motionEntry]);
+
+  const activeScriptCode = useMemo(() => {
+    if (!activeItem || !isMotion) return '';
+    return motionEntry?.code ? sanitizeSnippetCode(motionEntry.code) : '';
+  }, [activeItem, isMotion, motionEntry]);
+
+  const activeScriptLabel = (motionEntry?.codeLang || 'TSX').toUpperCase();
 
   const activePrompt = useMemo(() => {
     if (!activeItem) return '';
@@ -225,7 +236,8 @@ export const PlateTable: React.FC<PlateTableProps> = ({
   }, [activeItem, isPinUI, isMotion, pinuiSource, motionEntry, activeTitle, activeDesc]);
 
   const snippetCssWithTheme = useMemo(() => {
-    if (!activeItem || isPinUI || isThreeUI || isMotion) return '';
+    if (!activeItem || isPinUI) return '';
+    if (isThreeUI || isMotion) return activeItem.previewCss ?? '';
     const extra = buildSnippetThemeOverrideCss(
       activeItem.sourceLibrary,
       activeItem.previewCss,
@@ -233,9 +245,6 @@ export const PlateTable: React.FC<PlateTableProps> = ({
     );
     return extra ? `${extra}\n${activeItem.previewCss ?? ''}` : activeItem.previewCss ?? '';
   }, [activeItem, isPinUI, isThreeUI, isMotion, stageTheme]);
-
-  const shownCode =
-    benchTab === 'html' ? activeHtml : benchTab === 'css' ? activeCss : activePrompt;
 
   const cycleViewport = () => {
     setViewport((prev) => (prev === 1440 ? 768 : prev === 768 ? 390 : 1440));
@@ -257,13 +266,34 @@ export const PlateTable: React.FC<PlateTableProps> = ({
         meta: 'Định dạng & Biến giao diện',
       });
     }
+    if (activeScriptCode) {
+      list.push({
+        id: 'code',
+        label: activeScriptLabel,
+        meta: `Mã nguồn ${activeScriptLabel}`,
+      });
+    }
     list.push({
       id: 'spec',
       label: 'Prompt',
       meta: 'Đặc tả kiến trúc & Prompt',
     });
     return list;
-  }, [activeHtml, activeCss, isPinUI]);
+  }, [activeHtml, activeCss, activeScriptCode, activeScriptLabel, isPinUI]);
+
+  const resolvedBenchTab: BenchTab = useMemo(() => {
+    if (fileBoxTabs.some((tab) => tab.id === benchTab)) return benchTab;
+    return (fileBoxTabs[0]?.id as BenchTab | undefined) ?? 'spec';
+  }, [fileBoxTabs, benchTab]);
+
+  const shownCode =
+    resolvedBenchTab === 'html'
+      ? activeHtml || activePrompt
+      : resolvedBenchTab === 'css'
+        ? activeCss || activePrompt
+        : resolvedBenchTab === 'code'
+          ? activeScriptCode || activePrompt
+          : activePrompt;
 
   const handleCopyCode = async () => {
     if (!shownCode) return;
@@ -427,10 +457,10 @@ export const PlateTable: React.FC<PlateTableProps> = ({
                     theme={stageTheme}
                     compact
                   />
-                ) : !isThreeUI && !isMotion && activeItem.previewHtml ? (
+                ) : activeHtml ? (
                   <SandboxPreview
                     title={activeTitle}
-                    html={activeItem.previewHtml}
+                    html={activeHtml}
                     css={snippetCssWithTheme}
                     theme={stageTheme}
                     viewport={viewport}
@@ -519,7 +549,7 @@ export const PlateTable: React.FC<PlateTableProps> = ({
                   <div className="ex-source-editor-head">
                     <div className="ex-source-tabs" role="tablist" aria-label="Tệp mã nguồn và Prompt">
                       {fileBoxTabs.map((tab) => {
-                        const active = benchTab === tab.id;
+                        const active = resolvedBenchTab === tab.id;
                         return (
                           <button
                             key={tab.id}

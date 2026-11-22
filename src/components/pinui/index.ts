@@ -124,3 +124,6 @@ export { default as CaremetricFooter } from './CaremetricFooter';
 
 export { PinUIPlayground, PINUI_PLAYGROUND_IDS } from './PinUIPlayground';
 export type { PinUIPlaygroundProps } from './PinUIPlayground';
+
+export { PinHeartButton } from './PinHeartButton';
+export type { PinHeartButtonProps } from './PinHeartButton';

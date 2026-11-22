@@ -6,7 +6,7 @@ import {
   ChevronDown,
   ChevronsLeft,
   ChevronsRight,
-  GitBranch,
+  Layers,
   PanelLeft,
   PanelLeftClose,
   Share2,
@@ -17,14 +17,13 @@ import {
 import { DynamicDropZone } from '../../components/pinui/DynamicDropZone';
 import { PromptComposer } from '../../components/pinui/PromptComposer';
 import { apiClient } from '../../services/apiClient';
-import { useAppStore } from '../../store/appStore';
+import { formatUserDisplayName, useAppStore } from '../../store/appStore';
 import type {
   CommunityPost,
   CommunityShowcaseSnippet,
   WorkspaceProject,
 } from '../../types/index';
 import { AiProjectSetupDrawer } from './AiProjectSetupDrawer';
-import { GitHubConnectorModal } from './GitHubConnectorModal';
 import type { PreviewViewport } from './LivePreviewFrame';
 import { LiveStage, type StageTabId } from './LiveStage';
 import { Modal } from './Modal';
@@ -32,8 +31,6 @@ import { Popover } from './Popover';
 import { ProjectRail } from './ProjectRail';
 import type { ReviewTab } from './ReviewZone';
 import {
-  type ArenaCandidateResult,
-  type ArenaComparisonTurn,
   stripModeTag,
   Thread,
   type StarterPrompt,
@@ -50,9 +47,9 @@ const MODEL_OPTIONS = [
   { id: 'auto', name: 'Tự động', note: 'Gateway mặc định' },
   { id: 'studio-smart-route', name: 'Smart Route', note: 'Cân bằng tốc độ' },
   { id: 'studio-heavy-route', name: 'Heavy Route', note: 'Kiến trúc đa tệp' },
-  { id: 'ag/gemini-3.8-flash-low', name: 'Gemini 3.8 Flash', note: 'Phản hồi nhanh' },
-  { id: 'ag/gemini-4-argon-high', name: 'Gemini 4 Argon', note: 'Tư duy hệ thống' },
-  { id: 'ag/claude-sonnet-5-5-medium', name: 'Claude Sonnet 5.5', note: 'Giao diện tinh gọn' },
+  { id: 'gemini-2.5-flash', name: 'Gemini 2.5 Flash', note: 'Phản hồi nhanh' },
+  { id: 'gemini-2.5-pro', name: 'Gemini 2.5 Pro', note: 'Tư duy hệ thống' },
+  { id: 'claude-sonnet-4-5', name: 'Claude Sonnet 4.5', note: 'Giao diện tinh gọn' },
 ];
 
 const STARTERS: StarterPrompt[] = [
@@ -73,7 +70,6 @@ const STARTERS: StarterPrompt[] = [
   },
 ];
 
-const ARENA_TURNS_STORAGE_KEY = 'fforum_v3_arena_compare_turns';
 const COMMUNITY_POSTS_STORAGE_KEY = 'fforum_v3_community_posts_v7';
 
 function derivePublishTags(project: WorkspaceProject): string {
@@ -172,272 +168,6 @@ function buildEvalRepairPrompt(project: WorkspaceProject): string {
   ].join('\n');
 }
 
-function buildDistinctArenaArtifact(
-  prompt: string,
-  modelLabel: string,
-  side: 'A' | 'B'
-): Array<{ path: string; content: string; summary: string }> {
-  const cleanTitle =
-    prompt
-      .replace(/^\[Mode:\s*[^\]]+\]\s*/i, '')
-      .replace(/[<>"]/g, '')
-      .trim()
-      .slice(0, 64) || 'F-FORUM Artifact';
-
-  const isSideA = side === 'A';
-  const paletteBg = isSideA ? '#111110' : '#0d151c';
-  const paletteSurface = isSideA ? '#1b1917' : '#13202b';
-  const paletteAccent = isSideA ? '#ff6450' : '#38bdf8';
-  const paletteSecondary = isSideA ? '#7fd69b' : '#a7f3d0';
-  const layoutName = isSideA ? 'Asymmetric Split 60/40' : 'Modular Bento 3-Column';
-
-  const html = `<!DOCTYPE html>
-<html lang="vi">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>${cleanTitle} — ${modelLabel}</title>
-  <link rel="stylesheet" href="styles.css" />
-</head>
-<body>
-  <header class="arena-header" role="banner">
-    <div class="arena-brand">
-      <span class="arena-dot" aria-hidden="true"></span>
-      <strong>MODEL ${side} (${modelLabel})</strong>
-    </div>
-    <nav class="arena-nav" aria-label="Điều hướng chính">
-      <a href="#hero">Tổng quan</a>
-      <a href="#modules">Mô-đun</a>
-      <a href="#interactive">Tương tác</a>
-    </nav>
-  </header>
-
-  <main class="arena-main" id="hero">
-    <section class="arena-hero">
-      <p class="arena-kicker">PHƯƠNG ÁN ${side} · ${layoutName.toUpperCase()}</p>
-      <h1>${cleanTitle}</h1>
-      <p class="arena-lead">
-        Bản dựng từ ${modelLabel} sử dụng lưới không gian 8px, tối ưu hiển thị trên cả 3 khung nhìn 390px, 768px và 1440px.
-      </p>
-      <div class="arena-cta">
-        <button type="button" id="action-trigger" class="btn-main">Kích hoạt mô-đun ${side}</button>
-        <button type="button" id="layout-toggle" class="btn-alt">Đổi mật độ hiển thị</button>
-      </div>
-    </section>
-
-    <section class="arena-grid" id="modules" aria-label="Các khối chức năng">
-      <article class="arena-card">
-        <h2>Cấu trúc bố cục ${layoutName}</h2>
-        <p>Tách biệt rõ tầng thị giác chính và bảng thông số thời gian thực với độ tương phản cao.</p>
-      </article>
-      <article class="arena-card" id="interactive">
-        <h2>Trạng thái kiểm thử trực tiếp</h2>
-        <p id="live-status" role="status">Sẵn sàng nhận thao tác từ người dùng (Phương án ${side}).</p>
-        <div class="arena-stat">
-          <span>Số lần tương tác:</span>
-          <strong id="click-counter">1</strong>
-        </div>
-      </article>
-    </section>
-  </main>
-  <script src="app.js"></script>
-</body>
-</html>`;
-
-  const css = `:root {
-  --bg: ${paletteBg};
-  --surface: ${paletteSurface};
-  --accent: ${paletteAccent};
-  --ok: ${paletteSecondary};
-  --text: #f4f0e6;
-  --muted: #a8a29e;
-  --border: rgba(244, 240, 230, 0.14);
-}
-
-* {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-}
-
-body {
-  background: var(--bg);
-  color: var(--text);
-  font-family: system-ui, -apple-system, sans-serif;
-  line-height: 1.6;
-  min-height: 100vh;
-}
-
-.arena-header {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  padding: 16px 24px;
-  border-bottom: 1px solid var(--border);
-  background: var(--surface);
-}
-
-.arena-brand {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  font-size: 0.82rem;
-  letter-spacing: 0.04em;
-}
-
-.arena-dot {
-  width: 10px;
-  height: 10px;
-  border-radius: 999px;
-  background: var(--accent);
-}
-
-.arena-nav {
-  display: flex;
-  gap: 16px;
-}
-
-.arena-nav a {
-  color: var(--muted);
-  text-decoration: none;
-  font-size: 0.875rem;
-}
-
-.arena-main {
-  max-width: 1080px;
-  margin: 0 auto;
-  padding: 32px 24px;
-  display: grid;
-  gap: 24px;
-}
-
-.arena-hero {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  padding: 28px;
-  display: grid;
-  gap: 14px;
-}
-
-.arena-kicker {
-  color: var(--accent);
-  font-size: 0.75rem;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-}
-
-.arena-lead {
-  color: var(--muted);
-  max-width: 65ch;
-}
-
-.arena-cta {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 12px;
-  margin-top: 6px;
-}
-
-.btn-main,
-.btn-alt {
-  padding: 10px 18px;
-  border-radius: 8px;
-  font-weight: 600;
-  font-size: 0.875rem;
-  cursor: pointer;
-}
-
-.btn-main {
-  background: var(--accent);
-  color: #111110;
-  border: 0;
-}
-
-.btn-alt {
-  background: transparent;
-  color: var(--text);
-  border: 1px solid var(--border);
-}
-
-.arena-grid {
-  display: grid;
-  grid-template-columns: ${isSideA ? '1.35fr 1fr' : '1fr 1.25fr'};
-  gap: 16px;
-}
-
-.arena-card {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  padding: 22px;
-  display: grid;
-  gap: 10px;
-}
-
-.arena-stat {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding-top: 8px;
-  border-top: 1px solid var(--border);
-  color: var(--ok);
-}
-
-body.compact-mode .arena-hero,
-body.compact-mode .arena-card {
-  padding: 16px;
-}
-
-@media (max-width: 768px) {
-  .arena-grid {
-    grid-template-columns: 1fr;
-  }
-}`;
-
-  const js = `(function () {
-  var btn = document.getElementById('action-trigger');
-  var toggle = document.getElementById('layout-toggle');
-  var status = document.getElementById('live-status');
-  var counter = document.getElementById('click-counter');
-  var count = 1;
-
-  if (btn && status && counter) {
-    btn.addEventListener('click', function () {
-      count += 1;
-      counter.textContent = String(count);
-      status.textContent = 'Model ${side} (${modelLabel}) đã cập nhật trạng thái lần #' + count + '.';
-    });
-  }
-
-  if (toggle) {
-    toggle.addEventListener('click', function () {
-      document.body.classList.toggle('compact-mode');
-    });
-  }
-})();`;
-
-  return [
-    {
-      path: 'index.html',
-      content: html,
-      summary: `Cấu trúc HTML5 phương án ${side} (${modelLabel})`,
-    },
-    {
-      path: 'styles.css',
-      content: css,
-      summary: `Bảng màu & lưới bố cục ${layoutName} (${modelLabel})`,
-    },
-    {
-      path: 'app.js',
-      content: js,
-      summary: `Kịch bản tương tác DOM phương án ${side}`,
-    },
-  ];
-}
-
 export const WorkspaceView: React.FC = () => {
   const {
     projects,
@@ -478,8 +208,6 @@ export const WorkspaceView: React.FC = () => {
   const [stageTab, setStageTab] = useState<StageTabId>('preview');
   const [reviewTab, setReviewTab] = useState<ReviewTab>('check');
   const [railOpen, setRailOpen] = useState(true);
-  const [rightMode, setRightMode] = useState<'compact' | 'split' | 'closed'>('compact');
-  const rightOpen = rightMode !== 'closed';
   const [railSheetOpen, setRailSheetOpen] = useState(false);
   const [stageExpanded, setStageExpanded] = useState(false);
 
@@ -496,33 +224,45 @@ export const WorkspaceView: React.FC = () => {
   const [composerValue, setComposerValue] = useState('');
   const [agentMode, setAgentMode] = useState<AgentExecutionMode>('Build');
   const [selectedModel, setSelectedModel] = useState('auto');
-  const [arenaMode, setArenaMode] = useState<'single' | 'compare'>('single');
-  const [arenaModelA, setArenaModelA] = useState('ag/gemini-3.8-flash-low');
-  const [arenaModelB, setArenaModelB] = useState('ag/claude-sonnet-5-5-medium');
-  const [arenaRunning, setArenaRunning] = useState(false);
 
-  const [arenaTurnsMap, setArenaTurnsMap] = useState<Record<string, ArenaComparisonTurn[]>>(() => {
-    if (typeof window === 'undefined') return {};
-    try {
-      const raw = window.localStorage.getItem(ARENA_TURNS_STORAGE_KEY);
-      return raw ? (JSON.parse(raw) as Record<string, ArenaComparisonTurn[]>) : {};
-    } catch {
-      return {};
-    }
-  });
+  const hasGeneratedArtifact = useMemo(() => {
+    if (activeProject.files.length === 0) return false;
+    const hasUserTurn = activeProject.messages.some((m) => m.role === 'user');
+    const hasAiReply = activeProject.messages.some(
+      (m) => m.role === 'assistant' && m.id !== 'msg-welcome'
+    );
+    const hasRealFileChanges =
+      activeProject.diffs.some((d) => d.additions > 0 || d.deletions > 0) ||
+      activeProject.files.length > 3 ||
+      activeProject.processes.some((p) => p.kind === 'setup_bundle' || p.kind === 'ai_generation');
+    return hasUserTurn || hasAiReply || hasRealFileChanges;
+  }, [activeProject]);
+
+  const [rightMode, setRightMode] = useState<'compact' | 'split' | 'closed'>(() =>
+    hasGeneratedArtifact ? 'split' : 'closed'
+  );
+  const rightOpen = rightMode !== 'closed';
+  const prevProjectIdRef = useRef(activeProject.id);
+  const prevArtifactRef = useRef(hasGeneratedArtifact);
 
   useEffect(() => {
-    if (typeof window === 'undefined') return;
-    try {
-      window.localStorage.setItem(ARENA_TURNS_STORAGE_KEY, JSON.stringify(arenaTurnsMap));
-    } catch {
+    const projectChanged = prevProjectIdRef.current !== activeProject.id;
+    const artifactAppeared = !prevArtifactRef.current && hasGeneratedArtifact;
+    prevProjectIdRef.current = activeProject.id;
+    prevArtifactRef.current = hasGeneratedArtifact;
+
+    if (projectChanged) {
+      setRightMode(hasGeneratedArtifact ? 'split' : 'closed');
       return;
     }
-  }, [arenaTurnsMap]);
+    if (artifactAppeared || (aiActivity === 'streaming' && hasGeneratedArtifact)) {
+      setStageTab('preview');
+      setRightMode('split');
+    }
+  }, [activeProject.id, hasGeneratedArtifact, aiActivity]);
 
   const [dropZoneOpen, setDropZoneOpen] = useState(false);
   const [setupDrawerOpen, setSetupDrawerOpen] = useState(false);
-  const [githubOpen, setGithubOpen] = useState(false);
   const [exporting, setExporting] = useState(false);
   const [publishOpen, setPublishOpen] = useState(false);
   const [publishTitle, setPublishTitle] = useState('');
@@ -608,11 +348,6 @@ export const WorkspaceView: React.FC = () => {
     setPublishOpen(true);
   };
 
-  const currentArenaTurns = useMemo(
-    () => arenaTurnsMap[activeProject.id] || [],
-    [arenaTurnsMap, activeProject.id]
-  );
-
   const diffTotals = useMemo(
     () =>
       activeProject.diffs.reduce(
@@ -626,7 +361,6 @@ export const WorkspaceView: React.FC = () => {
   );
 
   const isGenerating =
-    arenaRunning ||
     aiActivity === 'thinking' ||
     aiActivity === 'streaming' ||
     aiStreamingStage === 'routing' ||
@@ -653,195 +387,9 @@ export const WorkspaceView: React.FC = () => {
     ? `${activeProject.checksReport.passCount}/${activeProject.checksReport.results.length} phép kiểm đạt`
     : 'Kiểm định 6 lớp';
 
-  const getModelLabel = (modelId: string): string => {
-    const found = MODEL_OPTIONS.find((item) => item.id === modelId || item.name === modelId);
-    return found ? found.name : modelId;
-  };
-
-  const updateProjectArenaTurns = (
-    projectId: string,
-    updater: (prev: ArenaComparisonTurn[]) => ArenaComparisonTurn[]
-  ) => {
-    setArenaTurnsMap((prev) => ({
-      ...prev,
-      [projectId]: updater(prev[projectId] || []),
-    }));
-  };
-
-  const sendArenaComparePrompt = async (rawPrompt: string) => {
-    const targetProjectId = activeProject.id;
-    const formattedPrompt = `[Mode: ${agentMode}] ${rawPrompt}`;
-    const turnId = `arena-${Date.now()}`;
-    const createdAt = new Date().toISOString();
-    const labelA = getModelLabel(arenaModelA);
-    const labelB = getModelLabel(arenaModelB);
-    const baseFiles = activeProject.files.map((file) => ({
-      path: file.path,
-      content: file.content,
-    }));
-
-    const initialTurn: ArenaComparisonTurn = {
-      id: turnId,
-      prompt: formattedPrompt,
-      createdAt,
-      appliedSide: 'A',
-      candidateA: {
-        modelId: arenaModelA,
-        modelLabel: labelA,
-        status: 'running',
-        message: `Đang tổng hợp phương án A với ${labelA}...`,
-        files: [],
-        elapsedMs: 0,
-        tokenEstimate: 0,
-      },
-      candidateB: {
-        modelId: arenaModelB,
-        modelLabel: labelB,
-        status: 'running',
-        message: `Đang tổng hợp phương án B với ${labelB}...`,
-        files: [],
-        elapsedMs: 0,
-        tokenEstimate: 0,
-      },
-    };
-
-    setArenaRunning(true);
-    updateProjectArenaTurns(targetProjectId, (prev) => [...prev, initialTurn]);
-
-    const startA = performance.now();
-    const startB = performance.now();
-
-    const runSide = async (
-      modelId: string,
-      modelLabel: string,
-      side: 'A' | 'B',
-      startTime: number
-    ): Promise<ArenaCandidateResult> => {
-      try {
-        const res = await apiClient.sendAiChat(
-          {
-            projectId: targetProjectId,
-            prompt: `${formattedPrompt} (Arena Model ${side}: ${modelLabel})`,
-            model: modelId,
-            agentMode,
-            files: baseFiles,
-            attachedItems: activeProject.attachedItems,
-          },
-          settings.byok
-        );
-
-        const elapsedMs = Math.max(180, Math.round(performance.now() - startTime));
-        const filesToUse =
-          res.fallback || !res.files || res.files.length === 0
-            ? buildDistinctArenaArtifact(rawPrompt, modelLabel, side)
-            : res.files;
-        const totalChars = filesToUse.reduce((acc, f) => acc + f.content.length, 0);
-
-        return {
-          modelId,
-          modelLabel,
-          protocolUsed: res.protocolUsed,
-          status: 'done',
-          message: res.fallback
-            ? `Phương án ${side} (${modelLabel}): Đã dựng bộ 3 tệp HTML/CSS/JS theo bố cục ${side === 'A' ? 'Asymmetric Split 60/40' : 'Modular Bento 3-Column'}.`
-            : res.message,
-          files: filesToUse,
-          elapsedMs,
-          tokenEstimate: Math.max(140, Math.round(totalChars / 3.8)),
-          fallback: res.fallback,
-        };
-      } catch {
-        const elapsedMs = Math.max(210, Math.round(performance.now() - startTime));
-        const synthesized = buildDistinctArenaArtifact(rawPrompt, modelLabel, side);
-        const totalChars = synthesized.reduce((acc, f) => acc + f.content.length, 0);
-
-        return {
-          modelId,
-          modelLabel,
-          status: 'done',
-          message: `Phương án ${side} (${modelLabel}): Đã tổng hợp 3 tệp HTML/CSS/JS theo kiến trúc ${side === 'A' ? 'Asymmetric Split 60/40' : 'Modular Bento 3-Column'}.`,
-          files: synthesized,
-          elapsedMs,
-          tokenEstimate: Math.max(140, Math.round(totalChars / 3.8)),
-          fallback: true,
-        };
-      }
-    };
-
-    try {
-      const [resultA, resultB] = await Promise.all([
-        runSide(arenaModelA, labelA, 'A', startA),
-        runSide(arenaModelB, labelB, 'B', startB),
-      ]);
-
-      updateProjectArenaTurns(targetProjectId, (prev) =>
-        prev.map((turn) =>
-          turn.id === turnId
-            ? {
-                ...turn,
-                candidateA: resultA,
-                candidateB: resultB,
-                appliedSide: 'A',
-              }
-            : turn
-        )
-      );
-
-      if (resultA.files.length > 0) {
-        addWorkspaceFiles(resultA.files);
-        if (settings.autoRunChecks !== false) {
-          runChecksOnActiveProject();
-        }
-      }
-    } finally {
-      setArenaRunning(false);
-    }
-  };
-
-  const handleApplyArenaCandidate = (
-    turnId: string,
-    side: 'A' | 'B',
-    openFilePath?: string
-  ) => {
-    const turn = currentArenaTurns.find((item) => item.id === turnId);
-    if (!turn) return;
-    const candidate = side === 'A' ? turn.candidateA : turn.candidateB;
-    if (!candidate.files.length) return;
-
-    addWorkspaceFiles(candidate.files);
-    if (settings.autoRunChecks !== false) {
-      runChecksOnActiveProject();
-    }
-
-    updateProjectArenaTurns(activeProject.id, (prev) =>
-      prev.map((item) => (item.id === turnId ? { ...item, appliedSide: side } : item))
-    );
-
-    if (openFilePath) {
-      setActiveFilePath(openFilePath);
-      setStageTab('source');
-    } else {
-      setStageTab('preview');
-    }
-
-    if (!isDesktop) {
-      setMobilePane('stage');
-    }
-
-    addToast({
-      type: 'success',
-      title: `Đã áp dụng Model ${side} (${candidate.modelLabel})`,
-      message: 'Mã nguồn và khung Xem trực tiếp đã được cập nhật.',
-    });
-  };
-
   const sendPrompt = async (text: string) => {
     const raw = text.trim();
     if (!raw || isGenerating) return;
-    if (arenaMode === 'compare') {
-      await sendArenaComparePrompt(raw);
-      return;
-    }
     await sendWorkspacePrompt(`[Mode: ${agentMode}] ${raw}`, {
       model: selectedModel,
       agentMode,
@@ -1060,9 +608,10 @@ export const WorkspaceView: React.FC = () => {
   };
 
   const handleCreateProject = () => {
-    createProject(`Phiên Arena ${projects.length + 1}`);
+    createProject(`Phiên làm việc ${projects.length + 1}`);
     setRenaming(false);
     setRailSheetOpen(false);
+    setRightMode('closed');
     setMobilePane('chat');
   };
 
@@ -1103,7 +652,7 @@ export const WorkspaceView: React.FC = () => {
         if (!isDesktop) setMobilePane('stage');
       }}
       onExitSplit={() => setRightMode('compact')}
-      onOpenGithub={() => setGithubOpen(true)}
+      hasArtifact={hasGeneratedArtifact}
       hidden={!isExpandedView && stageHidden}
     />
   );
@@ -1118,7 +667,7 @@ export const WorkspaceView: React.FC = () => {
       onDelete={deleteProject}
       onTogglePin={togglePinProject}
       onNavigate={navigate}
-      userName={currentUser?.name || 'Khách'}
+      userName={formatUserDisplayName(currentUser?.name, 'Khách')}
       quotaLabel={quotaLabel}
       theme={settings.theme}
       dismiss={dismiss}
@@ -1152,7 +701,7 @@ export const WorkspaceView: React.FC = () => {
         </aside>
       )}
 
-      <section className="ws-thread" aria-label="Bảng hội thoại Arena" hidden={threadHidden}>
+      <section className="ws-thread" aria-label="Bảng hội thoại Agent" hidden={threadHidden}>
         <header className="ws-head ws-chat-head">
           {!railInline && (
             <button
@@ -1211,18 +760,6 @@ export const WorkspaceView: React.FC = () => {
                         type="button"
                         className="ws-menu-item"
                         onClick={() => {
-                          setArenaMode(arenaMode === 'single' ? 'compare' : 'single');
-                          close();
-                        }}
-                      >
-                        {arenaMode === 'single' ? 'Bật so sánh 2 Model (Arena A-B)' : 'Chuyển về 1 Model'}
-                      </button>
-                    </li>
-                    <li>
-                      <button
-                        type="button"
-                        className="ws-menu-item"
-                        onClick={() => {
                           close();
                           setSetupDrawerOpen(true);
                         }}
@@ -1265,18 +802,6 @@ export const WorkspaceView: React.FC = () => {
                         }}
                       >
                         Lưu mốc phiên
-                      </button>
-                    </li>
-                    <li>
-                      <button
-                        type="button"
-                        className="ws-menu-item"
-                        onClick={() => {
-                          close();
-                          setGithubOpen(true);
-                        }}
-                      >
-                        Kết nối GitHub
                       </button>
                     </li>
                     <li>
@@ -1330,13 +855,11 @@ export const WorkspaceView: React.FC = () => {
 
         <Thread
           messages={activeProject.messages}
-          arenaTurns={currentArenaTurns}
-          onApplyArenaCandidate={handleApplyArenaCandidate}
           activity={aiActivity}
           streamingStage={aiStreamingStage}
           streamingPreview={aiStreamingPreview}
           modelUsed={aiModelUsed}
-          userName={currentUser?.name || 'Bạn'}
+          userName={formatUserDisplayName(currentUser?.name, 'Bạn')}
           starters={STARTERS}
           onPickStarter={handlePickStarter}
           onOpenFile={handleOpenFileInStage}
@@ -1449,48 +972,15 @@ export const WorkspaceView: React.FC = () => {
               </div>
             )}
 
-            {arenaMode === 'compare' && (
-              <div className="ws-model-compare-bar" aria-label="Chọn 2 Model so sánh">
-                <span className="ws-arena-badge">A</span>
-                <select
-                  id="ws-arena-model-a"
-                  className="ws-model-select ws-model-select--slot"
-                  aria-label="Model A"
-                  value={arenaModelA}
-                  onChange={(event) => setArenaModelA(event.target.value)}
-                >
-                  {MODEL_OPTIONS.map((option) => (
-                    <option key={option.id} value={option.id}>
-                      {option.name}
-                    </option>
-                  ))}
-                </select>
-                <span className="ws-arena-badge">B</span>
-                <select
-                  id="ws-arena-model-b"
-                  className="ws-model-select ws-model-select--slot"
-                  aria-label="Model B"
-                  value={arenaModelB}
-                  onChange={(event) => setArenaModelB(event.target.value)}
-                >
-                  {MODEL_OPTIONS.map((option) => (
-                    <option key={option.id} value={option.id}>
-                      {option.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            )}
-
             <div className="ws-arena-composer-shell">
               <div className="ws-arena-repo-strip">
                 <div className="ws-arena-repo-pills">
                   <span className="ws-arena-repo-name" title={`Dự án: ${activeProject.name}`}>
-                    <GitBranch size={12} aria-hidden="true" />
+                    <Layers size={12} aria-hidden="true" />
                     <span>{activeProject.name}</span>
                   </span>
-                  <span className="ws-arena-branch-name" title="Nhánh hiện tại">
-                    ↳ main
+                  <span className="ws-arena-branch-name" title="Số tệp mã nguồn trong phiên">
+                    {activeProject.files.length} tệp
                   </span>
                 </div>
 
@@ -1553,11 +1043,7 @@ export const WorkspaceView: React.FC = () => {
                     </button>
                   </div>
                 }
-                placeholder={
-                  arenaMode === 'compare'
-                    ? `So sánh ${getModelLabel(arenaModelA)} vs ${getModelLabel(arenaModelB)}...`
-                    : 'Bạn muốn dựng hoặc sửa gì? (Enter để gửi)...'
-                }
+                placeholder="Bạn muốn dựng hoặc chỉnh sửa giao diện gì? (Enter để gửi)..."
                 onAttachClick={() => setDropZoneOpen((value) => !value)}
                 onSend={(text) => {
                   setComposerValue('');
@@ -1577,7 +1063,7 @@ export const WorkspaceView: React.FC = () => {
           aria-valuenow={splitRatio}
           aria-valuemin={20}
           aria-valuemax={80}
-          aria-label="Kéo để thay đổi kích thước chia màn hình Arena"
+          aria-label="Kéo để thay đổi kích thước chia màn hình"
           tabIndex={0}
           className={`ws-resizer ${isResizing ? 'is-dragging' : ''}`}
           onPointerDown={startResizing}
@@ -1832,20 +1318,6 @@ export const WorkspaceView: React.FC = () => {
             title: `Đã thêm ${incoming.length} tệp thiết lập`,
           });
         }}
-      />
-
-      <GitHubConnectorModal
-        open={githubOpen}
-        onClose={() => setGithubOpen(false)}
-        project={activeProject}
-        onInjectFiles={(incoming) => {
-          addWorkspaceFiles(incoming);
-          addToast({
-            type: 'success',
-            title: `Đã nạp ${incoming.length} tệp từ GitHub`,
-          });
-        }}
-        onAttachRepo={(item) => attachItemToWorkspace(item)}
       />
     </div>
   );

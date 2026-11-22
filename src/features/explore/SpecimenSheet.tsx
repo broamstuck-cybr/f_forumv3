@@ -3,7 +3,7 @@ import { Monitor, Moon, RotateCw, Smartphone, Sun, Tablet, X, ZoomIn, ZoomOut } 
 import type { SourceCatalogItem } from '../../types/index';
 import { previewFor } from '../../ui/Media';
 import { useAppStore } from '../../store/appStore';
-import { PinUIPlayground } from '../../components/pinui';
+import { PinHeartButton, PinUIPlayground } from '../../components/pinui';
 import {
   LIBRARY_LABEL,
   buildSnippetThemeOverrideCss,
@@ -35,7 +35,7 @@ interface SpecimenSheetProps {
   onAttach: (item: SourceCatalogItem) => void;
 }
 
-type CodeTab = 'html' | 'css' | 'spec';
+type CodeTab = 'html' | 'css' | 'code' | 'spec';
 
 interface ReactionBarProps {
   id: string;
@@ -50,16 +50,13 @@ export const ReactionBar: React.FC<ReactionBarProps> = ({ id, title, showLabel =
   const saved = savedItemIds.includes(id);
   return (
     <span className={`ex-react${className ? ` ${className}` : ''}`}>
-      <button
-        type="button"
-        className="ex-react-btn"
-        aria-pressed={liked}
-        aria-label={`${liked ? 'Bỏ tim' : 'Thả tim'} ${title}`}
-        onClick={() => toggleLikedItem(id)}
-      >
-        <span className="ex-heart-dot" aria-hidden="true" />
-        <span className="ex-react-num">{getHeartCount(id)}</span>
-      </button>
+      <PinHeartButton
+        compact
+        liked={liked}
+        count={getHeartCount(id)}
+        ariaLabel={`${liked ? 'Bỏ tim' : 'Thả tim'} ${title}`}
+        onToggle={() => toggleLikedItem(id)}
+      />
       <button
         type="button"
         className="ex-react-btn"
@@ -179,16 +176,27 @@ export const SpecimenSheet: React.FC<SpecimenSheetProps> = ({
   const safeHtml = useMemo(() => {
     if (!item) return '';
     if (isPinUI) return pinuiSource?.tsx ?? '';
-    if (isThreeUI || isMotion) return '';
+    if (isMotion && motionEntry?.liveHtml && motionEntry.liveHtml.length > (item.previewHtml?.length ?? 0)) {
+      return sanitizeSnippetCode(motionEntry.liveHtml);
+    }
     return sanitizeSnippetCode(item.previewHtml);
-  }, [item, isPinUI, isThreeUI, isMotion, pinuiSource]);
+  }, [item, isPinUI, isMotion, pinuiSource, motionEntry]);
 
   const safeCss = useMemo(() => {
     if (!item) return '';
     if (isPinUI) return pinuiSource?.css ?? '';
-    if (isThreeUI || isMotion) return '';
+    if (isMotion && motionEntry?.css && !item.previewCss) {
+      return sanitizeSnippetCode(motionEntry.css);
+    }
     return sanitizeSnippetCode(item.previewCss);
-  }, [item, isPinUI, isThreeUI, isMotion, pinuiSource]);
+  }, [item, isPinUI, isMotion, pinuiSource, motionEntry]);
+
+  const safeCode = useMemo(() => {
+    if (!item || !isMotion) return '';
+    return motionEntry?.code ? sanitizeSnippetCode(motionEntry.code) : '';
+  }, [item, isMotion, motionEntry]);
+
+  const safeCodeLabel = (motionEntry?.codeLang || 'TSX').toUpperCase();
 
   const safeSpec = useMemo(() => {
     if (!item) return '';
@@ -201,12 +209,31 @@ export const SpecimenSheet: React.FC<SpecimenSheetProps> = ({
   }, [item, isPinUI, isMotion, pinuiSource, motionEntry, safeTitle, safeDesc]);
 
   const snippetCssWithTheme = useMemo(() => {
-    if (!item || isPinUI || isThreeUI || isMotion) return '';
+    if (!item || isPinUI) return '';
+    if (isThreeUI || isMotion) return item.previewCss ?? '';
     const extra = buildSnippetThemeOverrideCss(item.sourceLibrary, item.previewCss, stageTheme);
     return extra ? `${extra}\n${item.previewCss ?? ''}` : item.previewCss ?? '';
   }, [item, isPinUI, isThreeUI, isMotion, stageTheme]);
 
-  const activeCode = codeTab === 'html' ? safeHtml : codeTab === 'css' ? safeCss : safeSpec;
+  const resolvedCodeTab: CodeTab = useMemo(() => {
+    if (codeTab === 'html' && safeHtml) return 'html';
+    if (codeTab === 'css' && safeCss) return 'css';
+    if (codeTab === 'code' && safeCode) return 'code';
+    if (codeTab === 'spec') return 'spec';
+    if (safeHtml) return 'html';
+    if (safeCss) return 'css';
+    if (safeCode) return 'code';
+    return 'spec';
+  }, [codeTab, safeHtml, safeCss, safeCode]);
+
+  const activeCode =
+    resolvedCodeTab === 'html'
+      ? safeHtml || safeSpec
+      : resolvedCodeTab === 'css'
+        ? safeCss || safeSpec
+        : resolvedCodeTab === 'code'
+          ? safeCode || safeSpec
+          : safeSpec;
 
   const handleCopyCode = async () => {
     if (!activeCode) return;
@@ -319,10 +346,10 @@ export const SpecimenSheet: React.FC<SpecimenSheetProps> = ({
                   theme={stageTheme}
                   compact
                 />
-              ) : !isThreeUI && !isMotion && item.previewHtml ? (
+              ) : safeHtml ? (
                 <SandboxPreview
                   title={safeTitle}
-                  html={item.previewHtml}
+                  html={safeHtml}
                   css={snippetCssWithTheme}
                   theme={stageTheme}
                   viewport={viewport}
@@ -395,9 +422,9 @@ export const SpecimenSheet: React.FC<SpecimenSheetProps> = ({
                       <button
                         type="button"
                         role="tab"
-                        aria-selected={codeTab === 'html'}
+                        aria-selected={resolvedCodeTab === 'html'}
                         className="ex-text"
-                        aria-pressed={codeTab === 'html'}
+                        aria-pressed={resolvedCodeTab === 'html'}
                         onClick={() => setCodeTab('html')}
                       >
                         {isPinUI ? 'TSX' : 'HTML'}
@@ -407,20 +434,32 @@ export const SpecimenSheet: React.FC<SpecimenSheetProps> = ({
                       <button
                         type="button"
                         role="tab"
-                        aria-selected={codeTab === 'css'}
+                        aria-selected={resolvedCodeTab === 'css'}
                         className="ex-text"
-                        aria-pressed={codeTab === 'css'}
+                        aria-pressed={resolvedCodeTab === 'css'}
                         onClick={() => setCodeTab('css')}
                       >
                         CSS
                       </button>
                     ) : null}
+                    {safeCode ? (
+                      <button
+                        type="button"
+                        role="tab"
+                        aria-selected={resolvedCodeTab === 'code'}
+                        className="ex-text"
+                        aria-pressed={resolvedCodeTab === 'code'}
+                        onClick={() => setCodeTab('code')}
+                      >
+                        {safeCodeLabel}
+                      </button>
+                    ) : null}
                     <button
                       type="button"
                       role="tab"
-                      aria-selected={codeTab === 'spec'}
+                      aria-selected={resolvedCodeTab === 'spec'}
                       className="ex-text"
-                      aria-pressed={codeTab === 'spec'}
+                      aria-pressed={resolvedCodeTab === 'spec'}
                       onClick={() => setCodeTab('spec')}
                     >
                       Prompt

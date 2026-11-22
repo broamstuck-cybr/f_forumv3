@@ -66,12 +66,12 @@ function detectSystemTheme(): ThemeMode {
 
 const DEFAULT_SETTINGS: SettingsState = {
   theme: 'dark',
-  themePreference: 'system',
+  themePreference: 'dark',
   ambientVideo: true,
-  wallpaperPreset: 'ember',
+  wallpaperPreset: 'dark',
   autoRunChecks: true,
   defaultViewport: 1440,
-  themeEffect: 'droplet',
+  themeEffect: 'rain',
   reducedMotion: false,
   compactDensity: false,
   defaultExportTarget: 'antigravity',
@@ -84,7 +84,7 @@ const DEFAULT_SETTINGS: SettingsState = {
   },
 };
 
-function applyThemeToDom(
+function syncThemeDom(
   theme: ThemeMode,
   reducedMotion?: boolean,
   ambientVideo?: boolean,
@@ -96,8 +96,8 @@ function applyThemeToDom(
     const root = document.documentElement;
     root.setAttribute('data-theme', theme);
     root.setAttribute('data-ambient', ambientVideo === false ? 'off' : 'on');
-    root.setAttribute('data-wallpaper', wallpaperPreset || 'ember');
-    root.setAttribute('data-effect', themeEffect || 'droplet');
+    root.setAttribute('data-wallpaper', wallpaperPreset || 'dark');
+    root.setAttribute('data-effect', themeEffect || 'rain');
     root.setAttribute('data-density', compactDensity ? 'compact' : 'roomy');
     root.classList.toggle('dark', theme === 'dark');
     root.classList.toggle('light', theme === 'light');
@@ -136,41 +136,41 @@ function createStarterFiles(): WorkspaceFile[] {
     {
       path: 'index.html',
       language: 'html',
-      summary: 'Semantic HTML5 entry document with accessible landmarks',
+      summary: 'Trang khởi đầu HTML5 có cấu trúc ngữ nghĩa',
       updatedAt: now,
       content: `<!DOCTYPE html>
 <html lang="vi">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>F-FORUM v3 Workspace Artifact</title>
+  <title>Bản dựng F-Forum Workspace</title>
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
   <header class="site-header" role="banner">
     <div class="brand-title">F-FORUM WORKSPACE</div>
-    <nav class="site-nav" aria-label="Main">
-      <a href="#stage">Stage</a>
-      <a href="#metrics">Metrics</a>
+    <nav class="site-nav" aria-label="Điều hướng chính">
+      <a href="#stage">Bản dựng</a>
+      <a href="#metrics">Trạng thái</a>
     </nav>
   </header>
   <main class="stage-container" id="stage">
     <section class="hero-card">
-      <p class="kicker">OBSIDIAN FOUNDRY TOKENS</p>
-      <h1>Spatial Interface Workbench</h1>
-      <p class="subtitle">Multi-file sandboxed preview with real-time DOM checks, line diffs, and secret-scanned ZIP export.</p>
+      <p class="kicker">KHUNG KHỞI TẠO</p>
+      <h1>Bản dựng giao diện mới</h1>
+      <p class="subtitle">Nhập yêu cầu ở khung trò chuyện để tạo trang web hoàn chỉnh, xem trực tiếp, so sánh thay đổi và đóng gói tải về.</p>
       <div class="cta-row">
-        <button type="button" id="inspect-btn" class="btn-primary">Verify Runtime State</button>
+        <button type="button" id="inspect-btn" class="btn-primary">Thử tương tác</button>
       </div>
     </section>
-    <section class="metrics-strip" id="metrics" aria-label="System Metrics">
+    <section class="metrics-strip" id="metrics" aria-label="Thông tin khung mẫu">
       <div class="metric-tile">
-        <span class="metric-label">Grid Base</span>
-        <strong class="metric-val">8px Spatial</strong>
+        <span class="metric-label">Hệ lưới</span>
+        <strong class="metric-val">8px</strong>
       </div>
       <div class="metric-tile">
-        <span class="metric-label">Status</span>
-        <strong class="metric-val" id="runtime-readout">Verified Ready</strong>
+        <span class="metric-label">Trạng thái</span>
+        <strong class="metric-val" id="runtime-readout">Sẵn sàng</strong>
       </div>
     </section>
   </main>
@@ -181,7 +181,7 @@ function createStarterFiles(): WorkspaceFile[] {
     {
       path: 'styles.css',
       language: 'css',
-      summary: 'Obsidian Foundry & Editorial Stone token styles',
+      summary: 'Biến màu và bố cục cơ bản',
       updatedAt: now,
       content: `:root {
   --bg: #0b0d12;
@@ -308,7 +308,7 @@ body {
     {
       path: 'app.js',
       language: 'javascript',
-      summary: 'Interactive runtime diagnostic script',
+      summary: 'Kịch bản tương tác cơ bản',
       updatedAt: now,
       content: `(function () {
   var btn = document.getElementById('inspect-btn');
@@ -317,7 +317,7 @@ body {
   if (btn && readout) {
     btn.addEventListener('click', function () {
       clicks += 1;
-      readout.textContent = 'Verified Check #' + clicks;
+      readout.textContent = 'Đã kiểm tra lần ' + clicks;
     });
   }
 })();`,
@@ -325,9 +325,58 @@ body {
   ];
 }
 
+export function formatUserDisplayName(name?: string | null, fallback = 'Khách'): string {
+  const cleaned = (name ?? '').trim();
+  if (!cleaned) return fallback;
+  if (/^system\s+administrator$/i.test(cleaned)) return 'Quản trị viên';
+  return cleaned;
+}
+
+function cleanTextLabel(raw: string): string {
+  return raw
+    .replace(/^Phiên Arena\b/i, 'Phiên làm việc')
+    .replace(/^Obsidian Spatial Workbench$/i, 'Dự án khởi đầu')
+    .replace(/^Initial Baseline$/i, 'Bản khởi tạo')
+    .replace(/^Workspace Initialized & Static Checks Passed$/i, 'Khởi tạo phiên và hoàn tất kiểm định tĩnh')
+    .replace(/^Automated Static & DOM Checks$/i, 'Kiểm định tĩnh & cấu trúc giao diện')
+    .replace(/^Synthesizing:\s*(?:\[Mode:\s*[^\]]+\]\s*)?/i, 'Cập nhật: ')
+    .replace(/^\[Mode:\s*[^\]]+\]\s*/i, '')
+    .replace(/^Added (\d+) file\(s\) to virtual tree$/i, 'Đã thêm $1 tệp vào cây mã nguồn')
+    .replace(/^Exported (.+)$/i, 'Đã xuất gói $1')
+    .replace(/^(\d+)\/(\d+)\s+checks passed$/i, '$1/$2 phép kiểm đạt')
+    .replace(/^Updated (\d+) files \((\d+)\/(\d+) checks pass\)$/i, 'Đã cập nhật $1 tệp ($2/$3 phép kiểm đạt)');
+}
+
+function sanitizeProjectLabels(project: WorkspaceProject): WorkspaceProject {
+  const nextName = cleanTextLabel(project.name || 'Dự án mới');
+  const nextDesc =
+    project.description === 'Starter multi-file project with 8px token rhythm and live preview.' ||
+    project.description === 'Synthesized multi-file project'
+      ? 'Dự án đa tệp chuẩn lưới 8px kèm khung xem trực tiếp.'
+      : project.description;
+  return {
+    ...project,
+    name: nextName,
+    description: nextDesc,
+    snapshots: Array.isArray(project.snapshots)
+      ? project.snapshots.map((snap) => ({
+          ...snap,
+          label: cleanTextLabel(snap.label || 'Mốc lưu'),
+        }))
+      : [],
+    processes: Array.isArray(project.processes)
+      ? project.processes.map((proc) => ({
+          ...proc,
+          name: cleanTextLabel(proc.name || 'Tác vụ phiên'),
+          detail: proc.detail ? cleanTextLabel(proc.detail) : proc.detail,
+        }))
+      : [],
+  };
+}
+
 function createInitialProject(
-  name = 'Obsidian Spatial Workbench',
-  description = 'Starter multi-file project with 8px token rhythm and live preview.'
+  name = 'Dự án khởi đầu',
+  description = 'Dự án đa tệp chuẩn lưới 8px kèm khung xem trực tiếp.'
 ): WorkspaceProject {
   const now = new Date().toISOString();
   const starterFiles = createStarterFiles();
@@ -346,7 +395,7 @@ function createInitialProject(
     snapshots: [
       {
         id: 'snap-initial',
-        label: 'Initial Baseline',
+        label: 'Bản khởi tạo',
         createdAt: now,
         files: starterFiles,
       },
@@ -356,7 +405,7 @@ function createInitialProject(
         id: 'msg-welcome',
         role: 'assistant',
         content:
-          'Workspace đã sẵn sàng. Nhập yêu cầu thiết kế hoặc đính kèm mẫu từ Explore để tổng hợp mã nguồn HTML/CSS/JS và chạy kiểm định tự động.',
+          'Workspace đã sẵn sàng. Nhập yêu cầu thiết kế hoặc đính kèm mẫu từ Khám phá để tổng hợp mã nguồn HTML/CSS/JS và chạy kiểm định tự động.',
         createdAt: now,
         changedFiles: ['index.html', 'styles.css', 'app.js'],
       },
@@ -367,12 +416,12 @@ function createInitialProject(
     processes: [
       {
         id: 'proc-init',
-        name: 'Workspace Initialized & Static Checks Passed',
+        name: 'Khởi tạo phiên và hoàn tất kiểm định tĩnh',
         kind: 'static_checks',
         status: 'completed',
         startedAt: now,
         completedAt: now,
-        detail: `${initialChecks.passCount}/${initialChecks.results.length} checks passed`,
+        detail: `${initialChecks.passCount}/${initialChecks.results.length} phép kiểm đạt`,
       },
     ],
   };
@@ -663,8 +712,8 @@ export const AppStoreProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       if (!raw) {
         return {
           ...DEFAULT_SETTINGS,
-          theme: legacyTheme ?? sysTheme,
-          themePreference: legacyTheme ?? 'system',
+          theme: legacyTheme ?? 'dark',
+          themePreference: legacyTheme ?? 'dark',
         };
       }
       const parsed = JSON.parse(raw) as Partial<SettingsState>;
@@ -675,7 +724,7 @@ export const AppStoreProvider: React.FC<{ children: React.ReactNode }> = ({ chil
           ? parsed.themePreference
           : parsed.theme === 'light' || parsed.theme === 'dark'
             ? parsed.theme
-            : legacyTheme ?? 'system';
+            : legacyTheme ?? 'dark';
       const resolvedTheme: ThemeMode =
         resolvedPref === 'system'
           ? sysTheme
@@ -683,14 +732,14 @@ export const AppStoreProvider: React.FC<{ children: React.ReactNode }> = ({ chil
             ? resolvedPref
             : parsed.theme === 'light' || parsed.theme === 'dark'
               ? parsed.theme
-              : sysTheme;
+              : 'dark';
       const resolvedEffect: ThemeEffect =
         parsed.themeEffect === 'droplet' ||
         parsed.themeEffect === 'rain' ||
         parsed.themeEffect === 'diwali' ||
         parsed.themeEffect === 'none'
           ? parsed.themeEffect
-          : 'droplet';
+          : 'rain';
       const resolvedWallpaper: WallpaperPreset =
         parsed.wallpaperPreset === 'auto' ||
         parsed.wallpaperPreset === 'dark' ||
@@ -701,7 +750,7 @@ export const AppStoreProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         parsed.wallpaperPreset === 'constellation' ||
         parsed.wallpaperPreset === 'indigo'
           ? parsed.wallpaperPreset
-          : 'ember';
+          : 'dark';
       return {
         ...DEFAULT_SETTINGS,
         ...parsed,
@@ -729,7 +778,9 @@ export const AppStoreProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       const raw = window.localStorage.getItem(STORAGE_PROJECTS_KEY);
       if (!raw) return [createInitialProject()];
       const parsed = JSON.parse(raw) as WorkspaceProject[];
-      return Array.isArray(parsed) && parsed.length > 0 ? parsed : [createInitialProject()];
+      return Array.isArray(parsed) && parsed.length > 0
+        ? parsed.map(sanitizeProjectLabels)
+        : [createInitialProject()];
     } catch {
       return [createInitialProject()];
     }
@@ -780,10 +831,10 @@ export const AppStoreProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
   const communityPosts = useMemo(
     () => [
-      ...communityChannels.qa,
-      ...communityChannels.showcase,
-      ...communityChannels.drops,
-      ...communityChannels.clubs,
+      ...(Array.isArray(communityChannels.qa) ? communityChannels.qa : []),
+      ...(Array.isArray(communityChannels.showcase) ? communityChannels.showcase : []),
+      ...(Array.isArray(communityChannels.drops) ? communityChannels.drops : []),
+      ...(Array.isArray(communityChannels.clubs) ? communityChannels.clubs : []),
     ],
     [communityChannels]
   );
@@ -799,7 +850,7 @@ export const AppStoreProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   }, []);
 
   useEffect(() => {
-    applyThemeToDom(
+    syncThemeDom(
       settings.theme,
       settings.reducedMotion,
       settings.ambientVideo !== false,
@@ -957,7 +1008,12 @@ export const AppStoreProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     try {
       const data = await apiClient.fetchCommunityState();
       if (data && data.channels) {
-        setCommunityChannels(data.channels);
+        setCommunityChannels((prev) => ({
+          qa: Array.isArray(data.channels.qa) ? data.channels.qa : prev.qa,
+          showcase: Array.isArray(data.channels.showcase) ? data.channels.showcase : prev.showcase,
+          drops: Array.isArray(data.channels.drops) ? data.channels.drops : prev.drops,
+          clubs: Array.isArray(data.channels.clubs) ? data.channels.clubs : prev.clubs,
+        }));
       }
     } catch {
       return;
@@ -980,7 +1036,9 @@ export const AppStoreProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       .fetchUserProjects()
       .then((data) => {
         if (cancelled || !data.authenticated) return;
-        const remote = Array.isArray(data.projects) ? data.projects : [];
+        const remote = Array.isArray(data.projects)
+          ? data.projects.map(sanitizeProjectLabels)
+          : [];
         syncedProjectsRef.current = new Map(remote.map((p) => [p.id, p]));
         hydratedUserIdRef.current = currentUserId;
         setProjects((prev) => mergeRemoteProjects(prev, remote));
@@ -1052,8 +1110,8 @@ export const AppStoreProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       initialAttached: AttachedContextItem[] = []
     ): WorkspaceProject => {
       const created = createInitialProject(
-        name.trim() || 'Untitled Workspace',
-        description?.trim() || 'Synthesized multi-file project'
+        name.trim() || 'Phiên làm việc mới',
+        description?.trim() || 'Dự án đa tệp chuẩn lưới 8px kèm khung xem trực tiếp.'
       );
       created.attachedItems = initialAttached;
       setProjects((prev) => [created, ...prev]);
@@ -1169,7 +1227,7 @@ export const AppStoreProvider: React.FC<{ children: React.ReactNode }> = ({ chil
             path: cleanPath,
             content: item.content,
             language,
-            summary: item.summary || 'Added to workspace',
+            summary: item.summary || 'Đã thêm vào Workspace',
             updatedAt: now,
           });
         }
@@ -1178,7 +1236,7 @@ export const AppStoreProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         const nextChecks = runWorkspaceChecks(nextFiles);
         const setupProc: ProcessItem = {
           id: `proc-files-${Date.now()}`,
-          name: `Added ${incoming.length} file(s) to virtual tree`,
+          name: `Đã thêm ${incoming.length} tệp vào cây mã nguồn`,
           kind: 'setup_bundle',
           status: 'completed',
           startedAt: now,
@@ -1288,12 +1346,12 @@ export const AppStoreProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     const now = new Date().toISOString();
     const nextProc: ProcessItem = {
       id: `proc-chk-${Date.now()}`,
-      name: 'Automated Static & DOM Checks',
+      name: 'Kiểm định tĩnh & cấu trúc giao diện',
       kind: 'static_checks',
       status: report.overallStatus === 'fail' ? 'failed' : 'completed',
       startedAt: now,
       completedAt: now,
-      detail: `${report.passCount} pass, ${report.warnCount} warn, ${report.failCount} fail`,
+      detail: `${report.passCount} đạt, ${report.warnCount} cảnh báo, ${report.failCount} lỗi`,
     };
     updateActiveProject((proj) => ({
       ...proj,
@@ -1325,13 +1383,14 @@ export const AppStoreProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       const userMsgId = `msg-u-${Date.now()}`;
       const procId = `proc-ai-${Date.now()}`;
       const startedAt = new Date().toISOString();
+      const cleanBrief = trimmed.replace(/^\[Mode:\s*[^\]]+\]\s*/i, '').trim();
       const runningProc: ProcessItem = {
         id: procId,
-        name: `Synthesizing: ${trimmed.slice(0, 42)}`,
+        name: `Cập nhật: ${cleanBrief.slice(0, 42)}`,
         kind: 'ai_generation',
         status: 'running',
         startedAt,
-        detail: 'Routing multi-protocol AI Engine...',
+        detail: 'Đang định tuyến mô hình AI...',
       };
 
       setAiActivity('thinking');
@@ -1441,7 +1500,7 @@ export const AppStoreProvider: React.FC<{ children: React.ReactNode }> = ({ chil
             snapshots: [
               {
                 id: `snap-${Date.now()}`,
-                label: trimmed.slice(0, 36),
+                label: cleanBrief.slice(0, 36) || 'Bản cập nhật',
                 createdAt: completedAt,
                 files: nextFiles,
               },
@@ -1467,7 +1526,7 @@ export const AppStoreProvider: React.FC<{ children: React.ReactNode }> = ({ chil
                     ...p,
                     status: 'completed',
                     completedAt,
-                    detail: `Updated ${response.files.length} files (${nextChecks.passCount}/${nextChecks.results.length} checks pass)`,
+                    detail: `Đã cập nhật ${response.files.length} tệp (${nextChecks.passCount}/${nextChecks.results.length} phép kiểm đạt)`,
                   }
                 : p
             ),
@@ -1583,7 +1642,7 @@ export const AppStoreProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         snapshots: [
           {
             id: `snap-${Date.now()}`,
-            label: label?.trim() || `Snapshot ${proj.snapshots.length + 1}`,
+            label: label?.trim() || `Mốc lưu ${proj.snapshots.length + 1}`,
             createdAt: now,
             files: proj.files,
           },
@@ -1592,7 +1651,7 @@ export const AppStoreProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       }));
       addToast({
         type: 'success',
-        title: 'Đã lưu Snapshot Workspace',
+        title: 'Đã lưu mốc khôi phục',
       });
     },
     [updateActiveProject, addToast]
@@ -1616,7 +1675,7 @@ export const AppStoreProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       });
       addToast({
         type: 'info',
-        title: 'Đã khôi phục Snapshot',
+        title: 'Đã khôi phục mốc đã lưu',
       });
     },
     [updateActiveProject, addToast]
@@ -1654,14 +1713,14 @@ export const AppStoreProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       const now = new Date().toISOString();
       const zipProc: ProcessItem = {
         id: `proc-zip-${Date.now()}`,
-        name: `Exported ${filename}`,
+        name: `Đã xuất gói ${filename}`,
         kind: 'zip_export',
         status: 'completed',
         startedAt: now,
         completedAt: now,
         detail: clean
-          ? 'Secret scanner passed (0 sensitive strings)'
-          : `Auto-redacted ${findings.length} secret pattern(s) before packaging`,
+          ? 'Quét bảo mật đạt chuẩn (0 chuỗi nhạy cảm)'
+          : `Đã ẩn tự động ${findings.length} chuỗi nhạy cảm trước khi đóng gói`,
       };
       updateActiveProject((proj) => ({
         ...proj,
@@ -1688,8 +1747,8 @@ export const AppStoreProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       setAuthModalOpen(false);
       addToast({
         type: 'success',
-        title: `Xin chào, ${res.user.name}`,
-        message: res.user.role === 'admin' ? 'Quyền Admin không giới hạn lượt AI' : undefined,
+        title: `Xin chào, ${formatUserDisplayName(res.user.name)}`,
+        message: res.user.role === 'admin' ? 'Quyền quản trị không giới hạn lượt AI' : undefined,
       });
       return res.user;
     },
@@ -1706,8 +1765,8 @@ export const AppStoreProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       setAuthModalOpen(false);
       addToast({
         type: 'success',
-        title: 'Đã xác thực System Admin',
-        message: 'Chế độ Unlimited AI Quota đã kích hoạt.',
+        title: 'Đã xác thực Quản trị viên',
+        message: 'Hạn mức không giới hạn lượt AI đã kích hoạt.',
       });
       return res.user;
     },
@@ -1755,7 +1814,7 @@ export const AppStoreProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       setCommunityChannels(res.channels);
       addToast({
         type: 'success',
-        title: 'Đã đăng bài lên Source of Knowledge',
+        title: 'Đã đăng bài lên Cộng đồng',
       });
       return res.post;
     },
@@ -1785,7 +1844,7 @@ export const AppStoreProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       setCommunityChannels(res.channels);
       addToast({
         type: 'success',
-        title: 'Đã đánh dấu Accepted Solution',
+        title: 'Đã chọn lời giải chuẩn',
       });
     },
     [addToast]
@@ -1822,7 +1881,7 @@ export const AppStoreProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       setCommunityChannels(res.channels);
       addToast({
         type: 'success',
-        title: 'Đã cập nhật Project Continuity Dossier',
+        title: 'Đã cập nhật hồ sơ bàn giao CLB',
       });
     },
     [addToast]

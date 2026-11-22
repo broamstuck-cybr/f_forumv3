@@ -19,32 +19,8 @@ export interface StarterPrompt {
   prompt: string;
 }
 
-export interface ArenaCandidateResult {
-  modelId: string;
-  modelLabel: string;
-  protocolUsed?: string;
-  status: 'running' | 'done';
-  message: string;
-  files: Array<{ path: string; content: string; summary?: string }>;
-  elapsedMs: number;
-  tokenEstimate: number;
-  fallback?: boolean;
-}
-
-export interface ArenaComparisonTurn {
-  id: string;
-  userMessageId?: string;
-  prompt: string;
-  createdAt: string;
-  candidateA: ArenaCandidateResult;
-  candidateB: ArenaCandidateResult;
-  appliedSide: 'A' | 'B';
-}
-
 interface ThreadProps {
   messages: ChatMessage[];
-  arenaTurns: ArenaComparisonTurn[];
-  onApplyArenaCandidate: (turnId: string, side: 'A' | 'B', openFilePath?: string) => void;
   activity: AIActivityState;
   streamingStage: AIStreamingStage;
   streamingPreview: string;
@@ -96,16 +72,8 @@ function stepRank(stage: AIStreamingStage): number {
   return -1;
 }
 
-function estimateElapsedLabel(message: ChatMessage, index: number): string {
-  const filesCount = message.changedFiles?.length || 1;
-  const tenths = 6 + ((index * 3 + filesCount * 2) % 9);
-  return `${(tenths / 10).toFixed(1)}s`;
-}
-
 export const Thread: React.FC<ThreadProps> = ({
   messages,
-  arenaTurns,
-  onApplyArenaCandidate,
   activity,
   streamingStage,
   streamingPreview,
@@ -129,14 +97,14 @@ export const Thread: React.FC<ThreadProps> = ({
   const [expandedTools, setExpandedTools] = useState<Record<string, boolean>>({});
   const busy = activity === 'thinking' || activity === 'streaming';
   const failed = activity === 'error';
-  const untouched = messages.every((message) => message.role !== 'user') && arenaTurns.length === 0;
+  const untouched = messages.every((message) => message.role !== 'user');
 
   useEffect(() => {
     const container = scrollRef.current;
     if (container) {
       container.scrollTop = container.scrollHeight;
     }
-  }, [messages.length, arenaTurns.length, activity, streamingPreview]);
+  }, [messages.length, activity, streamingPreview]);
 
   useEffect(() => {
     const pre = previewRef.current;
@@ -175,110 +143,11 @@ export const Thread: React.FC<ThreadProps> = ({
   const lastAssistantId = [...messages].reverse().find((message) => message.role === 'assistant')?.id;
   const activeRank = stepRank(streamingStage);
 
-  const renderArenaCard = (
-    turn: ArenaComparisonTurn,
-    side: 'A' | 'B',
-    candidate: ArenaCandidateResult
-  ) => {
-    const isApplied = turn.appliedSide === side;
-    const isRunning = candidate.status === 'running';
-    const cardCopyId = `${turn.id}-${side}`;
-    const previewFile =
-      candidate.files.find((f) => f.path === 'styles.css') ||
-      candidate.files.find((f) => f.path === 'index.html') ||
-      candidate.files[0];
-    const snippet = previewFile
-      ? previewFile.content.split(/\r?\n/).slice(0, 7).join('\n')
-      : '';
-
-    return (
-      <article
-        key={cardCopyId}
-        className="ws-arena-card"
-        data-side={side}
-        data-applied={isApplied ? 'true' : undefined}
-      >
-        <header className="ws-arena-card-head">
-          <div className="ws-arena-card-title">
-            <span className="ws-arena-badge">{side}</span>
-            <strong className="ws-arena-model">{candidate.modelLabel}</strong>
-          </div>
-          <div className="ws-arena-metrics">
-            <span className="ws-pill-meta">
-              {isRunning ? 'Đang chạy...' : `${(candidate.elapsedMs / 1000).toFixed(2)}s`}
-            </span>
-            {!isRunning && (
-              <span className="ws-pill-meta">~{candidate.tokenEstimate} tok</span>
-            )}
-          </div>
-        </header>
-
-        <p className="ws-arena-body">{candidate.message}</p>
-
-        {candidate.files.length > 0 && (
-          <ul className="ws-turn-files" aria-label={`Tệp từ Model ${side}`}>
-            {candidate.files.map((file) => (
-              <li key={file.path}>
-                <button
-                  type="button"
-                  className="ws-file-pill"
-                  onClick={() => onApplyArenaCandidate(turn.id, side, file.path)}
-                >
-                  {file.path}
-                </button>
-              </li>
-            ))}
-          </ul>
-        )}
-
-        {snippet && (
-          <pre className="ws-arena-snippet">
-            <code>{snippet}</code>
-          </pre>
-        )}
-
-        <footer className="ws-arena-card-foot">
-          <span className="ws-arena-active-tag">
-            {isApplied ? 'Đang hiển thị' : 'Phương án chờ'}
-          </span>
-          <div className="ws-arena-card-actions">
-            <button
-              type="button"
-              className="ws-icon-pill ws-icon-pill--sm"
-              aria-label={`Chép phản hồi Model ${side}`}
-              title={copiedId === cardCopyId ? 'Đã chép' : `Chép phản hồi Model ${side}`}
-              data-active={copiedId === cardCopyId ? 'true' : undefined}
-              onClick={() => void handleCopyContent(cardCopyId, candidate.message)}
-            >
-              {copiedId === cardCopyId ? (
-                <Check size={13} aria-hidden="true" />
-              ) : (
-                <Copy size={13} aria-hidden="true" />
-              )}
-            </button>
-
-            <button
-              type="button"
-              className={`ws-icon-pill ws-icon-pill--sm ${isApplied ? 'ws-icon-pill--active' : 'ws-icon-pill--accent'}`}
-              disabled={isRunning}
-              aria-pressed={isApplied}
-              aria-label={isApplied ? `Đang áp dụng Model ${side}` : `Áp dụng Model ${side} vào Live View`}
-              title={isApplied ? 'Đang áp dụng trên Live View' : 'Áp dụng bản này vào Live View'}
-              onClick={() => onApplyArenaCandidate(turn.id, side)}
-            >
-              <Check size={13} aria-hidden="true" />
-            </button>
-          </div>
-        </footer>
-      </article>
-    );
-  };
-
   return (
     <div ref={scrollRef} className="ws-scroll">
       <div className="ws-measure ws-arena-stream">
         {untouched && !busy && (
-          <section className="ws-arena-empty" aria-label="Khởi tạo phiên Arena">
+          <section className="ws-arena-empty" aria-label="Khởi tạo phiên F-Forum">
             <h2 className="ws-arena-empty-title">
               Từ ý tưởng <em>đến bản dựng.</em>
             </h2>
@@ -303,8 +172,8 @@ export const Thread: React.FC<ThreadProps> = ({
           </section>
         )}
 
-        {messages.map((message, index) => {
-          if (message.role === 'system' && untouched) {
+        {messages.map((message) => {
+          if (untouched && (message.role === 'system' || message.id === 'msg-welcome')) {
             return null;
           }
 
@@ -315,8 +184,6 @@ export const Thread: React.FC<ThreadProps> = ({
             message.role === 'assistant' &&
             message.id === lastAssistantId &&
             message === lastMessage;
-          const elapsedLabel =
-            message.role === 'assistant' ? estimateElapsedLabel(message, index) : null;
           const plainContent = isUser ? stripModeTag(message.content) : message.content;
           const hasChangedFiles = Boolean(message.changedFiles && message.changedFiles.length > 0);
           const isToolExpanded = Boolean(expandedTools[message.id]);
@@ -346,7 +213,7 @@ export const Thread: React.FC<ThreadProps> = ({
                     )}
                     <Terminal size={13} aria-hidden="true" />
                     <span>
-                      Ran commands {message.changedFiles!.length} · {checksPassLabel || '6/6 đạt'}
+                      Đã cập nhật {message.changedFiles!.length} tệp · {checksPassLabel || '6/6 phép kiểm đạt'}
                     </span>
                   </button>
 
@@ -370,19 +237,19 @@ export const Thread: React.FC<ThreadProps> = ({
                           {onOpenPreview && (
                             <button type="button" className="ws-artifact-jump" onClick={onOpenPreview}>
                               <Eye size={12} aria-hidden="true" />
-                              <span>Preview</span>
+                              <span>Xem trực tiếp</span>
                             </button>
                           )}
                           {onOpenDiff && (
                             <button type="button" className="ws-artifact-jump" onClick={onOpenDiff}>
                               <GitCompareArrows size={12} aria-hidden="true" />
-                              <span>Diff</span>
+                              <span>Đối chiếu</span>
                             </button>
                           )}
                           {onOpenChecks && (
                             <button type="button" className="ws-artifact-jump" onClick={onOpenChecks}>
                               <ShieldCheck size={12} aria-hidden="true" />
-                              <span>Checks</span>
+                              <span>Kiểm định</span>
                             </button>
                           )}
                         </div>
@@ -445,30 +312,12 @@ export const Thread: React.FC<ThreadProps> = ({
 
                 <span className="ws-arena-foot-meta">
                   {message.modelUsed ? `${message.modelUsed} · ` : ''}
-                  {elapsedLabel ? `${elapsedLabel} | ` : ''}
                   {formatClock(message.createdAt)}
                 </span>
               </footer>
             </article>
           );
         })}
-
-        {arenaTurns.map((turn) => (
-          <section
-            key={turn.id}
-            className="ws-arena-turn"
-            aria-label={`So sánh 2 Model: ${turn.prompt}`}
-          >
-            <div className="ws-arena-user-row">
-              <div className="ws-arena-user-bubble">{stripModeTag(turn.prompt)}</div>
-            </div>
-
-            <div className="ws-arena-grid">
-              {renderArenaCard(turn, 'A', turn.candidateA)}
-              {renderArenaCard(turn, 'B', turn.candidateB)}
-            </div>
-          </section>
-        ))}
 
         <div role="status" aria-live="polite">
           {busy && (

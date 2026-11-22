@@ -4,6 +4,7 @@ import { AppProvider, useAppStore } from './store/appStore';
 import { AppNavbar } from './components/layout/AppNavbar';
 import { AppFooter } from './components/layout/AppFooter';
 import { AmbientVideoBackdrop } from './components/layout/AmbientVideoBackdrop';
+import { CommandPalette } from './components/layout/CommandPalette';
 import { GlobalRouteLoader } from './components/layout/GlobalRouteLoader';
 import { GlobalThemeAtmosphere } from './components/layout/GlobalThemeAtmosphere';
 import { AuthModal } from './components/public/AuthModal';
@@ -47,9 +48,9 @@ const ROUTE_META: Record<
   { title: string; description: string; path: string; noindex?: boolean }
 > = {
   landing: {
-    title: 'F-Forum — Kho thiết kế, mã nguồn mở và không gian dựng Web/UI',
+    title: 'F-Forum — Kho giao diện & Workspace web',
     description:
-      'F-Forum là kho tham chiếu 6.770 mẫu giao diện và không gian dựng thử Web/UI chạy trực tiếp trên trình duyệt.',
+      'Kho thành phần UI, trình sửa mã HTML/CSS/JS và cộng đồng web trên trình duyệt.',
     path: '/',
   },
   home: {
@@ -59,21 +60,21 @@ const ROUTE_META: Record<
   },
   explore: {
     title: 'Bàn soi Khám phá — F-Forum',
-    description: 'Soi 196 mẫu tương tác, không gian 3D, hiệu ứng, chuyển động, bố cục cùng 32 công cụ AI và 122 kho GitHub.',
+    description: 'Khám phá kho mẫu tương tác, không gian 3D, hiệu ứng, chuyển động, bố cục cùng công cụ AI và kho GitHub tuyển chọn.',
     path: '/explore',
   },
   experience: {
     title: 'Trải nghiệm thành phần — F-Forum',
-    description: 'Trải nghiệm trực tiếp thành phần giao diện, chỉnh thông số mã nguồn và lưu bookmark.',
+    description: 'Trải nghiệm trực tiếp toàn bộ kho thành phần giao diện, đọc mã nguồn sạch và lưu bookmark.',
     path: '/explore/experience',
   },
   workspace: {
     title: 'Workspace — F-Forum',
-    description: 'Bàn làm việc 3 vùng với Live View cô lập 390/768/1440px, Diff & Check 6 lớp và xuất ZIP quét bí mật.',
+    description: 'Không gian dựng thử web với khung xem trực tiếp đa màn hình, đối chiếu mã nguồn, kiểm định 6 lớp và xuất gói ZIP an toàn.',
     path: '/workspace',
   },
   community: {
-    title: 'Tòa soạn Source of Knowledge — F-Forum',
+    title: 'Tri thức cộng đồng — F-Forum',
     description: 'Phản biện kỹ thuật, trình diễn hộp cát, học liệu chuẩn hóa và hồ sơ chuyển giao câu lạc bộ.',
     path: '/community',
   },
@@ -114,7 +115,7 @@ const ROUTE_LOAD_LABELS: Record<string, string> = {
   home: 'Đang mở Trang chủ...',
   explore: 'Đang mở Bàn soi Khám phá...',
   experience: 'Đang nạp Trải nghiệm mẫu...',
-  workspace: 'Đang khởi động Workspace Arena...',
+  workspace: 'Đang khởi động Workspace F-Forum...',
   community: 'Đang mở Tri thức cộng đồng...',
   profile: 'Đang mở Hồ sơ thành viên...',
   settings: 'Đang mở Cài đặt hệ thống...',
@@ -217,6 +218,7 @@ const AppShell: React.FC = () => {
 
           <AuthModal open={authModalOpen} onClose={() => setAuthModalOpen(false)} />
           <NoticeStatusModal open={noticeModalOpen} onClose={() => setNoticeModalOpen(false)} />
+          <CommandPalette />
           <ToastStack />
         </div>
       </LayoutGroup>

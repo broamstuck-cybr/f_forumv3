@@ -16,7 +16,6 @@ const LIBRARY_ATTRIBUTIONS: Array<{
   name: string;
   license: string;
   origin: string;
-  url: string;
   usage: string;
 }> = [
   {
@@ -24,7 +23,6 @@ const LIBRARY_ATTRIBUTIONS: Array<{
     name: 'PinUI Registry',
     license: 'MIT License (c) Rachit Thakur / Shadcn Labs',
     origin: 'sources/pinui/',
-    url: 'https://www.pinui.xyz',
     usage:
       'PromptComposer, ThemeSwitch, LampSwitch, ReaderCard, Magnify, LiquidTabs, Chips, ChatRoom, SelectionList, SiteRail, SynaisFooter.',
   },
@@ -33,32 +31,28 @@ const LIBRARY_ATTRIBUTIONS: Array<{
     name: 'ThreeUI Archive',
     license: 'Reference Metadata Only',
     origin: 'sources/threeui/',
-    url: 'https://threeui.com',
-    usage: 'Không gian 3D, WebGL và nhịp bố cục cho Khám phá và Hồ sơ.',
+    usage: 'Không gian 3D, cảnh WebGL tương tác và nhịp bố cục cho Khám phá.',
   },
   {
     key: 'motionsites',
     name: 'MotionSites Briefs',
     license: 'Public Section Specs',
     origin: 'sources/motionsites/',
-    url: 'https://motionsites.ai',
-    usage: 'Nhịp kể chuyện Scrollytelling, 20+ GIF thực tế và cấu trúc trang đích.',
+    usage: 'Các phần trang đích có chuyển động mượt và bản mô tả prompt kèm sẵn.',
   },
   {
     key: 'lucianlabs',
     name: 'LucianLabs Elements',
     license: 'MIT License (c) 2026 Seokwoooo',
     origin: 'sources/lucianlabs/',
-    url: 'https://lucianlabs.dev',
-    usage: 'Hệ biến --ux-* và 400 vi chuyển động chuẩn xác.',
+    usage: 'Bộ hiệu ứng tương tác vi mô và biến giao diện nhất quán.',
   },
   {
     key: 'codefronts',
     name: 'CodeFronts Patterns',
     license: 'MIT License (c) CodeFronts',
     origin: 'sources/codefronts/',
-    url: 'https://codefronts.com',
-    usage: '5.047 mẫu CSS thuần và kỹ thuật anti-FOUC.',
+    usage: 'Mẫu bố cục CSS và Tailwind gọn nhẹ sẵn sàng thử trực tiếp.',
   },
 ];
 
@@ -222,23 +216,14 @@ export const NoticeStatusModal: React.FC<NoticeStatusModalProps> = ({ open, onCl
                       </div>
                       <div className="flex shrink-0 items-center gap-2 sm:flex-col sm:items-end">
                         <code
-                          className="rounded px-2 py-0.5 font-mono text-[11px]"
+                          className="rounded-full px-2.5 py-0.5 font-mono text-[11px]"
                           style={{
                             backgroundColor: 'var(--bg-panel)',
                             color: 'var(--ink-secondary)',
                           }}
                         >
-                          {lib.origin}
+                          Tích hợp cục bộ
                         </code>
-                        <a
-                          href={lib.url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-xs font-medium hover:underline"
-                          style={{ color: 'var(--accent-verdigris)' }}
-                        >
-                          Mở nguồn
-                        </a>
                       </div>
                     </article>
                   ))}
@@ -310,10 +295,10 @@ export const NoticeStatusModal: React.FC<NoticeStatusModalProps> = ({ open, onCl
                     }}
                   >
                     <div className="text-sm font-semibold" style={{ color: 'var(--ink-primary)' }}>
-                      Kiểm chứng Live View &amp; Diff &amp; Check
+                      Chạy thử cô lập &amp; Kiểm tra tự động
                     </div>
                     <p className="mt-2 text-sm leading-relaxed" style={{ color: 'var(--ink-secondary)' }}>
-                      Mọi mã nguồn trong Workspace được chạy trong khung cô lập (`sandbox="allow-scripts"`) và kiểm định tự động qua 6 lớp: cấu trúc HTML, cú pháp JS, hiển thị đa màn hình, liên kết nội bộ, quét bí mật và khả năng tiếp cận.
+                      Mọi mã nguồn trong Workspace được chạy trong khung sandbox cô lập hoàn toàn khỏi trang chính và kiểm tra tự động về cấu trúc, cú pháp, độ tương thích thiết bị, bảo mật khóa cá nhân và khả năng tiếp cận.
                     </p>
                   </div>
 
