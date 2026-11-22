@@ -45,6 +45,7 @@ script đo viết riêng). Ô `[~]` là đã làm một phần, ô `[ ]` là ch�
 - `[x]` `@property --bg/--bg-raised/--fg` + `html[data-theme-blend='open']` tween 380ms, có nhánh reduced-motion.
 - `[x]` Giọt nước dùng bề mặt `raised` của theme mới.
 - `[x]` 4 preset gradient mới theo Color Theory (Godray Amber, Mesh Dusk, Jade Halo, Rose Clay) + 2 preset cũ nay có gradient thật (Obsidian Foundry, Paper Ivory), khai báo token sáng/tối cho từng preset.
+- `[x]` Sửa lỗi tự phát hiện: bước nạp cài đặt dùng danh sách viết tay nên preset mới bị **reset về ember mỗi lần tải lại trang**. Nay `WALLPAPER_PRESETS` trong `types/index.ts` là nguồn duy nhất, có test khoá.
 - `[x]` Dropzone sao lưu thay bằng `original/dynamic-drop-zone` của PinUI (cả Settings lẫn Workspace).
 - `[x]` "+20% độ rõ nét" nay đo được: 6/6 cặp chữ/nền đạt WCAG AA, riêng chữ mờ nhất trên nền sáng từ 4,24:1 lên 5,08:1. Có test khoá lại trong `tests/upgrade-a11y.test.mjs`.
 
@@ -74,3 +75,5 @@ script đo viết riêng). Ô `[~]` là đã làm một phần, ô `[ ]` là ch�
 | `grep` rà soát | 0 "Arena" trong UI, 0 `LIVE`, 0 `target="_blank"` sót |
 | `node --test tests/upgrade-a11y.test.mjs` | 9/9 xanh: 6 cặp tương phản + 3 luật chống rò rỉ |
 | Phòng thử chuyển động (script) | 8/8 mẫu × 2 theme hợp lệ, 35 mục trải trên cả 8 mẫu |
+| `node --test tests/theme-sync.test.mjs` | 7/7 xanh: theme ghi trong lúc hiệu ứng chạy, blend tự gỡ |
+| `node --test tests/wallpaper-presets.test.mjs` | 6/6 xanh: preset khớp nguồn, có CSS nền, không reset khi tải lại |

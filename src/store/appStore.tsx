@@ -36,6 +36,7 @@ import type {
   WorkspaceFile,
   WorkspaceProject,
 } from '../types/index';
+import { WALLPAPER_PRESETS } from '../types/index';
 import { apiClient, getOrCreateClientGuestId } from '../services/apiClient';
 import { writeThemeToDom } from '../components/layout/theme-transition';
 import { runWorkspaceChecks } from '../services/checksRunner';
@@ -693,14 +694,7 @@ export const AppStoreProvider: React.FC<{ children: React.ReactNode }> = ({ chil
           ? parsed.themeEffect
           : 'droplet';
       const resolvedWallpaper: WallpaperPreset =
-        parsed.wallpaperPreset === 'auto' ||
-        parsed.wallpaperPreset === 'dark' ||
-        parsed.wallpaperPreset === 'light' ||
-        parsed.wallpaperPreset === 'ember' ||
-        parsed.wallpaperPreset === 'harbour' ||
-        parsed.wallpaperPreset === 'aurora' ||
-        parsed.wallpaperPreset === 'constellation' ||
-        parsed.wallpaperPreset === 'indigo'
+        parsed.wallpaperPreset && (WALLPAPER_PRESETS as readonly string[]).includes(parsed.wallpaperPreset)
           ? parsed.wallpaperPreset
           : 'ember';
       return {

@@ -32,19 +32,23 @@ export type ThemeMode = 'dark' | 'light';
 
 export type ThemeEffect = 'droplet' | 'rain' | 'diwali' | 'none';
 
-export type WallpaperPreset =
-  | 'auto'
-  | 'dark'
-  | 'light'
-  | 'ember'
-  | 'harbour'
-  | 'aurora'
-  | 'constellation'
-  | 'indigo'
-  | 'godray'
-  | 'meshDusk'
-  | 'jade'
-  | 'rose';
+/** Danh sách preset nền — nguồn duy nhất cho cả type và bước kiểm tra khi nạp. */
+export const WALLPAPER_PRESETS = [
+  'auto',
+  'dark',
+  'light',
+  'ember',
+  'harbour',
+  'aurora',
+  'constellation',
+  'indigo',
+  'godray',
+  'meshDusk',
+  'jade',
+  'rose',
+] as const;
+
+export type WallpaperPreset = (typeof WALLPAPER_PRESETS)[number];
 
 export type UserRole = 'user' | 'admin' | 'SUPER_ADMIN' | 'CLUB_LEADER' | 'STUDENT';
 
