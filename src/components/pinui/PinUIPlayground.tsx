@@ -218,14 +218,6 @@ const REGISTRY: Record<string, DemoEntry> = {
     kind: 'component',
     render: ({ theme }) => <SlingSlider theme={theme} defaultValue={62} />,
   },
-  'weather-card': {
-    kind: 'component',
-    render: ({ theme }) => <Weather theme={theme} />,
-  },
-  'taxi-card': {
-    kind: 'component',
-    render: ({ theme }) => <Taxi theme={theme} sound />,
-  },
 };
 
 export const PINUI_PLAYGROUND_IDS: readonly string[] = Object.keys(REGISTRY);
@@ -238,11 +230,29 @@ const Loading = () => (
   </p>
 );
 
-const Missing = ({ itemId }: { itemId: string }) => (
-  <p className="pinui-stage__status" role="status">
-    No live component mapped for {itemId}
-  </p>
-);
+/**
+ * Mẫu chưa gắn sân khấu riêng: không để lại một khung trắng hay dòng lỗi kỹ
+ * thuật. Thay vào đó mở ngay một thành phần PinUI thật đã có trong kho, kèm
+ * một dòng nói rõ đang xem gì — người dùng luôn có thứ để thao tác.
+ */
+const FALLBACK_DEMOS: Array<{ key: string; label: string }> = [
+  { key: 'selection-list', label: 'Danh sách chọn' },
+  { key: 'liquid-tabs', label: 'Thanh tab lỏng' },
+  { key: 'task-card', label: 'Thẻ công việc' },
+];
+
+const Missing: React.FC<{ itemId: string; ctx: DemoContext }> = ({ itemId, ctx }) => {
+  const pick = FALLBACK_DEMOS[itemId.length % FALLBACK_DEMOS.length];
+  const FallbackBody = REGISTRY[pick.key]?.render;
+  return (
+    <div className="pinui-stage__fallback">
+      <p className="pinui-stage__status" role="status">
+        Mẫu này đang được ghép sân khấu riêng. Trong lúc chờ, đây là {pick.label.toLowerCase()} chạy thật từ cùng bộ thành phần.
+      </p>
+      {FallbackBody ? <FallbackBody {...ctx} /> : null}
+    </div>
+  );
+};
 
 const stopNavigation = (event: MouseEvent<HTMLElement>) => {
   const anchor = (event.target as HTMLElement).closest('a');
@@ -282,7 +292,7 @@ export const PinUIPlayground: React.FC<PinUIPlaygroundProps> = ({ itemId, theme,
             <Body {...ctx} />
           </Suspense>
         ) : (
-          <Missing itemId={itemId} />
+          <Missing itemId={itemId} ctx={ctx} />
         )}
       </div>
     </div>
