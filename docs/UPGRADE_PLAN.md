@@ -60,7 +60,7 @@ script đo viết riêng). Ô `[~]` là đã làm một phần, ô `[ ]` là ch�
 - `[x]` Thêm chuỗi ngày thật vào server (`telemetryHistory`, 30 ngày) — ghi khi có lượt AI thật.
 - `[x]` Tăng trưởng người dùng tính từ `createdAt` thật của tài khoản.
 - `[x]` `AdminCharts`: hoạt động máy chủ theo ngày (4 chỉ số, tooltip, bàn phím), tài khoản cộng dồn, khối tài nguyên & vận hành.
-- `[x]` Kiểm chứng: gọi `recordAiTelemetry` 4 lần → `history` có 1 ngày `{aiRequests:4, success:2, fallback:1, quotaBlocked:1}`; dữ liệu thử đã được đặt lại về 0.
+- `[x]` Kiểm chứng qua HTTP thật: đăng nhập admin bằng mật khẩu bootstrap tạm, gọi `GET /api/admin/state` → trả về cả `telemetryHistory` và `userGrowth` (8 khóa state). Dữ liệu thử và biến môi trường tạm đã được dọn sạch, `data/runtime-state.json` đặt lại về 0.
 - `[ ]` **Chưa xong:** rà layout Admin trên 390/768/1440 bằng mắt — môi trường này không có trình duyệt chụp ảnh.
 
 ## Kiểm định đã chạy
@@ -77,3 +77,6 @@ script đo viết riêng). Ô `[~]` là đã làm một phần, ô `[ ]` là ch�
 | Phòng thử chuyển động (script) | 8/8 mẫu × 2 theme hợp lệ, 35 mục trải trên cả 8 mẫu |
 | `node --test tests/theme-sync.test.mjs` | 7/7 xanh: theme ghi trong lúc hiệu ứng chạy, blend tự gỡ |
 | `node --test tests/wallpaper-presets.test.mjs` | 6/6 xanh: preset khớp nguồn, có CSS nền, không reset khi tải lại |
+| `GET /api/admin/state` (curl + cookie admin) | 200, có `telemetryHistory` và `userGrowth` |
+| Sáu route chính qua Vite | `/ /explore /workspace /settings /admin /community` đều 200 |
+| Tổng ba bộ test mới | **22/22 xanh** |
