@@ -19,6 +19,8 @@ import {
 import { PlateTable, type LibraryFilter } from './PlateTable';
 import { RepoChart } from './RepoChart';
 import { ToolIndex } from './ToolIndex';
+import { FileBoxToggle } from './FileBoxToggle';
+import { ResourceCabinet } from './ResourceCabinet';
 import { useCalm } from './useCalm';
 import './explore.css';
 
@@ -57,6 +59,7 @@ export const ExploreView: React.FC = () => {
   const [library, setLibrary] = useState<LibraryFilter>('all');
   const [search, setSearch] = useState('');
   const [savedOnly, setSavedOnly] = useState(false);
+  const [cabinetOpen, setCabinetOpen] = useState(false);
   const query = search.trim().toLowerCase();
 
   useEffect(() => {
@@ -112,38 +115,52 @@ export const ExploreView: React.FC = () => {
   return (
     <div className="ex">
       <header className="wrap-wide ex-head">
-        <h1 className="t-display ex-title">
-          <span className="t-script ex-title-cap">B</span>àn soi
-        </h1>
-        <div className="ex-aside">
+        <div className="ex-head-top">
+          <h1 className="t-display ex-title">
+            <span className="t-script ex-title-cap">B</span>àn soi
+          </h1>
           <p className="ex-lede">Đặt mẫu lên bàn, soi từng bản, rồi mang vào Workspace.</p>
+        </div>
+
+        <div className="ex-search-row">
           <SearchCard
             value={search}
             onChange={setSearch}
             placeholder="Tìm mẫu, công cụ, repo..."
             recentSearches={RECENT_SEARCHES}
             onSelectRecent={(value) => setSearch(value)}
-            className="ex-pinui-search"
+            className="ex-pinui-search ex-pinui-search--wide"
           />
-          <div className="ex-quick">
-            <button
-              type="button"
-              className="ex-pill"
-              aria-pressed={savedOnly}
-              onClick={() => setSavedOnly((prev) => !prev)}
-            >
-              <span className="ex-mark-dot" aria-hidden="true" />
-              <span>Đã lưu ({savedItemIds.length})</span>
-            </button>
-            {sourceCatalog[0] ? (
+          <div className="ex-simplify">
+            <p className="ex-simplify-line">
+              Nhiều quá? <span className="ex-simplify-soft">Đơn giản nha!!!</span>
+            </p>
+            <FileBoxToggle
+              open={cabinetOpen}
+              theme={theme}
+              count={resourceLibrary.length}
+              onToggle={setCabinetOpen}
+            />
+            <div className="ex-quick">
               <button
                 type="button"
                 className="ex-pill"
-                onClick={() => openExperience(sourceCatalog[0].id)}
+                aria-pressed={savedOnly}
+                onClick={() => setSavedOnly((prev) => !prev)}
               >
-                Trải nghiệm thành phần
+                <span className="ex-mark-dot" aria-hidden="true" />
+                <span>Đã lưu ({savedItemIds.length})</span>
               </button>
-            ) : null}
+              {sourceCatalog[0] ? (
+                <button
+                  type="button"
+                  className="ex-pill"
+                  onClick={() => openExperience(sourceCatalog[0].id)}
+                >
+                  Trải nghiệm thành phần
+                </button>
+              ) : null}
+            </div>
           </div>
         </div>
       </header>
@@ -248,6 +265,20 @@ export const ExploreView: React.FC = () => {
           />
         ) : null}
       </motion.section>
+
+      <ResourceCabinet
+        open={cabinetOpen}
+        resources={resourceLibrary.map((item) => ({
+          id: item.id,
+          title: item.title,
+          group: item.group,
+          category: item.category,
+          tags: item.tags,
+          description: item.description,
+        }))}
+        theme={theme}
+        onClose={() => setCabinetOpen(false)}
+      />
     </div>
   );
 };

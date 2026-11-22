@@ -56,12 +56,12 @@ const ProjectCard: React.FC<{
             <dd>{item.files.length} tệp</dd>
           </div>
           <div>
-            <dt className="t-label">khung nhìn</dt>
-            <dd>390 · 768 · 1440</dd>
+            <dt className="t-label">khung hình</dt>
+            <dd>Điện thoại · máy tính bảng · máy tính</dd>
           </div>
           <div>
             <dt className="t-label">chuyển động</dt>
-            <dd>{item.motionConfig.durationMs} ms</dd>
+            <dd>{item.motionConfig.durationMs ? 'Mượt, có chủ đích' : 'Tĩnh'}</dd>
           </div>
         </dl>
         <div className="lp-proj-chips">
@@ -73,7 +73,7 @@ const ProjectCard: React.FC<{
             Mở trong Khám phá
           </button>
           <button type="button" className="btn btn-line btn-sm" onClick={onLive}>
-            Thử Live View
+            Thử tự dựng
           </button>
         </div>
       </div>

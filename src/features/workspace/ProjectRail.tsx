@@ -247,7 +247,7 @@ export const ProjectRail: React.FC<ProjectRailProps> = ({
           title="Về Trang chủ F-Forum"
         >
           <KineticLogo size={18} />
-          <span>Arena</span>
+          <span>Workspace</span>
         </button>
         {dismiss}
       </header>
@@ -255,7 +255,7 @@ export const ProjectRail: React.FC<ProjectRailProps> = ({
       <div className="ws-rail-quick">
         <button type="button" className="ws-rail-nav-btn" onClick={onCreate}>
           <PlusCircle size={15} aria-hidden="true" />
-          <span>New Chat</span>
+          <span>Phiên mới</span>
         </button>
         {onNavigate && (
           <button type="button" className="ws-rail-nav-btn" onClick={() => onNavigate('explore')}>

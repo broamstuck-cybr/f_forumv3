@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { animate, useReducedMotion } from 'motion/react';
 import { Monitor, Moon, RotateCw, Smartphone, Sun, Tablet, X, ZoomIn, ZoomOut } from 'lucide-react';
 import type { SourceCatalogItem } from '../../types/index';
 import { previewFor } from '../../ui/Media';
@@ -48,16 +49,35 @@ export const ReactionBar: React.FC<ReactionBarProps> = ({ id, title, showLabel =
   const { savedItemIds, toggleSavedItem, toggleLikedItem, isItemLiked, getHeartCount } = useAppStore();
   const liked = isItemLiked(id);
   const saved = savedItemIds.includes(id);
+  const heartRef = useRef<HTMLSpanElement>(null);
+  const reduced = Boolean(useReducedMotion());
+
+  /* Nhịp tim PinUI: nảy theo lò xo, chỉ chạy khi người dùng thật sự thả tim. */
+  const handleLike = () => {
+    const next = !liked;
+    toggleLikedItem(id);
+    if (reduced || !next || !heartRef.current) return;
+    animate(heartRef.current, { scale: [1, 1.42, 0.94, 1], rotate: [0, -9, 3, 0] }, {
+      duration: 0.56,
+      ease: [0.16, 1, 0.3, 1],
+    });
+  };
+
   return (
     <span className={`ex-react${className ? ` ${className}` : ''}`}>
       <button
         type="button"
-        className="ex-react-btn"
+        className="ex-react-btn ex-react-btn--heart"
+        data-liked={liked ? 'true' : 'false'}
         aria-pressed={liked}
         aria-label={`${liked ? 'Bỏ tim' : 'Thả tim'} ${title}`}
-        onClick={() => toggleLikedItem(id)}
+        onClick={handleLike}
       >
-        <span className="ex-heart-dot" aria-hidden="true" />
+        <span ref={heartRef} className="ex-heart" data-liked={liked ? 'true' : 'false'} aria-hidden="true">
+          <svg viewBox="0 0 24 24" width="15" height="15" fill={liked ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 7.8l1.1 1L12 21.2l7.7-7.8 1.1-1a5.5 5.5 0 0 0 0-7.8z" />
+          </svg>
+        </span>
         <span className="ex-react-num">{getHeartCount(id)}</span>
       </button>
       <button

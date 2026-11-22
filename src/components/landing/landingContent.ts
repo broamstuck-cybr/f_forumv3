@@ -144,41 +144,41 @@ export interface ManifestoBeat {
 export const MANIFESTO_BEATS: ManifestoBeat[] = [
   {
     id: 'beat-preview',
-    headline: 'Chạy thử giao diện thật trước khi lấy mã.',
-    body: 'Mỗi mẫu trong 196 giao diện đều mở kèm bản xem trước tương tác và liên kết nguồn gốc; bạn kiểm tra trực tiếp từng chuyển động cùng trạng thái nút bấm thay vì nhìn ảnh chụp tĩnh.',
+    headline: 'Bấm thử trước khi mang về.',
+    body: 'Mẫu nào cũng chạy được ngay trong khung. Bạn rê, bấm, gõ thử đúng như người dùng cuối sẽ làm — cảm giác đúng rồi mới lấy mã, khỏi phải sửa đi sửa lại vì một tấm ảnh trông đẹp hơn thực tế.',
     stickers: [
-      { label: 'Xem trước tương tác', bg: '#EFCEBE', tilt: -3 },
-      { label: 'Nguồn tham khảo', bg: '#BAD9E6', tilt: 2.5 },
+      { label: 'Bấm thử được', bg: '#EFCEBE', tilt: -3 },
+      { label: 'Không xem ảnh tĩnh', bg: '#BAD9E6', tilt: 2.5 },
     ],
     badge: 'prism',
   },
   {
     id: 'beat-viewport',
-    headline: 'Đổi khung 390, 768 và 1440px ngay trên một màn hình.',
-    body: 'Live View cô lập mã trong iframe sandbox không chia sẻ quyền đồng nguồn. Bạn kéo thử bố cục ở ba độ rộng chuẩn mà không làm rò rỉ dữ liệu từ phiên đang mở.',
+    headline: 'Một mẫu, xem trên điện thoại lẫn màn hình lớn.',
+    body: 'Chuyển qua lại giữa khung điện thoại và khung máy tính chỉ bằng một cú bấm. Bạn thấy ngay chỗ nào chữ chen nhau, chỗ nào nút quá nhỏ — trước khi đưa lên máy thật.',
     stickers: [
-      { label: '390px · 768px · 1440px', bg: '#EBC9AE', tilt: -2 },
-      { label: 'Chạy cô lập', bg: '#DDAD95', tilt: 3 },
+      { label: 'Điện thoại ↔ máy tính', bg: '#EBC9AE', tilt: -2 },
+      { label: 'Xem liền một mạch', bg: '#DDAD95', tilt: 3 },
     ],
     badge: 'viewport',
   },
   {
     id: 'beat-code',
-    headline: 'Tách riêng HTML, CSS, JS để sửa trực tiếp tại chỗ.',
-    body: 'Workspace chia rõ từng tệp mã nguồn. Trước khi bạn tải gói ZIP, bộ Diff & Check chạy 6 phép kiểm để đối chiếu thay đổi và tự động che mọi khóa bí mật.',
+    headline: 'Sửa đúng chỗ, thấy ngay kết quả.',
+    body: 'Mã tách thành từng tệp để bạn đọc không lẫn. Đổi một dòng là khung bên cạnh cập nhật, nên vòng lặp thử — sửa — xem của bạn ngắn lại thật nhiều.',
     stickers: [
-      { label: 'HTML · CSS · JS', bg: '#B0AEC6', tilt: 2 },
-      { label: '6 phép kiểm · Xuất ZIP', bg: '#EFCEBE', tilt: -2.5 },
+      { label: 'Sửa là thấy', bg: '#B0AEC6', tilt: 2 },
+      { label: 'Tệp rõ ràng', bg: '#EFCEBE', tilt: -2.5 },
     ],
     badge: 'code',
   },
   {
     id: 'beat-library',
-    headline: '6.770 chi tiết UI/UX, 196 giao diện và 122 kho GitHub tiếng Việt.',
-    body: 'Kho mở quy tụ thêm 61 công cụ AI cùng 83 mẫu chuyển động có sẵn prompt. Học sinh, sinh viên, giảng viên hay vibe coder đều mở được mã gốc để học cách dựng và gửi bản cải tiến lên Tri thức.',
+    headline: 'Một chỗ để tìm, một chỗ để dựng.',
+    body: 'Mẫu giao diện, công cụ, kho mã và chuyển động nằm chung một bàn soi. Tìm được thứ vừa mắt là mang thẳng vào Workspace, không phải mở thêm mười tab rồi tự ghép lại.',
     stickers: [
-      { label: '6.770 chi tiết UI/UX', bg: '#BAD9E6', tilt: -2 },
-      { label: '196 giao diện · 122 kho GitHub', bg: '#DDAD95', tilt: 2.5 },
+      { label: 'Tìm là ra', bg: '#BAD9E6', tilt: -2 },
+      { label: 'Mang thẳng vào Workspace', bg: '#DDAD95', tilt: 2.5 },
     ],
     badge: 'matrix',
   },
@@ -196,42 +196,42 @@ export const PROJECT_SHOWCASE_THUMBS: Record<string, string> = {
 export const STAGE_SHOWCASE_SHOTS: string[] = ['ff-space-voyage', 'ff-codenest', 'ff-aethera', 'ff-designpro'];
 
 export const STAGE_DIFFERENTIATORS: Array<{ id: string; title: string; text: string }> = [
-  { id: 'd1', title: 'Mã tách bạch', text: 'Tệp HTML, CSS, JS độc lập để chỉnh ngay tại chỗ' },
-  { id: 'd2', title: 'Prompt mở', text: 'Sao chép đặc tả gốc và đăng bản sửa lên Tri thức' },
-  { id: 'd3', title: 'Kiểm 6 mục', text: 'Soát HTML, JS, khung 390/768/1440px, liên kết, khóa và A11y' },
-  { id: 'd4', title: 'Hộp cát cô lập', text: 'Iframe sandbox tắt allow-same-origin, chặn rò rỉ phiên' },
+  { id: 'd1', title: 'Đọc không lẫn', text: 'Mỗi tệp một việc, mở ra là hiểu ngay đang sửa gì' },
+  { id: 'd2', title: 'Hỏi bằng lời thường', text: 'Mô tả điều bạn muốn, không cần thuộc tên thuộc tính' },
+  { id: 'd3', title: 'Soát giúp bạn', text: 'Bấm một lần là biết chỗ nào còn vướng trước khi gửi đi' },
+  { id: 'd4', title: 'Thử mà không sợ', text: 'Bản dựng chạy riêng, nghịch thoải mái không đụng dữ liệu thật' },
 ];
 
 export const OPEN_ACCESS_FEATURES: string[] = [
-  'Live View cô lập mã trong sandbox kèm 6 phép kiểm trên 390px, 768px và 1440px',
-  '196 giao diện tham khảo, 6.770 chi tiết UI/UX và 83 mẫu chuyển động kèm prompt',
-  'Danh mục 122 kho GitHub tiếng Việt cùng 61 công cụ AI đã kiểm chứng đường dẫn',
-  '15 lượt tạo mã miễn phí mỗi phiên, hỗ trợ gắn khóa API cá nhân lưu cục bộ',
+  'Xem trước chạy thật, thử mọi trạng thái trước khi lấy mã',
+  'Mẫu giao diện, chuyển động và công cụ nằm chung một bàn soi',
+  'Kho mã và công cụ chọn lọc, mở ra là dùng được ngay',
+  'Dùng miễn phí mỗi phiên, cần thêm thì gắn khóa riêng của bạn',
 ];
 
 export const FAQ_ITEMS: Array<{ id: string; question: string; answer: string }> = [
   {
     id: 'f1',
-    question: 'F-Forum dùng để làm gì?',
+    question: 'F-Forum giúp mình làm nhanh hơn ở đâu?',
     answer:
-      'F-Forum là bàn dựng và kiểm định giao diện web trực tiếp trên trình duyệt cho học sinh, sinh viên, giảng viên cùng vibe coder. Bạn chọn mẫu từ Bàn soi, mở mã HTML/CSS/JS trong Workspace để chỉnh sửa, chạy 6 phép kiểm rồi chia sẻ lại kết quả lên Tri thức.',
+      'Ở chỗ bạn không phải bắt đầu từ trang giấy trắng. Chọn một mẫu vừa mắt trong Bàn soi, mở sang Workspace, nhờ trợ lý sửa theo ý mình rồi xem kết quả ngay bên cạnh. Việc dựng một trang giới thiệu hay một bảng điều khiển nhỏ thường xong trong một buổi thay vì vài ngày.'
   },
   {
     id: 'f2',
-    question: 'Live View và Diff & Check hoạt động ra sao?',
+    question: 'Khung xem trước có an toàn khi mình dán mã lạ không?',
     answer:
-      'Live View nạp bản dựng vào iframe sandbox="allow-scripts" với referrerPolicy="no-referrer" và tắt hẳn allow-same-origin để cô lập trang chính. Khi bạn sửa mã, Diff & Check đối chiếu từng dòng thay đổi đồng thời chạy 6 phép kiểm: cấu trúc HTML, cú pháp JS, khung nhìn 390/768/1440px, liên kết nội bộ, quét khóa bí mật và tiêu chuẩn tiếp cận.',
+      'Có. Bản dựng chạy trong một khung tách biệt với trang chính, không đọc được dữ liệu phiên của bạn. Nếu đoạn mã có vòng lặp chạy mãi, khung tự dừng và báo lỗi thay vì treo cả trang. Bạn cứ thử thoải mái.'
   },
   {
     id: 'f3',
-    question: 'Kho 196 giao diện, 6.770 chi tiết UI/UX và 122 kho GitHub gồm những gì?',
+    question: 'Trong bàn soi có những gì?',
     answer:
-      'Thư viện tổng hợp 6.770 chi tiết UI/UX chuẩn hóa, 196 giao diện chạy trực tiếp và 83 mẫu chuyển động có sẵn prompt. Ngoài ra, Bàn soi còn biên tập 122 kho GitHub tiếng Việt cùng 61 công cụ AI thực chiến để bạn tra cứu hoặc nạp thẳng vào Workspace.',
+      'Bốn nhóm chính: giao diện mẫu để soi và tái sử dụng, hiệu ứng và chuyển động để thử cảm giác, không gian ba chiều để nghịch bằng chuột, và một tủ tài nguyên gồm công cụ lẫn kho mã. Tất cả đều mở được ngay, không cần cài gì.'
   },
   {
     id: 'f4',
-    question: 'Chi phí và giới hạn lượt tạo mã là gì?',
+    question: 'Dùng miễn phí được bao lâu?',
     answer:
-      'Mỗi phiên khách hoặc tài khoản thành viên có sẵn 15 lượt tạo mã miễn phí. Nếu cần chạy vượt định mức này, bạn gắn khóa API cá nhân (OpenAI-compatible, Anthropic hoặc Gemini) trong mục Cài đặt; trình duyệt chỉ giữ khóa ở bộ nhớ cục bộ và loại bỏ hoàn toàn khỏi tệp xuất ZIP.',
+      'Mỗi phiên có sẵn một lượng lượt tạo mã miễn phí, đủ để thử vài ý tưởng. Khi cần làm nhiều hơn, bạn gắn khóa riêng của mình trong Cài đặt — khóa chỉ nằm trên máy bạn và không bao giờ đi kèm tệp xuất ra.'
   },
 ];

@@ -40,16 +40,15 @@ const ShowcasePlate: React.FC<{
         <button type="button" className="btn btn-line btn-sm" onClick={onOpenExplore}>
           Soi mẫu
         </button>
-        <a
-          href={item.liveUrl}
-          target="_blank"
-          rel="noopener noreferrer"
-          aria-label={`Mở nguồn ${item.title}`}
-          title={`Mở nguồn ${item.title}`}
+        <button
+          type="button"
           className="icon-btn"
+          aria-label={`Soi kỹ ${item.title}`}
+          title={`Soi kỹ ${item.title}`}
+          onClick={onOpenExplore}
         >
           <ArrowUpRight size={17} aria-hidden="true" />
-        </a>
+        </button>
       </div>
     </div>
   </article>
@@ -89,7 +88,7 @@ export const LandingShowcase: React.FC<LandingShowcaseProps> = ({ onNavigate }) 
               Khám phá
             </button>
             <button type="button" className="btn btn-red" onClick={() => onNavigate('workspace')}>
-              Live View
+              Xem thật
             </button>
           </div>
         </div>

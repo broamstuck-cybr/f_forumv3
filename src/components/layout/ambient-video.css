@@ -36,11 +36,17 @@ html[data-theme='light'] .ambient-backdrop[data-preset='indigo'] {
 }
 
 .ambient-backdrop[data-preset='dark'] {
-  background: #121110;
+  background:
+    radial-gradient(1100px 700px at 16% 10%, rgba(214, 58, 39, 0.2), transparent 62%),
+    radial-gradient(1000px 680px at 84% 18%, rgba(125, 163, 187, 0.16), transparent 64%),
+    linear-gradient(158deg, #14120f 0%, #121110 52%, #0b0a09 100%);
 }
 
 .ambient-backdrop[data-preset='light'] {
-  background: #f4f0e6;
+  background:
+    radial-gradient(1100px 700px at 14% 10%, rgba(221, 173, 149, 0.4), transparent 62%),
+    radial-gradient(1000px 680px at 86% 18%, rgba(186, 217, 230, 0.46), transparent 64%),
+    linear-gradient(160deg, #f8f4ec 0%, #f2ede1 54%, #e9e2d3 100%);
 }
 
 .ambient-layer {
@@ -104,4 +110,100 @@ html[data-theme='light'] .ambient-scrim {
   .ambient-scrim {
     transition-duration: 0.01ms;
   }
+}
+
+/* ===========================================================================
+   Preset Gradient Lab — Godray / Mesh Dusk / Jade / Rose.
+
+   Bốn lớp xếp chồng: tia sáng chính (godray), điểm bổ túc (mesh), sương nền
+   (wash) và hạt nhiễu rất nhẹ để bề mặt có chất liệu. Tất cả là gradient
+   thuần CSS, không tải thêm tệp nên preset đổi là thấy ngay.
+=========================================================================== */
+
+.ambient-backdrop[data-preset='godray'] {
+  background:
+    conic-gradient(
+      from 200deg at 22% -12%,
+      rgba(255, 214, 148, 0.34) 0deg,
+      rgba(255, 176, 92, 0.12) 26deg,
+      transparent 52deg,
+      rgba(255, 205, 128, 0.16) 74deg,
+      transparent 104deg
+    ),
+    radial-gradient(1200px 760px at 18% 0%, rgba(255, 186, 108, 0.28), transparent 62%),
+    radial-gradient(900px 620px at 88% 84%, rgba(120, 76, 168, 0.18), transparent 66%),
+    linear-gradient(168deg, #1a1209 0%, #241809 44%, #120d07 100%);
+}
+
+html[data-theme='light'] .ambient-backdrop[data-preset='godray'] {
+  background:
+    conic-gradient(
+      from 198deg at 20% -10%,
+      rgba(255, 233, 189, 0.62) 0deg,
+      rgba(255, 205, 138, 0.28) 24deg,
+      transparent 52deg,
+      rgba(255, 219, 166, 0.3) 76deg,
+      transparent 106deg
+    ),
+    radial-gradient(1200px 760px at 16% 0%, rgba(252, 214, 156, 0.5), transparent 62%),
+    radial-gradient(960px 640px at 86% 88%, rgba(196, 168, 226, 0.22), transparent 66%),
+    linear-gradient(168deg, #fffaf1 0%, #fdf1dd 46%, #f8ebd6 100%);
+}
+
+.ambient-backdrop[data-preset='meshDusk'] {
+  background:
+    radial-gradient(720px 620px at 12% 18%, rgba(96, 205, 195, 0.34), transparent 66%),
+    radial-gradient(820px 640px at 86% 26%, rgba(240, 128, 128, 0.26), transparent 68%),
+    radial-gradient(900px 760px at 52% 96%, rgba(118, 108, 214, 0.3), transparent 70%),
+    linear-gradient(152deg, #0b0d17 0%, #111426 52%, #090a12 100%);
+}
+
+html[data-theme='light'] .ambient-backdrop[data-preset='meshDusk'] {
+  background:
+    radial-gradient(720px 620px at 10% 16%, rgba(140, 226, 216, 0.42), transparent 66%),
+    radial-gradient(820px 640px at 88% 26%, rgba(250, 178, 174, 0.4), transparent 68%),
+    radial-gradient(900px 760px at 54% 96%, rgba(190, 182, 240, 0.4), transparent 70%),
+    linear-gradient(152deg, #fbfafd 0%, #f3f1f8 52%, #efedf6 100%);
+}
+
+.ambient-backdrop[data-preset='jade'] {
+  background:
+    radial-gradient(900px 620px at 20% 8%, rgba(86, 214, 168, 0.26), transparent 64%),
+    radial-gradient(760px 560px at 82% 72%, rgba(212, 184, 96, 0.16), transparent 66%),
+    linear-gradient(164deg, #08110d 0%, #0d1a15 52%, #060c09 100%);
+}
+
+html[data-theme='light'] .ambient-backdrop[data-preset='jade'] {
+  background:
+    radial-gradient(900px 620px at 18% 6%, rgba(146, 224, 191, 0.42), transparent 64%),
+    radial-gradient(760px 560px at 84% 74%, rgba(226, 208, 148, 0.32), transparent 66%),
+    linear-gradient(164deg, #f6fbf7 0%, #e9f4ed 52%, #e2efe8 100%);
+}
+
+.ambient-backdrop[data-preset='rose'] {
+  background:
+    radial-gradient(820px 600px at 16% 10%, rgba(248, 166, 186, 0.28), transparent 64%),
+    radial-gradient(760px 600px at 84% 32%, rgba(196, 150, 232, 0.2), transparent 66%),
+    linear-gradient(166deg, #140f10 0%, #1d1416 52%, #0d090a 100%);
+}
+
+html[data-theme='light'] .ambient-backdrop[data-preset='rose'] {
+  background:
+    radial-gradient(820px 600px at 14% 8%, rgba(252, 196, 206, 0.48), transparent 64%),
+    radial-gradient(760px 600px at 86% 34%, rgba(214, 186, 240, 0.36), transparent 66%),
+    linear-gradient(166deg, #fffaf9 0%, #fbeef0 52%, #f6e8ec 100%);
+}
+
+/* hạt nhiễu rất nhẹ cho 4 preset mới — không phủ lên video của Ember/Harbour */
+.ambient-backdrop[data-preset='godray']::after,
+.ambient-backdrop[data-preset='meshDusk']::after,
+.ambient-backdrop[data-preset='jade']::after,
+.ambient-backdrop[data-preset='rose']::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.16;
+  mix-blend-mode: soft-light;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)' opacity='0.5'/%3E%3C/svg%3E");
 }

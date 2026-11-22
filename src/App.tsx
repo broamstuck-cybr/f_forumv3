@@ -49,7 +49,7 @@ const ROUTE_META: Record<
   landing: {
     title: 'F-Forum — Kho thiết kế, mã nguồn mở và không gian dựng Web/UI',
     description:
-      'F-Forum là kho tham chiếu 6.770 mẫu giao diện và không gian dựng thử Web/UI chạy trực tiếp trên trình duyệt.',
+      'F-Forum là bàn soi giao diện và không gian dựng thử web chạy trực tiếp trên trình duyệt: xem thật, sửa thật, mang về dùng.',
     path: '/',
   },
   home: {
@@ -69,7 +69,7 @@ const ROUTE_META: Record<
   },
   workspace: {
     title: 'Workspace — F-Forum',
-    description: 'Bàn làm việc 3 vùng với Live View cô lập 390/768/1440px, Diff & Check 6 lớp và xuất ZIP quét bí mật.',
+    description: 'Nơi bạn mô tả điều muốn dựng, xem kết quả ngay bên cạnh và mang bản chạy được về máy.',
     path: '/workspace',
   },
   community: {
@@ -114,7 +114,7 @@ const ROUTE_LOAD_LABELS: Record<string, string> = {
   home: 'Đang mở Trang chủ...',
   explore: 'Đang mở Bàn soi Khám phá...',
   experience: 'Đang nạp Trải nghiệm mẫu...',
-  workspace: 'Đang khởi động Workspace Arena...',
+  workspace: 'Đang mở Workspace...',
   community: 'Đang mở Tri thức cộng đồng...',
   profile: 'Đang mở Hồ sơ thành viên...',
   settings: 'Đang mở Cài đặt hệ thống...',

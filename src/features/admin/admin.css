@@ -549,3 +549,108 @@
     }
   }
 }
+
+/* ── Bảng biểu đồ dữ liệu thật: hoạt động, tăng trưởng, tài nguyên ── */
+
+.adm-charts {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  margin-bottom: var(--space-4);
+}
+
+.adm-chart-card {
+  min-width: 0;
+}
+
+.adm-chart-pair {
+  display: grid;
+  grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr);
+  gap: var(--space-4);
+}
+
+.adm-chart-box {
+  position: relative;
+  padding: 4px 4px 0;
+}
+
+.adm-chart-box--short {
+  padding-bottom: 8px;
+}
+
+.adm-chart-tip {
+  position: absolute;
+  top: 10px;
+  right: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 6px 10px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--bg-raised);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
+  font-size: var(--text-xs);
+  color: var(--fg-muted);
+  pointer-events: none;
+}
+
+.adm-chart-tip strong {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--fg);
+}
+
+.adm-resource-list {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-3);
+  margin: 0;
+  padding: 4px 0 0;
+}
+
+.adm-resource-list div {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: var(--bg-sunken);
+}
+
+.adm-resource-list dt {
+  font-size: var(--text-2xs);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--fg-faint);
+}
+
+.adm-resource-list dd {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: var(--text-md);
+  color: var(--fg);
+}
+
+.adm-resource-bar {
+  height: 6px;
+  margin-top: var(--space-3);
+  border-radius: var(--radius-pill);
+  background: var(--bg-sunken);
+  overflow: hidden;
+}
+
+.adm-resource-bar span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--red);
+  transition: width var(--dur-3) var(--ease-ux);
+}
+
+@media (max-width: 900px) {
+  .adm-chart-pair {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

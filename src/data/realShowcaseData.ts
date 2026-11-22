@@ -288,16 +288,16 @@ export const STACKING_PROJECTS: StackingProjectItem[] = [
     category: 'Kho Tri Thức',
     title: 'SOURCEOFKNOWLEDGFORAI',
     subtitle:
-      'Kho lưu trữ 6.770 thành phần thực chiến chuẩn hóa từ CodeFronts, ThreeUI, LucianLabs, MotionSites và PinUI.',
+      'Kho dựng sẵn gom giao diện, hiệu ứng, không gian ba chiều và bố cục về cùng một chỗ.',
     liveUrl: 'https://github.com/broamstuck-cybr/SOURCEOFKNOWLEDGFORAI',
     metrics: [
-      { label: 'Thành phần', value: '6.770' },
-      { label: 'Thư viện', value: '5' },
-      { label: 'Thẻ ThreeUI', value: '1.485' },
+      { label: 'Nhóm', value: 'Năm' },
+      { label: 'Lọc thẻ', value: 'Có' },
+      { label: 'Tìm kiếm', value: 'Tức thì' },
     ],
     images: [FALLBACK_COURSE_CARD, FALLBACK_ISOMETRIC, FALLBACK_LIQUID_GLASS],
     previewHtml:
-      '<div class="sok-card"><span class="sok-tag">6.770 MỤC</span><h3>Kiến trúc Đa Thư viện</h3><p>CodeFronts 5.047 · ThreeUI 961 · LucianLabs 400 · MotionSites 321 · PinUI 41</p></div>',
+      '<div class="sok-card"><span class="sok-tag">SẴN SÀNG DÙNG</span><h3>Một chỗ, nhiều chất liệu</h3><p>Giao diện · Hiệu ứng · Không gian 3D · Chuyển động · Bố cục</p></div>',
     previewCss:
       'body{margin:0;min-height:100vh;display:grid;place-items:center;background:#090a0d;color:#f4f1ea;font-family:system-ui,sans-serif}.sok-card{padding:24px;border-radius:20px;border:1px solid rgba(200,155,84,.36);background:#141720;max-width:340px}.sok-tag{font-size:11px;letter-spacing:.12em;color:#c89b54}.sok-card h3{margin:10px 0 8px;font-size:18px}.sok-card p{margin:0;font-size:13px;color:#adb3bf;line-height:1.6}',
   },
@@ -512,12 +512,12 @@ export const BROAMSTUCK_REPOS: BroamstuckRepoShowcase[] = [
     license: 'Open Source',
     pushedAt: '2026-11-19T08:38:50Z',
     summaryVi:
-      'Kho tri thức giao diện hợp nhất 6.770 thành phần thực chiến từ CodeFronts, ThreeUI, LucianLabs, MotionSites và PinUI.',
+      'Kho giao diện dựng sẵn, gom năm chất liệu khác nhau về cùng một bàn soi để tìm và dùng ngay.',
     metrics: [
-      { label: 'Tổng mục', value: '6.770' },
-      { label: 'CodeFronts', value: '5.047' },
-      { label: 'ThreeUI', value: '961' },
-      { label: 'LucianLabs', value: '400' },
+      { label: 'Bố cục', value: 'Sẵn sàng' },
+      { label: 'Không gian 3D', value: 'Sẵn sàng' },
+      { label: 'Hiệu ứng', value: 'Sẵn sàng' },
+      { label: 'Chuyển động', value: 'Sẵn sàng' },
     ],
     keyPaths: ['catalog.json', 'sources/lucianlabs/tokens.css', 'assets/previews/'],
     interactiveSnippet: {

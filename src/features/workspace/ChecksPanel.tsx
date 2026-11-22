@@ -26,7 +26,7 @@ const PROCESS_WORDS: Record<ProcessStatus, string> = {
 const CATEGORY_TITLES: Record<CheckCategory, string> = {
   html_structure: '1. Cấu trúc tài liệu HTML5',
   js_syntax: '2. Cú pháp CSS & JavaScript',
-  responsive_layout: '3. Khung nhìn 390 · 768 · 1440px',
+  responsive_layout: '3. Bố cục vừa điện thoại, máy tính bảng và máy tính',
   internal_links: '4. Liên kết tài nguyên & Neo DOM',
   secret_scan: '5. Quét rò rỉ khóa API & Bí mật',
   accessibility: '6. Truy cập & Ngữ nghĩa A11y',

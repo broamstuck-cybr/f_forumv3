@@ -51,7 +51,7 @@ export const MOTION_MARQUEE_ITEMS: MotionMarqueeItem[] = [
     "specs": {
       "layout": "12 cột lệch tâm · Hero phân tầng",
       "motion": "Trượt mượt theo trục Y + mờ dần lớp nền",
-      "responsive": "390 / 768 / 1440px",
+      "responsive": "Điện thoại · máy tính bảng · máy tính",
       "durationMs": 520,
       "easing": "cubic-bezier(0.22, 1, 0.36, 1)"
     },
@@ -75,7 +75,7 @@ export const MOTION_MARQUEE_ITEMS: MotionMarqueeItem[] = [
     "specs": {
       "layout": "Khung dựng 3D toàn cảnh + lớp phủ HUD",
       "motion": "Quay quỹ đạo liên tục + giảm chấn góc nhìn",
-      "responsive": "390 / 768 / 1440px",
+      "responsive": "Điện thoại · máy tính bảng · máy tính",
       "durationMs": 720,
       "easing": "cubic-bezier(0.16, 1, 0.3, 1)"
     },
@@ -99,7 +99,7 @@ export const MOTION_MARQUEE_ITEMS: MotionMarqueeItem[] = [
     "specs": {
       "layout": "Bố cục ứng dụng 3 vùng · Khung biểu đồ chính",
       "motion": "Cập nhật đường cong mượt + chuyển tab tức thì",
-      "responsive": "390 / 768 / 1440px",
+      "responsive": "Điện thoại · máy tính bảng · máy tính",
       "durationMs": 380,
       "easing": "cubic-bezier(0.22, 1, 0.36, 1)"
     },
@@ -121,9 +121,9 @@ export const MOTION_MARQUEE_ITEMS: MotionMarqueeItem[] = [
     "fallbackUrl": "https://threeui.com/social/pages/hero/advanced-glass-material.jpg",
     "summaryVi": "Khối tổng hợp quyền lợi bảo mật doanh nghiệp kèm nút kích hoạt dùng thử và bảng cam kết SLA.",
     "specs": {
-      "layout": "Lưới lợi ích 3 cột + dải kêu gọi hành động",
+      "layout": "Ba cột quyền lợi gọn, một dải mời dùng thử",
       "motion": "Nổi thẻ khi lướt chuột + sáng chỉ báo trạng thái",
-      "responsive": "390 / 768 / 1440px",
+      "responsive": "Điện thoại · máy tính bảng · máy tính",
       "durationMs": 420,
       "easing": "cubic-bezier(0.22, 1, 0.36, 1)"
     },
@@ -147,7 +147,7 @@ export const MOTION_MARQUEE_ITEMS: MotionMarqueeItem[] = [
     "specs": {
       "layout": "Thanh trượt quy mô + 3 cột gói cước so sánh",
       "motion": "Nội suy con số giá tiền mượt khi kéo thanh trượt",
-      "responsive": "390 / 768 / 1440px",
+      "responsive": "Điện thoại · máy tính bảng · máy tính",
       "durationMs": 360,
       "easing": "cubic-bezier(0.2, 0.8, 0.2, 1)"
     },
@@ -171,7 +171,7 @@ export const MOTION_MARQUEE_ITEMS: MotionMarqueeItem[] = [
     "specs": {
       "layout": "Lưới liên kết 4 cột + chữ khổ lớn sát đáy",
       "motion": "Gạch chân trượt mượt + lộ chữ lớn khi cuộn tới đáy",
-      "responsive": "390 / 768 / 1440px",
+      "responsive": "Điện thoại · máy tính bảng · máy tính",
       "durationMs": 460,
       "easing": "cubic-bezier(0.22, 1, 0.36, 1)"
     },
@@ -195,7 +195,7 @@ export const MOTION_MARQUEE_ITEMS: MotionMarqueeItem[] = [
     "specs": {
       "layout": "Khung toàn màn hình · Tâm điểm thị sai",
       "motion": "Trôi quỹ đạo chậm + xuất hiện chữ tuần tự",
-      "responsive": "390 / 768 / 1440px",
+      "responsive": "Điện thoại · máy tính bảng · máy tính",
       "durationMs": 640,
       "easing": "cubic-bezier(0.16, 1, 0.3, 1)"
     },
@@ -219,7 +219,7 @@ export const MOTION_MARQUEE_ITEMS: MotionMarqueeItem[] = [
     "specs": {
       "layout": "Sân khấu hạt 3D + khung chữ căn đáy",
       "motion": "Luồng hạt bốc lên + biến thiên độ sáng",
-      "responsive": "390 / 768 / 1440px",
+      "responsive": "Điện thoại · máy tính bảng · máy tính",
       "durationMs": 680,
       "easing": "cubic-bezier(0.22, 1, 0.36, 1)"
     },
@@ -243,7 +243,7 @@ export const MOTION_MARQUEE_ITEMS: MotionMarqueeItem[] = [
     "specs": {
       "layout": "Lưới mô-đun giám sát · Thẻ trạng thái",
       "motion": "Xung nhịp kết nối + mở rộng ngăn chi tiết",
-      "responsive": "390 / 768 / 1440px",
+      "responsive": "Điện thoại · máy tính bảng · máy tính",
       "durationMs": 400,
       "easing": "cubic-bezier(0.2, 0.8, 0.2, 1)"
     },
@@ -267,7 +267,7 @@ export const MOTION_MARQUEE_ITEMS: MotionMarqueeItem[] = [
     "specs": {
       "layout": "Chia 2 cột: biểu mẫu đăng ký + bản xem trước",
       "motion": "Kiểm tra email tức thì + chuyển trạng thái gửi",
-      "responsive": "390 / 768 / 1440px",
+      "responsive": "Điện thoại · máy tính bảng · máy tính",
       "durationMs": 380,
       "easing": "cubic-bezier(0.2, 0.8, 0.2, 1)"
     },
@@ -291,7 +291,7 @@ export const MOTION_MARQUEE_ITEMS: MotionMarqueeItem[] = [
     "specs": {
       "layout": "Lưới Bento 4×3 · Thẻ kích thước đa dạng",
       "motion": "Co giãn bố cục khi lọc + nổi viền thẻ đang chọn",
-      "responsive": "390 / 768 / 1440px",
+      "responsive": "Điện thoại · máy tính bảng · máy tính",
       "durationMs": 420,
       "easing": "cubic-bezier(0.22, 1, 0.36, 1)"
     },
@@ -315,7 +315,7 @@ export const MOTION_MARQUEE_ITEMS: MotionMarqueeItem[] = [
     "specs": {
       "layout": "Khung thông tin 2 tầng · Chia 5 cột cân đối",
       "motion": "Chuyển màu liên kết mượt + cuộn mượt lên đầu trang",
-      "responsive": "390 / 768 / 1440px",
+      "responsive": "Điện thoại · máy tính bảng · máy tính",
       "durationMs": 420,
       "easing": "cubic-bezier(0.25, 1, 0.5, 1)"
     },
@@ -339,7 +339,7 @@ export const MOTION_MARQUEE_ITEMS: MotionMarqueeItem[] = [
     "specs": {
       "layout": "Khung cửa sổ tâm điểm · Lưới đối xứng",
       "motion": "Phóng khung khẩu độ theo tiến độ cuộn",
-      "responsive": "390 / 768 / 1440px",
+      "responsive": "Điện thoại · máy tính bảng · máy tính",
       "durationMs": 580,
       "easing": "cubic-bezier(0.22, 1, 0.36, 1)"
     },
@@ -363,7 +363,7 @@ export const MOTION_MARQUEE_ITEMS: MotionMarqueeItem[] = [
     "specs": {
       "layout": "Quỹ đạo elip 3D · Tâm chữ cố định",
       "motion": "Xoay vòng thẻ theo vận tốc cuộn và kéo chuột",
-      "responsive": "390 / 768 / 1440px",
+      "responsive": "Điện thoại · máy tính bảng · máy tính",
       "durationMs": 620,
       "easing": "cubic-bezier(0.22, 1, 0.36, 1)"
     },
@@ -387,7 +387,7 @@ export const MOTION_MARQUEE_ITEMS: MotionMarqueeItem[] = [
     "specs": {
       "layout": "Khung soạn thảo 2 ngăn + thanh công cụ nổi",
       "motion": "Khớp vị trí khối bằng lò xo + đổi khung nhìn",
-      "responsive": "390 / 768 / 1440px",
+      "responsive": "Điện thoại · máy tính bảng · máy tính",
       "durationMs": 420,
       "easing": "cubic-bezier(0.22, 1, 0.36, 1)"
     },
@@ -411,7 +411,7 @@ export const MOTION_MARQUEE_ITEMS: MotionMarqueeItem[] = [
     "specs": {
       "layout": "Khung tiêu điểm + thẻ lộ trình 4 chặng",
       "motion": "Mở chi tiết từng tuần + nổi nút đăng ký",
-      "responsive": "390 / 768 / 1440px",
+      "responsive": "Điện thoại · máy tính bảng · máy tính",
       "durationMs": 440,
       "easing": "cubic-bezier(0.22, 1, 0.36, 1)"
     },
@@ -435,7 +435,7 @@ export const MOTION_MARQUEE_ITEMS: MotionMarqueeItem[] = [
     "specs": {
       "layout": "Ngăn xếp thẻ 3 lớp · Điều hướng tiến/lùi",
       "motion": "Đẩy thẻ đầu ra sau với quán tính lò xo",
-      "responsive": "390 / 768 / 1440px",
+      "responsive": "Điện thoại · máy tính bảng · máy tính",
       "durationMs": 460,
       "easing": "cubic-bezier(0.22, 1, 0.36, 1)"
     },
@@ -459,7 +459,7 @@ export const MOTION_MARQUEE_ITEMS: MotionMarqueeItem[] = [
     "specs": {
       "layout": "Lưới kỹ thuật viền 1px · 4 nhóm tài liệu",
       "motion": "Nhấp nháy đèn trạng thái xanh + mở menu ngôn ngữ",
-      "responsive": "390 / 768 / 1440px",
+      "responsive": "Điện thoại · máy tính bảng · máy tính",
       "durationMs": 360,
       "easing": "cubic-bezier(0.2, 0.8, 0.2, 1)"
     },
@@ -483,7 +483,7 @@ export const MOTION_MARQUEE_ITEMS: MotionMarqueeItem[] = [
     "specs": {
       "layout": "Lưới biên tập 4 cột · Khoảng thở lớn",
       "motion": "Lật dòng tiêu đề + chuyển ảnh mượt",
-      "responsive": "390 / 768 / 1440px",
+      "responsive": "Điện thoại · máy tính bảng · máy tính",
       "durationMs": 480,
       "easing": "cubic-bezier(0.25, 1, 0.5, 1)"
     },
@@ -507,7 +507,7 @@ export const MOTION_MARQUEE_ITEMS: MotionMarqueeItem[] = [
     "specs": {
       "layout": "Lớp cảnh sâu 3 tầng · Cuộn đồng bộ",
       "motion": "Bồng bềnh theo hàm sin + lệch pha khi cuộn",
-      "responsive": "390 / 768 / 1440px",
+      "responsive": "Điện thoại · máy tính bảng · máy tính",
       "durationMs": 700,
       "easing": "cubic-bezier(0.25, 1, 0.5, 1)"
     },
@@ -531,7 +531,7 @@ export const MOTION_MARQUEE_ITEMS: MotionMarqueeItem[] = [
     "specs": {
       "layout": "Khung sóng âm trung tâm + thẻ chỉ số 4 cột",
       "motion": "Dao động cột sóng + trượt thanh tiến trình",
-      "responsive": "390 / 768 / 1440px",
+      "responsive": "Điện thoại · máy tính bảng · máy tính",
       "durationMs": 450,
       "easing": "cubic-bezier(0.25, 1, 0.5, 1)"
     },
@@ -555,7 +555,7 @@ export const MOTION_MARQUEE_ITEMS: MotionMarqueeItem[] = [
     "specs": {
       "layout": "Khung thông tin + lịch chọn khung giờ",
       "motion": "Chuyển bước chọn ngày -> giờ -> xác nhận mượt",
-      "responsive": "390 / 768 / 1440px",
+      "responsive": "Điện thoại · máy tính bảng · máy tính",
       "durationMs": 400,
       "easing": "cubic-bezier(0.22, 1, 0.36, 1)"
     },
@@ -579,7 +579,7 @@ export const MOTION_MARQUEE_ITEMS: MotionMarqueeItem[] = [
     "specs": {
       "layout": "Lưới thẻ telemetry 4 cột · Số liệu monospace",
       "motion": "Cập nhật thanh tốc độ + đổi vòng đua đang xem",
-      "responsive": "390 / 768 / 1440px",
+      "responsive": "Điện thoại · máy tính bảng · máy tính",
       "durationMs": 380,
       "easing": "cubic-bezier(0.16, 1, 0.3, 1)"
     },
@@ -603,7 +603,7 @@ export const MOTION_MARQUEE_ITEMS: MotionMarqueeItem[] = [
     "specs": {
       "layout": "Thanh thông số phiên bản + lưới điều hướng",
       "motion": "Sáng viền thẻ phiên bản + sao chép lệnh cài đặt",
-      "responsive": "390 / 768 / 1440px",
+      "responsive": "Điện thoại · máy tính bảng · máy tính",
       "durationMs": 400,
       "easing": "cubic-bezier(0.22, 1, 0.36, 1)"
     },
@@ -627,7 +627,7 @@ export const MOTION_MARQUEE_ITEMS: MotionMarqueeItem[] = [
     "specs": {
       "layout": "Chia đôi bất đối xứng 5/7 · Khung dự án",
       "motion": "Trượt thẻ ngang + đổi trạng thái con trỏ",
-      "responsive": "390 / 768 / 1440px",
+      "responsive": "Điện thoại · máy tính bảng · máy tính",
       "durationMs": 460,
       "easing": "cubic-bezier(0.22, 1, 0.36, 1)"
     },
@@ -651,7 +651,7 @@ export const MOTION_MARQUEE_ITEMS: MotionMarqueeItem[] = [
     "specs": {
       "layout": "Lưới ma trận điểm · Khung điều khiển góc",
       "motion": "Gợn sóng điểm ảnh theo bán kính con trỏ",
-      "responsive": "390 / 768 / 1440px",
+      "responsive": "Điện thoại · máy tính bảng · máy tính",
       "durationMs": 420,
       "easing": "cubic-bezier(0.2, 0.8, 0.2, 1)"
     },
@@ -675,7 +675,7 @@ export const MOTION_MARQUEE_ITEMS: MotionMarqueeItem[] = [
     "specs": {
       "layout": "Sơ đồ luồng ngang · Thẻ bước tác vụ",
       "motion": "Chạy điểm sáng dọc đường nối khi kích hoạt",
-      "responsive": "390 / 768 / 1440px",
+      "responsive": "Điện thoại · máy tính bảng · máy tính",
       "durationMs": 480,
       "easing": "cubic-bezier(0.22, 1, 0.36, 1)"
     },
@@ -699,7 +699,7 @@ export const MOTION_MARQUEE_ITEMS: MotionMarqueeItem[] = [
     "specs": {
       "layout": "Trục cột mốc dọc + hộp đăng ký danh sách chờ",
       "motion": "Sáng dần cột mốc khi cuộn + phản hồi gửi form",
-      "responsive": "390 / 768 / 1440px",
+      "responsive": "Điện thoại · máy tính bảng · máy tính",
       "durationMs": 460,
       "easing": "cubic-bezier(0.25, 1, 0.5, 1)"
     },
@@ -723,7 +723,7 @@ export const MOTION_MARQUEE_ITEMS: MotionMarqueeItem[] = [
     "specs": {
       "layout": "Cột mục lục cố định + lưới thẻ biểu phí",
       "motion": "Cuộn neo mượt tới từng mục + mở rộng giải thích",
-      "responsive": "390 / 768 / 1440px",
+      "responsive": "Điện thoại · máy tính bảng · máy tính",
       "durationMs": 360,
       "easing": "cubic-bezier(0.2, 0.8, 0.2, 1)"
     },
@@ -747,7 +747,7 @@ export const MOTION_MARQUEE_ITEMS: MotionMarqueeItem[] = [
     "specs": {
       "layout": "Dải đồng hồ 3 múi giờ + cột điều hướng đôi",
       "motion": "Cập nhật kim giây thời gian thực + gạch chân liên kết",
-      "responsive": "390 / 768 / 1440px",
+      "responsive": "Điện thoại · máy tính bảng · máy tính",
       "durationMs": 380,
       "easing": "cubic-bezier(0.2, 0.8, 0.2, 1)"
     },
@@ -771,7 +771,7 @@ export const MOTION_MARQUEE_ITEMS: MotionMarqueeItem[] = [
     "specs": {
       "layout": "Trục dọc tâm điểm · Khung nhập lệnh nổi",
       "motion": "Sáng viền xung nhịp + gõ chữ tuần tự",
-      "responsive": "390 / 768 / 1440px",
+      "responsive": "Điện thoại · máy tính bảng · máy tính",
       "durationMs": 440,
       "easing": "cubic-bezier(0.2, 0.8, 0.2, 1)"
     },
@@ -795,7 +795,7 @@ export const MOTION_MARQUEE_ITEMS: MotionMarqueeItem[] = [
     "specs": {
       "layout": "Trục chiều sâu Z · Khung ảnh toàn cảnh",
       "motion": "Tiến lớp ảnh theo trục Z + khóa tiêu cự",
-      "responsive": "390 / 768 / 1440px",
+      "responsive": "Điện thoại · máy tính bảng · máy tính",
       "durationMs": 650,
       "easing": "cubic-bezier(0.16, 1, 0.3, 1)"
     },
@@ -819,7 +819,7 @@ export const MOTION_MARQUEE_ITEMS: MotionMarqueeItem[] = [
     "specs": {
       "layout": "Lịch trục dọc + cột việc ưu tiên + bộ đếm",
       "motion": "Đánh dấu hoàn thành mượt + co giãn khối giờ",
-      "responsive": "390 / 768 / 1440px",
+      "responsive": "Điện thoại · máy tính bảng · máy tính",
       "durationMs": 360,
       "easing": "cubic-bezier(0.2, 0.8, 0.2, 1)"
     },
@@ -843,7 +843,7 @@ export const MOTION_MARQUEE_ITEMS: MotionMarqueeItem[] = [
     "specs": {
       "layout": "Đồ họa ma trận điểm + khung kêu gọi trung tâm",
       "motion": "Nhấp nháy nút điểm thành viên + phóng nhẹ nút chính",
-      "responsive": "390 / 768 / 1440px",
+      "responsive": "Điện thoại · máy tính bảng · máy tính",
       "durationMs": 480,
       "easing": "cubic-bezier(0.22, 1, 0.36, 1)"
     },
@@ -867,7 +867,7 @@ export const MOTION_MARQUEE_ITEMS: MotionMarqueeItem[] = [
     "specs": {
       "layout": "Thẻ tổng tài sản + 3 thẻ chỉ số bảo chứng",
       "motion": "Đổ đầy thanh tỷ lệ phân bổ + đổi đơn vị hiển thị",
-      "responsive": "390 / 768 / 1440px",
+      "responsive": "Điện thoại · máy tính bảng · máy tính",
       "durationMs": 420,
       "easing": "cubic-bezier(0.22, 1, 0.36, 1)"
     },
@@ -891,7 +891,7 @@ export const MOTION_MARQUEE_ITEMS: MotionMarqueeItem[] = [
     "specs": {
       "layout": "Khung CTA cuối trang + lưới 4 cột + thanh pháp lý",
       "motion": "Nổi nút bắt đầu miễn phí + hiệu ứng di chuột liên kết",
-      "responsive": "390 / 768 / 1440px",
+      "responsive": "Điện thoại · máy tính bảng · máy tính",
       "durationMs": 420,
       "easing": "cubic-bezier(0.22, 1, 0.36, 1)"
     },
@@ -915,7 +915,7 @@ export const MOTION_MARQUEE_ITEMS: MotionMarqueeItem[] = [
     "specs": {
       "layout": "Lưới tọa độ kỹ thuật · Viền 1px",
       "motion": "Quét đường lưới + nhảy bộ đếm số liệu",
-      "responsive": "390 / 768 / 1440px",
+      "responsive": "Điện thoại · máy tính bảng · máy tính",
       "durationMs": 500,
       "easing": "cubic-bezier(0.16, 1, 0.3, 1)"
     },
@@ -939,7 +939,7 @@ export const MOTION_MARQUEE_ITEMS: MotionMarqueeItem[] = [
     "specs": {
       "layout": "Khung kiến trúc 3D + thanh trượt thời gian",
       "motion": "Nội suy góc chiếu sáng và nhiệt độ màu",
-      "responsive": "390 / 768 / 1440px",
+      "responsive": "Điện thoại · máy tính bảng · máy tính",
       "durationMs": 560,
       "easing": "cubic-bezier(0.22, 1, 0.36, 1)"
     },
@@ -963,7 +963,7 @@ export const MOTION_MARQUEE_ITEMS: MotionMarqueeItem[] = [
     "specs": {
       "layout": "Lưới sản phẩm 3 cột + thanh lọc nổi",
       "motion": "Phóng nhẹ ảnh khi di chuột + trượt ngăn giỏ hàng",
-      "responsive": "390 / 768 / 1440px",
+      "responsive": "Điện thoại · máy tính bảng · máy tính",
       "durationMs": 400,
       "easing": "cubic-bezier(0.22, 1, 0.36, 1)"
     },
@@ -987,7 +987,7 @@ export const MOTION_MARQUEE_ITEMS: MotionMarqueeItem[] = [
     "specs": {
       "layout": "Khung tùy chỉnh trực quan + thẻ tóm tắt yêu cầu",
       "motion": "Đổi thông số diện tích/chi phí tức thì khi chọn",
-      "responsive": "390 / 768 / 1440px",
+      "responsive": "Điện thoại · máy tính bảng · máy tính",
       "durationMs": 420,
       "easing": "cubic-bezier(0.2, 0.8, 0.2, 1)"
     },
@@ -1011,7 +1011,7 @@ export const MOTION_MARQUEE_ITEMS: MotionMarqueeItem[] = [
     "specs": {
       "layout": "3 thẻ gói dịch vụ + bảng đối chiếu tính năng",
       "motion": "Nổi thẻ gói khuyên dùng + đổi hạn mức theo quy mô",
-      "responsive": "390 / 768 / 1440px",
+      "responsive": "Điện thoại · máy tính bảng · máy tính",
       "durationMs": 400,
       "easing": "cubic-bezier(0.22, 1, 0.36, 1)"
     },
@@ -1035,7 +1035,7 @@ export const MOTION_MARQUEE_ITEMS: MotionMarqueeItem[] = [
     "specs": {
       "layout": "Cột giới thiệu + 3 cột giải pháp + huy hiệu chuẩn",
       "motion": "Hiệu ứng sáng nhẹ huy hiệu + chuyển trạng thái liên kết",
-      "responsive": "390 / 768 / 1440px",
+      "responsive": "Điện thoại · máy tính bảng · máy tính",
       "durationMs": 400,
       "easing": "cubic-bezier(0.22, 1, 0.36, 1)"
     },
@@ -1059,7 +1059,7 @@ export const MOTION_MARQUEE_ITEMS: MotionMarqueeItem[] = [
     "specs": {
       "layout": "Tấm kính tối · Điểm sáng hướng tâm",
       "motion": "Dịch chuyển luồng sáng theo vị trí trỏ chuột",
-      "responsive": "390 / 768 / 1440px",
+      "responsive": "Điện thoại · máy tính bảng · máy tính",
       "durationMs": 540,
       "easing": "cubic-bezier(0.22, 1, 0.36, 1)"
     },
@@ -1083,7 +1083,7 @@ export const MOTION_MARQUEE_ITEMS: MotionMarqueeItem[] = [
     "specs": {
       "layout": "Tâm điểm lăng kính 3D · Lưới thông tin 3 cột",
       "motion": "Nghiêng trục X/Y + dịch dải phổ màu",
-      "responsive": "390 / 768 / 1440px",
+      "responsive": "Điện thoại · máy tính bảng · máy tính",
       "durationMs": 540,
       "easing": "cubic-bezier(0.22, 1, 0.36, 1)"
     },
@@ -1107,7 +1107,7 @@ export const MOTION_MARQUEE_ITEMS: MotionMarqueeItem[] = [
     "specs": {
       "layout": "Sân khấu sản phẩm lớn + cột đặt hàng",
       "motion": "Chuyển góc ảnh mượt + phản hồi nút chọn cỡ",
-      "responsive": "390 / 768 / 1440px",
+      "responsive": "Điện thoại · máy tính bảng · máy tính",
       "durationMs": 440,
       "easing": "cubic-bezier(0.22, 1, 0.36, 1)"
     },
@@ -1131,7 +1131,7 @@ export const MOTION_MARQUEE_ITEMS: MotionMarqueeItem[] = [
     "specs": {
       "layout": "Thẻ trạng thái nhận việc + danh mục dịch vụ",
       "motion": "Phản hồi sao chép clipboard + trượt thẻ dự án",
-      "responsive": "390 / 768 / 1440px",
+      "responsive": "Điện thoại · máy tính bảng · máy tính",
       "durationMs": 390,
       "easing": "cubic-bezier(0.22, 1, 0.36, 1)"
     },
@@ -1155,7 +1155,7 @@ export const MOTION_MARQUEE_ITEMS: MotionMarqueeItem[] = [
     "specs": {
       "layout": "Lưới thẻ KPI + bảng phí theo phương thức",
       "motion": "Chuyển tab tiền tệ mượt + làm nổi dòng đang trỏ",
-      "responsive": "390 / 768 / 1440px",
+      "responsive": "Điện thoại · máy tính bảng · máy tính",
       "durationMs": 380,
       "easing": "cubic-bezier(0.2, 0.8, 0.2, 1)"
     },
@@ -1179,7 +1179,7 @@ export const MOTION_MARQUEE_ITEMS: MotionMarqueeItem[] = [
     "specs": {
       "layout": "Thanh đỉnh 1 dòng + bảng Mega Menu 3 cột",
       "motion": "Bung bảng menu mượt + biến đổi nút 3 gạch trên mobile",
-      "responsive": "390 / 768 / 1440px",
+      "responsive": "Điện thoại · máy tính bảng · máy tính",
       "durationMs": 340,
       "easing": "cubic-bezier(0.22, 1, 0.36, 1)"
     },

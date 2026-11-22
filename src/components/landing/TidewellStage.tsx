@@ -17,9 +17,9 @@ interface TidewellStageProps {
 type ViewportPreset = '390' | '768' | '1440';
 
 const VIEWPORT_PRESETS: Array<{ id: ViewportPreset; label: string; ratioLabel: string }> = [
-  { id: '390', label: '390', ratioLabel: '390px · Di động' },
-  { id: '768', label: '768', ratioLabel: '768px · Máy tính bảng' },
-  { id: '1440', label: '1440', ratioLabel: '1440px · Máy tính bàn' },
+  { id: '390', label: 'Điện thoại', ratioLabel: 'khung điện thoại' },
+  { id: '768', label: 'Máy tính bảng', ratioLabel: 'khung máy tính bảng' },
+  { id: '1440', label: 'Máy tính', ratioLabel: 'khung máy tính' },
 ];
 
 const SHOWCASE_CARDS: KineticStageCard[] = STAGE_SHOWCASE_SHOTS.map(
@@ -417,14 +417,14 @@ export const TidewellStage: React.FC<TidewellStageProps> = ({ onNavigate }) => {
             <div style={{ display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px' }}>
               <div>
                 <p className="tw-corner-label">Không chỉ là hình ảnh</p>
-                <h3 className="tw-corner-title">Sản phẩm chạy thật trong Live View</h3>
+                <h3 className="tw-corner-title">Bản dựng chạy thật, ngay tại đây</h3>
               </div>
               <div className="lp-actions">
                 <button type="button" className="btn btn-line" onClick={() => onNavigate('explore')}>
                   Mở kho mẫu
                 </button>
                 <button type="button" className="btn btn-red" onClick={() => onNavigate('workspace')}>
-                  Mở Live View
+                  Dựng bản của bạn
                 </button>
               </div>
             </div>
@@ -466,23 +466,23 @@ export const TidewellStage: React.FC<TidewellStageProps> = ({ onNavigate }) => {
               đến sản phẩm
               <span className="tw-subphrase">biến ý tưởng thành giao diện chạy thật trên trình duyệt</span>
             </h2>
-            <p className="tw-telemetry">196 giao diện tham khảo · 12 mẫu tiêu biểu</p>
+            <p className="tw-telemetry">Chọn một mẫu gần với ý bạn · thử ngay trong khung</p>
           </div>
 
           <div ref={pass2Ref} className="tw-pass-block" data-pass-id="2" style={{ display: 'none' }}>
-            <p className="tw-kicker">02 · thông số &amp; mã nguồn</p>
+            <p className="tw-kicker">02 · lấy về và chỉnh tiếp</p>
             <h2 className="tw-phrase">
-              Chỉnh thông số{' '}
+              Mang về{' '}
               <span className="tw-chip tw-chip--code" aria-hidden="true">
-                <span className="tw-chip-code-top">390 · 1440</span>
-                <span className="tw-chip-code-bot">HTML · CSS</span>
+                <span className="tw-chip-code-top">Điện thoại</span>
+                <span className="tw-chip-code-bot">Máy tính</span>
               </span>{' '}
-              xuất mã sạch
+              nguyên bản mã
               <span className="tw-subphrase">
-                đọc cấu trúc tệp, đối chiếu khung nhìn và sao chép prompt cho cộng đồng
+                cảm giác đúng chưa, chỗ nào cần sửa — tất cả nằm trong tầm mắt
               </span>
             </h2>
-            <p className="tw-telemetry">6.770 chi tiết UI/UX · Sao chép Prompt · Tải gói ZIP</p>
+            <p className="tw-telemetry">Tệp rõ ràng · Không khóa lạ · Không rác</p>
           </div>
         </div>
 
@@ -503,21 +503,21 @@ export const TidewellStage: React.FC<TidewellStageProps> = ({ onNavigate }) => {
           <div className="tw-window-backdrop" aria-hidden="true" />
           <div className="tw-window-stripes" aria-hidden="true">
             <div className="tw-window-col">
-              <span>01 · LIVE VIEW</span>
-              <span>sandbox=&quot;allow-scripts&quot;</span>
+              <span>01 · XEM THẬT</span>
+              <span>chạy ngay trong khung</span>
             </div>
             <div className="tw-window-col">
-              <span>02 · ĐA KHUNG NHÌN</span>
-              <span>390px / 768px / 1440px</span>
+              <span>02 · MỌI KHUNG HÌNH</span>
+              <span>điện thoại · máy tính bảng · máy tính</span>
             </div>
             <div className="tw-window-col">
-              <span>03 · MÃ SẠCH &amp; PROMPT</span>
-              <span>HTML · CSS · JS · ZIP</span>
+              <span>03 · CẦM VỀ SỬA</span>
+              <span>tệp rõ ràng · không khóa lạ</span>
             </div>
           </div>
 
           <div className="tw-corner-top">
-            <p className="tw-corner-label">01 · giao diện &amp; mã nguồn</p>
+            <p className="tw-corner-label">01 · bấm thử là hiểu</p>
             <h3 className="tw-corner-title">Không chỉ là hình ảnh</h3>
           </div>
 
@@ -571,13 +571,13 @@ export const TidewellStage: React.FC<TidewellStageProps> = ({ onNavigate }) => {
                 </div>
 
                 <div className="tw-frame-actions">
-                  <span className="tw-frame-status">{activePreset.ratioLabel} · 196 giao diện</span>
+                  <span className="tw-frame-status">{activePreset.ratioLabel} · đang xem trên {activePreset.label.toLowerCase()}</span>
                   <div className="tw-frame-btns">
                     <button type="button" className="btn btn-line btn-sm" onClick={() => onNavigate('explore')}>
                       Mở kho mẫu
                     </button>
                     <button type="button" className="btn btn-red btn-sm" onClick={() => onNavigate('workspace')}>
-                      Mở Live View
+                      Dựng bản của bạn
                     </button>
                   </div>
                 </div>
@@ -586,7 +586,7 @@ export const TidewellStage: React.FC<TidewellStageProps> = ({ onNavigate }) => {
           </div>
 
           <div className="tw-corner-bottom">
-            <p className="tw-corner-label">02 · tùy biến trực tiếp</p>
+            <p className="tw-corner-label">02 · đổi là thấy</p>
             <h3 className="tw-corner-title">Sản phẩm chạy thật</h3>
           </div>
         </div>

@@ -296,6 +296,146 @@ html[data-theme='light'][data-wallpaper='indigo'] .scene-paper {
   --on-red: #f7faff;
 }
 
+/* ===========================================================================
+   Preset Gradient Lab — phối theo Color Theory.
+
+   Godray  : tia sáng ấm xuyên mây trên nền hổ phách đêm (analogous + warm key).
+   MeshDusk: mesh gradient hai điểm nhấn lệch bổ túc (teal ↔ coral) tạo chiều sâu.
+   Jade    : nền lục bảo trầm, ánh kim tuyến (complement của đất son).
+   Rose    : sắc hồng đất phối kem, nhịp tương phản mềm cho chế độ sáng.
+
+   Mọi preset đều phủ 4 lớp: quầng sáng chính, điểm bổ túc, sương nền và
+   hạt nhiễu rất nhẹ để bề mặt không bị phẳng.
+=========================================================================== */
+
+html[data-theme='dark'][data-wallpaper='godray'],
+html[data-theme='dark'][data-wallpaper='godray'] .scene-ink,
+html[data-theme='dark'][data-wallpaper='godray'] .scene-paper {
+  --bg: #14100b;
+  --bg-raised: #1e1811;
+  --bg-sunken: #0c0906;
+  --bg-high: #2a2118;
+  --bg-veil: rgba(20, 16, 11, 0.86);
+  --bg-glass-surface: rgba(30, 24, 17, 0.78);
+  --bg-card-surface: rgba(36, 29, 20, 0.84);
+  --red: #f0b25e;
+  --red-fill: #a8621f;
+  --red-soft: rgba(240, 178, 94, 0.16);
+  --on-red: #1a1208;
+}
+
+html[data-theme='light'][data-wallpaper='godray'],
+html[data-theme='light'][data-wallpaper='godray'] .scene-ink,
+html[data-theme='light'][data-wallpaper='godray'] .scene-paper {
+  --bg: #faf3e7;
+  --bg-raised: #fffbf3;
+  --bg-sunken: #f1e7d6;
+  --bg-high: #ffffff;
+  --bg-veil: rgba(250, 243, 231, 0.88);
+  --bg-glass-surface: rgba(255, 251, 243, 0.82);
+  --bg-card-surface: rgba(255, 253, 248, 0.9);
+  --red: #9c5a12;
+  --red-fill: #9c5a12;
+  --red-soft: rgba(156, 90, 18, 0.11);
+  --on-red: #fff8ec;
+}
+
+html[data-theme='dark'][data-wallpaper='meshDusk'],
+html[data-theme='dark'][data-wallpaper='meshDusk'] .scene-ink,
+html[data-theme='dark'][data-wallpaper='meshDusk'] .scene-paper {
+  --bg: #0f1116;
+  --bg-raised: #171a22;
+  --bg-sunken: #090a0e;
+  --bg-high: #21252f;
+  --bg-veil: rgba(15, 17, 22, 0.86);
+  --bg-glass-surface: rgba(23, 26, 34, 0.78);
+  --bg-card-surface: rgba(27, 31, 40, 0.84);
+  --red: #78d7c6;
+  --red-fill: #1a7f72;
+  --red-soft: rgba(120, 215, 198, 0.16);
+  --on-red: #f2fffc;
+}
+
+html[data-theme='light'][data-wallpaper='meshDusk'],
+html[data-theme='light'][data-wallpaper='meshDusk'] .scene-ink,
+html[data-theme='light'][data-wallpaper='meshDusk'] .scene-paper {
+  --bg: #f4f2f7;
+  --bg-raised: #fbfaff;
+  --bg-sunken: #e8e5ef;
+  --bg-high: #ffffff;
+  --bg-veil: rgba(244, 242, 247, 0.88);
+  --bg-glass-surface: rgba(251, 250, 255, 0.82);
+  --bg-card-surface: rgba(255, 255, 255, 0.9);
+  --red: #1f6f66;
+  --red-fill: #1f6f66;
+  --red-soft: rgba(31, 111, 102, 0.11);
+  --on-red: #f2fffc;
+}
+
+html[data-theme='dark'][data-wallpaper='jade'],
+html[data-theme='dark'][data-wallpaper='jade'] .scene-ink,
+html[data-theme='dark'][data-wallpaper='jade'] .scene-paper {
+  --bg: #0b1210;
+  --bg-raised: #131c19;
+  --bg-sunken: #070c0a;
+  --bg-high: #1c2824;
+  --bg-veil: rgba(11, 18, 16, 0.86);
+  --bg-glass-surface: rgba(19, 28, 25, 0.78);
+  --bg-card-surface: rgba(22, 33, 29, 0.84);
+  --red: #9fe3c4;
+  --red-fill: #1f7a5c;
+  --red-soft: rgba(159, 227, 196, 0.15);
+  --on-red: #f4fff9;
+}
+
+html[data-theme='light'][data-wallpaper='jade'],
+html[data-theme='light'][data-wallpaper='jade'] .scene-ink,
+html[data-theme='light'][data-wallpaper='jade'] .scene-paper {
+  --bg: #f1f6f2;
+  --bg-raised: #f9fdfa;
+  --bg-sunken: #e4ece6;
+  --bg-high: #ffffff;
+  --bg-veil: rgba(241, 246, 242, 0.88);
+  --bg-glass-surface: rgba(249, 253, 250, 0.82);
+  --bg-card-surface: rgba(255, 255, 255, 0.9);
+  --red: #1a6b4f;
+  --red-fill: #1a6b4f;
+  --red-soft: rgba(26, 107, 79, 0.11);
+  --on-red: #f4fff9;
+}
+
+html[data-theme='dark'][data-wallpaper='rose'],
+html[data-theme='dark'][data-wallpaper='rose'] .scene-ink,
+html[data-theme='dark'][data-wallpaper='rose'] .scene-paper {
+  --bg: #150f11;
+  --bg-raised: #20171a;
+  --bg-sunken: #0c0809;
+  --bg-high: #2b2024;
+  --bg-veil: rgba(21, 15, 17, 0.86);
+  --bg-glass-surface: rgba(32, 23, 26, 0.78);
+  --bg-card-surface: rgba(38, 28, 32, 0.84);
+  --red: #f7a8be;
+  --red-fill: #a63a5b;
+  --red-soft: rgba(247, 168, 190, 0.15);
+  --on-red: #fff6f8;
+}
+
+html[data-theme='light'][data-wallpaper='rose'],
+html[data-theme='light'][data-wallpaper='rose'] .scene-ink,
+html[data-theme='light'][data-wallpaper='rose'] .scene-paper {
+  --bg: #fbf3f2;
+  --bg-raised: #fffbfa;
+  --bg-sunken: #f2e6e3;
+  --bg-high: #ffffff;
+  --bg-veil: rgba(251, 243, 242, 0.88);
+  --bg-glass-surface: rgba(255, 251, 250, 0.82);
+  --bg-card-surface: rgba(255, 255, 255, 0.9);
+  --red: #97405c;
+  --red-fill: #97405c;
+  --red-soft: rgba(151, 64, 92, 0.11);
+  --on-red: #fff6f8;
+}
+
 :root,
 html[data-theme='dark'],
 html[data-theme='light'],

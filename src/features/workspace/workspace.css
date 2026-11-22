@@ -1488,6 +1488,97 @@
     overflow: hidden;
   }
 
+  /* Trạng thái chờ của Live Preview: không iframe, không lỗi giả. */
+  .ws-wait {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-3);
+    padding: clamp(var(--space-5), 5vw, var(--space-8));
+    text-align: center;
+    overflow-y: auto;
+    background:
+      radial-gradient(60% 50% at 50% 0%, var(--red-soft), transparent 70%),
+      var(--bg-sunken);
+  }
+
+  .ws-wait-mark {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 52px;
+    height: 52px;
+    border: 1px solid var(--line);
+    border-radius: var(--radius-lg);
+    background: var(--bg-raised);
+    color: var(--red);
+  }
+
+  .ws-wait-title {
+    margin: 0;
+    font-family: var(--font-ui);
+    font-size: clamp(var(--text-lg), 2vw, var(--text-xl));
+    font-weight: 620;
+    letter-spacing: -0.02em;
+    color: var(--fg);
+  }
+
+  .ws-wait-note {
+    margin: 0;
+    max-width: 52ch;
+    font-size: var(--text-sm);
+    line-height: 1.6;
+    color: var(--fg-muted);
+  }
+
+  .ws-wait-examples {
+    display: grid;
+    gap: var(--space-2);
+    width: min(560px, 100%);
+    margin: var(--space-2) 0 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .ws-wait-example {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    min-height: 44px;
+    padding: 8px var(--space-3);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-md);
+    background: var(--bg-raised);
+    color: var(--fg-muted);
+    font-family: var(--font-ui);
+    font-size: var(--text-sm);
+    line-height: 1.45;
+    text-align: left;
+    cursor: pointer;
+    transition: border-color var(--dur-2) var(--ease-ux), color var(--dur-2) var(--ease-ux),
+      transform var(--dur-2) var(--ease-ux);
+  }
+
+  .ws-wait-example svg {
+    flex: none;
+    color: var(--red);
+  }
+
+  .ws-wait-example:hover {
+    color: var(--fg);
+    border-color: var(--red);
+    transform: translateY(-1px);
+  }
+
+  .ws-wait-foot {
+    margin-top: var(--space-2);
+    font-size: var(--text-xs);
+    color: var(--fg-faint);
+  }
+
   .ws-source {
     display: flex;
     flex: 1;

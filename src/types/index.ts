@@ -40,7 +40,11 @@ export type WallpaperPreset =
   | 'harbour'
   | 'aurora'
   | 'constellation'
-  | 'indigo';
+  | 'indigo'
+  | 'godray'
+  | 'meshDusk'
+  | 'jade'
+  | 'rose';
 
 export type UserRole = 'user' | 'admin' | 'SUPER_ADMIN' | 'CLUB_LEADER' | 'STUDENT';
 
@@ -386,6 +390,21 @@ export interface AdminTelemetrySnapshot {
   lastRequestAt: string | null;
 }
 
+export interface AdminTelemetryDay {
+  date: string;
+  aiRequests: number;
+  success: number;
+  fallback: number;
+  quotaBlocked: number;
+  newUsers: number;
+}
+
+export interface AdminUserGrowthPoint {
+  date: string;
+  newUsers: number;
+  totalUsers: number;
+}
+
 export interface AdminAuditLogEntry {
   id: string;
   timestamp: string;
@@ -409,6 +428,8 @@ export interface AdminState {
   moderationQueue: ModerationReport[];
   usersAndQuotas: AdminUserQuotaRecord[];
   telemetry: AdminTelemetrySnapshot;
+  telemetryHistory: AdminTelemetryDay[];
+  userGrowth: AdminUserGrowthPoint[];
   auditLogs: AdminAuditLogEntry[];
   changelog: AdminChangelogEntry[];
 }

@@ -15,7 +15,7 @@ export interface SiteRailProps {
   links: SiteRailLink[];
   visible?: boolean;
   onBrandClick?: () => void;
-  githubUrl?: string;
+  onExtras?: () => void;
   theme?: 'light' | 'dark';
   className?: string;
 }
@@ -24,7 +24,7 @@ export const SiteRail: React.FC<SiteRailProps> = ({
   links,
   visible = true,
   onBrandClick,
-  githubUrl,
+  onExtras,
   theme,
   className = '',
 }) => {
@@ -77,21 +77,20 @@ export const SiteRail: React.FC<SiteRailProps> = ({
         )
       )}
 
-      {githubUrl && (
+      {onExtras ? (
         <>
           <span className="rail__sep" aria-hidden="true" />
-          <a
-            href={githubUrl}
-            target="_blank"
-            rel="noopener noreferrer"
+          <button
+            type="button"
             className="rail__ext"
-            aria-label="GitHub"
-            title="GitHub"
+            aria-label="Mở bảng ghi chú"
+            title="Bảng ghi chú"
+            onClick={onExtras}
           >
             <ArrowUpRight className="h-3.5 w-3.5" aria-hidden="true" />
-          </a>
+          </button>
         </>
-      )}
+      ) : null}
     </motion.nav>
   );
 };

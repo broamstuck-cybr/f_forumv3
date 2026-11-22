@@ -25,17 +25,59 @@ import { listAllQuotaEntries, MAX_STANDARD_TURNS, resetSubjectQuota } from './qu
 
 ensureLocalEnvLoaded();
 
+interface TelemetryCounters {
+  totalAiRequests: number;
+  successfulAiRequests: number;
+  fallbackAiRequests: number;
+  quotaBlockedRequests: number;
+  lastRequestAt: string | null;
+}
+
+/**
+ * Một ngày đo đếm thật của hệ thống. Chỉ ghi những gì server thực sự biết:
+ * số lượt AI, số lượt thành công / dự phòng / bị chặn hạn mức, và số tài khoản
+ * tạo mới trong ngày. Không suy diễn, không làm mượt, không bịa xu hướng.
+ */
+interface TelemetryDayPoint {
+  date: string;
+  aiRequests: number;
+  success: number;
+  fallback: number;
+  quotaBlocked: number;
+  newUsers: number;
+}
+
 interface PersistedAdminData {
   gateway: AdminGatewayOverride;
-  telemetryCounters: {
-    totalAiRequests: number;
-    successfulAiRequests: number;
-    fallbackAiRequests: number;
-    quotaBlockedRequests: number;
-    lastRequestAt: string | null;
-  };
+  telemetryCounters: TelemetryCounters;
+  telemetryHistory: TelemetryDayPoint[];
   auditLogs: AdminAuditLogEntry[];
   changelog: AdminChangelogEntry[];
+}
+
+const TELEMETRY_HISTORY_DAYS = 30;
+
+function todayKey(): string {
+  return new Date().toISOString().slice(0, 10);
+}
+
+function totalsFromHistory(history: TelemetryDayPoint[]): TelemetryCounters {
+  return history.reduce<TelemetryCounters>(
+    (acc, day) => ({
+      totalAiRequests: acc.totalAiRequests + day.aiRequests,
+      successfulAiRequests: acc.successfulAiRequests + day.success,
+      fallbackAiRequests: acc.fallbackAiRequests + day.fallback,
+      quotaBlockedRequests: acc.quotaBlockedRequests + day.quotaBlocked,
+      lastRequestAt: acc.lastRequestAt,
+    }),
+    {
+      totalAiRequests: 0,
+      successfulAiRequests: 0,
+      fallbackAiRequests: 0,
+      quotaBlockedRequests: 0,
+      lastRequestAt: null,
+    }
+  );
 }
 
 const serverStartTimeMs = Date.now();
@@ -70,6 +112,7 @@ function buildDefaultAdminData(): PersistedAdminData {
       quotaBlockedRequests: 0,
       lastRequestAt: null,
     },
+    telemetryHistory: [],
     auditLogs: [
       {
         id: 'audit-init-01',
@@ -137,6 +180,7 @@ registerHydrator('admin', async () => {
   const defaults = buildDefaultAdminData();
   let gateway = defaults.gateway;
   let telemetryCounters = defaults.telemetryCounters;
+  let telemetryHistory = defaults.telemetryHistory;
   let hasGateway = false;
   let hasTelemetry = false;
 
@@ -147,9 +191,11 @@ registerHydrator('admin', async () => {
     } else if (row.key === 'telemetryCounters' && row.value && typeof row.value === 'object') {
       telemetryCounters = {
         ...defaults.telemetryCounters,
-        ...(row.value as Partial<PersistedAdminData['telemetryCounters']>),
+        ...(row.value as Partial<TelemetryCounters>),
       };
       hasTelemetry = true;
+    } else if (row.key === 'telemetryHistory' && Array.isArray(row.value)) {
+      telemetryHistory = (row.value as TelemetryDayPoint[]).slice(-TELEMETRY_HISTORY_DAYS);
     }
   }
 
@@ -191,6 +237,7 @@ registerHydrator('admin', async () => {
   memoryAdmin = {
     gateway,
     telemetryCounters,
+    telemetryHistory,
     auditLogs,
     changelog,
   };
@@ -201,7 +248,11 @@ function ensureAdminData(): PersistedAdminData {
   if (!isSupabaseEnabled()) {
     const persisted = readLocalSection<PersistedAdminData | null>('adminStore', null);
     if (persisted && persisted.gateway && persisted.telemetryCounters) {
-      memoryAdmin = persisted;
+      /* Bản ghi cũ chưa có chuỗi ngày: giữ nguyên số liệu, chỉ thêm mảng rỗng. */
+      memoryAdmin = {
+        ...persisted,
+        telemetryHistory: Array.isArray(persisted.telemetryHistory) ? persisted.telemetryHistory : [],
+      };
       return memoryAdmin;
     }
   }
@@ -240,17 +291,20 @@ export function appendAuditLog(actor: string, action: string, target: string, de
   return entry;
 }
 
-export function recordAiTelemetry(event: 'success' | 'fallback' | 'quota_blocked'): void {
-  const store = ensureAdminData();
-  store.telemetryCounters.totalAiRequests += 1;
-  store.telemetryCounters.lastRequestAt = new Date().toISOString();
-  if (event === 'success') {
-    store.telemetryCounters.successfulAiRequests += 1;
-  } else if (event === 'fallback') {
-    store.telemetryCounters.fallbackAiRequests += 1;
-  } else if (event === 'quota_blocked') {
-    store.telemetryCounters.quotaBlockedRequests += 1;
+function dayPointOf(store: PersistedAdminData, date = todayKey()): TelemetryDayPoint {
+  let point = store.telemetryHistory.find((entry) => entry.date === date);
+  if (!point) {
+    point = { date, aiRequests: 0, success: 0, fallback: 0, quotaBlocked: 0, newUsers: 0 };
+    store.telemetryHistory.push(point);
+    store.telemetryHistory.sort((a, b) => a.date.localeCompare(b.date));
+    if (store.telemetryHistory.length > TELEMETRY_HISTORY_DAYS) {
+      store.telemetryHistory = store.telemetryHistory.slice(-TELEMETRY_HISTORY_DAYS);
+    }
   }
+  return point;
+}
+
+function persistTelemetry(store: PersistedAdminData): void {
   if (isSupabaseEnabled()) {
     enqueueWrite(
       sbUpsert(
@@ -261,6 +315,11 @@ export function recordAiTelemetry(event: 'success' | 'fallback' | 'quota_blocked
             value: store.telemetryCounters,
             updated_at: new Date().toISOString(),
           },
+          {
+            key: 'telemetryHistory',
+            value: store.telemetryHistory,
+            updated_at: new Date().toISOString(),
+          },
         ],
         'key'
       )
@@ -268,6 +327,25 @@ export function recordAiTelemetry(event: 'success' | 'fallback' | 'quota_blocked
   } else {
     saveAdminData();
   }
+}
+
+export function recordAiTelemetry(event: 'success' | 'fallback' | 'quota_blocked'): void {
+  const store = ensureAdminData();
+  store.telemetryCounters.totalAiRequests += 1;
+  store.telemetryCounters.lastRequestAt = new Date().toISOString();
+  const day = dayPointOf(store);
+  day.aiRequests += 1;
+  if (event === 'success') {
+    store.telemetryCounters.successfulAiRequests += 1;
+    day.success += 1;
+  } else if (event === 'fallback') {
+    store.telemetryCounters.fallbackAiRequests += 1;
+    day.fallback += 1;
+  } else if (event === 'quota_blocked') {
+    store.telemetryCounters.quotaBlockedRequests += 1;
+    day.quotaBlocked += 1;
+  }
+  persistTelemetry(store);
 }
 
 export function getInternalGatewayOverride(): AdminGatewayOverride {
@@ -454,6 +532,24 @@ export function getAdminStateSnapshot(): AdminState {
   const quotas = listAllQuotaEntries();
   const pendingReports = community.reports.filter((r) => r.status === 'pending').length;
 
+  dayPointOf(store);
+  const history = store.telemetryHistory.slice(-TELEMETRY_HISTORY_DAYS);
+
+  /* Tăng trưởng người dùng đọc thẳng từ createdAt của tài khoản thật. */
+  const signupsByDay = new Map<string, number>();
+  for (const user of users) {
+    const key = (user.createdAt || '').slice(0, 10);
+    if (key) signupsByDay.set(key, (signupsByDay.get(key) ?? 0) + 1);
+  }
+  const firstDay = history.length ? history[0].date : todayKey();
+  const growth: Array<{ date: string; newUsers: number; totalUsers: number }> = [];
+  let running = users.filter((user) => (user.createdAt || '').slice(0, 10) < firstDay).length;
+  for (const day of history) {
+    const created = signupsByDay.get(day.date) ?? 0;
+    running += created;
+    growth.push({ date: day.date, newUsers: created, totalUsers: running });
+  }
+
   const telemetry: AdminTelemetrySnapshot = {
     totalAiRequests: store.telemetryCounters.totalAiRequests,
     successfulAiRequests: store.telemetryCounters.successfulAiRequests,
@@ -466,7 +562,6 @@ export function getAdminStateSnapshot(): AdminState {
     uptimeSeconds: Math.max(1, Math.floor((Date.now() - serverStartTimeMs) / 1000)),
     lastRequestAt: store.telemetryCounters.lastRequestAt,
   };
-
   return {
     gateway: {
       ...store.gateway,
@@ -476,6 +571,8 @@ export function getAdminStateSnapshot(): AdminState {
     moderationQueue: community.reports,
     usersAndQuotas: buildUsersAndQuotasRegistry(),
     telemetry,
+    telemetryHistory: history.map((day) => ({ ...day })),
+    userGrowth: growth,
     auditLogs: store.auditLogs,
     changelog: store.changelog,
   };

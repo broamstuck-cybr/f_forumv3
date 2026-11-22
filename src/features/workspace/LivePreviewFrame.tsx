@@ -27,6 +27,34 @@ function __ffGuard() {
   return `${guardHeader}try {\n${guarded}\n} catch (e) {\n  var banner = document.createElement('div');\n  banner.style.cssText = 'position:fixed;bottom:12px;left:12px;right:12px;padding:10px 14px;border-radius:8px;background:#7f1d1d;color:#fecaca;font:12px/1.4 monospace;z-index:9999;';\n  banner.textContent = 'Runtime error: ' + (e && e.message ? e.message : String(e));\n  document.body.appendChild(banner);\n}`;
 }
 
+/**
+ * Chỉ những tệp do người dùng hoặc AI tạo ra mới đáng đưa vào khung xem trước.
+ * Ba tệp khung khởi tạo (index.html/styles.css/app.js) là bản nháp rỗng —
+ * đếm chúng là "có mã" sẽ biến Live Preview thành một khung giả luôn sáng.
+ */
+export const STARTER_PATHS = ['index.html', 'styles.css', 'app.js'] as const;
+
+export function hasGeneratedWebCode(files: WorkspaceFile[]): boolean {
+  const web = files.filter((file) =>
+    /\.(html?|css|m?js)$/i.test(file.path)
+  );
+  if (!web.length) return false;
+  return web.some((file) => {
+    if (!STARTER_PATHS.includes(file.path as (typeof STARTER_PATHS)[number])) return true;
+    /* Dấu vân tay của khung khởi tạo: nếu vẫn còn nguyên thì đây là bản nháp rỗng. */
+    switch (file.path) {
+      case 'index.html':
+        return !/F-FORUM v3 Workspace Artifact/i.test(file.content);
+      case 'styles.css':
+        return !/\.stage-container\b/.test(file.content);
+      case 'app.js':
+        return !/inspect-btn/.test(file.content);
+      default:
+        return true;
+    }
+  });
+}
+
 export function compileWorkspaceSrcDoc(files: WorkspaceFile[]): string {
   const htmlFile = files.find((f) => f.path === 'index.html') || files.find((f) => f.path.endsWith('.html'));
   const cssFiles = files.filter((f) => f.path.endsWith('.css'));

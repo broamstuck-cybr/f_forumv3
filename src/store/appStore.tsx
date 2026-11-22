@@ -37,6 +37,7 @@ import type {
   WorkspaceProject,
 } from '../types/index';
 import { apiClient, getOrCreateClientGuestId } from '../services/apiClient';
+import { writeThemeToDom } from '../components/layout/theme-transition';
 import { runWorkspaceChecks } from '../services/checksRunner';
 import { computeWorkspaceDiffs } from '../services/diffEngine';
 import { generateProjectSetupBundle } from '../services/projectSetupGenerator';
@@ -1868,6 +1869,12 @@ export const AppStoreProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   }, []);
 
   const setTheme = useCallback((theme: ThemeMode) => {
+    /*
+     * Ghi DOM ngay trong cùng frame với hiệu ứng PinUI: nếu chờ effect
+     * của React thì theme đổi sau khi hiệu ứng đã phủ xong → đúng cái
+     * "khựng" cần loại bỏ. Effect bên dưới vẫn ghi lại (cùng giá trị).
+     */
+    writeThemeToDom(theme);
     setSettings((prev) =>
       prev.theme === theme && prev.themePreference === theme
         ? prev

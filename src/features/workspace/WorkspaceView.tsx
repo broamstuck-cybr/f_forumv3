@@ -14,7 +14,7 @@ import {
   Wrench,
   X,
 } from 'lucide-react';
-import { DynamicDropZone } from '../../components/pinui/DynamicDropZone';
+import PinuiDropZone from '../../components/pinui/original/dynamic-drop-zone/DynamicDropZone';
 import { PromptComposer } from '../../components/pinui/PromptComposer';
 import { apiClient } from '../../services/apiClient';
 import { useAppStore } from '../../store/appStore';
@@ -466,6 +466,7 @@ export const WorkspaceView: React.FC = () => {
     quota,
     currentUser,
     settings,
+    theme,
     navigate,
     setAuthModalOpen,
     addToast,
@@ -721,7 +722,7 @@ export const WorkspaceView: React.FC = () => {
         const res = await apiClient.sendAiChat(
           {
             projectId: targetProjectId,
-            prompt: `${formattedPrompt} (Arena Model ${side}: ${modelLabel})`,
+            prompt: `${formattedPrompt} (Mô hình ${side}: ${modelLabel})`,
             model: modelId,
             agentMode,
             files: baseFiles,
@@ -1060,7 +1061,7 @@ export const WorkspaceView: React.FC = () => {
   };
 
   const handleCreateProject = () => {
-    createProject(`Phiên Arena ${projects.length + 1}`);
+    createProject(`Phiên làm việc ${projects.length + 1}`);
     setRenaming(false);
     setRailSheetOpen(false);
     setMobilePane('chat');
@@ -1105,6 +1106,8 @@ export const WorkspaceView: React.FC = () => {
       onExitSplit={() => setRightMode('compact')}
       onOpenGithub={() => setGithubOpen(true)}
       hidden={!isExpandedView && stageHidden}
+      generating={isGenerating}
+      onInsertPrompt={handlePickStarter}
     />
   );
 
@@ -1152,7 +1155,7 @@ export const WorkspaceView: React.FC = () => {
         </aside>
       )}
 
-      <section className="ws-thread" aria-label="Bảng hội thoại Arena" hidden={threadHidden}>
+      <section className="ws-thread" aria-label="Bảng hội thoại Workspace" hidden={threadHidden}>
         <header className="ws-head ws-chat-head">
           {!railInline && (
             <button
@@ -1373,10 +1376,29 @@ export const WorkspaceView: React.FC = () => {
 
             {dropZoneOpen && (
               <div className="ws-drop">
-                <DynamicDropZone
-                  onFilesAdded={handleFilesDropped}
-                  label="Thả tệp HTML, CSS, JS hoặc ảnh tham chiếu"
-                  compact
+                <PinuiDropZone
+                  theme={theme}
+                  corner={20}
+                  demoFile={false}
+                  onDrop={(files) => {
+                    const picked = files.slice(0, 6);
+                    void Promise.all(
+                      picked.map(async (file) => {
+                        if (file.type.startsWith('image/')) {
+                          return {
+                            name: file.name,
+                            content: `[Ảnh tham chiếu: ${file.name} · ${Math.max(1, Math.round(file.size / 1024))} KB]`,
+                          };
+                        }
+                        try {
+                          const text = await file.text();
+                          return { name: file.name, content: text.slice(0, 24000) };
+                        } catch {
+                          return { name: file.name, content: `[Tệp đính kèm: ${file.name}]` };
+                        }
+                      })
+                    ).then((payloads) => handleFilesDropped(payloads));
+                  }}
                 />
                 <div className="ws-drop-side">
                   <button
@@ -1577,7 +1599,7 @@ export const WorkspaceView: React.FC = () => {
           aria-valuenow={splitRatio}
           aria-valuemin={20}
           aria-valuemax={80}
-          aria-label="Kéo để thay đổi kích thước chia màn hình Arena"
+          aria-label="Kéo để thay đổi kích thước chia màn hình"
           tabIndex={0}
           className={`ws-resizer ${isResizing ? 'is-dragging' : ''}`}
           onPointerDown={startResizing}

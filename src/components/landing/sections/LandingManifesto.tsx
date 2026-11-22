@@ -244,7 +244,7 @@ export const LandingManifesto: React.FC<LandingManifestoProps> = ({ onNavigate }
         <div className="lp-hm-sticky">
           <div className="wrap-wide lp-hm-header">
             <p className="t-label" style={{ color: '#b5afa3' }}>
-              cách F-Forum làm việc
+              bốn việc bạn làm được ngay
             </p>
             <div className="lp-hm-meter" aria-hidden="true">
               <span style={{ transform: `scaleX(${isDesktopHorizontal ? Math.max(0.08, mp) : 1})` }} />
@@ -288,7 +288,7 @@ export const LandingManifesto: React.FC<LandingManifestoProps> = ({ onNavigate }
               Gõ ý tưởng của bạn <Mark kind="underline">ngay tại đây</Mark>
             </h2>
             <p className="t-lead">
-              Chọn một thẻ tác vụ hoặc mô tả giao diện bạn cần để mở thẳng Workspace cùng Live View và Diff &amp; Check.
+              Chọn một thẻ tác vụ hoặc mô tả giao diện bạn cần là mở thẳng Workspace, vừa trò chuyện vừa xem bản dựng hiện ra.
             </p>
           </div>
 

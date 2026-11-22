@@ -600,12 +600,7 @@ export default function BalanceCard({ balance = 3400089.23, currency: initialCur
       </section>
 
       {credit && (<div className="pbal__credit">
-          <p className="pbal__creditText">
-            Inspiration from{" "}
-            <a className="pbal__creditLink" href="https://in.pinterest.com/pin/1056657131344579045/" target="_blank" rel="noopener noreferrer">
-              pinterest.com
-            </a>
-          </p>
+          <p className="pbal__creditText">Bản dựng thẻ số dư cho Workspace</p>
 
           <button type="button" className="pbal__sfx" aria-pressed={audible} aria-label={audible ? "Mute the sound effects" : "Unmute the sound effects"} title={audible ? "Mute the sound effects" : "Unmute the sound effects"} onClick={() => setAudible((on) => !on)}>
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">

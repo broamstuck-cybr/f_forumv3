@@ -230,15 +230,13 @@ export const NoticeStatusModal: React.FC<NoticeStatusModalProps> = ({ open, onCl
                         >
                           {lib.origin}
                         </code>
-                        <a
-                          href={lib.url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-xs font-medium hover:underline"
-                          style={{ color: 'var(--accent-verdigris)' }}
+                        <span
+                          className="text-xs font-medium"
+                          style={{ color: 'var(--ink-muted)' }}
+                          title="Tài nguyên đã được hợp nhất vào F-Forum"
                         >
-                          Mở nguồn
-                        </a>
+                          Đang dùng
+                        </span>
                       </div>
                     </article>
                   ))}

@@ -2,8 +2,8 @@
  * The Theme Switch's engine — three ways to switch a theme.
  *
  * DROPLET
- *   A drop of the next theme's colour falls from the top of the scene onto the
- *   icon on real kinematics (s = v0·t + ½·g·t²), stretching with its speed
+ *   A drop of the next theme's raised surface falls from the top of the scene
+ *   onto the icon on real kinematics (s = v0·t + ½·g·t²), stretching with its speed
  *   while keeping its volume. It squashes on impact, the button dips and
  *   springs back, ripples spread, and the next theme floods out from the point
  *   of impact as a circle.
@@ -30,7 +30,9 @@
  * painted under the controls, and each control (the toggle, and anything
  * marked data-pts-target) takes the new theme the moment the flood reaches its
  * centre — so it changes "when the rain hits it". When the scene is covered,
- * the scene itself commits. Reduced motion switches at once; a watchdog
+ * the scene itself commits, and the page writes its own theme while the
+ * effect is still running, so the switch reads as one gesture.
+ * Reduced motion switches at once; a watchdog
  * finishes any run that stalls (a tab put in the background), so a switch can
  * never hang half done.
  */
@@ -57,10 +59,43 @@ type Options = {
   onCommit: (theme: ThemeName) => void;
 };
 
-const THEMES: Record<ThemeName, { bg: string; ring: string }> = {
-  light: { bg: "#ffffff", ring: "rgba(0, 0, 0, 0.10)" },
-  dark: { bg: "#141414", ring: "rgba(255, 255, 255, 0.10)" },
+/*
+ * The colours must be the app's own surfaces, not a generic white/black:
+ * the flood, the puddles and the drop all become the page the moment the
+ * switch lands, so any difference would show as a flash at the seam.
+ * `bg` covers the scene, `raised` gives the drop its volume.
+ */
+const THEMES: Record<ThemeName, { bg: string; raised: string; ring: string }> = {
+  light: { bg: "#f5f1e8", raised: "#fbf8f1", ring: "rgba(20, 18, 14, 0.16)" },
+  dark: { bg: "#11100f", raised: "#181716", ring: "rgba(243, 238, 227, 0.18)" },
 };
+
+/*
+ * The page commits its own theme from here the instant the next theme has
+ * taken most of the scene — the flood is still running, the puddles are
+ * still spreading, and the CSS variables change under it. That is what makes
+ * a switch read as one continuous gesture instead of an effect followed by a
+ * colour change.
+ */
+function syncPageTheme(next: ThemeName) {
+  if (typeof document === "undefined") return;
+  const root = document.documentElement;
+  /* only when this scene drives the whole page (Settings drives the app) */
+  if (!root.hasAttribute("data-theme")) return;
+  if (root.getAttribute("data-theme") === next) return;
+  root.setAttribute("data-theme-blend", "open");
+  root.setAttribute("data-theme", next);
+  root.classList.toggle("dark", next === "dark");
+  root.classList.toggle("light", next === "light");
+  root.style.colorScheme = next;
+  const meta = document.querySelector('meta[name="theme-color"]');
+  if (meta) meta.setAttribute("content", next === "dark" ? "#121110" : "#f4f0e6");
+  window.setTimeout(() => {
+    if (document.documentElement.getAttribute("data-theme") === next) {
+      document.documentElement.removeAttribute("data-theme-blend");
+    }
+  }, 680);
+}
 
 const EASE_OUT = "cubic-bezier(0.23, 1, 0.32, 1)";
 const EASE_DRAWER = "cubic-bezier(0.32, 0.72, 0, 1)";
@@ -98,6 +133,9 @@ function springLinear(durationS: number, bounce: number) {
 }
 
 const SPRING_MS = 520;
+
+/* how far the flood / puddles / star-dots have covered the scene before the page takes the new theme */
+const PAGE_COMMIT_AT = 0.34;
 
 /* ── shared puddle maths (Rain and Diwali) ─────────────────────────────── */
 
@@ -545,6 +583,7 @@ export function createThemeSwitch({ root, button, fx, effect, sound: soundOn, on
   function commit(next: ThemeName) {
     root.dataset.theme = next;
     updateLabel();
+    syncPageTheme(next);
     onCommit(next);
   }
 
@@ -688,8 +727,10 @@ export function createThemeSwitch({ root, button, fx, effect, sound: soundOn, on
   /*
    * The flood: a circle of the next theme opening from the impact under the
    * controls, on the drawer curve. The compositor runs the clip; each frame
-   * the circle's actual radius is read back from the animation, and a control
-   * takes the new theme the moment the circle reaches its centre.
+   * the circle's actual radius is read back from the animation, a control
+   * takes the new theme the moment the circle reaches its centre, and the
+   * page itself changes over at `PAGE_COMMIT_AT` — while the circle is still
+   * opening, so the CSS variables move with the gesture rather than after it.
    */
   function circleFlood(next: ThemeName, cx: number, cy: number, id: number) {
     const { w, h } = size();
@@ -700,6 +741,7 @@ export function createThemeSwitch({ root, button, fx, effect, sound: soundOn, on
     root.insertBefore(overlay, root.firstChild);
     layers.add(overlay);
     const targets = floodTargets();
+    let pageCommitted = false;
     cleanups.push(() => releaseTargets(targets));
     const anim = overlay.animate(
       { clipPath: [`circle(0px at ${cx}px ${cy}px)`, `circle(${R}px at ${cx}px ${cy}px)`] },
@@ -715,7 +757,15 @@ export function createThemeSwitch({ root, button, fx, effect, sound: soundOn, on
           tg.el.dataset.theme = next;
         }
       }
+      if (!pageCommitted && p >= PAGE_COMMIT_AT) {
+        pageCommitted = true;
+        syncPageTheme(next);
+      }
       if (anim.playState === "running") requestAnimationFrame(watch);
+      else if (!pageCommitted) {
+        pageCommitted = true;
+        syncPageTheme(next);
+      }
     };
     requestAnimationFrame(watch);
     return finished(anim).then(() => {
@@ -727,7 +777,8 @@ export function createThemeSwitch({ root, button, fx, effect, sound: soundOn, on
 
   function effectDroplet(next: ThemeName, id: number) {
     const c = centreOf(button);
-    const drop = createDrop(THEMES[next].bg);
+    /* bề mặt nổi của theme mới: giọt có khối, rơi xuống rồi mới loang thành nền */
+    const drop = createDrop(THEMES[next].raised);
     drop.style.left = `${c.x - DROP.w / 2}px`;
     drop.style.top = `${c.y - DROP.h}px`; // the belly's tip lands on the icon's centre
     fx.appendChild(drop);
@@ -885,6 +936,7 @@ export function createThemeSwitch({ root, button, fx, effect, sound: soundOn, on
 
   function effectRain(next: ThemeName, id: number) {
     const color = THEMES[next].bg;
+    let pageCommitted = false;
     /* puddles of the next theme under the controls; the rain over them */
     const wet = makeCanvas("pts__layer");
     const sky = makeCanvas("pts__layer", true);
@@ -987,6 +1039,11 @@ export function createThemeSwitch({ root, button, fx, effect, sound: soundOn, on
         if (t >= plan.mergeStart && !revealed) {
           const p = clamp((t - plan.mergeStart) / RAIN.mergeMs, 0, 1);
           k = 1 + (plan.mergeK - 1) * easeInOutCubic(p);
+          /* the page changes under the still-spreading puddles, not after them */
+          if (!pageCommitted && p >= PAGE_COMMIT_AT) {
+            pageCommitted = true;
+            syncPageTheme(next);
+          }
           if (p >= 1) {
             /* the scene's background now equals the puddles' colour: seamless */
             revealed = true;
@@ -1042,6 +1099,7 @@ export function createThemeSwitch({ root, button, fx, effect, sound: soundOn, on
   function effectDiwali(next: ThemeName, id: number) {
     Sound.unlock(); // inside the click: audio is only allowed from a gesture
     const color = THEMES[next].bg; // everything is made of the next theme
+    let pageCommitted = false;
     /* the stars' dots under the controls, the rockets just above them and still under the controls */
     const sky = makeCanvas("pts__layer");
     const wet = makeCanvas("pts__layer");
@@ -1224,6 +1282,10 @@ export function createThemeSwitch({ root, button, fx, effect, sound: soundOn, on
         if (t >= plan.mergeStart) {
           const p = clamp((t - plan.mergeStart) / DIWALI.mergeMs, 0, 1);
           k = 1 + (plan.mergeK - 1) * easeInOutCubic(p);
+          if (!pageCommitted && p >= PAGE_COMMIT_AT) {
+            pageCommitted = true;
+            syncPageTheme(next);
+          }
           if (p >= 1) {
             /* the dots cover every pixel in the next theme's colour: commit */
             commit(next);

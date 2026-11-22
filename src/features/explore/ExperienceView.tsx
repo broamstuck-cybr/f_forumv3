@@ -42,6 +42,8 @@ import {
   type PreviewViewport,
 } from './catalog';
 import { SandboxPreview } from './SandboxPreview';
+import { useCalm } from './useCalm';
+import { ThreeStage } from './ThreeStage';
 import './explore.css';
 
 type CategoryTab = 'all' | 'pinui' | 'lucianlabs' | 'threeui' | 'motionsites' | 'codefronts' | 'saved';
@@ -85,6 +87,7 @@ export const ExperienceView: React.FC = () => {
   const [stageTheme, setStageTheme] = useState<PreviewTheme>(theme);
   const [nonce, setNonce] = useState(0);
   const [codeTab, setCodeTab] = useState<CodeTab>('html');
+  const prefersReducedMotion = useCalm();
   const [copiedTarget, setCopiedTarget] = useState<'code' | 'prompt' | null>(null);
 
   const [pinuiMap, setPinuiMap] = useState<Record<string, PinUISourceEntry> | null>(
@@ -178,7 +181,6 @@ export const ExperienceView: React.FC = () => {
 
   const activePreview = activeItem ? previewFor(activeItem.id) : null;
   const activeOriginalImage = activeItem?.previewImage || (motionEntry as { previewImage?: string } | null)?.previewImage || '';
-  const activeOriginalUrl = activeItem?.officialUrl || (motionEntry as { sourceUrl?: string } | null)?.sourceUrl || '';
 
   const activeHtml = useMemo(() => {
     if (!activeItem) return '';
@@ -591,7 +593,14 @@ export const ExperienceView: React.FC = () => {
                       itemId={activeItem.id}
                       theme={stageTheme}
                     />
-                  ) : isThreeUI || isMotion ? (
+                  ) : isThreeUI ? (
+                    <ThreeStage
+                      key={`three-${activeItem.id}`}
+                      theme={stageTheme}
+                      title={activeTitle}
+                      reduced={prefersReducedMotion}
+                    />
+                  ) : isMotion ? (
                     activePreview ? (
                       <SpecimenMedia
                         key={activeItem.id}
@@ -615,17 +624,19 @@ export const ExperienceView: React.FC = () => {
                       <div className="ex-spec-type">
                         <span className="ex-spec-word">{activeTitle}</span>
                         <span className="t-label">
-                          {isThreeUI ? 'ThreeUI Pro MCP · Xem trực tiếp tại trang gốc' : 'MotionSites Prompt · Xem tại trang gốc'}
+                          Chuyển động này chưa kèm bản dựng chạy được — mở bản mô tả để tái tạo trong Workspace.
                         </span>
-                        {activeOriginalUrl ? (
-                          <a
-                            href={activeOriginalUrl}
-                            target="_blank"
-                            rel="noreferrer noopener"
+                        {activePrompt ? (
+                          <button
+                            type="button"
                             className="btn btn-line btn-sm"
+                            onClick={() => {
+                              void copyText(activePrompt);
+                              addToast({ type: 'success', title: 'Đã sao chép bản mô tả' });
+                            }}
                           >
-                            Mở trang gốc
-                          </a>
+                            Sao chép bản mô tả
+                          </button>
                         ) : null}
                       </div>
                     )
@@ -718,16 +729,6 @@ export const ExperienceView: React.FC = () => {
 
             {activeItem ? (
               <div className="ex-xp-card-foot">
-                {activeOriginalUrl ? (
-                  <a
-                    href={activeOriginalUrl}
-                    target="_blank"
-                    rel="noreferrer noopener"
-                    className="btn btn-line"
-                  >
-                    Trang gốc
-                  </a>
-                ) : null}
                 <button type="button" className="btn btn-line" onClick={handleAttach}>
                   Đính kèm vào dự án
                 </button>

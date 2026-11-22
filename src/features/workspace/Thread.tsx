@@ -278,7 +278,7 @@ export const Thread: React.FC<ThreadProps> = ({
     <div ref={scrollRef} className="ws-scroll">
       <div className="ws-measure ws-arena-stream">
         {untouched && !busy && (
-          <section className="ws-arena-empty" aria-label="Khởi tạo phiên Arena">
+          <section className="ws-arena-empty" aria-label="Khởi tạo phiên so sánh">
             <h2 className="ws-arena-empty-title">
               Từ ý tưởng <em>đến bản dựng.</em>
             </h2>

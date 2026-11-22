@@ -59,7 +59,7 @@ const PIXEL_ICONS: PixelIconSpec[] = [
   },
   {
     id: 'sandbox',
-    label: 'Live View',
+    label: 'Xem thật',
     grid: [
       'BBBBBBBBB',
       'BDDDDDDDB',
@@ -104,7 +104,7 @@ const PIXEL_ICONS: PixelIconSpec[] = [
   },
   {
     id: 'catalog',
-    label: '6.770 chi tiết',
+    label: 'mẫu dựng sẵn',
     grid: [
       'BBB..PPPP',
       'BLB..PLLP',
@@ -392,11 +392,11 @@ export const LandingHero: React.FC<LandingHeroProps> = ({
             <dl className="lp-colophon">
               <div>
                 <dt className="t-label">mẫu &amp; mã nguồn</dt>
-                <dd>196 giao diện chạy trực tiếp · 6.770 chi tiết UI/UX</dd>
+                <dd>Giao diện chạy trực tiếp, mở mã ra là sửa được</dd>
               </div>
               <div>
                 <dt className="t-label">khả năng</dt>
-                <dd className="lp-colophon-accent">Xem code sạch · Sao chép Prompt · Tùy biến trực tiếp</dd>
+                <dd className="lp-colophon-accent">Thử trước · Chỉnh theo ý · Mang về dùng</dd>
               </div>
               <div>
                 <dt className="t-label">cộng đồng</dt>

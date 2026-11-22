@@ -269,14 +269,13 @@ export const ToolIndex: React.FC<ToolIndexProps> = ({ query, onClearQuery, saved
                               </dl>
                             </div>
                             <div className="ex-row-actions">
-                              <a
+                              <button
+                                type="button"
                                 className="ex-text"
-                                href={item.officialUrl}
-                                target="_blank"
-                                rel="noreferrer noopener"
+                                onClick={() => handleAttach(item)}
                               >
-                                Mở nguồn
-                              </a>
+                                Đính kèm ngữ cảnh
+                              </button>
                               <ReactionBar id={item.id} title={title} showLabel />
                               <button
                                 type="button"

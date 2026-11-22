@@ -227,7 +227,6 @@ export const MotionMarqueeGrid: React.FC<MotionMarqueeGridProps> = ({
   const activeFull = activeItem ? fullMap[activeItem.id] : undefined;
   const activeVerbatimPrompt = activeItem ? getVerbatimPrompt(activeItem) : '';
   const activeTags = activeItem ? activeFull?.tags ?? activeItem.tags : [];
-  const activeSourceUrl = activeFull?.sourceUrl || '';
 
   const modalLiked = activeItem ? isItemLiked(activeItem.id) : false;
   const modalHearts = activeItem ? getHeartCount(activeItem.id) : 0;
@@ -303,7 +302,7 @@ export const MotionMarqueeGrid: React.FC<MotionMarqueeGridProps> = ({
                 <div className="mmq-modal-title-wrap">
                   <div className="mmq-modal-kicker">
                     <span className="tag tag-red">{activeItem.category}</span>
-                    <span className="t-label">{activeItem.specs.layout} · {activeItem.specs.responsive}</span>
+                    <span className="t-label">{activeItem.specs.layout}</span>
                   </div>
                   <h3 className="mmq-modal-title">{activeItem.title}</h3>
                 </div>
@@ -389,16 +388,9 @@ export const MotionMarqueeGrid: React.FC<MotionMarqueeGridProps> = ({
                   </button>
                 </div>
 
-                {activeTab === 'live' && activeSourceUrl && (
+                {activeTab === 'live' && (
                   <div className="mmq-vp-controls">
-                    <a
-                      href={activeSourceUrl}
-                      target="_blank"
-                      rel="noreferrer noopener"
-                      className="btn btn-line btn-sm"
-                    >
-                      Mở trang gốc
-                    </a>
+                    <span className="t-label">Bản dựng chạy trực tiếp trong khung này</span>
                   </div>
                 )}
               </div>
@@ -470,16 +462,12 @@ export const MotionMarqueeGrid: React.FC<MotionMarqueeGridProps> = ({
                         <dd>{activeItem.specs.motion}</dd>
                       </div>
                       <div>
-                        <dt className="t-label">Responsive</dt>
-                        <dd>{activeItem.specs.responsive}</dd>
+                        <dt className="t-label">Khớp màn hình</dt>
+                        <dd>Hiển thị tốt trên điện thoại và máy tính</dd>
                       </div>
                       <div>
-                        <dt className="t-label">Thời lượng</dt>
-                        <dd>{activeItem.specs.durationMs} ms</dd>
-                      </div>
-                      <div>
-                        <dt className="t-label">Easing</dt>
-                        <dd className="mmq-mono">{activeItem.specs.easing}</dd>
+                        <dt className="t-label">Dùng thử</dt>
+                        <dd>Mở thẳng trong Workspace</dd>
                       </div>
                     </dl>
 

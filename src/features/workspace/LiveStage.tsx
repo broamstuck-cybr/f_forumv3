@@ -30,6 +30,8 @@ import {
   type PreviewViewport,
 } from './LivePreviewFrame';
 import { ReviewZone, type ReviewTab } from './ReviewZone';
+import { PreviewWaiting } from './PreviewWaiting';
+import { hasGeneratedWebCode } from './LivePreviewFrame';
 
 export type StageTabId = 'preview' | 'source' | 'review';
 
@@ -57,6 +59,8 @@ export interface LiveStageProps {
   onExitSplit?: () => void;
   onOpenGithub?: () => void;
   hidden?: boolean;
+  generating?: boolean;
+  onInsertPrompt?: (prompt: string) => void;
 }
 
 const VIEWPORT_CYCLE: PreviewViewport[] = ['fit', 1440, 768, 390];
@@ -125,6 +129,8 @@ export const LiveStage: React.FC<LiveStageProps> = ({
   onExitSplit,
   onOpenGithub,
   hidden = false,
+  generating = false,
+  onInsertPrompt,
 }) => {
   const [reloadNonce, setReloadNonce] = useState(0);
   const [copiedFile, setCopiedFile] = useState<string | null>(null);
@@ -195,7 +201,7 @@ export const LiveStage: React.FC<LiveStageProps> = ({
 
   if (compact) {
     return (
-      <aside className="ws-compact-aside" aria-label="Bảng trạng thái Arena" hidden={hidden}>
+      <aside className="ws-compact-aside" aria-label="Bảng trạng thái Workspace" hidden={hidden}>
         <div className="ws-compact-card">
           <div className="ws-compact-head">
             <div className="ws-compact-tabs" role="tablist" aria-label="Chuyển Diff hoặc Checks">
@@ -371,11 +377,11 @@ export const LiveStage: React.FC<LiveStageProps> = ({
   return (
     <section
       className="ws-live"
-      aria-label="Không gian hiển thị & Mã nguồn Arena"
+      aria-label="Không gian hiển thị và mã nguồn"
       hidden={hidden}
     >
       <header className="ws-head ws-arena-stage-bar">
-        <div className="ws-arena-stage-tabs" role="tablist" aria-label="Chế độ xem Arena">
+        <div className="ws-arena-stage-tabs" role="tablist" aria-label="Chế độ xem Workspace">
           <button
             type="button"
             role="tab"
@@ -517,14 +523,21 @@ export const LiveStage: React.FC<LiveStageProps> = ({
       </header>
 
       <div className="ws-stage-body">
-        {stageTab === 'preview' && (
-          <LivePreviewFrame
-            files={project.files}
-            title={project.name}
-            viewport={viewport}
-            reloadNonce={reloadNonce}
-          />
-        )}
+        {stageTab === 'preview' &&
+          (hasGeneratedWebCode(project.files) ? (
+            <LivePreviewFrame
+              files={project.files}
+              title={project.name}
+              viewport={viewport}
+              reloadNonce={reloadNonce}
+            />
+          ) : (
+            <PreviewWaiting
+              generating={generating}
+              projectName={project.name}
+              onInsertPrompt={onInsertPrompt}
+            />
+          ))}
 
         {stageTab === 'source' && (
           <div className="ws-source">

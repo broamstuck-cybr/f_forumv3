@@ -210,14 +210,14 @@ export const RepoChart: React.FC<RepoChartProps> = ({ query, onClearQuery, saved
                   >
                     {isOpen ? 'Thu gọn' : 'Chi tiết'}
                   </button>
-                  <a
+                  <button
+                    type="button"
                     className="ex-text"
-                    href={repo.htmlUrl}
-                    target="_blank"
-                    rel="noreferrer noopener"
+                    onClick={() => void handleCopy(repo.htmlUrl, 'Đã chép liên kết')}
                   >
-                    Mở nguồn
-                  </a>
+                    <span className="sr-only">Sao chép liên kết </span>
+                    Chép liên kết
+                  </button>
                 </div>
               </article>
             );
@@ -308,14 +308,14 @@ export const RepoChart: React.FC<RepoChartProps> = ({ query, onClearQuery, saved
                       >
                         Chép link
                       </button>
-                      <a
+                      <button
+                        type="button"
                         className="ex-text"
-                        href={repo.htmlUrl}
-                        target="_blank"
-                        rel="noreferrer noopener"
+                        onClick={() => void handleCopy(repo.htmlUrl, 'Đã chép liên kết')}
                       >
-                        Mở nguồn
-                      </a>
+                        <span className="sr-only">Sao chép liên kết </span>
+                        Chép liên kết
+                      </button>
                     </div>
                   </div>
                 ) : null}
@@ -389,14 +389,14 @@ export const RepoChart: React.FC<RepoChartProps> = ({ query, onClearQuery, saved
                         Đính kèm
                       </button>
                       <ReactionBar id={repo.id} title={repo.fullName} showLabel />
-                      <a
+                      <button
+                        type="button"
                         className="ex-text"
-                        href={repo.htmlUrl}
-                        target="_blank"
-                        rel="noreferrer noopener"
+                        onClick={() => void handleCopy(repo.htmlUrl, 'Đã chép liên kết')}
                       >
-                        Mở nguồn
-                      </a>
+                        <span className="sr-only">Sao chép liên kết </span>
+                        Chép liên kết
+                      </button>
                     </div>
                   </li>
                 );

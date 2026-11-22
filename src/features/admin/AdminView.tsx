@@ -4,6 +4,7 @@ import type { AdminState, AIProtocol, ModerationReportStatus } from '../../types
 import { apiClient } from '../../services/apiClient';
 import { useAppStore } from '../../store/appStore';
 import { Chips, LampSwitch, LiquidTabs, SearchCard, SelectionList, SlingSlider } from '../../components/pinui';
+import { AdminCharts } from './AdminCharts';
 import './admin.css';
 
 type AdminTab = 'analytics' | 'users' | 'system' | 'logs';
@@ -690,6 +691,15 @@ export const AdminView: React.FC = () => {
             </span>
           )}
         </div>
+
+        {activeTab === 'analytics' && adminState ? (
+          <AdminCharts
+            history={adminState.telemetryHistory ?? []}
+            growth={adminState.userGrowth ?? []}
+            uptimeSeconds={adminState.telemetry.uptimeSeconds}
+            storageNote={adminState.gateway.enabled ? 'Gateway riêng' : 'Gateway mặc định'}
+          />
+        ) : null}
 
         {activeTab === 'analytics' && (
           <div className="adm-grid-2">

@@ -541,3 +541,58 @@ html.reduce-motion *::after {
   transition-duration: 0.01ms !important;
   scroll-behavior: auto !important;
 }
+
+/* ===========================================================================
+   Chuyển Sáng / Tối đồng nhịp với hiệu ứng PinUI.
+
+   `data-theme-blend` được bật NGAY TRONG lúc giọt nước / mưa đang phủ, nên
+   các bề mặt lớn tween màu 380ms — mắt thấy theme "tan" vào nhau thay vì
+   nhảy khựng sau khi hiệu ứng kết thúc. Không bật transition thường trực
+   trên toàn trang để tránh làm chậm mọi thay đổi trạng thái khác.
+=========================================================================== */
+
+@property --bg {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: #11100f;
+}
+
+@property --bg-raised {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: #181716;
+}
+
+@property --fg {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: #f3eee3;
+}
+
+html[data-theme-blend='open'] {
+  transition:
+    --bg 380ms cubic-bezier(0.22, 1, 0.36, 1),
+    --bg-raised 380ms cubic-bezier(0.22, 1, 0.36, 1),
+    --fg 380ms cubic-bezier(0.22, 1, 0.36, 1),
+    background-color 380ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* Mảnh nền phải tween cùng nhịp: `background` viết tắt không kế thừa
+   transition của `background-color` trong mọi trình duyệt. */
+html[data-theme-blend='open'],
+html[data-theme-blend='open'] body {
+  transition:
+    background-color 380ms cubic-bezier(0.22, 1, 0.36, 1),
+    color 380ms cubic-bezier(0.22, 1, 0.36, 1);
+  will-change: background-color;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html[data-theme-blend='open'] {
+    transition-duration: 0.01ms;
+  }
+}
+
+html.reduce-motion[data-theme-blend='open'] {
+  transition-duration: 0.01ms;
+}

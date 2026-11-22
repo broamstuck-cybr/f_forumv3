@@ -27,18 +27,26 @@
     margin-right: 0.03em;
   }
 
-  .ex-aside {
-    display: grid;
-    gap: var(--space-4);
-    width: 100%;
-    max-width: 34rem;
+  .ex-head-top {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: var(--space-3) var(--space-6);
   }
 
   .ex-lede {
-    max-width: 30ch;
+    max-width: 46ch;
     font-size: var(--text-lg);
     line-height: 1.5;
     color: var(--fg-muted);
+  }
+
+  /* Thanh tìm kiếm trải hết bề ngang khung: tra cứu là việc chính của bàn soi. */
+  .ex-search-row {
+    display: grid;
+    gap: var(--space-4);
+    width: 100%;
+    max-width: 1120px;
   }
 
   .ex-pinui-search {
@@ -46,11 +54,39 @@
   }
 
   .ex-pinui-search .psearch-bar {
-    min-height: 46px;
+    min-height: 54px;
+    padding-inline: var(--space-5);
     border-radius: var(--radius-pill);
     border: 1px solid var(--line-strong);
     background: var(--bg-raised);
     color: var(--fg);
+  }
+
+  .ex-pinui-search .psearch-bar input {
+    font-size: var(--text-md);
+  }
+
+  .ex-simplify {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-3) var(--space-4);
+  }
+
+  .ex-simplify-line {
+    margin: 0;
+    font-family: var(--font-ui);
+    font-size: var(--text-md);
+    color: var(--fg);
+  }
+
+  .ex-simplify-soft {
+    color: var(--fg-muted);
+    font-weight: 500;
+  }
+
+  .ex-simplify .ex-quick {
+    margin-left: auto;
   }
 
   .ex-pinui-search .psearch-bar[data-open='true'] {
@@ -1381,6 +1417,23 @@
     font-variant-numeric: tabular-nums;
   }
 
+  .ex-heart {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--fg-muted);
+    transform-origin: center;
+    transition: color var(--dur-2) var(--ease-ux);
+  }
+
+  .ex-heart[data-liked='true'] {
+    color: var(--red);
+  }
+
+  .ex-react-btn--heart:hover .ex-heart {
+    color: var(--red);
+  }
+
   .ex-heart-dot,
   .ex-mark-dot {
     display: inline-block;
@@ -1908,14 +1961,11 @@
 
   @media (min-width: 900px) {
     .ex-head {
-      grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
-      align-items: end;
-      column-gap: var(--space-8);
+      gap: var(--space-5);
     }
 
-    .ex-aside {
-      justify-self: end;
-      padding-bottom: var(--space-4);
+    .ex-search-row {
+      grid-template-columns: minmax(0, 1fr);
     }
 
     .ex-bench {

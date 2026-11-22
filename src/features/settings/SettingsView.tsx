@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import OriginalThemeSwitch from '../../components/pinui/original/theme-switch/ThemeSwitch';
 import OriginalFileBox from '../../components/pinui/original/file-box/FileBox';
+import PinuiDropZone from '../../components/pinui/original/dynamic-drop-zone/DynamicDropZone';
 import type {
   AIProtocol,
   ProjectSetupTarget,
@@ -22,7 +23,6 @@ import type {
 import { useAppStore } from '../../store/appStore';
 import {
   Chips,
-  DynamicDropZone,
   SelectionList,
   type DroppedFilePayload,
 } from '../../components/pinui';
@@ -68,25 +68,31 @@ const PRESETS: PresetDefinition[] = [
   },
   {
     id: 'dark',
-    name: 'Obsidian Dark',
-    desc: 'Nền tối chuẩn mực #121110, độ tương phản cao cho phiên làm việc dài.',
+    name: 'Obsidian Foundry',
+    desc: 'Nền mực đêm có quầng đồng rất khẽ — tương phản cao, dễ chịu cho phiên dài.',
     tone: 'dark',
     targetTheme: 'dark',
     swatches: ['#121110', '#d63a27', '#efe9dd'],
-    previewBg: '#121110',
-    previewCard: '#1c1b19',
+    previewBg:
+      'radial-gradient(circle at 18% 12%, rgba(214,58,39,0.22), transparent 58%),' +
+      'radial-gradient(circle at 82% 20%, rgba(125,163,187,0.18), transparent 62%),' +
+      'linear-gradient(158deg, #14120f 0%, #121110 52%, #0b0a09 100%)',
+    previewCard: 'rgba(28, 27, 25, 0.8)',
     previewAccent: '#d63a27',
     ambient: false,
   },
   {
     id: 'light',
     name: 'Paper Ivory',
-    desc: 'Nền giấy kem ấm cao cấp, đọc rõ ràng dưới ánh sáng ban ngày.',
+    desc: 'Giấy kem ấm pha quầng san hô và sương xanh — đọc rõ dưới nắng ban ngày.',
     tone: 'light',
     targetTheme: 'light',
     swatches: ['#f4f0e6', '#c85a3a', '#191714'],
-    previewBg: '#f4f0e6',
-    previewCard: '#ffffff',
+    previewBg:
+      'radial-gradient(circle at 14% 10%, rgba(221,173,149,0.5), transparent 58%),' +
+      'radial-gradient(circle at 86% 16%, rgba(186,217,230,0.55), transparent 62%),' +
+      'linear-gradient(160deg, #f8f4ec 0%, #f2ede1 54%, #e9e2d3 100%)',
+    previewCard: 'rgba(255, 255, 255, 0.88)',
     previewAccent: '#c85a3a',
     ambient: false,
   },
@@ -148,6 +154,67 @@ const PRESETS: PresetDefinition[] = [
     previewBg: 'linear-gradient(145deg, #091326 0%, #101f3d 55%, #060a14 100%)',
     previewCard: 'rgba(16, 28, 52, 0.82)',
     previewAccent: '#38bdf8',
+    ambient: true,
+  },
+  {
+    id: 'godray',
+    name: 'Godray Amber',
+    desc: 'Tia sáng ấm xuyên mây trên nền hổ phách — ấm, sâu, không chói.',
+    tone: 'dark',
+    targetTheme: 'dark',
+    swatches: ['#14100b', '#f0b25e', '#ffe9c6'],
+    previewBg:
+      'conic-gradient(from 200deg at 22% -12%, rgba(255,214,148,0.5) 0deg, transparent 62deg),' +
+      'radial-gradient(circle at 18% 4%, rgba(255,186,108,0.42), transparent 58%),' +
+      'linear-gradient(168deg, #1a1209 0%, #241809 46%, #120d07 100%)',
+    previewCard: 'rgba(36, 27, 18, 0.78)',
+    previewAccent: '#f0b25e',
+    ambient: true,
+  },
+  {
+    id: 'meshDusk',
+    name: 'Mesh Dusk',
+    desc: 'Ba vùng mesh teal – san hô – chàm tan vào nhau, đối trọng bổ túc cho vùng tối.',
+    tone: 'dark',
+    targetTheme: 'dark',
+    swatches: ['#0f1116', '#78d7c6', '#f08080'],
+    previewBg:
+      'radial-gradient(circle at 14% 20%, rgba(96,205,195,0.46), transparent 58%),' +
+      'radial-gradient(circle at 86% 28%, rgba(240,128,128,0.38), transparent 60%),' +
+      'radial-gradient(circle at 52% 94%, rgba(118,108,214,0.42), transparent 62%),' +
+      '#0b0d17',
+    previewCard: 'rgba(23, 26, 34, 0.8)',
+    previewAccent: '#78d7c6',
+    ambient: true,
+  },
+  {
+    id: 'jade',
+    name: 'Jade Halo',
+    desc: 'Lục bảo trầm phối ánh kim nhẹ — dịu mắt cho phiên đọc dài.',
+    tone: 'dark',
+    targetTheme: 'dark',
+    swatches: ['#0b1210', '#9fe3c4', '#d4b860'],
+    previewBg:
+      'radial-gradient(circle at 22% 10%, rgba(86,214,168,0.4), transparent 60%),' +
+      'radial-gradient(circle at 82% 74%, rgba(212,184,96,0.28), transparent 62%),' +
+      'linear-gradient(164deg, #08110d 0%, #0d1a15 52%, #060c09 100%)',
+    previewCard: 'rgba(22, 32, 28, 0.8)',
+    previewAccent: '#9fe3c4',
+    ambient: true,
+  },
+  {
+    id: 'rose',
+    name: 'Rose Clay',
+    desc: 'Hồng đất phối tím khói — tương phản mềm, hợp bản thảo sáng tạo.',
+    tone: 'light',
+    targetTheme: 'light',
+    swatches: ['#fbf3f2', '#c9a0e8', '#97405c'],
+    previewBg:
+      'radial-gradient(circle at 16% 10%, rgba(252,196,206,0.62), transparent 60%),' +
+      'radial-gradient(circle at 86% 34%, rgba(214,186,240,0.5), transparent 62%),' +
+      'linear-gradient(166deg, #fffaf9 0%, #fbeef0 52%, #f6e8ec 100%)',
+    previewCard: 'rgba(255, 255, 255, 0.88)',
+    previewAccent: '#97405c',
     ambient: true,
   },
 ];
@@ -915,10 +982,20 @@ export const SettingsView: React.FC = () => {
 
                   <div className="st-block">
                     <span className="st-label">Khôi phục từ tệp JSON</span>
-                    <DynamicDropZone
-                      label="Thả tệp JSON sao lưu vào đây"
-                      onFilesAdded={handleFilesDropped}
+                    <PinuiDropZone
+                      theme={theme}
+                      corner={22}
+                      demoFile={false}
+                      onDrop={(files) => {
+                        const file = files[0];
+                        if (!file) return;
+                        void file
+                          .text()
+                          .then((content) => handleFilesDropped([{ name: file.name, content }]))
+                          .catch(() => setImportError('Không đọc được tệp vừa thả.'));
+                      }}
                     />
+                    <p className="st-hint">Thả tệp sao lưu vào khung trên, dữ liệu sẽ được kiểm tra trước khi ghi đè.</p>
                     {importError && (
                       <p className="st-error" role="alert">
                         {importError}
