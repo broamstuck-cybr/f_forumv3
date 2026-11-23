@@ -6,8 +6,6 @@ import {
   type PromptComposerAction,
   type PromptComposerModel,
 } from '../../components/pinui/PromptComposer';
-import { CopyPastePad, LampSwitch, LiquidVoice } from '../../components/pinui';
-import { triggerPinuiThemeToggle } from '../../components/layout/GlobalThemeAtmosphere';
 import { DotMatrixHandsCanvas } from '../../components/launchpad/DotMatrixHandsCanvas';
 import { IrisQrCornerSection } from '../../components/launchpad/IrisQrCornerSection';
 import { ScrollStoryEngine } from '../../components/launchpad/ScrollStoryEngine';
@@ -262,42 +260,6 @@ export const HomeView: React.FC<HomeViewProps> = () => {
               onAttachClick={() => navigate('explore')}
             />
           </div>
-
-          {isFabulous && (
-            <div className="hm-fab-kit" aria-label="Bộ công cụ tương tác Fabulous">
-              <div className="hm-fab-kit-item">
-                <span className="t-label">Đèn giao diện · LampSwitch</span>
-                <LampSwitch
-                  on={theme === 'light'}
-                  onToggle={() => triggerPinuiThemeToggle()}
-                  onLabel="Giấy sáng"
-                  offLabel="Mực tối"
-                />
-              </div>
-              <div className="hm-fab-kit-item">
-                <span className="t-label">Ghi âm nhanh · LiquidVoice</span>
-                <LiquidVoice
-                  theme={theme}
-                  onSend={(ms) => {
-                    const sec = Math.max(1, Math.round(ms / 1000));
-                    setPromptText(
-                      (prev) =>
-                        prev ||
-                        `Tạo giao diện hiện đại với kính mờ VisionOS và chuyển động mượt (${sec}s ghi chú giọng nói).`
-                    );
-                    addToast({
-                      type: 'info',
-                      title: `Đã chèn gợi ý từ LiquidVoice (${sec}s)`,
-                    });
-                  }}
-                />
-              </div>
-              <div className="hm-fab-kit-item">
-                <span className="t-label">Bảng phím tắt · CopyPastePad</span>
-                <CopyPastePad theme={theme} />
-              </div>
-            </div>
-          )}
 
           <AnimatePresence initial={false}>
             {activeBlueprint && selectedAction && (

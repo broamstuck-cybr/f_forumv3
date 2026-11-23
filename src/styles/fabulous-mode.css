@@ -79,19 +79,6 @@ html[data-ui-mode='fabulous'] .mobile-bnav {
     0 -12px 32px -18px rgba(0, 0, 0, 0.45);
 }
 
-.nav__fabHeart {
-  flex-shrink: 0;
-}
-
-.nav__fabThemeBox {
-  display: flex;
-  justify-content: center;
-  padding: 8px;
-  border-radius: 12px;
-  background: color-mix(in srgb, var(--bg-raised) 82%, transparent);
-  border: 1px solid color-mix(in srgb, var(--accent, #38c99a) 22%, var(--line));
-}
-
 /* --- CodeFronts: Specular Glassmorphic Cards & 3D Tilt Across Routes --- */
 html[data-ui-mode='fabulous'] .st-panel,
 html[data-ui-mode='fabulous'] .st-card,
@@ -421,8 +408,7 @@ html[data-ui-mode='fabulous'] .ws-toolbar {
   gap: 14px;
 }
 
-.foot__fabRail,
-.lp-fab-rail {
+.foot__fabRail {
   margin-bottom: 18px;
   display: flex;
   justify-content: center;

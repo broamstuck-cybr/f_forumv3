@@ -92,7 +92,7 @@ const MotionVideoThumb: React.FC<{
   eager?: boolean;
   hovered?: boolean;
   reduced?: boolean;
-}> = ({ item, posterSrc, videoSrc, eager = false, hovered = false, reduced = false }) => {
+}> = ({ item, posterSrc, videoSrc, hovered = false, reduced = false }) => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [imgLoaded, setImgLoaded] = useState(false);
   const [imgFailed, setImgFailed] = useState(false);
@@ -128,10 +128,9 @@ const MotionVideoThumb: React.FC<{
           className="mmq-thumb-img"
           src={posterSrc}
           alt={`${item.title} · ${item.category}`}
-          loading={eager ? 'eager' : 'lazy'}
+          loading="eager"
           decoding="async"
           referrerPolicy="no-referrer"
-          style={imgLoaded ? undefined : { opacity: 0, position: 'absolute', inset: 0 }}
           onLoad={() => setImgLoaded(true)}
           onError={() => setImgFailed(true)}
         />

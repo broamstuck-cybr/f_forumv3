@@ -63,7 +63,7 @@ html[data-theme='light'] .ambient-backdrop {
   filter: saturate(1.06);
 }
 
-/* 2. godray-amber — Tia Nắng Hoàng Kim FPT */
+/* 2. godray-amber — Tia Nắng Hoàng Kim */
 .ambient-backdrop[data-preset='godray-amber'] .ambient-mesh-layer {
   background:
     radial-gradient(ellipse 90% 60% at 50% -10%, rgba(249, 115, 22, 0.28) 0%, transparent 70%),

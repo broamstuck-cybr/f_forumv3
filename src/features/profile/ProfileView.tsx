@@ -10,13 +10,10 @@ import { formatUserDisplayName, useAppStore } from '../../store/appStore';
 import type { AttachedContextItem, CommunityPost } from '../../types/index';
 import { Media, previewFor } from '../../ui/Media';
 import {
-  BalanceCard,
   CalendarCard,
   Chips,
   FileBox,
   LiquidTabs,
-  PinHeartButton,
-  ReaderCard,
   TaskCard,
   type TaskCardItem,
   type TaskStatus,
@@ -164,14 +161,11 @@ export const ProfileView: React.FC = () => {
     quota,
     navigate,
     theme,
-    settings,
     viewingProfileUser,
     openUserProfile,
     clearViewingProfileUser,
     addToast,
   } = useAppStore();
-  const isFabulous = settings.uiMode === 'fabulous';
-  const [profileLiked, setProfileLiked] = useState(false);
 
   const [activeTab, setActiveTab] = useState<ProfileTab>('saved');
   const [savedFilter, setSavedFilter] = useState<SavedFilter>('all');
@@ -994,31 +988,6 @@ export const ProfileView: React.FC = () => {
                       <div className="pf-calendar-wrap">
                         <CalendarCard theme={theme} />
                       </div>
-                      {isFabulous && (
-                        <div className="pf-fab-widgets">
-                          <ReaderCard
-                            title={`Hồ sơ ${displayName}`}
-                            subtitle="Fabulous Studio · PinUI"
-                            excerptLines={[bio]}
-                            paragraphs={[
-                              `${displayName} đang bật chế độ Fabulous với bộ 200 tài nguyên tương tác thực (41 PinUI, 9 CodeFronts, 50 ThreeUI, 50 Glacier, 50 Motion AI).`,
-                            ]}
-                            theme={theme}
-                          />
-                          <div className="pf-fab-balance-row">
-                            <BalanceCard
-                              balance={savedEntries.length * 100 + projects.length * 250}
-                              presets={[50, 100, 250, 500]}
-                            />
-                            <PinHeartButton
-                              liked={profileLiked}
-                              count={profileLiked ? userPosts.length + 1 : userPosts.length}
-                              onToggle={() => setProfileLiked((v) => !v)}
-                              ariaLabel="Thích hồ sơ"
-                            />
-                          </div>
-                        </div>
-                      )}
                     </>
                   )}
                 </div>

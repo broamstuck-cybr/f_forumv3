@@ -342,32 +342,44 @@ export const GlobalThemeAtmosphere: React.FC = () => {
       if (activeEffect === 'droplet') {
         sound.playDroplet();
         const spreadMs = 560;
+        const dropColor = next === 'dark' ? '#141414' : '#ffffff';
         const startRipple = () => {
           const t0 = performance.now();
+          const fallMs = Math.min(240, Math.max(90, Math.round(Math.sqrt((2 * Math.max(40, cy)) / 4000) * 1000)));
           const rippleTick = (now: number) => {
             if (myRun !== activeRun || !busyRef.current) return;
-            const p = Math.min(1, (now - t0) / spreadMs);
+            const elapsed = now - t0;
+            const p = Math.min(1, elapsed / spreadMs);
             const ease = 1 - Math.pow(1 - p, 3);
             const radius = ease * maxR;
             const fade = Math.max(0, 1 - p);
             if (ctx) {
               ctx.clearRect(0, 0, w, h);
-              ctx.strokeStyle = accent;
-              ctx.globalAlpha = 0.62 * fade;
-              ctx.lineWidth = 2.4 * (1 - p * 0.5);
-              ctx.beginPath();
-              ctx.arc(cx, cy, Math.max(2, radius), 0, Math.PI * 2);
-              ctx.stroke();
-
-              if (radius > 34) {
-                ctx.strokeStyle = highlight;
-                ctx.globalAlpha = 0.28 * fade;
-                ctx.lineWidth = 1.2;
+              if (elapsed < fallMs) {
+                const fp = elapsed / fallMs;
+                const dropY = -18 + (cy + 18) * (fp * fp);
+                ctx.fillStyle = dropColor;
                 ctx.beginPath();
-                ctx.arc(cx, cy, Math.max(2, radius - 26), 0, Math.PI * 2);
+                ctx.arc(cx, dropY, 9, 0, Math.PI * 2);
+                ctx.fill();
+              } else {
+                ctx.strokeStyle = accent;
+                ctx.globalAlpha = 0.62 * fade;
+                ctx.lineWidth = 2.4 * (1 - p * 0.5);
+                ctx.beginPath();
+                ctx.arc(cx, cy, Math.max(2, radius), 0, Math.PI * 2);
                 ctx.stroke();
+
+                if (radius > 34) {
+                  ctx.strokeStyle = highlight;
+                  ctx.globalAlpha = 0.28 * fade;
+                  ctx.lineWidth = 1.2;
+                  ctx.beginPath();
+                  ctx.arc(cx, cy, Math.max(2, radius - 26), 0, Math.PI * 2);
+                  ctx.stroke();
+                }
+                ctx.globalAlpha = 1;
               }
-              ctx.globalAlpha = 1;
             }
             if (p < 1) {
               rafId = requestAnimationFrame(rippleTick);

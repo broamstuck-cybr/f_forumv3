@@ -85,7 +85,6 @@ const CHANNEL_ITEMS: Array<{ id: ChannelFilterId; label: string }> = [
   { id: 'showcase', label: 'trưng-bày' },
   { id: 'drops', label: 'rules-prompt' },
   { id: 'clubs', label: 'clb-dự-án' },
-  { id: 'exams', label: 'kho-đề-thi' },
   { id: 'saved', label: 'đã-lưu' },
 ];
 
@@ -466,7 +465,7 @@ export const CommunityView: React.FC = () => {
     loadJsonFromStorage<string[]>(LOCAL_NOTIF_READ_KEY, [])
   );
   const [onboardingDismissed, setOnboardingDismissed] = useState<boolean>(() =>
-    loadJsonFromStorage<boolean>(LOCAL_ONBOARDING_KEY, false)
+    loadJsonFromStorage<boolean>(LOCAL_ONBOARDING_KEY, true)
   );
 
   const [reportTarget, setReportTarget] = useState<CommunityPost | null>(null);
@@ -737,10 +736,9 @@ export const CommunityView: React.FC = () => {
       { id: 'trending', label: 'Phổ biến' },
       { id: 'following', label: 'Đang theo dõi' },
       { id: 'newest', label: 'Mới nhất' },
-      { id: 'demos', label: 'Mã chạy thử', count: demoPosts.length },
       { id: 'saved', label: 'Đã lưu', count: savedCommunityPosts.length },
     ],
-    [allPosts.length, demoPosts.length, savedCommunityPosts.length]
+    [allPosts.length, savedCommunityPosts.length]
   );
 
   const topContributors = useMemo<ContributorStat[]>(() => {
@@ -1495,8 +1493,8 @@ export const CommunityView: React.FC = () => {
       if (mode === 'showcase') {
         setComposeChannel('showcase');
         setComposeCategory('Components');
-        setComposeIncludeCode(true);
-        setComposePreviewLive(true);
+        setComposeIncludeCode(false);
+        setComposePreviewLive(false);
       } else if (mode === 'template') {
         setComposeChannel('showcase');
         setComposeCategory('Layouts');
@@ -2021,33 +2019,6 @@ export const CommunityView: React.FC = () => {
                   }}
                 />
               </div>
-
-              <div className="cm-sort-group" role="group" aria-label="Sắp xếp bài viết">
-                <button
-                  type="button"
-                  className="cm-sort-btn"
-                  aria-pressed={sortMode === 'newest'}
-                  onClick={() => setSortMode('newest')}
-                >
-                  Mới
-                </button>
-                <button
-                  type="button"
-                  className="cm-sort-btn"
-                  aria-pressed={sortMode === 'top'}
-                  onClick={() => setSortMode('top')}
-                >
-                  Nổi bật / Đề xuất
-                </button>
-                <button
-                  type="button"
-                  className="cm-sort-btn"
-                  aria-pressed={sortMode === 'discussed'}
-                  onClick={() => setSortMode('discussed')}
-                >
-                  Thảo luận sôi nổi
-                </button>
-              </div>
             </div>
 
             <div className="cm-nav-strip">
@@ -2059,17 +2030,6 @@ export const CommunityView: React.FC = () => {
                   ariaLabel="Kênh bảng tin"
                 />
               </div>
-            </div>
-
-            <div className="cm-topics-strip">
-              <Chips
-                items={TOPIC_CHIPS}
-                selectedIds={[selectedTopic]}
-                onToggle={handleToggleTopic}
-                multi={false}
-                variant="filter"
-                theme={theme}
-              />
             </div>
 
             {hasActiveFilter && (
@@ -2136,7 +2096,7 @@ export const CommunityView: React.FC = () => {
             </div>
           )}
 
-          <section className="cm-stories-strip" aria-label="Điểm nhấn Tri thức & Kênh">
+          <section className="cm-stories-strip" aria-label="Điểm nhấn Tri thức">
             <button
               type="button"
               className="cm-story-card cm-story-card--create"
@@ -2150,33 +2110,6 @@ export const CommunityView: React.FC = () => {
                 <span>Chia sẻ lên Bảng tin</span>
               </span>
             </button>
-
-            {/* Instagram-style Channel Highlights */}
-            {CHANNEL_ITEMS.filter((c) => c.id !== 'all' && c.id !== 'saved').map((ch) => {
-              const active = activeChannel === ch.id;
-              const count = channelCounts[ch.id] ?? 0;
-              return (
-                <button
-                  key={`ch-story-${ch.id}`}
-                  type="button"
-                  className="cm-story-card cm-story-card--channel"
-                  data-active-channel={active ? 'true' : undefined}
-                  onClick={() => handleSelectChannel(ch.id)}
-                  title={`Xem kênh #${ch.label}`}
-                >
-                  <span className="cm-story-top">
-                    <span className="cm-story-avatar cm-story-avatar--channel" aria-hidden="true">
-                      <Hash size={14} />
-                    </span>
-                    <span className="cm-story-badge">{count}</span>
-                  </span>
-                  <span className="cm-story-bottom">
-                    <span className="cm-story-title">#{ch.label}</span>
-                    <span className="cm-story-author">Kênh Tri thức</span>
-                  </span>
-                </button>
-              );
-            })}
 
             {storyPosts.length === 0 ? (
               <button

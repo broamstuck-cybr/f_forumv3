@@ -52,7 +52,7 @@ const REACTIONS: Array<{ id: string; label: string; Icon: React.ComponentType<{ 
 const REACTION_ICON = Object.fromEntries(REACTIONS.map((r) => [r.id, r.Icon]));
 
 const BASE_THREADS: ChatThread[] = [
-  { id: 'chung-fpt', name: '#chung-fpt', kind: 'channel', online: true, rule: 'Tôn trọng nhau, không spam, không đăng đáp án thi.' },
+  { id: 'chung', name: '#chung', kind: 'channel', online: true, rule: 'Kênh thảo luận chung. Tôn trọng nhau, không spam, không đăng đáp án thi.' },
   { id: 'vibe-coding', name: '#vibe-coding', kind: 'channel', online: true, rule: 'Chia sẻ prompt kèm kết quả. Ghi rõ công cụ đã dùng.' },
   { id: 'ui-ux-critique', name: '#ui-ux-critique', kind: 'channel', online: true, rule: 'Góp ý cụ thể, có lý do. Không chê chung chung.' },
   { id: 'hoi-dap-nhanh', name: '#hoi-dap-nhanh', kind: 'channel', online: true, rule: 'Nêu rõ lỗi, môi trường và đoạn code liên quan.' },
@@ -122,7 +122,7 @@ export const CommunityChatRoom: React.FC<Props> = ({ currentHandle, currentName 
   const [customThreads, setCustomThreads] = useState<ChatThread[]>(() => load(THREADS_KEY, []));
   const [messages, setMessages] = useState<ChatMessage[]>(() => load(STORE_KEY, SEED));
   const [readAt, setReadAt] = useState<Record<string, number>>(() => load(READ_KEY, {}));
-  const [activeId, setActiveId] = useState<string>('chung-fpt');
+  const [activeId, setActiveId] = useState<string>('chung');
   const [mobileThread, setMobileThread] = useState(false);
   const [query, setQuery] = useState('');
   const [draft, setDraft] = useState('');

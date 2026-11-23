@@ -179,10 +179,10 @@ export const MANIFESTO_BEATS: ManifestoBeat[] = [
   {
     id: 'beat-open-workshop',
     headline: 'Bản địa hóa học đường Việt Nam & Xưởng lắp ráp mở miễn phí.',
-    body: 'Toàn bộ Tủ sách tài nguyên và thư viện prompt được phân loại bằng tiếng Việt bám sát bài toán học tập tại TH, THCS và THPT FPT. Khác công cụ AI thương mại làm thay hoàn toàn, F-Forum là xưởng lắp ráp mở: học sinh tự chọn thành phần thiết kế, còn người làm vibe coding có sẵn Skills chuẩn để kiểm soát AI.',
+    body: 'Toàn bộ Tủ sách tài nguyên và thư viện prompt được phân loại bằng tiếng Việt bám sát bài toán học tập của học sinh & sinh viên yêu công nghệ. Khác công cụ AI thương mại làm thay hoàn toàn, F-Forum là xưởng lắp ráp mở: học sinh tự chọn thành phần thiết kế, còn người làm vibe coding có sẵn Skills chuẩn để kiểm soát AI.',
     stickers: [
       { label: 'Xưởng lắp ráp mở', bg: '#BFE9D9', tilt: -2 },
-      { label: 'TH, THCS & THPT FPT', bg: '#C6E0E4', tilt: 2.5 },
+      { label: 'Cộng đồng F-Forum', bg: '#C6E0E4', tilt: 2.5 },
     ],
     badge: 'prism',
   },
@@ -209,7 +209,7 @@ export const PROJECT_SHOWCASE_THUMBS: Record<string, string> = {
 
 export const OPEN_ACCESS_FEATURES: string[] = [
   '7.662 mẫu giao diện & Starter Kits kiểm định khả thi (41 PinUI · 321 Motion AI · 961 ThreeUI · 892 GetLayers · 400 LucianLabs · 5.047 CodeFronts) cùng 60 công cụ và 122 repo',
-  'Bản địa hóa tiếng Việt theo bài toán học tập tại TH, THCS và THPT FPT — Chống "AI Slop", rèn tư duy phản biện',
+  'Bản địa hóa tiếng Việt theo bài toán học tập của học sinh & sinh viên yêu công nghệ — Chống "AI Slop", rèn tư duy phản biện',
   'Xác minh tài khoản API, mã hóa dữ liệu tệp JSON cùng Bộ lọc AI phát hiện và xử lý spam, ngôn từ thô tục',
   'Không gian Hỏi đáp, Threads, Kho đề thi, Hồ sơ học tập, đóng gói website riêng và đồng bộ WebSocket thời gian thực',
 ];
@@ -217,7 +217,7 @@ export const OPEN_ACCESS_FEATURES: string[] = [
 export const FAQ_ITEMS: Array<{ id: string; question: string; answer: string }> = [
   {
     id: 'f1',
-    question: 'FPT Forum (F-Forum) giải quyết 3 thực trạng nào khi học sinh dùng AI?',
+    question: 'F-Forum giải quyết 3 thực trạng nào khi học sinh dùng AI?',
     answer:
       'Theo báo cáo OECD PISA 2025 (9/2026), 95,9% học sinh sử dụng AI trong sáng tạo nhưng vướng 3 điểm nghẽn: (01) người mới "vibe code" thiếu lộ trình bắt đầu; (02) dễ phụ thuộc câu trả lời AI có sẵn mà chưa biến được ý tưởng thành sản phẩm hoàn chỉnh; (03) thiếu nguồn mẫu chuẩn để tham khảo. F-Forum tập trung học liệu kiểm chứng và kinh nghiệm thực tế vào một không gian chung.',
   },
@@ -225,7 +225,7 @@ export const FAQ_ITEMS: Array<{ id: string; question: string; answer: string }> 
     id: 'f2',
     question: 'F-Forum chống "AI Slop" và khác gì các công cụ AI làm thay toàn bộ?',
     answer:
-      'Thay vì tạo ra sản phẩm rập khuôn từ một câu lệnh ("AI Slop"), F-Forum vận hành như một Xưởng lắp ráp mở miễn phí tại TH, THCS và THPT FPT: học sinh tự chọn chủ đề, ghép các thành phần UI/UX trực quan (tương tự chọn template trên Canva) để tự kiểm chứng, còn người làm vibe coding có sẵn Skills và Starter Kits chuẩn để kiểm soát đầu ra của AI.',
+      'Thay vì tạo ra sản phẩm rập khuôn từ một câu lệnh ("AI Slop"), F-Forum vận hành như một Xưởng lắp ráp mở miễn phí cho cộng đồng F-Forum: học sinh tự chọn chủ đề, ghép các thành phần UI/UX trực quan (tương tự chọn template trên Canva) để tự kiểm chứng, còn người làm vibe coding có sẵn Skills và Starter Kits chuẩn để kiểm soát đầu ra của AI.',
   },
   {
     id: 'f3',

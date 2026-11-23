@@ -1174,12 +1174,12 @@ export const TeamHonorGallery: React.FC<TeamHonorGalleryProps> = ({ onBack, onNa
           <canvas
             ref={canvasRef}
             className="thg-canvas"
-            aria-label="Hành lang trưng bày 3D Đội ngũ Phát triển FPT Forum"
+            aria-label="Hành lang trưng bày 3D Đội ngũ Phát triển F-Forum"
           />
 
           {webglUnavailable && (
             <div className="thg-webgl-fallback">
-              <p className="thg-hud-kicker">PHÒNG VINH DANH FPT FORUM</p>
+              <p className="thg-hud-kicker">PHÒNG VINH DANH F-FORUM</p>
               <h2 className="thg-hud-headline">Trình duyệt tạm tắt WebGL 3D</h2>
               <p className="thg-hud-sub">
                 Bạn vẫn có thể duyệt toàn bộ 9 hồ sơ đội ngũ phát triển dưới dạng thẻ biên tập.
@@ -1262,7 +1262,7 @@ export const TeamHonorGallery: React.FC<TeamHonorGalleryProps> = ({ onBack, onNa
                   <p className="thg-hud-kicker">
                     {focusedExhibit
                       ? `${focusedExhibit.kicker} · ${focusedExhibit.milestone}`
-                      : 'TH, THCS & THPT FPT · SỔ TAY TRI ÂN'}
+                      : 'CỘNG ĐỒNG F-FORUM · SỔ TAY TRI ÂN'}
                   </p>
                   <h1 className="thg-hud-headline">
                     {focusedExhibit ? focusedExhibit.title : 'ĐỘI NGŨ F-FORUM'}
@@ -1316,10 +1316,10 @@ export const TeamHonorGallery: React.FC<TeamHonorGalleryProps> = ({ onBack, onNa
       )}
 
       {viewMode === 'list' && (
-        <section className="thg-list-view" aria-label="Danh sách 9 bản ghi đội ngũ FPT Forum">
+        <section className="thg-list-view" aria-label="Danh sách 9 bản ghi đội ngũ F-Forum">
           <div className="thg-list-head">
             <div>
-              <p className="thg-hud-kicker">PHÒNG VINH DANH ĐỘI NGŨ PHÁT TRIỂN · TH, THCS & THPT FPT</p>
+              <p className="thg-hud-kicker">PHÒNG VINH DANH ĐỘI NGŨ PHÁT TRIỂN · CỘNG ĐỒNG F-FORUM</p>
               <h1 className="thg-list-title">Sổ Tay Đóng Góp F-Forum</h1>
             </div>
             <p className="thg-list-lede">

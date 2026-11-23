@@ -460,6 +460,12 @@ export const PlateTable: React.FC<PlateTableProps> = ({
     return baseCss;
   }, [activeItem, isPinUI, isThreeUI, isMotion, isGlacier, activeShard, motionEntry]);
 
+  const hasCompleteDemoHtml = Boolean(
+    activeHtml &&
+      (/<(?:!doctype|html|section|main|header|body)[\s>]/i.test(activeHtml) ||
+        activeHtml.trim().length >= 420)
+  );
+
   const cycleViewport = () => {
     setViewport((prev) => (prev === 1440 ? 768 : prev === 768 ? 390 : 1440));
   };
@@ -723,9 +729,8 @@ export const PlateTable: React.FC<PlateTableProps> = ({
                     key={`${activeItem.id}-${nonce}`}
                     itemId={activeItem.id}
                     theme={stageTheme}
-                    compact
                   />
-                ) : activeHtml && (motionStageMode === 'html' || !activeVideo) ? (
+                ) : hasCompleteDemoHtml && (motionStageMode === 'html' || !activeVideo) ? (
                   <SandboxPreview
                     title={activeTitle}
                     html={activeHtml}

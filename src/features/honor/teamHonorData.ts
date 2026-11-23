@@ -60,9 +60,9 @@ export const HONOR_EXHIBITS: HonorExhibit[] = [
   {
     id: 'team-core',
     code: '01',
-    title: 'Ban Phát Triển FPT Forum',
+    title: 'Ban Phát Triển F-Forum',
     subtitle: 'Kiến Trúc Giao Diện & Xưởng Lắp Ráp Mở',
-    track: 'Thành viên Sáng lập · TH, THCS & THPT FPT',
+    track: 'Thành viên Sáng lập · Cộng đồng F-Forum',
     kicker: 'ĐỘI NGŨ PHÁT TRIỂN · 01',
     milestone: 'Phiên bản 3.0 · 2026',
     motif: 'compass',
@@ -93,11 +93,11 @@ export const HONOR_EXHIBITS: HonorExhibit[] = [
     },
     accordions: {
       coreContribution:
-        'Khởi xướng và trực tiếp xây dựng FPT Forum như một xưởng lắp ráp web mở dành cho học sinh yêu công nghệ. Mọi thao tác từ chọn mẫu giao diện, thử nghiệm trong hộp cát đến xuất bản dự án đều vận hành liền mạch ngay trên trình duyệt.',
+        'Khởi xướng và trực tiếp xây dựng F-Forum như một xưởng lắp ráp web mở dành cho học sinh yêu công nghệ. Mọi thao tác từ chọn mẫu giao diện, thử nghiệm trong hộp cát đến xuất bản dự án đều vận hành liền mạch ngay trên trình duyệt.',
       architectureResults:
         'Hợp nhất Bàn soi Khám phá, Workspace chỉnh sửa trực tiếp, Cộng đồng Tri thức và Trình kiểm định 6 lớp vào một kiến trúc thống nhất, giảm tối đa rào cản cài đặt môi trường cho người mới bắt đầu.',
       gratitude:
-        'Tri ân các thành viên nòng cốt đã bền bỉ thử nghiệm qua từng bản dựng, giữ vững tinh thần làm sản phẩm thật phục vụ cộng đồng học sinh FPT.',
+        'Tri ân các thành viên nòng cốt đã bền bỉ thử nghiệm qua từng bản dựng, giữ vững tinh thần làm sản phẩm thật phục vụ cộng đồng học sinh & sinh viên yêu công nghệ.',
     },
     relatedIds: ['team-systems', 'team-ai-robotics', 'mentors-council'],
   },
@@ -106,7 +106,7 @@ export const HONOR_EXHIBITS: HonorExhibit[] = [
     code: '02',
     title: 'Đội Ngũ Kỹ Thuật & Dữ Liệu',
     subtitle: 'Hạ Tầng Thử Nghiệm & Kiểm Chứng Thực Tế',
-    track: 'Thành viên Phát triển · TH, THCS & THPT FPT',
+    track: 'Thành viên Phát triển · Cộng đồng F-Forum',
     kicker: 'ĐỘI NGŨ PHÁT TRIỂN · 02',
     milestone: '7.662 Mẫu · 195 Khảo sát',
     motif: 'nodes',
@@ -150,7 +150,7 @@ export const HONOR_EXHIBITS: HonorExhibit[] = [
     code: '03',
     title: 'Nghiên Cứu AI & Robotics',
     subtitle: 'Ứng Dụng Tư Duy Kỹ Thuật & Giao Lưu Quốc Tế',
-    track: 'Thành viên Nghiên cứu · TH, THCS & THPT FPT',
+    track: 'Thành viên Nghiên cứu · Cộng đồng F-Forum',
     kicker: 'ĐỘI NGŨ PHÁT TRIỂN · 03',
     milestone: 'AI & Robotics · 2026',
     motif: 'spiral',
@@ -194,7 +194,7 @@ export const HONOR_EXHIBITS: HonorExhibit[] = [
     code: '04',
     title: 'Hội Đồng Thầy Cô Cố Vấn',
     subtitle: 'Định Hướng Sư Phạm & Khoa Học Kỹ Thuật',
-    track: 'Cố vấn Chuyên môn · TH, THCS & THPT FPT',
+    track: 'Cố vấn Chuyên môn · Cộng đồng F-Forum',
     kicker: 'TRI ÂN CỐ VẤN · 04',
     milestone: 'Đồng hành xuyên suốt',
     motif: 'pillars',
@@ -232,7 +232,7 @@ export const HONOR_EXHIBITS: HonorExhibit[] = [
     code: '05',
     title: 'Khảo Sát 195 Học Sinh',
     subtitle: 'Dữ Liệu Thực Chứng & Đối Chiếu OECD PISA 2025',
-    track: 'Nhóm Nghiên cứu Khoa học · FPT Schools',
+    track: 'Nhóm Nghiên cứu Khoa học · Cộng đồng F-Forum',
     kicker: 'BẰNG CHỨNG THỰC NGHIỆM · 05',
     milestone: '195 phiếu hợp lệ · 91,2%',
     motif: 'chart195',
@@ -826,7 +826,7 @@ function paintPlateBase(
 
   ctx.fillStyle = muted;
   ctx.font = '500 12px "IBM Plex Mono", ui-monospace, monospace';
-  ctx.fillText('F-FORUM NOTEBOOK · TH, THCS & THPT FPT', 46, H - 44);
+  ctx.fillText('F-FORUM NOTEBOOK · HỌC SINH & SINH VIÊN YÊU CÔNG NGHỆ', 46, H - 44);
 }
 
 export function createHonorArtwork(

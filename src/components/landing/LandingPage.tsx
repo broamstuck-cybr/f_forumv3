@@ -14,7 +14,6 @@ import { LandingFAQ } from './sections/LandingFAQ';
 import { LandingFooter } from './sections/LandingFooter';
 import { BackToTopButton } from './BackToTopButton';
 import { IrisQrCornerSection } from '../launchpad/IrisQrCornerSection';
-import { SiteRail } from '../pinui';
 import './landing.css';
 
 export interface LandingPageProps {
@@ -96,20 +95,6 @@ export const LandingPage: React.FC<LandingPageProps> = ({
       <LandingProjects onNavigate={navigateTo} />
       <LandingFAQ onEnterApp={enterApp} />
       <IrisQrCornerSection onNavigate={navigateTo} contextLabel="landing" />
-      {store.settings.uiMode === 'fabulous' && (
-        <div className="lp-fab-rail">
-          <SiteRail
-            theme={store.theme}
-            onBrandClick={() => scrollToSection('top', 0)}
-            links={LANDING_CHAPTERS.map((chapter) => ({
-              id: chapter.id,
-              label: chapter.label,
-              active: activeChapterId === chapter.id,
-              onClick: () => scrollToSection(chapter.id),
-            }))}
-          />
-        </div>
-      )}
       <LandingFooter onNavigate={handleFooterNavigate} onOpenNotice={() => setNoticeOpen(true)} />
       <BackToTopButton />
 

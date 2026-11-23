@@ -1249,22 +1249,44 @@
   }
 
   .cm-dialog {
+    position: fixed;
+    inset: 0;
+    margin: auto;
     width: min(560px, calc(100vw - 28px));
-    max-height: min(88dvh, 780px);
+    max-height: min(88dvh, 760px);
     border-radius: 18px;
+    border: 1px solid var(--line-strong);
+    background: var(--bg-high);
+    color: var(--fg);
+    box-shadow: var(--shadow-3);
     overflow: hidden;
   }
 
   .cm-dialog--composer {
-    width: min(720px, calc(100vw - 28px));
+    width: min(680px, calc(100vw - 28px));
   }
 
   .cm-dialog-body {
-    padding: 20px 22px;
+    padding: 18px 20px 14px;
     display: grid;
-    gap: 14px;
-    max-height: min(88dvh, 780px);
+    gap: 12px;
+    max-height: min(88dvh, 760px);
     overflow-y: auto;
+  }
+
+  .cm-dialog-actions {
+    position: sticky;
+    bottom: -14px;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 10px;
+    padding: 12px 0 4px;
+    margin-top: 4px;
+    background: var(--bg-high);
+    border-top: 1px solid var(--line);
+    z-index: 4;
   }
 
   .cm-dialog-head {

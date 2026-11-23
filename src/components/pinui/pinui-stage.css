@@ -34,8 +34,15 @@
   position: relative;
   display: grid;
   min-width: 0;
+  width: 100%;
+  min-height: 460px;
   place-items: center;
-  padding: 56px 24px 32px;
+  padding: 24px;
+  overflow-x: auto;
+}
+
+.pinui-stage__body > * {
+  max-width: 100%;
 }
 
 .pinui-stage[data-compact] .pinui-stage__body {

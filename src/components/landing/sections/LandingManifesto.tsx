@@ -26,7 +26,7 @@ const LANDING_COMPOSER_ACTIONS: PromptComposerAction[] = [
   {
     id: 'club-hub',
     label: 'Hội nhóm',
-    placeholder: 'Xây dựng trang giới thiệu dự án học thuật cho câu lạc bộ FPT...',
+    placeholder: 'Xây dựng trang giới thiệu dự án học thuật cho câu lạc bộ công nghệ...',
     kind: 'event',
   },
   {
@@ -237,7 +237,7 @@ export const LandingManifesto: React.FC<LandingManifestoProps> = ({ onNavigate }
   };
 
   return (
-    <section id="tuyen-ngon" aria-label="Nghiên cứu và cơ sở khoa học FPT Forum" className="lp-hm-root">
+    <section id="tuyen-ngon" aria-label="Nghiên cứu và cơ sở khoa học F-Forum" className="lp-hm-root">
       <div
         ref={runwayRef}
         className="lp-hm-runway"
@@ -258,7 +258,7 @@ export const LandingManifesto: React.FC<LandingManifestoProps> = ({ onNavigate }
                 đến <span className="t-note">Xưởng lắp ráp mở.</span>
               </h2>
               <p className="lp-hm-lead">
-                6 trụ cột nghiên cứu của FPT Forum: giải quyết 3 điểm nghẽn khi dùng AI (95,9% học sinh theo OECD PISA 2025), chống AI Slop, khảo sát 195 người dùng (91,2%) và kiến trúc JSON · Bộ lọc AI · WebSocket.
+                6 trụ cột nghiên cứu của F-Forum: giải quyết 3 điểm nghẽn khi dùng AI (95,9% học sinh theo OECD PISA 2025), chống AI Slop, khảo sát 195 người dùng (91,2%) và kiến trúc JSON · Bộ lọc AI · WebSocket.
               </p>
             </div>
 

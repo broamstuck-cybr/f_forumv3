@@ -63,7 +63,7 @@ export const LandingFAQ: React.FC<LandingFAQProps> = ({ onEnterApp }) => {
                 Hỏi đáp, Threads, Kho đề thi &amp; WebSocket
               </h3>
               <p className="t-lead" style={{ fontSize: 'var(--text-sm)' }}>
-                Không gian trao đổi tại TH, THCS &amp; THPT FPT tích hợp mã nguồn mẫu kiểm chứng, Bộ lọc AI chặn spam và đồng bộ thời gian thực.
+                Không gian trao đổi của cộng đồng F-Forum tích hợp mã nguồn mẫu kiểm chứng, Bộ lọc AI chặn spam và đồng bộ thời gian thực.
               </p>
               <div>
                 <button type="button" className="btn btn-accent" onClick={onEnterApp}>

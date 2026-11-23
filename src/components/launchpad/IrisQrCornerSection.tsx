@@ -965,7 +965,7 @@ export const IrisQrCornerSection: React.FC<IrisQrCornerSectionProps> = ({
   return (
     <section
       id={`iris-qr-${contextLabel}`}
-      aria-label="Không gian Robot 3D, mã QR và Khu Vinh Danh Đội Ngũ Phát Triển FPT Forum"
+      aria-label="Không gian Robot 3D, mã QR và Khu Vinh Danh Đội Ngũ Phát Triển F-Forum"
       className="iris-qr-section"
     >
       <div ref={heroRef} className="iris-hero">
@@ -1008,12 +1008,12 @@ export const IrisQrCornerSection: React.FC<IrisQrCornerSectionProps> = ({
               type="button"
               className="iris-qr-plate"
               onClick={() => setQrModalOpen(true)}
-              aria-label="Phóng to mã QR FPT Forum"
+              aria-label="Phóng to mã QR F-Forum"
               title="Nhấn để phóng to mã QR"
             >
               <img
                 src={IRIS_QR_CODE_URL}
-                alt="Mã QR kết nối FPT Forum"
+                alt="Mã QR kết nối F-Forum"
                 className="iris-qr-img"
                 loading="eager"
                 decoding="sync"
@@ -1024,7 +1024,7 @@ export const IrisQrCornerSection: React.FC<IrisQrCornerSectionProps> = ({
               type="button"
               className="iris-honor-btn"
               onClick={() => go('honor')}
-              aria-label="Mở Phòng Vinh Danh 3D đội ngũ phát triển FPT Forum"
+              aria-label="Mở Phòng Vinh Danh 3D đội ngũ phát triển F-Forum"
             >
               <span className="iris-honor-btn-glow" aria-hidden="true" />
               <span className="iris-honor-btn-icon" aria-hidden="true">
@@ -1048,7 +1048,7 @@ export const IrisQrCornerSection: React.FC<IrisQrCornerSectionProps> = ({
           >
             <div className="iris-qr-modal" onClick={(e) => e.stopPropagation()}>
               <div className="iris-qr-modal-frame">
-                <img src={IRIS_QR_CODE_URL} alt="Mã QR kết nối FPT Forum" />
+                <img src={IRIS_QR_CODE_URL} alt="Mã QR kết nối F-Forum" />
               </div>
               <div className="iris-qr-modal-actions">
                 <a
