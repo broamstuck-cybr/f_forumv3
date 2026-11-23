@@ -785,4 +785,103 @@ describe('F-FORUM v3 Core Verification Suite', () => {
       }
     });
   });
+
+  describe('(f) Real Visitor (195+) & Active Time (91h+)', () => {
+    test('GET /api/metrics exposes persisted baselines at 195+ visitors and 91h+ active seconds', async () => {
+      const res = await fetch(`${baseUrl}/api/metrics`);
+      assert.equal(res.status, 200);
+      const data = await res.json();
+      assert.equal(typeof data.visitors, 'number');
+      assert.ok(data.visitors >= 195, `visitors must start at >= 195, received ${data.visitors}`);
+      assert.equal(typeof data.activeSeconds, 'number');
+      assert.ok(
+        data.activeSeconds >= 327600,
+        `activeSeconds must start at >= 327600 (91h), received ${data.activeSeconds}`
+      );
+      assert.equal(typeof data.lastUpdatedAt, 'string');
+      assert.equal(Number.isNaN(Date.parse(data.lastUpdatedAt)), false);
+    });
+
+    test('POST /api/metrics/visit increments visitors only for a genuinely new visitorId', async () => {
+      const visitorId = `visitor-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+
+      const firstRes = await fetch(`${baseUrl}/api/metrics/visit`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ visitorId }),
+      });
+      assert.equal(firstRes.status, 200);
+      const first = await firstRes.json();
+      assert.equal(first.counted, true);
+      const afterFirst = first.visitors;
+
+      const duplicateRes = await fetch(`${baseUrl}/api/metrics/visit`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ visitorId }),
+      });
+      assert.equal(duplicateRes.status, 200);
+      const duplicate = await duplicateRes.json();
+      assert.equal(duplicate.counted, false);
+      assert.equal(duplicate.visitors, afterFirst, 'Duplicate visitorId must not increment visitors');
+
+      const otherRes = await fetch(`${baseUrl}/api/metrics/visit`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ visitorId: `${visitorId}-2` }),
+      });
+      assert.equal(otherRes.status, 200);
+      const other = await otherRes.json();
+      assert.equal(other.counted, true);
+      assert.equal(other.visitors, afterFirst + 1);
+
+      const emptyRes = await fetch(`${baseUrl}/api/metrics/visit`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ visitorId: '' }),
+      });
+      assert.equal(emptyRes.status, 400);
+    });
+
+    test('POST /api/metrics/heartbeat adds real active seconds and rejects invalid payloads', async () => {
+      const sessionId = `session-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+      const beforeRes = await fetch(`${baseUrl}/api/metrics`);
+      const before = await beforeRes.json();
+
+      const okRes = await fetch(`${baseUrl}/api/metrics/heartbeat`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ sessionId, deltaSeconds: 25 }),
+      });
+      assert.equal(okRes.status, 200);
+      const okData = await okRes.json();
+      assert.equal(okData.ok, true);
+      assert.equal(okData.addedSeconds, 25);
+      assert.equal(okData.activeSeconds, before.activeSeconds + 25);
+
+      for (const invalidDelta of [-5, 0, 61, 3600]) {
+        const invalidRes = await fetch(`${baseUrl}/api/metrics/heartbeat`, {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ sessionId, deltaSeconds: invalidDelta }),
+        });
+        assert.equal(invalidRes.status, 400, `deltaSeconds=${invalidDelta} must be rejected`);
+      }
+
+      const spamRes = await fetch(`${baseUrl}/api/metrics/heartbeat`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ sessionId, deltaSeconds: 36 }),
+      });
+      assert.equal(spamRes.status, 429, 'Per-session rate limit must block inflated active time');
+
+      const afterRes = await fetch(`${baseUrl}/api/metrics`);
+      const after = await afterRes.json();
+      assert.equal(
+        after.activeSeconds,
+        before.activeSeconds + 25,
+        'Rejected heartbeats must not add active time'
+      );
+    });
+  });
 });

@@ -61,7 +61,7 @@
     right: var(--space-3);
     bottom: 9px;
     height: 6px;
-    color: var(--red);
+    color: var(--accent);
     pointer-events: none;
   }
 
@@ -102,11 +102,11 @@
   .nav__avatar[data-guest='true'] {
     background: var(--bg-raised);
     color: var(--fg);
-    border-color: var(--line-strong);
+    border-color: var(--line);
   }
 
   .nav__avatarBtn:hover .nav__avatar {
-    border-color: var(--red);
+    border-color: var(--accent);
   }
 
   .nav__avatarBtn {
@@ -130,7 +130,7 @@
     width: min(312px, calc(100vw - 24px));
     padding: var(--space-3);
     background: var(--bg-high);
-    border: 1px solid var(--line-strong);
+    border: 1px solid var(--line);
     border-radius: 16px;
     box-shadow: var(--shadow-3);
     overflow: hidden;
@@ -170,7 +170,7 @@
     flex: none;
     min-height: 24px;
     padding: 0 var(--space-2);
-    border: 1px solid var(--line-strong);
+    border: 1px solid var(--line);
     border-radius: var(--radius-pill);
     background: var(--bg-raised);
     font-family: var(--font-mono);
@@ -180,9 +180,9 @@
   }
 
   .nav__menuQuota[data-low='true'] {
-    border-color: var(--red);
-    color: var(--red);
-    background: var(--red-soft);
+    border-color: var(--line);
+    color: var(--accent);
+    background: var(--accent-soft);
   }
 
   .nav__menuSection {
@@ -269,8 +269,8 @@
   }
 
   .nav__switch[aria-checked='true'] {
-    background: var(--red-fill);
-    border-color: var(--red-fill);
+    background: var(--accent-fill);
+    border-color: var(--accent-fill);
   }
 
   .nav__switchThumb {
@@ -283,7 +283,7 @@
   }
 
   .nav__switch[aria-checked='true'] .nav__switchThumb {
-    background: var(--on-red);
+    background: var(--on-accent);
     transform: translateX(18px);
   }
 
@@ -315,13 +315,13 @@
   }
 
   .nav__menuItem[data-tone='red'] {
-    color: var(--red);
+    color: var(--accent);
   }
 
   .nav__segBtn:focus-visible,
   .nav__switch:focus-visible,
   .nav__menuItem:focus-visible {
-    outline: 2px solid var(--red);
+    outline: 2px solid var(--accent);
     outline-offset: 2px;
   }
 
@@ -378,7 +378,7 @@
   }
 
   .navsheet__link[aria-current='page'] {
-    color: var(--red);
+    color: var(--accent);
     font-style: italic;
   }
 
@@ -514,7 +514,7 @@
   }
 
   .foot__link:hover {
-    color: var(--red);
+    color: var(--accent);
   }
 
   .foot__graffiti {
@@ -550,8 +550,8 @@
     text-transform: none;
     color: var(--fg);
     text-shadow:
-      0 2px 18px color-mix(in srgb, var(--red) 28%, transparent),
-      0.02em 0.03em 0 color-mix(in srgb, var(--red) 45%, transparent);
+      0 2px 18px color-mix(in srgb, var(--accent) 28%, transparent),
+      0.02em 0.03em 0 color-mix(in srgb, var(--accent) 42%, transparent);
     transform: rotate(-4.2deg) skewX(-6deg);
     transform-origin: center center;
     overflow: visible;
@@ -563,7 +563,7 @@
     width: 100%;
     height: clamp(38px, 4.8vw, 76px);
     margin-top: clamp(-1.2rem, -1.6vw, -0.5rem);
-    color: var(--red);
+    color: var(--accent);
     transform: rotate(-1.2deg);
     overflow: visible;
     pointer-events: none;
@@ -695,8 +695,8 @@
     }
 
     .mobile-bnav__btn[aria-current='page'] {
-      background: var(--red-soft);
-      color: var(--red);
+      background: var(--accent-soft);
+      color: var(--accent);
     }
 
     .mobile-bnav__btn--compose {
@@ -709,9 +709,9 @@
       width: 32px;
       height: 26px;
       border-radius: var(--radius-pill);
-      background: var(--red-fill);
-      color: var(--on-red);
-      box-shadow: 0 4px 12px -4px color-mix(in srgb, var(--red-fill) 65%, transparent);
+      background: var(--accent-fill);
+      color: var(--on-accent);
+      box-shadow: 0 4px 12px -4px color-mix(in srgb, var(--accent-fill) 65%, transparent);
     }
 
     .mobile-bnav__icon-wrap {
@@ -728,7 +728,7 @@
       width: 7px;
       height: 7px;
       border-radius: 50%;
-      background: var(--red-fill);
+      background: var(--accent-fill);
       box-shadow: 0 0 0 1.5px var(--bg-raised);
     }
   }
@@ -839,8 +839,8 @@
   }
 
   .cmdp-item[data-active='true'] {
-    background: var(--red-soft);
-    border-color: var(--red);
+    background: var(--accent-soft);
+    border-color: var(--line);
   }
 
   .cmdp-item-lead {

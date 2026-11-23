@@ -1,12 +1,10 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { motion } from 'motion/react';
 import { useAppStore } from '../../store/appStore';
 import {
   Chips,
-  LiquidTabs,
   SearchCard,
   type ChipItem,
-  type LiquidTabItem,
 } from '../../components/pinui';
 import OriginalFileBox from '../../components/pinui/original/file-box/FileBox';
 import { Mark } from '../../ui/Mark';
@@ -16,12 +14,9 @@ import {
   type ExploreMode,
 } from './catalog';
 import {
-  VAULT_LIBRARY_LABELS,
-  VAULT_LIBRARY_ORDER,
   fetchVaultIndex,
   getCachedVaultIndex,
   type VaultIndexItem,
-  type VaultLibraryKey,
 } from './vaultLoader';
 import { PlateTable, type LibraryFilter } from './PlateTable';
 import { RepoChart } from './RepoChart';
@@ -114,27 +109,6 @@ export const ExploreView: React.FC = () => {
     repos: RANKED_REPOS.length,
   };
 
-  const libraryTabs: LiquidTabItem[] = useMemo(() => {
-    const byLib = new Map<VaultLibraryKey, number>();
-    if (vaultItems.length > 0) {
-      for (const item of vaultItems) {
-        byLib.set(item.l, (byLib.get(item.l) ?? 0) + 1);
-      }
-    } else {
-      for (const item of sourceCatalog) {
-        byLib.set(item.sourceLibrary, (byLib.get(item.sourceLibrary) ?? 0) + 1);
-      }
-    }
-    return [
-      { id: 'all', label: 'Tất cả', count: totalPlatesCount },
-      ...VAULT_LIBRARY_ORDER.map((name) => ({
-        id: name,
-        label: VAULT_LIBRARY_LABELS[name],
-        count: byLib.get(name) ?? 0,
-      })),
-    ];
-  }, [vaultItems, sourceCatalog, totalPlatesCount]);
-
   const handleTabKey = (event: React.KeyboardEvent<HTMLButtonElement>, index: number) => {
     let next = -1;
     if (event.key === 'ArrowRight') next = (index + 1) % MODES.length;
@@ -157,7 +131,6 @@ export const ExploreView: React.FC = () => {
           <span className="t-script ex-title-cap">B</span>àn soi
         </h1>
         <div className="ex-aside">
-          <p className="ex-lede">Đặt mẫu lên bàn, thử trực tiếp, rồi mang vào Workspace.</p>
           <div className="ex-search-dock">
             <SearchCard
               value={search}
@@ -177,16 +150,11 @@ export const ExploreView: React.FC = () => {
               <span className="ex-vault-box-mini" aria-hidden="true">
                 <OriginalFileBox theme={theme} />
               </span>
-              <span className="ex-vault-dock-copy">
-                <span className="ex-vault-hint-text">Nhiều quá? Đơn giản nha!!!</span>
-                <span className="ex-vault-dock-sub">Mở kho trải nghiệm</span>
-              </span>
+              <span className="ex-vault-dock-label">Kho trải nghiệm</span>
             </button>
-          </div>
-          <div className="ex-quick">
             <button
               type="button"
-              className="ex-pill"
+              className="ex-pill ex-saved-pill"
               aria-pressed={savedOnly}
               onClick={() => setSavedOnly((prev) => !prev)}
             >
@@ -237,13 +205,6 @@ export const ExploreView: React.FC = () => {
 
         {mode === 'plates' ? (
           <div className="ex-lib-tabs-bar">
-            <LiquidTabs
-              tabs={libraryTabs}
-              activeId={library}
-              onChange={(nextId) => setLibrary(nextId as LibraryFilter)}
-              ariaLabel="Nhóm mẫu giao diện"
-              className="ex-pinui-tabs"
-            />
             <Chips
               items={QUICK_CATEGORY_CHIPS}
               selectedIds={[topicChip]}

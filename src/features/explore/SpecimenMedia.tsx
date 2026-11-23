@@ -9,6 +9,7 @@ interface SpecimenMediaProps {
   style?: React.CSSProperties;
   fit?: 'cover' | 'contain';
   activePlay?: boolean;
+  eager?: boolean;
 }
 
 export const SpecimenMedia: React.FC<SpecimenMediaProps> = ({
@@ -19,6 +20,7 @@ export const SpecimenMedia: React.FC<SpecimenMediaProps> = ({
   style,
   fit = 'cover',
   activePlay = false,
+  eager = false,
 }) => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [failed, setFailed] = useState(false);
@@ -32,24 +34,41 @@ export const SpecimenMedia: React.FC<SpecimenMediaProps> = ({
   useEffect(() => {
     const video = videoRef.current;
     if (!video || preview.kind !== 'video') return;
+    if (video.error) {
+      setFailed(true);
+      return;
+    }
     const reduce =
       window.matchMedia('(prefers-reduced-motion: reduce)').matches ||
       document.documentElement.classList.contains('reduce-motion');
+    const safePlay = () => {
+      if (video.preload === 'none') video.preload = 'metadata';
+      video.play().catch((err: unknown) => {
+        const name = err instanceof DOMException ? err.name : '';
+        if (name === 'NotSupportedError' || video.error) {
+          setFailed(true);
+        }
+      });
+    };
     if (activePlay && !reduce) {
-      video.play().catch(() => undefined);
+      safePlay();
       return;
     }
     const io = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
-          if (entry.isIntersecting && !reduce) {
-            video.play().catch(() => undefined);
+          if (entry.isIntersecting) {
+            if (reduce) {
+              if (video.preload === 'none') video.preload = 'metadata';
+              return;
+            }
+            safePlay();
           } else {
             video.pause();
           }
         });
       },
-      { rootMargin: '120px' }
+      { rootMargin: '400px' }
     );
     io.observe(video);
     return () => io.disconnect();
@@ -59,6 +78,7 @@ export const SpecimenMedia: React.FC<SpecimenMediaProps> = ({
     width: '100%',
     height: '100%',
     objectFit: fit,
+    background: 'var(--bg-sunken)',
     ...style,
   };
 
@@ -70,7 +90,7 @@ export const SpecimenMedia: React.FC<SpecimenMediaProps> = ({
           style={mediaStyle}
           src={preview.poster}
           alt={title}
-          loading="lazy"
+          loading={eager ? 'eager' : 'lazy'}
           decoding="async"
           referrerPolicy="no-referrer"
           onError={() => setPosterFailed(true)}
@@ -110,9 +130,12 @@ export const SpecimenMedia: React.FC<SpecimenMediaProps> = ({
         muted
         loop
         playsInline
-        preload={activePlay ? 'metadata' : 'none'}
+        preload="metadata"
         aria-label={title}
         onLoadedMetadata={(e) => {
+          if (e.currentTarget.videoWidth === 0) setFailed(true);
+        }}
+        onLoadedData={(e) => {
           if (e.currentTarget.videoWidth === 0) setFailed(true);
         }}
         onError={() => setFailed(true)}
@@ -126,7 +149,7 @@ export const SpecimenMedia: React.FC<SpecimenMediaProps> = ({
       style={mediaStyle}
       src={preview.src}
       alt={title}
-      loading="lazy"
+      loading={eager ? 'eager' : 'lazy'}
       decoding="async"
       referrerPolicy="no-referrer"
       onError={() => setFailed(true)}

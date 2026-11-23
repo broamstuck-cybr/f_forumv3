@@ -36,15 +36,6 @@ export interface ProjectRailProps {
   dismiss?: React.ReactNode;
 }
 
-type ProjectHealth = 'pass' | 'warn' | 'draft';
-
-function getProjectHealth(project: WorkspaceProject): ProjectHealth {
-  const report = project.checksReport;
-  if (!report) return 'draft';
-  if (report.failCount > 0 || report.warnCount > 0) return 'warn';
-  return 'pass';
-}
-
 export const ProjectRail: React.FC<ProjectRailProps> = ({
   projects,
   activeProjectId,
@@ -109,7 +100,6 @@ export const ProjectRail: React.FC<ProjectRailProps> = ({
         const isCurrent = project.id === activeProjectId;
         const isEditing = editingId === project.id;
         const isDeleting = confirmDeleteId === project.id;
-        const health = getProjectHealth(project);
 
         return (
           <li
@@ -180,11 +170,6 @@ export const ProjectRail: React.FC<ProjectRailProps> = ({
                 >
                   <Folder size={13} className="ws-rail-branch-icon" aria-hidden="true" />
                   <span className="ws-rail-name">{project.name}</span>
-                  <span
-                    className="ws-health-dot"
-                    data-health={health}
-                    aria-hidden="true"
-                  />
                 </button>
                 <div className="ws-rail-actions">
                   {onRename && (

@@ -12,6 +12,7 @@ import { LandingManifesto } from './sections/LandingManifesto';
 import { LandingProjects } from './sections/LandingProjects';
 import { LandingFAQ } from './sections/LandingFAQ';
 import { LandingFooter } from './sections/LandingFooter';
+import { BackToTopButton } from './BackToTopButton';
 import { IrisQrCornerSection } from '../launchpad/IrisQrCornerSection';
 import './landing.css';
 
@@ -95,6 +96,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
       <LandingFAQ onEnterApp={enterApp} />
       <IrisQrCornerSection onNavigate={navigateTo} contextLabel="landing" />
       <LandingFooter onNavigate={handleFooterNavigate} onOpenNotice={() => setNoticeOpen(true)} />
+      <BackToTopButton />
 
       <NoticeStatusModal open={noticeOpen} onClose={() => setNoticeOpen(false)} />
     </div>

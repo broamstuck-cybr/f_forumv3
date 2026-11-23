@@ -5,18 +5,16 @@ import {
   Eye,
   EyeOff,
   LayoutTemplate,
-  Moon,
   Palette,
   Search,
-  Sun,
 } from 'lucide-react';
-import OriginalThemeSwitch from '../../components/pinui/original/theme-switch/ThemeSwitch';
 import OriginalFileBox from '../../components/pinui/original/file-box/FileBox';
 import type {
   AIProtocol,
   ProjectSetupTarget,
   ThemeEffect,
   ThemePreference,
+  UiMode,
   WallpaperPreset,
 } from '../../types/index';
 import { useAppStore } from '../../store/appStore';
@@ -38,7 +36,6 @@ import {
 import './settings.css';
 
 type SectionId = 'appearance' | 'workspace' | 'ai' | 'data';
-type PresetFilter = 'all' | 'dark' | 'light';
 
 interface PresetDefinition {
   id: WallpaperPreset;
@@ -60,10 +57,10 @@ const PRESETS: PresetDefinition[] = [
     desc: 'Video Gradient Lab lặp mượt Crossfade (Light 001 / Dark 002) với lớp phủ trong trẻo giảm 10% độ tối.',
     tone: 'auto',
     targetTheme: 'system',
-    swatches: ['#141312', '#d63a27', '#f5f1e8'],
-    previewBg: 'radial-gradient(circle at 24% 22%, rgba(214,58,39,0.58), transparent 56%), radial-gradient(circle at 78% 76%, rgba(125,163,187,0.52), #121110 78%)',
+    swatches: ['#141312', '#1f8f7a', '#f5f1e8'],
+    previewBg: 'radial-gradient(circle at 24% 22%, rgba(56,201,154,0.5), transparent 56%), radial-gradient(circle at 78% 76%, rgba(125,163,187,0.52), #121110 78%)',
     previewCard: 'rgba(26, 24, 22, 0.82)',
-    previewAccent: '#e04430',
+    previewAccent: '#38c99a',
     ambient: true,
   },
   {
@@ -144,10 +141,10 @@ const PRESETS: PresetDefinition[] = [
     desc: 'Nền giấy thủ công sắc kem cát điểm ánh hổ phách nhẹ, đọc tài liệu và code lâu không mỏi mắt.',
     tone: 'light',
     targetTheme: 'light',
-    swatches: ['#f5f1e8', '#c42a18', '#14120e'],
+    swatches: ['#f5f1e8', '#0b7a59', '#14120e'],
     previewBg: 'radial-gradient(circle at 14% 14%, rgba(245,158,11,0.28), transparent 58%), radial-gradient(circle at 86% 86%, rgba(180,83,9,0.2), #f5f1e8 76%)',
     previewCard: 'rgba(255, 253, 248, 0.94)',
-    previewAccent: '#c42a18',
+    previewAccent: '#0b7a59',
     ambient: true,
   },
 ];
@@ -208,22 +205,103 @@ const BYOK_MODE_CHIPS = [
 ];
 
 const PROTOCOL_LIST = [
-  { id: 'openai-compatible', label: 'OpenAI Compatible', swatch: 'var(--red)' },
-  { id: 'anthropic', label: 'Anthropic Messages', swatch: 'var(--amber)' },
+  { id: 'openai-compatible', label: 'OpenAI Compatible', swatch: 'var(--accent, #2fb59a)' },
+  { id: 'anthropic', label: 'Anthropic Messages', swatch: 'var(--fg-muted, #8a9a96)' },
   { id: 'gemini', label: 'Google Gemini', swatch: 'var(--harbour)' },
 ];
 
 const MODEL_LIST = [
-  { id: 'studio-smart-route', label: 'Studio Smart Route (Khuyên dùng)', swatch: 'var(--green)' },
+  { id: 'studio-smart-route', label: 'Studio Smart Route (Khuyên dùng)', swatch: 'var(--accent-deep, #1f8f7a)' },
   { id: 'gemini-2.5-flash', label: 'Gemini 2.5 Flash', swatch: 'var(--harbour)' },
-  { id: 'gemini-2.5-pro', label: 'Gemini 2.5 Pro', swatch: 'var(--amber)' },
-  { id: 'claude-sonnet-4-5', label: 'Claude Sonnet 4.5', swatch: 'var(--red)' },
+  { id: 'gemini-2.5-pro', label: 'Gemini 2.5 Pro', swatch: 'var(--fg-muted, #8a9a96)' },
+  { id: 'claude-sonnet-4-5', label: 'Claude Sonnet 4.5', swatch: 'var(--accent, #2fb59a)' },
   { id: 'gpt-4o', label: 'GPT-4o', swatch: 'var(--fg)' },
 ];
 
 const SHORTCUTS = [
   { keys: 'Ctrl+E', desc: 'Mở bảng điều khiển nhanh' },
   { keys: 'Esc', desc: 'Đóng hộp thoại hoặc menu' },
+];
+
+const UI_MODE_OPTIONS: Array<{
+  id: UiMode;
+  title: string;
+  badge: string;
+  desc: string;
+  icon: React.ReactNode;
+}> = [
+  {
+    id: 'fabulous',
+    title: 'Fabulous',
+    badge: '100% PinUI & CodeFronts',
+    desc: 'Kích hoạt 100% tài nguyên UI cao cấp từ PinUI, ThreeUI, Glacier & CodeFronts trên Tìm kiếm, Thanh điều hướng, Chat, Tri thức & Workspace.',
+    icon: (
+      <svg className="st-uimode-svg" viewBox="0 0 32 32" fill="none" aria-hidden="true">
+        <path
+          d="M16 3L25.5 11.5L16 28.5L6.5 11.5L16 3Z"
+          stroke="currentColor"
+          strokeWidth="1.75"
+          strokeLinejoin="round"
+        />
+        <path
+          d="M6.5 11.5H25.5M16 3L11.5 11.5L16 28.5L20.5 11.5L16 3Z"
+          stroke="currentColor"
+          strokeWidth="1.4"
+          strokeLinejoin="round"
+        />
+        <circle cx="25.5" cy="5.5" r="1.4" fill="currentColor" />
+        <path d="M5 5.5H8M6.5 4V7" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
+      </svg>
+    ),
+  },
+  {
+    id: 'balanced',
+    title: 'Balanced',
+    badge: 'Mặc định',
+    desc: 'Cân bằng thẩm mỹ & hiệu năng mặc định của F-Forum.',
+    icon: (
+      <svg className="st-uimode-svg" viewBox="0 0 32 32" fill="none" aria-hidden="true">
+        <circle cx="12.5" cy="16" r="7.5" stroke="currentColor" strokeWidth="1.75" />
+        <circle cx="19.5" cy="16" r="7.5" stroke="currentColor" strokeWidth="1.75" />
+        <circle cx="16" cy="16" r="2" fill="currentColor" />
+      </svg>
+    ),
+  },
+  {
+    id: 'eco',
+    title: 'Eco',
+    badge: 'Tiết kiệm pin',
+    desc: 'Tiết kiệm pin, tắt nền video/WebGL & chuyển động nặng.',
+    icon: (
+      <svg className="st-uimode-svg" viewBox="0 0 32 32" fill="none" aria-hidden="true">
+        <path
+          d="M25.5 6.5C15.5 6.5 8 11.8 8 20.5C8 22.8 8.8 24.7 10.1 26C11.5 26 13.6 25.3 15.6 23.6C21.5 18.6 24.9 13.4 25.5 6.5Z"
+          stroke="currentColor"
+          strokeWidth="1.75"
+          strokeLinejoin="round"
+        />
+        <path
+          d="M7 26.5C11.2 22.2 15.8 17.5 21.5 12"
+          stroke="currentColor"
+          strokeWidth="1.75"
+          strokeLinecap="round"
+        />
+        <path
+          d="M11 16H14.2L15.6 13.5L17.4 18.2L18.9 16H21.5"
+          stroke="currentColor"
+          strokeWidth="1.5"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+      </svg>
+    ),
+  },
+];
+
+const THEME_PREF_CHIPS = [
+  { id: 'system', label: 'Hệ thống' },
+  { id: 'dark', label: 'Tối' },
+  { id: 'light', label: 'Sáng' },
 ];
 
 const UI_SCALE_KEY = 'fforum_v3_ui_scale';
@@ -247,7 +325,6 @@ export const SettingsView: React.FC = () => {
     updateSettings,
     updateByok,
     theme,
-    setTheme,
     reducedMotion,
     setReducedMotion,
     savedItemIds,
@@ -258,7 +335,6 @@ export const SettingsView: React.FC = () => {
 
   const [activeSection, setActiveSection] = useState<SectionId>('appearance');
   const [searchQuery, setSearchQuery] = useState('');
-  const [presetFilter, setPresetFilter] = useState<PresetFilter>('all');
   const [dataFolderPos, setDataFolderPos] = useState<number>(1);
   const [uiScale, setUiScale] = useState<number>(() => readInitialScale());
   const [showApiKey, setShowApiKey] = useState(false);
@@ -282,6 +358,8 @@ export const SettingsView: React.FC = () => {
   }, [uiScale]);
 
   const byok = settings.byok;
+  const currentUiMode: UiMode = settings.uiMode || 'balanced';
+  const currentThemePref: ThemePreference = settings.themePreference || (theme === 'dark' ? 'dark' : 'light');
   const currentWallpaper: WallpaperPreset = settings.wallpaperPreset || 'video';
   const currentEffect: ThemeEffect = settings.themeEffect || 'droplet';
   const ambientEnabled = settings.ambientVideo !== false;
@@ -294,16 +372,6 @@ export const SettingsView: React.FC = () => {
       ? `Đã dùng ${quota.used}`
       : `Còn ${quota.remaining ?? Math.max(0, quotaLimit - quota.used)}/${quotaLimit}`;
 
-  const activePreset = useMemo(
-    () => PRESETS.find((p) => p.id === currentWallpaper) || PRESETS[0],
-    [currentWallpaper]
-  );
-
-  const visiblePresets = useMemo(() => {
-    if (presetFilter === 'all') return PRESETS;
-    return PRESETS.filter((p) => p.tone === presetFilter || p.tone === 'auto');
-  }, [presetFilter]);
-
   const filteredSections = useMemo(() => {
     const q = searchQuery.trim().toLowerCase();
     if (!q) return SECTIONS;
@@ -313,17 +381,16 @@ export const SettingsView: React.FC = () => {
     return matches.length > 0 ? matches : SECTIONS;
   }, [searchQuery]);
 
-  const applyPreset = (preset: PresetDefinition) => {
-    const nextPref = preset.targetTheme || 'system';
+  const applyThemePref = (pref: ThemePreference) => {
+    const nextTheme =
+      pref === 'system'
+        ? typeof window !== 'undefined' && window.matchMedia?.('(prefers-color-scheme: dark)').matches
+          ? 'dark'
+          : 'light'
+        : pref;
     updateSettings({
-      wallpaperPreset: preset.id,
-      themePreference: nextPref,
-      ambientVideo: preset.ambient,
-    });
-    addToast({
-      type: 'info',
-      title: `Đã đổi hình nền: ${preset.name}`,
-      message: preset.desc,
+      themePreference: pref,
+      theme: nextTheme,
     });
   };
 
@@ -477,9 +544,45 @@ export const SettingsView: React.FC = () => {
               <header className="st-section-head">
                 <div>
                   <h2 className="st-section-title">Giao diện & Hình nền</h2>
-                  <p className="st-hint">Chọn sắc độ, kích thước hiển thị và hiệu ứng chuyển Sáng / Tối toàn trang.</p>
+                  <p className="st-hint">Chọn chế độ hiệu ứng, sắc độ Sáng / Tối, cỡ chữ và nền hiển thị.</p>
                 </div>
               </header>
+
+              <section className="st-panel" aria-label="Chế độ Giao diện và Hiệu ứng">
+                <div className="st-panel-label">
+                  <span>Chế độ Giao diện & Hiệu ứng (Fabulous / Balanced / Eco)</span>
+                </div>
+                <div className="st-uimode-grid" role="radiogroup" aria-label="Chọn chế độ giao diện">
+                  {UI_MODE_OPTIONS.map((opt) => {
+                    const selected = currentUiMode === opt.id;
+                    return (
+                      <button
+                        key={opt.id}
+                        type="button"
+                        role="radio"
+                        aria-checked={selected}
+                        className="st-uimode-card"
+                        data-mode={opt.id}
+                        onClick={() => {
+                          updateSettings({ uiMode: opt.id });
+                          addToast({
+                            type: 'info',
+                            title: `Đã chuyển sang chế độ ${opt.title}`,
+                            message: opt.desc,
+                          });
+                        }}
+                      >
+                        <div className="st-uimode-top">
+                          <span className="st-uimode-icon">{opt.icon}</span>
+                          <span className="st-uimode-badge">{opt.badge}</span>
+                        </div>
+                        <strong className="st-uimode-title">{opt.title}</strong>
+                        <p className="st-uimode-desc">{opt.desc}</p>
+                      </button>
+                    );
+                  })}
+                </div>
+              </section>
 
               <section className="st-panel" aria-label="Kích thước giao diện">
                 <div className="st-panel-label">
@@ -510,120 +613,25 @@ export const SettingsView: React.FC = () => {
                 </div>
               </section>
 
-              <section className="st-panel st-active-preset" aria-label="Hình nền đang sử dụng">
-                <div
-                  className="st-preset-thumb st-preset-thumb--hero"
-                  style={{ background: activePreset.previewBg }}
-                  aria-hidden="true"
-                >
-                  <div className="st-mini-ui">
-                    <div className="st-mini-rail">
-                      <span style={{ background: activePreset.previewAccent }} />
-                      <span />
-                      <span />
-                    </div>
-                    <div className="st-mini-canvas" style={{ background: activePreset.previewCard }}>
-                      <div className="st-mini-line st-mini-line--lg" />
-                      <div className="st-mini-line st-mini-line--sm" />
-                      <div className="st-mini-cta" style={{ background: activePreset.previewAccent }} />
-                    </div>
-                  </div>
-                </div>
-
-                <div className="st-active-info">
-                  <div className="st-active-title-row">
-                    <h3>{activePreset.name}</h3>
-                    <span className="tag">{theme === 'dark' ? 'Nền tối' : 'Nền sáng'}</span>
-                  </div>
-                  <p className="st-hint">{activePreset.desc}</p>
-                  <div className="st-swatches" aria-label="Bảng màu preset">
-                    {activePreset.swatches.map((hex) => (
-                      <span
-                        key={hex}
-                        className="st-swatch"
-                        style={{ backgroundColor: hex }}
-                        title={hex}
-                      />
-                    ))}
-                  </div>
-                </div>
-              </section>
-
-              <section className="st-presets-block" aria-label="Thư viện hình nền">
-                <div className="st-presets-bar">
-                  <span className="st-panel-label">
-                    <Palette size={15} aria-hidden="true" />
-                    <span>Chọn mẫu hình nền (Preset)</span>
-                  </span>
-                  <div className="st-filter-pills" role="group" aria-label="Lọc theo sắc độ">
-                    {(
-                      [
-                        { id: 'all', label: 'Tất cả' },
-                        { id: 'dark', label: 'Tối' },
-                        { id: 'light', label: 'Sáng' },
-                      ] as const
-                    ).map((f) => (
-                      <button
-                        key={f.id}
-                        type="button"
-                        className="st-filter-btn"
-                        aria-pressed={presetFilter === f.id}
-                        onClick={() => setPresetFilter(f.id)}
-                      >
-                        {f.label}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="st-presets-grid">
-                  {visiblePresets.map((preset) => {
-                    const selected = preset.id === currentWallpaper;
-                    return (
-                      <button
-                        key={preset.id}
-                        type="button"
-                        className="st-preset-item"
-                        aria-pressed={selected}
-                        onClick={() => applyPreset(preset)}
-                      >
-                        <div
-                          className="st-preset-thumb"
-                          style={{ background: preset.previewBg }}
-                          aria-hidden="true"
-                        >
-                          {preset.id === 'video' ? (
-                            <div className="st-mini-auto">
-                              <Sun size={16} className="st-mini-auto-sun" />
-                              <Moon size={16} className="st-mini-auto-moon" />
-                            </div>
-                          ) : (
-                            <div className="st-mini-ui">
-                              <div className="st-mini-rail">
-                                <span style={{ background: preset.previewAccent }} />
-                                <span />
-                                <span />
-                              </div>
-                              <div className="st-mini-canvas" style={{ background: preset.previewCard }}>
-                                <div className="st-mini-line st-mini-line--lg" />
-                                <div className="st-mini-line st-mini-line--sm" />
-                                <div className="st-mini-cta" style={{ background: preset.previewAccent }} />
-                              </div>
-                            </div>
-                          )}
-                        </div>
-                        <span className="st-preset-name">{preset.name}</span>
-                      </button>
-                    );
-                  })}
-                </div>
-              </section>
-
-              <section className="st-card" aria-label="Hiệu ứng chuyển đổi và chuyển động">
+              <section className="st-card" aria-label="Chủ đề Sáng Tối và hiệu ứng">
                 <div className="st-row st-row--first">
                   <div>
+                    <span className="st-label">Chế độ Sáng / Tối</span>
+                    <p className="st-hint">Đồng bộ trực tiếp với nút Đêm / Ngày trên thanh điều hướng.</p>
+                  </div>
+                  <Chips
+                    items={THEME_PREF_CHIPS}
+                    selectedIds={[currentThemePref]}
+                    multi={false}
+                    theme={theme}
+                    onToggle={(id) => applyThemePref(id as ThemePreference)}
+                  />
+                </div>
+
+                <div className="st-row">
+                  <div>
                     <span className="st-label">Hiệu ứng chuyển Sáng / Tối toàn trang</span>
-                    <p className="st-hint">Chế độ chọn bên dưới đồng bộ trực tiếp với nút Đêm / Ngày trên thanh điều hướng.</p>
+                    <p className="st-hint">Hiệu ứng chuyển cảnh khi đổi giữa giao diện Sáng và Tối.</p>
                   </div>
                   <Chips
                     items={EFFECT_CHIPS}
@@ -634,15 +642,32 @@ export const SettingsView: React.FC = () => {
                   />
                 </div>
 
-                <div className="st-pinui-theme-stage" aria-label="Thử trực tiếp hiệu ứng chuyển Sáng Tối">
-                  <OriginalThemeSwitch
-                    key={currentEffect}
-                    theme={theme}
-                    defaultEffect={currentEffect === 'none' ? 'droplet' : currentEffect}
-                    sound={!reducedMotion}
-                    onEffectChange={(nextEffect) => updateSettings({ themeEffect: nextEffect })}
-                    onThemeChange={(nextTheme) => setTheme(nextTheme)}
-                  />
+                <div className="st-row">
+                  <div>
+                    <span className="st-label">Mẫu hình nền</span>
+                    <p className="st-hint">Chọn lớp nền hiển thị khi chế độ Eco chưa bật.</p>
+                  </div>
+                  <select
+                    className="st-select"
+                    aria-label="Chọn mẫu hình nền"
+                    value={currentWallpaper}
+                    onChange={(e) => {
+                      const next = PRESETS.find((p) => p.id === e.target.value);
+                      if (next) {
+                        updateSettings({
+                          wallpaperPreset: next.id,
+                          themePreference: next.targetTheme || 'system',
+                          ambientVideo: next.ambient,
+                        });
+                      }
+                    }}
+                  >
+                    {PRESETS.map((p) => (
+                      <option key={p.id} value={p.id}>
+                        {p.name}
+                      </option>
+                    ))}
+                  </select>
                 </div>
 
                 <div className="st-grid-2">

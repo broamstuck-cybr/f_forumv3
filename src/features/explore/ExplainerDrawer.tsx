@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { BookOpen, Check, Copy, ExternalLink, Terminal, User, X } from 'lucide-react';
+import { BookOpen, Check, Copy, Terminal, User, X } from 'lucide-react';
 import { useAppStore } from '../../store/appStore';
 import { copyText } from './catalog';
 import type { ExplainerProfile } from './explainerData';
@@ -85,31 +85,7 @@ export const ExplainerDrawer: React.FC<ExplainerDrawerProps> = ({ profile, onClo
           <header className="ex-explainer-head">
             <div className="ex-explainer-head-meta">
               <span className="t-label">{profile.subtitle}</span>
-              <span
-                className={`ex-badge ${
-                  profile.statusKind === 'tested'
-                    ? 'ex-badge-tested'
-                    : profile.statusKind === 'info'
-                      ? 'ex-badge-info'
-                      : 'ex-badge-tested'
-                }`}
-              >
-                {profile.statusLabel}
-              </span>
-              {profile.isSpdx ? (
-                <span className="ex-badge ex-badge-tested">{profile.licenseLabel}</span>
-              ) : profile.licenseUrl ? (
-                <a
-                  href={profile.licenseUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="ex-badge ex-badge-link"
-                >
-                  {profile.licenseLabel} ↗
-                </a>
-              ) : (
-                <span className="ex-badge ex-badge-muted">{profile.licenseLabel}</span>
-              )}
+              <span className="ex-badge ex-badge-muted">{profile.licenseLabel}</span>
             </div>
             <button
               type="button"
@@ -144,17 +120,9 @@ export const ExplainerDrawer: React.FC<ExplainerDrawerProps> = ({ profile, onClo
               </div>
               <div className="ex-explainer-meta-card">
                 <span className="t-label">
-                  <ExternalLink size={13} aria-hidden="true" /> Nguồn gốc chính thức
+                  <BookOpen size={13} aria-hidden="true" /> Trạng thái xác thực
                 </span>
-                <a
-                  href={profile.originUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="ex-explainer-origin-anchor"
-                >
-                  <span>{profile.originUrl}</span>
-                  <ExternalLink size={13} aria-hidden="true" />
-                </a>
+                <strong className="ex-explainer-meta-val">{profile.statusLabel}</strong>
               </div>
             </div>
 
@@ -219,15 +187,6 @@ export const ExplainerDrawer: React.FC<ExplainerDrawerProps> = ({ profile, onClo
           </div>
 
           <footer className="ex-explainer-foot">
-            <a
-              href={profile.originUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="btn btn-line"
-            >
-              <span>{profile.originLabel}</span>
-              <ExternalLink size={14} aria-hidden="true" />
-            </a>
             <button type="button" className="btn btn-line" onClick={handleAttach}>
               Đính kèm vào Workspace
             </button>

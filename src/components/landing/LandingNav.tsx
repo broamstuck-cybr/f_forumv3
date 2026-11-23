@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { AnimatePresence, motion, useScroll, useSpring } from 'motion/react';
+import { AnimatePresence, motion } from 'motion/react';
 import { Menu, X } from 'lucide-react';
 import type { User } from '../../types/index';
 import { KineticLogo } from '../brand/KineticLogo';
@@ -37,13 +37,6 @@ export const LandingNav: React.FC<LandingNavProps> = ({
   const activeSection = useActiveChapter(CHAPTER_IDS);
   const closeRef = useRef<HTMLButtonElement>(null);
   const burgerRef = useRef<HTMLButtonElement>(null);
-
-  const { scrollYProgress } = useScroll();
-  const smoothProgress = useSpring(scrollYProgress, {
-    stiffness: 240,
-    damping: 34,
-    restDelta: 0.001,
-  });
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -94,13 +87,6 @@ export const LandingNav: React.FC<LandingNavProps> = ({
 
   return (
     <header className="lp-nav" data-scrolled={scrolled}>
-      <div className="lp-progress" aria-hidden="true">
-        <motion.div
-          className="lp-progress-bar"
-          style={{ scaleX: reduced ? scrollYProgress : smoothProgress }}
-        />
-      </div>
-
       <div className="wrap-wide lp-nav-row">
         <div className="nav__brand">
           <button

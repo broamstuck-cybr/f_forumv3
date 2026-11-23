@@ -115,11 +115,11 @@
   }
 
   .adm-kpi-val[data-tone='jade'] {
-    color: var(--green);
+    color: var(--accent, #2fb59a);
   }
 
   .adm-kpi-val[data-tone='red'] {
-    color: var(--red);
+    color: var(--accent, #2fb59a);
   }
 
   .adm-kpi-meta {
@@ -227,7 +227,7 @@
   }
 
   .adm-bar-rect:focus-visible {
-    outline: 2px solid var(--red);
+    outline: 2px solid var(--accent, #2fb59a);
     outline-offset: 2px;
   }
 
@@ -400,11 +400,11 @@
   .adm-quota-fill {
     height: 100%;
     border-radius: var(--radius-pill);
-    background: var(--red);
+    background: var(--accent, #2fb59a);
   }
 
   .adm-quota-fill[data-unlimited='true'] {
-    background: var(--green);
+    background: var(--accent, #2fb59a);
   }
 
   .adm-row-actions {

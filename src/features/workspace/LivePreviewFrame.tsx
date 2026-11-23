@@ -32,8 +32,10 @@ export function compileWorkspaceSrcDoc(files: WorkspaceFile[]): string {
   const cssFiles = files.filter((f) => f.path.endsWith('.css'));
   const jsFiles = files.filter((f) => f.path.endsWith('.js') || f.path.endsWith('.mjs'));
 
-  const combinedCss = cssFiles.map((f) => f.content).join('\n\n');
-  const combinedJs = jsFiles.map((f) => instrumentLoopGuard(f.content)).join('\n\n');
+  const combinedCss = cssFiles.map((f) => f.content).join('\n\n').replace(/<\/style/gi, '<\\/style');
+  const combinedJs = jsFiles
+    .map((f) => instrumentLoopGuard(f.content).replace(/<\/script/gi, '<\\/script'))
+    .join('\n\n');
   const cspMeta =
     '<meta http-equiv="Content-Security-Policy" content="default-src \'none\'; style-src \'unsafe-inline\'; script-src \'unsafe-inline\'; img-src data: https:; font-src data: https:;" />';
 
@@ -47,7 +49,7 @@ export function compileWorkspaceSrcDoc(files: WorkspaceFile[]): string {
 
   const injectedHead = `${cspMeta}\n<style>\n${combinedCss}\n</style>`;
   if (/<\/head>/i.test(doc)) {
-    doc = doc.replace(/<\/head>/i, `${injectedHead}\n</head>`);
+    doc = doc.replace(/<\/head>/i, () => `${injectedHead}\n</head>`);
   } else {
     doc = `${injectedHead}\n${doc}`;
   }
@@ -55,7 +57,7 @@ export function compileWorkspaceSrcDoc(files: WorkspaceFile[]): string {
   const injectedScript = combinedJs.trim() ? `<script>\n${combinedJs}\n</script>` : '';
   if (injectedScript) {
     if (/<\/body>/i.test(doc)) {
-      doc = doc.replace(/<\/body>/i, `${injectedScript}\n</body>`);
+      doc = doc.replace(/<\/body>/i, () => `${injectedScript}\n</body>`);
     } else {
       doc = `${doc}\n${injectedScript}`;
     }

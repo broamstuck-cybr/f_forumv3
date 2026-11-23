@@ -512,9 +512,9 @@ export const ProfileView: React.FC = () => {
 
           <div className="pf-id-main">
             <div className="pf-id-badges">
-              <span className="tag tag-red">{roleLabel}</span>
+              <span className="tag">{roleLabel}</span>
               <span className="t-label">{handle}</span>
-              <span className="tag">{statusNote}</span>
+              {!isOtherUser && statusNote !== defaultStatus && <span className="tag">{statusNote}</span>}
             </div>
             <h1 className="pf-name">{displayName}</h1>
             <p className="pf-bio">{bio}</p>
@@ -958,7 +958,7 @@ export const ProfileView: React.FC = () => {
                     <div className="pf-social-card">
                       <div className="pf-social-card-head">
                         <span className="t-label">thành viên cộng đồng</span>
-                        <span className="tag tag-red">{roleLabel}</span>
+                        <span className="tag">{roleLabel}</span>
                       </div>
                       <p className="t-lead" style={{ fontSize: 'var(--text-sm)', margin: 'var(--space-2) 0' }}>
                         {displayName} ({handle}) đóng góp các kiến trúc giao diện, mẫu chuyển động và thảo luận trên Tri thức F-Forum.

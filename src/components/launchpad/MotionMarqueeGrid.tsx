@@ -83,13 +83,16 @@ function resolveMotionRecord(
 
 const MarqueeThumb: React.FC<{
   item: MotionMarqueeItem;
+  originalSrc?: string;
+  eager?: boolean;
   className?: string;
-}> = ({ item, className = '' }) => {
+}> = ({ item, originalSrc, eager = false, className = '' }) => {
   const [useFallback, setUseFallback] = useState(false);
   const [plateOnly, setPlateOnly] = useState(false);
   const [loaded, setLoaded] = useState(false);
 
-  const src = useFallback ? item.fallbackUrl : item.imageUrl;
+  const alt = originalSrc && originalSrc !== item.imageUrl ? originalSrc : '';
+  const src = useFallback ? alt : item.imageUrl;
 
   return (
     <div className={`mmq-thumb-host ${className}`.trim()}>
@@ -110,13 +113,13 @@ const MarqueeThumb: React.FC<{
           className="mmq-thumb-img"
           src={src}
           alt={`${item.title} · ${item.category}`}
-          loading="lazy"
+          loading={eager ? 'eager' : 'lazy'}
           decoding="async"
           referrerPolicy="no-referrer"
           style={loaded ? undefined : { opacity: 0, position: 'absolute', inset: 0 }}
           onLoad={() => setLoaded(true)}
           onError={() => {
-            if (!useFallback && item.fallbackUrl && item.fallbackUrl !== item.imageUrl) {
+            if (!useFallback && alt) {
               setUseFallback(true);
             } else {
               setPlateOnly(true);
@@ -246,7 +249,11 @@ export const MotionMarqueeGrid: React.FC<MotionMarqueeGridProps> = ({
         onClick={() => handleOpenItem(item)}
       >
         <div className="mmq-card-media">
-          <MarqueeThumb item={item} />
+          <MarqueeThumb
+            item={item}
+            eager={rowsData.some((row) => row.slice(0, 6).includes(item))}
+            originalSrc={resolveMotionRecord(fullMap, item.id)?.previewImage}
+          />
           <div className="mmq-card-veil" aria-hidden="true">
             <span className="mmq-card-inspect">Trải nghiệm tương tác &amp; Prompt</span>
           </div>
@@ -528,7 +535,7 @@ export const MotionMarqueeGrid: React.FC<MotionMarqueeGridProps> = ({
                     ) : (
                       <div className="mmq-spec-preview">
                         <div className="mmq-spec-preview-media">
-                          <MarqueeThumb item={activeItem} />
+                          <MarqueeThumb item={activeItem} originalSrc={resolveMotionRecord(fullMap, activeItem.id)?.previewImage} />
                         </div>
                         <div className="mmq-spec-preview-bar">
                           <p className="mmq-prompt-note">{activeItem.summaryVi}</p>

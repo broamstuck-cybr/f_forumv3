@@ -202,6 +202,9 @@ export function sanitizeBrandText(input: string | undefined): string {
     .replace(RE_INTER_WORD, 'Be Vietnam Pro');
 }
 
+const RE_RELATIVE_FONT_FACE = /@font-face\s*\{[^}]*src\s*:\s*url\(\s*['"]?(?!https?:|data:)[^)]+\)[^}]*\}/gi;
+const RE_WORDMARK_PATH = /<path\b[^>]*\bd\s*=\s*["'][^"']*WORDMARK[^"']*["'][^>]*\/?>/gi;
+
 export function sanitizeSnippetCode(raw: string | undefined): string {
   if (!raw) return '';
   return raw
@@ -217,6 +220,8 @@ export function sanitizeSnippetCode(raw: string | undefined): string {
     .replace(/__BVP__/g, "'Be Vietnam Pro'")
     .replace(/\/\*[\s\S]*?\*\//g, '')
     .replace(/@import\s+url\([^)]*\)\s*;?/gi, '')
+    .replace(RE_RELATIVE_FONT_FACE, '')
+    .replace(RE_WORDMARK_PATH, '')
     .replace(/<link[^>]+rel=["']stylesheet["'][^>]*>/gi, '')
     .replace(/<script[^>]+src=["'][^"']+["'][^>]*>\s*<\/script>/gi, '')
     .replace(/PinUI|ThreeUI|MotionSites|LucianLabs|CodeFronts/gi, 'F-Forum')
@@ -232,6 +237,10 @@ function sanitizeFullDocFonts(html: string): string {
     'gi'
   );
   return html
+    .replace(RE_RELATIVE_FONT_FACE, '')
+    .replace(RE_WORDMARK_PATH, '')
+    .replace(/<script\b[^>]*\bsrc\s*=\s*["'][^"']+["'][^>]*>(?:\s*<\/script>)?/gi, '')
+    .replace(/<link\b[^>]*\bhref\s*=\s*["'](?!https?:|data:)[^"']+["'][^>]*>/gi, '')
     .replace(reInterFamily, "'Be Vietnam Pro'")
     .replace(reGoogleInter, (url) =>
       url.replace(new RegExp('Inte' + 'r(?:%20|\\+)?(?:Tight)?(?::[^&]+)?&?', 'gi'), '')
@@ -248,28 +257,41 @@ export function compileSpecimenSrcDoc(
   rawJs?: string
 ): string {
   const source = (rawHtml ?? '').trim();
-  const isFullDocument = /^\s*(?:<!doctype\s+html|<html[\s>])/i.test(source);
+  const isFullDocument = /^\s*(?:<!doctype\s+html|<html(?:\s|>))/i.test(source);
   const safeInlineJs = (rawJs ?? '').trim().replace(/<\/script/gi, '<\\/script');
 
   if (isFullDocument) {
     let doc = sanitizeFullDocFonts(source);
-    if (/<html[^>]*data-theme=/i.test(doc)) {
-      doc = doc.replace(/(<html[^>]*data-theme=)["'][^"']*["']/i, `$1"${theme}"`);
+    if (/<html(?:\s[^>]*)?data-theme=/i.test(doc)) {
+      doc = doc.replace(/(<html(?:\s[^>]*)?data-theme=)["'][^"']*["']/i, `$1"${theme}"`);
     } else {
       doc = doc.replace(/<html(\s|>)/i, `<html data-theme="${theme}"$1`);
     }
+    const hasHeadTag = /<head(?:\s[^>]*)?>/i.test(doc);
     if (!/http-equiv=["']Content-Security-Policy["']/i.test(doc)) {
-      if (/<head[^>]*>/i.test(doc)) {
-        doc = doc.replace(/<head[^>]*>/i, (match) => `${match}${SANDBOX_CSP}`);
+      if (hasHeadTag) {
+        doc = doc.replace(/<head(?:\s[^>]*)?>/i, (match) => `${match}${SANDBOX_CSP}`);
+      } else if (/<html(?:\s[^>]*)?>/i.test(doc)) {
+        doc = doc.replace(/<html(?:\s[^>]*)?>/i, (match) => `${match}<head>${SANDBOX_CSP}</head>`);
       } else {
-        doc = doc.replace(/<html[^>]*>/i, (match) => `${match}<head>${SANDBOX_CSP}</head>`);
+        doc = `<head>${SANDBOX_CSP}</head>${doc}`;
       }
     }
-    const extraCss = (rawCss ?? '').trim();
+    if (!/(?:html|body)[^{]*\{[^}]*(?:min-height|height)\s*:\s*100/i.test(doc)) {
+      const fillStyle = '<style data-sandbox-fill="true">html{height:100%}html,body{min-height:100%;margin:0}</style>';
+      if (/<head(?:\s[^>]*)?>/i.test(doc)) {
+        doc = doc.replace(/<head(?:\s[^>]*)?>/i, (match) => `${match}${fillStyle}`);
+      } else {
+        doc = `${fillStyle}${doc}`;
+      }
+    }
+    const extraCss = (rawCss ?? '').replace(RE_RELATIVE_FONT_FACE, '').trim();
     if (extraCss) {
       const styleTag = `<style data-stage-override="true">${extraCss}</style>`;
       if (/<\/head>/i.test(doc)) {
         doc = doc.replace(/<\/head>/i, `${styleTag}</head>`);
+      } else if (/<head(?:\s[^>]*)?>/i.test(doc)) {
+        doc = doc.replace(/<head(?:\s[^>]*)?>/i, (match) => `${match}${styleTag}`);
       } else if (/<\/body>/i.test(doc)) {
         doc = doc.replace(/<\/body>/i, `${styleTag}</body>`);
       } else {
@@ -289,11 +311,11 @@ export function compileSpecimenSrcDoc(
 
   const cleanHtml = sanitizeSnippetCode(rawHtml);
   const cleanCss = sanitizeSnippetCode(rawCss);
-  const hasFullViewportWrapper = /min-height:\s*100(?:vh|svh|dvh)/i.test(cleanCss);
+  const hasFullViewportWrapper = /min-height:\s*100(?:vh|svh|dvh|%)/i.test(cleanCss);
   const fallbackBg = theme === 'dark' ? '#121110' : '#f4f0e6';
   const fallbackFg = theme === 'dark' ? '#efe9dd' : '#17150f';
   const bodyPadding = hasFullViewportWrapper ? '0' : '24px';
-  const baseCss = `html,body{margin:0;min-height:100%;box-sizing:border-box}body{min-height:100dvh;display:grid;place-items:center;padding:${bodyPadding};background:${fallbackBg};color:${fallbackFg};font-family:'Be Vietnam Pro',system-ui,-apple-system,sans-serif}`;
+  const baseCss = `html{height:100%;min-height:100%}html,body{margin:0;min-height:100%;box-sizing:border-box}body{min-height:100%;display:grid;place-items:center;padding:${bodyPadding};background:${fallbackBg};color:${fallbackFg};font-family:'Be Vietnam Pro',system-ui,-apple-system,sans-serif}`;
   const syncThemeScript = `<script>(function(){var t="${theme}";var c=document.body.children;for(var i=0;i<c.length;i++){if(c[i].tagName!=="SCRIPT")c[i].setAttribute("data-theme",t);}})();</script>`;
   const userScript = safeInlineJs ? `<script>${safeInlineJs}</script>` : '';
   return `<!DOCTYPE html><html lang="vi" data-theme="${theme}"><head><meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1.0" />${SANDBOX_CSP}<style>${baseCss}\n${cleanCss}</style></head><body data-theme="${theme}">${cleanHtml}${syncThemeScript}${userScript}</body></html>`;
@@ -420,19 +442,6 @@ export function buildMotionThemeOverrideCss(liveHtml: string, stageTheme: Previe
     return `:root{--bg:#f4f0e6;--ink:#17150f;--muted:#524d45;--accent:#c42a18;--accent-ink:#fffaf5;--line:rgba(23,21,15,0.16);--panel:#eae5d8}html,body{background:var(--bg);color:var(--ink)}`;
   }
   return `:root{--bg:#121110;--ink:#efe9dd;--muted:#b5afa3;--accent:#ff6450;--accent-ink:#fffaf5;--line:rgba(239,233,221,0.16);--panel:#1a1917}html,body{background:var(--bg);color:var(--ink)}`;
-}
-
-export function buildSnippetThemeOverrideCss(
-  library: SourceLibraryName,
-  rawCss: string | undefined,
-  stageTheme: PreviewTheme
-): string {
-  const css = rawCss ?? '';
-  if (library !== 'codefronts' || css.includes('data-theme')) return '';
-  if (stageTheme === 'dark') {
-    return `html[data-theme="dark"] .thc-14,html[data-theme="dark"] .cb-17,html[data-theme="dark"] .ccb-02,html[data-theme="dark"] .flb-07,html[data-theme="dark"] .cal23,html[data-theme="dark"] .ac-02,html[data-theme="dark"] .fb-05{background:#121110!important}html[data-theme="dark"] .cal23{--bg:#121110;--card:#1a1917;--ink:#efe9dd;--ink2:#b5afa3;--ink3:#8e887e;--line:rgba(239,233,221,0.12)}html[data-theme="dark"] .ac-02{--ac-02-bg:#121110;--ac-02-card:#1a1917;--ac-02-ink:#efe9dd;--ac-02-mut:#b5afa3}html[data-theme="dark"] .fb-05{--fb-05-bg:#121110}`;
-  }
-  return `html[data-theme="light"] .btn-11,html[data-theme="light"] .card-16,html[data-theme="light"] .cs-07,html[data-theme="light"] .fc-21{background:#f4f0e6!important}`;
 }
 
 export function whiteLabelArchivePath(item: SourceCatalogItem): string {

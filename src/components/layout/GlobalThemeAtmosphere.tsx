@@ -280,8 +280,8 @@ export const GlobalThemeAtmosphere: React.FC = () => {
       const cx = detail?.x ?? w - 96;
       const cy = detail?.y ?? 30;
       const maxR = Math.hypot(Math.max(cx, w - cx), Math.max(cy, h - cy)) + 32;
-      const accent = next === 'dark' ? '#ff6e5a' : '#c42a18';
-      const highlight = next === 'dark' ? '#f4ede1' : '#2b241c';
+      const accent = next === 'dark' ? '#38c99a' : '#0b7a59';
+      const highlight = next === 'dark' ? '#f4f7f5' : '#111816';
 
       if (activeEffect === 'rain') {
         sound.playRain();

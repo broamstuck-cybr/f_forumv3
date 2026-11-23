@@ -16,8 +16,7 @@ export const LandingFAQ: React.FC<LandingFAQProps> = ({ onEnterApp }) => {
         <div className="wrap">
           <div className="lp-head">
             <div className="lp-head-copy">
-              <p className="t-label">hỏi đáp</p>
-              <h2 className="t-title">Câu hỏi thường gặp trước khi bắt đầu</h2>
+              <h2 className="t-title">Câu hỏi thường gặp</h2>
             </div>
           </div>
 
@@ -60,15 +59,14 @@ export const LandingFAQ: React.FC<LandingFAQProps> = ({ onEnterApp }) => {
             </div>
 
             <aside className="lp-faq-aside">
-              <p className="t-label">fpt forum · th, thcs và thpt fpt</p>
               <h3 className="t-title" style={{ fontSize: 'var(--text-2xl)' }}>
                 Hỏi đáp, Threads, Kho đề thi &amp; WebSocket
               </h3>
               <p className="t-lead" style={{ fontSize: 'var(--text-sm)' }}>
-                Mọi thảo luận trong không gian Tri thức đi kèm mã nguồn mẫu, Bộ lọc AI chống spam/ngôn từ thô tục và đồng bộ thời gian thực.
+                Không gian trao đổi tại TH, THCS &amp; THPT FPT tích hợp mã nguồn mẫu kiểm chứng, Bộ lọc AI chặn spam và đồng bộ thời gian thực.
               </p>
               <div>
-                <button type="button" className="btn btn-red" onClick={onEnterApp}>
+                <button type="button" className="btn btn-accent" onClick={onEnterApp}>
                   Mở F-Forum
                 </button>
               </div>
@@ -77,10 +75,10 @@ export const LandingFAQ: React.FC<LandingFAQProps> = ({ onEnterApp }) => {
         </div>
       </section>
 
-      <section aria-label="Bắt đầu dựng ngay" className="lp-closing scene-red">
+      <section aria-label="Bắt đầu dựng ngay" className="lp-closing scene-accent">
         <div className="wrap lp-closing-row">
           <h2 className="lp-closing-title">
-            Tự chọn khung mẫu, <span className="t-italic">làm chủ quy trình cùng AI.</span>
+            Chọn khung mẫu chuẩn, <span className="t-italic">làm chủ quy trình cùng AI.</span>
           </h2>
           <button type="button" className="btn btn-solid btn-lg" onClick={onEnterApp}>
             Mở Xưởng lắp ráp

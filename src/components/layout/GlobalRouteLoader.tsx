@@ -21,7 +21,7 @@ export const GlobalRouteLoader: React.FC<GlobalRouteLoaderProps> = ({
             style={{ '--d': '124px', '--tilt': '-18deg' } as React.CSSProperties}
           >
             <div className="ff-loader-spin" style={{ '--dur': '1.6s' } as React.CSSProperties}>
-              <span className="ff-loader-planet" style={{ '--dot': '#ff6450' } as React.CSSProperties} />
+              <span className="ff-loader-planet" style={{ '--dot': '#38c99a' } as React.CSSProperties} />
             </div>
           </div>
           <div
@@ -29,7 +29,7 @@ export const GlobalRouteLoader: React.FC<GlobalRouteLoaderProps> = ({
             style={{ '--d': '92px', '--tilt': '24deg' } as React.CSSProperties}
           >
             <div className="ff-loader-spin" style={{ '--dur': '2.1s' } as React.CSSProperties}>
-              <span className="ff-loader-planet" style={{ '--dot': '#7da3bb' } as React.CSSProperties} />
+              <span className="ff-loader-planet" style={{ '--dot': '#8cbcc8' } as React.CSSProperties} />
             </div>
           </div>
           <div
@@ -37,7 +37,7 @@ export const GlobalRouteLoader: React.FC<GlobalRouteLoaderProps> = ({
             style={{ '--d': '66px', '--tilt': '-56deg' } as React.CSSProperties}
           >
             <div className="ff-loader-spin" style={{ '--dur': '1.35s' } as React.CSSProperties}>
-              <span className="ff-loader-planet" style={{ '--dot': '#ddad95' } as React.CSSProperties} />
+              <span className="ff-loader-planet" style={{ '--dot': '#e6b385' } as React.CSSProperties} />
             </div>
           </div>
           <span className="ff-loader-core" />

@@ -343,7 +343,8 @@ const SeamlessLoopVideo: React.FC<{
 
 export const AmbientVideoBackdrop: React.FC = () => {
   const { theme, settings, reducedMotion } = useAppStore();
-  const ambientEnabled = settings.ambientVideo !== false;
+  const isEco = settings.uiMode === 'eco';
+  const ambientEnabled = !isEco && settings.ambientVideo !== false;
   const preset: WallpaperPreset = settings.wallpaperPreset || 'video';
   const [posterOnly, setPosterOnly] = useState<boolean>(() =>
     shouldUseStaticPoster(ambientEnabled, reducedMotion)
@@ -359,6 +360,8 @@ export const AmbientVideoBackdrop: React.FC = () => {
     mqMotion.addEventListener('change', syncStaticMode);
     return () => mqMotion.removeEventListener('change', syncStaticMode);
   }, [ambientEnabled, reducedMotion]);
+
+  if (isEco) return null;
 
   const isVideoPreset =
     preset === 'video' ||

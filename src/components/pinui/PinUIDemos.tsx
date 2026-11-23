@@ -109,7 +109,7 @@ export const PromptComposerDemo = ({ theme }: { theme: 'light' | 'dark' }) => {
 };
 
 export const ThemeSwitchDemo = ({ theme, onThemeChange }: { theme: 'light' | 'dark'; onThemeChange: (value: 'light' | 'dark') => void }) => (
-  <ThemeSwitch theme={theme} onThemeChange={onThemeChange} variant="stage" />
+  <ThemeSwitch theme={theme} onThemeChange={onThemeChange} />
 );
 
 export const TaskCardDemo = () => (

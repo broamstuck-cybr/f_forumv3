@@ -70,8 +70,8 @@ export const AppFooter: React.FC<AppFooterProps> = ({ onNavigate, onOpenNotice }
           <StreetGraffitiMark />
         </div>
         <div className="foot__base">
-          <p className="t-label">F-Forum v3 · Không gian Web & UI</p>
-          <p className="t-label">F-Forum, 2026</p>
+          <p className="t-label">F-Forum</p>
+          <p className="t-label">2026</p>
         </div>
       </div>
     </footer>

@@ -1,11 +1,10 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { ExternalLink, Monitor, Moon, RotateCw, Smartphone, Sun, Tablet, X, ZoomIn, ZoomOut } from 'lucide-react';
+import { Monitor, Moon, RotateCw, Smartphone, Sun, Tablet, X, ZoomIn, ZoomOut } from 'lucide-react';
 import { previewFor } from '../../ui/Media';
 import { useAppStore } from '../../store/appStore';
 import { PinHeartButton, PinUIPlayground } from '../../components/pinui';
 import {
   LIBRARY_LABEL,
-  buildSnippetThemeOverrideCss,
   copyText,
   fetchMotionSitesFullMap,
   fetchPinUISourceMap,
@@ -21,7 +20,7 @@ import {
   type PreviewTheme,
   type PreviewViewport,
 } from './catalog';
-import { VAULT_LIBRARY_LABELS, resolveOriginalLiveUrl } from './vaultLoader';
+import { VAULT_LIBRARY_LABELS } from './vaultLoader';
 import { SandboxPreview } from './SandboxPreview';
 import { SpecimenMedia } from './SpecimenMedia';
 
@@ -183,13 +182,6 @@ export const SpecimenSheet: React.FC<SpecimenSheetProps> = ({
     item?.previewImage ||
     (isMotion ? motionEntry?.previewImage || '' : '') ||
     (preview?.kind === 'image' ? preview.src : '');
-  const originalUrl = item
-    ? resolveOriginalLiveUrl(
-        vaultLib,
-        item.id,
-        (isMotion ? motionEntry?.liveUrl : '') || item.officialUrl
-      )
-    : '';
 
   const safeHtml = useMemo(() => {
     if (!item) return '';
@@ -228,10 +220,8 @@ export const SpecimenSheet: React.FC<SpecimenSheetProps> = ({
 
   const snippetCssWithTheme = useMemo(() => {
     if (!item || isPinUI) return '';
-    if (isThreeUI || isMotion) return item.previewCss ?? '';
-    const extra = buildSnippetThemeOverrideCss(item.sourceLibrary, item.previewCss, stageTheme);
-    return extra ? `${extra}\n${item.previewCss ?? ''}` : item.previewCss ?? '';
-  }, [item, isPinUI, isThreeUI, isMotion, stageTheme]);
+    return item.previewCss ?? '';
+  }, [item, isPinUI]);
 
   const resolvedCodeTab: CodeTab = useMemo(() => {
     if (codeTab === 'html' && safeHtml) return 'html';
@@ -441,17 +431,6 @@ export const SpecimenSheet: React.FC<SpecimenSheetProps> = ({
               <button type="button" className="btn btn-line" onClick={() => onAttach(item)}>
                 Đính kèm
               </button>
-              {originalUrl ? (
-                <a
-                  href={originalUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="btn btn-line ex-xp-origin-link"
-                >
-                  <span>Trang gốc</span>
-                  <ExternalLink size={14} aria-hidden="true" />
-                </a>
-              ) : null}
               <ReactionBar id={item.id} title={safeTitle} showLabel />
               <button
                 type="button"

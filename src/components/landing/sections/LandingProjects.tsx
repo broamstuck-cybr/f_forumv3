@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
+import React, { useMemo } from 'react';
 import type { DimensionView } from '../../../types/index';
 import { HOME_MOTION_SHOWCASES, type HomeMotionShowcaseItem } from '../../../data/homeMotionShowcases';
 import { Mark } from '../../../ui/Mark';
-import { PROJECT_SHOWCASE_THUMBS, TIDEWELL_CARDS } from '../landingContent';
+import { PROJECT_SHOWCASE_THUMBS } from '../landingContent';
 
 interface LandingProjectsProps {
   onNavigate: (view: DimensionView) => void;
@@ -15,35 +15,37 @@ function languageSummary(item: HomeMotionShowcaseItem): string {
   return langs.join(' · ');
 }
 
+function buildShowcaseSrcDoc(item: HomeMotionShowcaseItem): string {
+  const htmlFile = item.files.find((f) => f.language === 'html')?.content ?? '';
+  const cssFile = item.files.find((f) => f.language === 'css')?.content ?? '';
+  const jsFile = item.files.find((f) => f.language === 'javascript')?.content ?? '';
+  const safeCss = cssFile.replace(/<\/style/gi, '<\\/style');
+  const safeJs = jsFile.replace(/<\/script/gi, '<\\/script');
+
+  let doc = htmlFile.replace(/<link[^>]+href=["']styles\.css["'][^>]*>/i, () => `<style>${safeCss}</style>`);
+  doc = doc.replace(/<script[^>]+src=["']app\.js["'][^>]*><\/script>/i, () => `<script>${safeJs}</script>`);
+  return doc;
+}
+
 const ProjectCard: React.FC<{
   item: HomeMotionShowcaseItem;
   index: number;
   onOpen: () => void;
   onLive: () => void;
 }> = ({ item, index, onOpen, onLive }) => {
-  const thumb = TIDEWELL_CARDS.find((card) => card.id === PROJECT_SHOWCASE_THUMBS[item.id]);
-  const [src, setSrc] = useState(thumb?.imageUrl ?? item.fallbackUrl);
-  const [failed, setFailed] = useState(false);
+  const srcDoc = useMemo(() => buildShowcaseSrcDoc(item), [item]);
 
   return (
     <article className="lp-proj-card">
       <div className="lp-proj-media">
         <span className="lp-proj-index">{String(index + 1).padStart(2, '0')}</span>
-        <div className="lp-proj-fallback" aria-hidden="true">
-          {item.category}
-        </div>
-        <img
-          src={src}
-          alt={`Ảnh xem trước ${item.title}`}
+        <iframe
+          srcDoc={srcDoc}
+          title={`Bản chạy thử ${item.title}`}
+          sandbox="allow-scripts"
           loading="eager"
-          decoding="async"
           referrerPolicy="no-referrer"
-          data-failed={failed ? 'true' : undefined}
-          className="lp-proj-img"
-          onError={() => {
-            if (src !== item.fallbackUrl) setSrc(item.fallbackUrl);
-            else setFailed(true);
-          }}
+          className="lp-proj-iframe"
         />
       </div>
       <div className="lp-proj-body">
@@ -69,7 +71,7 @@ const ProjectCard: React.FC<{
           <span className="lp-proj-chip">{item.motionConfig.pattern}</span>
         </div>
         <div className="lp-proj-actions">
-          <button type="button" className="btn btn-red btn-sm" onClick={onOpen}>
+          <button type="button" className="btn btn-accent btn-sm" onClick={onOpen}>
             Mở trong Khám phá
           </button>
           <button type="button" className="btn btn-line btn-sm" onClick={onLive}>
@@ -87,7 +89,6 @@ export const LandingProjects: React.FC<LandingProjectsProps> = ({ onNavigate }) 
       <div className="wrap-wide">
         <div className="lp-head">
           <div className="lp-head-copy">
-            <p className="t-label">kiến trúc hệ thống &amp; starter kits đã kiểm định</p>
             <h2 className="t-title">
               Bộ khung mẫu chuẩn, <Mark kind="underline">mở là chạy</Mark> được
             </h2>

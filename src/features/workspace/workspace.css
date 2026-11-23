@@ -206,14 +206,14 @@
   .ws-icon-pill[aria-pressed='true'],
   .ws-icon-pill[data-active='true'],
   .ws-icon-pill--active {
-    border-color: var(--red);
-    background: var(--red-soft);
-    color: var(--red);
+    border-color: var(--accent, #2fb59a);
+    background: var(--accent-wash, rgba(47,181,154,0.12));
+    color: var(--accent, #2fb59a);
   }
 
   .ws-icon-pill--accent {
     border-color: transparent;
-    background: var(--red-fill);
+    background: var(--accent, #2fb59a);
     color: var(--on-red);
   }
 
@@ -263,7 +263,7 @@
   }
 
   .ws-mode-icon[aria-pressed='true'] {
-    background: var(--red-fill);
+    background: var(--accent, #2fb59a);
     color: var(--on-red);
   }
 
@@ -333,11 +333,11 @@
   }
 
   .ws-add {
-    color: var(--green);
+    color: var(--accent, #2fb59a);
   }
 
   .ws-del {
-    color: var(--red);
+    color: var(--accent, #2fb59a);
   }
 
   .ws-warn {
@@ -399,7 +399,7 @@
   .ws-rail-item[data-active='true'] {
     background: var(--bg-card-surface);
     border-color: var(--line-strong);
-    box-shadow: inset 3px 0 0 var(--red);
+    box-shadow: inset 3px 0 0 var(--accent, #2fb59a);
   }
 
   .ws-rail-row-wrap {
@@ -436,28 +436,6 @@
     gap: 7px;
     width: 100%;
     min-width: 0;
-  }
-
-  .ws-health-dot {
-    width: 7px;
-    height: 7px;
-    flex: none;
-    border-radius: 999px;
-    background: var(--fg-faint);
-  }
-
-  .ws-health-dot[data-health='pass'] {
-    background: var(--green);
-    box-shadow: 0 0 0 2px var(--green-soft);
-  }
-
-  .ws-health-dot[data-health='warn'] {
-    background: var(--amber);
-    box-shadow: 0 0 0 2px color-mix(in srgb, var(--amber) 22%, transparent);
-  }
-
-  .ws-health-dot[data-health='draft'] {
-    background: var(--fg-faint);
   }
 
   .ws-rail-name {
@@ -598,8 +576,8 @@
   }
 
   .ws-turn[data-role='system'] {
-    border-color: var(--red);
-    background: var(--red-soft);
+    border-color: var(--accent, #2fb59a);
+    background: var(--accent-wash, rgba(47,181,154,0.12));
   }
 
   .ws-turn-meta {
@@ -627,12 +605,12 @@
   }
 
   .ws-role-badge[data-role='assistant'] {
-    background: var(--red-soft);
-    color: var(--red);
+    background: var(--accent-wash, rgba(47,181,154,0.12));
+    color: var(--accent, #2fb59a);
   }
 
   .ws-role-badge[data-role='system'] {
-    background: var(--red-fill);
+    background: var(--accent, #2fb59a);
     color: var(--on-red);
   }
 
@@ -701,9 +679,9 @@
   }
 
   .ws-file-pill:hover {
-    border-color: var(--red);
-    color: var(--red);
-    background: var(--red-soft);
+    border-color: var(--accent, #2fb59a);
+    color: var(--accent, #2fb59a);
+    background: var(--accent-wash, rgba(47,181,154,0.12));
   }
 
   .ws-artifact-card {
@@ -745,10 +723,10 @@
     align-items: center;
     gap: 5px;
     padding: 2px 9px;
-    border: 1px solid var(--green);
+    border: 1px solid var(--accent, #2fb59a);
     border-radius: var(--radius-pill);
-    background: var(--green-soft);
-    color: var(--green);
+    background: var(--accent-wash, rgba(47,181,154,0.12));
+    color: var(--accent, #2fb59a);
     font-family: var(--font-mono);
     font-size: 10.5px;
     font-weight: 600;
@@ -790,7 +768,7 @@
   }
 
   .ws-artifact-jump:focus-visible {
-    outline: 2px solid var(--red);
+    outline: 2px solid var(--accent, #2fb59a);
     outline-offset: 2px;
   }
 
@@ -827,7 +805,7 @@
   }
 
   .ws-filelink:hover {
-    color: var(--red);
+    color: var(--accent, #2fb59a);
     text-decoration-color: currentColor;
   }
 
@@ -896,8 +874,8 @@
   }
 
   .ws-arena-card[data-applied='true'] {
-    border-color: var(--red);
-    box-shadow: 0 0 0 1px var(--red);
+    border-color: var(--accent, #2fb59a);
+    box-shadow: 0 0 0 1px var(--accent, #2fb59a);
   }
 
   .ws-arena-card-head {
@@ -922,8 +900,8 @@
     height: 22px;
     padding: 0 6px;
     border-radius: var(--radius-pill);
-    background: var(--red-soft);
-    color: var(--red);
+    background: var(--accent-wash, rgba(47,181,154,0.12));
+    color: var(--accent, #2fb59a);
     font-family: var(--font-mono);
     font-size: 10.5px;
     font-weight: 700;
@@ -992,7 +970,7 @@
   }
 
   .ws-arena-card[data-applied='true'] .ws-arena-active-tag {
-    color: var(--green);
+    color: var(--accent, #2fb59a);
   }
 
   .ws-caret {
@@ -1001,7 +979,7 @@
     height: 1.1em;
     margin-left: var(--space-2);
     vertical-align: text-bottom;
-    background: var(--red);
+    background: var(--accent, #2fb59a);
     animation: ws-blink 1.1s var(--ease-fade) infinite;
   }
 
@@ -1038,7 +1016,7 @@
   }
 
   .ws-starter:hover {
-    border-color: var(--red);
+    border-color: var(--accent, #2fb59a);
     background: var(--bg-high);
     transform: translateY(-1px);
   }
@@ -1184,13 +1162,13 @@
   }
 
   .ws-arena-action-btn--accent {
-    border-color: color-mix(in srgb, var(--red) 40%, var(--line));
-    color: var(--red);
+    border-color: color-mix(in srgb, var(--accent, #2fb59a) 40%, var(--line));
+    color: var(--accent, #2fb59a);
   }
 
   .ws-arena-action-btn--accent:hover {
-    border-color: var(--red);
-    background: var(--red-soft);
+    border-color: var(--accent, #2fb59a);
+    background: var(--accent-wash, rgba(47,181,154,0.12));
   }
 
   .ws-resizer {
@@ -1216,7 +1194,7 @@
 
   .ws-resizer:hover .ws-resizer-line,
   .ws-resizer.is-dragging .ws-resizer-line {
-    background: var(--red);
+    background: var(--accent, #2fb59a);
   }
 
   .ws-resizer-handle {
@@ -1232,7 +1210,7 @@
 
   .ws-resizer:hover .ws-resizer-handle,
   .ws-resizer.is-dragging .ws-resizer-handle {
-    background: var(--red);
+    background: var(--accent, #2fb59a);
     transform: scaleY(1.25);
   }
 
@@ -1316,9 +1294,9 @@
     flex-wrap: wrap;
     gap: var(--space-2);
     padding: 10px 14px;
-    border: 1px solid var(--red);
+    border: 1px solid var(--accent, #2fb59a);
     border-radius: 12px;
-    background: var(--red-soft);
+    background: var(--accent-wash, rgba(47,181,154,0.12));
     font-size: var(--text-xs);
     line-height: 1.5;
     overflow: hidden;
@@ -1389,8 +1367,8 @@
   }
 
   .ws-eval-btn:hover:not(:disabled) {
-    border-color: var(--red);
-    background: var(--red-fill);
+    border-color: var(--accent, #2fb59a);
+    background: var(--accent, #2fb59a);
     color: var(--on-red);
   }
 
@@ -1400,7 +1378,7 @@
   }
 
   .ws-eval-btn:focus-visible {
-    outline: 2px solid var(--red);
+    outline: 2px solid var(--accent, #2fb59a);
     outline-offset: 2px;
   }
 
@@ -1827,7 +1805,7 @@
   }
 
   .ws-log summary:hover {
-    color: var(--red);
+    color: var(--accent, #2fb59a);
   }
 
   .ws-log ul {
@@ -1856,7 +1834,7 @@
 
   .ws-log-status {
     flex: none;
-    color: var(--green);
+    color: var(--accent, #2fb59a);
   }
 
   .ws-log li[data-status='running'] .ws-log-status {
@@ -1945,7 +1923,7 @@
   }
 
   .ws-switch-item[aria-pressed='true'] {
-    box-shadow: inset 0 2px 0 var(--red);
+    box-shadow: inset 0 2px 0 var(--accent, #2fb59a);
     color: var(--fg);
     background: var(--bg-card-surface);
   }
@@ -2156,16 +2134,16 @@
     align-items: flex-start;
     gap: 12px;
     padding: 14px;
-    border: 1px solid var(--green);
+    border: 1px solid var(--accent, #2fb59a);
     border-radius: 12px;
-    background: var(--green-soft);
+    background: var(--accent-wash, rgba(47,181,154,0.12));
     color: var(--fg);
   }
 
   .ws-publish-done-row svg {
     flex: none;
     margin-top: 2px;
-    color: var(--green);
+    color: var(--accent, #2fb59a);
   }
 
   .ws-publish-done-title {
@@ -2231,7 +2209,7 @@
 
   .ws-dv-file[aria-current='true'] {
     background: var(--line);
-    box-shadow: inset 2px 0 0 var(--red);
+    box-shadow: inset 2px 0 0 var(--accent, #2fb59a);
   }
 
   .ws-dv-main {
@@ -2323,20 +2301,20 @@
 
   .ws-dv-line[data-type='add'],
   .ws-dv-half[data-type='add'] {
-    background: var(--green-soft);
+    background: var(--accent-wash, rgba(47,181,154,0.12));
   }
 
   .ws-dv-line[data-type='del'],
   .ws-dv-half[data-type='del'] {
-    background: var(--red-soft);
+    background: var(--accent-wash, rgba(47,181,154,0.12));
   }
 
   .ws-dv-line[data-type='add'] .ws-dv-sign {
-    color: var(--green);
+    color: var(--accent, #2fb59a);
   }
 
   .ws-dv-line[data-type='del'] .ws-dv-sign {
-    color: var(--red);
+    color: var(--accent, #2fb59a);
   }
 
   .ws-dv-split {
@@ -2400,7 +2378,7 @@
     }
 
     .ws-dv-file[aria-current='true'] {
-      box-shadow: inset 0 -2px 0 var(--red);
+      box-shadow: inset 0 -2px 0 var(--accent, #2fb59a);
     }
   }
 
@@ -2471,9 +2449,9 @@
   }
 
   .ws-preset-chip[aria-pressed='true'] {
-    border-color: var(--red);
-    color: var(--red);
-    background: var(--red-soft);
+    border-color: var(--accent, #2fb59a);
+    color: var(--accent, #2fb59a);
+    background: var(--accent-wash, rgba(47,181,154,0.12));
   }
 
   .ws-byok-key-row {
@@ -2589,14 +2567,14 @@
   }
 
   .ws-stage-step[data-state='done'] {
-    color: var(--green);
-    border-color: var(--green);
+    color: var(--accent, #2fb59a);
+    border-color: var(--accent, #2fb59a);
   }
 
   .ws-stage-step[data-state='active'] {
-    color: var(--red);
-    border-color: var(--red);
-    background: var(--red-soft);
+    color: var(--accent, #2fb59a);
+    border-color: var(--accent, #2fb59a);
+    background: var(--accent-wash, rgba(47,181,154,0.12));
   }
 
   .ws-stream-preview {
@@ -2756,7 +2734,7 @@
 
   .ws-arena-empty-title em {
     font-style: italic;
-    color: var(--red);
+    color: var(--accent, #2fb59a);
   }
 
   .ws-arena-empty-sub {
@@ -3063,13 +3041,6 @@
     color: var(--fg);
   }
 
-  .ws-live-dot {
-    width: 7px;
-    height: 7px;
-    border-radius: 50%;
-    background: var(--green);
-  }
-
   .ws-arena-tab-count {
     font-family: var(--font-mono);
     font-size: 10.5px;
@@ -3350,7 +3321,7 @@
   width: 26px;
   height: 26px;
   border-radius: 9999px;
-  background: var(--red-fill);
+  background: var(--accent, #2fb59a);
   color: var(--on-red);
   font-size: 11px;
   font-weight: 700;
@@ -3525,7 +3496,7 @@
 
 .ws-compact-globe {
   flex: none;
-  color: var(--green);
+  color: var(--accent, #2fb59a);
 }
 
 .ws-compact-preview-name {
@@ -3665,7 +3636,7 @@
   gap: 7px;
   padding: 0 12px;
   font-size: 12px;
-  color: var(--green);
+  color: var(--accent, #2fb59a);
 }
 
 .ws-stage-empty {

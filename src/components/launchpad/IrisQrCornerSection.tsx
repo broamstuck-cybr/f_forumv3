@@ -7,7 +7,7 @@ import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPass.js';
 import { OutputPass } from 'three/examples/jsm/postprocessing/OutputPass.js';
 import { mergeVertices } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
-import { Cpu, Layers, ShieldCheck, Sparkles, Users, X } from 'lucide-react';
+import { Users } from 'lucide-react';
 import type { DimensionView } from '../../types/index';
 import { useAppStore } from '../../store/appStore';
 import {
@@ -21,64 +21,6 @@ export interface IrisQrCornerSectionProps {
   onNavigate?: (view: DimensionView) => void;
   contextLabel?: 'home' | 'landing';
 }
-
-interface HonorTrackItem {
-  id: string;
-  code: string;
-  roleTitle: string;
-  trackLabel: string;
-  contribution: string;
-  highlights: string[];
-  accent: 'amber' | 'iris' | 'sage' | 'steel';
-  icon: React.ReactNode;
-}
-
-const DEV_TEAM_HONOR_TRACKS: HonorTrackItem[] = [
-  {
-    id: 'track-architecture',
-    code: '01',
-    roleTitle: 'Kiến trúc Hệ thống & Hạ tầng Lõi',
-    trackLabel: 'Nhóm Kỹ thuật Nền tảng · FPT Forum',
-    contribution:
-      'Xây dựng kiến trúc ứng dụng Web, cầu nối API có mã bảo mật riêng, lưu trữ dữ liệu mã hóa trong hệ thống tệp JSON và đồng bộ WebSocket hai chiều theo thời gian thực.',
-    highlights: ['API & Mã hóa JSON', 'WebSocket thời gian thực', 'Workspace Live View'],
-    accent: 'iris',
-    icon: <Cpu size={18} aria-hidden="true" />,
-  },
-  {
-    id: 'track-design',
-    code: '02',
-    roleTitle: 'Thiết kế UI/UX & Chống "AI Slop"',
-    trackLabel: 'Nhóm Thẩm mỹ & Tủ sách Tài nguyên',
-    contribution:
-      'Phân loại và kiểm tra tính khả thi cho 7.662 mẫu giao diện chuẩn (PinUI, Motion AI, ThreeUI, GetLayers, LucianLabs, CodeFronts) tạo nên Xưởng lắp ráp mở bản địa hóa tiếng Việt.',
-    highlights: ['7.662 mẫu giao diện', 'Starter Kits & Skills', 'Đáp ứng 390/768/1440px'],
-    accent: 'amber',
-    icon: <Layers size={18} aria-hidden="true" />,
-  },
-  {
-    id: 'track-research',
-    code: '03',
-    roleTitle: 'Nghiên cứu Khoa học & Khảo sát Học đường',
-    trackLabel: 'Nhóm Nghiên cứu · TH, THCS và THPT FPT',
-    contribution:
-      'Khảo sát thực tế trên 195 học sinh và người dùng (91,2% đánh giá cao mẫu UI/UX trực quan), phân tích 3 thực trạng ứng dụng AI từ báo cáo OECD PISA 2025 (95,9%) và đo lường tỷ lệ hoàn thiện sản phẩm.',
-    highlights: ['195 người dùng khảo sát', '91,2% đánh giá cao', 'Tư duy phản biện'],
-    accent: 'sage',
-    icon: <Sparkles size={18} aria-hidden="true" />,
-  },
-  {
-    id: 'track-community',
-    code: '04',
-    roleTitle: 'Cộng đồng Tri thức & Bộ lọc An toàn AI',
-    trackLabel: 'Nhóm Cộng đồng & Kiểm duyệt Thông minh',
-    contribution:
-      'Phát triển hệ sinh thái Hỏi đáp, Threads, Kho đề thi, Hồ sơ và Bộ lọc AI tự động ghi nhận spam, ngôn từ thô tục để cảnh cáo và vô hiệu hóa bài viết vi phạm.',
-    highlights: ['Bộ lọc AI chống spam', 'Hỏi đáp & Kho đề thi', 'Văn hóa học thuật mở'],
-    accent: 'steel',
-    icon: <ShieldCheck size={18} aria-hidden="true" />,
-  },
-];
 
 function clamp(v: number, lo: number, hi: number): number {
   return v < lo ? lo : v > hi ? hi : v;
@@ -298,7 +240,7 @@ function buildFallbackHead(): THREE.Group {
     glossy: true,
     useMap: false,
     tint: '#4a4a56',
-    rim: { color: 0x8a5cff, power: 4.5, strength: 0.32 },
+    rim: { color: 0x38c99a, power: 4.5, strength: 0.32 },
   });
   return g;
 }
@@ -314,7 +256,7 @@ function buildFallbackArm(): THREE.Group {
     glossy: false,
     useMap: false,
     tint: '#1d1d23',
-    rim: { color: 0x8a5cff, power: 2.6, strength: 1.05 },
+    rim: { color: 0x38c99a, power: 2.6, strength: 1.05 },
   });
   return g;
 }
@@ -333,22 +275,19 @@ export const IrisQrCornerSection: React.FC<IrisQrCornerSectionProps> = ({
   const [loaderHidden, setLoaderHidden] = useState(false);
   const [webglFallback, setWebglFallback] = useState(false);
   const [qrModalOpen, setQrModalOpen] = useState(false);
-  const [honorModalOpen, setHonorModalOpen] = useState(false);
 
   const go = (view: DimensionView) => {
-    setHonorModalOpen(false);
     if (onNavigate) onNavigate(view);
     else navigate(view);
   };
 
   useEffect(() => {
-    if (!qrModalOpen && !honorModalOpen) return undefined;
+    if (!qrModalOpen) return undefined;
     const prevOverflow = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
     const onKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
         setQrModalOpen(false);
-        setHonorModalOpen(false);
       }
     };
     window.addEventListener('keydown', onKeyDown);
@@ -356,7 +295,7 @@ export const IrisQrCornerSection: React.FC<IrisQrCornerSectionProps> = ({
       document.body.style.overflow = prevOverflow;
       window.removeEventListener('keydown', onKeyDown);
     };
-  }, [qrModalOpen, honorModalOpen]);
+  }, [qrModalOpen]);
 
   useEffect(() => {
     const hero = heroRef.current;
@@ -383,19 +322,19 @@ export const IrisQrCornerSection: React.FC<IrisQrCornerSectionProps> = ({
     renderer.outputColorSpace = THREE.SRGBColorSpace;
 
     const scene = new THREE.Scene();
-    scene.background = new THREE.Color('#0b0b11');
+    scene.background = new THREE.Color('#0c1212');
 
     const camera = new THREE.PerspectiveCamera(28, 1, 0.1, 100);
 
     const glowTex = createRadialTexture([
-      [0, 'rgba(160,120,255,1)'],
-      [0.25, 'rgba(124,77,255,.55)'],
-      [0.6, 'rgba(90,50,230,.12)'],
-      [1, 'rgba(60,30,200,0)'],
+      [0, 'rgba(56,201,154,1)'],
+      [0.25, 'rgba(16,155,114,.52)'],
+      [0.6, 'rgba(11,122,89,.12)'],
+      [1, 'rgba(8,70,54,0)'],
     ]);
 
     const envScene = new THREE.Scene();
-    envScene.background = new THREE.Color('#030305');
+    envScene.background = new THREE.Color('#040808');
     const softboxes: Array<{
       color: string;
       w: number;
@@ -406,9 +345,9 @@ export const IrisQrCornerSection: React.FC<IrisQrCornerSectionProps> = ({
       { color: '#ffffff', w: 5, h: 3.2, pos: [-3, 4.5, 4], intensity: 3.2 },
       { color: '#ffffff', w: 1.2, h: 6, pos: [6, 0.5, 2], intensity: 1.1 },
       { color: '#ffffff', w: 3, h: 1, pos: [1.5, 5, -1], intensity: 0.8 },
-      { color: '#7c4dff', w: 4, h: 5, pos: [-5, 0, -4], intensity: 1.0 },
-      { color: '#7c4dff', w: 4, h: 5, pos: [5, 0, -4], intensity: 1.0 },
-      { color: '#5b30ff', w: 6, h: 3, pos: [0, -5, 1], intensity: 0.35 },
+      { color: '#38c99a', w: 4, h: 5, pos: [-5, 0, -4], intensity: 0.95 },
+      { color: '#38c99a', w: 4, h: 5, pos: [5, 0, -4], intensity: 0.95 },
+      { color: '#109b72', w: 6, h: 3, pos: [0, -5, 1], intensity: 0.35 },
     ];
     const sbGeo = new THREE.SphereGeometry(0.5, 32, 16);
     for (const sb of softboxes) {
@@ -424,7 +363,7 @@ export const IrisQrCornerSection: React.FC<IrisQrCornerSectionProps> = ({
     scene.environment = envTarget.texture;
     scene.environmentIntensity = 1.0;
 
-    scene.add(new THREE.HemisphereLight(0xdcd8f0, 0x1a0f3a, 2.3));
+    scene.add(new THREE.HemisphereLight(0xd8f0e8, 0x0c241d, 2.3));
     const dirLight = new THREE.DirectionalLight(0xffffff, 0.55);
     dirLight.position.set(-3, 4, 5);
     scene.add(dirLight);
@@ -445,7 +384,7 @@ export const IrisQrCornerSection: React.FC<IrisQrCornerSectionProps> = ({
     const haze = new THREE.Sprite(
       new THREE.SpriteMaterial({
         map: glowTex,
-        color: 0x7a55ff,
+        color: 0x38c99a,
         opacity: 0.06,
         blending: THREE.AdditiveBlending,
         toneMapped: false,
@@ -459,8 +398,8 @@ export const IrisQrCornerSection: React.FC<IrisQrCornerSectionProps> = ({
 
     const floorGlowMat = new THREE.MeshBasicMaterial({
       map: glowTex,
-      color: 0x8f6bff,
-      opacity: 0.95,
+      color: 0x38c99a,
+      opacity: 0.85,
       blending: THREE.AdditiveBlending,
       transparent: true,
       depthWrite: false,
@@ -556,10 +495,10 @@ export const IrisQrCornerSection: React.FC<IrisQrCornerSectionProps> = ({
       head.add(glassMesh);
 
       const irisTex = createRadialTexture([
-        [0, '#d7c9ff'],
-        [0.45, '#a07bff'],
-        [0.8, '#7646f2'],
-        [1, '#5c2fe0'],
+        [0, '#ccf7e8'],
+        [0.45, '#52d6aa'],
+        [0.8, '#13966d'],
+        [1, '#0b684b'],
       ]);
 
       for (const sx of [-1, 1]) {
@@ -578,7 +517,7 @@ export const IrisQrCornerSection: React.FC<IrisQrCornerSectionProps> = ({
           new THREE.CircleGeometry(0.42, 48),
           new THREE.MeshBasicMaterial({
             map: glowTex,
-            color: 0x8a5cff,
+            color: 0x38c99a,
             opacity: 0.24,
             transparent: true,
             blending: THREE.AdditiveBlending,
@@ -594,7 +533,7 @@ export const IrisQrCornerSection: React.FC<IrisQrCornerSectionProps> = ({
         const ring = new THREE.Mesh(
           new THREE.RingGeometry(0.168, 0.212, 64),
           new THREE.MeshBasicMaterial({
-            color: new THREE.Color(1.1, 0.88, 2.0),
+            color: new THREE.Color(0.65, 1.55, 1.25),
             toneMapped: false,
             depthWrite: false,
             depthTest: false,
@@ -652,9 +591,9 @@ export const IrisQrCornerSection: React.FC<IrisQrCornerSectionProps> = ({
 
       const ballGeo = new THREE.SphereGeometry(0.118, 32, 24);
       const ballMat = new THREE.MeshPhysicalMaterial({
-        color: '#8b62ff',
-        emissive: new THREE.Color('#6a3dff'),
-        emissiveIntensity: 1.5,
+        color: '#38c99a',
+        emissive: new THREE.Color('#109b72'),
+        emissiveIntensity: 1.4,
         roughness: 0.22,
         clearcoat: 1,
         clearcoatRoughness: 0.14,
@@ -684,8 +623,8 @@ export const IrisQrCornerSection: React.FC<IrisQrCornerSectionProps> = ({
         const sp = new THREE.Sprite(
           new THREE.SpriteMaterial({
             map: glowTex,
-            color: 0x9a6bff,
-            opacity: 0.85,
+            color: 0x52d6aa,
+            opacity: 0.82,
             blending: THREE.AdditiveBlending,
             toneMapped: false,
             depthWrite: false,
@@ -764,7 +703,7 @@ export const IrisQrCornerSection: React.FC<IrisQrCornerSectionProps> = ({
           glossy: true,
           useMap: false,
           tint: '#4a4a56',
-          rim: { color: 0x8a5cff, power: 4.5, strength: 0.32 },
+          rim: { color: 0x38c99a, power: 4.5, strength: 0.32 },
         });
       } else {
         headRoot = buildFallbackHead();
@@ -778,7 +717,7 @@ export const IrisQrCornerSection: React.FC<IrisQrCornerSectionProps> = ({
           useMap: false,
           smooth: true,
           tint: '#1d1d23',
-          rim: { color: 0x8a5cff, power: 2.6, strength: 1.05 },
+          rim: { color: 0x38c99a, power: 2.6, strength: 1.05 },
         });
       } else {
         armTpl = buildFallbackArm();
@@ -1047,17 +986,17 @@ export const IrisQrCornerSection: React.FC<IrisQrCornerSectionProps> = ({
                   <stop offset="100%" stopColor="#16161e" />
                 </radialGradient>
               </defs>
-              <circle cx="82" cy="36" r="10" fill="#8b62ff" />
-              <circle cx="158" cy="36" r="10" fill="#8b62ff" />
-              <line x1="86" y1="44" x2="96" y2="70" stroke="#4a4a56" strokeWidth="6" strokeLinecap="round" />
-              <line x1="154" y1="44" x2="144" y2="70" stroke="#4a4a56" strokeWidth="6" strokeLinecap="round" />
-              <circle cx="120" cy="128" r="68" fill="url(#irisBotHead)" stroke="#8a5cff" strokeOpacity="0.45" strokeWidth="2" />
-              <rect x="68" y="98" width="104" height="58" rx="26" fill="#06060a" stroke="#1d1d26" strokeWidth="3" />
-              <circle cx="98" cy="126" r="13" fill="#7c4dff" stroke="#d7c9ff" strokeWidth="3" />
-              <circle cx="98" cy="126" r="6" fill="#07040f" />
+              <circle cx="82" cy="36" r="10" fill="#38c99a" />
+              <circle cx="158" cy="36" r="10" fill="#38c99a" />
+              <line x1="86" y1="44" x2="96" y2="70" stroke="#4a5856" strokeWidth="6" strokeLinecap="round" />
+              <line x1="154" y1="44" x2="144" y2="70" stroke="#4a5856" strokeWidth="6" strokeLinecap="round" />
+              <circle cx="120" cy="128" r="68" fill="url(#irisBotHead)" stroke="#38c99a" strokeOpacity="0.45" strokeWidth="2" />
+              <rect x="68" y="98" width="104" height="58" rx="26" fill="#060a09" stroke="#1d2826" strokeWidth="3" />
+              <circle cx="98" cy="126" r="13" fill="#109b72" stroke="#ccf7e8" strokeWidth="3" />
+              <circle cx="98" cy="126" r="6" fill="#040d0a" />
               <circle cx="101" cy="123" r="2.2" fill="#ffffff" />
-              <circle cx="142" cy="126" r="13" fill="#7c4dff" stroke="#d7c9ff" strokeWidth="3" />
-              <circle cx="142" cy="126" r="6" fill="#07040f" />
+              <circle cx="142" cy="126" r="13" fill="#109b72" stroke="#ccf7e8" strokeWidth="3" />
+              <circle cx="142" cy="126" r="6" fill="#040d0a" />
               <circle cx="145" cy="123" r="2.2" fill="#ffffff" />
             </svg>
           </div>
@@ -1084,7 +1023,8 @@ export const IrisQrCornerSection: React.FC<IrisQrCornerSectionProps> = ({
             <button
               type="button"
               className="iris-honor-btn"
-              onClick={() => setHonorModalOpen(true)}
+              onClick={() => go('honor')}
+              aria-label="Mở Phòng Vinh Danh 3D đội ngũ phát triển FPT Forum"
             >
               <span className="iris-honor-btn-glow" aria-hidden="true" />
               <span className="iris-honor-btn-icon" aria-hidden="true">
@@ -1126,100 +1066,6 @@ export const IrisQrCornerSection: React.FC<IrisQrCornerSectionProps> = ({
                   Đóng
                 </button>
               </div>
-            </div>
-          </div>,
-          document.body
-        )}
-
-      {honorModalOpen &&
-        typeof document !== 'undefined' &&
-        createPortal(
-          <div
-            className="iris-honor-backdrop"
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby={`iris-honor-title-${contextLabel}`}
-            onClick={() => setHonorModalOpen(false)}
-          >
-            <div className="iris-honor-modal" onClick={(e) => e.stopPropagation()}>
-              <header className="iris-honor-head">
-                <div>
-                  <p className="iris-honor-kicker">TH, THCS VÀ THPT FPT · DỰ ÁN FPT FORUM</p>
-                  <h2 id={`iris-honor-title-${contextLabel}`} className="iris-honor-title">
-                    Khu Vinh Danh Đội Ngũ Phát Triển
-                  </h2>
-                </div>
-                <button
-                  type="button"
-                  className="iris-honor-close"
-                  onClick={() => setHonorModalOpen(false)}
-                  aria-label="Đóng bảng vinh danh"
-                >
-                  <X size={18} aria-hidden="true" />
-                </button>
-              </header>
-
-              <div className="iris-honor-metrics" aria-label="Dấu ấn nghiên cứu FPT Forum">
-                <div className="iris-honor-metric">
-                  <strong>95,9%</strong>
-                  <span>Học sinh dùng AI sáng tạo (OECD PISA 2025)</span>
-                </div>
-                <div className="iris-honor-metric">
-                  <strong>91,2% / 195</strong>
-                  <span>Người dùng đánh giá cao mẫu UI/UX trực quan</span>
-                </div>
-                <div className="iris-honor-metric">
-                  <strong>7.662</strong>
-                  <span>Mẫu giao diện chuẩn hóa trong Xưởng lắp ráp mở</span>
-                </div>
-              </div>
-
-              <div className="iris-honor-grid">
-                {DEV_TEAM_HONOR_TRACKS.map((track) => (
-                  <article
-                    key={track.id}
-                    className="iris-honor-card"
-                    data-accent={track.accent}
-                  >
-                    <div className="iris-honor-card-top">
-                      <span className="iris-honor-card-icon">{track.icon}</span>
-                      <span className="iris-honor-card-code">{track.code}</span>
-                    </div>
-                    <p className="iris-honor-card-track">{track.trackLabel}</p>
-                    <h3 className="iris-honor-card-title">{track.roleTitle}</h3>
-                    <p className="iris-honor-card-body">{track.contribution}</p>
-                    <div className="iris-honor-tags">
-                      {track.highlights.map((tag) => (
-                        <span key={tag} className="iris-honor-tag">
-                          {tag}
-                        </span>
-                      ))}
-                    </div>
-                  </article>
-                ))}
-              </div>
-
-              <footer className="iris-honor-foot">
-                <p className="iris-honor-note">
-                  Tri ân tập thể thầy cô cố vấn, các thành viên nghiên cứu và cộng đồng học sinh TH, THCS và THPT FPT đã đồng hành xây dựng FPT Forum — không gian học tập tích hợp AI minh bạch, miễn phí và chống &ldquo;AI Slop&rdquo;.
-                </p>
-                <div className="iris-honor-foot-actions">
-                  <button
-                    type="button"
-                    className="iris-qr-btn"
-                    onClick={() => go('explore')}
-                  >
-                    Khám phá Xưởng lắp ráp
-                  </button>
-                  <button
-                    type="button"
-                    className="iris-qr-btn iris-qr-btn--ghost"
-                    onClick={() => setHonorModalOpen(false)}
-                  >
-                    Đóng
-                  </button>
-                </div>
-              </footer>
             </div>
           </div>,
           document.body

@@ -45,6 +45,11 @@ import {
   flushSupabaseWrites,
   isSupabaseEnabled,
 } from './persistence.js';
+import {
+  getSiteMetrics,
+  recordSiteHeartbeat,
+  recordSiteVisit,
+} from './metricsStore.js';
 import { deleteUserProject, listUserProjects, syncUserProject } from './projectStore.js';
 import { consumeQuotaTurn, getQuotaState } from './quotaStore.js';
 
@@ -68,6 +73,62 @@ export function handleHealth(_req: Request, res: Response): void {
     persistence: isSupabaseEnabled() ? 'supabase' : 'local-json',
     timestamp: new Date().toISOString(),
   });
+}
+
+export function handleMetricsAction(
+  req: Request,
+  res: Response,
+  explicitAction?: string
+): void {
+  const action = (explicitAction || req.params.action || '').toLowerCase();
+
+  if (!action && req.method === 'GET') {
+    res.status(200).json(getSiteMetrics());
+    return;
+  }
+
+  if (req.method !== 'POST') {
+    res.status(405).json({ error: 'Method not allowed' });
+    return;
+  }
+
+  const body = (req.body || {}) as Record<string, unknown>;
+
+  if (action === 'visit') {
+    const visitorId = typeof body.visitorId === 'string' ? body.visitorId.trim() : '';
+    if (!visitorId) {
+      res.status(400).json({ error: 'Thiếu visitorId.' });
+      return;
+    }
+    const result = recordSiteVisit(visitorId);
+    res.status(200).json({ ...result.metrics, counted: result.counted });
+    return;
+  }
+
+  if (action === 'heartbeat') {
+    const sessionId = typeof body.sessionId === 'string' ? body.sessionId.trim() : '';
+    const deltaSeconds = typeof body.deltaSeconds === 'number' ? body.deltaSeconds : Number.NaN;
+    const result = recordSiteHeartbeat(sessionId, deltaSeconds);
+    if (!result.ok) {
+      const status = result.error === 'rate_limited' ? 429 : 400;
+      const error =
+        result.error === 'invalid_session'
+          ? 'Thiếu sessionId.'
+          : result.error === 'rate_limited'
+            ? 'Tần suất heartbeat vượt quá thời gian hoạt động thực tế.'
+            : 'deltaSeconds phải nằm trong khoảng 1..60 giây.';
+      res.status(status).json({ error, ...result.metrics });
+      return;
+    }
+    res.status(200).json({
+      ok: true,
+      addedSeconds: result.addedSeconds,
+      ...result.metrics,
+    });
+    return;
+  }
+
+  res.status(404).json({ error: `Unknown metrics action: ${action}` });
 }
 
 export async function handleAiQuota(req: Request, res: Response): Promise<void> {
@@ -607,6 +668,12 @@ export async function handleProjectsAction(
 }
 
 app.get('/api/health', handleHealth);
+app.get('/api/metrics', (req, res) => {
+  handleMetricsAction(req, res);
+});
+app.all('/api/metrics/:action', (req, res) => {
+  handleMetricsAction(req, res);
+});
 app.get('/api/ai/quota', (req, res) => {
   void handleAiQuota(req, res);
 });

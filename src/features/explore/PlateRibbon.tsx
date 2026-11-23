@@ -32,6 +32,26 @@ const DRIFT_SPEED = 19.2;
 const DRAG_THRESHOLD = 6;
 const LIVE_CANVAS_WIDTH = 900;
 const CALM_CSS = '*,*::before,*::after{animation:none!important;transition:none!important}';
+const FILL_CSS = 'html{height:100%}html,body{min-height:100%;margin:0}';
+
+function isUsableLiveHtml(html: string | undefined, hasFallbackMedia: boolean): boolean {
+  if (!html) return false;
+  const trimmed = html.trim();
+  if (!trimmed) return false;
+  if (!hasFallbackMedia) return true;
+  if (
+    /WORDMARK\s+PATH|\[FRONT\]/i.test(trimmed) ||
+    /<[^>]+>\s*…\s*<\/[^>]+>/.test(trimmed) ||
+    /(?:src|poster)\s*=\s*["']assets\/[^"']+["']/i.test(trimmed) ||
+    /#(?:faceGl|track)\b/.test(trimmed)
+  ) {
+    return false;
+  }
+  if (trimmed.length < 700 && !/<(?:section|main|canvas|svg|button|form|article)\b/i.test(trimmed)) {
+    return false;
+  }
+  return true;
+}
 
 interface LiveThumbProps {
   title: string;
@@ -50,13 +70,15 @@ const LiveThumb: React.FC<LiveThumbProps> = ({ title, html, css, calm }) => {
     const host = hostRef.current;
     if (!host) return;
     const io = new IntersectionObserver(
-      (entries) => setVisible(entries[entries.length - 1].isIntersecting),
-      { rootMargin: '160px' }
+      (entries) => {
+        if (entries[entries.length - 1].isIntersecting) setVisible(true);
+      },
+      { rootMargin: '400px' }
     );
     io.observe(host);
     const ro = new ResizeObserver((entries) => {
       const rect = entries[entries.length - 1].contentRect;
-      if (rect.width === 0) return;
+      if (rect.width === 0 || rect.height === 0) return;
       const scale = rect.width / LIVE_CANVAS_WIDTH;
       setBox({ scale, height: rect.height / scale });
     });
@@ -66,6 +88,9 @@ const LiveThumb: React.FC<LiveThumbProps> = ({ title, html, css, calm }) => {
       ro.disconnect();
     };
   }, []);
+
+  const hasMinHeight = /(?:html|body)[^{]*\{[^}]*min-height\s*:\s*100/i.test(`${html}\n${css}`);
+  const thumbCss = [hasMinHeight ? '' : FILL_CSS, css, calm ? CALM_CSS : ''].filter(Boolean).join('\n');
 
   return (
     <span ref={hostRef} className="ex-live-thumb" data-ready={visible && box.scale > 0 ? 'true' : 'false'}>
@@ -82,10 +107,11 @@ const LiveThumb: React.FC<LiveThumbProps> = ({ title, html, css, calm }) => {
           <SandboxPreview
             title={title}
             html={html}
-            css={calm ? `${css}\n${CALM_CSS}` : css}
+            css={thumbCss}
             theme={theme}
             viewport={1440}
             nonce={0}
+            className="ex-sandbox-thumb"
           />
         </span>
       ) : null}
@@ -109,13 +135,15 @@ const PinUIThumb: React.FC<PinUIThumbProps> = ({ itemId, isBlocx }) => {
     const host = hostRef.current;
     if (!host) return;
     const io = new IntersectionObserver(
-      (entries) => setVisible(entries[entries.length - 1].isIntersecting),
-      { rootMargin: '180px' }
+      (entries) => {
+        if (entries[entries.length - 1].isIntersecting) setVisible(true);
+      },
+      { rootMargin: '400px' }
     );
     io.observe(host);
     const ro = new ResizeObserver((entries) => {
       const rect = entries[entries.length - 1].contentRect;
-      if (rect.width === 0) return;
+      if (rect.width === 0 || rect.height === 0) return;
       const scale = rect.width / canvasWidth;
       setBox({ scale, height: rect.height / scale });
     });
@@ -317,11 +345,11 @@ export const PlateRibbon: React.FC<PlateRibbonProps> = ({
           const isPinUI = item.vaultLibrary === 'pinui';
           const isMotion = item.vaultLibrary === 'motionsites';
           const libLabel = VAULT_LIBRARY_LABELS[item.vaultLibrary];
-          const hasLive = Boolean(item.previewHtml);
           const videoSrc = item.previewVideo;
           const imgSrc =
             item.previewImage ||
             (preview?.kind === 'image' ? preview.src : undefined);
+          const hasLive = isUsableLiveHtml(item.previewHtml, Boolean(imgSrc || videoSrc));
           const preferAnimatedImg =
             isMotion && Boolean(imgSrc && /\.(gif|webp)(\?|$)/i.test(imgSrc));
           const saved = savedIds.includes(item.id);
@@ -346,6 +374,21 @@ export const PlateRibbon: React.FC<PlateRibbonProps> = ({
                       <PinUIThumb itemId={item.id} isBlocx={item.id.startsWith('blocx/')} />
                     </span>
                   </span>
+                ) : preferAnimatedImg && imgSrc ? (
+                  <span className="plate ex-plate-frame">
+                    <span className="ex-plate-shot">
+                      <SpecimenMedia
+                        eager={index < 6}
+                        preview={{
+                          kind: 'image',
+                          src: imgSrc,
+                          credit: 'motionsites.ai',
+                        }}
+                        title={title}
+                        fallbackLabel={libLabel}
+                      />
+                    </span>
+                  </span>
                 ) : hasLive ? (
                   <span className="plate ex-plate-frame">
                     <span className="ex-plate-shot">
@@ -357,24 +400,11 @@ export const PlateRibbon: React.FC<PlateRibbonProps> = ({
                       />
                     </span>
                   </span>
-                ) : preferAnimatedImg && imgSrc ? (
-                  <span className="plate ex-plate-frame">
-                    <span className="ex-plate-shot">
-                      <SpecimenMedia
-                        preview={{
-                          kind: 'image',
-                          src: imgSrc,
-                          credit: 'motionsites.ai',
-                        }}
-                        title={title}
-                        fallbackLabel={libLabel}
-                      />
-                    </span>
-                  </span>
                 ) : videoSrc ? (
                   <span className="plate ex-plate-frame">
                     <span className="ex-plate-shot">
                       <SpecimenMedia
+                        eager={index < 6}
                         preview={{
                           kind: 'video',
                           src: videoSrc,
@@ -390,6 +420,7 @@ export const PlateRibbon: React.FC<PlateRibbonProps> = ({
                   <span className="plate ex-plate-frame">
                     <span className="ex-plate-shot">
                       <SpecimenMedia
+                        eager={index < 6}
                         preview={{
                           kind: 'image',
                           src: imgSrc,
@@ -409,6 +440,7 @@ export const PlateRibbon: React.FC<PlateRibbonProps> = ({
                   <span className="plate ex-plate-frame">
                     <span className="ex-plate-shot">
                       <SpecimenMedia
+                        eager={index < 6}
                         preview={preview}
                         title={title}
                         fallbackLabel={libLabel}

@@ -102,6 +102,42 @@ function parseSseFrame(rawFrame: string): { event: string; data: string } | null
   return { event, data: dataLines.join('\n') };
 }
 
+export interface SiteMetrics {
+  visitors: number;
+  activeSeconds: number;
+  lastUpdatedAt: string;
+}
+
+export interface SiteVisitMetrics extends SiteMetrics {
+  counted: boolean;
+}
+
+export interface SiteHeartbeatMetrics extends SiteMetrics {
+  ok: boolean;
+  addedSeconds: number;
+}
+
+export function fetchSiteMetrics(): Promise<SiteMetrics> {
+  return requestJson<SiteMetrics>('/api/metrics', { method: 'GET' });
+}
+
+export function recordSiteVisit(visitorId: string): Promise<SiteVisitMetrics> {
+  return requestJson<SiteVisitMetrics>('/api/metrics/visit', {
+    method: 'POST',
+    body: JSON.stringify({ visitorId }),
+  });
+}
+
+export function sendSiteHeartbeat(
+  sessionId: string,
+  deltaSeconds: number
+): Promise<SiteHeartbeatMetrics> {
+  return requestJson<SiteHeartbeatMetrics>('/api/metrics/heartbeat', {
+    method: 'POST',
+    body: JSON.stringify({ sessionId, deltaSeconds }),
+  });
+}
+
 export const apiClient = {
   fetchHealth(): Promise<{
     status: string;

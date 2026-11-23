@@ -8,7 +8,10 @@ export type AppRoute =
   | 'profile'
   | 'settings'
   | 'admin'
+  | 'honor'
   | 'not-found';
+
+export type UiMode = 'eco' | 'balanced' | 'fabulous';
 
 export type DimensionView =
   | AppRoute
@@ -454,6 +457,7 @@ export type ThemePreference = 'system' | 'light' | 'dark';
 export interface SettingsState {
   theme: ThemeMode;
   themePreference?: ThemePreference;
+  uiMode?: UiMode;
   ambientVideo?: boolean;
   wallpaperPreset?: WallpaperPreset;
   autoRunChecks?: boolean;

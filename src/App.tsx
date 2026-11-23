@@ -39,6 +39,9 @@ const SettingsView = lazy(() =>
 const AdminView = lazy(() =>
   import('./features/admin/AdminView').then((m) => ({ default: m.AdminView }))
 );
+const TeamHonorGallery = lazy(() =>
+  import('./features/honor/TeamHonorGallery').then((m) => ({ default: m.TeamHonorGallery }))
+);
 const Skybridge404 = lazy(() =>
   import('./components/public/Skybridge404').then((m) => ({ default: m.Skybridge404 }))
 );
@@ -94,6 +97,11 @@ const ROUTE_META: Record<
     path: '/admin',
     noindex: true,
   },
+  honor: {
+    title: 'Đội ngũ phát triển — F-Forum',
+    description: 'Phòng trưng bày 3D tôn vinh đội ngũ phát triển và kiến trúc sư F-Forum.',
+    path: '/honor',
+  },
   'not-found': {
     title: 'Không tìm thấy trang — F-Forum',
     description: 'Đường dẫn không tồn tại trên F-Forum.',
@@ -120,6 +128,7 @@ const ROUTE_LOAD_LABELS: Record<string, string> = {
   profile: 'Đang mở Hồ sơ thành viên...',
   settings: 'Đang mở Cài đặt hệ thống...',
   admin: 'Đang mở Bảng điều khiển...',
+  honor: 'Đang mở Phòng trưng bày 3D Đội ngũ...',
 };
 
 const AppShell: React.FC = () => {
@@ -161,7 +170,11 @@ const AppShell: React.FC = () => {
     return () => window.clearTimeout(timer);
   }, [currentRoute, reducedMotion]);
 
-  const showNavbar = currentRoute !== 'landing' && currentRoute !== 'not-found' && currentRoute !== 'workspace';
+  const showNavbar =
+    currentRoute !== 'landing' &&
+    currentRoute !== 'honor' &&
+    currentRoute !== 'not-found' &&
+    currentRoute !== 'workspace';
   const showFooter =
     currentRoute === 'home' ||
     currentRoute === 'explore' ||
@@ -210,6 +223,12 @@ const AppShell: React.FC = () => {
               {currentRoute === 'profile' && <ProfileView />}
               {currentRoute === 'settings' && <SettingsView />}
               {currentRoute === 'admin' && <AdminView />}
+              {currentRoute === 'honor' && (
+                <TeamHonorGallery
+                  onBack={() => navigate('home')}
+                  onNavigate={navigate}
+                />
+              )}
               {currentRoute === 'not-found' && <Skybridge404 onNavigate={navigate} />}
             </Suspense>
           </main>

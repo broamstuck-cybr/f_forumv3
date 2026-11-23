@@ -15,7 +15,7 @@ export interface KineticStageCard {
 
 export const LANDING_CHAPTERS: LandingChapter[] = [
   { id: 'top', code: 'I', label: 'Khởi đầu' },
-  { id: 'quy-trinh', code: 'II', label: '50 Trưng bày' },
+  { id: 'quy-trinh', code: 'II', label: 'Template' },
   { id: 'tuyen-ngon', code: 'III', label: 'Nghiên cứu' },
   { id: 'du-an', code: 'IV', label: 'Hệ thống' },
   { id: 'faq', code: 'V', label: 'Hỏi đáp' },
@@ -138,61 +138,61 @@ export interface ManifestoBeat {
 export const MANIFESTO_BEATS: ManifestoBeat[] = [
   {
     id: 'beat-reality',
-    headline: '01 · 02 · 03 — Không thiếu AI, mà thiếu lộ trình và kho mẫu chuẩn.',
-    body: 'OECD PISA 2025 (9/2026) ghi nhận 95,9% học sinh dùng AI sáng tạo, nhưng vướng 3 điểm nghẽn: (01) người mới "vibe code" thiếu lộ trình bắt đầu; (02) dễ phụ thuộc câu trả lời AI có sẵn mà chưa biến được ý tưởng thành sản phẩm hoàn chỉnh; (03) muốn tự làm sản phẩm học tập nhưng thiếu nguồn mẫu chuẩn và không gian tập trung để lưu trữ, chia sẻ kinh nghiệm thực tế.',
+    headline: '3 điểm nghẽn khi học sinh dùng AI: thiếu lộ trình, phụ thuộc và thiếu mẫu chuẩn.',
+    body: 'OECD PISA 2025 (9/2026) ghi nhận 95,9% học sinh dùng AI sáng tạo, nhưng vướng 3 điểm nghẽn: (01) người mới "vibe code" thiếu lộ trình bắt đầu; (02) dễ phụ thuộc câu trả lời có sẵn thay vì biến ý tưởng thành sản phẩm; (03) thiếu kho mẫu chuẩn và không gian tập trung để lưu trữ, chia sẻ kinh nghiệm thực tế.',
     stickers: [
-      { label: 'PISA 2025 · 95,9%', bg: '#EFCEBE', tilt: -2.5 },
-      { label: '3 Thực trạng 01/02/03', bg: '#BAD9E6', tilt: 2 },
+      { label: 'PISA 2025 · 95,9%', bg: '#BFE9D9', tilt: -2.5 },
+      { label: '3 điểm nghẽn 01–03', bg: '#C6E0E4', tilt: 2 },
     ],
     badge: 'prism',
   },
   {
     id: 'beat-solution',
-    headline: 'Biện pháp: Bộ khung UI/UX & Starter Kits kiểm định trước khi vào thư viện.',
-    body: 'F-Forum cung cấp các bộ khung giao diện (UI/UX), mã nguồn mở và cấu trúc dự án mẫu cho web, ứng dụng và sản phẩm AI đã được phân loại, kiểm tra tính khả thi. Hệ thống tự động đối chiếu nhu cầu để gợi ý Kit phù hợp như chọn template trên Canva, giúp người mới "vibe coding" có nền tảng đúng chuẩn do cộng đồng chuyên gia biên soạn và AI hỗ trợ.',
+    headline: 'Bộ khung UI/UX & Starter Kits kiểm định khả thi trước khi vào thư viện.',
+    body: 'F-Forum cung cấp các bộ khung UI/UX, mã nguồn mở và cấu trúc dự án mẫu cho web, ứng dụng và sản phẩm AI đã được phân loại, kiểm tra tính khả thi. Hệ thống đối chiếu nhu cầu để gợi ý Kit phù hợp tương tự chọn template trên Canva, giúp người mới có nền tảng chuẩn.',
     stickers: [
-      { label: 'Starter Kits chuẩn', bg: '#EBC9AE', tilt: -2 },
-      { label: 'Chuyên gia + AI gợi ý', bg: '#DDAD95', tilt: 2.5 },
+      { label: 'Starter Kits kiểm định', bg: '#E9D5BE', tilt: -2 },
+      { label: 'Gợi ý theo nhu cầu', bg: '#BFE9D9', tilt: 2.5 },
     ],
     badge: 'viewport',
   },
   {
     id: 'beat-antislop',
-    headline: 'Mục tiêu nghiên cứu: Làm chủ quy trình & Chống "AI Slop".',
-    body: 'Đánh giá mức độ cải thiện khả năng tìm học liệu chuẩn, tư duy phản biện ý tưởng và tỷ lệ hoàn thiện sản phẩm thực tế của học sinh. Thay vì rơi vào bẫy sao chép hàng loạt rác nội dung rập khuôn từ AI (AI Slop), F-Forum cung cấp cấu trúc mẫu chọn lọc để người học tự lắp ghép, kiểm chứng và làm chủ quy trình sáng tạo.',
+    headline: 'Chống "AI Slop": tự lắp ghép, phản biện và làm chủ quy trình.',
+    body: 'Nghiên cứu đánh giá khả năng tìm học liệu chuẩn, tư duy phản biện ý tưởng và tỷ lệ hoàn thiện sản phẩm thực tế của học sinh. Thay vì sao chép hàng loạt sản phẩm rập khuôn từ AI (AI Slop), người học dùng cấu trúc mẫu chọn lọc để tự lắp ghép, kiểm chứng và làm chủ quy trình sáng tạo.',
     stickers: [
-      { label: 'Chống "AI Slop"', bg: '#B0AEC6', tilt: 2 },
-      { label: 'Tư duy phản biện', bg: '#EFCEBE', tilt: -2.5 },
+      { label: 'Chống "AI Slop"', bg: '#D2E2DE', tilt: 2 },
+      { label: 'Tư duy phản biện', bg: '#E9D5BE', tilt: -2.5 },
     ],
     badge: 'code',
   },
   {
     id: 'beat-survey',
-    headline: 'Kết quả nghiên cứu: 91,2% trên 195 người dùng đánh giá cao mẫu UI/UX trực quan.',
-    body: 'Khảo sát trên 195 học sinh và người dùng cho thấy 91,2% đánh giá cao việc tiếp cận mẫu thiết kế web và thành phần UI/UX trực quan thay vì làm từ con số không. Các Starter Kits tích hợp prompt và mã mẫu giúp hệ thống hóa lại nguồn tài nguyên kỹ thuật vốn phân tán, khó tra cứu trên GitHub.',
+    headline: 'Khảo sát 195 người dùng: 91,2% đánh giá cao mẫu UI/UX trực quan.',
+    body: 'Khảo sát thực tế trên 195 học sinh và người dùng cho thấy 91,2% đánh giá cao việc tiếp cận mẫu thiết kế web và thành phần UI/UX trực quan thay vì làm từ con số không. Các Starter Kits tích hợp prompt và mã mẫu giúp hệ thống hóa lại tài nguyên kỹ thuật vốn phân tán trên GitHub.',
     stickers: [
-      { label: '195 học sinh & người dùng', bg: '#BAD9E6', tilt: -2 },
-      { label: '91,2% đánh giá cao', bg: '#DDAD95', tilt: 2.5 },
+      { label: '195 người tham gia', bg: '#C6E0E4', tilt: -2 },
+      { label: '91,2% đánh giá cao', bg: '#BFE9D9', tilt: 2.5 },
     ],
     badge: 'matrix',
   },
   {
     id: 'beat-open-workshop',
-    headline: 'Bản địa hóa học đường Việt Nam & "Xưởng lắp ráp mở" miễn phí.',
-    body: 'Toàn bộ "Tủ sách tài nguyên" và thư viện prompt được phân loại tiếng Việt bám sát bài toán phổ thông tại TH, THCS và THPT FPT. Khác công cụ AI thương mại làm thay hoàn toàn, F-Forum là một xưởng lắp ráp mở: học sinh tự chọn chủ đề, thành phần thiết kế, còn bạn làm vibe coding có sẵn Skills chuẩn để huấn luyện AI bài bản và dễ kiểm soát.',
+    headline: 'Bản địa hóa học đường Việt Nam & Xưởng lắp ráp mở miễn phí.',
+    body: 'Toàn bộ Tủ sách tài nguyên và thư viện prompt được phân loại bằng tiếng Việt bám sát bài toán học tập tại TH, THCS và THPT FPT. Khác công cụ AI thương mại làm thay hoàn toàn, F-Forum là xưởng lắp ráp mở: học sinh tự chọn thành phần thiết kế, còn người làm vibe coding có sẵn Skills chuẩn để kiểm soát AI.',
     stickers: [
-      { label: 'Xưởng lắp ráp mở', bg: '#EFCEBE', tilt: -2 },
-      { label: 'Bản địa hóa Việt Nam', bg: '#BAD9E6', tilt: 2.5 },
+      { label: 'Xưởng lắp ráp mở', bg: '#BFE9D9', tilt: -2 },
+      { label: 'TH, THCS & THPT FPT', bg: '#C6E0E4', tilt: 2.5 },
     ],
     badge: 'prism',
   },
   {
     id: 'beat-architecture',
-    headline: 'Cơ chế JSON mã hóa, Bộ lọc AI an toàn & Đồng bộ WebSocket.',
-    body: 'Trình duyệt gửi yêu cầu API đăng nhập để máy chủ cùng AI xác minh; dữ liệu được mã hóa trong hệ thống tệp JSON. Bộ lọc AI ghi nhận spam, ngôn từ thô tục, cảnh cáo và vô hiệu hóa bài vi phạm. Kiến trúc phục vụ trọn bộ Hỏi đáp, Threads, Kho đề thi, Hồ sơ, API mã bảo mật riêng và WebSocket đồng bộ thời gian thực.',
+    headline: 'Xác minh API, dữ liệu JSON mã hóa, Bộ lọc AI & WebSocket.',
+    body: 'Trình duyệt gửi yêu cầu API đăng nhập để máy chủ và AI xác minh; dữ liệu được mã hóa trong hệ thống tệp JSON kèm mã bảo mật riêng. Bộ lọc AI phát hiện spam và ngôn từ thô tục để cảnh cáo, vô hiệu hóa bài vi phạm, đồng bộ thời gian thực qua WebSocket cho Hỏi đáp, Threads và Kho đề thi.',
     stickers: [
-      { label: 'JSON + Bộ lọc AI', bg: '#EBC9AE', tilt: 2 },
-      { label: 'WebSocket Real-time', bg: '#B0AEC6', tilt: -2 },
+      { label: 'JSON + Bộ lọc AI', bg: '#E9D5BE', tilt: 2 },
+      { label: 'WebSocket Real-time', bg: '#D2E2DE', tilt: -2 },
     ],
     badge: 'code',
   },
@@ -208,35 +208,35 @@ export const PROJECT_SHOWCASE_THUMBS: Record<string, string> = {
 };
 
 export const OPEN_ACCESS_FEATURES: string[] = [
-  '7.662 mẫu giao diện & Starter Kits đã kiểm tra tính khả thi (41 PinUI · 321 Motion AI · 961 ThreeUI · 892 GetLayers · 400 LucianLabs · 5.047 CodeFronts)',
-  'Bản địa hóa tiếng Việt theo nhu cầu học đường TH, THCS và THPT FPT — Chống "AI Slop", làm chủ tư duy phản biện',
-  'Xác minh tài khoản API, mã hóa dữ liệu trong tệp JSON cùng Bộ lọc AI phát hiện spam và ngôn từ thô tục',
-  'Không gian Hỏi đáp, Threads, Kho đề thi, Hồ sơ, đóng gói website riêng và đồng bộ WebSocket thời gian thực',
+  '7.662 mẫu giao diện & Starter Kits kiểm định khả thi (41 PinUI · 321 Motion AI · 961 ThreeUI · 892 GetLayers · 400 LucianLabs · 5.047 CodeFronts) cùng 60 công cụ và 122 repo',
+  'Bản địa hóa tiếng Việt theo bài toán học tập tại TH, THCS và THPT FPT — Chống "AI Slop", rèn tư duy phản biện',
+  'Xác minh tài khoản API, mã hóa dữ liệu tệp JSON cùng Bộ lọc AI phát hiện và xử lý spam, ngôn từ thô tục',
+  'Không gian Hỏi đáp, Threads, Kho đề thi, Hồ sơ học tập, đóng gói website riêng và đồng bộ WebSocket thời gian thực',
 ];
 
 export const FAQ_ITEMS: Array<{ id: string; question: string; answer: string }> = [
   {
     id: 'f1',
-    question: 'FPT Forum (F-Forum) giải quyết 3 thực trạng nào của học sinh khi dùng AI?',
+    question: 'FPT Forum (F-Forum) giải quyết 3 thực trạng nào khi học sinh dùng AI?',
     answer:
-      'Theo báo cáo OECD PISA 2025 (9/2026), 95,9% học sinh sử dụng AI trong sáng tạo nhưng gặp 3 điểm nghẽn: (01) người mới "vibe code" thiếu lộ trình bắt đầu; (02) dễ phụ thuộc câu trả lời AI có sẵn mà chưa biết biến ý tưởng thành sản phẩm hoàn chỉnh; (03) thiếu nguồn mẫu chuẩn để tự làm sản phẩm học tập. F-Forum tạo không gian tập trung để lưu trữ, tham khảo mẫu đã kiểm chứng và học hỏi kinh nghiệm thực tế.',
+      'Theo báo cáo OECD PISA 2025 (9/2026), 95,9% học sinh sử dụng AI trong sáng tạo nhưng vướng 3 điểm nghẽn: (01) người mới "vibe code" thiếu lộ trình bắt đầu; (02) dễ phụ thuộc câu trả lời AI có sẵn mà chưa biến được ý tưởng thành sản phẩm hoàn chỉnh; (03) thiếu nguồn mẫu chuẩn để tham khảo. F-Forum tập trung học liệu kiểm chứng và kinh nghiệm thực tế vào một không gian chung.',
   },
   {
     id: 'f2',
-    question: 'F-Forum chống "AI Slop" và khác gì các công cụ AI thương mại làm thay toàn bộ?',
+    question: 'F-Forum chống "AI Slop" và khác gì các công cụ AI làm thay toàn bộ?',
     answer:
-      'Thay vì để AI làm thay và tạo ra sản phẩm rập khuôn thiếu chiều sâu ("AI Slop"), F-Forum vận hành như một "Xưởng lắp ráp mở" miễn phí: học sinh tự chọn chủ đề, thành phần UI/UX trực quan (tương tự chọn template trên Canva) để tự lắp ghép và kiểm chứng, còn các bạn làm vibe coding có sẵn bộ kỹ năng (Skills) và Starter Kits chuẩn để huấn luyện AI làm việc bài bản, dễ kiểm soát.',
+      'Thay vì tạo ra sản phẩm rập khuôn từ một câu lệnh ("AI Slop"), F-Forum vận hành như một Xưởng lắp ráp mở miễn phí tại TH, THCS và THPT FPT: học sinh tự chọn chủ đề, ghép các thành phần UI/UX trực quan (tương tự chọn template trên Canva) để tự kiểm chứng, còn người làm vibe coding có sẵn Skills và Starter Kits chuẩn để kiểm soát đầu ra của AI.',
   },
   {
     id: 'f3',
-    question: 'Kết quả khảo sát thực tế của nghiên cứu tại TH, THCS và THPT FPT cho thấy điều gì?',
+    question: 'Kết quả khảo sát trên 195 người dùng cho thấy điều gì?',
     answer:
-      'Khảo sát trên 195 học sinh và người dùng cho thấy 91,2% đánh giá cao việc được tiếp cận các mẫu thiết kế web và thành phần UI/UX trực quan, có tính thẩm mỹ cao thay vì tự thiết kế từ con số không. Việc hệ thống hóa lại các bộ prompt và mã nguồn vốn phân tán trên GitHub giúp rút ngắn thời gian tìm kiếm và nâng cao tỷ lệ hoàn thiện sản phẩm thực tế.',
+      'Khảo sát trên 195 học sinh và người dùng ghi nhận 91,2% đánh giá cao việc tiếp cận trực tiếp các mẫu thiết kế web và thành phần UI/UX trực quan thay vì tự thiết kế từ con số không. Việc hệ thống hóa 7.662 mẫu giao diện, 60 công cụ và 122 repo từ GitHub giúp rút ngắn thời gian tra cứu và nâng tỷ lệ hoàn thiện sản phẩm thực tế.',
   },
   {
     id: 'f4',
-    question: 'Cơ chế xác minh, lưu trữ JSON, Bộ lọc AI và WebSocket trong F-Forum hoạt động ra sao?',
+    question: 'Cơ chế xác minh, lưu trữ JSON, Bộ lọc AI và WebSocket hoạt động ra sao?',
     answer:
-      'Trình duyệt gửi yêu cầu API đăng nhập tới máy chủ để máy chủ và AI xác minh thông tin người dùng; dữ liệu được mã hóa trong hệ thống tệp JSON và cung cấp API mã bảo mật riêng. Bộ lọc AI tự động ghi nhận hành vi spam hoặc ngôn từ thô tục để cảnh cáo và vô hiệu hóa bài viết vi phạm. WebSocket đồng bộ hai chiều theo thời gian thực trên toàn hệ thống Hỏi đáp, Threads, Kho đề thi và Hồ sơ.',
+      'Trình duyệt gửi yêu cầu API đăng nhập để máy chủ và AI xác minh thông tin người dùng; dữ liệu được mã hóa trong hệ thống tệp JSON kèm API mã bảo mật riêng. Bộ lọc AI tự động ghi nhận hành vi spam hoặc ngôn từ thô tục để cảnh cáo và vô hiệu hóa bài viết vi phạm. WebSocket đồng bộ hai chiều theo thời gian thực trên toàn hệ thống Hỏi đáp, Threads, Kho đề thi và Hồ sơ.',
   },
 ];

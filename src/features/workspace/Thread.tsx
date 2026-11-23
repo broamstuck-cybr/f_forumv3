@@ -213,7 +213,7 @@ export const Thread: React.FC<ThreadProps> = ({
                     )}
                     <Terminal size={13} aria-hidden="true" />
                     <span>
-                      Đã cập nhật {message.changedFiles!.length} tệp · {checksPassLabel || '6/6 phép kiểm đạt'}
+                      Đã cập nhật {message.changedFiles!.length} tệp{checksPassLabel ? ` · ${checksPassLabel}` : ''}
                     </span>
                   </button>
 

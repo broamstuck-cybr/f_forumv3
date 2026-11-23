@@ -1,0 +1,227 @@
+/* UI Mode System: Eco & Fabulous (CodeFronts Vault + PinUI Specular Recipes) */
+
+/* ==========================================================================
+   1. ECO MODE ([data-ui-mode='eco'])
+   Lightweight flat surfaces, zero backdrop-filter blur, zero ambient motion.
+   ========================================================================== */
+html[data-ui-mode='eco'] .nav,
+html[data-ui-mode='eco'] .st-panel,
+html[data-ui-mode='eco'] .st-card,
+html[data-ui-mode='eco'] .cm-post-card,
+html[data-ui-mode='eco'] .cm-sidebar-card,
+html[data-ui-mode='eco'] .psearch-bar,
+html[data-ui-mode='eco'] .psearch-dropdown,
+html[data-ui-mode='eco'] .chat-bubble,
+html[data-ui-mode='eco'] .ws-arena-composer-shell {
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+  box-shadow: none !important;
+  background: var(--bg-card-surface);
+}
+
+html[data-ui-mode='eco'] *,
+html[data-ui-mode='eco'] *::before,
+html[data-ui-mode='eco'] *::after {
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.01ms !important;
+  scroll-behavior: auto !important;
+}
+
+/* ==========================================================================
+   2. FABULOUS MODE ([data-ui-mode='fabulous'])
+   Authentic CodeFronts Vault MIT CSS + PinUI Specular Depth (Emerald-Teal)
+   ========================================================================== */
+
+/* --- CodeFronts: visionos-glass-navbar & sliding-capsule-active-tab --- */
+html[data-ui-mode='fabulous'] .nav {
+  background: color-mix(in srgb, var(--bg-veil) 78%, transparent);
+  backdrop-filter: blur(28px) saturate(160%) brightness(1.04);
+  -webkit-backdrop-filter: blur(28px) saturate(160%) brightness(1.04);
+  border-bottom: 1px solid color-mix(in srgb, var(--accent, #38c99a) 22%, var(--line));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.24),
+    0 18px 40px -24px rgba(0, 0, 0, 0.55);
+}
+
+html[data-ui-mode='fabulous'] .nav__tab[aria-current='page'] {
+  color: var(--fg);
+  background: color-mix(in srgb, var(--accent, #38c99a) 16%, transparent);
+  border-radius: var(--radius-pill);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35);
+}
+
+/* --- CodeFronts: glassmorphic-product-feature-card (Specular 1px Hairline) --- */
+html[data-ui-mode='fabulous'] .st-panel,
+html[data-ui-mode='fabulous'] .st-card,
+html[data-ui-mode='fabulous'] .cm-post-card,
+html[data-ui-mode='fabulous'] .cm-sidebar-card,
+html[data-ui-mode='fabulous'] .ws-arena-composer-shell {
+  backdrop-filter: blur(22px) saturate(150%);
+  -webkit-backdrop-filter: blur(22px) saturate(150%);
+  border: 1px solid color-mix(in srgb, var(--accent, #38c99a) 18%, var(--line));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.22),
+    0 24px 48px -28px rgba(0, 0, 0, 0.45);
+}
+
+html[data-ui-mode='fabulous'] .cm-post-card:hover {
+  border-color: color-mix(in srgb, var(--accent, #38c99a) 42%, var(--line));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.28),
+    0 28px 54px -26px color-mix(in srgb, var(--accent, #38c99a) 22%, rgba(0, 0, 0, 0.5));
+}
+
+/* --- CodeFronts: glassmorphism-button-with-subtle-glow-border --- */
+html[data-ui-mode='fabulous'] .cm-fab,
+html[data-ui-mode='fabulous'] .ws-arena-action-btn--accent,
+html[data-ui-mode='fabulous'] .st-uimode-card[aria-checked='true'] {
+  border: 1px solid transparent;
+  background:
+    linear-gradient(
+      color-mix(in srgb, var(--accent, #38c99a) 14%, var(--bg-card-surface)),
+      color-mix(in srgb, var(--accent, #38c99a) 14%, var(--bg-card-surface))
+    ) padding-box,
+    linear-gradient(
+      135deg,
+      rgba(255, 255, 255, 0.45),
+      color-mix(in srgb, var(--accent, #38c99a) 62%, transparent) 45%,
+      rgba(255, 255, 255, 0.1) 85%
+    ) border-box;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.24),
+    0 10px 26px -14px color-mix(in srgb, var(--accent, #38c99a) 55%, transparent);
+}
+
+/* --- CodeFronts: glass-search + PinUI original/search-card drawn tiles --- */
+html[data-ui-mode='fabulous'] .psearch-bar {
+  backdrop-filter: blur(18px) saturate(145%);
+  -webkit-backdrop-filter: blur(18px) saturate(145%);
+  border: 1px solid color-mix(in srgb, var(--accent, #38c99a) 26%, var(--line));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.28),
+    0 12px 28px -18px rgba(0, 0, 0, 0.42);
+}
+
+html[data-ui-mode='fabulous'] .psearch-bar[data-open='true'] {
+  border-color: var(--accent, #38c99a);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.34),
+    0 0 0 3px color-mix(in srgb, var(--accent, #38c99a) 18%, transparent),
+    0 18px 36px -18px rgba(0, 0, 0, 0.5);
+}
+
+html[data-ui-mode='fabulous'] .psearch-dropdown {
+  backdrop-filter: blur(24px) saturate(160%);
+  -webkit-backdrop-filter: blur(24px) saturate(160%);
+  border: 1px solid color-mix(in srgb, var(--accent, #38c99a) 24%, var(--line));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.22),
+    0 24px 48px -20px rgba(0, 0, 0, 0.55);
+}
+
+.psearch-fab-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 7px 10px;
+  border-radius: 12px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--fg);
+  text-align: left;
+  cursor: pointer;
+  transition: background-color 0.16s ease, border-color 0.16s ease;
+}
+
+.psearch-fab-row:hover {
+  background: color-mix(in srgb, var(--accent, #38c99a) 10%, var(--bg-raised));
+  border-color: color-mix(in srgb, var(--accent, #38c99a) 28%, transparent);
+}
+
+.psearch-fab-tile {
+  position: relative;
+  width: 34px;
+  height: 34px;
+  border-radius: 9px;
+  flex-shrink: 0;
+  overflow: hidden;
+  display: grid;
+  place-items: center;
+  border: 1px solid rgba(255, 255, 255, 0.32);
+  box-shadow:
+    inset 0 1px 1px rgba(255, 255, 255, 0.55),
+    0 6px 14px -6px rgba(16, 155, 114, 0.45);
+}
+
+.psearch-fab-tile--emerald {
+  background: linear-gradient(145deg, #38c99a 0%, #109b72 58%, #0b6e50 100%);
+  color: #ffffff;
+}
+
+.psearch-fab-tile--slate {
+  background: linear-gradient(145deg, #64748b 0%, #334155 60%, #1e293b 100%);
+  color: #f8fafc;
+}
+
+.psearch-fab-tile--amber {
+  background: linear-gradient(145deg, #f5c37e 0%, #c97d3b 58%, #8f4f1c 100%);
+  color: #ffffff;
+}
+
+/* --- CodeFronts: chatgpt-response-bubble-css & imessage-css-chat-bubbles --- */
+html[data-ui-mode='fabulous'] .chat-bubble {
+  backdrop-filter: blur(18px) saturate(145%);
+  -webkit-backdrop-filter: blur(18px) saturate(145%);
+  border: 1px solid color-mix(in srgb, var(--accent, #38c99a) 16%, var(--line));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.2),
+    0 12px 28px -18px rgba(0, 0, 0, 0.42);
+}
+
+html[data-ui-mode='fabulous'] .chat-row[data-mine='true'] .chat-bubble {
+  background: linear-gradient(
+    145deg,
+    color-mix(in srgb, var(--accent, #38c99a) 24%, var(--bg-card-surface)),
+    color-mix(in srgb, var(--accent-deep, #109b72) 16%, var(--bg-card-surface))
+  );
+  border-color: color-mix(in srgb, var(--accent, #38c99a) 42%, transparent);
+}
+
+html[data-ui-mode='fabulous'] .chat-pin,
+html[data-ui-mode='fabulous'] .chat-badge {
+  border: 1px solid color-mix(in srgb, var(--accent, #38c99a) 30%, transparent);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.22);
+}
+
+.chat-copy-btn {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px;
+  border-radius: var(--radius-pill);
+  border: 1px solid color-mix(in srgb, var(--accent, #38c99a) 35%, var(--line));
+  background: color-mix(in srgb, var(--bg-card-surface) 90%, transparent);
+  color: var(--fg);
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.chat-copy-btn:hover {
+  border-color: var(--accent, #38c99a);
+  color: var(--accent, #38c99a);
+}
+
+/* --- Workspace PromptComposer specular upgrade in Fabulous --- */
+html[data-ui-mode='fabulous'] .ws-arena-composer-shell .pc-shell,
+html[data-ui-mode='fabulous'] .ws-arena-mode-chip[aria-pressed='true'] {
+  border-color: color-mix(in srgb, var(--accent, #38c99a) 44%, var(--line));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.22),
+    0 12px 26px -18px color-mix(in srgb, var(--accent, #38c99a) 45%, transparent);
+}

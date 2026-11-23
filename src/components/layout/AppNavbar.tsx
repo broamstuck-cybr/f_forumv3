@@ -4,6 +4,7 @@ import { Bell, Compass, Home, Menu, Moon, Plus, Sun, User as UserIcon, X } from 
 import type { AppRoute } from '../../types/index';
 import { useAppStore } from '../../store/appStore';
 import { KineticLogo } from '../brand/KineticLogo';
+import { BackToTopButton } from '../landing/BackToTopButton';
 import { triggerPinuiThemeToggle } from './GlobalThemeAtmosphere';
 import './app-shell.css';
 
@@ -488,6 +489,7 @@ export const AppNavbar: React.FC<AppNavbarProps> = () => {
         <span>Hồ sơ</span>
       </button>
     </nav>
+    <BackToTopButton offsetForMobileNav />
     </>
   );
 };

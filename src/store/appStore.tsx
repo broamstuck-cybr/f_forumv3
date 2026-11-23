@@ -9,7 +9,6 @@ import React, {
 } from 'react';
 import sourceCatalogJson from '../data/sourceCatalog.json';
 import resourceLibraryJson from '../data/resourceLibrary.json';
-import communitySeedJson from '../data/communitySeed.json';
 import type {
   AIActivityState,
   AIStreamingStage,
@@ -31,6 +30,7 @@ import type {
   ThemeEffect,
   ThemeMode,
   ToastItem,
+  UiMode,
   User,
   WallpaperPreset,
   WorkspaceFile,
@@ -85,6 +85,7 @@ const VALID_WALLPAPER_PRESETS: ReadonlySet<WallpaperPreset> = new Set([
 const DEFAULT_SETTINGS: SettingsState = {
   theme: 'dark',
   themePreference: 'dark',
+  uiMode: 'balanced',
   ambientVideo: true,
   wallpaperPreset: 'video',
   autoRunChecks: true,
@@ -108,11 +109,13 @@ function syncThemeDom(
   ambientVideo?: boolean,
   compactDensity?: boolean,
   wallpaperPreset?: WallpaperPreset,
-  themeEffect?: ThemeEffect
+  themeEffect?: ThemeEffect,
+  uiMode?: UiMode
 ): void {
   if (typeof document !== 'undefined') {
     const root = document.documentElement;
     root.setAttribute('data-theme', theme);
+    root.dataset.uiMode = uiMode || 'balanced';
     root.setAttribute('data-ambient', ambientVideo === false ? 'off' : 'on');
     root.setAttribute('data-wallpaper', wallpaperPreset || 'video');
     root.setAttribute('data-effect', themeEffect || 'rain');
@@ -154,192 +157,23 @@ function createStarterFiles(): WorkspaceFile[] {
     {
       path: 'index.html',
       language: 'html',
-      summary: 'Trang khởi đầu HTML5 có cấu trúc ngữ nghĩa',
+      summary: 'Trang HTML trống',
       updatedAt: now,
       content: `<!DOCTYPE html>
 <html lang="vi">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Bản dựng F-Forum Workspace</title>
+  <title>Dự án mới</title>
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
-  <header class="site-header" role="banner">
-    <div class="brand-title">F-FORUM WORKSPACE</div>
-    <nav class="site-nav" aria-label="Điều hướng chính">
-      <a href="#stage">Bản dựng</a>
-      <a href="#metrics">Trạng thái</a>
-    </nav>
-  </header>
-  <main class="stage-container" id="stage">
-    <section class="hero-card">
-      <p class="kicker">KHUNG KHỞI TẠO</p>
-      <h1>Bản dựng giao diện mới</h1>
-      <p class="subtitle">Nhập yêu cầu ở khung trò chuyện để tạo trang web hoàn chỉnh, xem trực tiếp, so sánh thay đổi và đóng gói tải về.</p>
-      <div class="cta-row">
-        <button type="button" id="inspect-btn" class="btn-primary">Thử tương tác</button>
-      </div>
-    </section>
-    <section class="metrics-strip" id="metrics" aria-label="Thông tin khung mẫu">
-      <div class="metric-tile">
-        <span class="metric-label">Hệ lưới</span>
-        <strong class="metric-val">8px</strong>
-      </div>
-      <div class="metric-tile">
-        <span class="metric-label">Trạng thái</span>
-        <strong class="metric-val" id="runtime-readout">Sẵn sàng</strong>
-      </div>
-    </section>
-  </main>
   <script src="app.js"></script>
 </body>
 </html>`,
     },
-    {
-      path: 'styles.css',
-      language: 'css',
-      summary: 'Biến màu và bố cục cơ bản',
-      updatedAt: now,
-      content: `:root {
-  --bg: #0b0d12;
-  --surface: #12161f;
-  --border: rgba(255, 255, 255, 0.1);
-  --text: #f1f5f9;
-  --muted: #94a3b8;
-  --accent: #f59e0b;
-  --emerald: #10b981;
-}
-
-* {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-}
-
-body {
-  background: var(--bg);
-  color: var(--text);
-  font-family: system-ui, -apple-system, sans-serif;
-  line-height: 1.6;
-  min-height: 100vh;
-}
-
-.site-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 16px 24px;
-  border-bottom: 1px solid var(--border);
-}
-
-.brand-title {
-  font-weight: 700;
-  font-size: 0.875rem;
-  letter-spacing: 0.06em;
-}
-
-.site-nav {
-  display: flex;
-  gap: 16px;
-}
-
-.site-nav a {
-  color: var(--muted);
-  text-decoration: none;
-  font-size: 0.875rem;
-}
-
-.stage-container {
-  max-width: 960px;
-  margin: 0 auto;
-  padding: 32px 24px;
-  display: flex;
-  flex-direction: column;
-  gap: 24px;
-}
-
-.hero-card {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  padding: 32px;
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
-.kicker {
-  color: var(--accent);
-  font-size: 0.75rem;
-  font-weight: 600;
-  letter-spacing: 0.08em;
-}
-
-.subtitle {
-  color: var(--muted);
-  max-width: 62ch;
-}
-
-.btn-primary {
-  background: var(--accent);
-  color: #0b0d12;
-  border: none;
-  border-radius: 8px;
-  padding: 10px 18px;
-  font-weight: 600;
-  cursor: pointer;
-}
-
-.metrics-strip {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 16px;
-}
-
-.metric-tile {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  padding: 20px;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.metric-label {
-  color: var(--muted);
-  font-size: 0.75rem;
-}
-
-.metric-val {
-  color: var(--emerald);
-  font-size: 1.125rem;
-}
-
-@media (max-width: 640px) {
-  .metrics-strip {
-    grid-template-columns: 1fr;
-  }
-}`,
-    },
-    {
-      path: 'app.js',
-      language: 'javascript',
-      summary: 'Kịch bản tương tác cơ bản',
-      updatedAt: now,
-      content: `(function () {
-  var btn = document.getElementById('inspect-btn');
-  var readout = document.getElementById('runtime-readout');
-  var clicks = 0;
-  if (btn && readout) {
-    btn.addEventListener('click', function () {
-      clicks += 1;
-      readout.textContent = 'Đã kiểm tra lần ' + clicks;
-    });
-  }
-})();`,
-    },
+    { path: 'styles.css', language: 'css', summary: 'Tệp CSS trống', updatedAt: now, content: '' },
+    { path: 'app.js', language: 'javascript', summary: 'Tệp JS trống', updatedAt: now, content: '' },
   ];
 }
 
@@ -418,30 +252,11 @@ function createInitialProject(
         files: starterFiles,
       },
     ],
-    messages: [
-      {
-        id: 'msg-welcome',
-        role: 'assistant',
-        content:
-          'Workspace đã sẵn sàng. Nhập yêu cầu thiết kế hoặc đính kèm mẫu từ Khám phá để tổng hợp mã nguồn HTML/CSS/JS và chạy kiểm định tự động.',
-        createdAt: now,
-        changedFiles: ['index.html', 'styles.css', 'app.js'],
-      },
-    ],
+    messages: [],
     attachedItems: [],
     diffs: initialDiffs,
     checksReport: initialChecks,
-    processes: [
-      {
-        id: 'proc-init',
-        name: 'Khởi tạo phiên và hoàn tất kiểm định tĩnh',
-        kind: 'static_checks',
-        status: 'completed',
-        startedAt: now,
-        completedAt: now,
-        detail: `${initialChecks.passCount}/${initialChecks.results.length} phép kiểm đạt`,
-      },
-    ],
+    processes: [],
   };
 }
 
@@ -484,6 +299,7 @@ function parseRouteFromPathname(pathname: string): AppRoute {
   if (clean === '/profile') return 'profile';
   if (clean === '/settings') return 'settings';
   if (clean === '/admin') return 'admin';
+  if (clean === '/honor') return 'honor';
   return 'not-found';
 }
 
@@ -516,6 +332,7 @@ function normalizeRouteTarget(target: AppRoute | DimensionView): AppRoute {
     target === 'profile' ||
     target === 'settings' ||
     target === 'admin' ||
+    target === 'honor' ||
     target === 'not-found'
   ) {
     return target;
@@ -530,47 +347,7 @@ function normalizeRouteTarget(target: AppRoute | DimensionView): AppRoute {
 }
 
 function buildFallbackSeedChannels(): CommunityChannelsData {
-  const raw = (communitySeedJson as { channels?: Record<string, Array<Record<string, unknown>>> }).channels || {};
-  const mapChannel = (items: Array<Record<string, unknown>> | undefined, channel: 'qa' | 'showcase' | 'drops' | 'clubs'): CommunityPost[] =>
-    (items || []).map((item, idx) => ({
-      id: String(item.id || `${channel}-${idx}`),
-      channel,
-      title: String(item.title || item.name || 'Community Post'),
-      author: (item.author as CommunityPost['author']) || {
-        id: 'seed-author',
-        name: String(item.lead || 'Core Architect'),
-        handle: String(item.slug || 'architect'),
-        role: 'Thành viên',
-      },
-      category: String(item.category || channel.toUpperCase()),
-      tags: Array.isArray(item.tags) ? item.tags.map(String) : [channel],
-      createdAt: String(item.createdAt || '2026-11-18T10:00:00Z'),
-      votes: typeof item.votes === 'number' ? item.votes : typeof item.likes === 'number' ? item.likes : 0,
-      body: typeof item.body === 'string' ? item.body : typeof item.description === 'string' ? item.description : '',
-      description: typeof item.description === 'string' ? item.description : typeof item.body === 'string' ? item.body : '',
-      answersCount: typeof item.answersCount === 'number' ? item.answersCount : item.acceptedAnswer ? 1 : 0,
-      isAccepted: Boolean(item.isAccepted || item.acceptedAnswer),
-      acceptedAnswer: item.acceptedAnswer as CommunityPost['acceptedAnswer'],
-      answers: item.acceptedAnswer ? [item.acceptedAnswer as NonNullable<CommunityPost['acceptedAnswer']>] : [],
-      likes: typeof item.likes === 'number' ? item.likes : 0,
-      views: typeof item.views === 'number' ? item.views : 40,
-      demoSnippet: item.demoSnippet as CommunityPost['demoSnippet'],
-      forks: typeof item.forks === 'number' ? item.forks : 0,
-      fileType: typeof item.fileType === 'string' ? item.fileType : undefined,
-      payload: typeof item.payload === 'string' ? item.payload : undefined,
-      name: typeof item.name === 'string' ? item.name : undefined,
-      slug: typeof item.slug === 'string' ? item.slug : undefined,
-      lead: typeof item.lead === 'string' ? item.lead : undefined,
-      membersCount: typeof item.membersCount === 'number' ? item.membersCount : undefined,
-      activeDossier: item.activeDossier as CommunityPost['activeDossier'],
-    }));
-
-  return {
-    qa: mapChannel(raw.qa, 'qa'),
-    showcase: mapChannel(raw.showcase, 'showcase'),
-    drops: mapChannel(raw.drops, 'drops'),
-    clubs: mapChannel(raw.clubs, 'clubs'),
-  };
+  return { qa: [], showcase: [], drops: [], clubs: [] };
 }
 
 export interface AppStoreContextValue {
@@ -867,7 +644,8 @@ export const AppStoreProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       settings.ambientVideo !== false,
       settings.compactDensity,
       settings.wallpaperPreset,
-      settings.themeEffect
+      settings.themeEffect,
+      settings.uiMode
     );
   }, [
     settings.theme,
@@ -876,6 +654,7 @@ export const AppStoreProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     settings.compactDensity,
     settings.wallpaperPreset,
     settings.themeEffect,
+    settings.uiMode,
   ]);
 
   useEffect(() => {

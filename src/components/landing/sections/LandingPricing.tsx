@@ -13,7 +13,6 @@ export const LandingPricing: React.FC<LandingPricingProps> = ({ onEnterApp }) =>
       <div className="wrap">
         <div className="lp-head">
           <div className="lp-head-copy">
-            <p className="t-label">xưởng lắp ráp mở · th, thcs và thpt fpt</p>
             <h2 className="t-title">
               <Mark kind="box">Miễn phí mở</Mark> toàn bộ Starter Kits &amp; Skills
             </h2>
@@ -23,11 +22,7 @@ export const LandingPricing: React.FC<LandingPricingProps> = ({ onEnterApp }) =>
         <Reveal className="lp-open-sheet">
           <div className="lp-price-col">
             <div>
-              <p className="t-label">học đường việt nam</p>
               <p className="lp-price-num">0đ</p>
-              <p className="t-label" style={{ marginTop: 'var(--space-2)' }}>
-                7.662 mẫu UI/UX · Chống AI Slop · WebSocket
-              </p>
             </div>
             <div>
               <button type="button" className="btn btn-solid btn-lg" onClick={onEnterApp}>

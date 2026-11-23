@@ -1,12 +1,12 @@
 .ambient-backdrop {
   --ambient-fallback-dark:
-    radial-gradient(1100px 680px at 14% 12%, rgba(214, 58, 39, 0.2), transparent 60%),
-    radial-gradient(900px 620px at 86% 24%, rgba(125, 163, 187, 0.16), transparent 64%),
-    linear-gradient(155deg, #0d0c0b 0%, #141312 52%, #0a0908 100%);
+    radial-gradient(1100px 680px at 14% 12%, rgba(56, 201, 154, 0.16), transparent 60%),
+    radial-gradient(900px 620px at 86% 24%, rgba(140, 188, 200, 0.14), transparent 64%),
+    linear-gradient(155deg, #0b1111 0%, #111818 52%, #080d0d 100%);
   --ambient-fallback-light:
-    radial-gradient(1100px 680px at 14% 12%, rgba(221, 173, 149, 0.34), transparent 60%),
-    radial-gradient(900px 620px at 86% 24%, rgba(186, 217, 230, 0.42), transparent 64%),
-    linear-gradient(155deg, #f6f2e9 0%, #efe9dc 52%, #e8e1d2 100%);
+    radial-gradient(1100px 680px at 14% 12%, rgba(56, 201, 154, 0.14), transparent 60%),
+    radial-gradient(900px 620px at 86% 24%, rgba(168, 214, 204, 0.34), transparent 64%),
+    linear-gradient(155deg, #f3f6f4 0%, #eaf0ed 52%, #e2eae6 100%);
   position: fixed;
   inset: 0;
   z-index: 0;

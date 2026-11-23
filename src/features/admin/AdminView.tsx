@@ -32,16 +32,16 @@ interface DonutSlice {
 }
 
 const PROTOCOL_ITEMS = [
-  { id: 'openai-compatible', label: 'OpenAI Compatible', swatch: 'var(--red)' },
-  { id: 'anthropic', label: 'Anthropic Messages', swatch: 'var(--amber)' },
+  { id: 'openai-compatible', label: 'OpenAI Compatible', swatch: 'var(--accent, #2fb59a)' },
+  { id: 'anthropic', label: 'Anthropic Messages', swatch: 'var(--fg-muted, #8a9a96)' },
   { id: 'gemini', label: 'Google Gemini', swatch: 'var(--harbour)' },
 ];
 
 const MODEL_PRESETS = [
-  { id: 'studio-smart-route', label: 'Studio Smart Route (Tự động)', swatch: 'var(--green)' },
+  { id: 'studio-smart-route', label: 'Studio Smart Route (Tự động)', swatch: 'var(--accent-deep, #1f8f7a)' },
   { id: 'gemini-2.5-flash', label: 'Gemini 2.5 Flash', swatch: 'var(--harbour)' },
-  { id: 'gemini-2.5-pro', label: 'Gemini 2.5 Pro', swatch: 'var(--amber)' },
-  { id: 'claude-sonnet-4-5', label: 'Claude Sonnet 4.5', swatch: 'var(--red)' },
+  { id: 'gemini-2.5-pro', label: 'Gemini 2.5 Pro', swatch: 'var(--fg-muted, #8a9a96)' },
+  { id: 'claude-sonnet-4-5', label: 'Claude Sonnet 4.5', swatch: 'var(--accent, #2fb59a)' },
   { id: 'gpt-4o', label: 'GPT-4o', swatch: 'var(--fg)' },
 ];
 
@@ -386,21 +386,21 @@ export const AdminView: React.FC = () => {
         id: 'admin',
         label: 'Admin (Không giới hạn)',
         value: adminCount,
-        color: 'var(--green)',
+        color: 'var(--accent-deep, #1f8f7a)',
         detail: 'Bỏ qua giới hạn lượt AI',
       },
       {
         id: 'user-active',
         label: 'Thành viên đang dùng',
         value: activeUsers,
-        color: 'var(--red)',
+        color: 'var(--accent, #2fb59a)',
         detail: 'Đã phát sinh lượt gọi AI',
       },
       {
         id: 'user-idle',
         label: 'Thành viên chờ',
         value: idleUsers,
-        color: 'var(--amber)',
+        color: 'var(--fg-muted, #8a9a96)',
         detail: 'Chưa tiêu thụ hạn mức',
       },
       {
@@ -420,21 +420,21 @@ export const AdminView: React.FC = () => {
         id: 'ok',
         label: 'Thành công',
         value: tel?.successfulAiRequests ?? 0,
-        color: 'var(--green)',
+        color: 'var(--accent-deep, #1f8f7a)',
         detail: 'Phản hồi trực tiếp từ mô hình',
       },
       {
         id: 'fallback',
         label: 'Fallback cục bộ',
         value: tel?.fallbackAiRequests ?? 0,
-        color: 'var(--amber)',
+        color: 'var(--fg-muted, #8a9a96)',
         detail: 'Chuyển dự phòng khi mất upstream',
       },
       {
         id: 'blocked',
         label: 'Chặn hạn mức',
         value: tel?.quotaBlockedRequests ?? 0,
-        color: 'var(--red)',
+        color: 'var(--accent, #2fb59a)',
         detail: 'Vượt ngưỡng lượt cho phép',
       },
     ];
@@ -782,8 +782,8 @@ export const AdminView: React.FC = () => {
                     const fillColor = bar.value === 0
                       ? 'var(--line-strong)'
                       : bar.unlimited
-                        ? 'var(--green)'
-                        : 'var(--red)';
+                        ? 'var(--accent-deep, #1f8f7a)'
+                        : 'var(--accent, #2fb59a)';
 
                     return (
                       <g key={bar.id}>
@@ -1403,7 +1403,7 @@ export const AdminView: React.FC = () => {
                   <div key={entry.id} className="adm-log-row">
                     <time className="t-label">{formatDateTime(entry.timestamp)}</time>
                     <div className="min-w-0">
-                      <span style={{ color: 'var(--green)' }} className="font-semibold">
+                      <span style={{ color: 'var(--accent-deep, #1f8f7a)' }} className="font-semibold">
                         {entry.action}
                       </span>{' '}
                       <span style={{ color: 'var(--fg-muted)' }}>({entry.actor})</span>

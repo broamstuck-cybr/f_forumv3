@@ -1,7 +1,6 @@
 import React, { useMemo, useRef } from 'react';
 import { motion, useScroll, useTransform, type MotionValue } from 'motion/react';
-import { ArrowUp } from 'lucide-react';
-import { useInView, usePrefersReducedMotion, useScrollProgress } from './useLandingMotion';
+import { useInView, usePrefersReducedMotion } from './useLandingMotion';
 
 interface RevealProps {
   children: React.ReactNode;
@@ -130,24 +129,5 @@ export const ScrollTextScrub: React.FC<{
         );
       })}
     </p>
-  );
-};
-
-export const BackToTop: React.FC = () => {
-  const progress = useScrollProgress();
-  const visible = progress > 0.14;
-
-  return (
-    <button
-      type="button"
-      onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-      aria-label="Lên đầu trang"
-      title="Lên đầu trang"
-      className={`ff-btn ff-btn-ghost fixed bottom-6 right-5 z-40 h-11 w-11 !p-0 sm:bottom-8 sm:right-8 ${
-        visible ? 'pointer-events-auto opacity-100' : 'pointer-events-none opacity-0'
-      }`}
-    >
-      <ArrowUp className="h-4 w-4" aria-hidden="true" />
-    </button>
   );
 };

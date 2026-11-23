@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { BookOpen, ExternalLink } from 'lucide-react';
+import { BookOpen } from 'lucide-react';
 import type { ResourceGroup, ResourceItem, VerificationStatus } from '../../types/index';
 import { useAppStore } from '../../store/appStore';
 import {
@@ -11,7 +11,7 @@ import {
   sanitizeBrandText,
 } from './catalog';
 import { ExplainerDrawer } from './ExplainerDrawer';
-import { buildToolExplainer, isVerifiedSpdxLicense } from './explainerData';
+import { buildToolExplainer } from './explainerData';
 import { ReactionBar } from './SpecimenSheet';
 
 interface ToolIndexProps {
@@ -27,18 +27,6 @@ type StatusFilter = 'all' | VerificationStatus;
 function shortCategoryLabel(category: string): string {
   return category.split(/[\/&]/)[0].trim().split(/\s+/).slice(0, 2).join(' ');
 }
-
-const STATUS_BADGE: Record<VerificationStatus, string> = {
-  verified_tested: 'Đã chạy thử',
-  verified_info: 'Thông tin xác thực',
-  unverified: 'Chưa đối chiếu',
-};
-
-const STATUS_CLASS: Record<VerificationStatus, string> = {
-  verified_tested: 'ex-badge-tested',
-  verified_info: 'ex-badge-info',
-  unverified: 'ex-badge-muted',
-};
 
 export const ToolIndex: React.FC<ToolIndexProps> = ({ query, onClearQuery, savedOnly, onShowAll, onToggleSavedOnly }) => {
   const {
@@ -188,9 +176,6 @@ export const ToolIndex: React.FC<ToolIndexProps> = ({ query, onClearQuery, saved
             Đã lưu ({savedToolCount})
           </button>
         </div>
-        <p className="t-label">
-          {total} công cụ xác thực URL · {groups[0].entries.length} công cụ AI nổi bật
-        </p>
       </div>
 
       <div
@@ -247,7 +232,6 @@ export const ToolIndex: React.FC<ToolIndexProps> = ({ query, onClearQuery, saved
                         const title = sanitizeBrandText(item.title);
                         const description = sanitizeBrandText(item.description);
                         const snippet = sanitizeBrandText(item.snippet);
-                        const isSpdx = isVerifiedSpdxLicense(item.license);
                         return (
                           <li className="ex-row" key={item.id}>
                             <div className="ex-row-main">
@@ -259,10 +243,7 @@ export const ToolIndex: React.FC<ToolIndexProps> = ({ query, onClearQuery, saved
                                 >
                                   <h3 className="ex-row-title">{title}</h3>
                                 </button>
-                                <span className={`ex-badge ${STATUS_CLASS[item.status]}`}>
-                                  {STATUS_BADGE[item.status]}
-                                </span>
-                                <span className={`ex-badge ${isSpdx ? 'ex-badge-tested' : 'ex-badge-muted'}`}>
+                                <span className={`ex-badge ex-badge-muted`}>
                                   {item.license}
                                 </span>
                               </div>
@@ -296,15 +277,6 @@ export const ToolIndex: React.FC<ToolIndexProps> = ({ query, onClearQuery, saved
                                 <BookOpen size={14} aria-hidden="true" />
                                 <span>Giải thích &amp; Hướng dẫn</span>
                               </button>
-                              <a
-                                href={item.officialUrl}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="ex-text ex-explainer-trigger"
-                              >
-                                <span>Trang gốc</span>
-                                <ExternalLink size={13} aria-hidden="true" />
-                              </a>
                               <ReactionBar id={item.id} title={title} showLabel />
                               <button
                                 type="button"

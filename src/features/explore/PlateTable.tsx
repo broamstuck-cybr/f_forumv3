@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { ExternalLink, Monitor, Moon, RotateCw, Smartphone, Sun, Tablet, ZoomIn, ZoomOut } from 'lucide-react';
+import { Monitor, Moon, RotateCw, Smartphone, Sun, Tablet, ZoomIn, ZoomOut } from 'lucide-react';
 import type { SourceCatalogItem } from '../../types/index';
 import { useAppStore } from '../../store/appStore';
 import { PinUIPlayground, type FileBoxTab } from '../../components/pinui';
@@ -7,7 +7,6 @@ import { previewFor } from '../../ui/Media';
 import { Reveal } from '../../ui/Reveal';
 import {
   LIBRARY_LABEL,
-  buildSnippetThemeOverrideCss,
   copyText,
   fetchMotionSitesFullMap,
   fetchPinUISourceMap,
@@ -32,7 +31,6 @@ import {
   VAULT_LIBRARY_ORDER,
   fetchVaultShard,
   getCachedVaultShard,
-  resolveOriginalLiveUrl,
   type VaultIndexItem,
   type VaultLibraryKey,
   type VaultShardPayload,
@@ -47,7 +45,16 @@ export type LibraryFilter = 'all' | VaultLibraryKey;
 type BenchTab = 'html' | 'css' | 'code' | 'spec';
 
 const RIBBON_CAP = 24;
-const PREFETCH_SHARD_CAP = 10;
+const PREFETCH_SHARD_CAP = 36;
+
+function shardPrefetchRank(shard: string): number {
+  if (shard.startsWith('gl-')) return 0;
+  if (shard.startsWith('ms-')) return 1;
+  if (shard.startsWith('tu-')) return 2;
+  if (shard.startsWith('ll-')) return 3;
+  if (shard.startsWith('cf-')) return 4;
+  return 5;
+}
 
 const TOPIC_LABEL: Record<string, string> = {
   hero: 'Hero & Mở đầu',
@@ -187,11 +194,7 @@ export const PlateTable: React.FC<PlateTableProps> = ({
       const previewCss = shard?.c || cat?.previewCss || motionEntry?.css;
       const previewVideo = shard?.vid || motionEntry?.previewVideo;
       const previewImage = shard?.img || cat?.previewImage || motionEntry?.previewImage;
-      const officialUrl = resolveOriginalLiveUrl(
-        vi.l,
-        vi.i,
-        shard?.u || motionEntry?.liveUrl || cat?.officialUrl
-      );
+      const officialUrl = shard?.u || motionEntry?.liveUrl || cat?.officialUrl || '';
 
       const resolvedId = cat?.id ?? vi.i;
       return {
@@ -282,23 +285,28 @@ export const PlateTable: React.FC<PlateTableProps> = ({
   const flat = shown.flatMap((ribbon) => ribbon.items);
 
   useEffect(() => {
-    const neededShards = new Set<string>();
-    for (const ribbon of shown) {
-      for (const item of ribbon.items) {
-        if (
-          item.shard &&
-          item.shard !== 'pinui' &&
-          !getCachedVaultShard(item.shard) &&
-          neededShards.size < PREFETCH_SHARD_CAP
-        ) {
-          neededShards.add(item.shard);
-        }
+    const seen = new Map<string, number>();
+    const maxItems = shown.reduce((max, r) => Math.max(max, r.items.length), 0);
+    for (let idx = 0; idx < maxItems; idx++) {
+      for (const ribbon of shown) {
+        const item = ribbon.items[idx];
+        if (!item?.shard || item.shard === 'pinui' || getCachedVaultShard(item.shard)) continue;
+        if (!seen.has(item.shard)) seen.set(item.shard, idx);
       }
     }
-    if (neededShards.size === 0) return;
+    const neededShards = Array.from(seen.entries())
+      .sort((a, b) => {
+        const rankDiff = shardPrefetchRank(a[0]) - shardPrefetchRank(b[0]);
+        if (rankDiff !== 0) return rankDiff;
+        if (a[1] !== b[1]) return a[1] - b[1];
+        return a[0].localeCompare(b[0]);
+      })
+      .slice(0, PREFETCH_SHARD_CAP)
+      .map(([shard]) => shard);
+    if (neededShards.length === 0) return;
     let cancelled = false;
     void Promise.all(
-      Array.from(neededShards).map((shard) => fetchVaultShard(shard).catch(() => null))
+      neededShards.map((shard) => fetchVaultShard(shard).catch(() => null))
     ).then(() => {
       if (!cancelled) setShardVersion((v) => v + 1);
     });
@@ -433,13 +441,6 @@ export const PlateTable: React.FC<PlateTableProps> = ({
     activeItem?.previewImage ||
     (isMotion ? motionEntry?.previewImage || '' : '') ||
     (activePreview?.kind === 'image' ? activePreview.src : '');
-  const activeOriginalUrl = activeItem
-    ? resolveOriginalLiveUrl(
-        vaultLib,
-        activeItem.id,
-        activeShard?.u || (isMotion ? motionEntry?.liveUrl : '') || activeItem.officialUrl
-      )
-    : '';
 
   const activePrompt = useMemo(() => {
     if (!activeItem) return '';
@@ -456,13 +457,8 @@ export const PlateTable: React.FC<PlateTableProps> = ({
     if (!activeItem || isPinUI) return '';
     const baseCss = activeShard?.c || (isMotion ? motionEntry?.css : '') || activeItem.previewCss || '';
     if (isThreeUI || isMotion || isGlacier) return baseCss;
-    const extra = buildSnippetThemeOverrideCss(
-      activeItem.sourceLibrary,
-      baseCss,
-      stageTheme
-    );
-    return extra ? `${extra}\n${baseCss}` : baseCss;
-  }, [activeItem, isPinUI, isThreeUI, isMotion, isGlacier, activeShard, motionEntry, stageTheme]);
+    return baseCss;
+  }, [activeItem, isPinUI, isThreeUI, isMotion, isGlacier, activeShard, motionEntry]);
 
   const cycleViewport = () => {
     setViewport((prev) => (prev === 1440 ? 768 : prev === 768 ? 390 : 1440));
@@ -644,18 +640,6 @@ export const PlateTable: React.FC<PlateTableProps> = ({
                 ) : null}
               </div>
               <div className="ex-stage-controls">
-                {activeOriginalUrl ? (
-                  <a
-                    href={activeOriginalUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="btn btn-line btn-sm ex-xp-origin-link"
-                    title="Xem trang gốc của thư viện nguồn"
-                  >
-                    <span>Trang gốc</span>
-                    <ExternalLink size={13} aria-hidden="true" />
-                  </a>
-                ) : null}
                 <button
                   type="button"
                   className="ex-stage-icon-btn"
@@ -836,17 +820,6 @@ export const PlateTable: React.FC<PlateTableProps> = ({
               >
                 Đính kèm
               </button>
-              {activeOriginalUrl ? (
-                <a
-                  href={activeOriginalUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="btn btn-line ex-xp-origin-link"
-                >
-                  <span>Trang gốc</span>
-                  <ExternalLink size={14} aria-hidden="true" />
-                </a>
-              ) : null}
               <ReactionBar id={activeItem.id} title={activeTitle} showLabel />
               <button
                 type="button"
@@ -939,16 +912,7 @@ export const PlateTable: React.FC<PlateTableProps> = ({
                 {ribbon.totalMatches > ribbon.items.length ? (
                   <div>
                     <dt>trên bàn</dt>
-                    <dd>
-                      {ribbon.items.length} ·{' '}
-                      <button
-                        type="button"
-                        className="ex-inline-link"
-                        onClick={() => openExperience(ribbon.items[0]?.id ?? 'vault')}
-                      >
-                        xem tất cả →
-                      </button>
-                    </dd>
+                    <dd>{ribbon.items.length}</dd>
                   </div>
                 ) : null}
               </dl>

@@ -94,20 +94,8 @@ function loadSeedChannels(): CommunityChannelsData {
   return { qa: [], showcase: [], drops: [], clubs: [] };
 }
 
-function buildInitialReports(seededChannels: CommunityChannelsData): ModerationReport[] {
-  return [
-    {
-      id: 'rep-seed-01',
-      targetId: seededChannels.qa[0]?.id || 'qa-01',
-      targetChannel: 'qa',
-      targetTitle: seededChannels.qa[0]?.title || 'Kiểm tra câu hỏi kỹ thuật',
-      reason: 'Yêu cầu xác minh snippet benchmark đính kèm trong câu trả lời.',
-      reporterId: 'usr-reviewer-01',
-      reporterName: 'Lê Quang Huy',
-      status: 'pending',
-      createdAt: '2026-11-18T16:00:00Z',
-    },
-  ];
+function buildInitialReports(_seededChannels: CommunityChannelsData): ModerationReport[] {
+  return [];
 }
 
 function toCommunityPostRow(post: CommunityPost): Record<string, unknown> {

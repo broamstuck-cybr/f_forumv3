@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { ArrowLeft, Code2, Flame, Heart, Pin, Search, Send, ThumbsUp, X } from 'lucide-react';
+import { ArrowLeft, Check, Code2, Copy, Flame, Heart, Pin, Search, Send, ThumbsUp, X } from 'lucide-react';
 import { moderateText } from './moderationFilter';
+import { useAppStore } from '../../store/appStore';
 import './chat.css';
 
 interface ChatMessage {
@@ -66,6 +67,9 @@ interface Props {
 }
 
 export const CommunityChatRoom: React.FC<Props> = ({ currentHandle, currentName }) => {
+  const { settings } = useAppStore();
+  const isFabulous = settings.uiMode === 'fabulous';
+  const [copiedId, setCopiedId] = useState<string | null>(null);
   const [messages, setMessages] = useState<ChatMessage[]>(() => load(STORE_KEY, SEED));
   const [readAt, setReadAt] = useState<Record<string, number>>(() => load(READ_KEY, {}));
   const [activeId, setActiveId] = useState<string>('chung-fpt');
@@ -197,6 +201,16 @@ export const CommunityChatRoom: React.FC<Props> = ({ currentHandle, currentName 
     setReplyTo(null);
   };
 
+  const copySnippet = async (id: string, code: string) => {
+    try {
+      await navigator.clipboard.writeText(code);
+      setCopiedId(id);
+      window.setTimeout(() => setCopiedId((prev) => (prev === id ? null : prev)), 1500);
+    } catch {
+      return;
+    }
+  };
+
   return (
     <section className="chat" data-thread-open={mobileThread} aria-label="Phòng chat Tri thức">
       <aside className="chat-list">
@@ -254,7 +268,23 @@ export const CommunityChatRoom: React.FC<Props> = ({ currentHandle, currentName 
                   <div className="chat-bubble">
                     {quoted && <blockquote className="chat-quote">{quoted.authorName}: {quoted.text.slice(0, 80)}</blockquote>}
                     {m.text && <p>{m.text}</p>}
-                    {m.snippet && <pre className="chat-code"><code>{m.snippet}</code></pre>}
+                    {m.snippet && (
+                      <div className="relative">
+                        <pre className="chat-code"><code>{m.snippet}</code></pre>
+                        {isFabulous && (
+                          <button
+                            type="button"
+                            className="chat-copy-btn"
+                            aria-label="Chép đoạn code"
+                            title={copiedId === m.id ? 'Đã chép' : 'Chép code'}
+                            onClick={() => void copySnippet(m.id, m.snippet || '')}
+                          >
+                            {copiedId === m.id ? <Check size={12} /> : <Copy size={12} />}
+                            <span>{copiedId === m.id ? 'Đã chép' : 'Chép'}</span>
+                          </button>
+                        )}
+                      </div>
+                    )}
                     <time dateTime={m.at}>{timeLabel(m.at)}</time>
                   </div>
                   <div className="chat-actions">

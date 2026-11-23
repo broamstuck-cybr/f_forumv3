@@ -1,6 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
-  ExternalLink,
   Monitor,
   Moon,
   RotateCw,
@@ -25,7 +24,6 @@ import { previewFor } from '../../ui/Media';
 import { SpecimenMedia } from './SpecimenMedia';
 import {
   LIBRARY_LABEL,
-  buildSnippetThemeOverrideCss,
   copyText,
   fetchMotionSitesFullMap,
   fetchPinUISourceMap,
@@ -49,7 +47,6 @@ import {
   fetchVaultShard,
   getCachedVaultIndex,
   getCachedVaultShard,
-  resolveOriginalLiveUrl,
   type VaultIndexItem,
   type VaultLibraryKey,
   type VaultShardPayload,
@@ -354,13 +351,6 @@ export const ExperienceView: React.FC = () => {
     (isMotion ? motionEntry?.previewImage || '' : '') ||
     (activePreview?.kind === 'image' ? activePreview.src : '') ||
     '';
-  const activeOriginalUrl = activeVaultItem
-    ? resolveOriginalLiveUrl(
-        activeVaultItem.l,
-        activeVaultItem.i,
-        shardPayload?.u || (isMotion ? motionEntry?.liveUrl : '') || activeCatalogItem?.officialUrl
-      )
-    : '';
 
   const [motionStageMode, setMotionStageMode] = useState<'html' | 'video'>('html');
 
@@ -430,13 +420,8 @@ export const ExperienceView: React.FC = () => {
       activeCatalogItem?.previewCss ||
       '';
     if (isThreeUI || isMotion || isGlacier) return rawCss;
-    const extra = buildSnippetThemeOverrideCss(
-      activeVaultItem.l === 'glacier' ? 'codefronts' : activeVaultItem.l,
-      rawCss,
-      stageTheme
-    );
-    return extra ? `${extra}\n${rawCss}` : rawCss;
-  }, [activeVaultItem, isPinUI, isThreeUI, isMotion, isGlacier, shardPayload, motionEntry, activeCatalogItem, stageTheme]);
+    return rawCss;
+  }, [activeVaultItem, isPinUI, isThreeUI, isMotion, isGlacier, shardPayload, motionEntry, activeCatalogItem]);
 
   useEffect(() => {
     if (!activeId) return;
@@ -787,9 +772,6 @@ export const ExperienceView: React.FC = () => {
           <section className="ex-xp-center" aria-label="Sân khấu trải nghiệm">
             <div className="ex-xp-toolbar">
               <div className="ex-xp-tool-meta">
-                <span className="t-label">
-                  {viewport === 1440 ? 'Máy tính' : viewport === 768 ? 'Máy tính bảng' : 'Điện thoại'} · {stageZoomed ? '115%' : '100%'} · {stageTheme === 'dark' ? 'Mực' : 'Giấy'}
-                </span>
                 {activeHtml && activeOriginalVideo ? (
                   <div className="ex-source-tabs" role="group" aria-label="Chế độ xem mẫu">
                     <button
@@ -813,18 +795,6 @@ export const ExperienceView: React.FC = () => {
               </div>
 
               <div className="ex-stage-controls" role="group" aria-label="Điều khiển sân khấu">
-                {activeOriginalUrl ? (
-                  <a
-                    href={activeOriginalUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="btn btn-line btn-sm ex-xp-origin-link"
-                    title="Xem trang gốc của thư viện nguồn"
-                  >
-                    <span>Trang gốc</span>
-                    <ExternalLink size={13} aria-hidden="true" />
-                  </a>
-                ) : null}
                 <button
                   type="button"
                   className="ex-stage-icon-btn"
@@ -988,18 +958,6 @@ export const ExperienceView: React.FC = () => {
                     <div className="ex-spec-type">
                       <span className="t-label">{activeGroupLabel} · {activeVaultItem.c}</span>
                       <span className="ex-spec-word">{activeTitle}</span>
-                      {activeOriginalUrl ? (
-                        <a
-                          href={activeOriginalUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="btn btn-line btn-sm ex-xp-origin-link"
-                          style={{ justifySelf: 'start' }}
-                        >
-                          <span>Trang gốc</span>
-                          <ExternalLink size={14} aria-hidden="true" />
-                        </a>
-                      ) : null}
                     </div>
                   )}
                 </div>
@@ -1101,17 +1059,6 @@ export const ExperienceView: React.FC = () => {
                 >
                   Mở Workspace
                 </button>
-                {activeOriginalUrl ? (
-                  <a
-                    href={activeOriginalUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="btn btn-ghost ex-xp-origin-link"
-                  >
-                    <span>Trang gốc</span>
-                    <ExternalLink size={14} aria-hidden="true" />
-                  </a>
-                ) : null}
               </div>
             ) : null}
           </section>

@@ -186,7 +186,7 @@ export const LiveStage: React.FC<LiveStageProps> = ({
     }
   };
 
-  const checkCount = project.checksReport ? project.checksReport.passCount : 6;
+  const checkCount = project.checksReport ? project.checksReport.passCount : 0;
   const totalCheckCount = project.checksReport ? project.checksReport.results.length : 6;
 
   if (compact) {

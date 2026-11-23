@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { BookOpen, ExternalLink } from 'lucide-react';
+import { BookOpen } from 'lucide-react';
 import { useAppStore } from '../../store/appStore';
 import {
   RANKED_REPOS,
@@ -194,14 +194,7 @@ export const RepoChart: React.FC<RepoChartProps> = ({ query, onClearQuery, saved
                       {isSpdx ? (
                         <span className="ex-badge ex-badge-tested">{repo.license}</span>
                       ) : (
-                        <a
-                          href={`${repo.htmlUrl}/blob/HEAD/LICENSE`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="ex-badge ex-badge-link"
-                        >
-                          Xem LICENSE ↗
-                        </a>
+                        <span className="ex-badge ex-badge-muted">{repo.license || 'Tùy chỉnh'}</span>
                       )}
                     </dd>
                   </div>
@@ -220,15 +213,6 @@ export const RepoChart: React.FC<RepoChartProps> = ({ query, onClearQuery, saved
                     <BookOpen size={14} aria-hidden="true" />
                     <span>Giải thích &amp; Hướng dẫn</span>
                   </button>
-                  <a
-                    href={repo.htmlUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="ex-text ex-explainer-trigger"
-                  >
-                    <span>GitHub</span>
-                    <ExternalLink size={13} aria-hidden="true" />
-                  </a>
                   <button
                     type="button"
                     className="ex-text"
@@ -324,14 +308,7 @@ export const RepoChart: React.FC<RepoChartProps> = ({ query, onClearQuery, saved
                           {isVerifiedSpdxLicense(repo.license) ? (
                             <span className="ex-badge ex-badge-tested">{repo.license}</span>
                           ) : (
-                            <a
-                              href={`${repo.htmlUrl}/blob/HEAD/LICENSE`}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="ex-badge ex-badge-link"
-                            >
-                              Xem LICENSE ↗
-                            </a>
+                            <span className="ex-badge ex-badge-muted">{repo.license || 'Tùy chỉnh'}</span>
                           )}
                         </dd>
                       </div>
@@ -347,15 +324,6 @@ export const RepoChart: React.FC<RepoChartProps> = ({ query, onClearQuery, saved
                         <BookOpen size={14} aria-hidden="true" />
                         <span>Giải thích &amp; Hướng dẫn</span>
                       </button>
-                      <a
-                        href={repo.htmlUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="ex-text ex-explainer-trigger"
-                      >
-                        <span>GitHub</span>
-                        <ExternalLink size={13} aria-hidden="true" />
-                      </a>
                       <button
                         type="button"
                         className="ex-text"

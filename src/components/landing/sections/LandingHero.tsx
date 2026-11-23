@@ -4,6 +4,7 @@ import type { DimensionView, User } from '../../../types/index';
 import { Mark } from '../../../ui/Mark';
 import { HardwareShowcase } from '../../HardwareShowcase';
 import { usePrefersReducedMotion } from '../useLandingMotion';
+import { formatActiveDurationVi, useLiveMetrics } from '../useLiveMetrics';
 
 interface LandingHeroProps {
   currentUser: User | null;
@@ -20,10 +21,10 @@ interface PixelIconSpec {
 }
 
 const PIXEL_PALETTE: Record<string, string> = {
-  D: '#1F2430',
-  B: '#7DA3BB',
-  L: '#F1ECEA',
-  P: '#DDAD95',
+  D: '#161D1D',
+  B: '#38C99A',
+  L: '#F4F7F5',
+  P: '#E6B385',
 };
 
 const PIXEL_ICONS: PixelIconSpec[] = [
@@ -204,6 +205,7 @@ export const LandingHero: React.FC<LandingHeroProps> = ({
   onNavigate,
 }) => {
   const reduced = usePrefersReducedMotion();
+  const { visitors, activeSeconds } = useLiveMetrics();
   const sectionRef = useRef<HTMLElement>(null);
   const [activeCount, setActiveCount] = useState<number>(() => (reduced ? PIXEL_ICONS.length : 0));
   const [planeState, setPlaneState] = useState<{
@@ -283,11 +285,6 @@ export const LandingHero: React.FC<LandingHeroProps> = ({
       <motion.div style={reduced ? undefined : { opacity: heroOpacity }} className="wrap-wide">
         <div className="lp-hero-grid">
           <motion.div style={reduced ? undefined : { y: copyY }} className="lp-hero-copy">
-            <p className="lp-kicker t-label">
-              <span>FPT Forum · TH, THCS và THPT FPT</span>
-              <span>Xưởng lắp ráp mở &amp; Chống AI Slop</span>
-            </p>
-
             <div className="lp-assembly" aria-label="Chuỗi 7 bước từ ý tưởng đến tệp xuất">
               {!reduced && planeState.opacity > 0.01 && (
                 <svg
@@ -298,7 +295,7 @@ export const LandingHero: React.FC<LandingHeroProps> = ({
                 >
                   <path
                     d={splinePath}
-                    stroke="#7DA3BB"
+                    stroke="#38C99A"
                     strokeWidth="1.25"
                     strokeDasharray="4 5"
                     strokeOpacity={0.55 * planeState.opacity}
@@ -309,9 +306,9 @@ export const LandingHero: React.FC<LandingHeroProps> = ({
                     transform={`translate(${planeState.x.toFixed(1)}, ${planeState.y.toFixed(1)}) rotate(${planeState.angle.toFixed(1)})`}
                     opacity={planeState.opacity}
                   >
-                    <polygon points="10,0 -8,-6 -4,0 -8,6" fill="#F1ECEA" stroke="#1F2430" strokeWidth="1" />
-                    <polygon points="10,0 -4,0 -8,6" fill="#7DA3BB" />
-                    <line x1="-4" y1="0" x2="8" y2="0" stroke="#DDAD95" strokeWidth="1" />
+                    <polygon points="10,0 -8,-6 -4,0 -8,6" fill="#F4F7F5" stroke="#161D1D" strokeWidth="1" />
+                    <polygon points="10,0 -4,0 -8,6" fill="#38C99A" />
+                    <line x1="-4" y1="0" x2="8" y2="0" stroke="#E6B385" strokeWidth="1" />
                   </g>
                 </svg>
               )}
@@ -371,7 +368,7 @@ export const LandingHero: React.FC<LandingHeroProps> = ({
             </h1>
 
             <p className="lp-hero-lead">
-              Báo cáo OECD PISA 2025 (9/2026) ghi nhận 95,9% học sinh dùng AI trong sáng tạo — nhưng điểm nghẽn lớn nhất là thiếu lộ trình và nguồn mẫu chuẩn. FPT Forum mở ra một Xưởng lắp ráp mở bản địa hóa tiếng Việt giúp học sinh chống &ldquo;AI Slop&rdquo; và hoàn thiện sản phẩm thực tế.
+              OECD PISA 2025 (9/2026) ghi nhận 95,9% học sinh dùng AI sáng tạo, nhưng nhiều bạn thiếu lộ trình và kho mẫu chuẩn. FPT Forum xây dựng Xưởng lắp ráp mở bản địa hóa tiếng Việt tại TH, THCS &amp; THPT FPT — quy tụ 7.662 mẫu giao diện, 60 công cụ và 122 repo giúp chống &ldquo;AI Slop&rdquo; và hoàn thiện sản phẩm thật.
             </p>
 
             <div className="lp-actions">
@@ -388,24 +385,25 @@ export const LandingHero: React.FC<LandingHeroProps> = ({
               )}
             </div>
 
-            <dl className="lp-colophon">
+            <dl className="lp-colophon" aria-label="Số liệu thực của F-Forum">
               <div>
-                <dt className="t-label">7.662 mẫu giao diện</dt>
-                <dd>
-                  41 PinUI · 321 Motion AI · 961 ThreeUI · 892 GetLayers · 400 LucianLabs · 5.047 CodeFronts
-                </dd>
+                <dt className="t-label">Tổng tài nguyên &amp; mẫu</dt>
+                <dd className="lp-colophon-value">7.844 tài nguyên &amp; mẫu</dd>
+                <dd className="lp-colophon-sub">7.662 UI · 60 công cụ · 122 repo</dd>
               </div>
               <div>
-                <dt className="t-label">195 người dùng khảo sát</dt>
-                <dd className="lp-colophon-accent">
-                  91,2% đánh giá cao mẫu UI/UX trực quan · 95,9% học sinh dùng AI (OECD PISA 2025)
+                <dt className="t-label">Tổng người truy cập</dt>
+                <dd className="lp-colophon-value lp-colophon-num">
+                  {visitors.toLocaleString('vi-VN')}
                 </dd>
+                <dd className="lp-colophon-sub">Ghi nhận thực theo trình duyệt</dd>
               </div>
               <div>
-                <dt className="t-label">Xưởng lắp ráp mở FPT</dt>
-                <dd>
-                  Chống AI Slop · Kho Skill &amp; Mã nguồn mở · Cộng đồng TH, THCS &amp; THPT FPT
+                <dt className="t-label">Tổng thời gian truy cập thực</dt>
+                <dd className="lp-colophon-value lp-colophon-accent lp-colophon-num">
+                  {formatActiveDurationVi(activeSeconds)}
                 </dd>
+                <dd className="lp-colophon-sub">Chỉ tính khi tab đang mở</dd>
               </div>
             </dl>
           </motion.div>

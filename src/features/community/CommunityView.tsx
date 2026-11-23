@@ -32,6 +32,7 @@ import {
 import { moderateFields } from './moderationFilter';
 import { computeFeedScore } from './feedRanking';
 import { CommunityChatRoom } from './CommunityChatRoom';
+import { PinHeartButton } from '../../components/pinui/PinHeartButton';
 import type {
   ClubHandoverDossier,
   CommunityAnswer,
@@ -41,7 +42,6 @@ import type {
   CommunityPostImage,
   CommunityShowcaseSnippet,
 } from '../../types/index';
-import communitySeedJson from '../../data/communitySeed.json';
 import { formatUserDisplayName, useAppStore } from '../../store/appStore';
 import {
   ChatRoom,
@@ -110,17 +110,6 @@ interface ComposeDraft {
   tags: string;
 }
 
-const DEFAULT_SEED_POLL: CommunityPoll = {
-  question: 'Chủ đề bạn muốn cộng đồng tổng hợp mẫu chuẩn trong tuần này?',
-  closesLabel: 'Còn 3 ngày',
-  options: [
-    { id: 'opt-tokens', label: 'Hệ thống CSS Tokens sáng / tối', votes: 34 },
-    { id: 'opt-forms', label: 'Biểu mẫu & kiểm tra nhập liệu', votes: 21 },
-    { id: 'opt-mobile', label: 'Điều hướng di động 390px', votes: 29 },
-    { id: 'opt-3d', label: 'Cảnh 3D WebGL nhẹ dưới 60fps', votes: 14 },
-  ],
-};
-
 function compressImageFile(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -188,11 +177,10 @@ const QUICK_COMPOSE_TAGS = [
   'bento',
 ];
 
-const CHAT_HUES = ['#ff6450', '#7fd69b', '#7da3bb', '#e9b44c', '#b0aec6'];
 
 const SAMPLE_SNIPPET: CommunityShowcaseSnippet = {
   html: '<div class="builder-demo-card">\n  <div class="builder-demo-head">\n    <span class="builder-badge">Sandbox Live</span>\n    <span id="demo-counter" class="builder-counter">0 lượt chạy</span>\n  </div>\n  <h3 class="builder-title">Khối kiểm định tương tác thời gian thực</h3>\n  <p class="builder-desc">Nhấn nút bên dưới để kiểm tra phản hồi sự kiện JS trong khung cô lập.</p>\n  <button type="button" id="demo-trigger" class="builder-btn">Kích hoạt xung kiểm thử</button>\n</div>',
-  css: '.builder-demo-card { width: min(380px, 100%); box-sizing: border-box; padding: 18px; border-radius: 12px; border: 1px solid rgba(239, 233, 221, 0.22); background: #1a1917; color: #efe9dd; display: grid; gap: 10px; }\n[data-theme="light"] .builder-demo-card { background: #fbf8f1; color: #17150f; border-color: rgba(23, 21, 15, 0.2); }\n.builder-demo-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; }\n.builder-badge { font-family: monospace; font-size: 11px; padding: 3px 8px; border-radius: 999px; background: rgba(255, 100, 80, 0.16); color: #ff6450; }\n.builder-counter { font-family: monospace; font-size: 12px; color: #7fd69b; }\n[data-theme="light"] .builder-counter { color: #1c7440; }\n.builder-title { margin: 0; font-size: 16px; font-weight: 600; line-height: 1.3; }\n.builder-desc { margin: 0; font-size: 13px; line-height: 1.5; color: #b5afa3; }\n[data-theme="light"] .builder-desc { color: #524d45; }\n.builder-btn { padding: 9px 14px; border-radius: 8px; border: 1px solid #ff6450; background: #d63a27; color: #fffaf5; font-weight: 600; cursor: pointer; }',
+  css: '.builder-demo-card { width: min(380px, 100%); box-sizing: border-box; padding: 18px; border-radius: 12px; border: 1px solid rgba(239, 233, 221, 0.22); background: #1a1917; color: #efe9dd; display: grid; gap: 10px; }\n[data-theme="light"] .builder-demo-card { background: #fbf8f1; color: #17150f; border-color: rgba(23, 21, 15, 0.2); }\n.builder-demo-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; }\n.builder-badge { font-family: monospace; font-size: 11px; padding: 3px 8px; border-radius: 999px; background: rgba(47, 181, 154, 0.16); color: #2fb59a; }\n.builder-counter { font-family: monospace; font-size: 12px; color: #2fb59a; }\n[data-theme="light"] .builder-counter { color: #1c7440; }\n.builder-title { margin: 0; font-size: 16px; font-weight: 600; line-height: 1.3; }\n.builder-desc { margin: 0; font-size: 13px; line-height: 1.5; color: #b5afa3; }\n[data-theme="light"] .builder-desc { color: #524d45; }\n.builder-btn { padding: 9px 14px; border-radius: 8px; border: 1px solid #2fb59a; background: #1f8f7a; color: #fffaf5; font-weight: 600; cursor: pointer; }',
   js: '(function(){\n  var btn = document.getElementById("demo-trigger");\n  var out = document.getElementById("demo-counter");\n  var count = 0;\n  if (btn && out) {\n    btn.addEventListener("click", function() {\n      count += 1;\n      out.textContent = count + " lượt chạy";\n    });\n  }\n})();',
 };
 
@@ -307,6 +295,7 @@ export const CommunityView: React.FC = () => {
     reportPost,
     addToast,
     theme,
+    settings,
     reducedMotion,
     openUserProfile,
   } = useAppStore();
@@ -489,38 +478,6 @@ export const CommunityView: React.FC = () => {
     }
   }, [composeTitle, composeBody, composeTagsInput]);
 
-  const seedFallbackById = useMemo(() => {
-    const map = new Map<
-      string,
-      { demoSnippet?: CommunityShowcaseSnippet; answers: CommunityAnswer[] }
-    >();
-    const rawChannels =
-      (communitySeedJson as { channels?: Record<string, Array<Record<string, unknown>>> })
-        .channels || {};
-    for (const list of Object.values(rawChannels)) {
-      for (const item of list || []) {
-        const id = String(item.id || '');
-        if (!id) continue;
-        const answers: CommunityAnswer[] = [];
-        if (item.acceptedAnswer && typeof item.acceptedAnswer === 'object') {
-          answers.push(item.acceptedAnswer as CommunityAnswer);
-        }
-        if (Array.isArray(item.answers)) {
-          for (const ans of item.answers as CommunityAnswer[]) {
-            if (!answers.some((existing) => existing.id === ans.id)) {
-              answers.push(ans);
-            }
-          }
-        }
-        map.set(id, {
-          demoSnippet: item.demoSnippet as CommunityShowcaseSnippet | undefined,
-          answers,
-        });
-      }
-    }
-    return map;
-  }, []);
-
   const allPosts = useMemo<CommunityPost[]>(() => {
     const map = new Map<string, CommunityPost>();
     for (const lp of localPosts) {
@@ -531,31 +488,12 @@ export const CommunityView: React.FC = () => {
     for (const sp of communityPosts) {
       if (sp.hidden) continue;
       if (!map.has(sp.id)) {
-        const seedMeta = seedFallbackById.get(sp.id);
-        const mergedAnswers: CommunityAnswer[] = Array.isArray(sp.answers) ? [...sp.answers] : [];
-        if (seedMeta?.answers) {
-          for (const sa of seedMeta.answers) {
-            if (!mergedAnswers.some((existing) => existing.id === sa.id)) {
-              mergedAnswers.push(sa);
-            }
-          }
-        }
-        map.set(sp.id, {
-          ...sp,
-          demoSnippet: sp.demoSnippet || seedMeta?.demoSnippet,
-          answers: mergedAnswers,
-        });
+        map.set(sp.id, { ...sp, answers: Array.isArray(sp.answers) ? [...sp.answers] : [] });
       }
     }
     const list = Array.from(map.values());
-    // Attach default community poll to the first Q&A post if no post defines a poll yet
-    if (list.length > 0 && !list.some((p) => Boolean(p.poll))) {
-      const targetIdx = list.findIndex((p) => p.channel === 'qa');
-      const idx = targetIdx >= 0 ? targetIdx : 0;
-      list[idx] = { ...list[idx], poll: DEFAULT_SEED_POLL };
-    }
     return list;
-  }, [communityPosts, localPosts, seedFallbackById]);
+  }, [communityPosts, localPosts]);
 
   const moderatedPosts = useMemo<CommunityPost[]>(() => {
     const hiddenSet = new Set(moderation.hiddenPostIds);
@@ -746,19 +684,6 @@ export const CommunityView: React.FC = () => {
         name: c.name,
         role: `@${c.handle}`,
         status: `${c.postsCount} bài`,
-      })),
-    [topContributors]
-  );
-
-  const chatRoomPeople = useMemo<ChatRoomPerson[]>(
-    () =>
-      topContributors.slice(0, 4).map((c, idx) => ({
-        id: `cm-cr-${c.handle}`,
-        name: c.name,
-        role: c.role || 'Thành viên',
-        initials: authorInitials(c.name),
-        hue: CHAT_HUES[idx % CHAT_HUES.length],
-        speaking: idx < 2,
       })),
     [topContributors]
   );
@@ -2019,20 +1944,26 @@ export const CommunityView: React.FC = () => {
 
           {visiblePosts.length === 0 ? (
             <div className="cm-empty">
-              <h2 className="cm-empty-title">Không tìm thấy bài viết phù hợp</h2>
+              <h2 className="cm-empty-title">
+                {allPosts.length === 0 ? 'Chưa có bài viết nào' : 'Không tìm thấy bài viết phù hợp'}
+              </h2>
               <p className="cm-post-body">
-                Thử đổi kênh, xóa từ khóa lọc hoặc đăng bài chia sẻ mới.
+                {allPosts.length === 0
+                  ? 'Hãy là người đầu tiên chia sẻ kiến thức với cộng đồng.'
+                  : 'Thử đổi kênh, xóa từ khóa lọc hoặc đăng bài chia sẻ mới.'}
               </p>
               <div className="cm-empty-actions">
-                <button type="button" className="btn btn-line btn-sm" onClick={clearAllFilters}>
-                  Xóa bộ lọc
-                </button>
+                {allPosts.length > 0 && (
+                  <button type="button" className="btn btn-line btn-sm" onClick={clearAllFilters}>
+                    Xóa bộ lọc
+                  </button>
+                )}
                 <button
                   type="button"
                   className="btn btn-red btn-sm"
                   onClick={() => setComposerOpen(true)}
                 >
-                  Viết bài mới
+                  {allPosts.length === 0 ? 'Viết bài' : 'Viết bài mới'}
                 </button>
               </div>
             </div>
@@ -2146,7 +2077,6 @@ export const CommunityView: React.FC = () => {
                             : 'Theo dõi'}
                         </button>
                         <span className="cm-cat-label">{whiteLabelText(post.category)}</span>
-                        {solved && <span className="cm-solved-dot">Đạt chuẩn</span>}
                       </div>
                     </div>
 
@@ -2423,17 +2353,29 @@ export const CommunityView: React.FC = () => {
                     <footer className="cm-post-foot">
                       <div className="cm-post-reactions">
                         <div className="cm-action-pair">
-                          <button
-                            type="button"
-                            className="cm-icon-btn"
-                            aria-pressed={isLiked}
-                            aria-label={isLiked ? 'Bỏ tán thành' : 'Tán thành bài viết'}
-                            title={isLiked ? 'Đã tán thành' : 'Tán thành'}
-                            onClick={() => handleToggleVote(post)}
-                          >
-                            <ArrowBigUp size={18} aria-hidden="true" />
-                          </button>
-                          <span className="cm-count">{score}</span>
+                          {settings.uiMode === 'fabulous' ? (
+                            <PinHeartButton
+                              liked={isLiked}
+                              count={score}
+                              compact
+                              onToggle={() => handleToggleVote(post)}
+                              ariaLabel={isLiked ? 'Bỏ tán thành' : 'Tán thành bài viết'}
+                            />
+                          ) : (
+                            <>
+                              <button
+                                type="button"
+                                className="cm-icon-btn"
+                                aria-pressed={isLiked}
+                                aria-label={isLiked ? 'Bỏ tán thành' : 'Tán thành bài viết'}
+                                title={isLiked ? 'Đã tán thành' : 'Tán thành'}
+                                onClick={() => handleToggleVote(post)}
+                              >
+                                <ArrowBigUp size={18} aria-hidden="true" />
+                              </button>
+                              <span className="cm-count">{score}</span>
+                            </>
+                          )}
                         </div>
 
                         <div className="cm-action-pair">
@@ -2946,14 +2888,6 @@ export const CommunityView: React.FC = () => {
             )}
           </section>
 
-          <div className="cm-chatroom-wrap">
-            <ChatRoom
-              title="Phòng thảo luận"
-              people={chatRoomPeople.length > 0 ? chatRoomPeople : undefined}
-              sound={false}
-              defaultOpen={false}
-            />
-          </div>
         </aside>
       </div>
 

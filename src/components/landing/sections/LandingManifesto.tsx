@@ -14,31 +14,31 @@ const LANDING_COMPOSER_ACTIONS: PromptComposerAction[] = [
   {
     id: 'landing',
     label: 'Trang đích',
-    placeholder: 'Mô tả mạch kể chuyện và nhịp cuộn hai chiều cho trang giới thiệu...',
+    placeholder: 'Mô tả bố cục và mục tiêu cho trang giới thiệu sản phẩm học tập...',
     kind: 'image',
   },
   {
     id: 'dashboard',
     label: 'Dữ liệu',
-    placeholder: 'Thiết kế không gian phân tích số liệu rõ ràng và tương thích 390px...',
+    placeholder: 'Thiết kế bảng điều khiển số liệu rõ ràng, tương thích màn hình 390px...',
     kind: 'note',
   },
   {
     id: 'club-hub',
     label: 'Hội nhóm',
-    placeholder: 'Xây dựng hồ sơ chuyển giao dự án học thuật cho câu lạc bộ...',
+    placeholder: 'Xây dựng trang giới thiệu dự án học thuật cho câu lạc bộ FPT...',
     kind: 'event',
   },
   {
     id: 'quiz-tools',
     label: 'Kiểm tra',
-    placeholder: 'Tạo công cụ so sánh hai phương án bố cục kèm bảng đối chiếu rõ ràng...',
+    placeholder: 'Tạo công cụ ôn tập hoặc so sánh hai phương án giao diện có bảng đối chiếu...',
     kind: 'voice',
   },
   {
     id: 'design-code',
     label: 'Mã nguồn',
-    placeholder: 'Chuyển đặc tả giao diện thành HTML/CSS/JS sạch đi qua Diff & Check...',
+    placeholder: 'Chuyển đặc tả giao diện thành HTML/CSS/JS sạch và kiểm tra trực tiếp...',
     kind: 'docs',
   },
 ];
@@ -63,32 +63,32 @@ const GeometricBadge: React.FC<{ kind: ManifestoBeat['badge']; active: boolean }
   if (kind === 'prism') {
     return (
       <svg viewBox="0 0 88 88" className="lp-hm-badgeSvg" data-active={active} aria-hidden="true">
-        <polygon points="44,8 78,28 44,48 10,28" fill="#BAD9E6" stroke="#121110" strokeWidth="2.5" />
-        <polygon points="10,28 44,48 44,80 10,60" fill="#7DA3BB" stroke="#121110" strokeWidth="2.5" />
-        <polygon points="78,28 44,48 44,80 78,60" fill="#DDAD95" stroke="#121110" strokeWidth="2.5" />
+        <polygon points="44,8 78,28 44,48 10,28" fill="#B8E5D4" stroke="#0F1414" strokeWidth="2.5" />
+        <polygon points="10,28 44,48 44,80 10,60" fill="#52B89A" stroke="#0F1414" strokeWidth="2.5" />
+        <polygon points="78,28 44,48 44,80 78,60" fill="#E6B385" stroke="#0F1414" strokeWidth="2.5" />
       </svg>
     );
   }
   if (kind === 'viewport') {
     return (
       <svg viewBox="0 0 88 88" className="lp-hm-badgeSvg" data-active={active} aria-hidden="true">
-        <rect x="8" y="14" width="72" height="58" rx="8" fill="#F1ECEA" stroke="#121110" strokeWidth="2.5" />
-        <rect x="8" y="14" width="72" height="14" rx="6" fill="#EBC9AE" stroke="#121110" strokeWidth="2.5" />
-        <rect x="18" y="36" width="24" height="26" rx="4" fill="#7DA3BB" stroke="#121110" strokeWidth="2" />
-        <rect x="48" y="36" width="22" height="11" rx="3" fill="#B0AEC6" stroke="#121110" strokeWidth="2" />
-        <rect x="48" y="51" width="22" height="11" rx="3" fill="#DDAD95" stroke="#121110" strokeWidth="2" />
+        <rect x="8" y="14" width="72" height="58" rx="8" fill="#F3F6F4" stroke="#0F1414" strokeWidth="2.5" />
+        <rect x="8" y="14" width="72" height="14" rx="6" fill="#C7E2D8" stroke="#0F1414" strokeWidth="2.5" />
+        <rect x="18" y="36" width="24" height="26" rx="4" fill="#52B89A" stroke="#0F1414" strokeWidth="2" />
+        <rect x="48" y="36" width="22" height="11" rx="3" fill="#B0C9C4" stroke="#0F1414" strokeWidth="2" />
+        <rect x="48" y="51" width="22" height="11" rx="3" fill="#E6B385" stroke="#0F1414" strokeWidth="2" />
       </svg>
     );
   }
   if (kind === 'code') {
     return (
       <svg viewBox="0 0 88 88" className="lp-hm-badgeSvg" data-active={active} aria-hidden="true">
-        <rect x="8" y="14" width="72" height="60" rx="8" fill="#F1ECEA" stroke="#121110" strokeWidth="2.5" />
-        <rect x="8" y="14" width="72" height="14" rx="6" fill="#B0AEC6" stroke="#121110" strokeWidth="2.5" />
+        <rect x="8" y="14" width="72" height="60" rx="8" fill="#F3F6F4" stroke="#0F1414" strokeWidth="2.5" />
+        <rect x="8" y="14" width="72" height="14" rx="6" fill="#B8D8D2" stroke="#0F1414" strokeWidth="2.5" />
         <path
           d="M30 44 L21 51 L30 58 M58 44 L67 51 L58 58 M46 40 L42 62"
           fill="none"
-          stroke="#121110"
+          stroke="#0F1414"
           strokeWidth="3.5"
           strokeLinecap="round"
           strokeLinejoin="round"
@@ -98,10 +98,10 @@ const GeometricBadge: React.FC<{ kind: ManifestoBeat['badge']; active: boolean }
   }
   return (
     <svg viewBox="0 0 88 88" className="lp-hm-badgeSvg" data-active={active} aria-hidden="true">
-      <rect x="10" y="10" width="30" height="30" rx="6" fill="#BAD9E6" stroke="#121110" strokeWidth="2.5" />
-      <rect x="48" y="10" width="30" height="30" rx="6" fill="#DDAD95" stroke="#121110" strokeWidth="2.5" />
-      <rect x="10" y="48" width="30" height="30" rx="6" fill="#B0AEC6" stroke="#121110" strokeWidth="2.5" />
-      <rect x="48" y="48" width="30" height="30" rx="6" fill="#EFCEBE" stroke="#121110" strokeWidth="2.5" />
+      <rect x="10" y="10" width="30" height="30" rx="6" fill="#B8E5D4" stroke="#0F1414" strokeWidth="2.5" />
+      <rect x="48" y="10" width="30" height="30" rx="6" fill="#E6B385" stroke="#0F1414" strokeWidth="2.5" />
+      <rect x="10" y="48" width="30" height="30" rx="6" fill="#A6CCC8" stroke="#0F1414" strokeWidth="2.5" />
+      <rect x="48" y="48" width="30" height="30" rx="6" fill="#D5E4DE" stroke="#0F1414" strokeWidth="2.5" />
     </svg>
   );
 };
@@ -179,7 +179,7 @@ const BeatBlock: React.FC<{
 };
 
 export const LandingManifesto: React.FC<LandingManifestoProps> = ({ onNavigate }) => {
-  const { launchPromptToWorkspace } = useAppStore();
+  const { launchPromptToWorkspace, theme } = useAppStore();
   const reduced = usePrefersReducedMotion();
   const runwayRef = useRef<HTMLDivElement>(null);
   const trackRef = useRef<HTMLDivElement>(null);
@@ -245,9 +245,6 @@ export const LandingManifesto: React.FC<LandingManifestoProps> = ({ onNavigate }
       >
         <div className="lp-hm-sticky">
           <div className="wrap-wide lp-hm-header">
-            <p className="t-label" style={{ color: '#b5afa3' }}>
-              nghiên cứu khoa học · th, thcs và thpt fpt
-            </p>
             <div className="lp-hm-meter" aria-hidden="true">
               <span style={{ transform: `scaleX(${isDesktopHorizontal ? Math.max(0.08, mp) : 1})` }} />
             </div>
@@ -261,7 +258,7 @@ export const LandingManifesto: React.FC<LandingManifestoProps> = ({ onNavigate }
                 đến <span className="t-note">Xưởng lắp ráp mở.</span>
               </h2>
               <p className="lp-hm-lead">
-                Toàn cảnh 8 lát cắt nghiên cứu của FPT Forum: giải quyết 3 điểm nghẽn dùng AI, chống AI Slop, kết quả khảo sát 195 người dùng (91,2%) và kiến trúc JSON · Bộ lọc AI · WebSocket.
+                6 trụ cột nghiên cứu của FPT Forum: giải quyết 3 điểm nghẽn khi dùng AI (95,9% học sinh theo OECD PISA 2025), chống AI Slop, khảo sát 195 người dùng (91,2%) và kiến trúc JSON · Bộ lọc AI · WebSocket.
               </p>
             </div>
 
@@ -285,19 +282,18 @@ export const LandingManifesto: React.FC<LandingManifestoProps> = ({ onNavigate }
       <div className="lp-section sheet">
         <div className="wrap lp-desk">
           <div className="lp-desk-head">
-            <p className="t-label">đối chiếu nhu cầu &amp; gợi ý starter kit</p>
             <h2 className="t-title">
               Chọn bộ khung mẫu <Mark kind="underline">ngay tại đây</Mark>
             </h2>
             <p className="t-lead">
-              Mô tả bài toán học tập hoặc dự án phổ thông của bạn — F-Forum đối chiếu kho tài nguyên chuẩn để mở thẳng Workspace kèm Live View và kiểm định tự động.
+              Nhập bài toán học tập hoặc dự án phổ thông của bạn — F-Forum đối chiếu kho 7.662 mẫu giao diện, 60 công cụ và 122 repo để mở thẳng Workspace kèm xem trước trực tiếp.
             </p>
           </div>
 
           <div className="lp-desk-box">
             <PromptComposer
               layoutId="landing-pinui-composer"
-              theme="light"
+              theme={theme}
               value={promptText}
               onChange={setPromptText}
               selectedAction={selectedAction}

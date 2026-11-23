@@ -23,7 +23,6 @@ import { SandboxPreview } from '../../features/explore/SandboxPreview';
 import { SpecimenMedia } from '../../features/explore/SpecimenMedia';
 import {
   LIBRARY_LABEL,
-  buildSnippetThemeOverrideCss,
   fetchMotionSitesFullMap,
   fetchPinUISourceMap,
   getCachedMotionSitesFullMap,
@@ -561,13 +560,8 @@ function BookDialog({
 
   const selectedCssWithTheme = useMemo(() => {
     if (!selectedItem || isPinUI || isThreeUI || isMotion) return '';
-    const extra = buildSnippetThemeOverrideCss(
-      selectedItem.sourceLibrary,
-      selectedItem.previewCss,
-      stageTheme
-    );
-    return extra ? `${extra}\n${selectedItem.previewCss ?? ''}` : selectedItem.previewCss ?? '';
-  }, [selectedItem, isPinUI, isThreeUI, isMotion, stageTheme]);
+    return selectedItem.previewCss ?? '';
+  }, [selectedItem, isPinUI, isThreeUI, isMotion]);
 
   useEffect(() => {
     if (isThreeUI || isMotion) {

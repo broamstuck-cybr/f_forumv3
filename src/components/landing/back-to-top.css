@@ -1,0 +1,108 @@
+/* Adapted from CodeFronts Scroll-to-Top Floating Button with SVG Progress Ring · MIT License */
+.ff-btt {
+  --btt-c: 138.23;
+  position: fixed;
+  right: 22px;
+  bottom: calc(22px + env(safe-area-inset-bottom));
+  z-index: 55;
+  display: grid;
+  place-items: center;
+  width: 56px;
+  height: 56px;
+  padding: 0;
+  border-radius: 50%;
+  border: 1px solid var(--line);
+  background: var(--bg-glass-surface);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  color: var(--accent);
+  cursor: pointer;
+  box-shadow: var(--shadow-2);
+  opacity: 0;
+  transform: translateY(8px) scale(0.76);
+  pointer-events: none;
+  transition:
+    opacity 240ms var(--ease-ux),
+    transform 260ms var(--ease-spring),
+    border-color 180ms var(--ease-ux),
+    box-shadow 220ms var(--ease-ux);
+}
+
+.ff-btt[data-shown='true'] {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+  pointer-events: auto;
+}
+
+.ff-btt:hover {
+  transform: translateY(-3px) scale(1.02);
+  border-color: var(--line-strong);
+  box-shadow: var(--shadow-3);
+}
+
+.ff-btt:active {
+  transform: scale(0.94);
+}
+
+.ff-btt:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+
+.ff-btt__ringSvg {
+  position: absolute;
+  inset: 2px;
+  width: 50px;
+  height: 50px;
+  transform: rotate(-90deg);
+  pointer-events: none;
+}
+
+.ff-btt__track {
+  stroke: var(--line);
+}
+
+.ff-btt__ring {
+  stroke: var(--accent);
+  stroke-dasharray: var(--btt-c);
+  stroke-dashoffset: calc(var(--btt-c) * (1 - var(--btt-p, 0)));
+  transition: stroke-dashoffset 100ms linear;
+}
+
+.ff-btt__arrow {
+  width: 21px;
+  height: 21px;
+  position: relative;
+  z-index: 2;
+  color: var(--fg);
+  transition: color 180ms var(--ease-ux);
+}
+
+.ff-btt:hover .ff-btt__arrow {
+  color: var(--accent);
+}
+
+@media (max-width: 767px) {
+  .ff-btt {
+    right: 16px;
+    width: 52px;
+    height: 52px;
+  }
+
+  .ff-btt__ringSvg {
+    width: 46px;
+    height: 46px;
+  }
+
+  .ff-btt[data-mobile-offset='true'] {
+    bottom: calc(82px + env(safe-area-inset-bottom));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ff-btt,
+  .ff-btt__ring,
+  .ff-btt__arrow {
+    transition: none;
+  }
+}

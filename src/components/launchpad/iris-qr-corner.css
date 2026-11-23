@@ -1,14 +1,14 @@
 .iris-qr-section {
-  --iris-bg: #0b0b11;
-  --iris-surface: #14141e;
-  --iris-surface-2: #1a1a28;
-  --iris-line: rgba(255, 255, 255, 0.09);
-  --iris-text: #f6f4ef;
-  --iris-muted: #b4b2c4;
-  --iris-violet: #8c6cff;
+  --iris-bg: #0c1212;
+  --iris-surface: #121a1a;
+  --iris-surface-2: #182322;
+  --iris-line: rgba(244, 247, 245, 0.12);
+  --iris-text: #f4f7f5;
+  --iris-muted: #b6c5bf;
+  --iris-accent: #38c99a;
   --iris-amber: #e6b385;
-  --iris-sage: #8bc9a8;
-  --iris-steel: #8cb7d4;
+  --iris-sage: #6fd4aa;
+  --iris-steel: #8cbcc8;
   position: relative;
   width: 100%;
   background: var(--iris-bg);
@@ -17,7 +17,7 @@
   -webkit-font-smoothing: antialiased;
   overflow: hidden;
   isolation: isolate;
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  border-top: 1px solid var(--iris-line);
 }
 
 .iris-hero {
@@ -54,8 +54,8 @@
   width: 46px;
   height: 46px;
   border-radius: 50%;
-  border: 2px solid rgba(140, 108, 255, 0.18);
-  border-top-color: var(--iris-violet);
+  border: 2px solid rgba(56, 201, 154, 0.18);
+  border-top-color: var(--iris-accent);
   transform: translate(-50%, -50%);
   animation: iris-spin 1s linear infinite;
   transition: opacity 0.5s;
@@ -100,10 +100,10 @@
   padding: 14px;
   border-radius: 26px;
   background: #ffffff;
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(244, 247, 245, 0.2);
   box-shadow:
-    0 24px 56px rgba(0, 0, 0, 0.55),
-    0 0 36px rgba(140, 108, 255, 0.28);
+    0 24px 56px rgba(0, 0, 0, 0.52),
+    0 0 32px rgba(56, 201, 154, 0.22);
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -114,12 +114,12 @@
 .iris-qr-plate:hover {
   transform: translateY(-3px) scale(1.02);
   box-shadow:
-    0 28px 64px rgba(0, 0, 0, 0.62),
-    0 0 44px rgba(140, 108, 255, 0.42);
+    0 28px 64px rgba(0, 0, 0, 0.6),
+    0 0 40px rgba(56, 201, 154, 0.34);
 }
 
 .iris-qr-plate:focus-visible {
-  outline: 2px solid var(--iris-amber);
+  outline: 2px solid var(--iris-accent);
   outline-offset: 4px;
 }
 
@@ -132,7 +132,6 @@
   border-radius: 12px;
 }
 
-/* PinUI-crafted Dev Team Honor Button */
 .iris-honor-btn {
   position: relative;
   display: inline-flex;
@@ -141,13 +140,13 @@
   min-height: 54px;
   padding: 10px 24px 10px 12px;
   border-radius: 999px;
-  border: 1px solid rgba(230, 179, 133, 0.36);
+  border: 1px solid var(--iris-line);
   background: linear-gradient(
     180deg,
-    rgba(30, 29, 44, 0.94) 0%,
-    rgba(19, 18, 30, 0.96) 100%
+    rgba(24, 34, 33, 0.94) 0%,
+    rgba(15, 22, 21, 0.96) 100%
   );
-  color: #f8f5ef;
+  color: #f4f7f5;
   font-family: inherit;
   font-size: 15px;
   font-weight: 600;
@@ -155,9 +154,8 @@
   cursor: pointer;
   overflow: hidden;
   box-shadow:
-    0 16px 38px rgba(0, 0, 0, 0.52),
-    inset 0 1px 0 rgba(255, 255, 255, 0.16),
-    inset 0 -1px 0 rgba(140, 108, 255, 0.22);
+    0 16px 38px rgba(0, 0, 0, 0.48),
+    inset 0 1px 0 rgba(255, 255, 255, 0.14);
   transition:
     transform 240ms cubic-bezier(0.22, 1, 0.36, 1),
     border-color 220ms ease,
@@ -169,8 +167,8 @@
   inset: 0;
   background: radial-gradient(
     110% 130% at 14% 0%,
-    rgba(230, 179, 133, 0.22) 0%,
-    rgba(140, 108, 255, 0.14) 48%,
+    rgba(56, 201, 154, 0.18) 0%,
+    rgba(230, 179, 133, 0.12) 48%,
     transparent 76%
   );
   opacity: 0.78;
@@ -184,9 +182,9 @@
   width: 34px;
   height: 34px;
   border-radius: 999px;
-  background: linear-gradient(145deg, rgba(230, 179, 133, 0.26), rgba(140, 108, 255, 0.28));
-  border: 1px solid rgba(255, 255, 255, 0.18);
-  color: #f8e5d0;
+  background: linear-gradient(145deg, rgba(56, 201, 154, 0.24), rgba(230, 179, 133, 0.22));
+  border: 1px solid rgba(244, 247, 245, 0.16);
+  color: #dff8ee;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -200,11 +198,11 @@
 
 .iris-honor-btn:hover {
   transform: translateY(-2px);
-  border-color: rgba(230, 179, 133, 0.62);
+  border-color: rgba(56, 201, 154, 0.46);
   box-shadow:
-    0 22px 46px rgba(0, 0, 0, 0.6),
-    0 0 28px rgba(140, 108, 255, 0.26),
-    inset 0 1px 0 rgba(255, 255, 255, 0.24);
+    0 22px 46px rgba(0, 0, 0, 0.56),
+    0 0 24px rgba(56, 201, 154, 0.22),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
 }
 
 .iris-honor-btn:hover .iris-honor-btn-glow {
@@ -216,7 +214,7 @@
 }
 
 .iris-honor-btn:focus-visible {
-  outline: 2px solid var(--iris-amber);
+  outline: 2px solid var(--iris-accent);
   outline-offset: 4px;
 }
 
@@ -232,21 +230,20 @@
   justify-content: center;
 }
 
-/* QR Zoom & Honor Modals (portaled to document.body) */
 .iris-qr-modal-backdrop,
 .iris-honor-backdrop {
-  --iris-surface: #14141e;
-  --iris-line: rgba(255, 255, 255, 0.09);
-  --iris-text: #f6f4ef;
-  --iris-muted: #b4b2c4;
-  --iris-violet: #8c6cff;
+  --iris-surface: #121a1a;
+  --iris-line: rgba(244, 247, 245, 0.12);
+  --iris-text: #f4f7f5;
+  --iris-muted: #b6c5bf;
+  --iris-accent: #38c99a;
   --iris-amber: #e6b385;
-  --iris-sage: #8bc9a8;
-  --iris-steel: #8cb7d4;
+  --iris-sage: #6fd4aa;
+  --iris-steel: #8cbcc8;
   position: fixed;
   inset: 0;
   z-index: 12000;
-  background: rgba(7, 7, 12, 0.84);
+  background: rgba(7, 11, 11, 0.84);
   backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
   display: flex;
@@ -305,41 +302,40 @@
   border-radius: 999px;
   font-size: 13.5px;
   font-weight: 600;
-  background: rgba(230, 179, 133, 0.18);
-  border: 1px solid rgba(230, 179, 133, 0.42);
-  color: #f8eadc;
+  background: #0d825f;
+  border: 1px solid rgba(56, 201, 154, 0.35);
+  color: #ffffff;
   text-decoration: none;
   cursor: pointer;
   transition: background-color 180ms ease, color 180ms ease;
 }
 
 .iris-qr-btn:hover {
-  background: rgba(230, 179, 133, 0.3);
+  background: #109b72;
   color: #ffffff;
 }
 
 .iris-qr-btn--ghost {
-  background: rgba(255, 255, 255, 0.06);
-  border-color: rgba(255, 255, 255, 0.16);
-  color: #d6d4e0;
+  background: rgba(244, 247, 245, 0.06);
+  border-color: var(--iris-line);
+  color: #d6e0dc;
 }
 
 .iris-qr-btn--ghost:hover {
-  background: rgba(255, 255, 255, 0.12);
+  background: rgba(244, 247, 245, 0.12);
   color: #ffffff;
 }
 
-/* Dev Team Honor Modal */
 .iris-honor-modal {
   width: 100%;
   max-width: 920px;
   max-height: min(88dvh, 820px);
-  border-radius: 26px;
-  background: linear-gradient(165deg, #161622 0%, #101019 100%);
-  border: 1px solid rgba(230, 179, 133, 0.24);
+  border-radius: 24px;
+  background: linear-gradient(165deg, #141d1c 0%, #0d1414 100%);
+  border: 1px solid var(--iris-line);
   box-shadow:
     0 32px 96px rgba(0, 0, 0, 0.72),
-    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
   color: var(--iris-text);
   display: flex;
   flex-direction: column;
@@ -362,7 +358,7 @@
   font-weight: 700;
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: var(--iris-amber);
+  color: var(--iris-accent);
 }
 
 .iris-honor-title {
@@ -417,7 +413,7 @@
   font-family: var(--font-display, 'Be Vietnam Pro', sans-serif);
   font-size: 20px;
   font-weight: 700;
-  color: var(--iris-amber);
+  color: var(--iris-accent);
 }
 
 .iris-honor-metric span {
@@ -444,19 +440,6 @@
   gap: 10px;
 }
 
-.iris-honor-card[data-accent='iris'] {
-  border-color: rgba(140, 108, 255, 0.26);
-}
-.iris-honor-card[data-accent='amber'] {
-  border-color: rgba(230, 179, 133, 0.28);
-}
-.iris-honor-card[data-accent='sage'] {
-  border-color: rgba(139, 201, 168, 0.26);
-}
-.iris-honor-card[data-accent='steel'] {
-  border-color: rgba(140, 183, 212, 0.26);
-}
-
 .iris-honor-card-top {
   display: flex;
   align-items: center;
@@ -467,16 +450,16 @@
   width: 36px;
   height: 36px;
   border-radius: 10px;
-  background: rgba(255, 255, 255, 0.06);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  color: var(--iris-amber);
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--iris-line);
+  color: var(--iris-accent);
   display: inline-flex;
   align-items: center;
   justify-content: center;
 }
 
-.iris-honor-card[data-accent='iris'] .iris-honor-card-icon {
-  color: #c2b0ff;
+.iris-honor-card[data-accent='amber'] .iris-honor-card-icon {
+  color: var(--iris-amber);
 }
 .iris-honor-card[data-accent='sage'] .iris-honor-card-icon {
   color: var(--iris-sage);
@@ -495,7 +478,7 @@
   margin: 0;
   font-size: 12px;
   font-weight: 600;
-  color: var(--iris-amber);
+  color: var(--iris-accent);
 }
 
 .iris-honor-card-title {
