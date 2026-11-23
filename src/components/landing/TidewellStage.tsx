@@ -11,6 +11,8 @@ import {
   type ShowcaseLibraryKind,
 } from '../../data/reelmarkCarouselData';
 import { PinUIPlayground } from '../pinui';
+import { SandboxPreview } from '../../features/explore/SandboxPreview';
+import { buildMotionThemeOverrideCss } from '../../features/explore/catalog';
 import { usePrefersReducedMotion } from './useLandingMotion';
 import './tidewell.css';
 
@@ -29,7 +31,26 @@ export {
 
 interface MotionFullEntry {
   liveHtml?: string;
+  css?: string;
   promptText?: string;
+}
+
+function splitLiveHtmlCss(rawLiveHtml: string | undefined, extraCss?: string): { html: string; css: string } | null {
+  if (!rawLiveHtml || rawLiveHtml.trim().length === 0) return null;
+  const isFullDoc = /^\s*(?:<!doctype\s+html|<html[\s>])/i.test(rawLiveHtml);
+  if (isFullDoc) {
+    return { html: rawLiveHtml.trim(), css: extraCss?.trim() || '' };
+  }
+  const styleBlocks: string[] = [];
+  if (extraCss && extraCss.trim()) styleBlocks.push(extraCss.trim());
+  const html = rawLiveHtml
+    .replace(/<style[^>]*>([\s\S]*?)<\/style>/gi, (_m, cssBody: string) => {
+      if (cssBody && cssBody.trim()) styleBlocks.push(cssBody.trim());
+      return '';
+    })
+    .trim();
+  if (!html) return null;
+  return { html, css: styleBlocks.join('\n\n') };
 }
 
 let motionFullCache: Record<string, MotionFullEntry> | null = null;
@@ -95,6 +116,8 @@ export const TidewellStage: React.FC<TidewellStageProps> = () => {
   const [modalMode, setModalMode] = useState<'interactive' | 'video'>('interactive');
   const [pinuiModalTheme, setPinuiModalTheme] = useState<'dark' | 'light'>(theme);
   const [liveHtmlContent, setLiveHtmlContent] = useState<string | null>(null);
+  const [liveCssContent, setLiveCssContent] = useState<string>('');
+  const [fullPromptContent, setFullPromptContent] = useState<string | null>(null);
   const [liveHtmlLoading, setLiveHtmlLoading] = useState(false);
   const [readyVideos, setReadyVideos] = useState<Record<string, boolean>>({});
 
@@ -127,6 +150,8 @@ export const TidewellStage: React.FC<TidewellStageProps> = () => {
   useEffect(() => {
     if (!selectedCard) {
       setLiveHtmlContent(null);
+      setLiveCssContent('');
+      setFullPromptContent(null);
       setLiveHtmlLoading(false);
       return undefined;
     }
@@ -141,19 +166,25 @@ export const TidewellStage: React.FC<TidewellStageProps> = () => {
     if (selectedCard.library === 'PinUI') {
       setModalMode('interactive');
       setLiveHtmlContent(null);
+      setLiveCssContent('');
+      setFullPromptContent(null);
       setLiveHtmlLoading(false);
     } else if (selectedCard.hasLiveHtml && selectedCard.motionsitesSlug) {
       setModalMode('interactive');
       setLiveHtmlContent(null);
+      setLiveCssContent('');
+      setFullPromptContent(null);
       setLiveHtmlLoading(true);
       let cancelled = false;
       void fetchMotionSitesFull().then((items) => {
         if (cancelled) return;
         const entry = items[selectedCard.motionsitesSlug!];
-        const html = entry?.liveHtml ?? null;
-        setLiveHtmlContent(html);
+        const parts = splitLiveHtmlCss(entry?.liveHtml, entry?.css);
+        setLiveHtmlContent(parts?.html ?? null);
+        setLiveCssContent(parts?.css ?? '');
+        setFullPromptContent(entry?.promptText ?? null);
         setLiveHtmlLoading(false);
-        if (!html) setModalMode('video');
+        if (!parts?.html) setModalMode('video');
       });
       return () => {
         cancelled = true;
@@ -162,6 +193,8 @@ export const TidewellStage: React.FC<TidewellStageProps> = () => {
     } else {
       setModalMode('video');
       setLiveHtmlContent(null);
+      setLiveCssContent('');
+      setFullPromptContent(null);
       setLiveHtmlLoading(false);
     }
 
@@ -595,7 +628,7 @@ export const TidewellStage: React.FC<TidewellStageProps> = () => {
                         aria-pressed={modalMode === 'video'}
                         onClick={() => setModalMode('video')}
                       >
-                        Video gốc
+                        {selectedCard.videoUrl ? 'Video & Prompt' : 'Prompt gốc'}
                       </button>
                     </div>
                   )}
@@ -607,10 +640,18 @@ export const TidewellStage: React.FC<TidewellStageProps> = () => {
                       <PinUIPlayground itemId={selectedCard.sourceId} theme={pinuiModalTheme} />
                     </div>
                   ) : modalMode === 'interactive' && liveHtmlContent ? (
-                    <iframe
-                      title={`Trình diễn gốc ${selectedCard.title}`}
-                      srcDoc={liveHtmlContent}
-                      sandbox="allow-scripts"
+                    <SandboxPreview
+                      title={selectedCard.title}
+                      html={liveHtmlContent}
+                      css={[
+                        liveCssContent,
+                        buildMotionThemeOverrideCss(liveHtmlContent, theme),
+                      ]
+                        .filter(Boolean)
+                        .join('\n\n')}
+                      theme={theme}
+                      viewport={1440}
+                      nonce={0}
                       className="rm-modal-iframe"
                     />
                   ) : modalMode === 'interactive' && liveHtmlLoading ? (
@@ -618,23 +659,31 @@ export const TidewellStage: React.FC<TidewellStageProps> = () => {
                   ) : (
                     <div className="rm-modal-video-grid">
                       <div className="rm-modal-video-wrap">
-                        <video
-                          key={selectedCard.videoUrl}
-                          src={selectedCard.videoUrl}
-                          poster={selectedCard.imageUrl || selectedCard.fallbackUrl}
-                          controls
-                          autoPlay
-                          loop
-                          muted
-                          playsInline
-                          className="rm-modal-video"
-                        />
+                        {selectedCard.videoUrl ? (
+                          <video
+                            key={selectedCard.videoUrl}
+                            src={selectedCard.videoUrl}
+                            poster={selectedCard.imageUrl || selectedCard.fallbackUrl}
+                            controls
+                            autoPlay
+                            loop
+                            muted
+                            playsInline
+                            className="rm-modal-video"
+                          />
+                        ) : (
+                          <img
+                            src={selectedCard.imageUrl || selectedCard.fallbackUrl}
+                            alt={selectedCard.title}
+                            className="rm-modal-video"
+                          />
+                        )}
                       </div>
                       <div className="rm-modal-spec">
                         <span className="rm-modal-spec-label">
                           Đặc tả kỹ thuật · {selectedCard.library}
                         </span>
-                        <pre className="rm-modal-spec-pre">{selectedCard.promptText}</pre>
+                        <pre className="rm-modal-spec-pre">{fullPromptContent || selectedCard.promptText}</pre>
                       </div>
                     </div>
                   )}

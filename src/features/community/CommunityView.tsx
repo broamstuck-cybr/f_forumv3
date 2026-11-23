@@ -159,7 +159,6 @@ export function computeFeedRankScore(
   );
   const affinityMultiplier = (1 + topicMatches * 0.35) * (followed ? 1.25 : 1);
 
-  // Creator diversity boost: prevent single author from flooding consecutive slots
   const authorPriorCount =
     input.authorPostCountInWindow ??
     (ctx.recentAuthorOccurrences?.[input.authorHandle.toLowerCase()] ?? 0);
@@ -953,7 +952,6 @@ export const CommunityView: React.FC = () => {
       return Date.parse(b.createdAt) - Date.parse(a.createdAt);
     });
 
-    // Creator diversity boost: interleave so one author doesn't flood consecutive slots
     if (sorted.length <= 2) return sorted;
     const diversified: CommunityPost[] = [];
     const remaining = [...sorted];

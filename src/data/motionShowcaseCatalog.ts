@@ -22,6 +22,86 @@ export interface MotionMarqueeItem {
 
 export const MOTION_MARQUEE_ITEMS: MotionMarqueeItem[] = [
   {
+    "id": "ms-nike-hover",
+    "row": 0,
+    "title": "Nike Hover",
+    "category": "Features",
+    "imageUrl": "/assets/motion-posters/nike-hover.jpg",
+    "videoUrl": "",
+    "specs": {
+      "layout": "Features",
+      "motion": "Live HTML + TSX + Full Prompt",
+      "responsive": "390px / 768px / 1440px",
+      "durationMs": 420,
+      "easing": "cubic-bezier(0.22, 1, 0.36, 1)"
+    },
+    "tags": [
+      "Features",
+      "features"
+    ],
+    "promptText": "Create a single full-viewport (`h-[100dvh]`) Nike-branded section in React + Tailwind CSS + GSAP. It must be **fully mobile responsive**. The app requires `react-player` and `gsap` installed via npm.\n\n---\n\n### 1. Dependencies to Install\nInstall `react-player` and `gsap`.\n\n### 2. Globals & Configuration (`src/index.css`)\nReplace `index.css` with this exact Tailwind v4 and Google Fonts configuration:\n```css\n@import url('https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Manrope:wght@400;500;600;700&display=swap');\n@import \"tailwindcss\";\n\n@theme {\n  --font-sans: \"Manrope\", "
+  },
+  {
+    "id": "ms-monolith-hero",
+    "row": 1,
+    "title": "Monolith Hero",
+    "category": "Architecture",
+    "imageUrl": "https://d2ol7oe51mr4n9.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/b5f79c5a-2ebd-41ef-865e-24c660ac98bd.png",
+    "videoUrl": "https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260928_024808_abbfad57-4496-4906-9abc-49f0d153d287.mp4",
+    "specs": {
+      "layout": "Architecture",
+      "motion": "Live HTML + MP4 Trailer + Full Prompt",
+      "responsive": "390px / 768px / 1440px",
+      "durationMs": 420,
+      "easing": "cubic-bezier(0.22, 1, 0.36, 1)"
+    },
+    "tags": [
+      "Architecture",
+      "hero"
+    ],
+    "promptText": "# Prompt: recreate the Stratum hero page exactly\n\nRecreate this exact single-page real-estate hero site. This is a fidelity task, not a redesign. Implement the supplied content, assets, CSS, animations and interactions exactly as specified. Build only this one page. Keep it local; do not publish or deploy it. Do not add sections, headers, footers, cards, forms, extra buttons, extra links, extra animations or extra copy.\n\nThe complete `index.html` appended at the end of this prompt is the authoritative specification. Copy it byte-for-byte. Everything above it describes that file so you can chec"
+  },
+  {
+    "id": "ms-pet-diagnostics",
+    "row": 2,
+    "title": "Pet Diagnostics",
+    "category": "Healthcare",
+    "imageUrl": "https://d2ol7oe51mr4n9.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/193afe38-41fa-4454-9d48-ed154b66d17c.png",
+    "videoUrl": "https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260814_034538_de4032ce-5035-473d-a5b1-0e2224635a6a.mp4",
+    "specs": {
+      "layout": "Healthcare",
+      "motion": "Live HTML + MP4 Trailer + Full Prompt",
+      "responsive": "390px / 768px / 1440px",
+      "durationMs": 420,
+      "easing": "cubic-bezier(0.22, 1, 0.36, 1)"
+    },
+    "tags": [
+      "Healthcare",
+      "features"
+    ],
+    "promptText": "Build a **single self-contained `index.html`** file. No build step, no framework, no external\nJS, no local image files. All CSS in one `<style>` block in `<head>`; one small `<script>`\nbefore `</body>`. Match every number below exactly — the layout is measurement-driven, not\neyeballed.\n\n---\n\n## 1. Assets (remote only — use these exact URLs)\n\n**Hero video (desktop, autoplaying background) — 1928×1076, 8.04 s, H.264 MP4, silent:**\n```\nhttps://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260814_034538_de4032ce-5035-473d-a5b1-0e2224635a6a.mp4\n```\n\n**Hero still (desktop) — dou"
+  },
+  {
+    "id": "ms-stillmind",
+    "row": 3,
+    "title": "Stillmind",
+    "category": "Hero",
+    "imageUrl": "/assets/motion-posters/halden-port-hero.jpg",
+    "videoUrl": "https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260702_081127_0992a171-d3c6-4978-8213-0ec5df8b6d63.mp4",
+    "specs": {
+      "layout": "Hero",
+      "motion": "Live HTML + MP4 Trailer + Full Prompt",
+      "responsive": "390px / 768px / 1440px",
+      "durationMs": 420,
+      "easing": "cubic-bezier(0.22, 1, 0.36, 1)"
+    },
+    "tags": [
+      "Hero",
+      "hero"
+    ],
+    "promptText": "Create a fullscreen cinematic hero section for a mindfulness/focus app called \"Lumora\" using React, Tailwind CSS, and Lucide React icons.\n\n## Font\n\nUse **Instrument Serif** (Google Fonts, italic for the logo). Load it in index.html:\n```\n<link rel=\"preconnect\" href=\"https://fonts.googleapis.com\">\n<link rel=\"preconnect\" href=\"https://fonts.gstatic.com\" crossorigin>\n<link href=\"https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&display=swap\" rel=\"stylesheet\">\n```\n\nSet `font-family: 'Instrument Serif', serif` on html/body. Use `system-ui, sans-serif` inline for body text (subtext, "
+  },
+  {
     "id": "ms-driftlab-hero",
     "row": 0,
     "title": "Jellyfish Scroll",
@@ -30,7 +110,7 @@ export const MOTION_MARQUEE_ITEMS: MotionMarqueeItem[] = [
     "videoUrl": "https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20261102_045327_a6584765-3154-43e6-b1c9-4e574f83a811.mp4",
     "specs": {
       "layout": "Interactive",
-      "motion": "MP4 Preview + Interactive Prompt",
+      "motion": "Live HTML + MP4 Trailer + Full Prompt",
       "responsive": "390px / 768px / 1440px",
       "durationMs": 420,
       "easing": "cubic-bezier(0.22, 1, 0.36, 1)"
@@ -42,15 +122,516 @@ export const MOTION_MARQUEE_ITEMS: MotionMarqueeItem[] = [
     "promptText": "# Driftlab — Jellyfish Scroll Hero (exact recreation prompt)\n\nGive me a single-file, scroll-driven hero called **Driftlab**. A pink jellyfish floats in the middle of a lilac sky. Huge condensed black words arrive big from the lower right on a curve, pass behind the jellyfish, pause in the centre and leave to the left. After the last word falls away, the jellyfish grows and two text panels appear in turn while it moves to the other side.\n\nPlain HTML, CSS and one vanilla script with raw WebGL2 in one file, with no libraries. The only external resources are the Google Fonts and the three media UR"
   },
   {
-    "id": "ms-daisy-wild",
+    "id": "ms-macos-widget",
     "row": 1,
+    "title": "macOS widget",
+    "category": "SaaS",
+    "imageUrl": "https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20261014_121838_c97d0940-f430-4304-8573-4f47ee44f447.png",
+    "videoUrl": "https://d2ol7oe51mr4n9.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/4d01c727-d9c5-47c8-a778-35a451ffd39f.mp4",
+    "specs": {
+      "layout": "SaaS",
+      "motion": "Live HTML + MP4 Trailer + Full Prompt",
+      "responsive": "390px / 768px / 1440px",
+      "durationMs": 420,
+      "easing": "cubic-bezier(0.22, 1, 0.36, 1)"
+    },
+    "tags": [
+      "SaaS",
+      "hero"
+    ],
+    "promptText": "# Prompt: Recreate the Driftbar Meadow Footer (exact spec)\n\nCopy everything below the line into your AI coding tool.\n\n---\n\nBuild a single-file `index.html` (inline CSS, no frameworks, no build step) that recreates the **Driftbar** footer **exactly** as specified. It is one full-viewport footer:\n- a pale paper top holding a brand block and three link columns\n- a looping video of a blue-hour meadow (lavender mist, fireflies, first stars) filling the lower half and fading into the paper\n- a giant frosted-glass \"Driftbar\" wordmark sinking into lavender fog at the bottom\n\nFollow every value literal"
+  },
+  {
+    "id": "ms-guardnet-benefits",
+    "row": 2,
+    "title": "Guardnet Benefits",
+    "category": "Benefits",
+    "imageUrl": "/assets/motion-posters/guardnet-benefits.jpg",
+    "videoUrl": "https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260421_072701_f6a01abb-eb30-4559-9d6e-774362defbc3.mp4",
+    "specs": {
+      "layout": "Benefits",
+      "motion": "Live HTML + TSX + MP4 Trailer + Full Prompt",
+      "responsive": "390px / 768px / 1440px",
+      "durationMs": 420,
+      "easing": "cubic-bezier(0.22, 1, 0.36, 1)"
+    },
+    "tags": [
+      "Benefits",
+      "features"
+    ],
+    "promptText": "Build a single React + TypeScript section using Tailwind CSS. No extra libraries. Fully mobile-responsive. Black background, white text.\n\n## Global Prerequisites\n\n- Font: `@import url(https://db.onlinewebfonts.com/c/e55e9079ee863276569c8a68d776ef04?family=Futura+Md+BT+Medium);`\n- Body: `font-family: 'Futura Md BT Medium', system-ui, -apple-system, sans-serif; background-color: #000; color: #fff; -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale;`\n- Section sits inside a `w-full max-w-[1400px]` wrapper on a black page.\n\n---\n\n## BenefitsSection\n\nContainer: `relative w-full "
+  },
+  {
+    "id": "ms-aurex-finance",
+    "row": 3,
+    "title": "Aurex Finance",
+    "category": "Fintech",
+    "imageUrl": "/assets/motion-posters/aurex-finance.jpg",
+    "videoUrl": "https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260813_115057_94c3699b-0fd1-4124-bcf3-3626bb8c1f77.mp4",
+    "specs": {
+      "layout": "Fintech",
+      "motion": "Live HTML + JSX + MP4 Trailer + Full Prompt",
+      "responsive": "390px / 768px / 1440px",
+      "durationMs": 420,
+      "easing": "cubic-bezier(0.22, 1, 0.36, 1)"
+    },
+    "tags": [
+      "Fintech",
+      "hero"
+    ],
+    "promptText": "Build a **single full-screen hero section** for a DeFi / private-banking landing page called **LŪMEN // ÍNDEX**. Use **React 18 + TypeScript + Vite + Tailwind CSS**, with `lucide-react` for icons. The entire page is ONE component rendering ONE `<section>` that fills the viewport — no scrolling, no other sections.\n\n## 0. Project setup\n\nDependencies: `react@^18.3.1`, `react-dom@^18.3.1`, `lucide-react@^0.446.0`. Dev: `vite@^5.4.2`, `@vitejs/plugin-react`, `tailwindcss@^3.4.1`, `postcss`, `autoprefixer`, `typescript@^5.5.3`.\n\n`tailwind.config.js` — leave the theme completely unextended. Nearly ev"
+  },
+  {
+    "id": "ms-gold-standard",
+    "row": 0,
+    "title": "Gold Standard",
+    "category": "Portfolio",
+    "imageUrl": "/assets/motion-posters/gold-standard.jpg",
+    "videoUrl": "https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260930_000857_e98f4291-826d-46eb-9a28-8022b5fb7e62.mp4",
+    "specs": {
+      "layout": "Portfolio",
+      "motion": "Live HTML + JS + MP4 Trailer + Full Prompt",
+      "responsive": "390px / 768px / 1440px",
+      "durationMs": 420,
+      "easing": "cubic-bezier(0.22, 1, 0.36, 1)"
+    },
+    "tags": [
+      "Portfolio",
+      "hero"
+    ],
+    "promptText": "# Prompt: recreate the SOSCALE hero landing page exactly\n\nBuild a single-file, zero-dependency static landing page (`index.html`, with inline `<style>` and two inline `<script>` blocks plus one tiny `<head>` script). The page is one full-viewport hero with no scrolling. Every size and position below is exact. Don't add or remove elements, rename classes or \"improve\" the design. Reproduce it one to one.\n\n---\n\n## 1. Assets\n\n| Asset | Source | Notes |\n|---|---|---|\n| Hero background video | `https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260930_000857_e98f4291-826d-46e"
+  },
+  {
+    "id": "ms-vante-ribbon-hero",
+    "row": 1,
+    "title": "Video Ribbon",
+    "category": "Portfolio",
+    "imageUrl": "/assets/motion-posters/vante-ribbon-hero.jpg",
+    "videoUrl": "https://pub-86dc5b5484314368ac5436a674b0d919.r2.dev/designs/roadster-3d-car-landing.mp4",
+    "specs": {
+      "layout": "Portfolio",
+      "motion": "Live HTML + JS + MP4 Trailer + Full Prompt",
+      "responsive": "390px / 768px / 1440px",
+      "durationMs": 420,
+      "easing": "cubic-bezier(0.22, 1, 0.36, 1)"
+    },
+    "tags": [
+      "Portfolio",
+      "hero"
+    ],
+    "promptText": "# Video Ribbon — Vante Scroll Portfolio Hero (exact recreation prompt)\n\nBuild a single-file, full-viewport, scroll-driven portfolio hero called **Vante**. On a near-black page, the two-part headline `CRAFT IN` / `MOTION` slides across the screen in opposite directions while a continuous ribbon of live video cards spirals around the viewer in 3D. It starts small along the bottom, swings close in a shallow curved arc, wraps around the left edge, runs away along the top and leaves top right. Then the cards land one by one in a calm 3×2 grid.\n\nPlain HTML, CSS and one vanilla ES module in one file."
+  },
+  {
+    "id": "ms-planetary-pulse",
+    "row": 2,
+    "title": "Planetary Pulse",
+    "category": "Science",
+    "imageUrl": "/assets/motion-posters/planetary-pulse.jpg",
+    "videoUrl": "https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260816_125506_3a597378-ec85-4ebd-bd22-03b45508ac62.mp4",
+    "specs": {
+      "layout": "Science",
+      "motion": "Live HTML + JS + MP4 Trailer + Full Prompt",
+      "responsive": "390px / 768px / 1440px",
+      "durationMs": 420,
+      "easing": "cubic-bezier(0.22, 1, 0.36, 1)"
+    },
+    "tags": [
+      "Science",
+      "hero"
+    ],
+    "promptText": "Build a single-screen, non-scrolling hero landing page called **Terranova — Signals from the Deep Green**. It is a full-bleed looping background video with a real-time refractive \"liquid glass\" card floating over it, plus a slide-in fullscreen menu. Vanilla HTML/CSS/JS only — **no frameworks, no build step, no Three.js, no WebGL, no canvas 3D**. The glass effect is done entirely with an SVG filter plus a 2D canvas that re-draws the video every frame.\n\nProduce exactly five files: `index.html`, `styles.css`, `glass-card.js`, `ui.js`, `serve.mjs`.\n\n---\n\n## 1. Global setup\n\n### Fonts\nIn `<head>`, "
+  },
+  {
+    "id": "ms-real-time-alerts",
+    "row": 3,
+    "title": "Real-Time Alerts",
+    "category": "Sign in",
+    "imageUrl": "/assets/motion-posters/real-time-alerts.jpg",
+    "videoUrl": "https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260813_052122_e77a27e6-17f1-4794-889b-3ceaa0e9e8cb.mp4",
+    "specs": {
+      "layout": "Sign in",
+      "motion": "Live HTML + JS + MP4 Trailer + Full Prompt",
+      "responsive": "390px / 768px / 1440px",
+      "durationMs": 420,
+      "easing": "cubic-bezier(0.22, 1, 0.36, 1)"
+    },
+    "tags": [
+      "Sign in",
+      "hero"
+    ],
+    "promptText": "Build a single, self-contained `index.html` file — no build step, no external requests except one video URL, no frameworks, no dependencies. Everything (CSS, JS, SVG) is inline. The file is a pixel-locked recreation of a designed login page, reconstructed from a 1464×949 reference frame. Follow every number exactly; the design is calibrated, not approximate.\n\n## 0. Global rules\n\n- `<!DOCTYPE html>`, `<html lang=\"en\">`.\n- `<meta name=\"viewport\" content=\"width=device-width, initial-scale=1, viewport-fit=cover\">`\n- `<title>Signal — Log in</title>`\n- `html,body{height:100%;background:var(--page)}`"
+  },
+  {
+    "id": "ms-ai-runtime",
+    "row": 0,
+    "title": "AI Runtime",
+    "category": "AI",
+    "imageUrl": "/assets/motion-posters/ai-runtime.jpg",
+    "videoUrl": "https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260809_012548_ef22562c-c0ae-4816-ad9d-f8922af4e6a7.mp4",
+    "specs": {
+      "layout": "AI",
+      "motion": "Live HTML + MP4 Trailer + Full Prompt",
+      "responsive": "390px / 768px / 1440px",
+      "durationMs": 420,
+      "easing": "cubic-bezier(0.22, 1, 0.36, 1)"
+    },
+    "tags": [
+      "AI",
+      "hero"
+    ],
+    "promptText": "Rebuild this as a **single-viewport, full-bleed video-background landing page** using static **HTML + CSS + vanilla JS** (no framework). Match the current implementation exactly. File structure:\n\n```\nindex.html\nstyles.css\nmain.js\nassets/logo.webp\nfonts/GeistPixel-Circle.woff2\n```\n\nDocument title: `Intelligence Designed To Evolve`.  \nBody: black `#000`, `overflow: hidden`, height `100vh` / `100dvh`, Inter for UI, retro dot-matrix display font for headline + stat symbols. Antialiased text.\n\n---\n\n## Exact background video (required)\n\nFull-viewport cover video behind all UI (`position: absolute; i"
+  },
+  {
+    "id": "ms-data-signal",
+    "row": 1,
+    "title": "Data Signal",
+    "category": "Analytics",
+    "imageUrl": "/assets/motion-posters/data-signal.jpg",
+    "videoUrl": "https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260808_064556_051587f1-74a1-4336-8c05-4dde3594ed05.mp4",
+    "specs": {
+      "layout": "Analytics",
+      "motion": "Live HTML + MP4 Trailer + Full Prompt",
+      "responsive": "390px / 768px / 1440px",
+      "durationMs": 420,
+      "easing": "cubic-bezier(0.22, 1, 0.36, 1)"
+    },
+    "tags": [
+      "Analytics",
+      "hero"
+    ],
+    "promptText": "Recreate this page **pixel-faithfully** as a single static `index.html` (inline CSS + JS, no framework). Match structure, copy, spacing tokens, glass, motion, fonts, and media exactly. Do not invent extra sections, stats, cards, or marketing blocks. Full-viewport dark landing only — no page scroll (`html, body { overflow: hidden; background: #000 }`).\n\n## Product / brand\n- Brand: **Vantage**\n- Document title: `Stop Digging Through Dashboards`\n- Theme color: `#000000`\n- `color-scheme: dark`\n- One composition: full-bleed cinematic background + left hero stack + bottom-right glass demo card. No i"
+  },
+  {
+    "id": "ms-cyber-layer",
+    "row": 2,
+    "title": "Cyber Layer",
+    "category": "Cybersecurity",
+    "imageUrl": "/assets/motion-posters/cyber-layer.jpg",
+    "videoUrl": "https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260809_132544_b6ef0174-ed95-45ad-9a2f-ccb8acfbdce8.mp4",
+    "specs": {
+      "layout": "Cybersecurity",
+      "motion": "Live HTML + MP4 Trailer + Full Prompt",
+      "responsive": "390px / 768px / 1440px",
+      "durationMs": 420,
+      "easing": "cubic-bezier(0.22, 1, 0.36, 1)"
+    },
+    "tags": [
+      "Cybersecurity",
+      "hero"
+    ],
+    "promptText": "Build a **single self-contained `index.html`** that recreates this cybersecurity landing page **pixel-faithfully**. Fixed fullscreen black stage, left-locked typography, right-side looping video atmosphere, one-shot entrance choreography, and a mobile burger overlay. No frameworks. No scroll. No cards. No purple. No rounded pills.\n\n---\n\n## 1. Document shell\n\n```html\n<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n<meta charset=\"utf-8\">\n<meta name=\"viewport\" content=\"width=device-width, initial-scale=1, viewport-fit=cover\">\n<title>Security built into every system layer</title>\n```\n\n- `html, body { heig"
+  },
+  {
+    "id": "ms-phoenix-ignis",
+    "row": 3,
+    "title": "Phoenix ignis",
+    "category": "3D",
+    "imageUrl": "https://images.higgs.ai/?default=1&output=webp&url=https%3A%2F%2Fd8j0ntlcm91z4.cloudfront.net%2Fuser_38xzZboKViGWJOttwIXH07lWA1P%2Fhf_20261031_020340_4815bb8d-68c3-48c4-ad05-6307d085e896.png",
+    "videoUrl": "",
+    "specs": {
+      "layout": "3D",
+      "motion": "Live HTML + JS + Full Prompt",
+      "responsive": "390px / 768px / 1440px",
+      "durationMs": 420,
+      "easing": "cubic-bezier(0.22, 1, 0.36, 1)"
+    },
+    "tags": [
+      "3D",
+      "hero"
+    ],
+    "promptText": "# Myth Atlas ‚Äî Interactive 3D Creature Field Guide (exact recreation prompt)\n\nBuild a single-file, full-viewport web app called **Myth Atlas**: an interactive 3D field guide to creatures that never existed. It looks like a museum specimen plate on warm sandstone paper. A phoenix and a kraken sit in the centre as real textured 3D models you can drag, zoom and spin. A left sidebar, two specimen tabs, and a right catalogue card surround them. Clicking a tab flies one model out and springs the other in, while the card's copy swaps with a staggered rise. A sun button flips the whole page and the "
+  },
+  {
+    "id": "ms-redline-mars-hero",
+    "row": 0,
+    "title": "Mars Trips",
+    "category": "Travel",
+    "imageUrl": "https://images.higgs.ai/?default=1&output=webp&url=https%3A%2F%2Fd8j0ntlcm91z4.cloudfront.net%2Fuser_38xzZboKViGWJOttwIXH07lWA1P%2Fhf_20261031_030432_a1948696-c1d5-4468-845e-7d1291f80943.png",
+    "videoUrl": "",
+    "specs": {
+      "layout": "Travel",
+      "motion": "Live HTML + JS + Full Prompt",
+      "responsive": "390px / 768px / 1440px",
+      "durationMs": 420,
+      "easing": "cubic-bezier(0.22, 1, 0.36, 1)"
+    },
+    "tags": [
+      "Travel",
+      "hero"
+    ],
+    "promptText": "# Redline — Mars Trips Three-Step 3D Hero (exact recreation prompt)\n\nBuild a single-file, full-viewport landing hero for **Redline**, a space-travel brand selling seats to Mars. It is one continuous three-step experience with no page loads:\n\n1. **MARS:** a real 3D Mars swells from a speck in front of a giant white word, on a burnt-orange background.\n2. **THARSIS:** the planet slides left and turns, a region lights up crimson like a territory on a map, and a timeline of landing sites appears on the right with a hover photo card.\n3. **Landing:** the camera dives into the planet, whites out in a "
+  },
+  {
+    "id": "ms-halden-port-hero",
+    "row": 1,
+    "title": "Halden AI Teammate Hero",
+    "category": "AI",
+    "imageUrl": "https://images.higgs.ai/?default=1&output=webp&url=https%3A%2F%2Fd8j0ntlcm91z4.cloudfront.net%2Fuser_38xzZboKViGWJOttwIXH07lWA1P%2Fhf_20261029_050506_a830ff21-4c71-4272-bc39-b61cacb54463.png",
+    "videoUrl": "",
+    "specs": {
+      "layout": "AI",
+      "motion": "Live HTML + Full Prompt",
+      "responsive": "390px / 768px / 1440px",
+      "durationMs": 420,
+      "easing": "cubic-bezier(0.22, 1, 0.36, 1)"
+    },
+    "tags": [
+      "AI",
+      "hero"
+    ],
+    "promptText": "# Prompt: Halden, AI teammate for port operators (bowl-glow scroll hero)\n\nGive me the superdetailed exact prompt to recreate this page exactly as it is, including the correct asset URL, all elements, animations, and fonts. This is that prompt.\n\n## What it is\n\nBuild a B2B SaaS landing hero for a fictional maritime-logistics AI company, **Halden**, whose AI agent is called **Hal**. Use one HTML file with plain CSS and vanilla JavaScript: no framework, no build step, no libraries.\n\nThe page is three scenes stacked in one scroll:\n\n1. **Hero.** A white page with a soft, rounded, **bowl-shaped sky-c"
+  },
+  {
+    "id": "ms-orbit-flora",
+    "row": 2,
+    "title": "Orbit Flora",
+    "category": "AI",
+    "imageUrl": "https://images.higgs.ai/?default=1&output=webp&url=https%3A%2F%2Fd8j0ntlcm91z4.cloudfront.net%2Fuser_38xzZboKViGWJOttwIXH07lWA1P%2Fhf_20260808_192942_e1086505-d7da-433b-a59b-8220f4e6c808.png",
+    "videoUrl": "",
+    "specs": {
+      "layout": "AI",
+      "motion": "Live HTML + Full Prompt",
+      "responsive": "390px / 768px / 1440px",
+      "durationMs": 420,
+      "easing": "cubic-bezier(0.22, 1, 0.36, 1)"
+    },
+    "tags": [
+      "AI",
+      "hero"
+    ],
+    "promptText": "Build a **single-file** `index.html` full-viewport poster. No scroll. No frameworks. No redesign. Match layout, type, color, both image URLs, entrance choreography, mobile menu, and mouse morph-reveal **exactly**.\n\n---\n\n## 0. Document shell\n\n```html\n<!doctype html>\n<html lang=\"en\" class=\"anim\">\n<head>\n  <meta charset=\"utf-8\">\n  <meta name=\"viewport\" content=\"width=device-width, initial-scale=1, viewport-fit=cover\">\n  <meta name=\"theme-color\" content=\"#161616\">\n  <title>Orbit — Secure system</title>\n```\n\n- Root `<html>` starts with class `anim`\n- `html, body`: `width/height 100%`, `margin: 0`, "
+  },
+  {
+    "id": "ms-keylight",
+    "row": 3,
+    "title": "Keylight",
+    "category": "Authentication",
+    "imageUrl": "https://d2ol7oe51mr4n9.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/d889cba6-535c-450f-9b74-7270c0e01e9a.webp",
+    "videoUrl": "",
+    "specs": {
+      "layout": "Authentication",
+      "motion": "Live HTML + Full Prompt",
+      "responsive": "390px / 768px / 1440px",
+      "durationMs": 420,
+      "easing": "cubic-bezier(0.22, 1, 0.36, 1)"
+    },
+    "tags": [
+      "Authentication",
+      "hero"
+    ],
+    "promptText": "# Prompt: Recreate the Keylight sign-in page exactly\n\nCopy everything below the line into your AI coding tool.\n\n---\n\nRecreate the **Keylight** sign-in page: one self-contained `index.html` (inline CSS + vanilla JS, no framework, no build step). It must match **exactly**, so reproduce the source at the end byte for byte. Do not restyle, re-time or refactor anything.\n\n## What it is\n\n- **Split screen.**\n  - **Left:** a brand panel about 41% wide on a 1470√ó900 design frame. It holds:\n    - a still of a keyhole cut into a dark navy wall, with warm orange light pouring through it into blue haze\n   "
+  },
+  {
+    "id": "ms-vell-lookbook",
+    "row": 0,
+    "title": "Runway Lookbook",
+    "category": "Interactive",
+    "imageUrl": "https://images.higgs.ai/?default=1&output=webp&url=https%3A%2F%2Fd8j0ntlcm91z4.cloudfront.net%2Fuser_38xzZboKViGWJOttwIXH07lWA1P%2Fhf_20261102_042056_1a704ff7-b0e5-4a9f-bbda-62392b819fb6.png",
+    "videoUrl": "",
+    "specs": {
+      "layout": "Interactive",
+      "motion": "Live HTML + Full Prompt",
+      "responsive": "390px / 768px / 1440px",
+      "durationMs": 420,
+      "easing": "cubic-bezier(0.22, 1, 0.36, 1)"
+    },
+    "tags": [
+      "Interactive",
+      "hero"
+    ],
+    "promptText": "# Maison Vell — Runway Depth Lookbook (exact recreation prompt)\n\nGive me a single-file, full-viewport fashion page called **Maison Vell**. Six models stand in one line that recedes from the right of the screen into a blurred distance on the left. Dragging, scrolling or pressing the arrow keys walks the whole line forward: the front model grows and slides out behind the product column, everyone else takes the next place, and a new model arrives out of the haze at the back. The product column on the right scrolls in sync, and a big look number rolls over at bottom left. It loops forever.\n\nPlain "
+  },
+  {
+    "id": "ms-lumen-roof-hero",
+    "row": 1,
+    "title": "Solar Fog",
+    "category": "Interactive",
+    "imageUrl": "https://images.higgs.ai/?default=1&output=webp&url=https%3A%2F%2Fd8j0ntlcm91z4.cloudfront.net%2Fuser_38xzZboKViGWJOttwIXH07lWA1P%2Fhf_20261102_040343_a73684b4-3f71-4613-a843-c8be80fb1211.png",
+    "videoUrl": "",
+    "specs": {
+      "layout": "Interactive",
+      "motion": "Live HTML + Full Prompt",
+      "responsive": "390px / 768px / 1440px",
+      "durationMs": 420,
+      "easing": "cubic-bezier(0.22, 1, 0.36, 1)"
+    },
+    "tags": [
+      "Interactive",
+      "hero"
+    ],
+    "promptText": "# Lumen Roof — Morning / Night Fog Hero (exact recreation prompt)\n\nGive me a single-file, full-viewport solar company hero called **Lumen Roof**. A charcoal farmhouse with solar panels fills the screen under a big centred headline. A glass Morning / Night toggle sits at the bottom. Clicking it sinks the whole house about a quarter of the screen into rising fog, swaps the time of day while it is hidden, and floats the house back up in the new light, while the sky, fog colour, nav, headline and button change with it.\n\nPlain HTML, CSS and one vanilla script with raw WebGL2 in one file, with no li"
+  },
+  {
+    "id": "ms-living-portrait-hero",
+    "row": 2,
+    "title": "Living Portrait",
+    "category": "Portfolio",
+    "imageUrl": "/assets/motion-posters/orbit-flora.jpg",
+    "videoUrl": "",
+    "specs": {
+      "layout": "Portfolio",
+      "motion": "Live HTML + Full Prompt",
+      "responsive": "390px / 768px / 1440px",
+      "durationMs": 420,
+      "easing": "cubic-bezier(0.22, 1, 0.36, 1)"
+    },
+    "tags": [
+      "Portfolio",
+      "hero"
+    ],
+    "promptText": "Build a 3D Creator portfolio landing page with an interactive living portrait for \"Mina\" using React, TypeScript, Tailwind CSS, Framer Motion, and Lucide React. The page has a dark theme (#0C0C0C background) with the font Kanit (Google Fonts, weights 300-900). The page title is \"Mina -- 3D Creator\".\n\nFONT\nLoad exactly: https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700;800;900&display=swap with preconnect to https://fonts.googleapis.com and https://fonts.gstatic.com (crossorigin).\n\nGLOBAL STYLES\nBackground: #0C0C0C on html, body, #root, and the main wrapper\nFont family: 'K"
+  },
+  {
+    "id": "ms-price-calculator",
+    "row": 3,
+    "title": "Price Calculator",
+    "category": "SaaS",
+    "imageUrl": "/assets/motion-posters/price-calculator.jpg",
+    "videoUrl": "",
+    "specs": {
+      "layout": "SaaS",
+      "motion": "Live HTML + Full Prompt",
+      "responsive": "390px / 768px / 1440px",
+      "durationMs": 420,
+      "easing": "cubic-bezier(0.22, 1, 0.36, 1)"
+    },
+    "tags": [
+      "SaaS",
+      "pricing"
+    ],
+    "promptText": "Recreate Project Estimation Calculator Section\n\nCreate a full-width dark calculator section with id calculator-section. Background: bg-background, padding py-16 md:py-28 px-4 md:px-16, max-width max-w-7xl centered.\n\nHeader: Centered. Small mono uppercase tracking-widest label \"Try project estimation calculator\" in text-muted-foreground. Below it, an h2: \"Get premium website within your budget\" — text-3xl md:text-4xl lg:text-5xl font-normal.\n\nLayout: 2-column grid (grid-cols-1 lg:grid-cols-2), rounded-2xl overflow-hidden, no gap.\n\nLEFT COLUMN (Calculator Form): Background #0D0D0D, padding p-8 l"
+  },
+  {
+    "id": "ms-fernhollow",
+    "row": 0,
+    "title": "Flower Valley",
+    "category": "3D",
+    "imageUrl": "/assets/motion-posters/fernhollow.jpg",
+    "videoUrl": "",
+    "specs": {
+      "layout": "3D",
+      "motion": "Live HTML + JS + Full Prompt",
+      "responsive": "390px / 768px / 1440px",
+      "durationMs": 420,
+      "easing": "cubic-bezier(0.22, 1, 0.36, 1)"
+    },
+    "tags": [
+      "3D",
+      "hero"
+    ],
+    "promptText": "# Fernhollow — Night Flower Valley Hero (exact recreation prompt)\n\nGive me a single-file, full-screen hero for a regenerative design studio called **Fernhollow**. It sits on top of an interactive 3D night valley of glowing flowers. A centred cream headline \"Grown, not built.\" in tall condensed type sits over the valley, with a short caption, a round arrow button, a top nav and a sound toggle.\n\nThe valley is the 3D flower valley from gladeye.com, used with permission. It is not rebuilt. The page runs the original compiled engine: their webpack runtime and chunks, including three.js r154, the va"
+  },
+  {
+    "id": "ms-medusa-jellyfish-hero",
+    "row": 1,
+    "title": "Robot Jellyfish",
+    "category": "3D",
+    "imageUrl": "/assets/motion-posters/medusa-jellyfish-hero.jpg",
+    "videoUrl": "",
+    "specs": {
+      "layout": "3D",
+      "motion": "Live HTML + JS + Full Prompt",
+      "responsive": "390px / 768px / 1440px",
+      "durationMs": 420,
+      "easing": "cubic-bezier(0.22, 1, 0.36, 1)"
+    },
+    "tags": [
+      "3D",
+      "hero",
+      "dashboard"
+    ],
+    "promptText": "# Robot Jellyfish — Medusa JF-4 3D Field Simulator Hero (exact recreation prompt)\n\nBuild a single-file, full-viewport interactive page called **Medusa JF-4**. It is a live three.js field simulator of a robotic jellyfish that you can take apart piece by piece. A huge procedural 3D machine floats in the centre of a pale aqua-white instrument dashboard, and a 25-second looping tour opens each assembly in turn while every gauge on the page reacts.\n\nThere are no images, no video and no model files. Every petal, gear, link and rivet is three.js code. Plain HTML, CSS and one vanilla ES module in one "
+  },
+  {
+    "id": "ms-lifeline-sun-hero",
+    "row": 2,
+    "title": "Sun Timeline",
+    "category": "3D",
+    "imageUrl": "/assets/motion-posters/lifeline-sun-hero.jpg",
+    "videoUrl": "",
+    "specs": {
+      "layout": "3D",
+      "motion": "Live HTML + JS + Full Prompt",
+      "responsive": "390px / 768px / 1440px",
+      "durationMs": 420,
+      "easing": "cubic-bezier(0.22, 1, 0.36, 1)"
+    },
+    "tags": [
+      "3D",
+      "hero"
+    ],
+    "promptText": "# Sun Timeline — Life of the Sun Scrub Hero (exact recreation prompt)\n\nBuild a single-file, full-viewport interactive page called **The Life of the Sun**. It is extremely minimal: a pure black page, one glowing ball in the upper-middle, a soft pool of light under it, a two-line caption, and a thin timeline of fine ticks. Scrubbing moves through ten stages of the Sun's life, from solar nebula to white dwarf. Each scrub physically throws the ball: it whips round, its surface smears into horizontal bands, and the new surface lands within about a quarter of a second while the caption blurs across."
+  },
+  {
+    "id": "ms-cybersecurity-hero",
+    "row": 3,
+    "title": "Cybersecurity Hero",
+    "category": "Hero",
+    "imageUrl": "/assets/motion-posters/cybersecurity-hero.jpg",
+    "videoUrl": "",
+    "specs": {
+      "layout": "Hero",
+      "motion": "Live HTML + Full Prompt",
+      "responsive": "390px / 768px / 1440px",
+      "durationMs": 420,
+      "easing": "cubic-bezier(0.22, 1, 0.36, 1)"
+    },
+    "tags": [
+      "Hero",
+      "hero"
+    ],
+    "promptText": "Build a **single-page React + TypeScript (Vite)** landing hero for a product called **\"Xero\"** that recreates the following section exactly. Use the **Inter** Google Font (weights 300, 400, 500, 600, 700, 800). Do not use Tailwind utility classes for the hero — write plain CSS in a global stylesheet. No purple/indigo branding outside the specified pink-magenta gradient arc.\n\n## Layout & Structure\n\nRender three top-level blocks centered on a black page (`#0a0a0f`), each constrained to `max-width: 1600px`, in this vertical order:\n\n1. **`<nav>`** — sticky-style top bar (not actually sticky, just "
+  },
+  {
+    "id": "ms-solace-faq",
+    "row": 0,
+    "title": "Halftone FAQ",
+    "category": "SaaS",
+    "imageUrl": "/assets/motion-posters/solace-faq.jpg",
+    "videoUrl": "",
+    "specs": {
+      "layout": "SaaS",
+      "motion": "Live HTML + Full Prompt",
+      "responsive": "390px / 768px / 1440px",
+      "durationMs": 420,
+      "easing": "cubic-bezier(0.22, 1, 0.36, 1)"
+    },
+    "tags": [
+      "SaaS",
+      "hero"
+    ],
+    "promptText": "# Solace — Halftone Dot FAQ and Footer (exact recreation prompt)\n\nGive me a single-file closing section for an AI co-pilot product called **Solace**. The section runs a FAQ into the footer. Behind both sits a full-width live grid of round amber dots, sparse and ragged at the top and dense and pale lower down. Every dot swells and shrinks at its own pace, so the field ripples like an audio meter, and dots near the cursor swell. A centred heading and a dark amber glass FAQ accordion sit on top, with a full-width brown glass footer panel at the bottom.\n\nPlain HTML, CSS and one vanilla script with"
+  },
+  {
+    "id": "ms-rocket-cta",
+    "row": 1,
+    "title": "Rocket CTA",
+    "category": "CTA",
+    "imageUrl": "/assets/motion-posters/rocket-cta.jpg",
+    "videoUrl": "https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260314_131748_f2ca2a28-fed7-44c8-b9a9-bd9acdd5ec31.mp4",
+    "specs": {
+      "layout": "CTA",
+      "motion": "TSX + MP4 Trailer + Full Prompt",
+      "responsive": "390px / 768px / 1440px",
+      "durationMs": 420,
+      "easing": "cubic-bezier(0.22, 1, 0.36, 1)"
+    },
+    "tags": [
+      "CTA",
+      "cta"
+    ],
+    "promptText": "Build a pixel-faithful recreation of the landing CTA section. Use React 18 + Vite + TypeScript, TailwindCSS, `framer-motion`, `clsx` + `tailwind-merge` as `cn()`. Dark theme background (`#000000`), Inter font, Material Symbols Outlined for icons. Use the white-alpha \"landing\" palette in `tailwind.config.ts`:\n\n```ts\nlanding: {\n  surface: \"rgba(255, 255, 255, 0.10)\",\n  \"surface-hover\": \"rgba(255, 255, 255, 0.16)\",\n  border: \"rgba(255, 255, 255, 0.10)\",\n  \"border-strong\": \"rgba(255, 255, 255, 0.20)\",\n  text: \"rgba(255, 255, 255, 0.80)\",\n  \"text-muted\": \"rgba(255, 255, 255, 0.60)\",\n}\n```\n\nAdd a gl"
+  },
+  {
+    "id": "ms-daisy-wild",
+    "row": 2,
     "title": "Daisy Wild",
     "category": "Product",
     "imageUrl": "https://images.higgs.ai/?default=1&output=webp&url=https%3A%2F%2Fd8j0ntlcm91z4.cloudfront.net%2Fuser_38xzZboKViGWJOttwIXH07lWA1P%2Fhf_20260511_151621_4fba6892-ed21-4c2e-8cb3-0bd2ec2abefa.png",
     "videoUrl": "https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260511_151818_65bb22c5-33ae-4e23-85ea-0a3dd89957c2.mp4",
     "specs": {
       "layout": "Product",
-      "motion": "MP4 Preview + Interactive Prompt",
+      "motion": "JSX + MP4 Trailer + Full Prompt",
       "responsive": "390px / 768px / 1440px",
       "durationMs": 420,
       "easing": "cubic-bezier(0.22, 1, 0.36, 1)"
@@ -62,435 +643,95 @@ export const MOTION_MARQUEE_ITEMS: MotionMarqueeItem[] = [
     "promptText": "Build a standalone React + TypeScript + Tailwind CSS section component. This is a fragrance product showcase split into two halves: a looping video on the LEFT and a lime-green product panel on the RIGHT. On mobile it stacks vertically with the product panel ABOVE the video (achieved via `flex-col-reverse`). Every value below is exact.\n\n## Tech Stack\n- React 18 + TypeScript\n- Tailwind CSS 3 (default config, default breakpoints: `sm:640px`, `md:768px`)\n- Vite\n- No extra packages. No icon libraries needed.\n\n## Constants\n\n```ts\nconst TEXT_COLOR = '#000000';\nconst BG_LIME = '#BDE84F';\nconst EASE ="
   },
   {
-    "id": "ms-adhd-planner",
-    "row": 2,
-    "title": "ADHD Planner",
-    "category": "App",
-    "imageUrl": "https://images.higgs.ai/?default=1&output=webp&url=https%3A%2F%2Fd8j0ntlcm91z4.cloudfront.net%2Fuser_38xzZboKViGWJOttwIXH07lWA1P%2Fhf_20260709_082449_46df5cc4-ad98-4541-9236-a2659c1478a4.png",
-    "videoUrl": "https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260711_090308_1dd0cea7-f9ba-4db4-8147-c7d746061c9e.mp4",
-    "specs": {
-      "layout": "App",
-      "motion": "MP4 Preview + Interactive Prompt",
-      "responsive": "390px / 768px / 1440px",
-      "durationMs": 420,
-      "easing": "cubic-bezier(0.22, 1, 0.36, 1)"
-    },
-    "tags": [
-      "App",
-      "hero"
-    ],
-    "promptText": "Build a single-page landing site for \"Drift\" -- a calm, ADHD-friendly planner app. Use React + Vite + TypeScript + Tailwind CSS + lucide-react for icons. No other UI libraries.\n\n### Fonts\n\nImport via Google Fonts in `index.css`:\n- **Inter** (weights 400, 500, 600) -- used as base body font\n- **Instrument Serif** (italic only) -- used for the italic word \"the stress\" in the hero heading\n\n```css\n@import url('https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@1&family=Inter:wght@400;500;600&display=swap');\n```\n\nBody: `font-family: 'Inter', sans-serif;` with antialiased rendering. `ove"
-  },
-  {
-    "id": "ms-wellness-device",
+    "id": "ms-orbis-hello",
     "row": 3,
-    "title": "Wellness Devicex",
-    "category": "Health",
-    "imageUrl": "https://images.higgs.ai/?default=1&output=webp&url=https%3A%2F%2Fd8j0ntlcm91z4.cloudfront.net%2Fuser_38xzZboKViGWJOttwIXH07lWA1P%2Fhf_20260713_140344_79e1296a-86d7-43fd-9b5f-63ffe560f291.png",
-    "videoUrl": "https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260713_162101_0d7498c5-29bb-47bf-a99f-2773c0a880a9.mp4",
+    "title": "Orbis Hello",
+    "category": "About",
+    "imageUrl": "/assets/motion-posters/orbis-hello.jpg",
+    "videoUrl": "https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260331_151551_992053d1-3d3e-4b8c-abac-45f22158f411.mp4",
     "specs": {
-      "layout": "Health",
-      "motion": "MP4 Preview + Interactive Prompt",
+      "layout": "About",
+      "motion": "JS + MP4 Trailer + Full Prompt",
       "responsive": "390px / 768px / 1440px",
       "durationMs": 420,
       "easing": "cubic-bezier(0.22, 1, 0.36, 1)"
     },
     "tags": [
-      "Health",
-      "hero"
+      "About",
+      "about"
     ],
-    "promptText": "Build a single-page hero section for a product called \"Measured\" — a health/wellness wearable device landing page. The page is fullscreen (100vh), dark/moody aesthetic with layered imagery, a cursor-following spotlight reveal effect, and a frosted-glass navigation. Use React + Vite + Tailwind CSS + TypeScript.\n\n---\n\n## Fonts\n\n1. **Google Fonts — Inter** (weights 300-700): Used as the global default font on all elements (`* { font-family: 'Inter', sans-serif; }`)\n2. **Google Fonts — Instrument Serif** (regular + italic): Used for the hero heading \"Measured\". Load via `<link>` in index.html: `ht"
+    "promptText": "---\n\n> **Setup requirements before building the section:**\n>\n> **Google Fonts** -- Load these in `index.html` `<head>`:\n> ```html\n> <link rel=\"preconnect\" href=\"https://fonts.googleapis.com\" />\n> <link rel=\"preconnect\" href=\"https://fonts.gstatic.com\" crossorigin />\n> <link href=\"https://fonts.googleapis.com/css2?family=Anton&family=Condiment&display=swap\" rel=\"stylesheet\" />\n> ```\n>\n> **Tailwind config** -- Extend `theme` with these exact custom values:\n> ```js\n> fontFamily: {\n>   grotesk: ['Anton', 'sans-serif'],\n>   condiment: ['Condiment', 'cursive'],\n> },\n> colors: {\n>   cream: '#EFF4FF',"
   },
   {
-    "id": "ms-prompt-hero",
+    "id": "ms-playful-idea",
     "row": 0,
-    "title": "PROMPT",
-    "category": "Landing Page",
-    "imageUrl": "https://images.higgs.ai/?default=1&output=webp&url=https%3A%2F%2Fd8j0ntlcm91z4.cloudfront.net%2Fuser_38xzZboKViGWJOttwIXH07lWA1P%2Fhf_20260629_104530_521b2f85-c0f3-4d0e-9704-b578315b4cb9.png",
-    "videoUrl": "https://d8j0ntlcm91z4.cloudfront.net/user_39ca84eAE1ODL9hbR5VhoEj8tBf/hf_20260625_154433_532a85d3-dabf-4265-b8bd-19ac6af31842.mp4",
+    "title": "Playful Idea",
+    "category": "Creative Agency",
+    "imageUrl": "/assets/motion-posters/playful-idea.jpg",
+    "videoUrl": "https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260908_073327_03643c0a-db33-417a-ae8f-4a39259c7f9c.mp4",
     "specs": {
-      "layout": "Landing Page",
-      "motion": "MP4 Preview + Interactive Prompt",
+      "layout": "Creative Agency",
+      "motion": "TSX + MP4 Trailer + Full Prompt",
       "responsive": "390px / 768px / 1440px",
       "durationMs": 420,
       "easing": "cubic-bezier(0.22, 1, 0.36, 1)"
     },
     "tags": [
-      "Landing Page",
+      "Creative Agency",
       "hero"
     ],
-    "promptText": "### Overview\n\nBuild a full-screen, scroll-driven fashion/archive landing page for a brand called \"prmpt\". The page has two main phases:\n\n1. **Hero phase** (first 100vh of scroll): Full-viewport video background with overlaid UI (logo, nav, product info, custom cursor). A black panel slides up from below covering the video.\n2. **Gallery phase** (continues scrolling): The black panel contains a scattered grid of product images that scale in/out as they enter/exit the viewport. At the end, a white overlay fades in with a \"view\" CTA button.\n\n---\n\n### Tech Stack\n\n- **React 19** + **TypeScript**\n- *"
+    "promptText": "Recreate this exact single-page creative studio footer. This is a fidelity task, not a redesign. Implement the supplied content, assets, CSS, and interactions exactly. Build only this footer page. Keep it local; do not publish or deploy it. Do not add a header, hero, cards, forms, sections, buttons, links, animations, or extra copy.\n\nThe source snapshots appended below are the authoritative specification. Copy them exactly, adapting only import paths or framework plumbing if necessary. Do not substitute approximate typography, another logo, stock video, or a generic eye-following effect.\n\n1. O"
   },
   {
-    "id": "ms-autumn-fox",
+    "id": "ms-quantum-core",
     "row": 1,
-    "title": "Autumn Fox",
-    "category": "3D",
-    "imageUrl": "https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20261016_125845_ec7f8569-08dd-4a78-8310-9e094f5dd0a3.png",
-    "videoUrl": "https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20261016_125941_6c5f1180-2f4e-44ec-b90c-aa0b05e5109b.mp4",
+    "title": "Quantum Core",
+    "category": "Data Intelligence",
+    "imageUrl": "/assets/motion-posters/quantum-core.jpg",
+    "videoUrl": "https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260813_092641_de52eb87-daf2-41db-92cb-7a56eae012a5.mp4",
     "specs": {
-      "layout": "3D",
-      "motion": "MP4 Preview + Interactive Prompt",
+      "layout": "Data Intelligence",
+      "motion": "TSX + MP4 Trailer + Full Prompt",
       "responsive": "390px / 768px / 1440px",
       "durationMs": 420,
       "easing": "cubic-bezier(0.22, 1, 0.36, 1)"
     },
     "tags": [
-      "3D",
+      "Data Intelligence",
       "hero"
     ],
-    "promptText": "Build a single, standalone index.html file: a full-screen hero section for a fictional AI automation brand called \"FENNEC\". Put everything (HTML, CSS, JS) in that one file. Use no build tools and no extra local files. Follow every spec below exactly.\n\n==================================================\n1. EXTERNAL ASSETS (use these exact URLs)\n==================================================\n- Background video (MP4, 1920x1080, 8s, loops):\n  https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20261016_125941_6c5f1180-2f4e-44ec-b90c-aa0b05e5109b.mp4\n- Still image (used as t"
+    "promptText": "# PROMPT — Recreate the \"Apogee\" Hero Section Exactly\n\nBuild a pixel-exact, fully mobile-responsive hero landing section called **\"Apogee\"**. Follow every specification below literally — exact hex values, exact pixel numbers, exact class names, exact animation delays, exact copy. Do not substitute, round, simplify, or \"improve\" any value. Where a bracketed Tailwind arbitrary value is given (e.g. `text-[15.5px]`), use that arbitrary value verbatim rather than the nearest Tailwind preset.\n\n---\n\n## 1. STACK & PROJECT SETUP\n\n- **Vite 5** + **React 18.3** + **TypeScript 5.5** + **Tailwind CSS 3.4**"
   },
   {
-    "id": "ms-space-planet",
+    "id": "ms-cognitra-feature",
     "row": 2,
-    "title": "Space planet",
-    "category": "3D",
-    "imageUrl": "https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260827_202133_508c64b8-a31e-4290-bdfc-1187df70e0a6.png",
-    "videoUrl": "https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260827_202422_3ffb4889-c520-432d-8458-038009eb40df.mp4",
+    "title": "Cognitra Feature",
+    "category": "Feature",
+    "imageUrl": "/assets/motion-posters/cognitra-feature.jpg",
+    "videoUrl": "https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260514_135830_bb6491d1-9b66-4aec-9722-13b4dfe3fb46.mp4",
     "specs": {
-      "layout": "3D",
-      "motion": "MP4 Preview + Interactive Prompt",
+      "layout": "Feature",
+      "motion": "TSX + MP4 Trailer + Full Prompt",
       "responsive": "390px / 768px / 1440px",
       "durationMs": 420,
       "easing": "cubic-bezier(0.22, 1, 0.36, 1)"
     },
     "tags": [
-      "3D",
-      "hero"
+      "Feature",
+      "features"
     ],
-    "promptText": "Build a single, self-contained HTML file: a full-viewport space-themed hero section\nfor a site called \"SpaceEdu\". No build step, no frameworks, no external JS. All CSS in\none <style> block in <head>, all JS in one <script> block before </body>. It must be\npixel-faithful to the spec below and fully mobile responsive.\n\n════════════════════════════════════════════════════════════════════════\n1. CONCEPT\n════════════════════════════════════════════════════════════════════════\nA cinematic hero. A looping video of a single planet fills the whole viewport as the\nbackground. Centred over it: eyebrow \"P"
+    "promptText": "---\n\n**Prompt:**\n\nCreate a full-viewport section (100vh) that sits over a fixed background video. The section has no background color of its own -- it is fully transparent so the fixed video behind it shows through.\n\n**Background video (fixed, behind everything):**\nA `<video>` element fixed to the viewport (`position: fixed; top: 0; left: 0; width: 100%; height: 100vh; object-fit: cover; z-index: 0`), using this source:\n```\nhttps://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260514_135830_bb6491d1-9b66-4aec-9722-13b4dfe3fb46.mp4\n```\nIt should `autoPlay`, be `muted`, `loo"
   },
   {
-    "id": "ms-curved-reel",
+    "id": "ms-ai-workflow",
     "row": 3,
-    "title": "Curved Reel",
-    "category": "Agency",
-    "imageUrl": "https://images.higgs.ai/?default=1&output=webp&url=https%3A%2F%2Fd8j0ntlcm91z4.cloudfront.net%2Fuser_38xzZboKViGWJOttwIXH07lWA1P%2Fhf_20261108_070809_9454266a-bcc7-474e-854a-bc5770e5ceb3.png",
-    "videoUrl": "https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20261108_070920_ba374cc6-355a-4d14-84c6-1d40d14db660.mp4",
-    "specs": {
-      "layout": "Agency",
-      "motion": "MP4 Preview + Interactive Prompt",
-      "responsive": "390px / 768px / 1440px",
-      "durationMs": 420,
-      "easing": "cubic-bezier(0.22, 1, 0.36, 1)"
-    },
-    "tags": [
-      "Agency",
-      "hero"
-    ],
-    "promptText": "# HERO PROMPT — \"Norro.\" Curved Showreel (exact recreation brief)\n\nBuild a **single self-contained `index.html`** (inline `<style>` and one inline `<script>`, no build step, no framework, no external JS libraries) for a fictional Nordic film studio called **Norro.**. The page is a dark, full-viewport, non-scrolling showreel: a **WebGL2 fragment shader** draws a horizontal reel of 16:9 film stills bent onto a **concave cylinder** (as if seen from inside a curved cinema screen). Huge condensed uppercase project titles roll at the bottom-left, Next/Prev buttons sit bottom-right, a custom red-dot "
-  },
-  {
-    "id": "ms-intelligent-operations",
-    "row": 0,
-    "title": "Intelligent Operations",
-    "category": "Agency",
-    "imageUrl": "https://images.higgs.ai/?default=1&output=webp&url=https%3A%2F%2Fd8j0ntlcm91z4.cloudfront.net%2Fuser_38xzZboKViGWJOttwIXH07lWA1P%2Fhf_20260728_050334_5b076e26-0ce7-4898-b432-d764190e448f.png",
-    "videoUrl": "https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260729_102822_0e6c87e8-c141-4744-bf32-ad30db296371.mp4",
-    "specs": {
-      "layout": "Agency",
-      "motion": "MP4 Preview + Interactive Prompt",
-      "responsive": "390px / 768px / 1440px",
-      "durationMs": 420,
-      "easing": "cubic-bezier(0.22, 1, 0.36, 1)"
-    },
-    "tags": [
-      "Agency",
-      "hero"
-    ],
-    "promptText": "# Exact recreation prompt — NovaAI landing page\n\nRecreate this page **pixel-faithfully**. Stack: React + TypeScript + Vite + Tailwind CSS + lucide-react. Do not invent alternate copy, layout, fonts, colors, or effects.\n\n---\n\n## Page identity\n\n- **Title:** `NOVA_AI — Today AI Aligns With Bold Dreams`\n- **Brand:** lowercase `novaai` with a Lucide `Hexagon` icon (size 24, strokeWidth 1.5) to the left\n- **Overall feel:** dark cinematic AI marketing site; full-viewport scroll-scrubbed video background; white typography with drop shadows; frosted glass UI chips; sparse editorial layout; no purple gr"
-  },
-  {
-    "id": "ms-modern-agency",
-    "row": 1,
-    "title": "Modern Agency",
-    "category": "Agency",
-    "imageUrl": "https://images.higgs.ai/?default=1&output=webp&url=https%3A%2F%2Fd8j0ntlcm91z4.cloudfront.net%2Fuser_38xzZboKViGWJOttwIXH07lWA1P%2Fhf_20260516_090123_74be96d4-9c1b-40cf-932a-96f4f4babed3.png",
-    "videoUrl": "https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260516_122702_390f5305-8719-41d5-ae80-d23ab3796c28.mp4",
-    "specs": {
-      "layout": "Agency",
-      "motion": "MP4 Preview + Interactive Prompt",
-      "responsive": "390px / 768px / 1440px",
-      "durationMs": 420,
-      "easing": "cubic-bezier(0.22, 1, 0.36, 1)"
-    },
-    "tags": [
-      "Agency",
-      "hero"
-    ],
-    "promptText": "Build a React + Vite + Tailwind CSS landing page for \"Axion Studio\" - a design agency site. Use the `shaders` package (npm: `shaders`) for the hero background, `lucide-react` for icons. The page has 3 sections. Match every detail exactly:\n\n---\n\n## SECTION 1: HERO (Full viewport height)\n\n**Background:** Light gray `#EFEFEF` with a full-screen animated shader overlay (positioned absolute, inset-0, z-10, pointer-events-none). The shader stack uses components from `shaders/react`:\n- `Swirl` - colorA: `#ffffff`, colorB: `#f0f0f0`, detail: 1.7\n- `ChromaFlow` - baseColor: `#ffffff`, downColor/leftCol"
-  },
-  {
-    "id": "ms-velorah-hero",
-    "row": 2,
-    "title": "Velorah",
-    "category": "Agency",
-    "imageUrl": "https://motionsites.ai/assets/hero-velorah-preview-CJNTtbpd.gif",
-    "videoUrl": "https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260314_131748_f2ca2a28-fed7-44c8-b9a9-bd9acdd5ec31.mp4",
-    "specs": {
-      "layout": "Agency",
-      "motion": "MP4 Preview + Interactive Prompt",
-      "responsive": "390px / 768px / 1440px",
-      "durationMs": 420,
-      "easing": "cubic-bezier(0.22, 1, 0.36, 1)"
-    },
-    "tags": [
-      "Agency",
-      "hero"
-    ],
-    "promptText": "Create a single-page hero section with a fullscreen looping background video, glassmorphic navigation, and cinematic typography. Use React + Vite + Tailwind CSS + TypeScript with shadcn/ui.\n\nVideo Background:\n\nFullscreen <video> element with autoPlay, loop, muted, playsInline\nSource URL: https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260314_131748_f2ca2a28-fed7-44c8-b9a9-bd9acdd5ec31.mp4\nPositioned absolute inset-0 w-full h-full object-cover z-0\n\nFonts:\n\nImport from Google Fonts: Instrumental Serif (display) and Inter weights 400/500 (body)\nCSS variables: --font-dis"
-  },
-  {
-    "id": "ms-video-studio",
-    "row": 3,
-    "title": "Video Studio",
-    "category": "Agency",
-    "imageUrl": "https://images.higgs.ai/?default=1&output=webp&url=https%3A%2F%2Fd8j0ntlcm91z4.cloudfront.net%2Fuser_38xzZboKViGWJOttwIXH07lWA1P%2Fhf_20261110_224241_f6feccd5-1c45-4d22-b369-f927916f9973.png",
-    "videoUrl": "https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20261110_231342_88260d66-aa30-4612-9157-d7f1b5a66d8c.mp4",
-    "specs": {
-      "layout": "Agency",
-      "motion": "MP4 Preview + Interactive Prompt",
-      "responsive": "390px / 768px / 1440px",
-      "durationMs": 420,
-      "easing": "cubic-bezier(0.22, 1, 0.36, 1)"
-    },
-    "tags": [
-      "Agency",
-      "hero"
-    ],
-    "promptText": "# Kolibrie Studio: recreation prompt\n\nBuild a three-section landing page for **Kolibrie**, a fictional studio that makes short-form social films, reels and motion. It is a single self-contained HTML file (one inline `<style>`, one inline `<script>`, four self-hosted fonts) with a warm golden-hour, cream-and-tomato look. The three sections are: a full-screen **hero** with a looping video background and a photo card that follows the cursor; a pinned **\"Latest drops\"** section with copy on the left and a 3D stack of five case cards on the right that peels away as you scroll; and a tall **\"Meet th"
-  },
-  {
-    "id": "ms-petalyx",
-    "row": 0,
-    "title": "Petalyx",
-    "category": "Creative",
-    "imageUrl": "https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20261021_093215_b7826239-e451-4e15-b42b-d6bcf9497a32.png",
-    "videoUrl": "https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20261021_093331_5998f443-1b9c-4b62-820c-8219c73c72c4.mp4",
-    "specs": {
-      "layout": "Creative",
-      "motion": "MP4 Preview + Interactive Prompt",
-      "responsive": "390px / 768px / 1440px",
-      "durationMs": 420,
-      "easing": "cubic-bezier(0.22, 1, 0.36, 1)"
-    },
-    "tags": [
-      "Creative",
-      "hero"
-    ],
-    "promptText": "Build a single standalone index.html landing page called \"Petalyx\": a cherry-blossom, anime-watercolor themed SaaS page for measuring AI agents. One file, inline <style> and <script>, no build step, no local assets. Every image and video must load from the exact CloudFront URLs given below. Recreate everything exactly as specified.\n\n==================================================\n1. HEAD, FONTS, LIBRARIES\n==================================================\n- <title>Petalyx — Benchmark all AI staff</title>\n- <meta name=\"description\" content=\"Benchmark the impact of all your AI staff.\">\n- <met"
-  },
-  {
-    "id": "ms-balloon-drop",
-    "row": 1,
-    "title": "Balloon Drop",
-    "category": "Ecommerce",
-    "imageUrl": "https://images.higgs.ai/?default=1&output=webp&url=https%3A%2F%2Fd8j0ntlcm91z4.cloudfront.net%2Fuser_38xzZboKViGWJOttwIXH07lWA1P%2Fhf_20261109_013341_08629ffd-6ab5-44a8-bec8-f1939ab3a6cd.png",
-    "videoUrl": "https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20261109_014328_9a7b4687-246e-497b-9bb9-42c285db3f47.mp4",
-    "specs": {
-      "layout": "Ecommerce",
-      "motion": "MP4 Preview + Interactive Prompt",
-      "responsive": "390px / 768px / 1440px",
-      "durationMs": 420,
-      "easing": "cubic-bezier(0.22, 1, 0.36, 1)"
-    },
-    "tags": [
-      "Ecommerce",
-      "hero"
-    ],
-    "promptText": "# HERO PROMPT — \"olla\" Stack-smart Kitchenware Landing Page (Balloon-Drop Grill)\n\n> Exact recreation brief. Build a **single self-contained HTML file** (inline `<style>` and inline `<script>`, no frameworks, no build step, no libraries) that reproduces the page described below pixel-for-pixel and frame-for-frame. Every number in this document is load-bearing. Where a value is given in `vw`, `vh`, `%` or `px`, use exactly that unit. Where an easing curve, duration or delay is given, use exactly that. Every copy string is quoted verbatim — do not rephrase, re-capitalise or add punctuation.\n\n---\n"
-  },
-  {
-    "id": "ms-velia",
-    "row": 2,
-    "title": "Velia",
-    "category": "Editorial",
-    "imageUrl": "https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20261021_093821_db49f268-cd69-4ac0-b92b-e0b8a7062322.png",
-    "videoUrl": "https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20261022_054532_4648c53b-8840-4872-b054-016a86833f5c.mp4",
-    "specs": {
-      "layout": "Editorial",
-      "motion": "MP4 Preview + Interactive Prompt",
-      "responsive": "390px / 768px / 1440px",
-      "durationMs": 420,
-      "easing": "cubic-bezier(0.22, 1, 0.36, 1)"
-    },
-    "tags": [
-      "Editorial",
-      "hero"
-    ],
-    "promptText": "Build a single standalone index.html (all CSS and JS inline, no build step, no local assets) for a premium AI creative-direction landing page called \"Velia\". Recreate it exactly as specified. All images and videos load directly from the CloudFront URLs given. The page must be fully mobile responsive with smooth, premium, staggered animations. Where this prompt gives code marked VERBATIM, copy it exactly as written; do not rewrite, simplify or \"improve\" it.\n\n====================================================================\n1. HEAD: FONTS, LIBRARIES, TOKENS\n==================================="
-  },
-  {
-    "id": "ms-design-rocket-email-hero",
-    "row": 3,
-    "title": "Email Marketing",
-    "category": "Email Marketing",
-    "imageUrl": "https://motionsites.ai/assets/hero-design-rocket-email-preview-DBed7Yfk.gif",
-    "videoUrl": "https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260419_064822_f120e48a-d545-45dd-a02d-facb07829888.mp4",
-    "specs": {
-      "layout": "Email Marketing",
-      "motion": "MP4 Preview + Interactive Prompt",
-      "responsive": "390px / 768px / 1440px",
-      "durationMs": 420,
-      "easing": "cubic-bezier(0.22, 1, 0.36, 1)"
-    },
-    "tags": [
-      "Email Marketing",
-      "hero"
-    ],
-    "promptText": "Prompt: Recreate \"Design Rocket Certificates\" Email-Style Landing Page\nBuild a single-page React + TypeScript + Vite + Tailwind CSS project that renders an email-style marketing page for a \"Design Rocket Certificates\" AI leadership course, built in collaboration with Microsoft. Use lucide-react for icons. No other UI libraries.\n\nGlobal setup\nindex.html\n\nTitle: Newsletter Design Build Out\nPreconnect to fonts.googleapis.com and fonts.gstatic.com\nLoad Google Fonts: Instrument Serif (ital 0,1) and Inter (weights 400, 500, 600, 700)\nsrc/index.css\n\n@tailwind base;\n@tailwind components;\n@tailwind uti"
-  },
-  {
-    "id": "ms-trueearth",
-    "row": 0,
-    "title": "TrueEarth",
-    "category": "Environmental",
-    "imageUrl": "https://images.higgs.ai/?default=1&output=webp&url=https%3A%2F%2Fd8j0ntlcm91z4.cloudfront.net%2Fuser_38xzZboKViGWJOttwIXH07lWA1P%2Fhf_20260831_224622_4eeb9d43-9e46-4483-9530-1eb4ef4c942d.png",
-    "videoUrl": "https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260831_231820_baf1d009-9cc2-4f94-a720-b04a94a8eab4.mp4",
-    "specs": {
-      "layout": "Environmental",
-      "motion": "MP4 Preview + Interactive Prompt",
-      "responsive": "390px / 768px / 1440px",
-      "durationMs": 420,
-      "easing": "cubic-bezier(0.22, 1, 0.36, 1)"
-    },
-    "tags": [
-      "Environmental",
-      "hero"
-    ],
-    "promptText": "Build a single, self-contained HTML file (one file: inline <style> and inline <script>, no\nbuild step, no frameworks, no external JS/CSS libraries) containing ONE full-viewport hero\nsection for an ocean-conservation nonprofit called \"OceanPulse\".\n\n=====================================================================\n1. GLOBAL SETUP\n=====================================================================\n- <!DOCTYPE html>, lang=\"en\".\n- <meta name=\"viewport\" content=\"width=device-width, initial-scale=1, viewport-fit=cover\">\n- <title>OceanPulse — Saving Oceans, Uniting The Coastline</title>\n- Font: "
-  },
-  {
-    "id": "ms-bag-slots",
-    "row": 1,
-    "title": "Bag Slots",
-    "category": "Fashion",
-    "imageUrl": "https://images.higgs.ai/?default=1&output=webp&url=https%3A%2F%2Fd8j0ntlcm91z4.cloudfront.net%2Fuser_38xzZboKViGWJOttwIXH07lWA1P%2Fhf_20261106_072459_3a7afc56-a581-4651-8e7e-756e12183786.png",
-    "videoUrl": "https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20261106_073138_ef13b890-f508-46d7-bf25-278d3144c3d5.mp4",
-    "specs": {
-      "layout": "Fashion",
-      "motion": "MP4 Preview + Interactive Prompt",
-      "responsive": "390px / 768px / 1440px",
-      "durationMs": 420,
-      "easing": "cubic-bezier(0.22, 1, 0.36, 1)"
-    },
-    "tags": [
-      "Fashion",
-      "social-media"
-    ],
-    "promptText": "# Bag Slots: Glass Slot-Machine Bag Reveal Story (exact recreation prompt)\n\nBuild a single-file, interactive, vertical 9:16 social-media story for a fictional bag brand, **LUNE**.\n\nA young woman in a cropped indigo denim jacket stands against a grey studio wall. A frosted-glass panel floats across her chest, reading \"L U N E\". When you tap the glass, she reaches toward the camera with her hand, grabs the glass and pulls it down like a slot-machine lever. That plays from a real video clip.\n\nThe panel then becomes three slot reels of shoulder bags that spin with motion blur and stop one by one o"
-  },
-  {
-    "id": "ms-fox-couture",
-    "row": 2,
-    "title": "Fox Couture",
-    "category": "Fashion",
-    "imageUrl": "https://images.higgs.ai/?default=1&output=webp&url=https%3A%2F%2Fd8j0ntlcm91z4.cloudfront.net%2Fuser_38xzZboKViGWJOttwIXH07lWA1P%2Fhf_20261107_005547_8a9e6889-76aa-4688-81b5-4452d9afa4ad.png",
-    "videoUrl": "https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20261107_145142_a39216fc-13cf-4ce3-baf8-d9bdbfd5f955.mp4",
-    "specs": {
-      "layout": "Fashion",
-      "motion": "MP4 Preview + Interactive Prompt",
-      "responsive": "390px / 768px / 1440px",
-      "durationMs": 420,
-      "easing": "cubic-bezier(0.22, 1, 0.36, 1)"
-    },
-    "tags": [
-      "Fashion",
-      "hero"
-    ],
-    "promptText": "# Novu® London — full recreation brief\n\nBuild a single-page, three-section fashion landing page for a fictional digital-fashion label called **Novu®**. Its mascot is a photoreal 3D fennec fox in orange shield sunglasses, a chunky silver chain and an oversized white varsity jacket. The page has three sections: a hero with a giant wordmark, a pinned \"story\" section, and a partners carousel with a footer. Behind the hero and the story runs **one continuous scroll-scrubbed video**. The fox walks in place the whole time while the camera orbits all the way around it (front close-up → profile → back "
-  },
-  {
-    "id": "ms-future-fashion",
-    "row": 3,
-    "title": "Future Fashion",
-    "category": "Fashion",
-    "imageUrl": "https://images.higgs.ai/?default=1&output=webp&url=https%3A%2F%2Fd8j0ntlcm91z4.cloudfront.net%2Fuser_38xzZboKViGWJOttwIXH07lWA1P%2Fhf_20261105_170816_005f1a54-50e2-4842-b1b8-0b5d062fa432.png",
-    "videoUrl": "https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20261105_173304_f896736c-46d1-4e39-996c-3ee39ad7c52f.mp4",
-    "specs": {
-      "layout": "Fashion",
-      "motion": "MP4 Preview + Interactive Prompt",
-      "responsive": "390px / 768px / 1440px",
-      "durationMs": 420,
-      "easing": "cubic-bezier(0.22, 1, 0.36, 1)"
-    },
-    "tags": [
-      "Fashion",
-      "hero"
-    ],
-    "promptText": "# ORBE — Future Mode · hero recreation brief\n\nRecreate this page exactly as described: a single self-contained `index.html` (inline CSS and JS, fonts embedded as base64 WOFF2, everything else loaded from the URLs below). It is a one-screen, non-scrolling, full-viewport futuristic hero. A black sci-fi HUD bezel frames a night sky above the clouds, where violet aurora ribbons whip across the sky (a looping video). A huge white geometric headline, \"FUTURE MODE\", scrolls sideways behind a glass 3D figure whose head is a glowing cyan halo ring with a planet orbiting inside it. \"NEW\" and \"ERA\" sit i"
-  },
-  {
-    "id": "ms-main-character",
-    "row": 0,
-    "title": "Main Character",
-    "category": "Fashion",
-    "imageUrl": "https://images.higgs.ai/?default=1&output=webp&url=https%3A%2F%2Fd8j0ntlcm91z4.cloudfront.net%2Fuser_38xzZboKViGWJOttwIXH07lWA1P%2Fhf_20261106_062711_9bf7546c-1db2-4093-97d4-0e32ea8d2abd.png",
-    "videoUrl": "https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20261106_062821_b3d651fe-7fbe-4e60-b4f5-77b953e1d1ce.mp4",
-    "specs": {
-      "layout": "Fashion",
-      "motion": "MP4 Preview + Interactive Prompt",
-      "responsive": "390px / 768px / 1440px",
-      "durationMs": 420,
-      "easing": "cubic-bezier(0.22, 1, 0.36, 1)"
-    },
-    "tags": [
-      "Fashion",
-      "social-media"
-    ],
-    "promptText": "# Main Character Mode: Interactive Life-Sim Social Post (exact recreation prompt)\n\nBuild a single-file, interactive 4:5 social-media post in the style of a life-simulation game. A stylish young woman sits on an invisible chair on a bright green hill under a clear blue sky. A green rotating crystal gem floats above her head, and cream pill-shaped action bubbles fan out around her like a game pie menu: \"Gossip\", \"Flirt\", \"Change Outfit\", \"Ask About Mood\", \"Talk About Pet\", \"More Choices…\".\n\nThe woman subtly comes alive in a looping video. Each bubble triggers its own effect:\n\n- floating hearts\n-"
-  },
-  {
-    "id": "ms-kresna-footer",
-    "row": 1,
-    "title": "Kresna Footer",
-    "category": "Footer Section",
-    "imageUrl": "https://motionsites.ai/assets/footer-kresna-preview-BrIYYd2q.gif",
-    "videoUrl": "https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260503_104800_bc43ae09-f494-43e3-97d7-2f8c1692cfd7.mp4",
-    "specs": {
-      "layout": "Footer Section",
-      "motion": "MP4 Preview + Interactive Prompt",
-      "responsive": "390px / 768px / 1440px",
-      "durationMs": 420,
-      "easing": "cubic-bezier(0.22, 1, 0.36, 1)"
-    },
-    "tags": [
-      "Footer Section",
-      "footer"
-    ],
-    "promptText": "Build a single-file HTML footer component called Kresna — a sales-automation SaaS brand. The deliverable is one self-contained .html file with inline <style> and inline <script>. Render it inside a <section class=\"footer-section\"> on a white page (body { background: #ffffff; padding: 48px 24px; }).\nFonts\nLoad from Google Fonts in the <head>:\n\nDM Sans — weights 400, 500, 600, 700 (body, nav links, buttons, headings, watermark)\nCaveat — weights 500, 600, 700 (handwritten accents: \"Stay in touch!\", \"Feeling lucky?\", column titles \"Navigation\"/\"Company\")\n\nDefault body font: 'DM Sans', sans-serif. "
-  },
-  {
-    "id": "ms-lumina-footer",
-    "row": 2,
-    "title": "Lumina",
-    "category": "Footer Section",
-    "imageUrl": "https://motionsites.ai/assets/footer-lumina-preview-CYkr-ACN.gif",
-    "videoUrl": "https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260429_114316_1c7889ad-2885-410e-b493-98119fee0ddb.mp4",
-    "specs": {
-      "layout": "Footer Section",
-      "motion": "MP4 Preview + Interactive Prompt",
-      "responsive": "390px / 768px / 1440px",
-      "durationMs": 420,
-      "easing": "cubic-bezier(0.22, 1, 0.36, 1)"
-    },
-    "tags": [
-      "Footer Section",
-      "footer"
-    ],
-    "promptText": "Create a React frontend using Tailwind CSS v4, the `motion/react` library for animations, and `lucide-react` for icons. I want to build a page with an immersive video background and a highly stylized \"liquid glass\" footer.\n\nPlease follow these exact specifications:\n\n1. Global CSS & Fonts (`index.css`):\nAdd the following exact `@font-face` to the CSS file and set it as the root Tailwind `--font-sans`:\n@font-face {\n    font-family: \"Helvetica Regular\";\n    src: url(\"https://db.onlinewebfonts.com/t/a64ff11d2c24584c767f6257e880dc65.eot\");\n    src: url(\"https://db.onlinewebfonts.com/t/a64ff11d2c245"
-  },
-  {
-    "id": "ms-portal",
-    "row": 3,
-    "title": "Portal",
+    "title": "AI Workflow Hero",
     "category": "Hero",
-    "imageUrl": "https://motionsites.ai/assets/hero-portal-preview-DEscBr2T.gif",
-    "videoUrl": "https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260606_131516_eca35265-ea66-4fbd-8d52-22aae6e1a503.mp4",
+    "imageUrl": "/assets/motion-posters/ai-workflow.jpg",
+    "videoUrl": "https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260511_131941_d136af49-e243-493a-be14-6ff3f24e09e6.mp4",
     "specs": {
       "layout": "Hero",
-      "motion": "MP4 Preview + Interactive Prompt",
+      "motion": "TSX + MP4 Trailer + Full Prompt",
       "responsive": "390px / 768px / 1440px",
       "durationMs": 420,
       "easing": "cubic-bezier(0.22, 1, 0.36, 1)"
@@ -499,258 +740,78 @@ export const MOTION_MARQUEE_ITEMS: MotionMarqueeItem[] = [
       "Hero",
       "hero"
     ],
-    "promptText": "Build a password manager landing page hero section using React, TypeScript, Tailwind CSS, Framer Motion, and Lucide React icons. Here is every specification:\n\n---\n\n### Fonts\n\n- **Heading font:** \"Helvetica Now Display Bold\" -- load via this stylesheet in `index.html`:\n  ```\n  <link href=\"https://db.onlinewebfonts.com/c/04e6981992c0e2e7642af2074ebe3901?family=Helvetica+Now+Display+Bold\" rel=\"stylesheet\">\n  ```\n- **Body font:** \"Inter\" (weights 300-900) -- load via Google Fonts in `index.css`:\n  ```\n  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&di"
+    "promptText": "### Stack\n\n- **Vite** + **React 18** + **TypeScript**\n- **Tailwind CSS 3.4**\n- **lucide-react** for icons (`LogIn`, `UserPlus`, `Play`, `Sparkles`, `Menu`, `X`)\n- No Framer Motion -- all animations are CSS `transition-*` classes\n\n---\n\n### Fonts (loaded in `index.html`)\n\n```html\n<link rel=\"preconnect\" href=\"https://fonts.googleapis.com\" />\n<link rel=\"preconnect\" href=\"https://fonts.gstatic.com\" crossorigin />\n<link href=\"https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap\" rel=\"stylesheet\" />\n<link href=\"https://db.onlinewebfonts.com/c/6e47ef470dd19698c911332a9b"
   },
   {
-    "id": "ms-aethera-hero",
+    "id": "ms-impact-ventures",
     "row": 0,
-    "title": "Aethera Studio",
-    "category": "Hero Section",
-    "imageUrl": "https://motionsites.ai/assets/hero-aethera-preview-DknSlcTa.gif",
-    "videoUrl": "https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260328_083109_283f3553-e28f-428b-a723-d639c617eb2b.mp4",
+    "title": "Impact Ventures",
+    "category": "Hero",
+    "imageUrl": "/assets/motion-posters/impact-ventures.jpg",
+    "videoUrl": "https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260622_204103_f607742e-09da-4cf5-bb06-4e67b0a531de.mp4",
     "specs": {
-      "layout": "Hero Section",
-      "motion": "MP4 Preview + Interactive Prompt",
+      "layout": "Hero",
+      "motion": "JS + MP4 Trailer + Full Prompt",
       "responsive": "390px / 768px / 1440px",
       "durationMs": 420,
       "easing": "cubic-bezier(0.22, 1, 0.36, 1)"
     },
     "tags": [
-      "Hero Section",
+      "Hero",
       "hero"
     ],
-    "promptText": "Prompt: Cinematic Hero Section with Looping Video Background\n\nCreate a fullscreen single-page hero section using React + Vite + Tailwind CSS + TypeScript with the following specifications:\n\nFonts:\nDisplay text (headings, logo): Instrument Serif\nBody text (navigation, descriptions): Inter\nImport both fonts in /src/styles/fonts.css\n\nVideo Background:\n\nPosition: top: '300px' with inset: 'auto 0 0 0'\nImplement custom fade-in/fade-out loop logic using React useEffect and useRef:\nUse requestAnimationFrame to continuously monitor currentTime and duration\nFade in over 0.5s at the start (opacity 0 to 1"
+    "promptText": "Create a fullscreen hero landing page section for a design agency called \"Atelier\" using React, Tailwind CSS, and Lucide React icons. The section must be fully mobile responsive with an animated hamburger mobile menu. Here are the exact specifications:\n\n**Fonts (Google Fonts):**\n- \"Instrument Serif\" (regular + italic) for headings and mobile menu links\n- \"Inter\" (weights 300, 400, 500, 600) as the sans-serif body font\n\nLoad them in index.html:\n```html\n<link rel=\"preconnect\" href=\"https://fonts.googleapis.com\" />\n<link rel=\"preconnect\" href=\"https://fonts.gstatic.com\" crossorigin />\n<link href="
   },
   {
-    "id": "ms-aetheris-voyage-hero",
+    "id": "ms-vaultshield",
     "row": 1,
-    "title": "Aetheris Voyage",
-    "category": "Hero Section",
-    "imageUrl": "https://motionsites.ai/assets/hero-aetheris-voyage-preview-BGJn1z4t.gif",
-    "videoUrl": "https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260418_080021_d598092b-c4c2-4e53-8e46-94cf9064cd50.mp4",
+    "title": "VaultShield",
+    "category": "Hero",
+    "imageUrl": "/assets/motion-posters/vaultshield.jpg",
+    "videoUrl": "https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260518_003132_8b7edcb6-c64d-4a52-a9ca-879942e122ad.mp4",
     "specs": {
-      "layout": "Hero Section",
-      "motion": "MP4 Preview + Interactive Prompt",
+      "layout": "Hero",
+      "motion": "JS + MP4 Trailer + Full Prompt",
       "responsive": "390px / 768px / 1440px",
       "durationMs": 420,
       "easing": "cubic-bezier(0.22, 1, 0.36, 1)"
     },
     "tags": [
-      "Hero Section",
+      "Hero",
       "hero"
     ],
-    "promptText": "Build Prompt: Cinematic Space-Travel Landing Page\nBuild a single-page landing site with two full-height sections (Hero + Capabilities), both using looping background videos with custom JS crossfade, a shared liquid-glass design system, and Framer Motion entrance animations.\n\nTech stack (pinned, CDN-only)\n<script src=\"https://cdn.tailwindcss.com\"></script>\n<script src=\"https://unpkg.com/react@18.3.1/umd/react.development.js\" integrity=\"sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L\" crossorigin=\"anonymous\"></script>\n<script src=\"https://unpkg.com/react-dom@18.3.1/umd/re"
+    "promptText": "Create a fullscreen hero section for a password manager app called \"VaultShield\" using React, TypeScript, Tailwind CSS, Framer Motion, and Lucide React icons.\n\n---\n\n## Fonts\n\n- **Heading font:** `Helvetica Now Display Bold` loaded from `https://db.onlinewebfonts.com/c/04e6981992c0e2e7642af2074ebe3901?family=Helvetica+Now+Display+Bold` (add as a `<link>` in `index.html`)\n- **Body font:** `Inter` (weights 300-900) loaded from Google Fonts: `https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap` (imported in CSS)\n\n## CSS Variables\n\n```css\n:root {\n  --font-he"
   },
   {
-    "id": "ms-asme-hero",
+    "id": "ms-visual-hero",
     "row": 2,
-    "title": "Asme",
-    "category": "Hero Section",
-    "imageUrl": "https://motionsites.ai/assets/hero-asme-preview-B_nGDnTP.gif",
-    "videoUrl": "https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260328_115001_bcdaa3b4-03de-47e7-ad63-ae3e392c32d4.mp4",
+    "title": "Visual Hero",
+    "category": "Hero",
+    "imageUrl": "/assets/motion-posters/visual-hero.jpg",
+    "videoUrl": "https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260511_080827_a9e5ad52-b6ee-4e79-b393-d936f179cfd7.mp4",
     "specs": {
-      "layout": "Hero Section",
-      "motion": "MP4 Preview + Interactive Prompt",
+      "layout": "Hero",
+      "motion": "JS + MP4 Trailer + Full Prompt",
       "responsive": "390px / 768px / 1440px",
       "durationMs": 420,
       "easing": "cubic-bezier(0.22, 1, 0.36, 1)"
     },
     "tags": [
-      "Hero Section",
+      "Hero",
       "hero"
     ],
-    "promptText": "Build a single-page hero section with a full-screen looping background video, liquid glass UI elements, and a dark cinematic aesthetic. Use React, TypeScript, Tailwind CSS, and Lucide React icons. Here are the exact specifications:\n\nBackground Video:\n\nFull-screen muted autoplaying video covering the entire viewport, positioned absolutely with object-cover\nVideo source URL: https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260328_115001_bcdaa3b4-03de-47e7-ad63-ae3e392c32d4.mp4\nThe video is shifted down by 17% (translate-y-[17%]) so the top portion of the video is croppe"
+    "promptText": "**Build a fullscreen hero section in a Vite + React + TypeScript + Tailwind CSS project. Use `gsap` and `lucide-react`. No other UI libraries.**\n\n### Fonts (in `src/index.css`)\nImport at the top of index.css BEFORE `\n@tailwind\n` directives:\n```css\n@import\n url('https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Barlow:wght@300;400;500;600&display=swap');\n\n@font\n-face {\n  font-family: 'Dirtyline';\n  src: url('https://fonts.cdnfonts.com/s/15011/Dirtyline36DaysofType.woff') format('woff');\n  font-weight: normal;\n  font-style: normal;\n  font-display: swap;\n}\n```\nBody font: `"
   },
   {
-    "id": "ms-bloom-ai-hero",
+    "id": "ms-digital-experiences",
     "row": 3,
-    "title": "Bloom AI",
-    "category": "Hero Section",
-    "imageUrl": "https://motionsites.ai/assets/hero-bloom-ai-preview-g6RcYLTl.gif",
-    "videoUrl": "https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260315_073750_51473149-4350-4920-ae24-c8214286f323.mp4",
-    "specs": {
-      "layout": "Hero Section",
-      "motion": "MP4 Preview + Interactive Prompt",
-      "responsive": "390px / 768px / 1440px",
-      "durationMs": 420,
-      "easing": "cubic-bezier(0.22, 1, 0.36, 1)"
-    },
-    "tags": [
-      "Hero Section",
-      "hero"
-    ],
-    "promptText": "Create a full-screen hero landing page for \"Bloom\" — an AI-powered plant/floral design platform. The design uses a liquid glass morphism aesthetic over a looping video background.\n\nBackground\nFull-screen autoplaying, looping, muted video background: https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260315_073750_51473149-4350-4920-ae24-c8214286f323.mp4\nVideo covers entire viewport with object-cover, sits at z-0. All content floats above at z-10.\n\nFonts\nDisplay/Body: Poppins (Google Fonts) — used for headings and body text\nSerif accent: Source Serif 4 (Google Fonts) — u"
-  },
-  {
-    "id": "ms-designpro-hero",
-    "row": 0,
-    "title": "DesignPro Academy",
-    "category": "Hero Section",
-    "imageUrl": "https://motionsites.ai/assets/hero-designpro-preview-D8c5_een.gif",
-    "videoUrl": "https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260328_105406_16f4600d-7a92-4292-b96e-b19156c7830a.mp4",
-    "specs": {
-      "layout": "Hero Section",
-      "motion": "MP4 Preview + Interactive Prompt",
-      "responsive": "390px / 768px / 1440px",
-      "durationMs": 420,
-      "easing": "cubic-bezier(0.22, 1, 0.36, 1)"
-    },
-    "tags": [
-      "Hero Section",
-      "hero"
-    ],
-    "promptText": "Create a full-screen hero section for a product design education platform called \"DesignPro\" with the following exact specifications:\n\nBackground:\n\nFull-screen looping video background using this exact CloudFront URL: https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260328_105406_16f4600d-7a92-4292-b96e-b19156c7830a.mp4\n\nVideo should autoplay, loop, be muted, and play inline\n\nBackground color: black (#000000)\n\nNavigation Bar:\n\nLogo: Circular design with a white border (2px), containing a smaller filled white circle inside, followed by \"DesignPro\" text\n\nNavigation link"
-  },
-  {
-    "id": "ms-digital-epoch-hero",
-    "row": 1,
-    "title": "Digital Epoch",
-    "category": "Hero Section",
-    "imageUrl": "https://motionsites.ai/assets/hero-digital-epoch-preview-B85ezqXO.gif",
-    "videoUrl": "https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260505_101331_74f9b798-3f00-4e86-8a01-377aa16ffeaa.mp4",
-    "specs": {
-      "layout": "Hero Section",
-      "motion": "MP4 Preview + Interactive Prompt",
-      "responsive": "390px / 768px / 1440px",
-      "durationMs": 420,
-      "easing": "cubic-bezier(0.22, 1, 0.36, 1)"
-    },
-    "tags": [
-      "Hero Section",
-      "hero"
-    ],
-    "promptText": "Build a modern, high-performance landing page section using React, TypeScript, Tailwind CSS v4, and Motion. The application should match the following exact specifications:\n1. Dependencies & Setup\nLibraries: Install lucide-react, motion, clsx, and tailwind-merge.\nFonts & CSS: In index.css, import the Inter and Outfit fonts from Google Fonts: @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@400;500;600&display=swap');\nConfigure the Tailwind theme in your CSS to use Inter as --font-sans and Outfit as --font-display.\nThe global body background sh"
-  },
-  {
-    "id": "ms-dot-hero",
-    "row": 2,
-    "title": "Dot",
-    "category": "Hero Section",
-    "imageUrl": "https://motionsites.ai/assets/dot-hero-Csf49OgS.gif",
-    "videoUrl": "https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260427_054418_a6d194f0-ac86-4df9-abe5-ded73e596d7c.mp4",
-    "specs": {
-      "layout": "Hero Section",
-      "motion": "MP4 Preview + Interactive Prompt",
-      "responsive": "390px / 768px / 1440px",
-      "durationMs": 420,
-      "easing": "cubic-bezier(0.22, 1, 0.36, 1)"
-    },
-    "tags": [
-      "Hero Section",
-      "hero"
-    ],
-    "promptText": "Build a React landing page exactly as specified below. Use React 19, Tailwind CSS v4, and motion/react for animations.\n1. Fonts & Global CSS Setup:\nIn index.html, import these Google Fonts:\nInstrument Serif (weights 400, italic 400)\nInter (weights 100 to 900)\nIn src/index.css, import this custom font for the Nokia text:\n@import url('https://db.onlinewebfonts.com/c/440b53b1a1c65037f944ff19259d8014?family=Nokia+Cellphone+FC+Small');\nConfigure the Tailwind theme variables in index.css:\n--font-instrument: \"Instrument Serif\", serif;\n--font-serif: \"Instrument Serif\", serif;\n--font-sans: \"Inter\", san"
-  },
-  {
-    "id": "ms-power-ai-hero",
-    "row": 3,
-    "title": "Power AI",
-    "category": "Hero Section",
-    "imageUrl": "https://motionsites.ai/assets/hero-power-ai-preview-BqpSbx41.gif",
-    "videoUrl": "https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260328_065045_c44942da-53c6-4804-b734-f9e07fc22e08.mp4",
-    "specs": {
-      "layout": "Hero Section",
-      "motion": "MP4 Preview + Interactive Prompt",
-      "responsive": "390px / 768px / 1440px",
-      "durationMs": 420,
-      "easing": "cubic-bezier(0.22, 1, 0.36, 1)"
-    },
-    "tags": [
-      "Hero Section",
-      "hero"
-    ],
-    "promptText": "Create a full-screen dark hero section with a looping background video, navbar, headline, subtitle, CTA button, and a logo marquee at the bottom. Here are the exact specifications:\n\nTheme & Colors (index.css CSS variables):\nBackground: 260 87% 3% (deep dark blue-purple)\nForeground: 40 6% 95% (off-white)\nHero sub text: 40 6% 82%\nBody font: Geist Sans (via @fontsource/geist-sans)\nHeadline font: General Sans (loaded from Fontshare: https://api.fontshare.com/v2/css?f[]=general-sans@400,500,600,700&display=swap)\n\nBackground Video (Index page wrapper):\nVideo URL: https://d8j0ntlcm91z4.cloudfront.net"
-  },
-  {
-    "id": "ms-rivr-hero",
-    "row": 0,
-    "title": "RIVR",
-    "category": "Hero Section",
-    "imageUrl": "https://motionsites.ai/assets/hero-rivr-preview-DcS3pjx4.gif",
-    "videoUrl": "https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260428_193507_4286c423-2fd9-4efd-92bd-91a939453fc1.mp4",
-    "specs": {
-      "layout": "Hero Section",
-      "motion": "MP4 Preview + Interactive Prompt",
-      "responsive": "390px / 768px / 1440px",
-      "durationMs": 420,
-      "easing": "cubic-bezier(0.22, 1, 0.36, 1)"
-    },
-    "tags": [
-      "Hero Section",
-      "hero"
-    ],
-    "promptText": "Build a Hero section for a DeFi dashboard named RIVR showcasing a sleek, glassmorphism aesthetic. Please mimic these exact specifications to ensure a premium UI.\n\nDependencies: \n- Use `lucide-react` for icons.\n- Use `motion` (imported from `'motion/react'`) for animations.\n\n1. Global Styles (`src/index.css`)\nImport the custom 'Helvetica Regular' font, set the Tailwind theme properly, and reset the body. Exact CSS to include:\n@import \"tailwindcss\";\n\n@font-face {\n    font-family: \"Helvetica Regular\";\n    src: url(\"https://db.onlinewebfonts.com/t/a64ff11d2c24584c767f6257e880dc65.eot\");\n    src: u"
-  },
-  {
-    "id": "ms-stellar-ai-hero",
-    "row": 1,
-    "title": "Stellar AI",
-    "category": "Hero Section",
-    "imageUrl": "https://motionsites.ai/assets/hero-stellar-ai-preview-D3HL6bw1.gif",
-    "videoUrl": "https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260319_165750_358b1e72-c921-48b7-aaac-f200994f32fb.mp4",
-    "specs": {
-      "layout": "Hero Section",
-      "motion": "MP4 Preview + Interactive Prompt",
-      "responsive": "390px / 768px / 1440px",
-      "durationMs": 420,
-      "easing": "cubic-bezier(0.22, 1, 0.36, 1)"
-    },
-    "tags": [
-      "Hero Section",
-      "hero"
-    ],
-    "promptText": "Create a \"Stellar.ai\" landing page hero section using React, Tailwind CSS, and Lucide React icons. Use the Inter font (imported from Google Fonts). The page has a white background (bg-white), max-width max-w-7xl, and is centered with mx-auto.\n\nFont: Import Inter (weights 400, 500, 600, 700) from Google Fonts. Set font-family: 'Inter', sans-serif on the body.\n\nCustom CSS animations (in index.css):\n\n@keyframes fadeInUp -- from opacity: 0; transform: translateY(30px) to opacity: 1; transform: translateY(0). Class .animate-fade-in-up uses this with 0.6s ease-out forwards.\n@keyframes fadeInOverlay "
-  },
-  {
-    "id": "ms-transform-data-hero",
-    "row": 2,
-    "title": "Transform Data",
-    "category": "Hero Section",
-    "imageUrl": "https://motionsites.ai/assets/hero-transform-data-preview-Cx5OU29N.gif",
-    "videoUrl": "https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260329_050842_be71947f-f16e-4a14-810c-06e83d23ddb5.mp4",
-    "specs": {
-      "layout": "Hero Section",
-      "motion": "MP4 Preview + Interactive Prompt",
-      "responsive": "390px / 768px / 1440px",
-      "durationMs": 420,
-      "easing": "cubic-bezier(0.22, 1, 0.36, 1)"
-    },
-    "tags": [
-      "Hero Section",
-      "hero"
-    ],
-    "promptText": "HERO SECTION CREATION PROMPT\n\nCreate a modern hero section with a looping video background and the following specifications:\n\nVideo Background:\n\nSize: 115% width and height\n\nPosition: Centered horizontally, anchored to top with object-top focal point\n\nCustom JavaScript fade system (NO CSS transitions):\n\n250ms requestAnimationFrame-based fade-in on load/loop start\n\n250ms fade-out when 0.55 seconds remain before video end\n\nfadingOutRef boolean prevents re-triggering fade-out from repeated timeUpdate events\n\nOn ended: opacity set to 0, 100ms delay, reset to currentTime = 0, play, fade back in\n\nEa"
-  },
-  {
-    "id": "ms-vex-ventures-hero",
-    "row": 3,
-    "title": "VEX Ventures",
-    "category": "Hero Section",
-    "imageUrl": "https://motionsites.ai/assets/hero-vex-ventures-preview-BczMFIiw.gif",
-    "videoUrl": "https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260403_050628_c4e32401-fab4-4a27-b7a8-6e9291cd5959.mp4",
-    "specs": {
-      "layout": "Hero Section",
-      "motion": "MP4 Preview + Interactive Prompt",
-      "responsive": "390px / 768px / 1440px",
-      "durationMs": 420,
-      "easing": "cubic-bezier(0.22, 1, 0.36, 1)"
-    },
-    "tags": [
-      "Hero Section",
-      "hero"
-    ],
-    "promptText": "Recreate this hero section exactly. Here are the complete specifications:\n\nVideo Background:\n\nFull-screen background video, absolutely positioned, covering the entire viewport (object-cover)\nVideo URL: https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260403_050628_c4e32401-fab4-4a27-b7a8-6e9291cd5959.mp4\nAutoplay, loop, muted, playsInline\nNO dark overlay, NO gradient overlay, NO semi-transparent layer on top of the video. The video plays raw with no dimming whatsoever.\nTypography (CRITICAL - must be applied globally):\n\nImport the Google Font Inter via a <link> tag in "
-  },
-  {
-    "id": "ms-innovation-landing",
-    "row": 0,
-    "title": "Innovation",
+    "title": "Digital Experiences",
     "category": "Landing Page",
-    "imageUrl": "https://motionsites.ai/assets/hero-innovation-preview-BerBJHh1.gif",
-    "videoUrl": "https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260405_074625_a81f018a-956b-43fb-9aee-4d1508e30e6a.mp4",
+    "imageUrl": "/assets/motion-posters/digital-experiences.jpg",
+    "videoUrl": "https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260619_191346_9d19d66e-86a4-47f7-8dc6-712c1788c3b2.mp4",
     "specs": {
       "layout": "Landing Page",
-      "motion": "MP4 Preview + Interactive Prompt",
+      "motion": "JS + MP4 Trailer + Full Prompt",
       "responsive": "390px / 768px / 1440px",
       "durationMs": 420,
       "easing": "cubic-bezier(0.22, 1, 0.36, 1)"
@@ -759,100 +820,78 @@ export const MOTION_MARQUEE_ITEMS: MotionMarqueeItem[] = [
       "Landing Page",
       "hero"
     ],
-    "promptText": "RECREATION PROMPT\n\nBuild a single-page landing site using React + TypeScript + Vite + Tailwind CSS + framer-motion + lucide-react. The entire page has a bg-black background. The font loaded via Google Fonts is Instrument Serif (italic and regular). Import it in index.css:\n\n@import url('https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&display=swap');\nLIQUID GLASS CSS (in index.css, inside @layer components)\nCreate a reusable .liquid-glass class used on every glass element:\n\n.liquid-glass {\n  background: rgba(255, 255, 255, 0.01);\n  background-blend-mode: luminosity;\n  backdrop"
+    "promptText": "## Prompt\n\nBuild a single-page React + Vite + TypeScript + Tailwind CSS site with exactly two full-screen sections (Hero and Capabilities). The page is a dark, cinematic web design agency landing page with \"liquid glass\" morphism UI elements and smooth blur/fade animations using Framer Motion.\n\n---\n\n### Fonts (Google Fonts)\n\nLoad via `<link>` in `index.html`:\n- **Instrument Serif** (italic) -- used for all headings (`font-heading`)\n- **Barlow** (weights 300, 400, 500, 600) -- used for body text (`font-body`)\n\nTailwind config extends `fontFamily`:\n```js\nheading: [\"'Instrument Serif'\", 'serif'],"
   },
   {
-    "id": "ms-mindloop-landing",
-    "row": 1,
-    "title": "Mindloop Landing",
-    "category": "Landing Page",
-    "imageUrl": "https://motionsites.ai/assets/hero-mindloop-landing-preview-Bqnstohr.gif",
-    "videoUrl": "https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260325_120549_0cd82c36-56b3-4dd9-b190-069cfc3a623f.mp4",
-    "specs": {
-      "layout": "Landing Page",
-      "motion": "MP4 Preview + Interactive Prompt",
-      "responsive": "390px / 768px / 1440px",
-      "durationMs": 420,
-      "easing": "cubic-bezier(0.22, 1, 0.36, 1)"
-    },
-    "tags": [
-      "Landing Page",
-      "hero"
-    ],
-    "promptText": "Build a dark monochrome landing page called Mindloop — a newsletter/content platform. Use React + Vite + TypeScript + Tailwind CSS + shadcn/ui + Framer Motion. Fonts: Inter (sans) and Instrument Serif (serif, used for italic accent words). The entire theme is pure black (#000) background with white foreground — no colors or gradients beyond monochrome. Install hls.js and framer-motion.\n\nDesign System (index.css)\nAll CSS variables in HSL (no hsl() wrapper in the variable, just the values):\n\n--background: 0 0% 0%\n--foreground: 0 0% 100%\n--card: 0 0% 5%\n--card-foreground: 0 0% 100%\n--primary: 0 0"
-  },
-  {
-    "id": "ms-orbis-nft-landing",
-    "row": 2,
-    "title": "Orbis NFT",
-    "category": "Landing Page",
-    "imageUrl": "https://motionsites.ai/assets/hero-orbis-nft-preview-C3wvh77a.gif",
-    "videoUrl": "https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260331_045634_e1c98c76-1265-4f5c-882a-4276f2080894.mp4",
-    "specs": {
-      "layout": "Landing Page",
-      "motion": "MP4 Preview + Interactive Prompt",
-      "responsive": "390px / 768px / 1440px",
-      "durationMs": 420,
-      "easing": "cubic-bezier(0.22, 1, 0.36, 1)"
-    },
-    "tags": [
-      "Landing Page",
-      "hero",
-      "3d-website",
-      "landing-page"
-    ],
-    "promptText": "Create an NFT landing page called \"Orbis.Nft\" with 4 sections, using a dark space theme. The page uses video backgrounds served from CloudFront, a liquid glass UI effect, and a specific color/font system. Recreate it exactly as described below.\n\nFONTS (Google Fonts)\n\nAnton - Used for all headings and navigation text (aliased as font-grotesk in Tailwind)\n\nCondiment - A cursive script used for accent/overlay text (aliased as font-condiment in Tailwind)\n\nSystem monospace font (font-mono) - Used for body/description paragraphs\n\nLoad via Google Fonts in index.html:\n\nhttps://fonts.googleapis.com/css"
-  },
-  {
-    "id": "ms-prisma-landing",
-    "row": 3,
-    "title": "Prisma Creative Studio",
-    "category": "Landing Page",
-    "imageUrl": "https://motionsites.ai/assets/hero-prisma-preview-D4QeI0Bn.gif",
-    "videoUrl": "https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260405_170732_8a9ccda6-5cff-4628-b164-059c500a2b41.mp4",
-    "specs": {
-      "layout": "Landing Page",
-      "motion": "MP4 Preview + Interactive Prompt",
-      "responsive": "390px / 768px / 1440px",
-      "durationMs": 420,
-      "easing": "cubic-bezier(0.22, 1, 0.36, 1)"
-    },
-    "tags": [
-      "Landing Page",
-      "hero"
-    ],
-    "promptText": "Create a React + Vite + TypeScript + Tailwind CSS landing page for a creative studio called \"Prisma\". The page has 3 sections: Hero, About, and Features. Use framer-motion for animations and lucide-react for icons. The design is dark, moody, and cinematic with a warm cream color palette.\n\nFONTS\n\nLoad two Google Fonts in index.html:\n\nAlmarai (weights: 300, 400, 700, 800) -- used as the global default font\nInstrument Serif (italic only) -- used for italic accent text in the About section\nIn index.css, set the global font family:\n\n* { font-family: 'Almarai', -apple-system, BlinkMacSystemFont, 'Se"
-  },
-  {
-    "id": "ms-skyelite-hero",
+    "id": "ms-arceage-stats",
     "row": 0,
-    "title": "SkyElite Private Jets",
-    "category": "Landing Page",
-    "imageUrl": "https://motionsites.ai/assets/hero-skyelite-preview-DHaZIgUv.gif",
-    "videoUrl": "https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260328_091828_e240eb17-6edc-4129-ad9d-98678e3fd238.mp4",
+    "title": "Arceage Stats",
+    "category": "Stats",
+    "imageUrl": "/assets/motion-posters/arceage-stats.jpg",
+    "videoUrl": "https://app-uploads.krea.ai/wan-videos/7f348c17-c3aa-40c9-9d5b-a2bed9a72c2e.mp4",
     "specs": {
-      "layout": "Landing Page",
-      "motion": "MP4 Preview + Interactive Prompt",
+      "layout": "Stats",
+      "motion": "JS + MP4 Trailer + Full Prompt",
       "responsive": "390px / 768px / 1440px",
       "durationMs": 420,
       "easing": "cubic-bezier(0.22, 1, 0.36, 1)"
     },
     "tags": [
-      "Landing Page",
-      "hero"
+      "Stats",
+      "stats"
     ],
-    "promptText": "Create a premium private jet landing page hero section with the following specifications:\n\nVideo Background:\nUse this exact CloudFront video URL: https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260328_091828_e240eb17-6edc-4129-ad9d-98678e3fd238.mp4\nVideo should autoplay, be muted, loop continuously, and include playsInline attribute\nVideo covers entire viewport (100vh) using object-cover\n\nNavigation Bar:\nBrand name \"SkyElite\" on the left (text-2xl, font-semibold, text-gray-900)\nDesktop menu items (hidden on mobile, visible md:flex): Start, Story, Rates, Benefits, FAQ"
+    "promptText": "Create a React + Tailwind CSS v4 + Motion (framer-motion successor) stats section component. Use Vite as the bundler. The section should be fully mobile responsive.\n\n### Fonts\n\nImport from Google Fonts in your global CSS:\n```\n@import url('https://fonts.googleapis.com/css2?family=Barlow:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&family=Instrument+Serif:ital@0;1&display=swap');\n```\n\nDefine two Tailwind v4 theme fonts:\n- `--font-sans: \"Barlow\", ui-sans-serif, system-ui, sans-serif;` (used as the primary UI font via `font-s"
   },
   {
-    "id": "ms-halo-usd-landing",
+    "id": "ms-innovation-lab",
     "row": 1,
-    "title": "USD Halo",
+    "title": "Innovation Lab",
+    "category": "Technology",
+    "imageUrl": "/assets/motion-posters/innovation-lab.jpg",
+    "videoUrl": "https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260717_120352_eb988725-1351-43b3-8095-16e4a1005e3d.mp4",
+    "specs": {
+      "layout": "Technology",
+      "motion": "JS + MP4 Trailer + Full Prompt",
+      "responsive": "390px / 768px / 1440px",
+      "durationMs": 420,
+      "easing": "cubic-bezier(0.22, 1, 0.36, 1)"
+    },
+    "tags": [
+      "Technology",
+      "hero"
+    ],
+    "promptText": "Create a full-screen immersive landing page for a fictional creative-tech studio called \"VortxLab Creations\" (brand: \"V O R T X\"). The page features a looping background video, a glassmorphism-cut button aesthetic with octagonal clip-path shapes, and staggered fade-up entrance animations on every element.\n\n### Tech Stack\n- React + TypeScript + Vite\n- Tailwind CSS (configured with `fontFamily.inter: ['Inter', 'sans-serif']`)\n- `lucide-react` for icons (only `ArrowRight` used)\n- Google Fonts: **Inter** weights 300–900, loaded via `<link>` in index.html with preconnect to fonts.googleapis.com and"
+  },
+  {
+    "id": "ms-halo-use-case",
+    "row": 2,
+    "title": "Halo Use Case",
+    "category": "Use Case",
+    "imageUrl": "/assets/motion-posters/halo-use-case.jpg",
+    "videoUrl": "https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260423_183428_ab5e672a-f608-4dcb-b319-f3e040f02e2d.mp4",
+    "specs": {
+      "layout": "Use Case",
+      "motion": "TSX + MP4 Trailer + Full Prompt",
+      "responsive": "390px / 768px / 1440px",
+      "durationMs": 420,
+      "easing": "cubic-bezier(0.22, 1, 0.36, 1)"
+    },
+    "tags": [
+      "Use Case",
+      "features"
+    ],
+    "promptText": "**Prompt:**\n\nBuild a \"Use Cases\" section for a fintech stablecoin landing page using **React + TypeScript + Tailwind CSS** with **lucide-react** for icons (use `ArrowRight`). Make it fully mobile responsive.\n\n---\n\n### Font Setup\n\nThe page uses **\"TT Norms Pro\"** loaded via a stylesheet link in `index.html`:\n\n```html\n<link href=\"https://db.onlinewebfonts.com/c/49bf5d043a27b890a040cf393277e2b2?family=TT+Norms+Pro+Regular\" rel=\"stylesheet\">\n```\n\nAdd this `<link>` inside the `<head>` of your `index.html`.\n\nThen in `index.css`, apply it globally:\n\n```css\n@tailwind base;\n@tailwind components;\n@tailw"
+  },
+  {
+    "id": "ms-health-portal",
+    "row": 3,
+    "title": "Health Portal",
     "category": "Landing Page",
-    "imageUrl": "https://motionsites.ai/assets/halo-usd-hero-CtMXOklk.gif",
-    "videoUrl": "https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260423_161253_c72b1869-400f-45ed-ac0c-52f68c2ed5bd.mp4",
+    "imageUrl": "https://images.higgs.ai/?default=1&output=webp&url=https%3A%2F%2Fd8j0ntlcm91z4.cloudfront.net%2Fuser_38xzZboKViGWJOttwIXH07lWA1P%2Fhf_20260624_113640_ccf3cf97-d447-425b-a134-d7b09fc743fc.png",
+    "videoUrl": "",
     "specs": {
       "layout": "Landing Page",
-      "motion": "MP4 Preview + Interactive Prompt",
+      "motion": "TS + CSS + Full Prompt",
       "responsive": "390px / 768px / 1440px",
       "durationMs": 420,
       "easing": "cubic-bezier(0.22, 1, 0.36, 1)"
@@ -861,126 +900,86 @@ export const MOTION_MARQUEE_ITEMS: MotionMarqueeItem[] = [
       "Landing Page",
       "hero"
     ],
-    "promptText": "Build a premium, fintech-style landing page for a stablecoin product called \"Halo / USD Halo\" using React + TypeScript + Vite + Tailwind CSS, with lucide-react for icons. No other UI libraries. Background color of the page is #F5F5F5.\n\nGlobal Setup\nUse TT Norms Pro as the primary font, loaded via @font-face from /fonts/tt-norms-pro-regular.woff2 (weight 400) and /fonts/tt-norms-pro-semibold.woff2 (weight 600), with font-display: swap. Apply it to html, body, and inherit on *.\nTailwind base + components + utilities at the top of src/index.css.\nPage wrapper: flex flex-col bg-[#F5F5F5]. The first"
+    "promptText": "Create a single-page dental clinic landing page using **React + Vite + TypeScript + Tailwind CSS**. No external UI libraries, no icon libraries. Everything lives in one `App.tsx` file. The page has 3 full-screen sections, a splash screen, and a fixed navbar.\n\n---\n\n### SETUP\n\n**Font:** \"Open Sauce One\" loaded via these exact links in `index.html` `<head>`:\n```html\n<link href=\"https://db.onlinewebfonts.com/c/1cd1e7d71e048159076fd90b39846902?family=Open+Sauce+One\" rel=\"stylesheet\">\n<link href=\"https://db.onlinewebfonts.com/c/42acf9aa4a6dc2f2886a3f682e337ead?family=Open+Sauce+One+Bold\" rel=\"styles"
   },
   {
-    "id": "ms-nival-cyberspace",
-    "row": 2,
-    "title": "ConSentinel",
-    "category": "Motion",
-    "imageUrl": "https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260912_105822_bf7c2d53-9957-4521-bbbf-7c1ab7a70130.png",
-    "videoUrl": "https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260912_105953_21ad8049-9088-4a00-bad3-aee6b5575a2b.mp4",
-    "specs": {
-      "layout": "Motion",
-      "motion": "MP4 Preview + Interactive Prompt",
-      "responsive": "390px / 768px / 1440px",
-      "durationMs": 420,
-      "easing": "cubic-bezier(0.22, 1, 0.36, 1)"
-    },
-    "tags": [
-      "Motion",
-      "hero"
-    ],
-    "promptText": "Build a single self-contained `index.html` file — one full-viewport hero section for a\nsecurity product called \"ConSentinel\". No build step, no frameworks, no external JS.\nAll CSS in one `<style>` in `<head>`; all JS in `<script>` tags as described. Output the\ncomplete file, nothing else.\n\n════════════════════════════════════════════════════════════════════════\n1. CORE CONCEPT — THE DESIGN-UNIT SYSTEM (do not substitute rem/px)\n════════════════════════════════════════════════════════════════════════\nThe layout is a pixel-measured 1280×960 comp. Every size and offset is expressed in\n`--u`, one "
-  },
-  {
-    "id": "ms-vinyl",
-    "row": 3,
-    "title": "Vinyl",
-    "category": "Music",
-    "imageUrl": "https://images.higgs.ai/?default=1&output=webp&url=https%3A%2F%2Fd8j0ntlcm91z4.cloudfront.net%2Fuser_38xzZboKViGWJOttwIXH07lWA1P%2Fhf_20260908_122011_59c97465-4d23-4fdc-ac40-f6832f573e28.png",
-    "videoUrl": "https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260908_125738_eb584080-9f98-489e-adb2-014760aa34da.mp4",
-    "specs": {
-      "layout": "Music",
-      "motion": "MP4 Preview + Interactive Prompt",
-      "responsive": "390px / 768px / 1440px",
-      "durationMs": 420,
-      "easing": "cubic-bezier(0.22, 1, 0.36, 1)"
-    },
-    "tags": [
-      "Music",
-      "hero"
-    ],
-    "promptText": "Build a single, self-contained `index.html` file — a full-viewport hero section for a\nvinyl/music-discovery site called \"Vinyl\". No build step, no frameworks, no local\nassets, no external JS libraries. All CSS in one `<style>` block in the head, all JS\nin one inline `<script>` before `</body>`. Plain HTML/CSS/vanilla JS only.\n\n═══════════════════════════════════════════════════════════════════\n1. ASSETS — use these exact remote URLs, do not substitute or localize\n═══════════════════════════════════════════════════════════════════\n\nBACKGROUND VIDEO (mp4, 1920x1080, 10s, silent, seamless loop):\n"
-  },
-  {
-    "id": "ms-designer-portfolio",
+    "id": "ms-talent-collective",
     "row": 0,
-    "title": "Designer Portfolio",
-    "category": "Portfolio",
-    "imageUrl": "https://images.higgs.ai/?default=1&output=webp&url=https%3A%2F%2Fd8j0ntlcm91z4.cloudfront.net%2Fuser_38xzZboKViGWJOttwIXH07lWA1P%2Fhf_20261107_011718_f1fd2b4c-d260-44ae-a0a2-8256134a4c35.png",
-    "videoUrl": "https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20261107_013821_69b8d7f5-48e9-43bb-8986-621494771aff.mp4",
+    "title": "Talent Collective",
+    "category": "Agency",
+    "imageUrl": "https://images.higgs.ai/?default=1&output=webp&url=https%3A%2F%2Fd8j0ntlcm91z4.cloudfront.net%2Fuser_38xzZboKViGWJOttwIXH07lWA1P%2Fhf_20260727_225202_f9e684f3-dc19-469a-8142-eb391bfc601b.png",
+    "videoUrl": "",
     "specs": {
-      "layout": "Portfolio",
-      "motion": "MP4 Preview + Interactive Prompt",
+      "layout": "Agency",
+      "motion": "JS + Full Prompt",
       "responsive": "390px / 768px / 1440px",
       "durationMs": 420,
       "easing": "cubic-bezier(0.22, 1, 0.36, 1)"
     },
     "tags": [
-      "Portfolio",
+      "Agency",
       "hero"
     ],
-    "promptText": "# Recreate the \"Adrian Korvel\" portfolio hero exactly\n\nBuild a single-file, full-viewport portfolio hero for a fictional independent designer, Adrian Korvel. It is one screen, with no scrolling on desktop. The page is a deep burnt-terracotta scene. A giant, softly glowing condensed serif name sits behind an illustrated portrait of a young man with long curly hair that blows in the wind. Dark agave leaves sway in the bottom corners, and small sparkles twinkle. Around this sit small uppercase typewriter-style text blocks, a minimal nav and a strip of five badges along the bottom. Everything belo"
+    "promptText": "Build a single full-viewport React + TypeScript + Tailwind CSS page for a creative studio called **Kollektiva**. The app renders only this one section (no nav, no other pages). Stack: Vite + React 18 + Tailwind 3. Font: **Geist** (Google Fonts weights 300, 400, 500). Title: `Kollektiva`.\n\n### Font setup\n\nIn `index.html`:\n```html\n<link rel=\"preconnect\" href=\"https://fonts.googleapis.com\" />\n<link rel=\"preconnect\" href=\"https://fonts.gstatic.com\" crossorigin />\n<link href=\"https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500&display=swap\" rel=\"stylesheet\" />\n```\n\nIn Tailwind config, e"
   },
   {
-    "id": "ms-paper-craft",
+    "id": "ms-virtual-fitting",
     "row": 1,
-    "title": "Paper Craft",
-    "category": "Portfolio",
-    "imageUrl": "https://images.higgs.ai/?default=1&output=webp&url=https%3A%2F%2Fd8j0ntlcm91z4.cloudfront.net%2Fuser_38xzZboKViGWJOttwIXH07lWA1P%2Fhf_20261111_220652_7971eee8-dbed-4c0c-88a9-cd5772b5afc9.png",
-    "videoUrl": "https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20261111_224117_b319aa12-0927-4642-99b2-12727753649b.mp4",
+    "title": "Virtual Fitting",
+    "category": "Ecommerce",
+    "imageUrl": "https://images.higgs.ai/?default=1&output=webp&url=https%3A%2F%2Fd8j0ntlcm91z4.cloudfront.net%2Fuser_38xzZboKViGWJOttwIXH07lWA1P%2Fhf_20261104_080623_c94c85a3-23d5-4a0c-afff-41be1b5b8191.png",
+    "videoUrl": "",
     "specs": {
-      "layout": "Portfolio",
-      "motion": "MP4 Preview + Interactive Prompt",
+      "layout": "Ecommerce",
+      "motion": "JS + Full Prompt",
       "responsive": "390px / 768px / 1440px",
       "durationMs": 420,
       "easing": "cubic-bezier(0.22, 1, 0.36, 1)"
     },
     "tags": [
-      "Portfolio",
+      "Ecommerce",
       "hero"
     ],
-    "promptText": "# Foldwild Studio: full recreation brief\n\nBuild this website exactly as described: a single-page, hash-routed site for a fictional paper-craft studio called **Foldwild Studio**. Everything is one `index.html` with inline CSS and JavaScript, plus GSAP 3.12.5 from `https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js`. There is no build step and no framework. All imagery and video are loaded from the URLs listed below. Do not substitute, re-host or crop them into new files. Several objects are shown from one sprite sheet using CSS `background-size` and `background-position`.\n\nThe site "
+    "promptText": "# VirtualFit: Spatial Try-On Arc (exact recreation prompt)\n\nBuild a single-screen, visionOS-style virtual try-on hero called **VirtualFit**.\n\n- **Scene:** a softly blurred bright living room fills the screen. A man stands in the centre, cut off at mid-thigh, in front of a huge ghosted `FIT` word.\n- **Garment arc:** frosted-glass garment cards curve around him in a 3D arc. They recede, shrink, tilt and blur toward the edges and bob gently. You can drag, flick, scroll, use the arrow keys or buttons, or click a card.\n- **Try-on:** when the arc settles on a garment, a glowing horizontal scan line "
   },
   {
-    "id": "ms-storybook",
+    "id": "ms-saltwake-pirate-hero",
     "row": 2,
-    "title": "Storybook",
-    "category": "Publishing",
-    "imageUrl": "https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20261108_042945_1a630b88-451d-4d93-9a7d-4151a6170e19.png",
-    "videoUrl": "https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20261108_051956_5f368146-b522-461d-9f5d-422f45255bd0.mp4",
+    "title": "Pirate Ship",
+    "category": "Travel",
+    "imageUrl": "https://images.higgs.ai/?default=1&output=webp&url=https%3A%2F%2Fd8j0ntlcm91z4.cloudfront.net%2Fuser_38xzZboKViGWJOttwIXH07lWA1P%2Fhf_20261031_024714_39df675e-5060-4528-87dc-9d0c274815aa.png",
+    "videoUrl": "",
     "specs": {
-      "layout": "Publishing",
-      "motion": "MP4 Preview + Interactive Prompt",
+      "layout": "Travel",
+      "motion": "JS + CSS + Full Prompt",
       "responsive": "390px / 768px / 1440px",
       "durationMs": 420,
       "easing": "cubic-bezier(0.22, 1, 0.36, 1)"
     },
     "tags": [
-      "Publishing",
+      "Travel",
       "hero"
     ],
-    "promptText": "# Little Lantern: recreation prompt\n\nGive me a single-file website called \"Little Lantern\" that recreates this page exactly: a real-time 3D children's board book lying on a dark wooden table. On load the book is first seen open, flips back through its pages, closes, swings round and settles onto the table. Scrolling (or a click on \"Open book\") lifts the book, zooms it in and swings the cover open, revealing two-page spreads. Only the right-hand page ever turns: a stiff board page that rises over the spine and lands on the left, showing the next spread. Each spread is a layered night illustrati"
+    "promptText": "# Saltwake — Pirate Ship Two-Scene Hero (exact recreation prompt)\n\nBuild a single-file, full-viewport landing hero for **Saltwake**, an illustrated pirate voyage brand. The page is a flat game-art scene on parchment inside a thick black rounded frame. A galleon rides black hand-drawn line-art waves that are animated live in code. One click (or a scroll) plays a long single-take transition: the sea rises over the headline, the ship shrinks away to the horizon, and a palm island with a pirate captain slides in from the left. Soft palm-frond shadows drift across everything, and a custom black rin"
   },
   {
-    "id": "ms-crystal-koi",
+    "id": "ms-nexacore-results",
     "row": 3,
-    "title": "Crystal Koi",
-    "category": "SaaS",
-    "imageUrl": "https://images.higgs.ai/?default=1&output=webp&url=https%3A%2F%2Fd8j0ntlcm91z4.cloudfront.net%2Fuser_38xzZboKViGWJOttwIXH07lWA1P%2Fhf_20261104_151305_25ef1f45-0886-491c-a7a8-81e296402d5a.png",
-    "videoUrl": "https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20261104_160514_d8369d6e-d8ba-4532-9751-b32e0c8aaf75.mp4",
+    "title": "NexaCore Results",
+    "category": "Features",
+    "imageUrl": "https://cdn.prod.website-files.com/6720dd1ab6df0da205830ab1/6870f623cf3df417ce45df05_icon%20logo%20eternacloud.png",
+    "videoUrl": "",
     "specs": {
-      "layout": "SaaS",
-      "motion": "MP4 Preview + Interactive Prompt",
+      "layout": "Features",
+      "motion": "TS + Full Prompt",
       "responsive": "390px / 768px / 1440px",
       "durationMs": 420,
       "easing": "cubic-bezier(0.22, 1, 0.36, 1)"
     },
     "tags": [
-      "SaaS",
-      "hero"
+      "Features",
+      "features"
     ],
-    "promptText": "# Nectarline — exact recreation prompt\n\nBuild a single-file, five-section landing page called **Nectarline** (\"Supply Side Studio®\"), a fictional self-serve programmatic-media curation product. The page sits on top of a fixed, full-viewport scene: a looping dusk lotus-pond video in the hero (drawn through a WebGL hover-ripple lens), which crossfades to a deep violet gradient for the middle sections and to a night version of the pond behind the footer. A 3D crystal-glass koi fish (a real GLB model rendered with Three.js) swims through every section, its position, size and heading driven by scro"
+    "promptText": "Build a single React + TypeScript + Tailwind CSS v3 component called `PrecisionSection`. No external icon libraries — all icons are inline SVG or `<img>` tags. No `useState`, no animations, no hover states. Two separate layouts: a desktop staircase (absolutely-positioned pillars) and a mobile alternating-flow layout. The `sm:` breakpoint controls visibility between them.\n\n---\n\n## Global font\n\nRegister **\"Mazzard H\"** in `index.css` and apply it globally:\n\n```css\n@font-face {\n  font-family: 'Mazzard H';\n  font-weight: 400;\n  font-style: normal;\n  src: url('https://db.onlinewebfonts.com/t/eb5b5e"
   }
 ];

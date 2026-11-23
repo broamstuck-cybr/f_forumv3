@@ -438,9 +438,12 @@
   padding: 16px;
 }
 
-.rm-modal-iframe {
+.rm-modal-iframe,
+.rm-modal-iframe .ex-sandbox-viewport,
+.rm-modal-iframe .ex-sandbox-frame {
   width: 100%;
   height: 500px;
+  max-height: none;
   border: 0;
   background: #090c0c;
   display: block;

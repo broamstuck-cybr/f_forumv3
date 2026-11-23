@@ -12,7 +12,6 @@ import OriginalFileBox from '../../components/pinui/original/file-box/FileBox';
 import type {
   AIProtocol,
   ProjectSetupTarget,
-  ThemeEffect,
   ThemePreference,
   UiMode,
   WallpaperPreset,
@@ -51,91 +50,91 @@ interface PresetDefinition {
 
 const PRESETS: PresetDefinition[] = [
   {
-    id: 'video',
-    name: 'Gradient Video',
+    id: 'auto',
+    name: 'Tự động',
     tone: 'auto',
     targetTheme: 'system',
-    swatches: ['#141312', '#1f8f7a', '#f5f1e8'],
-    previewBg: 'radial-gradient(circle at 24% 22%, rgba(56,201,154,0.5), transparent 56%), radial-gradient(circle at 78% 76%, rgba(125,163,187,0.52), #121110 78%)',
+    swatches: ['#121110', '#e07a5f', '#f5f1e8'],
+    previewBg: 'radial-gradient(circle at 24% 22%, rgba(224,122,95,0.45), transparent 56%), radial-gradient(circle at 78% 76%, rgba(125,163,187,0.52), #121110 78%)',
     previewCard: 'rgba(26, 24, 22, 0.82)',
-    previewAccent: '#38c99a',
+    previewAccent: '#e07a5f',
     ambient: true,
   },
   {
-    id: 'godray-amber',
-    name: 'Godray Hoàng Kim',
+    id: 'dark',
+    name: 'Obsidian Godray',
     tone: 'dark',
     targetTheme: 'dark',
-    swatches: ['#16120e', '#f97316', '#fbbf24'],
-    previewBg: 'radial-gradient(ellipse 90% 60% at 50% -10%, rgba(249,115,22,0.52), transparent 70%), conic-gradient(from 220deg at 50% 0%, #14110f 0deg, rgba(251,191,36,0.34) 40deg, #12100f 90deg)',
-    previewCard: 'rgba(30, 22, 16, 0.86)',
-    previewAccent: '#f97316',
+    swatches: ['#111010', '#d14b34', '#7da3bb'],
+    previewBg: 'radial-gradient(circle at 20% 10%, rgba(209,75,52,0.44), transparent 58%), radial-gradient(circle at 80% 80%, rgba(125,163,187,0.34), #111010 78%)',
+    previewCard: 'rgba(28, 25, 22, 0.9)',
+    previewAccent: '#d14b34',
     ambient: true,
   },
   {
-    id: 'godray-prism',
-    name: 'Godray Lăng Kính',
-    tone: 'dark',
-    targetTheme: 'dark',
-    swatches: ['#0c1018', '#06b6d4', '#ec4899'],
-    previewBg: 'conic-gradient(from 180deg at 22% 0%, rgba(6,182,212,0.5) 0deg, rgba(236,72,153,0.44) 55deg, #0c1018 125deg)',
-    previewCard: 'rgba(18, 22, 34, 0.86)',
-    previewAccent: '#06b6d4',
+    id: 'light',
+    name: 'Paper Sunburst',
+    tone: 'light',
+    targetTheme: 'light',
+    swatches: ['#f5f1e8', '#ffffff', '#c85a3a'],
+    previewBg: 'radial-gradient(circle at 18% 12%, rgba(235,176,120,0.52), transparent 58%), radial-gradient(circle at 84% 78%, rgba(186,217,230,0.48), #f5f1e8 78%)',
+    previewCard: 'rgba(255, 252, 246, 0.94)',
+    previewAccent: '#c85a3a',
     ambient: true,
   },
   {
-    id: 'mesh-aurora',
-    name: 'Mesh Cực Quang',
+    id: 'ember',
+    name: 'Ember Godray',
     tone: 'dark',
     targetTheme: 'dark',
-    swatches: ['#0b1312', '#10b981', '#3b82f6'],
-    previewBg: 'radial-gradient(circle at 20% 22%, rgba(16,185,129,0.55), transparent 55%), radial-gradient(circle at 82% 72%, rgba(59,130,246,0.52), #0b1312 78%)',
-    previewCard: 'rgba(16, 28, 26, 0.84)',
-    previewAccent: '#10b981',
+    swatches: ['#18100d', '#f16e3b', '#ffb266'],
+    previewBg: 'conic-gradient(from 200deg at 20% 15%, rgba(241,110,59,0.72), rgba(255,178,102,0.55) 75deg, rgba(24,16,13,0.95) 210deg)',
+    previewCard: 'rgba(34, 20, 15, 0.86)',
+    previewAccent: '#ff8a54',
     ambient: true,
   },
   {
-    id: 'silk-twilight',
-    name: 'Lụa Hoàng Hôn',
+    id: 'harbour',
+    name: 'Frost Prism',
+    tone: 'light',
+    targetTheme: 'light',
+    swatches: ['#eef6f9', '#d8eaf3', '#2c769e'],
+    previewBg: 'radial-gradient(circle at 22% 16%, rgba(154,214,242,0.75), transparent 56%), radial-gradient(circle at 82% 84%, rgba(186,232,216,0.68), #eef6f9 78%)',
+    previewCard: 'rgba(255, 255, 255, 0.88)',
+    previewAccent: '#2c769e',
+    ambient: true,
+  },
+  {
+    id: 'aurora',
+    name: 'Aurora Mesh',
     tone: 'dark',
     targetTheme: 'dark',
-    swatches: ['#15132b', '#e11d48', '#4f46e5'],
-    previewBg: 'linear-gradient(135deg, #1e1b4b 0%, #0f172a 100%), radial-gradient(circle at 42% 40%, rgba(225,29,72,0.45), transparent 62%)',
-    previewCard: 'rgba(24, 22, 46, 0.86)',
-    previewAccent: '#e11d48',
+    swatches: ['#091318', '#34d399', '#38bdf8'],
+    previewBg: 'radial-gradient(circle at 20% 22%, rgba(52,211,153,0.55), transparent 55%), radial-gradient(circle at 82% 72%, rgba(56,189,248,0.52), #091318 78%)',
+    previewCard: 'rgba(13, 27, 34, 0.84)',
+    previewAccent: '#34d399',
     ambient: true,
   },
   {
     id: 'constellation',
-    name: 'Tinh Vân Thiên Hà',
+    name: 'Golden Nebula',
     tone: 'dark',
     targetTheme: 'dark',
-    swatches: ['#0f1218', '#f2c05e', '#38bdf8'],
-    previewBg: 'radial-gradient(circle at 50% 100%, rgba(88,28,135,0.55), transparent 65%), radial-gradient(circle at 20% 20%, rgba(30,58,138,0.55), #0c1018 75%)',
+    swatches: ['#0f1218', '#f2c05e', '#7da3bb'],
+    previewBg: 'conic-gradient(from 195deg at 22% 8%, rgba(242,192,94,0.48), rgba(125,163,187,0.34) 110deg, #0f1218 240deg)',
     previewCard: 'rgba(18, 22, 34, 0.84)',
     previewAccent: '#f2c05e',
     ambient: true,
   },
   {
-    id: 'obsidian-glass',
-    name: 'Kính Obsidian',
+    id: 'indigo',
+    name: 'Midnight Sapphire',
     tone: 'dark',
     targetTheme: 'dark',
-    swatches: ['#111010', '#2b2928', '#f8f4ec'],
-    previewBg: 'radial-gradient(circle at 50% -15%, rgba(255,255,255,0.2), transparent 65%), #111010',
-    previewCard: 'rgba(28, 26, 25, 0.92)',
-    previewAccent: '#f8f4ec',
-    ambient: true,
-  },
-  {
-    id: 'paper-warm',
-    name: 'Giấy Ấm',
-    tone: 'light',
-    targetTheme: 'light',
-    swatches: ['#f5f1e8', '#0b7a59', '#14120e'],
-    previewBg: 'radial-gradient(circle at 14% 14%, rgba(245,158,11,0.28), transparent 58%), radial-gradient(circle at 86% 86%, rgba(180,83,9,0.2), #f5f1e8 76%)',
-    previewCard: 'rgba(255, 253, 248, 0.94)',
-    previewAccent: '#0b7a59',
+    swatches: ['#0b1024', '#6366f1', '#38bdf8'],
+    previewBg: 'radial-gradient(circle at 22% 18%, rgba(99,102,241,0.58), transparent 56%), radial-gradient(circle at 84% 82%, rgba(56,189,248,0.44), #0b1024 78%)',
+    previewCard: 'rgba(16, 22, 48, 0.86)',
+    previewAccent: '#818cf8',
     ambient: true,
   },
 ];
@@ -145,7 +144,7 @@ const SECTIONS: Array<{ id: SectionId; label: string; icon: React.ReactNode; key
     id: 'appearance',
     label: 'Giao diện & Nền',
     icon: <Palette size={15} aria-hidden="true" />,
-    keywords: 'giao diện theme sáng tối hình nền preset aurora ember cỡ chữ hiệu ứng giọt nước mưa',
+    keywords: 'giao diện theme sáng tối hình nền preset aurora ember godray nebula sapphire cỡ chữ',
   },
   {
     id: 'workspace',
@@ -165,13 +164,6 @@ const SECTIONS: Array<{ id: SectionId; label: string; icon: React.ReactNode; key
     icon: <Database size={15} aria-hidden="true" />,
     keywords: 'dữ liệu sao lưu json khôi phục đặt lại',
   },
-];
-
-const EFFECT_CHIPS = [
-  { id: 'droplet', label: 'Giọt nước' },
-  { id: 'rain', label: 'Mưa rơi' },
-  { id: 'diwali', label: 'Ánh sáng' },
-  { id: 'none', label: 'Tắt' },
 ];
 
 const DENSITY_CHIPS = [
@@ -342,8 +334,9 @@ export const SettingsView: React.FC = () => {
   const byok = settings.byok;
   const currentUiMode: UiMode = settings.uiMode || 'balanced';
   const currentThemePref: ThemePreference = settings.themePreference || (theme === 'dark' ? 'dark' : 'light');
-  const currentWallpaper: WallpaperPreset = settings.wallpaperPreset || 'video';
-  const currentEffect: ThemeEffect = settings.themeEffect || 'droplet';
+  const currentWallpaper: WallpaperPreset = PRESETS.some((p) => p.id === settings.wallpaperPreset)
+    ? (settings.wallpaperPreset as WallpaperPreset)
+    : 'dark';
   const ambientEnabled = settings.ambientVideo !== false;
   const autoRunChecks = settings.autoRunChecks !== false;
   const defaultViewport = String(settings.defaultViewport ?? 1440);
@@ -576,7 +569,7 @@ export const SettingsView: React.FC = () => {
                 </div>
               </section>
 
-              <section className="st-card" aria-label="Chủ đề Sáng Tối và hiệu ứng">
+              <section className="st-card" aria-label="Chủ đề Sáng Tối và hình nền">
                 <div className="st-row st-row--first">
                   <span className="st-label">Chế độ Sáng / Tối</span>
                   <Chips
@@ -585,17 +578,6 @@ export const SettingsView: React.FC = () => {
                     multi={false}
                     theme={theme}
                     onToggle={(id) => applyThemePref(id as ThemePreference)}
-                  />
-                </div>
-
-                <div className="st-row">
-                  <span className="st-label">Hiệu ứng chuyển cảnh</span>
-                  <Chips
-                    items={EFFECT_CHIPS}
-                    selectedIds={[currentEffect]}
-                    multi={false}
-                    theme={theme}
-                    onToggle={(id) => updateSettings({ themeEffect: id as ThemeEffect })}
                   />
                 </div>
 

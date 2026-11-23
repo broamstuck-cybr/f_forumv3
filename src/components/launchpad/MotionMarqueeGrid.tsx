@@ -93,12 +93,38 @@ const MotionVideoThumb: React.FC<{
   hovered?: boolean;
   reduced?: boolean;
 }> = ({ item, posterSrc, videoSrc, hovered = false, reduced = false }) => {
+  const hostRef = useRef<HTMLDivElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const [imgLoaded, setImgLoaded] = useState(false);
   const [imgFailed, setImgFailed] = useState(false);
+  const [inView, setInView] = useState(false);
   const [videoReady, setVideoReady] = useState(false);
+  const [videoFailed, setVideoFailed] = useState(false);
 
-  const shouldMountVideo = !reduced && Boolean(videoSrc) && hovered;
+  useEffect(() => {
+    setVideoReady(false);
+    setVideoFailed(false);
+  }, [videoSrc]);
+
+  useEffect(() => {
+    const el = hostRef.current;
+    if (!el || !videoSrc || reduced || typeof IntersectionObserver !== 'function') {
+      setInView(false);
+      return undefined;
+    }
+    const io = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          setInView(entry.isIntersecting);
+        }
+      },
+      { rootMargin: '80px' }
+    );
+    io.observe(el);
+    return () => io.disconnect();
+  }, [videoSrc, reduced]);
+
+  const shouldMountVideo = !reduced && Boolean(videoSrc) && !videoFailed && (inView || hovered);
 
   useEffect(() => {
     const v = videoRef.current;
@@ -111,7 +137,7 @@ const MotionVideoThumb: React.FC<{
   }, [shouldMountVideo]);
 
   return (
-    <div className="mmq-thumb-host">
+    <div ref={hostRef} className="mmq-thumb-host">
       {(!imgLoaded || imgFailed) && (
         <div
           className="mmq-thumb-plate"
@@ -149,6 +175,7 @@ const MotionVideoThumb: React.FC<{
           preload="metadata"
           onLoadedData={() => setVideoReady(true)}
           onCanPlay={() => setVideoReady(true)}
+          onError={() => setVideoFailed(true)}
         />
       )}
     </div>
@@ -217,11 +244,18 @@ export const MotionMarqueeGrid: React.FC<MotionMarqueeGridProps> = ({
   };
 
   const handleOpenItem = (item: MotionMarqueeItem) => {
+    if (Object.keys(fullMap).length === 0) {
+      void loadMotionSitesFull().then((items) => setFullMap(items));
+    }
     const rec = resolveMotionRecord(fullMap, item.id);
     const hasLive = Boolean(splitLiveHtmlCss(rec?.liveHtml));
+    const hasVideo = Boolean(item.videoUrl || (item.id !== 'ms-nike-hover' && rec?.previewVideo));
     userPickedTabRef.current = false;
     setActiveItem(item);
     setActiveTab(hasLive ? 'live' : 'video');
+    if (!hasLive && !hasVideo) {
+      setActiveTab('code');
+    }
     setCodeSubTab('code');
     setCopiedCode(false);
     setViewport(1440);
@@ -266,8 +300,8 @@ export const MotionMarqueeGrid: React.FC<MotionMarqueeGridProps> = ({
 
   const renderCard = (item: MotionMarqueeItem, isClone: boolean) => {
     const rec = resolveMotionRecord(fullMap, item.id);
-    const posterSrc = rec?.previewImage || item.imageUrl;
-    const videoSrc = rec?.previewVideo || item.videoUrl;
+    const posterSrc = item.imageUrl || rec?.previewImage || '';
+    const videoSrc = item.videoUrl || (item.id !== 'ms-nike-hover' ? rec?.previewVideo || '' : '');
     const cardKey = isClone ? `${item.id}-clone` : item.id;
     const isEager = rowsData.some((row) => row.slice(0, 6).includes(item));
 
@@ -308,8 +342,10 @@ export const MotionMarqueeGrid: React.FC<MotionMarqueeGridProps> = ({
   };
 
   const activeFull = activeItem ? resolveMotionRecord(fullMap, activeItem.id) : undefined;
-  const activeVideoUrl = activeItem ? activeFull?.previewVideo || activeItem.videoUrl : '';
-  const activePosterUrl = activeItem ? activeFull?.previewImage || activeItem.imageUrl : '';
+  const activeVideoUrl = activeItem
+    ? activeItem.videoUrl || (activeItem.id !== 'ms-nike-hover' ? activeFull?.previewVideo || '' : '')
+    : '';
+  const activePosterUrl = activeItem ? activeItem.imageUrl || activeFull?.previewImage || '' : '';
   const activeVerbatimPrompt = activeItem ? getVerbatimPrompt(activeItem) : '';
   const activeTags = activeItem ? activeFull?.tags ?? activeItem.tags : [];
   const liveParts = useMemo(

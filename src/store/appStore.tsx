@@ -64,33 +64,48 @@ function detectSystemTheme(): ThemeMode {
   return 'dark';
 }
 
+const LEGACY_WALLPAPER_ALIAS: Record<string, WallpaperPreset> = {
+  video: 'auto',
+  'godray-amber': 'ember',
+  'godray-prism': 'harbour',
+  'mesh-aurora': 'aurora',
+  'silk-twilight': 'indigo',
+  'obsidian-glass': 'dark',
+  'paper-warm': 'light',
+};
+
 const VALID_WALLPAPER_PRESETS: ReadonlySet<WallpaperPreset> = new Set([
-  'video',
-  'godray-amber',
-  'godray-prism',
-  'mesh-aurora',
-  'silk-twilight',
-  'constellation',
-  'obsidian-glass',
-  'paper-warm',
   'auto',
   'dark',
   'light',
   'ember',
   'harbour',
   'aurora',
+  'constellation',
   'indigo',
 ]);
+
+function normalizeWallpaperPreset(raw: unknown): WallpaperPreset {
+  if (typeof raw === 'string') {
+    if (VALID_WALLPAPER_PRESETS.has(raw as WallpaperPreset)) {
+      return raw as WallpaperPreset;
+    }
+    if (raw in LEGACY_WALLPAPER_ALIAS) {
+      return LEGACY_WALLPAPER_ALIAS[raw];
+    }
+  }
+  return 'dark';
+}
 
 const DEFAULT_SETTINGS: SettingsState = {
   theme: 'dark',
   themePreference: 'dark',
   uiMode: 'balanced',
   ambientVideo: true,
-  wallpaperPreset: 'video',
+  wallpaperPreset: 'dark',
   autoRunChecks: true,
   defaultViewport: 1440,
-  themeEffect: 'rain',
+  themeEffect: 'droplet',
   reducedMotion: false,
   compactDensity: false,
   defaultExportTarget: 'antigravity',
@@ -117,8 +132,8 @@ function syncThemeDom(
     root.setAttribute('data-theme', theme);
     root.dataset.uiMode = uiMode || 'balanced';
     root.setAttribute('data-ambient', ambientVideo === false ? 'off' : 'on');
-    root.setAttribute('data-wallpaper', wallpaperPreset || 'video');
-    root.setAttribute('data-effect', themeEffect || 'rain');
+    root.setAttribute('data-wallpaper', wallpaperPreset || 'dark');
+    root.setAttribute('data-effect', themeEffect || 'droplet');
     root.setAttribute('data-density', compactDensity ? 'compact' : 'roomy');
     root.classList.toggle('dark', theme === 'dark');
     root.classList.toggle('light', theme === 'light');
@@ -534,11 +549,8 @@ export const AppStoreProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         parsed.themeEffect === 'diwali' ||
         parsed.themeEffect === 'none'
           ? parsed.themeEffect
-          : 'rain';
-      const resolvedWallpaper: WallpaperPreset =
-        parsed.wallpaperPreset && VALID_WALLPAPER_PRESETS.has(parsed.wallpaperPreset)
-          ? parsed.wallpaperPreset
-          : 'video';
+          : 'droplet';
+      const resolvedWallpaper = normalizeWallpaperPreset(parsed.wallpaperPreset);
       return {
         ...DEFAULT_SETTINGS,
         ...parsed,

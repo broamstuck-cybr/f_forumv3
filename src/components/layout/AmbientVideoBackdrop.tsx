@@ -345,7 +345,7 @@ export const AmbientVideoBackdrop: React.FC = () => {
   const { theme, settings, reducedMotion } = useAppStore();
   const isEco = settings.uiMode === 'eco';
   const ambientEnabled = !isEco && settings.ambientVideo !== false;
-  const preset: WallpaperPreset = settings.wallpaperPreset || 'video';
+  const preset: WallpaperPreset = settings.wallpaperPreset || 'dark';
   const [posterOnly, setPosterOnly] = useState<boolean>(() =>
     shouldUseStaticPoster(ambientEnabled, reducedMotion)
   );
@@ -364,13 +364,10 @@ export const AmbientVideoBackdrop: React.FC = () => {
   if (isEco) return null;
 
   const isVideoPreset =
-    preset === 'video' ||
     preset === 'auto' ||
     preset === 'dark' ||
-    preset === 'light' ||
-    preset === 'ember' ||
-    preset === 'harbour';
-  const isAuroraPreset = preset === 'mesh-aurora' || preset === 'aurora';
+    preset === 'light';
+  const isAuroraPreset = preset === 'aurora';
   const isConstellationPreset = preset === 'constellation';
 
   const useLightAsset =

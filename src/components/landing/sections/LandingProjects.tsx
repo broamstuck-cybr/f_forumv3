@@ -33,20 +33,34 @@ const ProjectCard: React.FC<{
   onOpen: () => void;
   onLive: () => void;
 }> = ({ item, index, onOpen, onLive }) => {
+  const [hovered, setHovered] = React.useState(false);
   const srcDoc = useMemo(() => buildShowcaseSrcDoc(item), [item]);
 
   return (
-    <article className="lp-proj-card">
+    <article
+      className="lp-proj-card"
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+    >
       <div className="lp-proj-media">
         <span className="lp-proj-index">{String(index + 1).padStart(2, '0')}</span>
-        <iframe
-          srcDoc={srcDoc}
-          title={`Bản chạy thử ${item.title}`}
-          sandbox="allow-scripts"
+        <img
+          className="lp-proj-img"
+          src={`/assets/motion-posters/${item.id}.jpg`}
+          alt={`Xem trước ${item.title}`}
           loading="eager"
-          referrerPolicy="no-referrer"
-          className="lp-proj-iframe"
+          decoding="async"
         />
+        {hovered && (
+          <iframe
+            srcDoc={srcDoc}
+            title={`Bản chạy thử ${item.title}`}
+            sandbox="allow-scripts"
+            loading="eager"
+            referrerPolicy="no-referrer"
+            className="lp-proj-iframe"
+          />
+        )}
       </div>
       <div className="lp-proj-body">
         <p className="t-label">{item.category}</p>

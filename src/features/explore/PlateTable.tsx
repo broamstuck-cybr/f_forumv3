@@ -463,7 +463,8 @@ export const PlateTable: React.FC<PlateTableProps> = ({
   const hasCompleteDemoHtml = Boolean(
     activeHtml &&
       (/<(?:!doctype|html|section|main|header|body)[\s>]/i.test(activeHtml) ||
-        activeHtml.trim().length >= 420)
+        Boolean(snippetCssWithTheme?.trim()) ||
+        activeHtml.trim().length >= 220)
   );
 
   const cycleViewport = () => {

@@ -907,7 +907,7 @@ export const ExperienceView: React.FC = () => {
                       itemId={activeVaultItem.i}
                       theme={stageTheme}
                     />
-                  ) : (Boolean(activeHtml && (/<(?:!doctype|html|section|main|header|body)[\s>]/i.test(activeHtml) || activeHtml.trim().length >= 420)) && (motionStageMode === 'html' || !activeOriginalVideo)) ? (
+                  ) : (Boolean(activeHtml && (/<(?:!doctype|html|section|main|header|body)[\s>]/i.test(activeHtml) || Boolean(snippetCssWithTheme?.trim()) || activeHtml.trim().length >= 220)) && (motionStageMode === 'html' || !activeOriginalVideo)) ? (
                     <SandboxPreview
                       title={activeTitle}
                       html={shardPayload?.h || activeCatalogItem?.previewHtml || activeHtml}

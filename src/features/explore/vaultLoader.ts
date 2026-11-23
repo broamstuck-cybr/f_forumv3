@@ -1,5 +1,3 @@
-// Vault loader & shard decoder for studio-vault.json and /data/vault/*.jgz
-
 export type VaultLibraryKey =
   | 'pinui'
   | 'codefronts'
