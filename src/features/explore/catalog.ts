@@ -11,6 +11,15 @@ import type {
   SourceCatalogItem,
   SourceLibraryName,
 } from '../../types/index';
+import type { VaultLibraryKey } from './vaultLoader';
+
+export interface ExplorePlateItem extends Omit<SourceCatalogItem, 'sourceLibrary'> {
+  sourceLibrary: SourceLibraryName;
+  vaultLibrary: VaultLibraryKey;
+  previewVideo?: string;
+  shard?: string;
+  hasRichMedia?: boolean;
+}
 
 export type ExploreMode = 'plates' | 'tools' | 'repos';
 export type PreviewViewport = 390 | 768 | 1440;
@@ -56,6 +65,9 @@ export interface MotionSiteFullEntry {
   css?: string;
   code?: string;
   codeLang?: string;
+  previewVideo?: string;
+  previewImage?: string;
+  liveUrl?: string;
   tags?: string[];
 }
 
@@ -145,7 +157,25 @@ export function archiveCount(library: SourceLibraryName): number | null {
 
 export function matchesQuery(query: string, fields: Array<string | undefined>): boolean {
   if (!query) return true;
-  return fields.some((field) => (field ? field.toLowerCase().includes(query) : false));
+  const normalized = query.trim().toLowerCase();
+  if (!normalized) return true;
+  const hay = fields.filter(Boolean).join(' ').toLowerCase();
+  return hay.includes(normalized);
+}
+
+export const TOPIC_FILTER_KEYWORDS: Record<string, string[]> = {
+  hero: ['hero', 'landing', 'banner', 'header', 'showcase', 'intro', 'mở đầu', 'đầu trang'],
+  card: ['card', 'bento', 'tile', 'panel', 'profile', 'glass', 'thẻ', 'lưới'],
+  button: ['button', 'btn', 'toggle', 'switch', 'pill', 'cta', 'nút', 'công tắc', 'tương tác'],
+  '3d': ['3d', 'webgl', 'three', 'threejs', 'shader', 'canvas', 'particle', 'globe', 'orbit', 'mesh', '3d_scene', 'không gian'],
+  pricing: ['pricing', 'price', 'plan', 'tier', 'billing', 'subscription', 'checkout', 'cart', 'bảng giá', 'gói'],
+};
+
+export function matchesTopicChip(topicId: string, fields: Array<string | undefined>): boolean {
+  if (!topicId) return true;
+  const keywords = TOPIC_FILTER_KEYWORDS[topicId] ?? [topicId];
+  const hay = fields.filter(Boolean).join(' ').toLowerCase();
+  return keywords.some((kw) => hay.includes(kw));
 }
 
 const RE_INTER_TIGHT = new RegExp('\\bInte' + 'r Tight\\b', 'gi');
@@ -410,14 +440,18 @@ export function whiteLabelArchivePath(item: SourceCatalogItem): string {
 }
 
 export function templateContext(
-  item: SourceCatalogItem,
+  item: SourceCatalogItem | ExplorePlateItem,
   customPayload?: string
 ): AttachedContextItem {
+  const libLabel =
+    'vaultLibrary' in item && item.vaultLibrary === 'glacier'
+      ? 'Nền & Lớp'
+      : LIBRARY_LABEL[item.sourceLibrary];
   return {
     id: item.id,
     kind: 'template',
     title: sanitizeBrandText(item.title),
-    sourceLibrary: LIBRARY_LABEL[item.sourceLibrary],
+    sourceLibrary: libLabel,
     summary: sanitizeBrandText(item.description),
     payload:
       customPayload ||

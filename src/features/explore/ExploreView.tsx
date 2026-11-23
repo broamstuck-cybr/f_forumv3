@@ -1,7 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { motion } from 'motion/react';
 import { useAppStore } from '../../store/appStore';
-import type { SourceLibraryName } from '../../types/index';
 import {
   Chips,
   LiquidTabs,
@@ -12,11 +11,18 @@ import {
 import OriginalFileBox from '../../components/pinui/original/file-box/FileBox';
 import { Mark } from '../../ui/Mark';
 import {
-  LIBRARY_LABEL,
-  LIBRARY_ORDER,
   RANKED_REPOS,
+  formatCount,
   type ExploreMode,
 } from './catalog';
+import {
+  VAULT_LIBRARY_LABELS,
+  VAULT_LIBRARY_ORDER,
+  fetchVaultIndex,
+  getCachedVaultIndex,
+  type VaultIndexItem,
+  type VaultLibraryKey,
+} from './vaultLoader';
 import { PlateTable, type LibraryFilter } from './PlateTable';
 import { RepoChart } from './RepoChart';
 import { ToolIndex } from './ToolIndex';
@@ -33,11 +39,11 @@ const RECENT_SEARCHES = ['Glass', '3D', 'Hero', 'Button', 'Pricing', 'Terminal']
 
 const QUICK_CATEGORY_CHIPS: ChipItem[] = [
   { id: '', label: 'Mọi chủ đề' },
-  { id: 'Hero', label: 'Hero & Mở đầu' },
-  { id: 'Card', label: 'Thẻ & Bento' },
-  { id: 'Button', label: 'Nút tương tác' },
-  { id: 'Three.js', label: 'WebGL & 3D' },
-  { id: 'Pricing', label: 'Bảng giá' },
+  { id: 'hero', label: 'Hero & Mở đầu' },
+  { id: 'card', label: 'Thẻ & Bento' },
+  { id: 'button', label: 'Nút tương tác' },
+  { id: '3d', label: 'WebGL & 3D' },
+  { id: 'pricing', label: 'Bảng giá' },
 ];
 
 function resolveIncomingMode(value: string | undefined | null): ExploreMode | null {
@@ -56,13 +62,31 @@ export const ExploreView: React.FC = () => {
     return resolveIncomingMode(window.sessionStorage.getItem('ff_explore_mode')) ?? 'plates';
   });
   const [library, setLibrary] = useState<LibraryFilter>('all');
+  const [topicChip, setTopicChip] = useState('');
   const [search, setSearch] = useState('');
   const [savedOnly, setSavedOnly] = useState(false);
+  const [vaultItems, setVaultItems] = useState<VaultIndexItem[]>(
+    () => getCachedVaultIndex()?.items ?? []
+  );
   const query = search.trim().toLowerCase();
 
-  const enterVaultExperience = () => {
-    if (typeof window !== 'undefined' && search.trim()) {
-      window.sessionStorage.setItem('ff_experience_query', search.trim());
+  useEffect(() => {
+    if (vaultItems.length > 0) return;
+    let cancelled = false;
+    void fetchVaultIndex()
+      .then((data) => {
+        if (!cancelled && data.items.length > 0) setVaultItems(data.items);
+      })
+      .catch(() => undefined);
+    return () => {
+      cancelled = true;
+    };
+  }, [vaultItems.length]);
+
+  const enterVaultExperience = (overrideQuery?: string) => {
+    const q = (overrideQuery ?? (search.trim() || topicChip)).trim();
+    if (typeof window !== 'undefined' && q) {
+      window.sessionStorage.setItem('ff_experience_query', q);
     }
     openExperience(sourceCatalog[0]?.id ?? 'vault');
   };
@@ -82,26 +106,34 @@ export const ExploreView: React.FC = () => {
     return () => window.removeEventListener('ff:explore-mode', onExploreMode);
   }, []);
 
-  const counts: Record<ExploreMode, number> = {
-    plates: sourceCatalog.length,
+  const totalPlatesCount = vaultItems.length > 0 ? vaultItems.length : sourceCatalog.length;
+
+  const counts: Record<ExploreMode, string | number> = {
+    plates: formatCount(totalPlatesCount),
     tools: resourceLibrary.length,
     repos: RANKED_REPOS.length,
   };
 
   const libraryTabs: LiquidTabItem[] = useMemo(() => {
-    const byLib = new Map<SourceLibraryName, number>();
-    for (const item of sourceCatalog) {
-      byLib.set(item.sourceLibrary, (byLib.get(item.sourceLibrary) ?? 0) + 1);
+    const byLib = new Map<VaultLibraryKey, number>();
+    if (vaultItems.length > 0) {
+      for (const item of vaultItems) {
+        byLib.set(item.l, (byLib.get(item.l) ?? 0) + 1);
+      }
+    } else {
+      for (const item of sourceCatalog) {
+        byLib.set(item.sourceLibrary, (byLib.get(item.sourceLibrary) ?? 0) + 1);
+      }
     }
     return [
-      { id: 'all', label: 'Tất cả', count: sourceCatalog.length },
-      ...LIBRARY_ORDER.map((name) => ({
+      { id: 'all', label: 'Tất cả', count: totalPlatesCount },
+      ...VAULT_LIBRARY_ORDER.map((name) => ({
         id: name,
-        label: LIBRARY_LABEL[name],
+        label: VAULT_LIBRARY_LABELS[name],
         count: byLib.get(name) ?? 0,
       })),
     ];
-  }, [sourceCatalog]);
+  }, [vaultItems, sourceCatalog, totalPlatesCount]);
 
   const handleTabKey = (event: React.KeyboardEvent<HTMLButtonElement>, index: number) => {
     let next = -1;
@@ -116,6 +148,7 @@ export const ExploreView: React.FC = () => {
   };
 
   const clearSearch = () => setSearch('');
+  const clearTopic = () => setTopicChip('');
 
   return (
     <div className="ex">
@@ -138,7 +171,7 @@ export const ExploreView: React.FC = () => {
             <button
               type="button"
               className="ex-vault-dock-btn"
-              onClick={enterVaultExperience}
+              onClick={() => enterVaultExperience()}
               title="Mở toàn bộ kho tài nguyên trong không gian trải nghiệm"
             >
               <span className="ex-vault-box-mini" aria-hidden="true">
@@ -213,8 +246,8 @@ export const ExploreView: React.FC = () => {
             />
             <Chips
               items={QUICK_CATEGORY_CHIPS}
-              selectedIds={[search]}
-              onToggle={(chipId) => setSearch((prev) => (prev === chipId ? '' : chipId))}
+              selectedIds={[topicChip]}
+              onToggle={(chipId) => setTopicChip((prev) => (prev === chipId ? '' : chipId))}
               multi={false}
               variant="filter"
               theme={theme}
@@ -237,12 +270,16 @@ export const ExploreView: React.FC = () => {
         {mode === 'plates' ? (
           <PlateTable
             query={query}
+            topicChip={topicChip}
+            onClearTopic={clearTopic}
             onClearQuery={clearSearch}
             savedOnly={savedOnly}
             onShowAll={() => setSavedOnly(false)}
             onToggleSavedOnly={() => setSavedOnly((v) => !v)}
             library={library}
             onLibraryChange={setLibrary}
+            vaultItems={vaultItems}
+            onOpenVaultQuery={(q) => enterVaultExperience(q)}
           />
         ) : null}
         {mode === 'tools' ? (

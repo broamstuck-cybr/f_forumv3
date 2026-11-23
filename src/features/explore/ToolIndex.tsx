@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import { BookOpen, ExternalLink } from 'lucide-react';
 import type { ResourceGroup, ResourceItem, VerificationStatus } from '../../types/index';
 import { useAppStore } from '../../store/appStore';
 import {
@@ -9,6 +10,8 @@ import {
   resourceContext,
   sanitizeBrandText,
 } from './catalog';
+import { ExplainerDrawer } from './ExplainerDrawer';
+import { buildToolExplainer, isVerifiedSpdxLicense } from './explainerData';
 import { ReactionBar } from './SpecimenSheet';
 
 interface ToolIndexProps {
@@ -26,7 +29,7 @@ function shortCategoryLabel(category: string): string {
 }
 
 const STATUS_BADGE: Record<VerificationStatus, string> = {
-  verified_tested: 'Đã kiểm thử',
+  verified_tested: 'Đã chạy thử',
   verified_info: 'Thông tin xác thực',
   unverified: 'Chưa đối chiếu',
 };
@@ -49,6 +52,12 @@ export const ToolIndex: React.FC<ToolIndexProps> = ({ query, onClearQuery, saved
   const [openGroup, setOpenGroup] = useState<ResourceGroup>(GROUP_ORDER[0]);
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
   const [catFilter, setCatFilter] = useState<string>('all');
+  const [explainerItem, setExplainerItem] = useState<ResourceItem | null>(null);
+
+  const explainerProfile = useMemo(
+    () => (explainerItem ? buildToolExplainer(explainerItem) : null),
+    [explainerItem]
+  );
 
   useEffect(() => {
     setCatFilter('all');
@@ -180,7 +189,7 @@ export const ToolIndex: React.FC<ToolIndexProps> = ({ query, onClearQuery, saved
           </button>
         </div>
         <p className="t-label">
-          {total} tài nguyên đã rà soát · {groups[0].entries.length} công cụ AI nổi bật
+          {total} công cụ xác thực URL · {groups[0].entries.length} công cụ AI nổi bật
         </p>
       </div>
 
@@ -238,13 +247,23 @@ export const ToolIndex: React.FC<ToolIndexProps> = ({ query, onClearQuery, saved
                         const title = sanitizeBrandText(item.title);
                         const description = sanitizeBrandText(item.description);
                         const snippet = sanitizeBrandText(item.snippet);
+                        const isSpdx = isVerifiedSpdxLicense(item.license);
                         return (
                           <li className="ex-row" key={item.id}>
                             <div className="ex-row-main">
                               <div className="ex-row-top">
-                                <h3 className="ex-row-title">{title}</h3>
+                                <button
+                                  type="button"
+                                  className="ex-row-title-btn"
+                                  onClick={() => setExplainerItem(item)}
+                                >
+                                  <h3 className="ex-row-title">{title}</h3>
+                                </button>
                                 <span className={`ex-badge ${STATUS_CLASS[item.status]}`}>
                                   {STATUS_BADGE[item.status]}
+                                </span>
+                                <span className={`ex-badge ${isSpdx ? 'ex-badge-tested' : 'ex-badge-muted'}`}>
+                                  {item.license}
                                 </span>
                               </div>
                               <p className="ex-row-line">{description}</p>
@@ -263,12 +282,29 @@ export const ToolIndex: React.FC<ToolIndexProps> = ({ query, onClearQuery, saved
                                   <dd>{item.compatibility}</dd>
                                 </div>
                                 <div>
-                                  <dt>kiểm tra</dt>
+                                  <dt>đồng bộ</dt>
                                   <dd>{formatDate(item.lastVerified)}</dd>
                                 </div>
                               </dl>
                             </div>
                             <div className="ex-row-actions">
+                              <button
+                                type="button"
+                                className="ex-text ex-text-strong ex-explainer-trigger"
+                                onClick={() => setExplainerItem(item)}
+                              >
+                                <BookOpen size={14} aria-hidden="true" />
+                                <span>Giải thích &amp; Hướng dẫn</span>
+                              </button>
+                              <a
+                                href={item.officialUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="ex-text ex-explainer-trigger"
+                              >
+                                <span>Trang gốc</span>
+                                <ExternalLink size={13} aria-hidden="true" />
+                              </a>
                               <ReactionBar id={item.id} title={title} showLabel />
                               <button
                                 type="button"
@@ -310,6 +346,11 @@ export const ToolIndex: React.FC<ToolIndexProps> = ({ query, onClearQuery, saved
           );
         })}
       </div>
+
+      <ExplainerDrawer
+        profile={explainerProfile}
+        onClose={() => setExplainerItem(null)}
+      />
     </div>
   );
 };

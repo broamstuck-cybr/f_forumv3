@@ -1,6 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { Monitor, Moon, RotateCw, Smartphone, Sun, Tablet, X, ZoomIn, ZoomOut } from 'lucide-react';
-import type { SourceCatalogItem } from '../../types/index';
+import { ExternalLink, Monitor, Moon, RotateCw, Smartphone, Sun, Tablet, X, ZoomIn, ZoomOut } from 'lucide-react';
 import { previewFor } from '../../ui/Media';
 import { useAppStore } from '../../store/appStore';
 import { PinHeartButton, PinUIPlayground } from '../../components/pinui';
@@ -16,23 +15,25 @@ import {
   resolvePinUISource,
   sanitizeBrandText,
   sanitizeSnippetCode,
+  type ExplorePlateItem,
   type MotionSiteFullEntry,
   type PinUISourceEntry,
   type PreviewTheme,
   type PreviewViewport,
 } from './catalog';
+import { VAULT_LIBRARY_LABELS, resolveOriginalLiveUrl } from './vaultLoader';
 import { SandboxPreview } from './SandboxPreview';
 import { SpecimenMedia } from './SpecimenMedia';
 
 interface SpecimenSheetProps {
-  item: SourceCatalogItem | null;
+  item: ExplorePlateItem | null;
   position: number;
   total: number;
   onClose: () => void;
   onStep: (delta: 1 | -1) => void;
-  onExperience: (item: SourceCatalogItem) => void;
-  onUse: (item: SourceCatalogItem) => void;
-  onAttach: (item: SourceCatalogItem) => void;
+  onExperience: (item: ExplorePlateItem) => void;
+  onUse: (item: ExplorePlateItem) => void;
+  onAttach: (item: ExplorePlateItem) => void;
 }
 
 type CodeTab = 'html' | 'css' | 'code' | 'spec';
@@ -159,9 +160,12 @@ export const SpecimenSheet: React.FC<SpecimenSheetProps> = ({
   const preview = item ? previewFor(item.id) : null;
   const safeTitle = item ? sanitizeBrandText(item.title) : '';
   const safeDesc = item ? sanitizeBrandText(item.description) : '';
-  const isPinUI = item?.sourceLibrary === 'pinui';
-  const isThreeUI = item?.sourceLibrary === 'threeui';
-  const isMotion = item?.sourceLibrary === 'motionsites';
+  const vaultLib = item?.vaultLibrary ?? item?.sourceLibrary ?? 'codefronts';
+  const libLabel = VAULT_LIBRARY_LABELS[vaultLib] || (item ? LIBRARY_LABEL[item.sourceLibrary] : '');
+  const isPinUI = vaultLib === 'pinui';
+  const isThreeUI = vaultLib === 'threeui';
+  const isMotion = vaultLib === 'motionsites';
+  const isGlacier = vaultLib === 'glacier';
 
   const pinuiSource = useMemo(
     () => (item && isPinUI ? resolvePinUISource(pinuiMap, item.id) : null),
@@ -172,6 +176,20 @@ export const SpecimenSheet: React.FC<SpecimenSheetProps> = ({
     () => (item && isMotion ? resolveMotionSiteEntry(motionMap, item.id) : null),
     [item, isMotion, motionMap]
   );
+
+  const originalVideo =
+    item?.previewVideo || (isMotion ? motionEntry?.previewVideo || '' : '');
+  const originalImage =
+    item?.previewImage ||
+    (isMotion ? motionEntry?.previewImage || '' : '') ||
+    (preview?.kind === 'image' ? preview.src : '');
+  const originalUrl = item
+    ? resolveOriginalLiveUrl(
+        vaultLib,
+        item.id,
+        (isMotion ? motionEntry?.liveUrl : '') || item.officialUrl
+      )
+    : '';
 
   const safeHtml = useMemo(() => {
     if (!item) return '';
@@ -261,7 +279,7 @@ export const SpecimenSheet: React.FC<SpecimenSheetProps> = ({
       {item ? (
         <div className="ex-spec-body">
           <div className="ex-spec-bar">
-            <span className="t-label">{LIBRARY_LABEL[item.sourceLibrary]}</span>
+            <span className="t-label">{libLabel}</span>
             <span className="t-label">
               {position} / {total}
             </span>
@@ -355,26 +373,45 @@ export const SpecimenSheet: React.FC<SpecimenSheetProps> = ({
                   viewport={viewport}
                   nonce={nonce}
                 />
+              ) : originalVideo ? (
+                <SpecimenMedia
+                  key={`${item.id}-vid`}
+                  preview={{
+                    kind: 'video',
+                    src: originalVideo,
+                    poster: originalImage || undefined,
+                    credit: isGlacier ? 'getlayers.ai' : 'motionsites.ai',
+                  }}
+                  title={safeTitle}
+                  fallbackLabel={libLabel}
+                  fit="contain"
+                  activePlay
+                />
+              ) : originalImage ? (
+                <SpecimenMedia
+                  key={`${item.id}-img`}
+                  preview={{
+                    kind: 'image',
+                    src: originalImage,
+                    credit: isThreeUI ? 'threeui.com' : isGlacier ? 'getlayers.ai' : 'motionsites.ai',
+                  }}
+                  title={safeTitle}
+                  fallbackLabel={libLabel}
+                  fit="contain"
+                />
               ) : preview ? (
                 <SpecimenMedia
                   key={item.id}
                   preview={preview}
                   title={safeTitle}
-                  fallbackLabel={LIBRARY_LABEL[item.sourceLibrary]}
+                  fallbackLabel={libLabel}
                   fit="contain"
                   activePlay
-                />
-              ) : item.previewImage ? (
-                <img
-                  src={item.previewImage}
-                  alt={safeTitle}
-                  referrerPolicy="no-referrer"
-                  style={{ width: '100%', height: '100%', objectFit: 'contain', display: 'block' }}
                 />
               ) : (
                 <div className="ex-spec-type">
                   <span className="ex-spec-word">{safeTitle}</span>
-                  <span className="t-label">{LIBRARY_LABEL[item.sourceLibrary]}</span>
+                  <span className="t-label">{libLabel}</span>
                 </div>
               )}
             </div>
@@ -404,6 +441,17 @@ export const SpecimenSheet: React.FC<SpecimenSheetProps> = ({
               <button type="button" className="btn btn-line" onClick={() => onAttach(item)}>
                 Đính kèm
               </button>
+              {originalUrl ? (
+                <a
+                  href={originalUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="btn btn-line ex-xp-origin-link"
+                >
+                  <span>Trang gốc</span>
+                  <ExternalLink size={14} aria-hidden="true" />
+                </a>
+              ) : null}
               <ReactionBar id={item.id} title={safeTitle} showLabel />
               <button
                 type="button"

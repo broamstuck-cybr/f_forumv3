@@ -1,23 +1,24 @@
 import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
-import type { SourceCatalogItem } from '../../types/index';
 import { previewFor } from '../../ui/Media';
 import { useAppStore } from '../../store/appStore';
-import { LIBRARY_LABEL, shortTitle } from './catalog';
+import { PinUIPlayground } from '../../components/pinui';
+import { shortTitle, type ExplorePlateItem } from './catalog';
+import { VAULT_LIBRARY_LABELS } from './vaultLoader';
 import { SandboxPreview } from './SandboxPreview';
 import { SpecimenMedia } from './SpecimenMedia';
 import { ReactionBar } from './SpecimenSheet';
 
 interface PlateRibbonProps {
   label: string;
-  items: SourceCatalogItem[];
+  items: ExplorePlateItem[];
   savedIds: string[];
   activeId: string | null;
   direction: 1 | -1;
   startAtEnd: boolean;
   drift: boolean;
   calm: boolean;
-  onSelect: (item: SourceCatalogItem) => void;
-  onExperience: (item: SourceCatalogItem) => void;
+  onSelect: (item: ExplorePlateItem) => void;
+  onExperience: (item: ExplorePlateItem) => void;
 }
 
 interface DragState {
@@ -86,6 +87,58 @@ const LiveThumb: React.FC<LiveThumbProps> = ({ title, html, css, calm }) => {
             viewport={1440}
             nonce={0}
           />
+        </span>
+      ) : null}
+    </span>
+  );
+};
+
+interface PinUIThumbProps {
+  itemId: string;
+  isBlocx: boolean;
+}
+
+const PinUIThumb: React.FC<PinUIThumbProps> = ({ itemId, isBlocx }) => {
+  const { theme } = useAppStore();
+  const hostRef = useRef<HTMLSpanElement>(null);
+  const [visible, setVisible] = useState(false);
+  const canvasWidth = isBlocx ? 960 : 620;
+  const [box, setBox] = useState({ scale: 0, height: 0 });
+
+  useEffect(() => {
+    const host = hostRef.current;
+    if (!host) return;
+    const io = new IntersectionObserver(
+      (entries) => setVisible(entries[entries.length - 1].isIntersecting),
+      { rootMargin: '180px' }
+    );
+    io.observe(host);
+    const ro = new ResizeObserver((entries) => {
+      const rect = entries[entries.length - 1].contentRect;
+      if (rect.width === 0) return;
+      const scale = rect.width / canvasWidth;
+      setBox({ scale, height: rect.height / scale });
+    });
+    ro.observe(host);
+    return () => {
+      io.disconnect();
+      ro.disconnect();
+    };
+  }, [canvasWidth]);
+
+  return (
+    <span ref={hostRef} className="ex-live-thumb" data-ready={visible && box.scale > 0 ? 'true' : 'false'}>
+      {visible && box.scale > 0 ? (
+        <span
+          className="ex-live-canvas ex-pinui-thumb-canvas"
+          inert
+          style={{
+            width: canvasWidth,
+            minHeight: box.height,
+            transform: `scale(${box.scale})`,
+          }}
+        >
+          <PinUIPlayground itemId={itemId} theme={theme} compact />
         </span>
       ) : null}
     </span>
@@ -261,10 +314,20 @@ export const PlateRibbon: React.FC<PlateRibbonProps> = ({
       >
         {items.map((item, index) => {
           const preview = previewFor(item.id);
+          const isPinUI = item.vaultLibrary === 'pinui';
+          const isMotion = item.vaultLibrary === 'motionsites';
+          const libLabel = VAULT_LIBRARY_LABELS[item.vaultLibrary];
           const hasLive = Boolean(item.previewHtml);
+          const videoSrc = item.previewVideo;
+          const imgSrc =
+            item.previewImage ||
+            (preview?.kind === 'image' ? preview.src : undefined);
+          const preferAnimatedImg =
+            isMotion && Boolean(imgSrc && /\.(gif|webp)(\?|$)/i.test(imgSrc));
           const saved = savedIds.includes(item.id);
           const isActive = activeId === item.id;
           const title = shortTitle(item);
+          const hasVisual = Boolean(isPinUI || videoSrc || hasLive || imgSrc || preview);
           return (
             <li key={item.id}>
               <button
@@ -277,14 +340,10 @@ export const PlateRibbon: React.FC<PlateRibbonProps> = ({
                 onFocus={() => setCursor(index)}
                 onClick={() => onSelect(item)}
               >
-                {preview ? (
+                {isPinUI ? (
                   <span className="plate ex-plate-frame">
                     <span className="ex-plate-shot">
-                      <SpecimenMedia
-                        preview={preview}
-                        title={title}
-                        fallbackLabel={LIBRARY_LABEL[item.sourceLibrary]}
-                      />
+                      <PinUIThumb itemId={item.id} isBlocx={item.id.startsWith('blocx/')} />
                     </span>
                   </span>
                 ) : hasLive ? (
@@ -295,6 +354,64 @@ export const PlateRibbon: React.FC<PlateRibbonProps> = ({
                         html={item.previewHtml ?? ''}
                         css={item.previewCss ?? ''}
                         calm={calm}
+                      />
+                    </span>
+                  </span>
+                ) : preferAnimatedImg && imgSrc ? (
+                  <span className="plate ex-plate-frame">
+                    <span className="ex-plate-shot">
+                      <SpecimenMedia
+                        preview={{
+                          kind: 'image',
+                          src: imgSrc,
+                          credit: 'motionsites.ai',
+                        }}
+                        title={title}
+                        fallbackLabel={libLabel}
+                      />
+                    </span>
+                  </span>
+                ) : videoSrc ? (
+                  <span className="plate ex-plate-frame">
+                    <span className="ex-plate-shot">
+                      <SpecimenMedia
+                        preview={{
+                          kind: 'video',
+                          src: videoSrc,
+                          poster: imgSrc,
+                          credit: item.vaultLibrary === 'glacier' ? 'getlayers.ai' : 'motionsites.ai',
+                        }}
+                        title={title}
+                        fallbackLabel={libLabel}
+                      />
+                    </span>
+                  </span>
+                ) : imgSrc ? (
+                  <span className="plate ex-plate-frame">
+                    <span className="ex-plate-shot">
+                      <SpecimenMedia
+                        preview={{
+                          kind: 'image',
+                          src: imgSrc,
+                          credit:
+                            item.vaultLibrary === 'threeui'
+                              ? 'threeui.com'
+                              : item.vaultLibrary === 'glacier'
+                                ? 'getlayers.ai'
+                                : 'motionsites.ai',
+                        }}
+                        title={title}
+                        fallbackLabel={libLabel}
+                      />
+                    </span>
+                  </span>
+                ) : preview ? (
+                  <span className="plate ex-plate-frame">
+                    <span className="ex-plate-shot">
+                      <SpecimenMedia
+                        preview={preview}
+                        title={title}
+                        fallbackLabel={libLabel}
                       />
                     </span>
                   </span>
@@ -309,7 +426,7 @@ export const PlateRibbon: React.FC<PlateRibbonProps> = ({
                 )}
                 <span className="ex-plate-cap" aria-hidden="true">
                   <span className="t-label">{String(index + 1).padStart(2, '0')}</span>
-                  {preview || hasLive ? <span className="ex-plate-title">{title}</span> : null}
+                  {hasVisual ? <span className="ex-plate-title">{title}</span> : null}
                   {saved ? <span className="t-note ex-plate-saved">đã lưu</span> : null}
                 </span>
               </button>

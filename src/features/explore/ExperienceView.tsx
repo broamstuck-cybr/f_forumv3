@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
+  ExternalLink,
   Monitor,
   Moon,
   RotateCw,
@@ -44,11 +45,11 @@ import {
 import { SandboxPreview } from './SandboxPreview';
 import {
   VAULT_LIBRARY_LABELS,
-  buildMetadataStagePreview,
   fetchVaultIndex,
   fetchVaultShard,
   getCachedVaultIndex,
   getCachedVaultShard,
+  resolveOriginalLiveUrl,
   type VaultIndexItem,
   type VaultLibraryKey,
   type VaultShardPayload,
@@ -232,7 +233,7 @@ export const ExperienceView: React.FC = () => {
   }, [categoryPool]);
 
   const filteredItems = useMemo(() => {
-    return categoryPool.filter((item) => {
+    const matched = categoryPool.filter((item) => {
       if (activeTag && !item.tg.some((t) => t.toLowerCase() === activeTag)) {
         return false;
       }
@@ -240,7 +241,18 @@ export const ExperienceView: React.FC = () => {
       const haystack = `${item.t} ${item.c} ${item.g} ${item.tg.join(' ')}`.toLowerCase();
       return haystack.includes(query);
     });
-  }, [categoryPool, activeTag, query]);
+    if (category === 'motionsites' && motionMap) {
+      const scoreMotion = (it: VaultIndexItem): number => {
+        const m = resolveMotionSiteEntry(motionMap, it.i);
+        if (m?.liveHtml) return 3;
+        if (m?.previewImage && /\.(gif|webp)(\?|$)/i.test(m.previewImage)) return 2;
+        if (m?.previewImage) return 1;
+        return 0;
+      };
+      return [...matched].sort((a, b) => scoreMotion(b) - scoreMotion(a));
+    }
+    return matched;
+  }, [categoryPool, activeTag, query, category, motionMap]);
 
   useEffect(() => {
     setVisibleLimit(PAGE_STEP);
@@ -334,10 +346,23 @@ export const ExperienceView: React.FC = () => {
   );
 
   const activePreview = activeCatalogItem ? previewFor(activeCatalogItem.id) : null;
+  const activeOriginalVideo =
+    shardPayload?.vid || (isMotion ? motionEntry?.previewVideo || '' : '');
   const activeOriginalImage =
+    shardPayload?.img ||
     activeCatalogItem?.previewImage ||
-    (motionEntry as { previewImage?: string } | null)?.previewImage ||
+    (isMotion ? motionEntry?.previewImage || '' : '') ||
+    (activePreview?.kind === 'image' ? activePreview.src : '') ||
     '';
+  const activeOriginalUrl = activeVaultItem
+    ? resolveOriginalLiveUrl(
+        activeVaultItem.l,
+        activeVaultItem.i,
+        shardPayload?.u || (isMotion ? motionEntry?.liveUrl : '') || activeCatalogItem?.officialUrl
+      )
+    : '';
+
+  const [motionStageMode, setMotionStageMode] = useState<'html' | 'video'>('html');
 
   const activeHtml = useMemo(() => {
     if (!activeVaultItem) return '';
@@ -399,7 +424,11 @@ export const ExperienceView: React.FC = () => {
 
   const snippetCssWithTheme = useMemo(() => {
     if (!activeVaultItem || isPinUI) return '';
-    const rawCss = shardPayload?.c || activeCatalogItem?.previewCss || '';
+    const rawCss =
+      shardPayload?.c ||
+      (isMotion ? motionEntry?.css : '') ||
+      activeCatalogItem?.previewCss ||
+      '';
     if (isThreeUI || isMotion || isGlacier) return rawCss;
     const extra = buildSnippetThemeOverrideCss(
       activeVaultItem.l === 'glacier' ? 'codefronts' : activeVaultItem.l,
@@ -407,19 +436,13 @@ export const ExperienceView: React.FC = () => {
       stageTheme
     );
     return extra ? `${extra}\n${rawCss}` : rawCss;
-  }, [activeVaultItem, isPinUI, isThreeUI, isMotion, isGlacier, shardPayload, activeCatalogItem, stageTheme]);
-
-  const fallbackMetaStage = useMemo(() => {
-    if (!activeVaultItem || isPinUI || activeHtml || activePreview || activeOriginalImage) {
-      return null;
-    }
-    return buildMetadataStagePreview(activeVaultItem, shardPayload, stageTheme);
-  }, [activeVaultItem, isPinUI, activeHtml, activePreview, activeOriginalImage, shardPayload, stageTheme]);
+  }, [activeVaultItem, isPinUI, isThreeUI, isMotion, isGlacier, shardPayload, motionEntry, activeCatalogItem, stageTheme]);
 
   useEffect(() => {
     if (!activeId) return;
     setNonce((n) => n + 1);
     setCopiedTarget(null);
+    setMotionStageMode('html');
   }, [activeId]);
 
   const availableTabs = useMemo(() => {
@@ -767,9 +790,41 @@ export const ExperienceView: React.FC = () => {
                 <span className="t-label">
                   {viewport === 1440 ? 'Máy tính' : viewport === 768 ? 'Máy tính bảng' : 'Điện thoại'} · {stageZoomed ? '115%' : '100%'} · {stageTheme === 'dark' ? 'Mực' : 'Giấy'}
                 </span>
+                {activeHtml && activeOriginalVideo ? (
+                  <div className="ex-source-tabs" role="group" aria-label="Chế độ xem mẫu">
+                    <button
+                      type="button"
+                      className="ex-source-tab"
+                      aria-pressed={motionStageMode === 'html'}
+                      onClick={() => setMotionStageMode('html')}
+                    >
+                      Bản chạy HTML
+                    </button>
+                    <button
+                      type="button"
+                      className="ex-source-tab"
+                      aria-pressed={motionStageMode === 'video'}
+                      onClick={() => setMotionStageMode('video')}
+                    >
+                      Video gốc
+                    </button>
+                  </div>
+                ) : null}
               </div>
 
               <div className="ex-stage-controls" role="group" aria-label="Điều khiển sân khấu">
+                {activeOriginalUrl ? (
+                  <a
+                    href={activeOriginalUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="btn btn-line btn-sm ex-xp-origin-link"
+                    title="Xem trang gốc của thư viện nguồn"
+                  >
+                    <span>Trang gốc</span>
+                    <ExternalLink size={13} aria-hidden="true" />
+                  </a>
+                ) : null}
                 <button
                   type="button"
                   className="ex-stage-icon-btn"
@@ -882,7 +937,7 @@ export const ExperienceView: React.FC = () => {
                       itemId={activeVaultItem.i}
                       theme={stageTheme}
                     />
-                  ) : activeHtml ? (
+                  ) : activeHtml && (motionStageMode === 'html' || !activeOriginalVideo) ? (
                     <SandboxPreview
                       title={activeTitle}
                       html={shardPayload?.h || activeCatalogItem?.previewHtml || activeHtml}
@@ -892,6 +947,34 @@ export const ExperienceView: React.FC = () => {
                       viewport={viewport}
                       nonce={nonce}
                     />
+                  ) : activeOriginalVideo ? (
+                    <SpecimenMedia
+                      key={`${activeVaultItem.i}-vid`}
+                      preview={{
+                        kind: 'video',
+                        src: activeOriginalVideo,
+                        poster: activeOriginalImage || undefined,
+                        credit: isGlacier ? 'getlayers.ai' : 'motionsites.ai',
+                      }}
+                      title={activeTitle}
+                      fallbackLabel={activeGroupLabel}
+                      fit="contain"
+                      activePlay
+                    />
+                  ) : activeOriginalImage ? (
+                    <div className="ex-xp-original-media">
+                      <SpecimenMedia
+                        key={`${activeVaultItem.i}-img`}
+                        preview={{
+                          kind: 'image',
+                          src: activeOriginalImage,
+                          credit: isThreeUI ? 'threeui.com' : isGlacier ? 'getlayers.ai' : 'motionsites.ai',
+                        }}
+                        title={activeTitle}
+                        fallbackLabel={activeGroupLabel}
+                        fit="contain"
+                      />
+                    </div>
                   ) : activePreview ? (
                     <SpecimenMedia
                       key={activeVaultItem.i}
@@ -901,30 +984,22 @@ export const ExperienceView: React.FC = () => {
                       fit="contain"
                       activePlay
                     />
-                  ) : activeOriginalImage ? (
-                    <div className="ex-xp-original-media">
-                      <img
-                        src={activeOriginalImage}
-                        alt={activeTitle}
-                        loading="eager"
-                        referrerPolicy="no-referrer"
-                        style={{ width: '100%', height: '100%', objectFit: 'contain', display: 'block' }}
-                      />
-                    </div>
-                  ) : fallbackMetaStage ? (
-                    <SandboxPreview
-                      title={activeTitle}
-                      html={fallbackMetaStage.html}
-                      css={fallbackMetaStage.css}
-                      js={fallbackMetaStage.js}
-                      theme={stageTheme}
-                      viewport={viewport}
-                      nonce={nonce}
-                    />
                   ) : (
                     <div className="ex-spec-type">
+                      <span className="t-label">{activeGroupLabel} · {activeVaultItem.c}</span>
                       <span className="ex-spec-word">{activeTitle}</span>
-                      <span className="t-label">{activeGroupLabel}</span>
+                      {activeOriginalUrl ? (
+                        <a
+                          href={activeOriginalUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="btn btn-line btn-sm ex-xp-origin-link"
+                          style={{ justifySelf: 'start' }}
+                        >
+                          <span>Trang gốc</span>
+                          <ExternalLink size={14} aria-hidden="true" />
+                        </a>
+                      ) : null}
                     </div>
                   )}
                 </div>
@@ -1026,6 +1101,17 @@ export const ExperienceView: React.FC = () => {
                 >
                   Mở Workspace
                 </button>
+                {activeOriginalUrl ? (
+                  <a
+                    href={activeOriginalUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="btn btn-ghost ex-xp-origin-link"
+                  >
+                    <span>Trang gốc</span>
+                    <ExternalLink size={14} aria-hidden="true" />
+                  </a>
+                ) : null}
               </div>
             ) : null}
           </section>

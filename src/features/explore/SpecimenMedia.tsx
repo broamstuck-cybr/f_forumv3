@@ -22,10 +22,12 @@ export const SpecimenMedia: React.FC<SpecimenMediaProps> = ({
 }) => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [failed, setFailed] = useState(false);
+  const [posterFailed, setPosterFailed] = useState(false);
 
   useEffect(() => {
     setFailed(false);
-  }, [preview.src]);
+    setPosterFailed(false);
+  }, [preview.src, preview.poster]);
 
   useEffect(() => {
     const video = videoRef.current;
@@ -61,6 +63,20 @@ export const SpecimenMedia: React.FC<SpecimenMediaProps> = ({
   };
 
   if (failed) {
+    if (preview.kind === 'video' && preview.poster && !posterFailed) {
+      return (
+        <img
+          className={className}
+          style={mediaStyle}
+          src={preview.poster}
+          alt={title}
+          loading="lazy"
+          decoding="async"
+          referrerPolicy="no-referrer"
+          onError={() => setPosterFailed(true)}
+        />
+      );
+    }
     return (
       <div
         className={className}
@@ -96,6 +112,9 @@ export const SpecimenMedia: React.FC<SpecimenMediaProps> = ({
         playsInline
         preload={activePlay ? 'metadata' : 'none'}
         aria-label={title}
+        onLoadedMetadata={(e) => {
+          if (e.currentTarget.videoWidth === 0) setFailed(true);
+        }}
         onError={() => setFailed(true)}
       />
     );

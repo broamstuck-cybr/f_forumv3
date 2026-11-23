@@ -16,7 +16,8 @@ const VAULT_DIR = path.join(PROJECT_ROOT, 'public/data/vault');
 const EMOJI_RE =
   /[\u{1F300}-\u{1F9FF}\u{1FA00}-\u{1FAFF}\u{2600}-\u{27BF}\u{FE0F}]/gu;
 
-const SYNTHETIC_STAGE_RE = /ms-stage|Khối 01|Chạy thử ngay trong khung xem/i;
+const SYNTHETIC_STAGE_RE =
+  /ms-stage|ff3d-stage|Đổi nhịp xoay|Khối 01|Chạy thử ngay trong khung xem/i;
 
 const GUARDNET_BENEFITS_CSS = `@import url('https://db.onlinewebfonts.com/c/e55e9079ee863276569c8a68d776ef04?family=Futura+Md+BT+Medium');
 
@@ -517,6 +518,11 @@ function main() {
   const sourceCatalogPath = path.join(PROJECT_ROOT, 'src/data/sourceCatalog.json');
   const sourceCatalog = JSON.parse(fs.readFileSync(sourceCatalogPath, 'utf8'));
 
+  const msPreviewsPath = path.join(PROJECT_ROOT, 'scripts/motionsites-previews.json');
+  const msBundlePreviews = fs.existsSync(msPreviewsPath)
+    ? JSON.parse(fs.readFileSync(msPreviewsPath, 'utf8'))
+    : {};
+
   const pinuiMf = JSON.parse(fs.readFileSync(path.join(SOURCES_DIR, 'pinui/manifest.json'), 'utf8'));
   const cfMf = JSON.parse(fs.readFileSync(path.join(SOURCES_DIR, 'codefronts/manifest.json'), 'utf8'));
   const glMf = JSON.parse(fs.readFileSync(path.join(SOURCES_DIR, 'getlayers/manifest.json'), 'utf8'));
@@ -526,11 +532,17 @@ function main() {
 
   const vaultItems = [];
   const cfPromptByKey = new Map();
+  const cfUrlByKey = new Map();
   const llPromptById = new Map();
+  const llUrlById = new Map();
   const msRecordById = new Map();
   const tuPromptById = new Map();
+  const tuMediaById = new Map();
+  const glMediaById = new Map();
+  const pinuiUrlById = new Map();
 
   for (const it of pinuiMf) {
+    pinuiUrlById.set(it.id, it.url || '');
     vaultItems.push({
       i: it.id,
       t: it.title,
@@ -560,11 +572,16 @@ function main() {
       c: css,
       j: js,
       p: prompt,
+      ...(it.url ? { u: it.url } : {}),
     };
 
     const shortKey = `cf/${it.category}/${path.basename(it.path, '.md')}`;
     cfPromptByKey.set(it.id, prompt);
     cfPromptByKey.set(shortKey, prompt);
+    if (it.url) {
+      cfUrlByKey.set(it.id, it.url);
+      cfUrlByKey.set(shortKey, it.url);
+    }
 
     const catTag = slugifyShard(it.category).replace(/^(?:css|tailwind-css|tailwind)-/, '');
     vaultItems.push({
@@ -606,9 +623,11 @@ function main() {
       c: parts.css,
       j: parts.js,
       p: cleanPrompt,
+      ...(it.url ? { u: it.url } : {}),
     };
 
     llPromptById.set(it.id, cleanPrompt);
+    if (it.url) llUrlById.set(it.id, it.url);
 
     vaultItems.push({
       i: it.id,
@@ -632,9 +651,39 @@ function main() {
   let msWithExtractedCode = 0;
   let msWithRenderableHtml = 0;
 
+  function findMotionBundlePreview(id) {
+    const candidates = [
+      id,
+      `${id}-hero`,
+      `${id}-landing`,
+      id.replace(/-hero$/, ''),
+      id.replace(/-control$/, '-hero'),
+      id === 'vertex' ? 'vertex-ai-hero' : '',
+      id === 'space-voyage' ? '20' : '',
+    ].filter(Boolean);
+    for (const key of candidates) {
+      if (msBundlePreviews[key]) return msBundlePreviews[key];
+    }
+    const norm = id.toLowerCase().replace(/-(hero|landing|section)$/, '');
+    for (const entry of Object.values(msBundlePreviews)) {
+      const eId = String(entry.id || '').toLowerCase();
+      if (eId === norm || eId === `${norm}-hero` || eId.startsWith(`${norm}-`)) {
+        return entry;
+      }
+    }
+    return null;
+  }
+
   msMf.forEach((it, idx) => {
     const filePath = path.join(SOURCE_ROOT, it.path);
     const raw = fs.existsSync(filePath) ? fs.readFileSync(filePath, 'utf8') : '';
+    const mp4Match = raw.match(/https?:\/\/[^\s"'`)>]+\.(?:mp4|webm)/i);
+    const imgMatch = raw.match(/https?:\/\/[^\s"'`)>]+\.(?:png|jpg|jpeg|webp|gif)/i);
+    const bundle = findMotionBundlePreview(it.id);
+    const previewVideo = mp4Match ? mp4Match[0] : '';
+    const previewImage = bundle?.image || (imgMatch ? imgMatch[0] : '') || bundle?.poster || '';
+    const liveUrl = `https://motionsites.ai/sections#${it.id}`;
+
     const body = stripExternalSourceLines(stripFrontmatter(raw));
 
     const rawHtmlFence = extractAllFences(body, 'html');
@@ -692,6 +741,9 @@ function main() {
       ...(mergedLiveHtml ? { liveHtml: mergedLiveHtml } : {}),
       ...(finalCss ? { css: finalCss } : {}),
       ...(finalCode ? { code: finalCode, codeLang: finalCodeLang || 'ts' } : {}),
+      ...(previewVideo ? { previewVideo } : {}),
+      ...(previewImage ? { previewImage } : {}),
+      liveUrl,
       tags: Array.from(new Set([it.category, it.type, ...(it.types || [])].filter(Boolean))),
     };
 
@@ -702,6 +754,9 @@ function main() {
       css: finalCss,
       code: finalCode,
       codeLang: finalCodeLang,
+      previewVideo,
+      previewImage,
+      liveUrl,
     });
 
     const bucket = Math.floor(idx / 80);
@@ -713,6 +768,9 @@ function main() {
       j: finalCode,
       ...(finalCodeLang ? { cl: finalCodeLang } : {}),
       p: body,
+      ...(previewVideo ? { vid: previewVideo } : {}),
+      ...(previewImage ? { img: previewImage } : {}),
+      u: liveUrl,
     };
 
     vaultItems.push({
@@ -725,7 +783,7 @@ function main() {
         new Set([it.type || 'hero', slugifyShard(it.category), ...(it.types || [])].filter(Boolean))
       ).slice(0, 4),
       s: shardName,
-      d: renderableHtml ? 1 : 0,
+      d: renderableHtml || previewVideo || previewImage ? 1 : 0,
     });
   });
   for (const [shardName, payload] of msShards.entries()) {
@@ -741,12 +799,19 @@ function main() {
   glMf.forEach((it, idx) => {
     const itemFile = it.path ? path.join(SOURCE_ROOT, it.path) : '';
     const promptFile = it.prompt_path ? path.join(SOURCE_ROOT, it.prompt_path) : '';
+    const rawItemMd = itemFile && fs.existsSync(itemFile) ? fs.readFileSync(itemFile, 'utf8') : '';
     const rawPrompt =
       promptFile && fs.existsSync(promptFile)
         ? fs.readFileSync(promptFile, 'utf8')
-        : itemFile && fs.existsSync(itemFile)
-          ? fs.readFileSync(itemFile, 'utf8')
-          : '';
+        : rawItemMd;
+    const vidPreviewMatch = rawItemMd.match(/https:\/\/storage\.getlayers\.ai\/[^\s|)`]+-preview\.mp4/i);
+    const vidMatch = vidPreviewMatch || rawItemMd.match(/https:\/\/storage\.getlayers\.ai\/[^\s|)`]+\.mp4/i);
+    const webpMatch = rawItemMd.match(/https:\/\/storage\.getlayers\.ai\/[^\s|)`]+\.webp/i);
+    const vidUrl = vidMatch ? vidMatch[0] : '';
+    const imgUrl = webpMatch ? webpMatch[0] : '';
+    const liveUrl = it.url || `https://www.getlayers.ai/layer/${it.id}`;
+    glMediaById.set(it.id, { vid: vidUrl, img: imgUrl, u: liveUrl });
+
     const cleanPrompt = stripExternalSourceLines(stripFrontmatter(rawPrompt));
     const stackLine = Array.isArray(it.stack) && it.stack.length ? `Stack: ${it.stack.join(', ')}` : '';
     const moodLine = Array.isArray(it.mood) && it.mood.length ? `Mood: ${it.mood.join(', ')}` : '';
@@ -772,6 +837,9 @@ function main() {
       c: '',
       j: '',
       p: enrichedPrompt,
+      ...(vidUrl ? { vid: vidUrl } : {}),
+      ...(imgUrl ? { img: imgUrl } : {}),
+      u: liveUrl,
       m: {
         tone: it.tone || 'dark',
         stack: it.stack || [],
@@ -795,7 +863,7 @@ function main() {
         ].filter(Boolean))
       ).slice(0, 4),
       s: shardName,
-      d: 0,
+      d: vidUrl || imgUrl ? 1 : 0,
     });
   });
   for (const [shardName, payload] of glShards.entries()) {
@@ -819,6 +887,7 @@ function main() {
       .trim();
 
     tuPromptById.set(it.id, fullPrompt);
+    tuMediaById.set(it.id, { img: it.preview || '', u: it.url || '' });
 
     const bucket = Math.floor(idx / 320);
     const shardName = `tu-${bucket}`;
@@ -828,6 +897,8 @@ function main() {
       c: '',
       j: '',
       p: fullPrompt,
+      ...(it.preview ? { img: it.preview } : {}),
+      ...(it.url ? { u: it.url } : {}),
       m: {
         runtime: it.runtime || 'Three.js, WebGL',
         category: it.category || '3D',
@@ -844,7 +915,7 @@ function main() {
         new Set(['3d', 'webgl', slugifyShard(it.category), slugifyShard(it.subcategory)].filter(Boolean))
       ).slice(0, 4),
       s: shardName,
-      d: 0,
+      d: it.preview ? 1 : 0,
     });
   });
   for (const [shardName, payload] of tuShards.entries()) {
@@ -890,13 +961,16 @@ function main() {
 
     let previewHtml = item.previewHtml;
     let previewCss = item.previewCss;
+    let previewImage = item.previewImage || '';
+    let officialUrl = item.officialUrl || '';
+
+    if (previewHtml && SYNTHETIC_STAGE_RE.test(previewHtml)) {
+      previewHtml = undefined;
+      previewCss = undefined;
+      removedSyntheticCount += 1;
+    }
 
     if (item.sourceLibrary === 'motionsites') {
-      if (previewHtml && SYNTHETIC_STAGE_RE.test(previewHtml)) {
-        previewHtml = undefined;
-        previewCss = undefined;
-        removedSyntheticCount += 1;
-      }
       if (msRec) {
         if (msRec.html) {
           previewHtml = stripEmojis(msRec.html);
@@ -908,16 +982,40 @@ function main() {
         } else if (!previewHtml) {
           previewCss = undefined;
         }
+        if (msRec.previewImage) previewImage = msRec.previewImage;
+        if (msRec.liveUrl) officialUrl = msRec.liveUrl;
       }
+    } else if (item.sourceLibrary === 'threeui') {
+      if (item.id.startsWith('glacier/')) {
+        const glKey = item.id.replace(/^glacier\//, '');
+        const gl = glMediaById.get(glKey);
+        if (gl) {
+          previewImage = gl.img || previewImage;
+          officialUrl = gl.u || officialUrl;
+        }
+      } else {
+        const tu = tuMediaById.get(item.id);
+        if (tu) {
+          previewImage = tu.img || previewImage;
+          officialUrl = tu.u || officialUrl;
+        }
+      }
+    } else if (item.sourceLibrary === 'pinui') {
+      officialUrl = pinuiUrlById.get(item.id) || officialUrl;
+    } else if (item.sourceLibrary === 'codefronts') {
+      officialUrl = cfUrlByKey.get(item.id) || officialUrl;
+    } else if (item.sourceLibrary === 'lucianlabs') {
+      officialUrl = llUrlById.get(item.id) || officialUrl;
     }
 
     const cleaned = {
       ...item,
       title: stripEmojis(item.title || ''),
       description: stripEmojis(item.description || ''),
-      officialUrl: '',
+      officialUrl,
       promptSpec,
     };
+    if (previewImage) cleaned.previewImage = previewImage;
     delete cleaned.previewHtml;
     delete cleaned.previewCss;
     if (previewHtml) cleaned.previewHtml = stripEmojis(previewHtml);

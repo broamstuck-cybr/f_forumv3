@@ -1,13 +1,12 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { Monitor, Moon, RotateCw, Smartphone, Sun, Tablet, ZoomIn, ZoomOut } from 'lucide-react';
-import type { SourceCatalogItem, SourceLibraryName } from '../../types/index';
+import { ExternalLink, Monitor, Moon, RotateCw, Smartphone, Sun, Tablet, ZoomIn, ZoomOut } from 'lucide-react';
+import type { SourceCatalogItem } from '../../types/index';
 import { useAppStore } from '../../store/appStore';
 import { PinUIPlayground, type FileBoxTab } from '../../components/pinui';
 import { previewFor } from '../../ui/Media';
 import { Reveal } from '../../ui/Reveal';
 import {
   LIBRARY_LABEL,
-  LIBRARY_ORDER,
   buildSnippetThemeOverrideCss,
   copyText,
   fetchMotionSitesFullMap,
@@ -16,43 +15,74 @@ import {
   getCachedMotionSitesFullMap,
   getCachedPinUISourceMap,
   matchesQuery,
+  matchesTopicChip,
   resolveMotionSiteEntry,
   resolvePinUISource,
   sanitizeBrandText,
   sanitizeSnippetCode,
   templateContext,
+  type ExplorePlateItem,
   type MotionSiteFullEntry,
   type PinUISourceEntry,
   type PreviewTheme,
   type PreviewViewport,
 } from './catalog';
+import {
+  VAULT_LIBRARY_LABELS,
+  VAULT_LIBRARY_ORDER,
+  fetchVaultShard,
+  getCachedVaultShard,
+  resolveOriginalLiveUrl,
+  type VaultIndexItem,
+  type VaultLibraryKey,
+  type VaultShardPayload,
+} from './vaultLoader';
 import { PlateRibbon } from './PlateRibbon';
 import { SandboxPreview } from './SandboxPreview';
 import { SpecimenMedia } from './SpecimenMedia';
 import { ReactionBar, SpecimenSheet } from './SpecimenSheet';
 import { useCalm } from './useCalm';
 
-export type LibraryFilter = 'all' | SourceLibraryName;
+export type LibraryFilter = 'all' | VaultLibraryKey;
 type BenchTab = 'html' | 'css' | 'code' | 'spec';
+
+const RIBBON_CAP = 24;
+const PREFETCH_SHARD_CAP = 10;
+
+const TOPIC_LABEL: Record<string, string> = {
+  hero: 'Hero & Mở đầu',
+  card: 'Thẻ & Bento',
+  button: 'Nút tương tác',
+  '3d': 'WebGL & 3D',
+  pricing: 'Bảng giá',
+};
 
 interface PlateTableProps {
   query: string;
+  topicChip?: string;
+  onClearTopic?: () => void;
   onClearQuery: () => void;
   savedOnly: boolean;
   onShowAll: () => void;
   onToggleSavedOnly: () => void;
   library?: LibraryFilter;
   onLibraryChange?: (library: LibraryFilter) => void;
+  vaultItems?: VaultIndexItem[];
+  onOpenVaultQuery?: (q: string) => void;
 }
 
 export const PlateTable: React.FC<PlateTableProps> = ({
   query,
+  topicChip = '',
+  onClearTopic,
   onClearQuery,
   savedOnly,
   onShowAll,
   onToggleSavedOnly,
   library: controlledLibrary,
   onLibraryChange,
+  vaultItems = [],
+  onOpenVaultQuery,
 }) => {
   const {
     sourceCatalog,
@@ -83,6 +113,8 @@ export const PlateTable: React.FC<PlateTableProps> = ({
   const [benchCodeOpen, setBenchCodeOpen] = useState(true);
   const [benchTab, setBenchTab] = useState<BenchTab>('html');
   const [copiedCode, setCopiedCode] = useState(false);
+  const [motionStageMode, setMotionStageMode] = useState<'html' | 'video'>('html');
+  const [shardVersion, setShardVersion] = useState(0);
   const [pinuiMap, setPinuiMap] = useState<Record<string, PinUISourceEntry> | null>(
     () => getCachedPinUISourceMap()
   );
@@ -96,38 +128,184 @@ export const PlateTable: React.FC<PlateTableProps> = ({
     setStageTheme(theme);
   }, [theme]);
 
+  useEffect(() => {
+    if (!motionMap) {
+      void fetchMotionSitesFullMap().then((loaded) => setMotionMap(loaded));
+    }
+  }, [motionMap]);
+
+  const catalogById = useMemo(() => {
+    const map = new Map<string, SourceCatalogItem>();
+    for (const item of sourceCatalog) {
+      map.set(item.id, item);
+      if (item.sourceLibrary === 'motionsites') {
+        map.set(item.id.replace(/^ms-/, ''), item);
+      }
+      if (item.id.startsWith('glacier/')) {
+        map.set(item.id.replace(/^glacier\//, ''), item);
+      }
+    }
+    return map;
+  }, [sourceCatalog]);
+
+  const unifiedPool: ExplorePlateItem[] = useMemo(() => {
+    if (vaultItems.length === 0) {
+      return sourceCatalog.map((item) => {
+        const isGl = item.id.startsWith('glacier/');
+        const vaultLibrary: VaultLibraryKey = isGl ? 'glacier' : item.sourceLibrary;
+        const motionEntry =
+          vaultLibrary === 'motionsites' ? resolveMotionSiteEntry(motionMap, item.id) : null;
+        return {
+          ...item,
+          vaultLibrary,
+          previewVideo: motionEntry?.previewVideo,
+          previewImage: item.previewImage || motionEntry?.previewImage,
+          officialUrl: item.officialUrl || motionEntry?.liveUrl || '',
+          hasRichMedia: Boolean(
+            item.previewHtml ||
+              item.previewImage ||
+              motionEntry?.previewVideo ||
+              motionEntry?.previewImage ||
+              previewFor(item.id)
+          ),
+        };
+      });
+    }
+
+    return vaultItems.map((vi) => {
+      const cat =
+        catalogById.get(vi.i) ??
+        catalogById.get(`ms-${vi.i}`) ??
+        catalogById.get(`glacier/${vi.i}`);
+      const shard = vi.s && vi.s !== 'pinui' ? getCachedVaultShard(vi.s)?.[vi.i] : undefined;
+      const motionEntry =
+        vi.l === 'motionsites' ? resolveMotionSiteEntry(motionMap, vi.i) : null;
+
+      const sourceLibrary =
+        vi.l === 'glacier' ? 'threeui' : vi.l;
+      const previewHtml = shard?.h || cat?.previewHtml || motionEntry?.liveHtml;
+      const previewCss = shard?.c || cat?.previewCss || motionEntry?.css;
+      const previewVideo = shard?.vid || motionEntry?.previewVideo;
+      const previewImage = shard?.img || cat?.previewImage || motionEntry?.previewImage;
+      const officialUrl = resolveOriginalLiveUrl(
+        vi.l,
+        vi.i,
+        shard?.u || motionEntry?.liveUrl || cat?.officialUrl
+      );
+
+      const resolvedId = cat?.id ?? vi.i;
+      return {
+        id: resolvedId,
+        title: cat?.title ?? vi.t,
+        sourceLibrary,
+        vaultLibrary: vi.l,
+        category: cat?.category ?? vi.c,
+        subcategory: cat?.subcategory ?? '',
+        tags: Array.from(new Set([...(cat?.tags ?? []), ...vi.tg])),
+        runtime: cat?.runtime ?? shard?.m?.runtime ?? (vi.l === 'glacier' ? 'Three.js / WebGL' : VAULT_LIBRARY_LABELS[vi.l]),
+        style: cat?.style ?? shard?.m?.layout ?? vi.c,
+        license: cat?.license ?? 'Source Archive',
+        officialUrl,
+        archivePath: cat?.archivePath ?? '',
+        description:
+          cat?.description ??
+          `${VAULT_LIBRARY_LABELS[vi.l]} · ${vi.c} (${vi.tg.slice(0, 3).join(', ')})`,
+        previewHtml,
+        previewCss,
+        previewImage,
+        previewVideo,
+        promptSpec: shard?.p || cat?.promptSpec || motionEntry?.promptText,
+        shard: vi.s,
+        hasRichMedia: Boolean(
+          cat || vi.d === 1 || previewHtml || previewVideo || previewImage || previewFor(resolvedId)
+        ),
+      };
+    });
+  }, [vaultItems, sourceCatalog, catalogById, motionMap, shardVersion]);
+
+  const savedSet = useMemo(() => new Set(savedItemIds), [savedItemIds]);
+
   const savedPlateCount = useMemo(
-    () => sourceCatalog.filter((item) => savedItemIds.includes(item.id)).length,
-    [sourceCatalog, savedItemIds]
+    () =>
+      unifiedPool.filter(
+        (item) => savedSet.has(item.id) || savedSet.has(item.id.replace(/^(ms-|glacier\/)/, ''))
+      ).length,
+    [unifiedPool, savedSet]
   );
 
-  const ribbons = useMemo(
-    () =>
-      LIBRARY_ORDER.map((name) => {
-        const all = sourceCatalog.filter((item) => item.sourceLibrary === name);
-        const items = all.filter(
-          (item) =>
-            (!savedOnly || savedItemIds.includes(item.id)) &&
-            matchesQuery(query, [
-              item.title,
-              item.description,
-              item.category,
-              item.subcategory,
-              item.runtime,
-              item.style,
-              LIBRARY_LABEL[item.sourceLibrary],
-              ...item.tags,
-            ])
-        );
-        return { name, all, items };
-      }),
-    [sourceCatalog, query, savedOnly, savedItemIds]
-  );
+  const hasActiveFilter = Boolean(query || topicChip || savedOnly);
+
+  const ribbons = useMemo(() => {
+    return VAULT_LIBRARY_ORDER.map((name) => {
+      const all = unifiedPool.filter((item) => item.vaultLibrary === name);
+      const matches = all.filter((item) => {
+        const isSaved =
+          savedSet.has(item.id) || savedSet.has(item.id.replace(/^(ms-|glacier\/)/, ''));
+        if (savedOnly && !isSaved) return false;
+        const fields = [
+          item.title,
+          item.description,
+          item.category,
+          item.subcategory,
+          item.runtime,
+          item.style,
+          VAULT_LIBRARY_LABELS[item.vaultLibrary],
+          LIBRARY_LABEL[item.sourceLibrary],
+          ...item.tags,
+        ];
+        if (!matchesTopicChip(topicChip, fields)) return false;
+        if (!matchesQuery(query, fields)) return false;
+        return true;
+      });
+      const richnessScore = (item: ExplorePlateItem): number => {
+        if (item.vaultLibrary === 'pinui') return 4;
+        if (item.previewHtml) return 4;
+        if (item.previewImage && /\.(gif|webp)(\?|$)/i.test(item.previewImage)) return 3;
+        if (item.previewImage) return 2;
+        if (item.previewVideo) return 1;
+        return item.hasRichMedia ? 1 : 0;
+      };
+      const prioritized = [...matches].sort((a, b) => richnessScore(b) - richnessScore(a));
+      return {
+        name,
+        allCount: all.length,
+        totalMatches: matches.length,
+        items: prioritized.slice(0, RIBBON_CAP),
+      };
+    });
+  }, [unifiedPool, query, topicChip, savedOnly, savedSet]);
 
   const shown = ribbons.filter(
     (ribbon) => (library === 'all' || ribbon.name === library) && ribbon.items.length > 0
   );
+  const totalMatchedAcrossAll = ribbons.reduce((sum, r) => sum + r.totalMatches, 0);
   const flat = shown.flatMap((ribbon) => ribbon.items);
+
+  useEffect(() => {
+    const neededShards = new Set<string>();
+    for (const ribbon of shown) {
+      for (const item of ribbon.items) {
+        if (
+          item.shard &&
+          item.shard !== 'pinui' &&
+          !getCachedVaultShard(item.shard) &&
+          neededShards.size < PREFETCH_SHARD_CAP
+        ) {
+          neededShards.add(item.shard);
+        }
+      }
+    }
+    if (neededShards.size === 0) return;
+    let cancelled = false;
+    void Promise.all(
+      Array.from(neededShards).map((shard) => fetchVaultShard(shard).catch(() => null))
+    ).then(() => {
+      if (!cancelled) setShardVersion((v) => v + 1);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [shown]);
 
   const activeIndex = useMemo(() => {
     if (flat.length === 0) return -1;
@@ -143,22 +321,28 @@ export const PlateTable: React.FC<PlateTableProps> = ({
 
   useEffect(() => {
     if (!activeItem) return;
-    if (activeItem.sourceLibrary === 'pinui' && !pinuiMap) {
+    if (activeItem.vaultLibrary === 'pinui' && !pinuiMap) {
       void fetchPinUISourceMap().then((loaded) => setPinuiMap(loaded));
     }
-    if (activeItem.sourceLibrary === 'motionsites' && !motionMap) {
+    if (activeItem.vaultLibrary === 'motionsites' && !motionMap) {
       void fetchMotionSitesFullMap().then((loaded) => setMotionMap(loaded));
     }
-  }, [activeItem?.id, activeItem?.sourceLibrary, pinuiMap, motionMap]);
+    if (activeItem.shard && activeItem.shard !== 'pinui' && !getCachedVaultShard(activeItem.shard)) {
+      void fetchVaultShard(activeItem.shard)
+        .then(() => setShardVersion((v) => v + 1))
+        .catch(() => undefined);
+    }
+  }, [activeItem?.id, activeItem?.vaultLibrary, activeItem?.shard, pinuiMap, motionMap]);
 
   useEffect(() => {
     if (!activeItem) return;
     setNonce((n) => n + 1);
     setBenchTab('html');
     setCopiedCode(false);
+    setMotionStageMode('html');
   }, [activeItem?.id]);
 
-  const handleSelectPlate = (item: SourceCatalogItem) => {
+  const handleSelectPlate = (item: ExplorePlateItem) => {
     setActiveId(item.id);
     const bench = benchRef.current;
     if (bench) {
@@ -174,7 +358,7 @@ export const PlateTable: React.FC<PlateTableProps> = ({
     if (next) setActiveId(next.id);
   };
 
-  const handleAttach = (item: SourceCatalogItem) => {
+  const handleAttach = (item: ExplorePlateItem) => {
     const title = sanitizeBrandText(item.title);
     if (activeProject.attachedItems.some((attached) => attached.id === item.id)) {
       addToast({ type: 'info', title: 'Đã đính kèm từ trước', message: title });
@@ -183,12 +367,23 @@ export const PlateTable: React.FC<PlateTableProps> = ({
     attachItemToWorkspace(templateContext(item));
   };
 
+  const activeVaultKey = activeItem?.id.replace(/^(ms-|glacier\/)/, '') ?? '';
+  const activeShard: VaultShardPayload | null =
+    activeItem?.shard && activeItem.shard !== 'pinui'
+      ? (getCachedVaultShard(activeItem.shard)?.[activeItem.id] ??
+        getCachedVaultShard(activeItem.shard)?.[activeVaultKey] ??
+        null)
+      : null;
+
   const activePreview = activeItem ? previewFor(activeItem.id) : null;
   const activeTitle = activeItem ? sanitizeBrandText(activeItem.title) : '';
   const activeDesc = activeItem ? sanitizeBrandText(activeItem.description) : '';
-  const isPinUI = activeItem?.sourceLibrary === 'pinui';
-  const isThreeUI = activeItem?.sourceLibrary === 'threeui';
-  const isMotion = activeItem?.sourceLibrary === 'motionsites';
+  const vaultLib: VaultLibraryKey = activeItem?.vaultLibrary ?? 'codefronts';
+  const activeLibLabel = VAULT_LIBRARY_LABELS[vaultLib];
+  const isPinUI = vaultLib === 'pinui';
+  const isThreeUI = vaultLib === 'threeui';
+  const isMotion = vaultLib === 'motionsites';
+  const isGlacier = vaultLib === 'glacier';
 
   const pinuiSource = useMemo(
     () => (activeItem && isPinUI ? resolvePinUISource(pinuiMap, activeItem.id) : null),
@@ -203,48 +398,71 @@ export const PlateTable: React.FC<PlateTableProps> = ({
   const activeHtml = useMemo(() => {
     if (!activeItem) return '';
     if (isPinUI) return pinuiSource?.tsx ?? '';
+    if (activeShard?.h) return sanitizeSnippetCode(activeShard.h);
     if (isMotion && motionEntry?.liveHtml && motionEntry.liveHtml.length > (activeItem.previewHtml?.length ?? 0)) {
       return sanitizeSnippetCode(motionEntry.liveHtml);
     }
     return sanitizeSnippetCode(activeItem.previewHtml);
-  }, [activeItem, isPinUI, isMotion, pinuiSource, motionEntry]);
+  }, [activeItem, isPinUI, isMotion, pinuiSource, activeShard, motionEntry]);
 
   const activeCss = useMemo(() => {
     if (!activeItem) return '';
     if (isPinUI) return pinuiSource?.css ?? '';
+    if (activeShard?.c) return sanitizeSnippetCode(activeShard.c);
     if (isMotion && motionEntry?.css && !activeItem.previewCss) {
       return sanitizeSnippetCode(motionEntry.css);
     }
     return sanitizeSnippetCode(activeItem.previewCss);
-  }, [activeItem, isPinUI, isMotion, pinuiSource, motionEntry]);
+  }, [activeItem, isPinUI, isMotion, pinuiSource, activeShard, motionEntry]);
 
-  const activeScriptCode = useMemo(() => {
-    if (!activeItem || !isMotion) return '';
-    return motionEntry?.code ? sanitizeSnippetCode(motionEntry.code) : '';
-  }, [activeItem, isMotion, motionEntry]);
+  const activeJs = useMemo(() => {
+    if (!activeItem || isPinUI) return '';
+    if (activeShard?.j) return sanitizeSnippetCode(activeShard.j);
+    if (isMotion && motionEntry?.code) return sanitizeSnippetCode(motionEntry.code);
+    return '';
+  }, [activeItem, isPinUI, isMotion, activeShard, motionEntry]);
 
-  const activeScriptLabel = (motionEntry?.codeLang || 'TSX').toUpperCase();
+  const activeScriptLabel = (activeShard?.cl || motionEntry?.codeLang || 'TSX').toUpperCase();
+
+  const activeVideo =
+    activeShard?.vid ||
+    activeItem?.previewVideo ||
+    (isMotion ? motionEntry?.previewVideo || '' : '');
+  const activeImage =
+    activeShard?.img ||
+    activeItem?.previewImage ||
+    (isMotion ? motionEntry?.previewImage || '' : '') ||
+    (activePreview?.kind === 'image' ? activePreview.src : '');
+  const activeOriginalUrl = activeItem
+    ? resolveOriginalLiveUrl(
+        vaultLib,
+        activeItem.id,
+        activeShard?.u || (isMotion ? motionEntry?.liveUrl : '') || activeItem.officialUrl
+      )
+    : '';
 
   const activePrompt = useMemo(() => {
     if (!activeItem) return '';
     if (isPinUI && pinuiSource?.prompt) return pinuiSource.prompt;
+    if (activeShard?.p) return activeShard.p;
     if (isMotion && motionEntry?.promptText) return motionEntry.promptText;
     return (
       sanitizeBrandText(activeItem.promptSpec) ||
-      `${activeTitle}\nNhóm: ${LIBRARY_LABEL[activeItem.sourceLibrary]}\nRuntime: ${activeItem.runtime}\nPhong cách: ${activeItem.style}\n\n${activeDesc}`
+      `${activeTitle}\nNhóm: ${activeLibLabel}\nRuntime: ${activeItem.runtime}\nPhong cách: ${activeItem.style}\n\n${activeDesc}`
     );
-  }, [activeItem, isPinUI, isMotion, pinuiSource, motionEntry, activeTitle, activeDesc]);
+  }, [activeItem, isPinUI, isMotion, pinuiSource, activeShard, motionEntry, activeTitle, activeLibLabel, activeDesc]);
 
   const snippetCssWithTheme = useMemo(() => {
     if (!activeItem || isPinUI) return '';
-    if (isThreeUI || isMotion) return activeItem.previewCss ?? '';
+    const baseCss = activeShard?.c || (isMotion ? motionEntry?.css : '') || activeItem.previewCss || '';
+    if (isThreeUI || isMotion || isGlacier) return baseCss;
     const extra = buildSnippetThemeOverrideCss(
       activeItem.sourceLibrary,
-      activeItem.previewCss,
+      baseCss,
       stageTheme
     );
-    return extra ? `${extra}\n${activeItem.previewCss ?? ''}` : activeItem.previewCss ?? '';
-  }, [activeItem, isPinUI, isThreeUI, isMotion, stageTheme]);
+    return extra ? `${extra}\n${baseCss}` : baseCss;
+  }, [activeItem, isPinUI, isThreeUI, isMotion, isGlacier, activeShard, motionEntry, stageTheme]);
 
   const cycleViewport = () => {
     setViewport((prev) => (prev === 1440 ? 768 : prev === 768 ? 390 : 1440));
@@ -266,7 +484,7 @@ export const PlateTable: React.FC<PlateTableProps> = ({
         meta: 'Định dạng & Biến giao diện',
       });
     }
-    if (activeScriptCode) {
+    if (activeJs) {
       list.push({
         id: 'code',
         label: activeScriptLabel,
@@ -279,7 +497,7 @@ export const PlateTable: React.FC<PlateTableProps> = ({
       meta: 'Đặc tả kiến trúc & Prompt',
     });
     return list;
-  }, [activeHtml, activeCss, activeScriptCode, activeScriptLabel, isPinUI]);
+  }, [activeHtml, activeCss, activeJs, activeScriptLabel, isPinUI]);
 
   const resolvedBenchTab: BenchTab = useMemo(() => {
     if (fileBoxTabs.some((tab) => tab.id === benchTab)) return benchTab;
@@ -292,7 +510,7 @@ export const PlateTable: React.FC<PlateTableProps> = ({
       : resolvedBenchTab === 'css'
         ? activeCss || activePrompt
         : resolvedBenchTab === 'code'
-          ? activeScriptCode || activePrompt
+          ? activeJs || activePrompt
           : activePrompt;
 
   const handleCopyCode = async () => {
@@ -323,7 +541,7 @@ export const PlateTable: React.FC<PlateTableProps> = ({
               >
                 Tất cả
               </button>
-              {LIBRARY_ORDER.map((name) => (
+              {VAULT_LIBRARY_ORDER.map((name) => (
                 <button
                   key={name}
                   type="button"
@@ -331,7 +549,7 @@ export const PlateTable: React.FC<PlateTableProps> = ({
                   aria-pressed={library === name}
                   onClick={() => setLibrary(name)}
                 >
-                  {LIBRARY_LABEL[name]}
+                  {VAULT_LIBRARY_LABELS[name]}
                 </button>
               ))}
             </>
@@ -357,21 +575,87 @@ export const PlateTable: React.FC<PlateTableProps> = ({
         ) : null}
       </div>
 
-      <p className="sr-only" role="status">
-        {query ? `${flat.length} mẫu khớp` : ''}
-      </p>
+      {hasActiveFilter ? (
+        <div className="wrap-wide ex-filter-summary" role="status">
+          <div className="ex-filter-summary-copy">
+            <span className="t-label">
+              Khớp {formatCount(totalMatchedAcrossAll)} / {formatCount(unifiedPool.length)} mẫu
+            </span>
+            {topicChip ? (
+              <span className="ex-badge ex-badge-info">
+                Chủ đề: {TOPIC_LABEL[topicChip] ?? topicChip}
+              </span>
+            ) : null}
+            {query ? <span className="ex-badge">Từ khóa: “{query}”</span> : null}
+          </div>
+          <div className="ex-filter-summary-actions">
+            {onOpenVaultQuery && totalMatchedAcrossAll > 0 ? (
+              <button
+                type="button"
+                className="ex-text ex-text-strong"
+                onClick={() => onOpenVaultQuery(query || topicChip)}
+              >
+                Mở {formatCount(totalMatchedAcrossAll)} kết quả trong Trải nghiệm →
+              </button>
+            ) : null}
+            <button
+              type="button"
+              className="ex-text"
+              onClick={() => {
+                onClearTopic?.();
+                onClearQuery();
+                if (savedOnly) onShowAll();
+              }}
+            >
+              Xóa bộ lọc
+            </button>
+          </div>
+        </div>
+      ) : null}
 
       {activeItem ? (
         <section ref={benchRef} className="wrap-wide ex-bench" aria-label="Sân khấu tương tác trực tiếp">
           <div className="ex-bench-stage-wrap">
             <div className="ex-bench-bar">
               <div className="ex-bench-id">
-                <span className="t-label">{LIBRARY_LABEL[activeItem.sourceLibrary]}</span>
+                <span className="t-label">{activeLibLabel}</span>
                 <span className="t-label">
                   {String(activeIndex + 1).padStart(2, '0')} / {flat.length}
                 </span>
+                {activeHtml && activeVideo ? (
+                  <div className="ex-source-tabs" role="group" aria-label="Chế độ xem mẫu">
+                    <button
+                      type="button"
+                      className="ex-source-tab"
+                      aria-pressed={motionStageMode === 'html'}
+                      onClick={() => setMotionStageMode('html')}
+                    >
+                      Bản chạy HTML
+                    </button>
+                    <button
+                      type="button"
+                      className="ex-source-tab"
+                      aria-pressed={motionStageMode === 'video'}
+                      onClick={() => setMotionStageMode('video')}
+                    >
+                      Video gốc
+                    </button>
+                  </div>
+                ) : null}
               </div>
               <div className="ex-stage-controls">
+                {activeOriginalUrl ? (
+                  <a
+                    href={activeOriginalUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="btn btn-line btn-sm ex-xp-origin-link"
+                    title="Xem trang gốc của thư viện nguồn"
+                  >
+                    <span>Trang gốc</span>
+                    <ExternalLink size={13} aria-hidden="true" />
+                  </a>
+                ) : null}
                 <button
                   type="button"
                   className="ex-stage-icon-btn"
@@ -457,35 +741,55 @@ export const PlateTable: React.FC<PlateTableProps> = ({
                     theme={stageTheme}
                     compact
                   />
-                ) : activeHtml ? (
+                ) : activeHtml && (motionStageMode === 'html' || !activeVideo) ? (
                   <SandboxPreview
                     title={activeTitle}
                     html={activeHtml}
                     css={snippetCssWithTheme}
+                    js={activeShard?.j || undefined}
                     theme={stageTheme}
                     viewport={viewport}
                     nonce={nonce}
+                  />
+                ) : activeVideo ? (
+                  <SpecimenMedia
+                    key={`${activeItem.id}-vid`}
+                    preview={{
+                      kind: 'video',
+                      src: activeVideo,
+                      poster: activeImage || undefined,
+                      credit: isGlacier ? 'getlayers.ai' : 'motionsites.ai',
+                    }}
+                    title={activeTitle}
+                    fallbackLabel={activeLibLabel}
+                    fit="contain"
+                    activePlay
+                  />
+                ) : activeImage ? (
+                  <SpecimenMedia
+                    key={`${activeItem.id}-img`}
+                    preview={{
+                      kind: 'image',
+                      src: activeImage,
+                      credit: isThreeUI ? 'threeui.com' : isGlacier ? 'getlayers.ai' : 'motionsites.ai',
+                    }}
+                    title={activeTitle}
+                    fallbackLabel={activeLibLabel}
+                    fit="contain"
                   />
                 ) : activePreview ? (
                   <SpecimenMedia
                     key={activeItem.id}
                     preview={activePreview}
                     title={activeTitle}
-                    fallbackLabel={LIBRARY_LABEL[activeItem.sourceLibrary]}
+                    fallbackLabel={activeLibLabel}
                     fit="contain"
                     activePlay
-                  />
-                ) : activeItem.previewImage ? (
-                  <img
-                    src={activeItem.previewImage}
-                    alt={activeTitle}
-                    referrerPolicy="no-referrer"
-                    style={{ width: '100%', height: '100%', objectFit: 'contain', display: 'block' }}
                   />
                 ) : (
                   <div className="ex-spec-type">
                     <span className="ex-spec-word">{activeTitle}</span>
-                    <span className="t-label">{LIBRARY_LABEL[activeItem.sourceLibrary]}</span>
+                    <span className="t-label">{activeLibLabel}</span>
                   </div>
                 )}
               </div>
@@ -532,6 +836,17 @@ export const PlateTable: React.FC<PlateTableProps> = ({
               >
                 Đính kèm
               </button>
+              {activeOriginalUrl ? (
+                <a
+                  href={activeOriginalUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="btn btn-line ex-xp-origin-link"
+                >
+                  <span>Trang gốc</span>
+                  <ExternalLink size={14} aria-hidden="true" />
+                </a>
+              ) : null}
               <ReactionBar id={activeItem.id} title={activeTitle} showLabel />
               <button
                 type="button"
@@ -602,7 +917,7 @@ export const PlateTable: React.FC<PlateTableProps> = ({
       ) : null}
 
       {shown.map((ribbon) => {
-        const index = LIBRARY_ORDER.indexOf(ribbon.name);
+        const index = VAULT_LIBRARY_ORDER.indexOf(ribbon.name);
         const direction = index % 2 === 0 ? 1 : -1;
         const lit = ribbon.name === 'lucianlabs';
         const scene = lit ? (theme === 'dark' ? ' ex-lib-lit scene-paper' : ' ex-lib-lit scene-ink') : '';
@@ -614,17 +929,32 @@ export const PlateTable: React.FC<PlateTableProps> = ({
           >
             <Reveal as="header" className="wrap-wide ex-lib-head">
               <h2 id={`ex-lib-${ribbon.name}`} className="t-mega ex-lib-name">
-                {LIBRARY_LABEL[ribbon.name]}
+                {VAULT_LIBRARY_LABELS[ribbon.name]}
               </h2>
               <dl className="ex-meta">
                 <div>
-                  <dt>{query ? 'khớp' : 'trên bàn'}</dt>
-                  <dd>{formatCount(ribbon.items.length)}</dd>
+                  <dt>{hasActiveFilter ? 'khớp' : 'kho gốc'}</dt>
+                  <dd>{formatCount(ribbon.totalMatches)}</dd>
                 </div>
+                {ribbon.totalMatches > ribbon.items.length ? (
+                  <div>
+                    <dt>trên bàn</dt>
+                    <dd>
+                      {ribbon.items.length} ·{' '}
+                      <button
+                        type="button"
+                        className="ex-inline-link"
+                        onClick={() => openExperience(ribbon.items[0]?.id ?? 'vault')}
+                      >
+                        xem tất cả →
+                      </button>
+                    </dd>
+                  </div>
+                ) : null}
               </dl>
             </Reveal>
             <PlateRibbon
-              label={LIBRARY_LABEL[ribbon.name]}
+              label={VAULT_LIBRARY_LABELS[ribbon.name]}
               items={ribbon.items}
               savedIds={savedItemIds}
               activeId={activeItem?.id ?? null}
@@ -644,14 +974,15 @@ export const PlateTable: React.FC<PlateTableProps> = ({
           <p className="ex-empty-line">
             {savedOnly
               ? 'Chưa có mẫu nào được lưu.'
-              : query
-                ? `Không có mẫu nào khớp “${query}”.`
+              : query || topicChip
+                ? `Không có mẫu nào khớp bộ lọc hiện tại.`
                 : 'Danh mục này chưa có mẫu trên bàn.'}
           </p>
           <button
             type="button"
             className="ex-text"
             onClick={() => {
+              onClearTopic?.();
               onClearQuery();
               onShowAll();
               setLibrary('all');

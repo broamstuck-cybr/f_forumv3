@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from 'react';
+import { BookOpen, ExternalLink } from 'lucide-react';
 import { useAppStore } from '../../store/appStore';
 import {
   RANKED_REPOS,
@@ -17,6 +18,13 @@ import {
   studioRepoContext,
   type PreviewTheme,
 } from './catalog';
+import { ExplainerDrawer } from './ExplainerDrawer';
+import {
+  buildRankedRepoExplainer,
+  buildStudioRepoExplainer,
+  isVerifiedSpdxLicense,
+  type ExplainerProfile,
+} from './explainerData';
 import { SandboxPreview } from './SandboxPreview';
 import { ReactionBar } from './SpecimenSheet';
 
@@ -40,6 +48,7 @@ export const RepoChart: React.FC<RepoChartProps> = ({ query, onClearQuery, saved
   const [snippetNonce, setSnippetNonce] = useState(0);
   const [snippetCodeOpen, setSnippetCodeOpen] = useState(false);
   const [snippetTab, setSnippetTab] = useState<SnippetTab>('html');
+  const [explainerProfile, setExplainerProfile] = useState<ExplainerProfile | null>(null);
 
   const savedRepoCount = useMemo(
     () =>
@@ -143,7 +152,7 @@ export const RepoChart: React.FC<RepoChartProps> = ({ query, onClearQuery, saved
           </button>
         </div>
         <p className="t-label ex-chart-note">
-          {RANKED_REPOS.length} kho xác thực · {agentCount} tác tử AI & CLI · cập nhật{' '}
+          {RANKED_REPOS.length} kho xác thực GitHub API · {agentCount} tác tử AI &amp; CLI · Sao chụp tại{' '}
           {formatDate(REPO_DATA.generatedAt)}
         </p>
       </div>
@@ -158,6 +167,7 @@ export const RepoChart: React.FC<RepoChartProps> = ({ query, onClearQuery, saved
             const savedId = rankedRepoSavedId(repo);
             const isOpen = openId === repo.id;
             const summary = sanitizeBrandText(repo.aiNote || repo.description);
+            const isSpdx = isVerifiedSpdxLicense(repo.license);
             return (
               <article
                 key={repo.id}
@@ -171,7 +181,7 @@ export const RepoChart: React.FC<RepoChartProps> = ({ query, onClearQuery, saved
                 <p className="ex-podium-desc">{summary}</p>
                 <dl className="ex-meta">
                   <div>
-                    <dt>sao</dt>
+                    <dt>sao ({formatDate(REPO_DATA.generatedAt)})</dt>
                     <dd>{formatCount(repo.stars)}</dd>
                   </div>
                   <div>
@@ -179,14 +189,46 @@ export const RepoChart: React.FC<RepoChartProps> = ({ query, onClearQuery, saved
                     <dd>{formatCount(repo.forks)}</dd>
                   </div>
                   <div>
-                    <dt>ngôn ngữ</dt>
-                    <dd>{repo.language || 'đa ngữ'}</dd>
+                    <dt>giấy phép</dt>
+                    <dd>
+                      {isSpdx ? (
+                        <span className="ex-badge ex-badge-tested">{repo.license}</span>
+                      ) : (
+                        <a
+                          href={`${repo.htmlUrl}/blob/HEAD/LICENSE`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="ex-badge ex-badge-link"
+                        >
+                          Xem LICENSE ↗
+                        </a>
+                      )}
+                    </dd>
                   </div>
                 </dl>
                 {isOpen ? (
                   <p className="ex-podium-extra">{sanitizeBrandText(repo.description)}</p>
                 ) : null}
                 <div className="ex-row-actions">
+                  <button
+                    type="button"
+                    className="ex-text ex-text-strong ex-explainer-trigger"
+                    onClick={() =>
+                      setExplainerProfile(buildRankedRepoExplainer(repo, REPO_DATA.generatedAt))
+                    }
+                  >
+                    <BookOpen size={14} aria-hidden="true" />
+                    <span>Giải thích &amp; Hướng dẫn</span>
+                  </button>
+                  <a
+                    href={repo.htmlUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="ex-text ex-explainer-trigger"
+                  >
+                    <span>GitHub</span>
+                    <ExternalLink size={13} aria-hidden="true" />
+                  </a>
                   <button
                     type="button"
                     className="ex-text"
@@ -209,13 +251,6 @@ export const RepoChart: React.FC<RepoChartProps> = ({ query, onClearQuery, saved
                     onClick={() => setOpenId(isOpen ? null : repo.id)}
                   >
                     {isOpen ? 'Thu gọn' : 'Chi tiết'}
-                  </button>
-                  <button
-                    type="button"
-                    className="ex-text"
-                    onClick={() => void handleCopy(repo.htmlUrl, 'Đã chép liên kết kho')}
-                  >
-                    Chép URL
                   </button>
                 </div>
               </article>
@@ -283,8 +318,44 @@ export const RepoChart: React.FC<RepoChartProps> = ({ query, onClearQuery, saved
                         <dt>fork</dt>
                         <dd>{formatCount(repo.forks)}</dd>
                       </div>
+                      <div>
+                        <dt>giấy phép</dt>
+                        <dd>
+                          {isVerifiedSpdxLicense(repo.license) ? (
+                            <span className="ex-badge ex-badge-tested">{repo.license}</span>
+                          ) : (
+                            <a
+                              href={`${repo.htmlUrl}/blob/HEAD/LICENSE`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="ex-badge ex-badge-link"
+                            >
+                              Xem LICENSE ↗
+                            </a>
+                          )}
+                        </dd>
+                      </div>
                     </dl>
                     <div className="ex-row-actions">
+                      <button
+                        type="button"
+                        className="ex-text ex-text-strong ex-explainer-trigger"
+                        onClick={() =>
+                          setExplainerProfile(buildRankedRepoExplainer(repo, REPO_DATA.generatedAt))
+                        }
+                      >
+                        <BookOpen size={14} aria-hidden="true" />
+                        <span>Giải thích &amp; Hướng dẫn</span>
+                      </button>
+                      <a
+                        href={repo.htmlUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="ex-text ex-explainer-trigger"
+                      >
+                        <span>GitHub</span>
+                        <ExternalLink size={13} aria-hidden="true" />
+                      </a>
                       <button
                         type="button"
                         className="ex-text"
@@ -354,6 +425,14 @@ export const RepoChart: React.FC<RepoChartProps> = ({ query, onClearQuery, saved
                       </dl>
                     </div>
                     <div className="ex-row-actions">
+                      <button
+                        type="button"
+                        className="ex-text ex-text-strong ex-explainer-trigger"
+                        onClick={() => setExplainerProfile(buildStudioRepoExplainer(repo))}
+                      >
+                        <BookOpen size={14} aria-hidden="true" />
+                        <span>Giải thích</span>
+                      </button>
                       <button
                         type="button"
                         className="ex-text"
@@ -515,6 +594,11 @@ export const RepoChart: React.FC<RepoChartProps> = ({ query, onClearQuery, saved
           </button>
         </div>
       ) : null}
+
+      <ExplainerDrawer
+        profile={explainerProfile}
+        onClose={() => setExplainerProfile(null)}
+      />
     </>
   );
 };

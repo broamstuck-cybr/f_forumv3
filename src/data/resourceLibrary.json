@@ -12,28 +12,10 @@
     ],
     "officialUrl": "https://www.cursor.com",
     "license": "Proprietary",
-    "compatibility": "Cross-platform (macOS, Linux, Windows)",
+    "compatibility": "Đa nền tảng (macOS, Linux, Windows)",
     "lastVerified": "2026-11-19",
     "status": "verified_tested",
     "description": "Trình biên tập mã nguồn tích hợp mô hình ngôn ngữ lớn hỗ trợ lập trình tác tử và lập chỉ mục codebase."
-  },
-  {
-    "id": "res-opencode-cli",
-    "title": "OpenCode AI Terminal Agent",
-    "group": "Dev Tools",
-    "category": "Agent Orchestration",
-    "tags": [
-      "platform:Terminal",
-      "tech:TypeScript",
-      "level:Advanced",
-      "cost:Free"
-    ],
-    "officialUrl": "https://github.com/anomalyco/opencode",
-    "license": "MIT",
-    "compatibility": "Linux, macOS, POSIX Shell",
-    "lastVerified": "2026-11-19",
-    "status": "verified_tested",
-    "description": "Môi trường điều phối tác tử lập trình đa mô hình chạy trên dòng lệnh với quy trình kiểm soát mã nguồn tự động."
   },
   {
     "id": "res-shadcn-ui",
@@ -140,12 +122,12 @@
       "level:Advanced",
       "cost:Free"
     ],
-    "officialUrl": "https://github.com/broamstuck-cybr/SOURCEOFKNOWLEDGFORAI",
-    "license": "MIT",
-    "compatibility": "LLM Systems (Claude, GPT, Gemini)",
+    "officialUrl": "https://github.com/broamstuck-cybr/SOURCEOFKNOWLEDGFORAI#prompts",
+    "license": "MIT + NOTICE.md",
+    "compatibility": "Hệ thống LLM (Claude, GPT, Gemini)",
     "lastVerified": "2026-11-19",
     "status": "verified_tested",
-    "description": "Kho prompt hệ thống đặc tả nghiêm ngặt, loại bỏ khuôn mẫu sáo rỗng và thiết lập cơ chế chống hồi quy."
+    "description": "Phân mục prompt hệ thống trong monorepo SOURCEOFKNOWLEDGFORAI, đặc tả chặt chẽ và chống hồi quy."
   },
   {
     "id": "res-rag-prompt-templates",
@@ -158,12 +140,12 @@
       "level:Intermediate",
       "cost:Free"
     ],
-    "officialUrl": "https://github.com/broamstuck-cybr/SOURCEOFKNOWLEDGFORAI",
-    "license": "Apache-2.0",
+    "officialUrl": "https://github.com/broamstuck-cybr/SOURCEOFKNOWLEDGFORAI#rag-prompts",
+    "license": "Apache-2.0 + NOTICE.md",
     "compatibility": "LangChain, LlamaIndex",
     "lastVerified": "2026-11-19",
     "status": "verified_info",
-    "description": "Mẫu prompt trích xuất thông tin theo cấu trúc JSON Schema giữ nguyên nguồn bằng chứng xác thực."
+    "description": "Mẫu prompt trích xuất thông tin theo cấu trúc JSON Schema trong SOURCEOFKNOWLEDGFORAI, giữ nguyên nguồn đối chứng."
   },
   {
     "id": "res-sourceofknowledge-repo",
@@ -177,11 +159,11 @@
       "cost:Free"
     ],
     "officialUrl": "https://github.com/broamstuck-cybr/SOURCEOFKNOWLEDGFORAI",
-    "license": "MIT",
-    "compatibility": "Git, Markdown Readers",
+    "license": "MIT + NOTICE.md",
+    "compatibility": "Git, Trình đọc Markdown",
     "lastVerified": "2026-11-19",
     "status": "verified_tested",
-    "description": "Kho lưu trữ 6.770 thành phần giao diện thực chiến từ 5 thư viện lớn (CodeFronts 5.047, ThreeUI 961, LucianLabs 400, MotionSites 321, PinUI 41).",
+    "description": "Kho tổng hợp 6.770 thành phần giao diện từ 5 thư viện (CodeFronts 5.047, ThreeUI 961, LucianLabs 400, MotionSites 321, PinUI 41), tuân thủ NOTICE.md từng nguồn.",
     "snippet": "total: 6770 | codefronts: 5047 | threeui: 961 (1485 tags) | lucianlabs: 400 | motionsites: 321 | pinui: 41"
   },
   {
@@ -215,12 +197,12 @@
       "level:Intermediate",
       "cost:Free"
     ],
-    "officialUrl": "https://github.com/broamstuck-cybr/SOURCEOFKNOWLEDGFORAI",
-    "license": "MIT",
+    "officialUrl": "https://github.com/broamstuck-cybr/SOURCEOFKNOWLEDGFORAI#clean-logic",
+    "license": "MIT + NOTICE.md",
     "compatibility": "Cursor, OpenCode, Agent Systems",
     "lastVerified": "2026-11-19",
     "status": "verified_tested",
-    "description": "Bộ tiêu chuẩn lập trình logic phòng vệ lỗi tối đa, kiểu dữ liệu chặt chẽ và giữ vững nguyên tắc chống hồi quy."
+    "description": "Bộ tiêu chuẩn lập trình logic phòng vệ lỗi (trong monorepo SOURCEOFKNOWLEDGFORAI), kiểu dữ liệu chặt chẽ và chống hồi quy."
   },
   {
     "id": "res-uiux-promax-skill",
@@ -233,12 +215,12 @@
       "level:Advanced",
       "cost:Free"
     ],
-    "officialUrl": "https://github.com/broamstuck-cybr/SOURCEOFKNOWLEDGFORAI",
-    "license": "MIT",
+    "officialUrl": "https://github.com/broamstuck-cybr/SOURCEOFKNOWLEDGFORAI#uiux-rules",
+    "license": "MIT + NOTICE.md",
     "compatibility": "Cursor, OpenCode, Agent Systems",
     "lastVerified": "2026-11-19",
     "status": "verified_tested",
-    "description": "Tập hợp quy tắc thiết kế giao diện hiện đại với bảng mã màu chuyên sâu và hệ thống tỷ lệ không gian 8px."
+    "description": "Tập hợp quy tắc thiết kế giao diện (trong SOURCEOFKNOWLEDGFORAI) với bảng màu chuyên sâu và tỷ lệ 8px."
   },
   {
     "id": "res-web-standards-doc",
@@ -307,12 +289,12 @@
       "level:Advanced",
       "cost:Free"
     ],
-    "officialUrl": "https://github.com/broamstuck-cybr/SOURCEOFKNOWLEDGFORAI",
-    "license": "MIT",
+    "officialUrl": "https://github.com/broamstuck-cybr/SOURCEOFKNOWLEDGFORAI#ai-engineering",
+    "license": "MIT + NOTICE.md",
     "compatibility": "Python 3.11+",
     "lastVerified": "2026-11-19",
     "status": "verified_info",
-    "description": "Cẩm nang thiết kế hệ thống tác tử, quản lý bộ nhớ ngữ cảnh và tối ưu độ trễ suy luận LLM."
+    "description": "Cẩm nang thiết kế hệ thống tác tử, quản lý bộ nhớ ngữ cảnh và tối ưu độ trễ suy luận LLM (trong SOURCEOFKNOWLEDGFORAI)."
   },
   {
     "id": "res-vite-bundler",
@@ -434,7 +416,7 @@
       "cost:Free"
     ],
     "officialUrl": "https://github.com/anthropics/skills",
-    "license": "MIT",
+    "license": "Xem LICENSE trong repo",
     "compatibility": "Claude API, Claude Code",
     "lastVerified": "2026-11-19",
     "status": "verified_tested",

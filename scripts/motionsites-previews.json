@@ -1,0 +1,978 @@
+{
+  "0": {
+    "id": "0",
+    "title": "Wealth Video Hero",
+    "image": "https://motionsites.ai/assets/hero-wealth-preview-B70idl_u.gif",
+    "poster": "https://motionsites.ai/assets/hero-wealth-poster-D9mwBQ1R.png",
+    "category": "Fintech",
+    "type": ""
+  },
+  "1": {
+    "id": "1",
+    "title": "New Era Bold Hero",
+    "image": "https://motionsites.ai/assets/hero-new-era-preview-CocuDUm9.gif",
+    "poster": "https://motionsites.ai/assets/hero-new-era-poster-BIdtLrty.png",
+    "category": "Creative",
+    "type": ""
+  },
+  "2": {
+    "id": "2",
+    "title": "Taskora SaaS Hero",
+    "image": "https://motionsites.ai/assets/hero-taskora-preview-BlRBv8IU.gif",
+    "poster": "https://motionsites.ai/assets/hero-taskora-poster-Cgi3qyR1.png",
+    "category": "SaaS",
+    "type": ""
+  },
+  "3": {
+    "id": "3",
+    "title": "ClearInvoice SaaS Hero",
+    "image": "https://motionsites.ai/assets/hero-clearinvoice-preview-l3q8sam6.gif",
+    "poster": "https://motionsites.ai/assets/hero-clearinvoice-poster-D9rl57xj.png",
+    "category": "SaaS",
+    "type": ""
+  },
+  "4": {
+    "id": "4",
+    "title": "Datacore SaaS Hero",
+    "image": "https://motionsites.ai/assets/hero-datacore-preview-DWeq7Ls3.gif",
+    "poster": "",
+    "category": "SaaS",
+    "type": ""
+  },
+  "5": {
+    "id": "5",
+    "title": "Glassmorphism Agency Hero",
+    "image": "https://motionsites.ai/assets/hero-glassmorphism-agency-preview-CGqeRoqP.gif",
+    "poster": "https://motionsites.ai/assets/hero-glassmorphism-agency-poster-BEMcgqRb.png",
+    "category": "Agency",
+    "type": ""
+  },
+  "6": {
+    "id": "6",
+    "title": "Bold Portfolio Hero",
+    "image": "https://motionsites.ai/assets/hero-portfolio-bold-preview-9Yfbi-Wg.gif",
+    "poster": "https://motionsites.ai/assets/hero-portfolio-bold-poster-Dhes_J9u.png",
+    "category": "Portfolio",
+    "type": ""
+  },
+  "7": {
+    "id": "7",
+    "title": "Synapse Dark Hero",
+    "image": "https://motionsites.ai/assets/hero-synapse-preview-CP83ds5W.gif",
+    "poster": "https://motionsites.ai/assets/hero-synapse-poster-BWu_t7F6.png",
+    "category": "SaaS",
+    "type": ""
+  },
+  "8": {
+    "id": "8",
+    "title": "New Era Automotive Hero",
+    "image": "https://motionsites.ai/assets/hero-new-era-auto-preview-W56vp0xD.gif",
+    "poster": "https://motionsites.ai/assets/hero-new-era-auto-poster-CSiQtduG.png",
+    "category": "Automotive",
+    "type": ""
+  },
+  "9": {
+    "id": "9",
+    "title": "Web3 EOS Hero",
+    "image": "https://motionsites.ai/assets/hero-web3-eos-poster-DF0_WdVS.png",
+    "poster": "https://motionsites.ai/assets/hero-web3-eos-poster-DF0_WdVS.png",
+    "category": "Web3",
+    "type": ""
+  },
+  "10": {
+    "id": "10",
+    "title": "AI Automation Hero",
+    "image": "https://motionsites.ai/assets/hero-synapse-ai-preview-BjBuH68i.gif",
+    "poster": "https://motionsites.ai/assets/hero-synapse-ai-poster-LxdBC470.png",
+    "category": "AI / SaaS",
+    "type": ""
+  },
+  "11": {
+    "id": "11",
+    "title": "Weblex Dark Hero",
+    "image": "https://motionsites.ai/assets/hero-weblex-preview-BoIbrUHI.gif",
+    "poster": "https://motionsites.ai/assets/hero-weblex-poster-EhV1BiMD.png",
+    "category": "Landing Page",
+    "type": ""
+  },
+  "12": {
+    "id": "12",
+    "title": "Targo Logistics Hero",
+    "image": "https://motionsites.ai/assets/hero-targo-preview-BF9qQyMr.gif",
+    "poster": "https://motionsites.ai/assets/hero-targo-poster-B9vpoEb_.png",
+    "category": "Automotive",
+    "type": ""
+  },
+  "13": {
+    "id": "13",
+    "title": "Framelix 3D Studios",
+    "image": "https://motionsites.ai/assets/hero-framelix-preview-DsyIImVY.gif",
+    "poster": "https://motionsites.ai/assets/hero-framelix-poster-Da8_fUvr.png",
+    "category": "Creative / 3D",
+    "type": ""
+  },
+  "14": {
+    "id": "14",
+    "title": "Logoisum Video Agency Hero",
+    "image": "https://motionsites.ai/assets/hero-logoisum-preview-yhpSc7Yy.gif",
+    "poster": "https://motionsites.ai/assets/hero-logoisum-poster-B5ln5VHb.png",
+    "category": "Agency",
+    "type": ""
+  },
+  "15": {
+    "id": "15",
+    "title": "Dark Portfolio Hero",
+    "image": "https://motionsites.ai/assets/hero-portfolio-dark-preview-RZYzJHIL.gif",
+    "poster": "https://motionsites.ai/assets/hero-portfolio-dark-poster-CDlMFIzp.png",
+    "category": "Portfolio",
+    "type": ""
+  },
+  "16": {
+    "id": "16",
+    "title": "HR SaaS Hero",
+    "image": "https://motionsites.ai/assets/hero-hr-saas-preview-Cf365Y1O.gif",
+    "poster": "https://motionsites.ai/assets/hero-hr-saas-poster-Bj2hU3_c.png",
+    "category": "SaaS",
+    "type": ""
+  },
+  "18": {
+    "id": "18",
+    "title": "Loader Animation",
+    "image": "https://motionsites.ai/assets/hero-loader-animation-preview-C3_SX_Io.gif",
+    "poster": "",
+    "category": "Animation",
+    "type": ""
+  },
+  "19": {
+    "id": "19",
+    "title": "Viktor Portfolio",
+    "image": "https://motionsites.ai/assets/hero-viktor-portfolio-preview-Bd2-Dg_u.gif",
+    "poster": "https://motionsites.ai/assets/hero-viktor-portfolio-poster-S-47espj.png",
+    "category": "Portfolio",
+    "type": ""
+  },
+  "20": {
+    "id": "20",
+    "title": "Space Voyage",
+    "image": "https://motionsites.ai/assets/hero-space-voyage-preview-eECLH3Yc.gif",
+    "poster": "https://motionsites.ai/assets/hero-space-voyage-poster-Dti9x8oS.png",
+    "category": "Landing Page",
+    "type": ""
+  },
+  "21": {
+    "id": "21",
+    "title": "Buzzentic Agency",
+    "image": "https://motionsites.ai/assets/hero-buzzentic-preview-CbopM29R.gif",
+    "poster": "https://motionsites.ai/assets/hero-buzzentic-poster-7nm68cTe.png",
+    "category": "Agency",
+    "type": ""
+  },
+  "ember-dsgn-hero": {
+    "id": "ember-dsgn-hero",
+    "title": "EMBER.dsgn",
+    "image": "https://image.mux.com/iK2ACd5wEwi7ORN8i16kl59Cck01IREnB3hX6EnnqiUk/animated.webp?width=640&fps=15",
+    "poster": "https://image.mux.com/iK2ACd5wEwi7ORN8i16kl59Cck01IREnB3hX6EnnqiUk/thumbnail.webp?width=1200&time=2",
+    "category": "Hero Section",
+    "type": "hero"
+  },
+  "aetheris-voyage-hero": {
+    "id": "aetheris-voyage-hero",
+    "title": "Aetheris Voyage",
+    "image": "https://motionsites.ai/assets/hero-aetheris-voyage-preview-BGJn1z4t.gif",
+    "poster": "https://motionsites.ai/assets/hero-aetheris-voyage-poster-BOeMMDSw.png",
+    "category": "Hero Section",
+    "type": "hero"
+  },
+  "package-fits-pricing": {
+    "id": "package-fits-pricing",
+    "title": "What Package Fits You",
+    "image": "https://motionsites.ai/assets/hero-package-fits-pricing-preview-Bglk5DXD.gif",
+    "poster": "https://motionsites.ai/assets/hero-package-fits-pricing-poster-a5yPlgS5.png",
+    "category": "Pricing",
+    "type": "hero"
+  },
+  "digital-epoch-hero": {
+    "id": "digital-epoch-hero",
+    "title": "Digital Epoch",
+    "image": "https://motionsites.ai/assets/hero-digital-epoch-preview-B85ezqXO.gif",
+    "poster": "https://motionsites.ai/assets/hero-digital-epoch-poster-Cnyom0By.png",
+    "category": "Hero Section",
+    "type": "hero"
+  },
+  "digital-reality-hero": {
+    "id": "digital-reality-hero",
+    "title": "Digital Reality",
+    "image": "https://motionsites.ai/assets/hero-digital-reality-preview-BogjTXUi.gif",
+    "poster": "https://motionsites.ai/assets/hero-digital-reality-poster-CmM0f68V.png",
+    "category": "Social Media",
+    "type": "hero"
+  },
+  "velorah-focus-hero": {
+    "id": "velorah-focus-hero",
+    "title": "Velorah Focus",
+    "image": "https://motionsites.ai/assets/hero-velorah-focus-preview-Boo7l3W4.gif",
+    "poster": "https://motionsites.ai/assets/hero-velorah-focus-poster-DahOTE6J.png",
+    "category": "Social Media",
+    "type": "social-media"
+  },
+  "rivr-hero": {
+    "id": "rivr-hero",
+    "title": "RIVR",
+    "image": "https://motionsites.ai/assets/hero-rivr-preview-DcS3pjx4.gif",
+    "poster": "https://motionsites.ai/assets/hero-rivr-poster-XRJOK5Jz.png",
+    "category": "Hero Section",
+    "type": "hero"
+  },
+  "shamoni-hero": {
+    "id": "shamoni-hero",
+    "title": "Shamoni",
+    "image": "https://motionsites.ai/assets/hero-shamoni-preview-DfbPWZl9.gif",
+    "poster": "https://motionsites.ai/assets/hero-shamoni-poster-CgFgfjoV.png",
+    "category": "Hero Section",
+    "type": "hero"
+  },
+  "rivr-defi-landing": {
+    "id": "rivr-defi-landing",
+    "title": "RIVR DeFi",
+    "image": "https://motionsites.ai/assets/landing-rivr-defi-preview-BPVSgEtB.gif",
+    "poster": "https://motionsites.ai/assets/landing-rivr-defi-poster-DCTiByUf.png",
+    "category": "Landing Page",
+    "type": "landing-page"
+  },
+  "zenith-realty-landing": {
+    "id": "zenith-realty-landing",
+    "title": "Zenith Realty",
+    "image": "https://motionsites.ai/assets/landing-zenith-realty-preview-Y1uTjYYl.gif",
+    "poster": "https://motionsites.ai/assets/landing-zenith-realty-poster-Pwf4HO6U.png",
+    "category": "Landing Page",
+    "type": "landing-page"
+  },
+  "lumina-footer": {
+    "id": "lumina-footer",
+    "title": "Lumina",
+    "image": "https://motionsites.ai/assets/footer-lumina-preview-CYkr-ACN.gif",
+    "poster": "https://motionsites.ai/assets/footer-lumina-poster-B8XFMFMo.png",
+    "category": "Footer Section",
+    "type": "hero"
+  },
+  "haul-footer": {
+    "id": "haul-footer",
+    "title": "HAUL!",
+    "image": "https://motionsites.ai/assets/footer-haul-poster-Do5X7frB.png",
+    "poster": "https://motionsites.ai/assets/footer-haul-poster-Do5X7frB.png",
+    "category": "Footer Section",
+    "type": "hero"
+  },
+  "vize-footer": {
+    "id": "vize-footer",
+    "title": "Vize Footer",
+    "image": "https://motionsites.ai/assets/footer-vize-poster-BRRRDP-A.png",
+    "poster": "https://motionsites.ai/assets/footer-vize-poster-BRRRDP-A.png",
+    "category": "Footer Section",
+    "type": "hero"
+  },
+  "glow-features": {
+    "id": "glow-features",
+    "title": "Glow Features",
+    "image": "https://motionsites.ai/assets/features-glow-poster-CmUBaPAq.png",
+    "poster": "https://motionsites.ai/assets/features-glow-poster-CmUBaPAq.png",
+    "category": "Features Section",
+    "type": "hero"
+  },
+  "zenith-footer": {
+    "id": "zenith-footer",
+    "title": "Zenith Footer",
+    "image": "https://motionsites.ai/assets/footer-zenith-preview-CYxIE6aF.gif",
+    "poster": "https://motionsites.ai/assets/footer-zenith-poster-CYI_iYMw.png",
+    "category": "Footer Section",
+    "type": "hero"
+  },
+  "community-cta": {
+    "id": "community-cta",
+    "title": "Community CTA",
+    "image": "https://motionsites.ai/assets/cta-community-preview-C90X-RHI.gif",
+    "poster": "https://motionsites.ai/assets/cta-community-poster-BKT8jLLq.png",
+    "category": "CTA Section",
+    "type": "hero"
+  },
+  "kresna-footer": {
+    "id": "kresna-footer",
+    "title": "Kresna Footer",
+    "image": "https://motionsites.ai/assets/footer-kresna-preview-BrIYYd2q.gif",
+    "poster": "https://motionsites.ai/assets/footer-kresna-poster-DZ1M1SnM.png",
+    "category": "Footer Section",
+    "type": "hero"
+  },
+  "impressive-hero": {
+    "id": "impressive-hero",
+    "title": "Impressive Hero",
+    "image": "https://motionsites.ai/assets/hero-impressive-preview-BCJtlSs2.gif",
+    "poster": "https://motionsites.ai/assets/hero-impressive-poster-BPadbNDX.png",
+    "category": "Hero Section",
+    "type": "hero"
+  },
+  "slam-dunk-hero": {
+    "id": "slam-dunk-hero",
+    "title": "Slam Dunk",
+    "image": "https://motionsites.ai/assets/hero-slam-dunk-preview-Cmg3K_S4.gif",
+    "poster": "https://motionsites.ai/assets/hero-slam-dunk-poster-Cd-dE4fD.png",
+    "category": "Hero Section",
+    "type": "hero"
+  },
+  "nova-space-landing": {
+    "id": "nova-space-landing",
+    "title": "NOVA Space Systems",
+    "image": "https://motionsites.ai/assets/hero-nova-space-preview-ej0OOJ0M.gif",
+    "poster": "https://motionsites.ai/assets/hero-nova-space-poster-BNMHPfK2.png",
+    "category": "Landing Page",
+    "type": "landing-page"
+  },
+  "akor-security-landing": {
+    "id": "akor-security-landing",
+    "title": "AKOR Security",
+    "image": "https://motionsites.ai/assets/hero-akor-security-preview-hRrwsPNf.gif",
+    "poster": "https://motionsites.ai/assets/hero-akor-security-poster-Cw0Ko1yz.png",
+    "category": "Landing Page",
+    "type": "landing-page"
+  },
+  "nexus-hero": {
+    "id": "nexus-hero",
+    "title": "Nexus IT Solutions",
+    "image": "https://motionsites.ai/assets/hero-nexus-preview-74RfhYpA.gif",
+    "poster": "https://motionsites.ai/assets/hero-nexus-poster-fNblRje9.png",
+    "category": "Hero Section",
+    "type": "hero"
+  },
+  "bionova-hero": {
+    "id": "bionova-hero",
+    "title": "Bionova Biotech",
+    "image": "https://motionsites.ai/assets/hero-bionova-preview-Sk76d0_D.gif",
+    "poster": "https://motionsites.ai/assets/hero-bionova-poster-CPaKbq55.png",
+    "category": "SaaS",
+    "type": "hero"
+  },
+  "orbit-engineers": {
+    "id": "orbit-engineers",
+    "title": "Orbit Engineers",
+    "image": "https://motionsites.ai/assets/hero-orbit-engineers-poster-BT1ffUzn.png",
+    "poster": "https://motionsites.ai/assets/hero-orbit-engineers-poster-BT1ffUzn.png",
+    "category": "Agency",
+    "type": "landing-page"
+  },
+  "finlytic-hero": {
+    "id": "finlytic-hero",
+    "title": "Finlytic AI Agent",
+    "image": "https://motionsites.ai/assets/hero-finlytic-preview-CV9g0FHP.gif",
+    "poster": "https://motionsites.ai/assets/hero-finlytic-poster-BKqseFhS.png",
+    "category": "SaaS",
+    "type": "hero"
+  },
+  "price-calculator": {
+    "id": "price-calculator",
+    "title": "Price Calculator",
+    "image": "https://motionsites.ai/assets/hero-price-calculator-preview-Dak8DDgY.gif",
+    "poster": "https://motionsites.ai/assets/hero-price-calculator-poster-DzoAr1AR.png",
+    "category": "SaaS",
+    "type": "hero"
+  },
+  "skyelite-hero": {
+    "id": "skyelite-hero",
+    "title": "SkyElite Private Jets",
+    "image": "https://motionsites.ai/assets/hero-skyelite-preview-DHaZIgUv.gif",
+    "poster": "https://motionsites.ai/assets/hero-skyelite-poster-GHD3VPq4.png",
+    "category": "Landing Page",
+    "type": "hero"
+  },
+  "deck-investor": {
+    "id": "deck-investor",
+    "title": "Investor Deck",
+    "image": "https://motionsites.ai/assets/hero-deck-preview-CbidQJxW.gif",
+    "poster": "https://motionsites.ai/assets/hero-deck-poster-yx2SqADM.png",
+    "category": "Presentation",
+    "type": "hero"
+  },
+  "securify-hero": {
+    "id": "securify-hero",
+    "title": "Securify Data Security",
+    "image": "https://motionsites.ai/assets/hero-securify-preview-DQSYrftH.gif",
+    "poster": "https://motionsites.ai/assets/hero-securify-poster-CrUPOWDv.png",
+    "category": "SaaS",
+    "type": "hero"
+  },
+  "apex-saas-hero": {
+    "id": "apex-saas-hero",
+    "title": "Apex SaaS",
+    "image": "https://motionsites.ai/assets/hero-apex-saas-preview-CbnBKSPv.gif",
+    "poster": "https://motionsites.ai/assets/hero-apex-saas-poster-CZ6BkKIa.png",
+    "category": "SaaS",
+    "type": ""
+  },
+  "datacore-booking-hero": {
+    "id": "datacore-booking-hero",
+    "title": "Datacore Booking",
+    "image": "https://motionsites.ai/assets/hero-datacore-booking-preview-B3t9SRK6.gif",
+    "poster": "https://motionsites.ai/assets/hero-datacore-booking-poster-C4umG3DT.png",
+    "category": "SaaS",
+    "type": ""
+  },
+  "halo-usd-landing": {
+    "id": "halo-usd-landing",
+    "title": "USD Halo",
+    "image": "https://motionsites.ai/assets/halo-usd-hero-CtMXOklk.gif",
+    "poster": "",
+    "category": "Landing Page",
+    "type": "landing-page"
+  },
+  "convix-software-hero": {
+    "id": "convix-software-hero",
+    "title": "Convix Software",
+    "image": "https://motionsites.ai/assets/convix-software-hero-B6-tdnN6.gif",
+    "poster": "https://motionsites.ai/assets/convix-software-hero-CKWsUESj.png",
+    "category": "SaaS",
+    "type": ""
+  },
+  "slate-hero": {
+    "id": "slate-hero",
+    "title": "Slate",
+    "image": "https://motionsites.ai/assets/slate-hero-BY-9TCfd.gif",
+    "poster": "https://motionsites.ai/assets/slate-hero-DVrU4R-f.png",
+    "category": "SaaS",
+    "type": ""
+  },
+  "codercrest-hero": {
+    "id": "codercrest-hero",
+    "title": "CoderCrest",
+    "image": "https://motionsites.ai/assets/codercrest-hero-CoycO52t.gif",
+    "poster": "https://motionsites.ai/assets/codercrest-hero-B-d2p-pC.png",
+    "category": "SaaS",
+    "type": ""
+  },
+  "digitwist-hero": {
+    "id": "digitwist-hero",
+    "title": "Digitwist AI Builder",
+    "image": "https://motionsites.ai/assets/hero-digitwist-preview-s2pJetjQ.gif",
+    "poster": "https://motionsites.ai/assets/hero-digitwist-poster-DbmglO1A.png",
+    "category": "SaaS",
+    "type": ""
+  },
+  "codenest-hero": {
+    "id": "codenest-hero",
+    "title": "CodeNest Coding Platform",
+    "image": "https://motionsites.ai/assets/hero-codenest-preview-Cgppc2qV.gif",
+    "poster": "https://motionsites.ai/assets/hero-codenest-poster-Cq1PVGCy.png",
+    "category": "Landing Page",
+    "type": ""
+  },
+  "grow-ai-hero": {
+    "id": "grow-ai-hero",
+    "title": "Grow AI Talent Platform",
+    "image": "https://motionsites.ai/assets/hero-grow-ai-preview-BlQ8tAQ-.gif",
+    "poster": "https://motionsites.ai/assets/hero-grow-ai-poster-B-kSCKSN.png",
+    "category": "SaaS",
+    "type": ""
+  },
+  "pro-ai-deck": {
+    "id": "pro-ai-deck",
+    "title": "Pro AI Deck",
+    "image": "https://motionsites.ai/assets/hero-pro-ai-deck-preview-BBbLJNeM.gif",
+    "poster": "https://motionsites.ai/assets/hero-pro-ai-deck-poster-CF077Cec.png",
+    "category": "Presentation",
+    "type": ""
+  },
+  "velorah-hero": {
+    "id": "velorah-hero",
+    "title": "Velorah",
+    "image": "https://motionsites.ai/assets/hero-velorah-preview-CJNTtbpd.gif",
+    "poster": "https://motionsites.ai/assets/hero-velorah-poster-mLkXfzr9.png",
+    "category": "Agency",
+    "type": ""
+  },
+  "nexora-features": {
+    "id": "nexora-features",
+    "title": "Nexora Features",
+    "image": "https://motionsites.ai/assets/hero-nexora-features-preview-D26X0IiD.gif",
+    "poster": "https://motionsites.ai/assets/hero-nexora-features-poster-BoCFKbPB.png",
+    "category": "Features Section",
+    "type": ""
+  },
+  "veloce-finance-landing": {
+    "id": "veloce-finance-landing",
+    "title": "Veloce Finance",
+    "image": "https://motionsites.ai/assets/hero-veloce-finance-preview-DQW35gIt.gif",
+    "poster": "https://motionsites.ai/assets/hero-veloce-finance-poster-Crck1KtV.png",
+    "category": "Landing Page",
+    "type": "landing-page"
+  },
+  "planet-orbit-hero": {
+    "id": "planet-orbit-hero",
+    "title": "Planet Orbit",
+    "image": "https://motionsites.ai/assets/hero-planet-orbit-preview-DWAP8Z1P.gif",
+    "poster": "https://motionsites.ai/assets/hero-planet-orbit-poster-CuWG70ga.png",
+    "category": "SaaS",
+    "type": ""
+  },
+  "neuralyn-hero": {
+    "id": "neuralyn-hero",
+    "title": "Neuralyn",
+    "image": "https://motionsites.ai/assets/hero-neuralyn-preview-Br4FRDQA.gif",
+    "poster": "https://motionsites.ai/assets/hero-neuralyn-poster-BrDgI9_4.png",
+    "category": "SaaS",
+    "type": ""
+  },
+  "liquid-glass-agency": {
+    "id": "liquid-glass-agency",
+    "title": "Liquid Glass Agency",
+    "image": "https://motionsites.ai/assets/hero-liquid-glass-agency-preview-Cr5Q9-lc.gif",
+    "poster": "https://motionsites.ai/assets/hero-liquid-glass-agency-poster-BvnVaqJh.png",
+    "category": "Landing Page",
+    "type": "landing-page"
+  },
+  "guardnet-landing": {
+    "id": "guardnet-landing",
+    "title": "Guardnet",
+    "image": "https://motionsites.ai/assets/hero-guardnet-preview-DAQqiNXC.gif",
+    "poster": "https://motionsites.ai/assets/hero-guardnet-poster-BgcbWciF.png",
+    "category": "Landing Page",
+    "type": "landing-page"
+  },
+  "neovision-landing": {
+    "id": "neovision-landing",
+    "title": "NeoVision",
+    "image": "https://motionsites.ai/assets/hero-neovision-preview-qwRNOas1.gif",
+    "poster": "https://motionsites.ai/assets/hero-neovision-poster-CIjls94N.png",
+    "category": "Landing Page",
+    "type": "landing-page"
+  },
+  "orbis-nft-landing": {
+    "id": "orbis-nft-landing",
+    "title": "Orbis NFT",
+    "image": "https://motionsites.ai/assets/hero-orbis-nft-preview-C3wvh77a.gif",
+    "poster": "https://motionsites.ai/assets/hero-orbis-nft-poster-Bfg-lWHl.png",
+    "category": "Landing Page",
+    "type": "landing-page"
+  },
+  "bloom-ai-hero": {
+    "id": "bloom-ai-hero",
+    "title": "Bloom AI",
+    "image": "https://motionsites.ai/assets/hero-bloom-ai-preview-g6RcYLTl.gif",
+    "poster": "https://motionsites.ai/assets/hero-bloom-ai-poster-Bol1Pj7x.png",
+    "category": "Hero Section",
+    "type": ""
+  },
+  "taskly-hero": {
+    "id": "taskly-hero",
+    "title": "Taskly",
+    "image": "https://motionsites.ai/assets/hero-taskly-preview-Dq2MKaI0.gif",
+    "poster": "https://motionsites.ai/assets/hero-taskly-poster-B5eMEGQS.png",
+    "category": "Hero Section",
+    "type": ""
+  },
+  "railroad-ai-hero": {
+    "id": "railroad-ai-hero",
+    "title": "Railroad.ai",
+    "image": "https://motionsites.ai/assets/hero-railroad-ai-preview-CBjplU90.gif",
+    "poster": "https://motionsites.ai/assets/hero-railroad-ai-poster-lVI2bwI8.png",
+    "category": "Hero Section",
+    "type": "hero"
+  },
+  "nexora-hero": {
+    "id": "nexora-hero",
+    "title": "Nexora Automation",
+    "image": "https://motionsites.ai/assets/hero-nexora-preview-cx5HmUgo.gif",
+    "poster": "https://motionsites.ai/assets/hero-nexora-poster-CLY3ybj2.png",
+    "category": "SaaS",
+    "type": "hero"
+  },
+  "nickel-hero": {
+    "id": "nickel-hero",
+    "title": "Nickel Payments",
+    "image": "https://motionsites.ai/assets/hero-nickel-preview-CnRoBZt5.gif",
+    "poster": "https://motionsites.ai/assets/hero-nickel-poster-Co3f0jXk.png",
+    "category": "SaaS",
+    "type": "hero"
+  },
+  "clubx-hero": {
+    "id": "clubx-hero",
+    "title": "ClubX Investors",
+    "image": "https://motionsites.ai/assets/hero-clubx-preview-CpKCe8yV.gif",
+    "poster": "https://motionsites.ai/assets/hero-clubx-poster-Dwv_zKz1.png",
+    "category": "Hero Section",
+    "type": "hero"
+  },
+  "evr-ventures-hero": {
+    "id": "evr-ventures-hero",
+    "title": "EVR Ventures",
+    "image": "https://motionsites.ai/assets/hero-evr-ventures-preview-DZxeVFEX.gif",
+    "poster": "https://motionsites.ai/assets/hero-evr-ventures-poster-Bld4o1cl.png",
+    "category": "Hero Section",
+    "type": "hero"
+  },
+  "mindloop-hero": {
+    "id": "mindloop-hero",
+    "title": "Mindloop",
+    "image": "https://motionsites.ai/assets/hero-mindloop-preview-BR8xW6xW.gif",
+    "poster": "https://motionsites.ai/assets/hero-mindloop-poster-2_RhEWJd.png",
+    "category": "SaaS",
+    "type": "hero"
+  },
+  "mindloop-landing": {
+    "id": "mindloop-landing",
+    "title": "Mindloop Landing",
+    "image": "https://motionsites.ai/assets/hero-mindloop-landing-preview-Bqnstohr.gif",
+    "poster": "https://motionsites.ai/assets/hero-mindloop-landing-poster-BbPiPxcA.png",
+    "category": "Landing Page",
+    "type": "landing-page"
+  },
+  "terra-hero": {
+    "id": "terra-hero",
+    "title": "Terra Geo Map",
+    "image": "https://motionsites.ai/assets/hero-terra-preview-BFjrCr7T.gif",
+    "poster": "https://motionsites.ai/assets/hero-terra-poster-BN-oVgFr.png",
+    "category": "SaaS",
+    "type": "hero"
+  },
+  "orbit-web3-hero": {
+    "id": "orbit-web3-hero",
+    "title": "Orbit Web3",
+    "image": "https://motionsites.ai/assets/hero-orbit-web3-preview-BXt4OttD.gif",
+    "poster": "https://motionsites.ai/assets/hero-orbit-web3-poster-CsiRb_pp.png",
+    "category": "Web3",
+    "type": "hero"
+  },
+  "ai-designer-agency": {
+    "id": "ai-designer-agency",
+    "title": "AI Designer Agency",
+    "image": "https://motionsites.ai/assets/hero-ai-designer-agency-preview-vrAje6Od.gif",
+    "poster": "https://motionsites.ai/assets/hero-ai-designer-agency-poster-CQqRSMUo.png",
+    "category": "Landing Page",
+    "type": "landing-page"
+  },
+  "automation-machines-hero": {
+    "id": "automation-machines-hero",
+    "title": "Automation Machines",
+    "image": "https://motionsites.ai/assets/hero-automation-machines-preview-DlTveRIN.gif",
+    "poster": "https://motionsites.ai/assets/hero-automation-machines-poster-CRJvUPpQ.png",
+    "category": "Hero Section",
+    "type": "hero"
+  },
+  "power-ai-hero": {
+    "id": "power-ai-hero",
+    "title": "Power AI",
+    "image": "https://motionsites.ai/assets/hero-power-ai-preview-BqpSbx41.gif",
+    "poster": "https://motionsites.ai/assets/hero-power-ai-poster-B5SetZ6G.png",
+    "category": "Hero Section",
+    "type": "hero"
+  },
+  "luminex-hero": {
+    "id": "luminex-hero",
+    "title": "Luminex",
+    "image": "https://motionsites.ai/assets/hero-luminex-preview-CxOP7ce6.gif",
+    "poster": "https://motionsites.ai/assets/hero-luminex-poster-9lhDX6Fl.png",
+    "category": "Hero Section",
+    "type": "hero"
+  },
+  "prisma-landing": {
+    "id": "prisma-landing",
+    "title": "Prisma Creative Studio",
+    "image": "https://motionsites.ai/assets/hero-prisma-preview-D4QeI0Bn.gif",
+    "poster": "https://motionsites.ai/assets/hero-prisma-poster-CH2WrOnW.png",
+    "category": "Landing Page",
+    "type": "landing-page"
+  },
+  "ecommerce-website-landing": {
+    "id": "ecommerce-website-landing",
+    "title": "E-commerce Website",
+    "image": "https://motionsites.ai/assets/hero-ecommerce-website-preview-D7j_TrNR.gif",
+    "poster": "https://motionsites.ai/assets/hero-ecommerce-website-poster-DUcLYbYg.png",
+    "category": "Landing Page",
+    "type": "landing-page"
+  },
+  "aethera-hero": {
+    "id": "aethera-hero",
+    "title": "Aethera Studio",
+    "image": "https://motionsites.ai/assets/hero-aethera-preview-DknSlcTa.gif",
+    "poster": "https://motionsites.ai/assets/hero-aethera-poster-DB6AdF0M.png",
+    "category": "Hero Section",
+    "type": "hero"
+  },
+  "asme-hero": {
+    "id": "asme-hero",
+    "title": "Asme",
+    "image": "https://motionsites.ai/assets/hero-asme-preview-B_nGDnTP.gif",
+    "poster": "https://motionsites.ai/assets/hero-asme-poster-G7m9uLxL.png",
+    "category": "Hero Section",
+    "type": "hero"
+  },
+  "transform-data-hero": {
+    "id": "transform-data-hero",
+    "title": "Transform Data",
+    "image": "https://motionsites.ai/assets/hero-transform-data-preview-Cx5OU29N.gif",
+    "poster": "https://motionsites.ai/assets/hero-transform-data-poster-DfsHSPMo.png",
+    "category": "Hero Section",
+    "type": "hero"
+  },
+  "wisa-space-hero": {
+    "id": "wisa-space-hero",
+    "title": "WISA Space",
+    "image": "https://motionsites.ai/assets/hero-wisa-space-preview-CAIFtU8c.gif",
+    "poster": "https://motionsites.ai/assets/hero-wisa-space-poster-CWyENdkI.png",
+    "category": "Hero Section",
+    "type": "hero"
+  },
+  "3d-jack-portfolio-hero": {
+    "id": "3d-jack-portfolio-hero",
+    "title": "3D Portfolio",
+    "image": "",
+    "poster": "",
+    "category": "Portfolio",
+    "type": "hero"
+  },
+  "dot-hero": {
+    "id": "dot-hero",
+    "title": "Dot",
+    "image": "https://motionsites.ai/assets/dot-hero-Csf49OgS.gif",
+    "poster": "https://motionsites.ai/assets/dot-hero-B-QWkNdy.png",
+    "category": "Hero Section",
+    "type": "hero"
+  },
+  "duolingo-styleguide-hero": {
+    "id": "duolingo-styleguide-hero",
+    "title": "Duolingo Styleguide",
+    "image": "https://motionsites.ai/assets/hero-duolingo-styleguide-preview-1HTxQ6Tj.gif",
+    "poster": "https://motionsites.ai/assets/hero-duolingo-styleguide-poster-CPG13g3T.png",
+    "category": "Hero Section",
+    "type": "hero"
+  },
+  "portfolio-cosmic-hero": {
+    "id": "portfolio-cosmic-hero",
+    "title": "Portfolio Cosmic",
+    "image": "https://motionsites.ai/assets/hero-portfolio-cosmic-preview-BpvWJ3Nc.gif",
+    "poster": "https://motionsites.ai/assets/hero-portfolio-cosmic-poster-vGZ7GZt-.png",
+    "category": "Portfolio",
+    "type": "hero"
+  },
+  "xportfolio-hero": {
+    "id": "xportfolio-hero",
+    "title": "xPortfolio Hero",
+    "image": "https://motionsites.ai/assets/hero-xportfolio-preview-D4A8maiC.gif",
+    "poster": "https://motionsites.ai/assets/hero-xportfolio-poster-B6q-pIN8.png",
+    "category": "Hero Section",
+    "type": "hero"
+  },
+  "designpro-hero": {
+    "id": "designpro-hero",
+    "title": "DesignPro Academy",
+    "image": "https://motionsites.ai/assets/hero-designpro-preview-D8c5_een.gif",
+    "poster": "https://motionsites.ai/assets/hero-designpro-poster-DwA5o1A7.png",
+    "category": "Hero Section",
+    "type": "hero"
+  },
+  "prioritize-hero": {
+    "id": "prioritize-hero",
+    "title": "Prioritize",
+    "image": "https://motionsites.ai/assets/hero-prioritize-preview-DlI3SYr4.png",
+    "poster": "https://motionsites.ai/assets/hero-prioritize-preview-DlI3SYr4.png",
+    "category": "Hero Section",
+    "type": "hero"
+  },
+  "stellar-ai-hero": {
+    "id": "stellar-ai-hero",
+    "title": "Stellar AI",
+    "image": "https://motionsites.ai/assets/hero-stellar-ai-preview-D3HL6bw1.gif",
+    "poster": "https://motionsites.ai/assets/hero-stellar-ai-poster-BQJztWy-.png",
+    "category": "Hero Section",
+    "type": "hero"
+  },
+  "stellar-ai-v2-hero": {
+    "id": "stellar-ai-v2-hero",
+    "title": "Sync AI",
+    "image": "https://motionsites.ai/assets/hero-stellar-ai-v2-preview-DjvxjG3C.gif",
+    "poster": "https://motionsites.ai/assets/hero-stellar-ai-v2-poster-D2407pz-.png",
+    "category": "Hero Section",
+    "type": "hero"
+  },
+  "keep-ahead-features": {
+    "id": "keep-ahead-features",
+    "title": "Keep Ahead Features",
+    "image": "https://motionsites.ai/assets/features-keep-ahead-poster-CriEHu8p.png",
+    "poster": "https://motionsites.ai/assets/features-keep-ahead-poster-CriEHu8p.png",
+    "category": "Features Section",
+    "type": "hero"
+  },
+  "benefits-features": {
+    "id": "benefits-features",
+    "title": "Benefits Features",
+    "image": "https://motionsites.ai/assets/features-benefits-preview-DO4ULagO.gif",
+    "poster": "https://motionsites.ai/assets/features-benefits-poster-DhGuAFq1.png",
+    "category": "Features Section",
+    "type": "hero"
+  },
+  "vertex-ai-hero": {
+    "id": "vertex-ai-hero",
+    "title": "VertexAI Hero",
+    "image": "https://motionsites.ai/assets/hero-vertex-ai-preview-Da80y3xa.gif",
+    "poster": "https://motionsites.ai/assets/hero-vertex-ai-poster-DEZfbTg3.png",
+    "category": "Hero Section",
+    "type": "hero"
+  },
+  "vortex-studio-hero": {
+    "id": "vortex-studio-hero",
+    "title": "AI Designer Portfolio",
+    "image": "https://motionsites.ai/assets/hero-vortex-studio-preview-BQyvwopD.gif",
+    "poster": "https://motionsites.ai/assets/hero-vortex-studio-poster-lf3IYvUr.png",
+    "category": "Landing Page",
+    "type": "hero"
+  },
+  "acreage-farming-hero": {
+    "id": "acreage-farming-hero",
+    "title": "Acreage Farming",
+    "image": "https://motionsites.ai/assets/hero-acreage-farming-preview-DY4bc7ni.gif",
+    "poster": "https://motionsites.ai/assets/hero-acreage-farming-poster-DA8kFOg1.png",
+    "category": "Landing Page",
+    "type": "landing-page"
+  },
+  "design-rocket-email-hero": {
+    "id": "design-rocket-email-hero",
+    "title": "Email Marketing",
+    "image": "https://motionsites.ai/assets/hero-design-rocket-email-preview-DBed7Yfk.gif",
+    "poster": "https://motionsites.ai/assets/hero-design-rocket-email-poster-CansTVuy.png",
+    "category": "Email Marketing",
+    "type": "hero"
+  },
+  "nike-premium-landing": {
+    "id": "nike-premium-landing",
+    "title": "Nike Premium Landing",
+    "image": "https://motionsites.ai/assets/hero-nike-premium-landing-preview-_VyIBlIe.gif",
+    "poster": "https://motionsites.ai/assets/hero-nike-premium-landing-poster-Bcg5HGjQ.png",
+    "category": "Landing Page",
+    "type": "hero"
+  },
+  "nexacore-hero": {
+    "id": "nexacore-hero",
+    "title": "NexaCore",
+    "image": "https://motionsites.ai/assets/hero-nexacore-preview-DtWEu8_f.gif",
+    "poster": "https://motionsites.ai/assets/hero-nexacore-poster-D8kt5SRH.png",
+    "category": "Landing Page",
+    "type": "hero"
+  },
+  "urban-jungle-hero": {
+    "id": "urban-jungle-hero",
+    "title": "Urban Jungle",
+    "image": "",
+    "poster": "",
+    "category": "Landing Page",
+    "type": "hero"
+  },
+  "yacht-club-hero": {
+    "id": "yacht-club-hero",
+    "title": "Yacht Club",
+    "image": "https://motionsites.ai/assets/hero-yacht-club-preview-BXyoIjIf.gif",
+    "poster": "https://motionsites.ai/assets/hero-yacht-club-poster-_Oi_fq0F.png",
+    "category": "Landing Page",
+    "type": "hero"
+  },
+  "innovation-landing": {
+    "id": "innovation-landing",
+    "title": "Innovation",
+    "image": "https://motionsites.ai/assets/hero-innovation-preview-BerBJHh1.gif",
+    "poster": "https://motionsites.ai/assets/hero-innovation-poster-B0t6ym_m.png",
+    "category": "Landing Page",
+    "type": "landing-page"
+  },
+  "focus-ai-landing": {
+    "id": "focus-ai-landing",
+    "title": "Focus AI",
+    "image": "https://motionsites.ai/assets/hero-focus-ai-preview-Bnad3D1L.gif",
+    "poster": "https://motionsites.ai/assets/hero-focus-ai-poster-KA-Ezq1n.png",
+    "category": "Landing Page",
+    "type": "landing-page"
+  },
+  "vex-ventures-hero": {
+    "id": "vex-ventures-hero",
+    "title": "VEX Ventures",
+    "image": "https://motionsites.ai/assets/hero-vex-ventures-preview-BczMFIiw.gif",
+    "poster": "https://motionsites.ai/assets/hero-vex-ventures-poster-WLKoWe6y.png",
+    "category": "Hero Section",
+    "type": "hero"
+  },
+  "vitara-hero": {
+    "id": "vitara-hero",
+    "title": "Vitara",
+    "image": "https://motionsites.ai/assets/hero-vitara-preview-Cjz2QYyU.gif",
+    "poster": "https://motionsites.ai/assets/hero-vitara-poster-CKA8M1gM.png",
+    "category": "Landing Page",
+    "type": "hero"
+  },
+  "portal-hero": {
+    "id": "portal-hero",
+    "title": "Portal",
+    "image": "https://motionsites.ai/assets/hero-portal-preview-DEscBr2T.gif",
+    "poster": "https://motionsites.ai/assets/hero-portal-poster-CNSIA4kq.png",
+    "category": "Hero Section",
+    "type": "hero"
+  },
+  "flowmate-landing": {
+    "id": "flowmate-landing",
+    "title": "FlowMate",
+    "image": "https://motionsites.ai/assets/hero-flowmate-preview-BmYI3ZvH.gif",
+    "poster": "https://motionsites.ai/assets/hero-flowmate-poster-DDfS_CZz.png",
+    "category": "Landing Page",
+    "type": "landing-page"
+  },
+  "nexar-hero": {
+    "id": "nexar-hero",
+    "title": "Nexar",
+    "image": "https://motionsites.ai/assets/hero-nexar-preview-Dk7ThCat.gif",
+    "poster": "https://motionsites.ai/assets/hero-nexar-poster-CDz-DJNM.png",
+    "category": "Hero Section",
+    "type": "hero"
+  },
+  "ecovolta-hero": {
+    "id": "ecovolta-hero",
+    "title": "EcoVolta",
+    "image": "https://motionsites.ai/assets/hero-ecovolta-preview-BXrSPAWj.gif",
+    "poster": "https://motionsites.ai/assets/hero-ecovolta-poster-C62kq2ZR.png",
+    "category": "Hero Section",
+    "type": "hero"
+  },
+  "ecovolta-v2-hero": {
+    "id": "ecovolta-v2-hero",
+    "title": "EcoVolta V2",
+    "image": "https://motionsites.ai/assets/hero-ecovolta-v2-preview-D8IVEFGK.gif",
+    "poster": "https://motionsites.ai/assets/hero-ecovolta-v2-poster-CuiiqzXg.png",
+    "category": "Hero Section",
+    "type": "hero"
+  },
+  "sentinel-ai-hero": {
+    "id": "sentinel-ai-hero",
+    "title": "Sentinel AI",
+    "image": "https://motionsites.ai/assets/hero-sentinel-ai-preview-BXas7Q1_.gif",
+    "poster": "https://motionsites.ai/assets/hero-sentinel-ai-poster-B7n15kua.png",
+    "category": "Hero Section",
+    "type": "hero"
+  },
+  "social-media-posts-hero": {
+    "id": "social-media-posts-hero",
+    "title": "Social Media Posts",
+    "image": "https://motionsites.ai/assets/hero-social-media-posts-preview-0OltSGuj.gif",
+    "poster": "https://motionsites.ai/assets/hero-social-media-posts-poster-D1_i5IVF.png",
+    "category": "Social Media",
+    "type": "social-media"
+  },
+  "crypto-wealth-hero": {
+    "id": "crypto-wealth-hero",
+    "title": "Crypto Wealth",
+    "image": "https://motionsites.ai/assets/hero-crypto-wealth-preview-Cv79y7eb.gif",
+    "poster": "https://motionsites.ai/assets/hero-crypto-wealth-poster-DzHusafH.png",
+    "category": "Hero Section",
+    "type": "hero"
+  },
+  "cinematic-landing-page": {
+    "id": "cinematic-landing-page",
+    "title": "Cinematic Landing Page",
+    "image": "https://image.mux.com/ehPIuMBxzv1o1npbn92tO6tndB01L3uFuFD01q6f5PfiY/animated.webp?width=640&fps=15",
+    "poster": "https://image.mux.com/ehPIuMBxzv1o1npbn92tO6tndB01L3uFuFD01q6f5PfiY/thumbnail.webp?width=1200&time=2",
+    "category": "Landing Page",
+    "type": ""
+  }
+}
