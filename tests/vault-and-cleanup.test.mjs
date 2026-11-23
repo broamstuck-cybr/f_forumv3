@@ -86,20 +86,47 @@ describe('Vault Hydration & Anti-Arena Regression Suite', () => {
     assert.ok(totalBytes < 15 * 1024 * 1024, `Vault shards should be < 15MB, got ${(totalBytes / 1e6).toFixed(2)}MB`);
   });
 
-  test('ensures 100% of sourceCatalog.json items have real prompts, 0 external officialUrl links, and 0 synthetic ms-stage boilerplate', () => {
+  test('ensures 100% of sourceCatalog.json items have real prompts, authentic vendor officialUrl links, and 0 synthetic stage boilerplate', () => {
     const catalogPath = path.join(projectRoot, 'src', 'data', 'sourceCatalog.json');
     const rawCatalog = fs.readFileSync(catalogPath, 'utf8');
-    assert.equal(/ms-stage|Khối 01|Chạy thử ngay trong khung xem/.test(rawCatalog), false, 'Synthetic ms-stage boilerplate must not exist in sourceCatalog.json');
+    assert.equal(
+      /ms-stage|ff3d-stage|Đổi nhịp xoay|Khối 01|Chạy thử ngay trong khung xem/.test(rawCatalog),
+      false,
+      'Synthetic stage boilerplate must not exist in sourceCatalog.json'
+    );
 
     const catalog = JSON.parse(rawCatalog);
     assert.ok(catalog.length >= 200);
+
+    const allowedHosts = new Set([
+      'www.pinui.xyz',
+      'pinui.xyz',
+      'threeui.com',
+      'www.threeui.com',
+      'www.getlayers.ai',
+      'getlayers.ai',
+      'motionsites.ai',
+      'www.motionsites.ai',
+      'lucianlabs.dev',
+      'www.lucianlabs.dev',
+      'codefronts.com',
+      'www.codefronts.com',
+    ]);
 
     for (const item of catalog) {
       assert.ok(
         typeof item.promptSpec === 'string' && item.promptSpec.trim().length >= 30,
         `Missing or too-short promptSpec for ${item.id}`
       );
-      assert.equal(item.officialUrl || '', '', `External officialUrl leak in ${item.id}`);
+      assert.ok(
+        typeof item.officialUrl === 'string' && item.officialUrl.startsWith('https://'),
+        `Missing authentic https officialUrl for ${item.id}`
+      );
+      const parsed = new URL(item.officialUrl);
+      assert.ok(
+        allowedHosts.has(parsed.hostname),
+        `Unexpected officialUrl host ${parsed.hostname} in ${item.id}`
+      );
     }
 
     const guardnet = catalog.find((item) => item.id === 'guardnet-benefits');
@@ -261,35 +288,46 @@ describe('Vault Hydration & Anti-Arena Regression Suite', () => {
     }
   });
 
-  test('verifies Iris 3D Robot + QR Code Corner at bottom of Home & Landing, and Reelmark Curved Carousel of 25 interleaved PinUI & Motion AI experiences', async () => {
+  test('verifies Iris 3D Robot + QR Code Corner + Dev Team Honor at bottom of Home & Landing, and F-Forum Curved Carousel of 50 PinUI & Motion AI experiences', async () => {
     const qrAssetPath = path.join(projectRoot, 'public', 'assets', 'qr-dino.png');
     assert.ok(fs.existsSync(qrAssetPath), 'public/assets/qr-dino.png must exist');
     assert.ok(fs.statSync(qrAssetPath).size > 5000, 'qr-dino.png must be a valid non-empty PNG');
 
-    const irisHtmlPath = path.join(projectRoot, 'public', 'iris-assistant.html');
-    assert.ok(fs.existsSync(irisHtmlPath), 'public/iris-assistant.html must exist');
-    const irisHtml = fs.readFileSync(irisHtmlPath, 'utf8');
-    assert.ok(irisHtml.includes('Iris — Smart AI Assistant'), 'iris-assistant.html must have Iris title');
-    assert.ok(irisHtml.includes('three@0.169.0'), 'iris-assistant.html must use Three.js r169 importmap');
-    assert.ok(
-      irisHtml.includes('hf_20261018_172206_0181329a-86e2-41c9-8ab8-c496f29aaa53.glb') &&
-        irisHtml.includes('hf_20261018_172137_cd6086ec-07ef-44dc-bd15-95a450ddaa8c.glb'),
-      'iris-assistant.html must load exact HEAD_GLB and ARM_GLB URLs'
+    assert.equal(
+      fs.existsSync(path.join(projectRoot, 'public', 'reelmark-hero.html')),
+      false,
+      'Legacy public/reelmark-hero.html must be removed'
+    );
+    assert.equal(
+      fs.existsSync(path.join(projectRoot, 'public', 'iris-assistant.html')),
+      false,
+      'Legacy public/iris-assistant.html must be removed'
+    );
+
+    const irisDataTs = fs.readFileSync(
+      path.join(projectRoot, 'src', 'data', 'irisRobotHtml.ts'),
+      'utf8'
     );
     assert.ok(
-      irisHtml.includes('UnrealBloomPass') &&
-        irisHtml.includes('PMREMGenerator') &&
-        irisHtml.includes('mergeVertices'),
-      'iris-assistant.html must use PMREMGenerator, UnrealBloomPass, and mergeVertices'
+      irisDataTs.includes('hf_20261018_172206_0181329a-86e2-41c9-8ab8-c496f29aaa53.glb') &&
+        irisDataTs.includes('hf_20261018_172137_cd6086ec-07ef-44dc-bd15-95a450ddaa8c.glb'),
+      'irisRobotHtml.ts must keep exact HEAD_GLB and ARM_GLB URLs'
     );
-    assert.ok(
-      irisHtml.indexOf('raycaster.intersectObject(root, true)') < irisHtml.indexOf('head.add(root)'),
-      'iris-assistant.html must raycast root in local head space before head.add(root) so robot.scale=0.001 and bob do not corrupt R'
+    assert.equal(
+      irisDataTs.includes('Get Iris') || irisDataTs.includes('Introducing a Smart AI Assistant'),
+      false,
+      'irisRobotHtml.ts must not contain legacy Iris boilerplate copy'
     );
 
     const irisSectionTsx = fs.readFileSync(
       path.join(projectRoot, 'src', 'components', 'launchpad', 'IrisQrCornerSection.tsx'),
       'utf8'
+    );
+    assert.ok(
+      irisSectionTsx.includes('UnrealBloomPass') &&
+        irisSectionTsx.includes('PMREMGenerator') &&
+        irisSectionTsx.includes('mergeVertices'),
+      'IrisQrCornerSection.tsx must use PMREMGenerator, UnrealBloomPass, and mergeVertices'
     );
     assert.ok(
       irisSectionTsx.indexOf('raycaster.intersectObject(root, true)') < irisSectionTsx.indexOf('head.add(root)'),
@@ -298,6 +336,15 @@ describe('Vault Hydration & Anti-Arena Regression Suite', () => {
     assert.ok(
       irisSectionTsx.includes('webglcontextlost') && irisSectionTsx.includes('disposeObjectTree(scene)'),
       'IrisQrCornerSection.tsx must handle webglcontextlost and dispose scene geometries/materials on unmount'
+    );
+    assert.ok(
+      irisSectionTsx.includes('Gặp gỡ đội ngũ phát triển của tôi :)'),
+      'IrisQrCornerSection.tsx must include the Dev Team Honor button'
+    );
+    assert.equal(
+      irisSectionTsx.includes('Get Iris') || irisSectionTsx.includes('Introducing a Smart AI Assistant'),
+      false,
+      'IrisQrCornerSection.tsx must not render legacy Iris navbar or English hero text'
     );
 
     const homeTsx = fs.readFileSync(
@@ -320,9 +367,16 @@ describe('Vault Hydration & Anti-Arena Regression Suite', () => {
       false,
       'Old TidewellStage copy must be deleted'
     );
+    assert.equal(
+      tidewellTsx.includes('Reelmark') ||
+        tidewellTsx.includes('Captivate Crowds') ||
+        tidewellTsx.includes('Make a Reel'),
+      false,
+      'TidewellStage must not contain Reelmark branding or copy'
+    );
     assert.ok(
-      tidewellTsx.includes('Captivate Crowds') && tidewellTsx.includes('with Snackable Reels'),
-      'TidewellStage must render Reelmark headline'
+      tidewellTsx.includes('Chạm Mẫu Sống,') && tidewellTsx.includes('Học Từ Bản Gốc'),
+      'TidewellStage must render the F-Forum Vietnamese editorial headline'
     );
     assert.ok(
       tidewellTsx.includes('&lt;-') && tidewellTsx.includes('-&gt;'),
@@ -330,31 +384,24 @@ describe('Vault Hydration & Anti-Arena Regression Suite', () => {
     );
     assert.ok(
       tidewellTsx.includes('key={idx}') && !tidewellTsx.includes('key={`${card.id}-${idx}`}'),
-      'TidewellStage cards must use stable slot key={idx} so reshuffling does not unmount/reload 25 <video> elements'
-    );
-
-    const reelmarkHtml = fs.readFileSync(
-      path.join(projectRoot, 'public', 'reelmark-hero.html'),
-      'utf8'
-    );
-    assert.ok(
-      reelmarkHtml.includes('@media (max-width: 820px)') && reelmarkHtml.includes('prefers-reduced-motion'),
-      'reelmark-hero.html must implement <= 820px phone layout and prefers-reduced-motion guard'
+      'TidewellStage cards must use stable slot key={idx} so reshuffling does not unmount/reload media elements'
     );
 
     const evalScript = [
-      "import { buildRandomInterleaved25, buildRoundedQuadClipPath } from './src/data/reelmarkCarouselData.ts';",
+      "import { buildShowcase50, buildRandomInterleaved25, buildRoundedQuadClipPath } from './src/data/reelmarkCarouselData.ts';",
+      "const all50 = buildShowcase50(101, 'all');",
       "const sampleA = buildRandomInterleaved25(101);",
       "const sampleB = buildRandomInterleaved25(202);",
       "const clip = buildRoundedQuadClipPath(170, 0, 280, 12, 310, 15);",
-      "console.log(JSON.stringify({ sampleA, sampleB, clip }));",
+      "console.log(JSON.stringify({ all50, sampleA, sampleB, clip }));",
     ].join('\n');
     const stdout = execFileSync('npx', ['tsx', '-e', evalScript], {
       cwd: projectRoot,
       encoding: 'utf8',
     });
-    const { sampleA, sampleB, clip } = JSON.parse(stdout.trim());
+    const { all50, sampleA, sampleB, clip } = JSON.parse(stdout.trim());
 
+    assert.equal(all50.length, 50, 'buildShowcase50 must provide all 50 experiences (25 Motion AI + 25 PinUI)');
     assert.equal(sampleA.length, 25, 'Must select exactly 25 experiences');
     assert.equal(sampleB.length, 25, 'Must select exactly 25 experiences');
 
