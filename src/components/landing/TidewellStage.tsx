@@ -1,6 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { ArrowLeft, ArrowRight, Shuffle } from 'lucide-react';
 import type { DimensionView } from '../../types/index';
 import { useAppStore } from '../../store/appStore';
 import {
@@ -87,7 +86,7 @@ export const TidewellStage: React.FC<TidewellStageProps> = () => {
   const { launchPromptToWorkspace, openExperience, theme } = useAppStore();
   const reduced = usePrefersReducedMotion();
 
-  const [seed, setSeed] = useState<number>(() => Math.floor(Math.random() * 1000000) + 1);
+  const [seed] = useState<number>(() => Math.floor(Math.random() * 1000000) + 1);
   const cards = useMemo(() => buildShowcase50(seed, 'all'), [seed]);
 
   const [activeIndex, setActiveIndex] = useState(0);
@@ -123,16 +122,6 @@ export const TidewellStage: React.FC<TidewellStageProps> = () => {
   const stepCarousel = useCallback((direction: -1 | 1) => {
     targetStepDeltaRef.current += direction * PITCH;
     velocityRef.current = 0;
-  }, []);
-
-  const handleReshuffle = useCallback(() => {
-    isDraggingRef.current = false;
-    setDragging(false);
-    targetStepDeltaRef.current = 0;
-    velocityRef.current = 0;
-    offsetRef.current = 0;
-    setActiveIndex(0);
-    setSeed((prev) => prev + Math.floor(Math.random() * 9973) + 17);
   }, []);
 
   useEffect(() => {
@@ -269,7 +258,7 @@ export const TidewellStage: React.FC<TidewellStageProps> = () => {
         const hR = 356 + 116 * Math.pow(qR, 2.6);
         const layerHeight = layerEl.clientHeight || (isPhone ? 320 : 952 * u);
         const phoneCenterU = (layerHeight / Math.max(0.2, u)) * 0.5;
-        const cy = isPhone ? phoneCenterU - 6 * d * d : 550 - 14 * d * d;
+        const cy = isPhone ? phoneCenterU - 6 * d * d : 495 - 14 * d * d;
 
         const boxH = Math.max(hL, hR);
         const boxTop = cy - boxH * 0.5;
@@ -368,13 +357,9 @@ export const TidewellStage: React.FC<TidewellStageProps> = () => {
       <div className="rm-viewport">
         <div ref={frameRef} className="rm-frame">
           <h2 className="rm-headline">
-            <span className="rm-headline-line1">Chạm Mẫu Sống,</span>
-            <span className="rm-headline-line2">Học Từ Bản Gốc</span>
+            <span className="rm-headline-line1">Dùng Thử Trực Tiếp</span>
+            <span className="rm-headline-line2">Trên Trình Duyệt</span>
           </h2>
-
-          <p className="rm-subline">
-            25 mẫu PinUI tương tác trực tiếp và 25 bố cục Motion AI trích xuất nguyên bản — kéo dải thẻ hoặc nhấn phím &lt;- / -&gt; để kiểm tra trước khi đưa vào Workspace.
-          </p>
 
           <div
             ref={trackLayerRef}
@@ -495,39 +480,7 @@ export const TidewellStage: React.FC<TidewellStageProps> = () => {
               className="rm-cta-btn"
               onClick={() => activeCard && setSelectedCard(activeCard)}
             >
-              Mở mẫu đang chọn
-            </button>
-          </div>
-
-          <div className="rm-arrow-controls" role="group" aria-label="Điều khiển băng chuyền trải nghiệm">
-            <button
-              type="button"
-              className="rm-step-btn"
-              onClick={() => stepCarousel(1)}
-              aria-label="Trải nghiệm trước"
-            >
-              <ArrowLeft size={14} strokeWidth={2} aria-hidden="true" />
-              <span>Trước</span>
-            </button>
-
-            <button
-              type="button"
-              className="rm-step-btn"
-              onClick={() => stepCarousel(-1)}
-              aria-label="Trải nghiệm tiếp theo"
-            >
-              <span>Tiếp</span>
-              <ArrowRight size={14} strokeWidth={2} aria-hidden="true" />
-            </button>
-
-            <button
-              type="button"
-              className="rm-step-btn"
-              onClick={handleReshuffle}
-              aria-label="Trộn ngẫu nhiên các trải nghiệm"
-            >
-              <Shuffle size={14} strokeWidth={2} aria-hidden="true" />
-              <span>Trộn ngẫu nhiên</span>
+              Mở dùng thử trực tiếp
             </button>
           </div>
         </div>

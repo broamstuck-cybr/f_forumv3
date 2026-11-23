@@ -6,6 +6,7 @@ import { useAppStore } from '../../store/appStore';
 import { KineticLogo } from '../brand/KineticLogo';
 import { BackToTopButton } from '../landing/BackToTopButton';
 import { triggerPinuiThemeToggle } from './GlobalThemeAtmosphere';
+import { PinHeartButton, ThemeSwitch } from '../pinui';
 import './app-shell.css';
 
 export interface AppNavbarProps {
@@ -40,8 +41,11 @@ export const AppNavbar: React.FC<AppNavbarProps> = () => {
     setAuthModalOpen,
     logout,
     theme,
+    settings,
     clearViewingProfileUser,
   } = useAppStore();
+  const isFabulous = settings.uiMode === 'fabulous';
+  const [navLiked, setNavLiked] = useState(false);
   const reduced = Boolean(useReducedMotion());
   const [menuOpen, setMenuOpen] = useState(false);
   const [sheetOpen, setSheetOpen] = useState(false);
@@ -189,6 +193,15 @@ export const AppNavbar: React.FC<AppNavbarProps> = () => {
         </div>
 
         <div className="nav__side">
+          {isFabulous && (
+            <PinHeartButton
+              liked={navLiked}
+              onToggle={() => setNavLiked((v) => !v)}
+              compact
+              ariaLabel="Yêu thích giao diện Fabulous"
+              className="nav__fabHeart"
+            />
+          )}
           <button
             type="button"
             className="icon-btn nav__themeBtn"
@@ -239,6 +252,15 @@ export const AppNavbar: React.FC<AppNavbarProps> = () => {
                       {quotaLabel}
                     </span>
                   </div>
+
+                  {isFabulous && (
+                    <div className="nav__fabThemeBox">
+                      <ThemeSwitch
+                        theme={theme}
+                        onThemeChange={() => triggerPinuiThemeToggle()}
+                      />
+                    </div>
+                  )}
 
                   <div className="nav__menuNav">
                     <button

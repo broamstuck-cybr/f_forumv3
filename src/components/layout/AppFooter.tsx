@@ -1,6 +1,8 @@
-import React from 'react';
+import React, { useState } from 'react';
 import type { AppRoute } from '../../types/index';
+import { useAppStore } from '../../store/appStore';
 import { StreetGraffitiMark } from '../brand/StreetGraffitiMark';
+import { PinHeartButton, SiteRail } from '../pinui';
 import './app-shell.css';
 
 interface AppFooterProps {
@@ -22,9 +24,27 @@ const ACCOUNT: Array<{ id: AppRoute; label: string }> = [
 ];
 
 export const AppFooter: React.FC<AppFooterProps> = ({ onNavigate, onOpenNotice }) => {
+  const { settings, currentRoute, theme } = useAppStore();
+  const isFabulous = settings.uiMode === 'fabulous';
+  const [footLiked, setFootLiked] = useState(false);
+
   return (
     <footer className="foot">
       <div className="wrap-wide">
+        {isFabulous && (
+          <div className="foot__fabRail">
+            <SiteRail
+              theme={theme}
+              onBrandClick={() => onNavigate('landing')}
+              links={PRODUCT.map((item) => ({
+                id: item.id,
+                label: item.label,
+                active: currentRoute === item.id,
+                onClick: () => onNavigate(item.id),
+              }))}
+            />
+          </div>
+        )}
         <div className="foot__grid">
           <p className="t-title" style={{ maxWidth: '16ch' }}>
             Từ phác thảo <span className="t-note">đến sản phẩm.</span>
@@ -71,6 +91,15 @@ export const AppFooter: React.FC<AppFooterProps> = ({ onNavigate, onOpenNotice }
         </div>
         <div className="foot__base">
           <p className="t-label">F-Forum</p>
+          {isFabulous && (
+            <PinHeartButton
+              liked={footLiked}
+              count={footLiked ? 201 : 200}
+              onToggle={() => setFootLiked((v) => !v)}
+              compact
+              ariaLabel="Thích F-Forum Fabulous"
+            />
+          )}
           <p className="t-label">2026</p>
         </div>
       </div>

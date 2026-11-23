@@ -37,7 +37,7 @@
   position: relative;
   width: 100%;
   max-width: none;
-  height: calc(952 * var(--u));
+  height: calc(850 * var(--u));
   background: transparent;
   overflow: hidden;
   flex-shrink: 0;
@@ -63,21 +63,6 @@
 .rm-headline-line1,
 .rm-headline-line2 {
   display: block;
-}
-
-.rm-subline {
-  position: absolute;
-  left: 50%;
-  top: calc(226 * var(--u));
-  transform: translateX(-50%);
-  width: calc(780 * var(--u));
-  text-align: center;
-  font-weight: 450;
-  font-size: calc(18 * var(--u));
-  line-height: calc(28 * var(--u));
-  color: var(--fg-muted);
-  margin: 0;
-  z-index: 10;
 }
 
 .rm-carousel-layer {
@@ -243,7 +228,7 @@
 .rm-cta-ring {
   position: absolute;
   left: 50%;
-  top: calc(782 * var(--u));
+  top: calc(742 * var(--u));
   transform: translateX(-50%);
   padding: calc(6 * var(--u));
   border-radius: 999px;
@@ -276,45 +261,6 @@
   transform: scale(1.02);
   background: var(--bg-inverse);
   color: var(--fg-inverse);
-}
-
-.rm-arrow-controls {
-  position: absolute;
-  left: 50%;
-  top: calc(868 * var(--u));
-  transform: translateX(-50%);
-  display: flex;
-  align-items: center;
-  gap: calc(10 * var(--u));
-  z-index: 15;
-}
-
-.rm-step-btn {
-  height: calc(40 * var(--u));
-  padding: 0 calc(16 * var(--u));
-  border-radius: 999px;
-  background: var(--bg-glass-surface);
-  border: 1px solid var(--line);
-  color: var(--fg);
-  font-family: inherit;
-  font-weight: 600;
-  font-size: calc(13.5 * var(--u));
-  cursor: pointer;
-  white-space: nowrap;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: calc(6 * var(--u));
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  transition: background-color 180ms ease, color 180ms ease, border-color 180ms ease, transform 180ms ease;
-}
-
-.rm-step-btn:hover {
-  background: var(--accent-fill);
-  border-color: var(--accent-fill);
-  color: var(--on-accent);
-  transform: translateY(-1px);
 }
 
 .rm-modal-backdrop {
@@ -587,17 +533,6 @@
     margin-top: 4px;
   }
 
-  .rm-subline {
-    position: static;
-    transform: none;
-    width: 100%;
-    max-width: 580px;
-    padding: 0 16px;
-    font-size: 15px;
-    line-height: 1.5;
-    margin-top: 12px;
-  }
-
   .rm-carousel-layer {
     position: relative;
     width: 100%;
@@ -620,23 +555,6 @@
     font-size: 15px;
   }
 
-  .rm-arrow-controls {
-    position: static;
-    transform: none;
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: 8px;
-    margin-top: 14px;
-    padding: 0 16px;
-    width: 100%;
-  }
-
-  .rm-step-btn {
-    height: 40px;
-    padding: 0 14px;
-    font-size: 13px;
-  }
-
   .rm-modal-video-grid {
     grid-template-columns: minmax(0, 1fr);
   }
@@ -644,7 +562,6 @@
 
 @media (prefers-reduced-motion: reduce) {
   .rm-card-video,
-  .rm-step-btn,
   .rm-cta-btn {
     transition: none;
   }

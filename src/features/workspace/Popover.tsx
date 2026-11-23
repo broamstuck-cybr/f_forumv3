@@ -6,6 +6,7 @@ interface PopoverProps {
   trigger?: React.ReactNode;
   triggerClassName?: string;
   align?: 'left' | 'right';
+  placement?: 'down' | 'up';
   children: (close: () => void) => React.ReactNode;
 }
 
@@ -15,6 +16,7 @@ export const Popover: React.FC<PopoverProps> = ({
   trigger,
   triggerClassName,
   align = 'right',
+  placement = 'down',
   children,
 }) => {
   const [open, setOpen] = useState(false);
@@ -59,7 +61,7 @@ export const Popover: React.FC<PopoverProps> = ({
         {trigger || icon}
       </button>
       {open && (
-        <div id={panelId} className="ws-pop-panel" data-align={align}>
+        <div id={panelId} className="ws-pop-panel" data-align={align} data-placement={placement}>
           {children(close)}
         </div>
       )}

@@ -46,7 +46,6 @@ interface SelectionDraft {
 interface FrameMeta {
   frameIndex: number;
   exhibitIndex: number;
-  side: 'outer' | 'inner';
   th: number;
   r: number;
   y: number;
@@ -66,14 +65,20 @@ interface RectSnapshot {
 const STORAGE_HONOR_SAVED_KEY = 'fforum_honor_saved_v1';
 
 const CORRIDOR_R = 18;
-const CORRIDOR_RIN = 12.2;
 const CORRIDOR_H = 6.2;
-const N_OUTER = 36;
-const N_INNER = 24;
-const WALK_R = 15.1;
-const WALK_Y = 2.75;
-const WALK_PITCH = 0.015;
-const FOCUS_GLIDE_SEC = 0.95;
+const N_FRAMES = HONOR_EXHIBITS.length;
+const ARC_MIN = -0.52;
+const ARC_MAX = 0.52;
+const WALK_R = 11.8;
+const WALK_Y = 2.78;
+const WALK_PITCH = 0.01;
+const FOCUS_R = CORRIDOR_R - 3.2;
+const INIT_TH = -0.26;
+const FOCUS_GLIDE_SEC = 0.85;
+
+function clampArc(th: number): number {
+  return Math.max(ARC_MIN - 0.04, Math.min(ARC_MAX + 0.04, th));
+}
 
 function shortestAngleDelta(from: number, to: number): number {
   const twoPi = Math.PI * 2;
@@ -286,14 +291,20 @@ export const TeamHonorGallery: React.FC<TeamHonorGalleryProps> = ({ onBack, onNa
     return map;
   }, []);
 
+  const [plateTick, setPlateTick] = useState(0);
+
   const plateUrls = useMemo(() => {
+    void plateTick;
     const map = new Map<string, string>();
     if (typeof document === 'undefined') return map;
     for (const ex of HONOR_EXHIBITS) {
-      map.set(ex.id, getHonorPlateDataUrl(ex));
+      map.set(
+        ex.id,
+        getHonorPlateDataUrl(ex, () => setPlateTick((t) => t + 1))
+      );
     }
     return map;
-  }, []);
+  }, [plateTick]);
 
   const filteredExhibits = useMemo(() => {
     const q = searchQuery.trim().toLowerCase();
@@ -537,25 +548,7 @@ export const TeamHonorGallery: React.FC<TeamHonorGalleryProps> = ({ onBack, onNa
     outerWall.position.y = CORRIDOR_H * 0.5;
     scene.add(outerWall);
 
-    const innerPillarGeo = new THREE.CylinderGeometry(
-      CORRIDOR_RIN,
-      CORRIDOR_RIN,
-      CORRIDOR_H,
-      120,
-      1,
-      true
-    );
-    const innerPillarMat = new THREE.MeshStandardMaterial({
-      map: wallTex,
-      roughness: 0.86,
-      metalness: 0.02,
-      side: THREE.FrontSide,
-    });
-    const innerPillar = new THREE.Mesh(innerPillarGeo, innerPillarMat);
-    innerPillar.position.y = CORRIDOR_H * 0.5;
-    scene.add(innerPillar);
-
-    const floorGeo = new THREE.RingGeometry(CORRIDOR_RIN, CORRIDOR_R, 160, 1);
+    const floorGeo = new THREE.CircleGeometry(CORRIDOR_R, 160);
     const floorMat = new THREE.MeshStandardMaterial({
       map: floorTex,
       roughness: 0.82,
@@ -567,7 +560,7 @@ export const TeamHonorGallery: React.FC<TeamHonorGalleryProps> = ({ onBack, onNa
     floorMesh.position.y = 0;
     scene.add(floorMesh);
 
-    const ceilingGeo = new THREE.RingGeometry(CORRIDOR_RIN, CORRIDOR_R, 160, 1);
+    const ceilingGeo = new THREE.CircleGeometry(CORRIDOR_R, 160);
     const ceilingMat = new THREE.MeshStandardMaterial({
       map: ceilingTex,
       roughness: 0.94,
@@ -597,7 +590,7 @@ export const TeamHonorGallery: React.FC<TeamHonorGalleryProps> = ({ onBack, onNa
     });
 
     const exhibitMaterials = HONOR_EXHIBITS.map((exhibit) => {
-      const art = createHonorArtwork(exhibit, maxAniso);
+      const art = createHonorArtwork(exhibit, maxAniso, () => setPlateTick((t) => t + 1));
       return new THREE.MeshBasicMaterial({
         map: art.texture,
       });
@@ -606,24 +599,12 @@ export const TeamHonorGallery: React.FC<TeamHonorGalleryProps> = ({ onBack, onNa
     const frames: FrameMeta[] = [];
     const hitMeshes: THREE.Mesh[] = [];
 
-    const addFrame = (
-      frameIndex: number,
-      exhibitIndex: number,
-      side: 'outer' | 'inner',
-      th: number,
-      y: number
-    ) => {
-      const rWall = side === 'outer' ? CORRIDOR_R - 0.16 : CORRIDOR_RIN + 0.16;
-      const focusR = side === 'outer' ? CORRIDOR_R - 3.35 : CORRIDOR_RIN + 3.15;
-      const focusYaw = side === 'outer' ? Math.PI * 0.5 : -Math.PI * 0.5;
+    const addFrame = (frameIndex: number, exhibitIndex: number, th: number, y: number) => {
+      const rWall = CORRIDOR_R - 0.16;
 
       const group = new THREE.Group();
       group.position.set(rWall * Math.cos(th), y, rWall * Math.sin(th));
-      if (side === 'outer') {
-        group.lookAt(0, y, 0);
-      } else {
-        group.lookAt(rWall * 2 * Math.cos(th), y, rWall * 2 * Math.sin(th));
-      }
+      group.lookAt(0, y, 0);
 
       const backing = new THREE.Mesh(backingGeo, backingMat);
       group.add(backing);
@@ -642,32 +623,25 @@ export const TeamHonorGallery: React.FC<TeamHonorGalleryProps> = ({ onBack, onNa
       frames.push({
         frameIndex,
         exhibitIndex,
-        side,
         th,
         r: rWall,
         y,
-        focusR,
-        focusYaw,
+        focusR: FOCUS_R,
+        focusYaw: 0,
         group,
         artMesh,
       });
     };
 
-    for (let i = 0; i < N_OUTER; i += 1) {
-      const th = (i / N_OUTER) * Math.PI * 2;
-      const y = 2.86 + (i % 2 === 0 ? 0.1 : -0.1);
-      addFrame(frames.length, i % HONOR_EXHIBITS.length, 'outer', th, y);
-    }
-
-    for (let i = 0; i < N_INNER; i += 1) {
-      const th = ((i + 0.5) / N_INNER) * Math.PI * 2;
-      const y = 2.82 + (i % 2 === 0 ? -0.08 : 0.08);
-      addFrame(frames.length, (i + 4) % HONOR_EXHIBITS.length, 'inner', th, y);
+    for (let i = 0; i < N_FRAMES; i += 1) {
+      const th = ARC_MIN + (i / Math.max(1, N_FRAMES - 1)) * (ARC_MAX - ARC_MIN);
+      const y = 2.86 + (i % 2 === 0 ? 0.06 : -0.06);
+      addFrame(i, i, th, y);
     }
 
     const pose = {
-      th: 0,
-      targetTh: 0,
+      th: INIT_TH,
+      targetTh: INIT_TH,
       r: WALK_R,
       y: WALK_Y,
       yaw: 0,
@@ -805,27 +779,17 @@ export const TeamHonorGallery: React.FC<TeamHonorGalleryProps> = ({ onBack, onNa
       focusFrameByIndex: (idx: number) => focusFrame(idx),
       focusExhibitId: (exhibitId: string) => {
         const exIdx = HONOR_EXHIBITS.findIndex((e) => e.id === exhibitId);
-        if (exIdx < 0) return;
-        let bestIdx = 0;
-        let bestDist = Infinity;
-        for (const f of frames) {
-          if (f.exhibitIndex !== exIdx) continue;
-          const d = Math.abs(shortestAngleDelta(pose.th, f.th));
-          if (d < bestDist) {
-            bestDist = d;
-            bestIdx = f.frameIndex;
-          }
+        if (exIdx >= 0 && frames[exIdx]) {
+          focusFrame(frames[exIdx].frameIndex);
         }
-        focusFrame(bestIdx);
       },
       stepWalk: (delta: number) => {
         if (focusedFrameIdx !== null) {
-          const sameSide = frames.filter((f) => f.side === frames[focusedFrameIdx!].side);
-          const posInSide = sameSide.findIndex((f) => f.frameIndex === focusedFrameIdx);
-          const next = sameSide[(posInSide + delta + sameSide.length) % sameSide.length];
-          if (next) focusFrame(next.frameIndex);
+          const nextIdx = Math.max(0, Math.min(frames.length - 1, focusedFrameIdx + delta));
+          focusFrame(nextIdx);
         } else {
-          pose.targetTh -= delta * ((Math.PI * 2) / 18);
+          const step = (ARC_MAX - ARC_MIN) / Math.max(1, N_FRAMES - 1);
+          pose.targetTh = clampArc(pose.targetTh + delta * step);
         }
       },
       exitFocus,
@@ -891,7 +855,7 @@ export const TeamHonorGallery: React.FC<TeamHonorGalleryProps> = ({ onBack, onNa
             pose.yaw = 0;
             pose.pitch = WALK_PITCH;
           }
-          pose.targetTh += dx * 0.0028;
+          pose.targetTh = clampArc(pose.targetTh - dx * 0.0022);
         }
         return;
       }
@@ -941,7 +905,7 @@ export const TeamHonorGallery: React.FC<TeamHonorGalleryProps> = ({ onBack, onNa
         exitFocus();
       }
       const delta = Math.abs(e.deltaY) > Math.abs(e.deltaX) ? e.deltaY : e.deltaX;
-      pose.targetTh -= delta * 0.00085;
+      pose.targetTh = clampArc(pose.targetTh + delta * 0.00055);
     };
 
     canvas.addEventListener('pointerdown', onPointerDown);
@@ -1006,9 +970,9 @@ export const TeamHonorGallery: React.FC<TeamHonorGalleryProps> = ({ onBack, onNa
       const sinT = Math.sin(pose.th);
       camera.position.set(pose.r * cosT, pose.y, pose.r * sinT);
 
-      // WHY: Clockwise tangent puts outer wall (R=18) on the right and inner pillar (RIN=12.2) on the left.
-      forwardVec.set(sinT, 0, -cosT);
-      rightVec.set(cosT, 0, sinT);
+      // WHY: Radial outward forwardVec faces the single curved front gallery arc (-0.52..+0.52 rad) directly without corridor blind spots.
+      forwardVec.set(cosT, 0, sinT);
+      rightVec.set(-sinT, 0, cosT);
 
       lookDir
         .copy(forwardVec)
@@ -1052,8 +1016,6 @@ export const TeamHonorGallery: React.FC<TeamHonorGalleryProps> = ({ onBack, onNa
 
       outerWallGeo.dispose();
       outerWallMat.dispose();
-      innerPillarGeo.dispose();
-      innerPillarMat.dispose();
       floorGeo.dispose();
       floorMat.dispose();
       ceilingGeo.dispose();

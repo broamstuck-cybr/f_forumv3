@@ -1,6 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
-  ArrowBigUp,
   ArrowUpRight,
   BarChart3,
   Bell,
@@ -12,25 +11,30 @@ import {
   EyeOff,
   Flag,
   Hash,
+  Heart,
   HelpCircle,
   Image as ImageIcon,
+  Layers,
+  Lightbulb,
   MessageSquare,
   Monitor,
   Moon,
   MoreHorizontal,
   Plus,
+  Reply,
   RotateCw,
   Share2,
   ShieldBan,
   Smartphone,
+  Sparkles,
   Sun,
   Tablet,
+  ThumbsUp,
   Trash2,
   VolumeX,
   X,
 } from 'lucide-react';
 import { moderateFields } from './moderationFilter';
-import { computeFeedScore } from './feedRanking';
 import { CommunityChatRoom } from './CommunityChatRoom';
 import { PinHeartButton } from '../../components/pinui/PinHeartButton';
 import type {
@@ -93,10 +97,69 @@ const LOCAL_POLL_VOTES_KEY = 'fforum_v3_community_poll_votes_v1';
 const LOCAL_MODERATION_KEY = 'fforum_v3_community_moderation_v1';
 const LOCAL_NOTIF_READ_KEY = 'fforum_v3_community_notif_read_v1';
 const LOCAL_ONBOARDING_KEY = 'fforum_v3_community_onboarding_v1';
+const LOCAL_ONBOARDING_TOPICS_KEY = 'fforum_v3_community_onboarding_topics_v1';
+const LOCAL_REACTIONS_KEY = 'fforum_v3_community_reactions_v1';
+const LOCAL_SHARES_KEY = 'fforum_v3_community_shares_v1';
 const LOCAL_DRAFT_KEY = 'fforum_v3_community_draft_v1';
 const UNREAD_NOTIF_STORAGE_KEY = 'fforum_v3_unread_notifications';
 
 const MAX_COMPOSE_IMAGES = 4;
+
+type PostReactionId = 'like' | 'love' | 'wow' | 'helpful';
+
+const POST_REACTIONS: Array<{
+  id: PostReactionId;
+  label: string;
+  Icon: React.ComponentType<{ size?: number; className?: string }>;
+}> = [
+  { id: 'like', label: 'Thích', Icon: ThumbsUp },
+  { id: 'love', label: 'Yêu thích', Icon: Heart },
+  { id: 'wow', label: 'Tuyệt vời', Icon: Sparkles },
+  { id: 'helpful', label: 'Hữu ích', Icon: Lightbulb },
+];
+
+export interface FeedRankInput {
+  createdAt: string;
+  reactions: number;
+  comments: number;
+  sharesAndForks: number;
+  hasDemoSnippet: boolean;
+  tags: string[];
+  category: string;
+  authorHandle: string;
+}
+
+export interface FeedRankContext {
+  onboardingTopics: string[];
+  followedHandles: string[];
+}
+
+export function computeFeedRankScore(
+  input: FeedRankInput,
+  ctx: FeedRankContext,
+  now: number = Date.now()
+): number {
+  const parsed = Date.parse(input.createdAt);
+  const ageHours = Number.isNaN(parsed) ? 0 : Math.max(0, (now - parsed) / 3_600_000);
+  const engagement =
+    Math.max(0, input.reactions) * 3 +
+    Math.max(0, input.comments) * 5 +
+    Math.max(0, input.sharesAndForks) * 4 +
+    (input.hasDemoSnippet ? 4 : 0) +
+    1;
+
+  const normalizedTopics = ctx.onboardingTopics.map((t) => t.toLowerCase()).filter(Boolean);
+  const haystack = [...input.tags, input.category].map((t) => t.toLowerCase());
+  const topicMatches = normalizedTopics.filter((topic) =>
+    haystack.some((item) => item.includes(topic) || topic.includes(item))
+  ).length;
+  const followed = ctx.followedHandles.some(
+    (h) => h.toLowerCase() === input.authorHandle.toLowerCase()
+  );
+  const affinityMultiplier = (1 + topicMatches * 0.35) * (followed ? 1.25 : 1);
+
+  return (engagement * affinityMultiplier) / Math.pow(ageHours + 2, 1.35);
+}
 
 interface ModerationPrefs {
   hiddenPostIds: string[];
@@ -306,7 +369,7 @@ export const CommunityView: React.FC = () => {
   const [activeChannel, setActiveChannel] = useState<ChannelFilterId>('all');
   const [selectedTopic, setSelectedTopic] = useState<string>('all');
   const [authorFilter, setAuthorFilter] = useState<string | null>(null);
-  const [sortMode, setSortMode] = useState<SortMode>('newest');
+  const [sortMode, setSortMode] = useState<SortMode>('top');
   const [searchQuery, setSearchQuery] = useState('');
   const [recentSearches, setRecentSearches] = useState<string[]>(() =>
     loadJsonFromStorage<string[]>(LOCAL_RECENT_SEARCHES_KEY, DEFAULT_RECENT_SEARCHES)
@@ -321,11 +384,22 @@ export const CommunityView: React.FC = () => {
   const [localAcceptedMap, setLocalAcceptedMap] = useState<Record<string, string>>(() =>
     loadJsonFromStorage<Record<string, string>>(LOCAL_ACCEPTED_STORAGE_KEY, {})
   );
+  const [postReactions, setPostReactions] = useState<Record<string, PostReactionId>>(() =>
+    loadJsonFromStorage<Record<string, PostReactionId>>(LOCAL_REACTIONS_KEY, {})
+  );
+  const [postShares, setPostShares] = useState<Record<string, number>>(() =>
+    loadJsonFromStorage<Record<string, number>>(LOCAL_SHARES_KEY, {})
+  );
+  const [onboardingTopics, setOnboardingTopics] = useState<string[]>(() =>
+    loadJsonFromStorage<string[]>(LOCAL_ONBOARDING_TOPICS_KEY, [])
+  );
+  const [openReactionPickerId, setOpenReactionPickerId] = useState<string | null>(null);
 
   const [selectedPostId, setSelectedPostId] = useState<string | null>(null);
   const [openCommentDrawers, setOpenCommentDrawers] = useState<Record<string, boolean>>({});
   const [replyDrafts, setReplyDrafts] = useState<Record<string, string>>({});
   const [replyTargets, setReplyTargets] = useState<Record<string, { answerId: string; authorName: string } | null>>({});
+  const [inlineReplyDrafts, setInlineReplyDrafts] = useState<Record<string, string>>({});
   const [followingHandles, setFollowingHandles] = useState<string[]>(() =>
     loadJsonFromStorage<string[]>(FOLLOWING_STORAGE_KEY, ['minh_dev', 'linh_ux'])
   );
@@ -467,6 +541,30 @@ export const CommunityView: React.FC = () => {
 
   useEffect(() => {
     try {
+      window.localStorage.setItem(LOCAL_REACTIONS_KEY, JSON.stringify(postReactions));
+    } catch {
+      return;
+    }
+  }, [postReactions]);
+
+  useEffect(() => {
+    try {
+      window.localStorage.setItem(LOCAL_SHARES_KEY, JSON.stringify(postShares));
+    } catch {
+      return;
+    }
+  }, [postShares]);
+
+  useEffect(() => {
+    try {
+      window.localStorage.setItem(LOCAL_ONBOARDING_TOPICS_KEY, JSON.stringify(onboardingTopics));
+    } catch {
+      return;
+    }
+  }, [onboardingTopics]);
+
+  useEffect(() => {
+    try {
       const draft: ComposeDraft = {
         title: composeTitle,
         body: composeBody,
@@ -548,9 +646,10 @@ export const CommunityView: React.FC = () => {
 
   const getPostScore = useCallback(
     (post: CommunityPost): number => {
-      return basePostVotes(post) + (isItemLiked(post.id) ? 1 : 0);
+      const hasUserReaction = Boolean(postReactions[post.id]) || isItemLiked(post.id);
+      return basePostVotes(post) + (hasUserReaction ? 1 : 0);
     },
-    [isItemLiked]
+    [isItemLiked, postReactions]
   );
 
   const demoPosts = useMemo(() => allPosts.filter((p) => Boolean(p.demoSnippet)), [allPosts]);
@@ -596,6 +695,11 @@ export const CommunityView: React.FC = () => {
 
   const handleSelectFeedTab = useCallback((tabId: FeedTabId) => {
     setFeedTab(tabId);
+    if (tabId === 'newest') {
+      setSortMode('newest');
+    } else if (tabId === 'all' || tabId === 'trending') {
+      setSortMode('top');
+    }
     if (tabId === 'saved') {
       setActiveChannel('saved');
     } else {
@@ -621,6 +725,7 @@ export const CommunityView: React.FC = () => {
   const feedTabItems = useMemo<LiquidTabItem[]>(
     () => [
       { id: 'all', label: 'Dành cho bạn', count: allPosts.length },
+      { id: 'trending', label: 'Phổ biến' },
       { id: 'following', label: 'Đang theo dõi' },
       { id: 'newest', label: 'Mới nhất' },
       { id: 'demos', label: 'Mã chạy thử', count: demoPosts.length },
@@ -795,35 +900,47 @@ export const CommunityView: React.FC = () => {
       );
     }
 
-    const interestTags = Array.from(
-      new Set(
-        allPosts
-          .filter((p) => savedItemIds.includes(p.id))
-          .flatMap((p) => p.tags.map((t) => t.toLowerCase()))
-      )
+    const savedTopicTags = allPosts
+      .filter((p) => savedItemIds.includes(p.id))
+      .flatMap((p) => p.tags.map((t) => t.toLowerCase()));
+    const combinedTopics = Array.from(
+      new Set([
+        ...onboardingTopics,
+        ...(selectedTopic !== 'all' ? [selectedTopic] : []),
+        ...savedTopicTags,
+      ])
     );
-    const personalization = { followedHandles: followingHandles, interestTags };
+    const rankCtx = {
+      onboardingTopics: combinedTopics,
+      followedHandles: followingHandles,
+    };
     const rank = (post: CommunityPost) =>
-      computeFeedScore(
+      computeFeedRankScore(
         {
           createdAt: post.createdAt,
-          votes: getPostScore(post),
+          reactions: getPostScore(post),
           comments: getPostAnswers(post).length,
-          hasAccepted: getPostAnswers(post).some((a) => a.isAccepted),
-          bookmarks: savedItemIds.includes(post.id) ? 1 : 0,
-          authorHandle: post.author.handle,
+          sharesAndForks: (post.forks ?? 0) + (postShares[post.id] ?? 0),
+          hasDemoSnippet: Boolean(post.demoSnippet),
           tags: post.tags,
+          category: post.category,
+          authorHandle: post.author.handle,
         },
-        personalization
+        rankCtx
       );
     return [...pool].sort((a, b) => {
-      if (feedTab === 'trending' || sortMode === 'top') {
-        const diff = rank(b) - rank(a);
-        if (diff !== 0) return diff;
-      }
       if (sortMode === 'discussed') {
         const diff = getPostAnswers(b).length - getPostAnswers(a).length;
         if (diff !== 0) return diff;
+      } else if (
+        feedTab === 'all' ||
+        feedTab === 'trending' ||
+        sortMode === 'top'
+      ) {
+        if (feedTab !== 'newest' && sortMode !== 'newest') {
+          const diff = rank(b) - rank(a);
+          if (diff !== 0) return diff;
+        }
       }
       return Date.parse(b.createdAt) - Date.parse(a.createdAt);
     });
@@ -833,6 +950,8 @@ export const CommunityView: React.FC = () => {
     activeChannel,
     feedTab,
     followingHandles,
+    onboardingTopics,
+    postShares,
     savedItemIds,
     selectedTopic,
     matchesTopicFilter,
@@ -842,6 +961,17 @@ export const CommunityView: React.FC = () => {
     getPostScore,
     getPostAnswers,
   ]);
+
+  const storyPosts = useMemo<CommunityPost[]>(() => {
+    if (moderatedPosts.length === 0) return [];
+    const prioritized = [...moderatedPosts].sort((a, b) => {
+      const aRich = (a.demoSnippet ? 2 : 0) + (a.images && a.images.length > 0 ? 1 : 0);
+      const bRich = (b.demoSnippet ? 2 : 0) + (b.images && b.images.length > 0 ? 1 : 0);
+      if (bRich !== aRich) return bRich - aRich;
+      return getPostScore(b) - getPostScore(a);
+    });
+    return prioritized.slice(0, 6);
+  }, [moderatedPosts, getPostScore]);
 
   const activeReaderPost = useMemo<CommunityPost | null>(
     () =>
@@ -1025,16 +1155,19 @@ export const CommunityView: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    if (!openMenuPostId) return;
+    if (!openMenuPostId && !openReactionPickerId) return;
     const onDown = (event: PointerEvent) => {
       const target = event.target as HTMLElement | null;
-      if (!target?.closest('.cm-mod-menu-wrap')) {
+      if (openMenuPostId && !target?.closest('.cm-mod-menu-wrap')) {
         setOpenMenuPostId(null);
+      }
+      if (openReactionPickerId && !target?.closest('.cm-react-wrap')) {
+        setOpenReactionPickerId(null);
       }
     };
     document.addEventListener('pointerdown', onDown);
     return () => document.removeEventListener('pointerdown', onDown);
-  }, [openMenuPostId]);
+  }, [openMenuPostId, openReactionPickerId]);
 
   const recordRecentSearch = useCallback((term: string) => {
     const clean = term.trim();
@@ -1046,12 +1179,43 @@ export const CommunityView: React.FC = () => {
     setSelectedTopic((prev) => (prev === topicId ? 'all' : topicId));
   }, []);
 
+  const handleOnboardingTopic = useCallback((topicId: string) => {
+    setSelectedTopic(topicId);
+    if (topicId && topicId !== 'all') {
+      setOnboardingTopics((prev) => (prev.includes(topicId) ? prev : [...prev, topicId]));
+    }
+  }, []);
+
+  const handleSelectReaction = useCallback(
+    (post: CommunityPost, reactionId: PostReactionId) => {
+      const current = postReactions[post.id];
+      const wasLiked = Boolean(current) || isItemLiked(post.id);
+      if (current === reactionId) {
+        setPostReactions((prev) => {
+          const next = { ...prev };
+          delete next[post.id];
+          return next;
+        });
+        if (isItemLiked(post.id)) {
+          toggleLikedItem(post.id);
+        }
+      } else {
+        setPostReactions((prev) => ({ ...prev, [post.id]: reactionId }));
+        if (!wasLiked) {
+          toggleLikedItem(post.id);
+          void upvotePost(post.id).catch(() => undefined);
+        }
+      }
+      setOpenReactionPickerId(null);
+    },
+    [postReactions, isItemLiked, toggleLikedItem, upvotePost]
+  );
+
   const handleToggleVote = useCallback(
     (post: CommunityPost) => {
-      toggleLikedItem(post.id);
-      void upvotePost(post.id).catch(() => undefined);
+      handleSelectReaction(post, postReactions[post.id] || 'like');
     },
-    [toggleLikedItem, upvotePost]
+    [handleSelectReaction, postReactions]
   );
 
   const handleCopyCode = useCallback(
@@ -1080,6 +1244,7 @@ export const CommunityView: React.FC = () => {
           ? `${window.location.origin}/community?post=${encodeURIComponent(post.id)}`
           : `/community?post=${encodeURIComponent(post.id)}`;
       const ok = await copyText(shareUrl);
+      setPostShares((prev) => ({ ...prev, [post.id]: (prev[post.id] ?? 0) + 1 }));
       setCopiedShareId(post.id);
       window.setTimeout(() => {
         setCopiedShareId((prev) => (prev === post.id ? null : prev));
@@ -1298,12 +1463,16 @@ export const CommunityView: React.FC = () => {
   );
 
   const openQuickComposer = useCallback(
-    (mode: 'default' | 'showcase' | 'qa' | 'workspace' | 'poll' | 'images') => {
+    (mode: 'default' | 'showcase' | 'qa' | 'workspace' | 'template' | 'poll' | 'images') => {
       if (mode === 'showcase') {
         setComposeChannel('showcase');
         setComposeCategory('Components');
         setComposeIncludeCode(true);
         setComposePreviewLive(true);
+      } else if (mode === 'template') {
+        setComposeChannel('showcase');
+        setComposeCategory('Layouts');
+        handlePrefillFromWorkspace();
       } else if (mode === 'qa') {
         setComposeChannel('qa');
         setComposeCategory('React / Frontend');
@@ -1558,6 +1727,60 @@ export const CommunityView: React.FC = () => {
           type: 'success',
           title: 'Đã đăng bình luận',
           message: whiteLabelText(post.title),
+        });
+      }
+    } finally {
+      setSubmittingReplyId(null);
+    }
+  };
+
+  const handleSubmitInlineReply = async (
+    event: React.FormEvent<HTMLFormElement>,
+    post: CommunityPost,
+    parentAnswer: CommunityAnswer
+  ) => {
+    event.preventDefault();
+    const draftKey = `${post.id}:${parentAnswer.id}`;
+    const draft = (inlineReplyDrafts[draftKey] || '').trim();
+    if (!draft) return;
+
+    const verdict = moderateFields([draft], 'comment');
+    if (!verdict.ok) {
+      addToast({ type: 'error', title: 'Bình luận bị chặn', message: verdict.message });
+      return;
+    }
+
+    setSubmittingReplyId(post.id);
+    const now = new Date().toISOString();
+    const newAnswer: CommunityAnswer = {
+      id: `ans-local-${Date.now()}`,
+      author: {
+        id: currentUser?.id || 'guest-builder',
+        name: formatUserDisplayName(currentUser?.name, 'Thành viên'),
+        handle: currentUser?.username || 'builder_vn',
+        role: currentUser?.role === 'admin' ? 'Điều hành' : 'Thành viên',
+      },
+      createdAt: now,
+      votes: 1,
+      content: `@${parentAnswer.author.handle} ${draft}`,
+      parentId: parentAnswer.id,
+    } as CommunityAnswer;
+
+    try {
+      setLocalReplies((prev) => ({
+        ...prev,
+        [post.id]: [...(prev[post.id] || []), newAnswer],
+      }));
+      setInlineReplyDrafts((prev) => ({ ...prev, [draftKey]: '' }));
+      setReplyTargets((prev) => ({ ...prev, [post.id]: null }));
+
+      if (currentUser) {
+        void answerPost(post.id, `@${parentAnswer.author.handle} ${draft}`).catch(() => undefined);
+      } else {
+        addToast({
+          type: 'success',
+          title: 'Đã gửi phản hồi',
+          message: `@${parentAnswer.author.handle}`,
         });
       }
     } finally {
@@ -1857,7 +2080,7 @@ export const CommunityView: React.FC = () => {
             <CommunityOnboardingCard
               followingHandles={followingHandles}
               onToggleFollow={toggleFollowHandle}
-              onSelectInterestTopic={setSelectedTopic}
+              onSelectInterestTopic={handleOnboardingTopic}
               onSelectChannel={(ch) => handleSelectChannel(ch)}
               onPublishGreeting={handlePublishGreeting}
               onDismiss={() => setOnboardingDismissed(true)}
@@ -1885,6 +2108,65 @@ export const CommunityView: React.FC = () => {
             </div>
           )}
 
+          <section className="cm-stories-strip" aria-label="Điểm nhấn Tri thức">
+            <button
+              type="button"
+              className="cm-story-card cm-story-card--create"
+              onClick={() => openQuickComposer('showcase')}
+            >
+              <span className="cm-story-create-icon" aria-hidden="true">
+                <Plus size={18} />
+              </span>
+              <span className="cm-story-create-copy">
+                <strong>{storyPosts.length === 0 ? 'Tạo tin đầu tiên' : 'Chia sẻ tin mới'}</strong>
+                <span>Chia sẻ lên Bảng tin</span>
+              </span>
+            </button>
+
+            {storyPosts.length === 0 ? (
+              <button
+                type="button"
+                className="cm-story-card cm-story-card--empty"
+                onClick={() => openQuickComposer('template')}
+              >
+                <span className="cm-story-badge">Bảng tin trống</span>
+                <span className="cm-story-title">Chia sẻ lên Bảng tin từ Workspace hoặc mẫu UI đầu tiên</span>
+              </button>
+            ) : (
+              storyPosts.map((story) => {
+                const thumb = story.images?.[0]?.url;
+                return (
+                  <button
+                    key={`story-${story.id}`}
+                    type="button"
+                    className="cm-story-card"
+                    data-has-demo={story.demoSnippet ? 'true' : undefined}
+                    onClick={() => {
+                      focusAndScrollToPost(story.id, false);
+                      if (story.demoSnippet) {
+                        setCodeModes((prev) => ({ ...prev, [story.id]: 'live' }));
+                      }
+                    }}
+                  >
+                    {thumb && (
+                      <img src={thumb} alt="" className="cm-story-bg" aria-hidden="true" loading="lazy" />
+                    )}
+                    <span className="cm-story-top">
+                      <span className="cm-story-avatar" aria-hidden="true">
+                        {authorInitials(story.author.name)}
+                      </span>
+                      {story.demoSnippet && <span className="cm-story-badge">Chạy thử</span>}
+                    </span>
+                    <span className="cm-story-bottom">
+                      <span className="cm-story-title">{whiteLabelText(story.title)}</span>
+                      <span className="cm-story-author">{story.author.name}</span>
+                    </span>
+                  </button>
+                );
+              })
+            )}
+          </section>
+
           <section className="cm-quick-composer" aria-label="Tạo bài viết nhanh">
             <div className="cm-quick-composer-top">
               <span className="cm-avatar-chip" aria-hidden="true">
@@ -1895,7 +2177,7 @@ export const CommunityView: React.FC = () => {
                 className="cm-quick-prompt-btn"
                 onClick={() => openQuickComposer('default')}
               >
-                Bạn vừa dựng gì hay muốn mổ xẻ lỗi nào?
+                Bạn đang nghĩ gì? Chia sẻ mã nguồn, mẫu giao diện hoặc câu hỏi...
               </button>
             </div>
             <div className="cm-quick-composer-actions">
@@ -1905,23 +2187,15 @@ export const CommunityView: React.FC = () => {
                 onClick={() => openQuickComposer('showcase')}
               >
                 <Code2 size={15} aria-hidden="true" />
-                <span>Chia sẻ demo</span>
+                <span>Chia sẻ mã nguồn</span>
               </button>
               <button
                 type="button"
                 className="cm-quick-action-btn"
-                onClick={() => openQuickComposer('images')}
+                onClick={() => openQuickComposer('template')}
               >
-                <ImageIcon size={15} aria-hidden="true" />
-                <span>Ảnh (tối đa 4)</span>
-              </button>
-              <button
-                type="button"
-                className="cm-quick-action-btn"
-                onClick={() => openQuickComposer('poll')}
-              >
-                <BarChart3 size={15} aria-hidden="true" />
-                <span>Thăm dò</span>
+                <Layers size={15} aria-hidden="true" />
+                <span>Đính kèm mẫu</span>
               </button>
               <button
                 type="button"
@@ -1934,10 +2208,18 @@ export const CommunityView: React.FC = () => {
               <button
                 type="button"
                 className="cm-quick-action-btn"
-                onClick={() => openQuickComposer('workspace')}
+                onClick={() => openQuickComposer('images')}
               >
-                <ArrowUpRight size={15} aria-hidden="true" />
-                <span>Nạp từ Workspace</span>
+                <ImageIcon size={15} aria-hidden="true" />
+                <span>Ảnh</span>
+              </button>
+              <button
+                type="button"
+                className="cm-quick-action-btn"
+                onClick={() => openQuickComposer('poll')}
+              >
+                <BarChart3 size={15} aria-hidden="true" />
+                <span>Thăm dò</span>
               </button>
             </div>
           </section>
@@ -2352,31 +2634,78 @@ export const CommunityView: React.FC = () => {
 
                     <footer className="cm-post-foot">
                       <div className="cm-post-reactions">
-                        <div className="cm-action-pair">
-                          {settings.uiMode === 'fabulous' ? (
-                            <PinHeartButton
-                              liked={isLiked}
-                              count={score}
-                              compact
-                              onToggle={() => handleToggleVote(post)}
-                              ariaLabel={isLiked ? 'Bỏ tán thành' : 'Tán thành bài viết'}
-                            />
-                          ) : (
-                            <>
-                              <button
-                                type="button"
-                                className="cm-icon-btn"
-                                aria-pressed={isLiked}
-                                aria-label={isLiked ? 'Bỏ tán thành' : 'Tán thành bài viết'}
-                                title={isLiked ? 'Đã tán thành' : 'Tán thành'}
-                                onClick={() => handleToggleVote(post)}
-                              >
-                                <ArrowBigUp size={18} aria-hidden="true" />
-                              </button>
-                              <span className="cm-count">{score}</span>
-                            </>
-                          )}
-                        </div>
+                        {(() => {
+                          const activeReactionId = postReactions[post.id];
+                          const activeReaction =
+                            POST_REACTIONS.find((r) => r.id === activeReactionId) ||
+                            (isLiked ? POST_REACTIONS[0] : null);
+                          const DisplayIcon = activeReaction ? activeReaction.Icon : ThumbsUp;
+                          const isPickerOpen = openReactionPickerId === post.id;
+                          return (
+                            <div className="cm-react-wrap">
+                              {isPickerOpen && (
+                                <div
+                                  className="cm-react-tray"
+                                  role="group"
+                                  aria-label="Chọn cảm xúc"
+                                >
+                                  {POST_REACTIONS.map(({ id, label, Icon }) => (
+                                    <button
+                                      key={id}
+                                      type="button"
+                                      className="cm-react-choice"
+                                      data-reaction={id}
+                                      aria-pressed={activeReactionId === id}
+                                      aria-label={label}
+                                      title={label}
+                                      onClick={() => handleSelectReaction(post, id)}
+                                    >
+                                      <Icon size={16} aria-hidden="true" />
+                                      <span>{label}</span>
+                                    </button>
+                                  ))}
+                                </div>
+                              )}
+                              <div className="cm-action-pair">
+                                {settings.uiMode === 'fabulous' && !activeReactionId ? (
+                                  <PinHeartButton
+                                    liked={isLiked}
+                                    count={score}
+                                    compact
+                                    onToggle={() => handleToggleVote(post)}
+                                    ariaLabel={isLiked ? 'Bỏ cảm xúc' : 'Thả cảm xúc'}
+                                  />
+                                ) : (
+                                  <button
+                                    type="button"
+                                    className="cm-react-trigger"
+                                    data-reaction={activeReaction?.id}
+                                    aria-pressed={Boolean(activeReaction)}
+                                    onClick={() => handleToggleVote(post)}
+                                  >
+                                    <DisplayIcon size={16} aria-hidden="true" />
+                                    <span>{activeReaction ? activeReaction.label : 'Thích'}</span>
+                                    <span className="cm-count">{score}</span>
+                                  </button>
+                                )}
+                                <button
+                                  type="button"
+                                  className="cm-icon-btn cm-icon-btn--sm"
+                                  aria-expanded={isPickerOpen}
+                                  aria-label="Chọn loại cảm xúc khác"
+                                  title="Chọn cảm xúc"
+                                  onClick={() =>
+                                    setOpenReactionPickerId((prev) =>
+                                      prev === post.id ? null : post.id
+                                    )
+                                  }
+                                >
+                                  <Sparkles size={13} aria-hidden="true" />
+                                </button>
+                              </div>
+                            </div>
+                          );
+                        })()}
 
                         <div className="cm-action-pair">
                           <button
@@ -2572,73 +2901,140 @@ export const CommunityView: React.FC = () => {
                           </p>
                         ) : (
                           <ul className="cm-comments-list">
-                            {answers.map((ans) => {
-                              const withParent = ans as CommunityAnswer & { parentId?: string };
-                              let depth = 0;
-                              let cur = withParent.parentId;
-                              while (cur && depth < 3) {
-                                depth += 1;
-                                const p = answers.find((x) => x.id === cur) as
-                                  | (CommunityAnswer & { parentId?: string })
-                                  | undefined;
-                                cur = p?.parentId;
+                            {(() => {
+                              type ThreadedAnswer = CommunityAnswer & { parentId?: string };
+                              const typed = answers as ThreadedAnswer[];
+                              const idSet = new Set(typed.map((a) => a.id));
+                              const childrenByParent = new Map<string, ThreadedAnswer[]>();
+                              const roots: ThreadedAnswer[] = [];
+                              for (const item of typed) {
+                                if (item.parentId && idSet.has(item.parentId)) {
+                                  const bucket = childrenByParent.get(item.parentId) ?? [];
+                                  bucket.push(item);
+                                  childrenByParent.set(item.parentId, bucket);
+                                } else {
+                                  roots.push(item);
+                                }
                               }
-                              return (
-                                <li
-                                  key={ans.id}
-                                  className="cm-comment-item"
-                                  data-depth={depth}
-                                  data-accepted={ans.isAccepted ? 'true' : undefined}
-                                >
-                                  <div className="cm-comment-head">
-                                    <button
-                                      type="button"
-                                      className="cm-author-link"
-                                      onClick={() => openUserProfile(ans.author)}
-                                      title={`Xem hồ sơ của ${ans.author.name} (@${ans.author.handle})`}
-                                    >
-                                      <span className="cm-avatar-chip cm-avatar-chip--sm" aria-hidden="true">
-                                        {authorInitials(ans.author.name)}
-                                      </span>
-                                      <span className="cm-author-name">{ans.author.name}</span>
-                                      <time className="t-label" dateTime={ans.createdAt}>
-                                        {formatPostDate(ans.createdAt)}
-                                      </time>
-                                    </button>
+                              const ordered: Array<{ ans: ThreadedAnswer; depth: number }> = [];
+                              const walk = (node: ThreadedAnswer, depth: number) => {
+                                ordered.push({ ans: node, depth: Math.min(3, depth) });
+                                for (const child of childrenByParent.get(node.id) ?? []) {
+                                  walk(child, depth + 1);
+                                }
+                              };
+                              for (const root of roots) walk(root, 0);
 
-                                    <div className="cm-comment-actions">
+                              return ordered.map(({ ans, depth }) => {
+                                const isInlineReplying =
+                                  replyTargets[post.id]?.answerId === ans.id;
+                                const inlineKey = `${post.id}:${ans.id}`;
+                                return (
+                                  <li
+                                    key={ans.id}
+                                    className="cm-comment-item"
+                                    data-depth={depth}
+                                    data-accepted={ans.isAccepted ? 'true' : undefined}
+                                  >
+                                    <div className="cm-comment-head">
                                       <button
                                         type="button"
-                                        className="cm-clear-btn"
-                                        onClick={() =>
-                                          setReplyTargets((prev) => ({
-                                            ...prev,
-                                            [post.id]: {
-                                              answerId: ans.id,
-                                              authorName: ans.author.handle,
-                                            },
-                                          }))
-                                        }
+                                        className="cm-author-link"
+                                        onClick={() => openUserProfile(ans.author)}
+                                        title={`Xem hồ sơ của ${ans.author.name} (@${ans.author.handle})`}
                                       >
-                                        Trả lời
+                                        <span className="cm-avatar-chip cm-avatar-chip--sm" aria-hidden="true">
+                                          {authorInitials(ans.author.name)}
+                                        </span>
+                                        <span className="cm-author-name">{ans.author.name}</span>
+                                        <time className="t-label" dateTime={ans.createdAt}>
+                                          {formatPostDate(ans.createdAt)}
+                                        </time>
                                       </button>
-                                      {ans.isAccepted ? (
-                                        <span className="cm-solved-dot">Lời giải chuẩn</span>
-                                      ) : (
+
+                                      <div className="cm-comment-actions">
+                                        <button
+                                          type="button"
+                                          className="cm-clear-btn cm-comment-reply-btn"
+                                          aria-expanded={isInlineReplying}
+                                          onClick={() =>
+                                            setReplyTargets((prev) => ({
+                                              ...prev,
+                                              [post.id]: isInlineReplying
+                                                ? null
+                                                : {
+                                                    answerId: ans.id,
+                                                    authorName: ans.author.handle,
+                                                  },
+                                            }))
+                                          }
+                                        >
+                                          <Reply size={12} aria-hidden="true" />
+                                          <span>Trả lời</span>
+                                        </button>
+                                        {ans.isAccepted ? (
+                                          <span className="cm-solved-dot">Lời giải chuẩn</span>
+                                        ) : (
+                                          <button
+                                            type="button"
+                                            className="cm-clear-btn"
+                                            onClick={() => void handleAcceptSolution(post, ans.id)}
+                                          >
+                                            Đánh dấu chuẩn
+                                          </button>
+                                        )}
+                                      </div>
+                                    </div>
+                                    <p className="cm-comment-text">{whiteLabelText(ans.content)}</p>
+
+                                    {isInlineReplying && (
+                                      <form
+                                        className="cm-inline-reply-form"
+                                        onSubmit={(e) => void handleSubmitInlineReply(e, post, ans)}
+                                      >
+                                        <input
+                                          type="text"
+                                          className="field cm-inline-reply-input"
+                                          value={inlineReplyDrafts[inlineKey] || ''}
+                                          onChange={(e) => {
+                                            const val = e.target.value;
+                                            setInlineReplyDrafts((prev) => ({
+                                              ...prev,
+                                              [inlineKey]: val,
+                                            }));
+                                          }}
+                                          placeholder={`Trả lời @${ans.author.handle}...`}
+                                          aria-label={`Trả lời bình luận của ${ans.author.name}`}
+                                          autoFocus
+                                        />
+                                        <button
+                                          type="submit"
+                                          className="btn btn-red btn-sm"
+                                          disabled={
+                                            submittingReplyId === post.id ||
+                                            !(inlineReplyDrafts[inlineKey] || '').trim()
+                                          }
+                                        >
+                                          Gửi
+                                        </button>
                                         <button
                                           type="button"
                                           className="cm-clear-btn"
-                                          onClick={() => void handleAcceptSolution(post, ans.id)}
+                                          onClick={() =>
+                                            setReplyTargets((prev) => ({
+                                              ...prev,
+                                              [post.id]: null,
+                                            }))
+                                          }
                                         >
-                                          Đánh dấu chuẩn
+                                          Hủy
                                         </button>
-                                      )}
-                                    </div>
-                                  </div>
-                                  <p className="cm-comment-text">{whiteLabelText(ans.content)}</p>
-                                </li>
-                              );
-                            })}
+                                      </form>
+                                    )}
+                                  </li>
+                                );
+                              });
+                            })()}
                           </ul>
                         )}
 

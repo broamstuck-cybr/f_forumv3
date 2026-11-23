@@ -1,4 +1,7 @@
+import fs from 'node:fs';
 import type { IncomingHttpHeaders } from 'node:http';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import type { AIChatRequest, AIProtocol, AttachedContextItem } from '../src/types/index';
 import { getInternalGatewayOverride } from './adminStore.js';
 import { ensureLocalEnvLoaded } from './quotaStore.js';
@@ -130,348 +133,187 @@ function buildUserContextPrompt(req: AIChatRequest): string {
     .join('\n\n');
 }
 
-function buildDeterministicFallback(
-  req: AIChatRequest,
-  config: EffectiveAIConfig,
-  upstreamError: string
-): AIGenerationOutput {
-  const cleanTitle = (req.prompt || 'F-FORUM v3 Spatial Interface')
-    .replace(/[<>"]/g, '')
-    .trim()
-    .slice(0, 68) || 'F-FORUM v3 Spatial Interface';
-  const attachedBadges = (req.attachedItems || [])
-    .map(
-      (it) =>
-        `<span class="tag-pill" data-kind="${it.kind.replace(/"/g, '')}">${it.title.replace(/[<>]/g, '')}</span>`
-    )
-    .join('\n            ');
+interface CatalogSampleEntry {
+  id: string;
+  title: string;
+  sourceLibrary?: string;
+  tags?: string[];
+  previewHtml?: string;
+  previewCss?: string;
+}
 
-  const htmlContent = `<!DOCTYPE html>
+let cachedCatalogSamples: CatalogSampleEntry[] | null = null;
+
+function getCatalogSamples(): CatalogSampleEntry[] {
+  if (cachedCatalogSamples) return cachedCatalogSamples;
+  const candidates = [
+    path.resolve(process.cwd(), 'src/data/sourceCatalog.json'),
+    path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../src/data/sourceCatalog.json'),
+  ];
+  for (const filePath of candidates) {
+    try {
+      if (!fs.existsSync(filePath)) continue;
+      const raw = JSON.parse(fs.readFileSync(filePath, 'utf8')) as unknown;
+      if (Array.isArray(raw)) {
+        cachedCatalogSamples = raw.filter(
+          (item): item is CatalogSampleEntry =>
+            Boolean(item) &&
+            typeof item === 'object' &&
+            typeof (item as CatalogSampleEntry).title === 'string' &&
+            typeof (item as CatalogSampleEntry).previewHtml === 'string' &&
+            (item as CatalogSampleEntry).previewHtml!.trim().length > 0
+        );
+        return cachedCatalogSamples;
+      }
+    } catch {
+      continue;
+    }
+  }
+  cachedCatalogSamples = [];
+  return cachedCatalogSamples;
+}
+
+const FALLBACK_STOP_WORDS = new Set([
+  'tạo', 'tao', 'làm', 'lam', 'viết', 'viet', 'thiết', 'thiet', 'kế', 'ke',
+  'giao', 'diện', 'dien', 'trang', 'mẫu', 'mau', 'web', 'app', 'cho', 'với',
+  'voi', 'một', 'mot', 'của', 'cua', 'và', 'va', 'the', 'for', 'with', 'and',
+  'build', 'create', 'make', 'design', 'component', 'css', 'html', 'prompt',
+  'turn', 'test', 'hello', 'xin', 'chào', 'chao', 'mode', 'refine', 'audit',
+]);
+
+function normalizeTokens(text: string): string[] {
+  return text
+    .replace(/^\[Mode:\s*[^\]]+\]\s*/i, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9\u00c0-\u024f\u1e00-\u1eff-]+/g, ' ')
+    .split(/\s+/)
+    .map((token) => token.trim())
+    .filter((token) => token.length >= 3 && !FALLBACK_STOP_WORDS.has(token));
+}
+
+function findStrongCatalogMatch(prompt: string): CatalogSampleEntry | null {
+  const cleanPrompt = prompt.replace(/^\[Mode:\s*[^\]]+\]\s*/i, '').trim().toLowerCase();
+  if (cleanPrompt.length < 4) return null;
+
+  const promptTokens = normalizeTokens(cleanPrompt);
+  if (promptTokens.length === 0) return null;
+
+  const samples = getCatalogSamples();
+  let bestEntry: CatalogSampleEntry | null = null;
+  let bestScore = 0;
+
+  for (const entry of samples) {
+    const titleLower = entry.title.toLowerCase();
+    const idLower = entry.id.toLowerCase();
+    const tagList = (entry.tags || []).map((t) => t.toLowerCase());
+
+    if (titleLower.length >= 6 && cleanPrompt.includes(titleLower)) {
+      return entry;
+    }
+
+    const entryTokenSet = new Set([
+      ...normalizeTokens(titleLower),
+      ...normalizeTokens(idLower.replace(/\//g, ' ')),
+      ...tagList.flatMap((t) => normalizeTokens(t.replace(/-/g, ' '))),
+    ]);
+
+    let hits = 0;
+    let score = 0;
+    for (const token of promptTokens) {
+      if (entryTokenSet.has(token)) {
+        hits += 1;
+        score += titleLower.includes(token) ? 3 : 2;
+      }
+    }
+
+    if (hits >= 2 && score > bestScore) {
+      bestScore = score;
+      bestEntry = entry;
+    }
+  }
+
+  return bestScore >= 4 ? bestEntry : null;
+}
+
+function buildFilesFromCatalogSample(entry: CatalogSampleEntry): AIGenerationOutput['files'] {
+  const rawHtml = (entry.previewHtml || '').trim();
+  const scriptBlocks: string[] = [];
+  const htmlWithoutScripts = rawHtml
+    .replace(/<script\b[^>]*>([\s\S]*?)<\/script>/gi, (_, code: string) => {
+      const cleaned = code.trim();
+      if (cleaned) scriptBlocks.push(cleaned);
+      return '';
+    })
+    .trim();
+
+  const cssContent = (entry.previewCss || '').trim();
+  const jsContent = scriptBlocks.join('\n\n');
+  const safeTitle = entry.title.replace(/[<>"]/g, '').trim() || 'Mẫu giao diện F-Forum';
+
+  const fullHtml = `<!DOCTYPE html>
 <html lang="vi">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>${cleanTitle}</title>
+  <title>${safeTitle}</title>
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
-  <header class="top-bar" role="banner">
-    <div class="brand-lockup">
-      <span class="aperture-dot" aria-hidden="true"></span>
-      <span class="brand-name">F-FORUM LIVE BUILD</span>
-    </div>
-    <nav class="top-nav" aria-label="Primary Navigation">
-      <a href="#overview" class="nav-link">Overview</a>
-      <a href="#modules" class="nav-link">Modules</a>
-      <a href="#telemetry" class="nav-link">Telemetry</a>
-    </nav>
-  </header>
-
-  <main class="main-stage" id="overview">
-    <section class="hero-panel" aria-labelledby="hero-heading">
-      <p class="eyebrow">SYNTHESIZED WORKSPACE ARTIFACT</p>
-      <h1 id="hero-heading">${cleanTitle}</h1>
-      <p class="lead-copy">
-        Kiến trúc giao diện đa tệp HTML/CSS/JS được đồng bộ theo hệ thống Design Tokens 8px, hỗ trợ kiểm thử DOM, Diff và xuất gói ZIP an toàn.
-      </p>
-      <div class="tag-row">
-        ${attachedBadges || '<span class="tag-pill">Obsidian Foundry</span><span class="tag-pill">8px Spatial Grid</span>'}
-      </div>
-      <div class="action-bar">
-        <button type="button" id="run-diagnostic-btn" class="primary-btn">Chạy Kiểm Tra Giao Diện</button>
-        <button type="button" id="toggle-density-btn" class="secondary-btn">Chuyển Đổi Mật Độ</button>
-      </div>
-    </section>
-
-    <section class="split-workbench" id="modules" aria-label="Interactive Modules">
-      <article class="module-card">
-        <h2>Spatial Layout Specification</h2>
-        <p>Cấu trúc bố cục bất đối xứng 60/40 giúp tối ưu tỷ lệ đọc và giảm tải nhận thức trên 3 khung hình (390px, 768px, 1440px).</p>
-        <dl class="metric-list">
-          <div class="metric-item">
-            <dt>Grid Rhythm</dt>
-            <dd>8px Base Unit</dd>
-          </div>
-          <div class="metric-item">
-            <dt>Contrast Target</dt>
-            <dd>WCAG AAA</dd>
-          </div>
-        </dl>
-      </article>
-
-      <article class="module-card" id="telemetry">
-        <h2>Interactive Diagnostic Console</h2>
-        <p id="status-readout" class="status-readout" role="status">Sẵn sàng kiểm tra tương tác runtime.</p>
-        <div class="counter-box">
-          <span>Iterations Verified:</span>
-          <strong id="iteration-count">1</strong>
-        </div>
-      </article>
-    </section>
-  </main>
-
-  <script src="app.js"></script>
-</body>
+${htmlWithoutScripts}
+${jsContent ? '  <script src="app.js"></script>\n' : ''}</body>
 </html>`;
 
-  const cssContent = `:root {
-  --bg-primary: #0b0d12;
-  --bg-elevated: #12161f;
-  --border-subtle: rgba(255, 255, 255, 0.1);
-  --text-primary: #f1f5f9;
-  --text-muted: #94a3b8;
-  --accent-amber: #f59e0b;
-  --accent-emerald: #10b981;
-  --radius-md: 12px;
-}
+  const files: AIGenerationOutput['files'] = [
+    {
+      path: 'index.html',
+      content: fullHtml,
+      summary: `HTML từ mẫu "${entry.title}"`,
+    },
+    {
+      path: 'styles.css',
+      content: cssContent,
+      summary: `CSS từ mẫu "${entry.title}"`,
+    },
+  ];
 
-* {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-}
-
-body {
-  background-color: var(--bg-primary);
-  color: var(--text-primary);
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  line-height: 1.6;
-  min-height: 100vh;
-  overflow-x: hidden;
-}
-
-.top-bar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 16px 24px;
-  border-bottom: 1px solid var(--border-subtle);
-  background: rgba(18, 22, 31, 0.85);
-}
-
-.brand-lockup {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-weight: 600;
-  letter-spacing: 0.04em;
-  font-size: 0.875rem;
-}
-
-.aperture-dot {
-  width: 10px;
-  height: 10px;
-  border-radius: 999px;
-  background: var(--accent-amber);
-}
-
-.top-nav {
-  display: flex;
-  gap: 16px;
-}
-
-.nav-link {
-  color: var(--text-muted);
-  text-decoration: none;
-  font-size: 0.875rem;
-}
-
-.nav-link:hover {
-  color: var(--text-primary);
-}
-
-.main-stage {
-  max-width: 1120px;
-  margin: 0 auto;
-  padding: 32px 24px;
-  display: flex;
-  flex-direction: column;
-  gap: 24px;
-}
-
-.hero-panel {
-  background: var(--bg-elevated);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-md);
-  padding: 32px;
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
-.eyebrow {
-  color: var(--accent-amber);
-  font-size: 0.75rem;
-  font-weight: 600;
-  letter-spacing: 0.08em;
-}
-
-h1 {
-  font-size: clamp(1.5rem, 3vw, 2.25rem);
-  line-height: 1.2;
-}
-
-.lead-copy {
-  color: var(--text-muted);
-  max-width: 68ch;
-}
-
-.tag-row {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-
-.tag-pill {
-  font-size: 0.75rem;
-  padding: 4px 12px;
-  border-radius: 999px;
-  background: rgba(245, 158, 11, 0.12);
-  color: var(--accent-amber);
-  border: 1px solid rgba(245, 158, 11, 0.28);
-}
-
-.action-bar {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 12px;
-  margin-top: 8px;
-}
-
-.primary-btn,
-.secondary-btn {
-  padding: 10px 18px;
-  border-radius: 8px;
-  font-size: 0.875rem;
-  font-weight: 500;
-  cursor: pointer;
-}
-
-.primary-btn {
-  background: var(--accent-amber);
-  color: #0b0d12;
-  border: none;
-}
-
-.secondary-btn {
-  background: transparent;
-  color: var(--text-primary);
-  border: 1px solid var(--border-subtle);
-}
-
-.split-workbench {
-  display: grid;
-  grid-template-columns: 1.4fr 1fr;
-  gap: 16px;
-}
-
-.module-card {
-  background: var(--bg-elevated);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-md);
-  padding: 24px;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.metric-list {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 12px;
-  margin-top: 8px;
-}
-
-.metric-item {
-  padding: 12px;
-  border-radius: 8px;
-  background: rgba(255, 255, 255, 0.03);
-}
-
-.metric-item dt {
-  font-size: 0.75rem;
-  color: var(--text-muted);
-}
-
-.metric-item dd {
-  font-size: 1rem;
-  font-weight: 600;
-  color: var(--accent-emerald);
-}
-
-.status-readout {
-  padding: 12px;
-  border-radius: 8px;
-  background: rgba(16, 185, 129, 0.1);
-  color: var(--accent-emerald);
-  font-size: 0.875rem;
-}
-
-.counter-box {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding-top: 8px;
-  font-size: 0.875rem;
-}
-
-body.compact-density .hero-panel,
-body.compact-density .module-card {
-  padding: 16px;
-}
-
-@media (max-width: 768px) {
-  .split-workbench {
-    grid-template-columns: 1fr;
-  }
-}`;
-
-  const jsContent = `(function () {
-  var runBtn = document.getElementById('run-diagnostic-btn');
-  var densityBtn = document.getElementById('toggle-density-btn');
-  var readout = document.getElementById('status-readout');
-  var counterEl = document.getElementById('iteration-count');
-  var count = 1;
-
-  if (runBtn && readout && counterEl) {
-    runBtn.addEventListener('click', function () {
-      count += 1;
-      counterEl.textContent = String(count);
-      readout.textContent = 'Kiem tra DOM & Responsive hoan tat tai lan chay #' + count + '.';
+  if (jsContent) {
+    files.push({
+      path: 'app.js',
+      content: jsContent,
+      summary: `Script tương tác từ mẫu "${entry.title}"`,
     });
   }
 
-  if (densityBtn) {
-    densityBtn.addEventListener('click', function () {
-      document.body.classList.toggle('compact-density');
-    });
+  return files;
+}
+
+function buildFallbackResponse(
+  req: AIChatRequest,
+  config: EffectiveAIConfig,
+  upstreamError: string
+): AIGenerationOutput {
+  const matched = findStrongCatalogMatch(req.prompt || '');
+  if (matched) {
+    return {
+      message: `Chưa kết nối khóa AI (${upstreamError}). Đã nạp mẫu thật khớp từ khóa: "${matched.title}" (${matched.sourceLibrary || 'Vault'}). Mở Cài đặt -> Khóa riêng (BYOK) để nhập API key thật (OpenAI / Gemini / OpenRouter / DeepSeek) hoặc mở Kho 7.662 mẫu để duyệt thêm.`,
+      files: buildFilesFromCatalogSample(matched),
+      checksHint: [],
+      fallback: true,
+      upstreamError,
+      modelUsed: config.model,
+      protocolUsed: config.protocol,
+    };
   }
-})();`;
+
+  const keyMissing = !config.apiKey;
+  const message = keyMissing
+    ? 'Chưa kết nối khóa AI. Mở Cài đặt -> Khóa riêng (BYOK) để nhập API key thật (OpenAI / Gemini / OpenRouter / DeepSeek) giúp trợ lý sinh mã theo yêu cầu, hoặc bấm mở Kho 7.662 mẫu để nạp giao diện thật.'
+    : `Kết nối AI tạm gián đoạn (${upstreamError}). Kiểm tra lại khóa tại Cài đặt -> Khóa riêng (BYOK) (OpenAI / Gemini / OpenRouter / DeepSeek) hoặc bấm mở Kho 7.662 mẫu để nạp mẫu thật.`;
 
   return {
-    message: `Đã tổng hợp bộ 3 tệp (index.html, styles.css, app.js) cho "${cleanTitle}". Hệ thống đang dùng bộ khung dự phòng do kết nối AI gặp sự cố (${upstreamError}). Mở Cài đặt -> Khóa riêng (BYOK) để dùng khóa API riêng hoặc kiểm tra AI_BASE_URL.`,
-    files: [
-      {
-        path: 'index.html',
-        content: htmlContent,
-        summary: 'Cấu trúc HTML5 ngữ nghĩa với landmarks và viewport chuẩn.',
-      },
-      {
-        path: 'styles.css',
-        content: cssContent,
-        summary: 'Design tokens Obsidian Foundry với bố cục 60/40 responsive.',
-      },
-      {
-        path: 'app.js',
-        content: jsContent,
-        summary: 'Logic tương tác kiểm tra trạng thái DOM và chuyển đổi mật độ.',
-      },
-    ],
-    checksHint: [
-      'HTML5 doctype, lang và viewport meta đầy đủ',
-      'Không phát hiện rò rỉ secret hoặc liên kết nội bộ lỗi',
-      'Cú pháp JavaScript hợp lệ 100%',
-    ],
+    message,
+    files: [],
+    checksHint: [],
     fallback: true,
     upstreamError,
     modelUsed: config.model,
@@ -710,7 +552,7 @@ export async function runAIGenerationStream(
     stage: 'routing',
     model: config.model,
     protocol: config.protocol,
-    detail: canCallUpstream ? `${config.protocol}:${config.model}` : 'deterministic-fallback',
+    detail: canCallUpstream ? `${config.protocol}:${config.model}` : 'unconfigured-fallback',
   });
 
   if (!canCallUpstream) {
@@ -718,12 +560,12 @@ export async function runAIGenerationStream(
       stage: 'generating',
       model: config.model,
       protocol: config.protocol,
-      detail: 'Deterministic synthesis',
+      detail: 'BYOK / Vault fallback',
     });
     const reason = unreachableLoopback
       ? 'AI_BASE_URL trên Vercel đang trỏ localhost/127.0.0.1; hãy đặt API công khai (OpenRouter/Gemini/OpenAI) hoặc bật Khóa riêng (BYOK) trong Cài đặt'
       : 'Chưa cấu hình AI_API_KEY trên máy chủ hoặc khóa BYOK';
-    const fallbackOut = buildDeterministicFallback(req, config, reason);
+    const fallbackOut = buildFallbackResponse(req, config, reason);
     hooks?.onDelta?.(fallbackOut.message);
     hooks?.onStage?.({
       stage: 'checking',
@@ -832,7 +674,7 @@ export async function runAIGenerationStream(
 
     const structured = parseStructuredLLMResponse(responseText, config);
     if (!structured) {
-      return buildDeterministicFallback(
+      return buildFallbackResponse(
         req,
         config,
         'Upstream response was not in expected multi-file JSON schema'
@@ -841,7 +683,7 @@ export async function runAIGenerationStream(
     return structured;
   } catch (err) {
     const msg = err instanceof Error ? sanitizeErrorText(err.message) : 'Upstream request failed';
-    return buildDeterministicFallback(req, config, msg);
+    return buildFallbackResponse(req, config, msg);
   } finally {
     clearTimeout(timeout);
   }

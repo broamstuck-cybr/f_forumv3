@@ -7,6 +7,7 @@ import { AmbientVideoBackdrop } from './components/layout/AmbientVideoBackdrop';
 import { CommandPalette } from './components/layout/CommandPalette';
 import { GlobalRouteLoader } from './components/layout/GlobalRouteLoader';
 import { GlobalThemeAtmosphere } from './components/layout/GlobalThemeAtmosphere';
+import { FabulousShowcaseDock } from './components/fabulous/FabulousShowcaseDock';
 import { AuthModal } from './components/public/AuthModal';
 import { NoticeStatusModal } from './components/public/NoticeStatusModal';
 import { ToastStack } from './components/public/ToastStack';
@@ -238,6 +239,7 @@ const AppShell: React.FC = () => {
           <AuthModal open={authModalOpen} onClose={() => setAuthModalOpen(false)} />
           <NoticeStatusModal open={noticeModalOpen} onClose={() => setNoticeModalOpen(false)} />
           <CommandPalette />
+          <FabulousShowcaseDock />
           <ToastStack />
         </div>
       </LayoutGroup>

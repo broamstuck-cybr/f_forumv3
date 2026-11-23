@@ -3,21 +3,18 @@ import {
   Check,
   ChevronDown,
   ChevronRight,
+  Compass,
   Copy,
   Eye,
-  FileCode2,
   GitCompareArrows,
+  KeyRound,
   RotateCw,
   ShieldCheck,
   Terminal,
+  Upload,
 } from 'lucide-react';
 import type { AIActivityState, AIStreamingStage, ChatMessage } from '../../types/index';
 import { formatClock } from './time';
-
-export interface StarterPrompt {
-  label: string;
-  prompt: string;
-}
 
 interface ThreadProps {
   messages: ChatMessage[];
@@ -26,8 +23,9 @@ interface ThreadProps {
   streamingPreview: string;
   modelUsed: string | null;
   userName: string;
-  starters: StarterPrompt[];
-  onPickStarter: (prompt: string) => void;
+  onOpenByok?: () => void;
+  onOpenExplore?: () => void;
+  onOpenUpload?: () => void;
   onOpenFile: (path: string) => void;
   onOpenPreview?: () => void;
   onOpenDiff?: () => void;
@@ -78,8 +76,9 @@ export const Thread: React.FC<ThreadProps> = ({
   streamingStage,
   streamingPreview,
   modelUsed,
-  starters,
-  onPickStarter,
+  onOpenByok,
+  onOpenExplore,
+  onOpenUpload,
   onOpenFile,
   onOpenPreview,
   onOpenDiff,
@@ -147,28 +146,47 @@ export const Thread: React.FC<ThreadProps> = ({
     <div ref={scrollRef} className="ws-scroll">
       <div className="ws-measure ws-arena-stream">
         {untouched && !busy && (
-          <section className="ws-arena-empty" aria-label="Khởi tạo phiên F-Forum">
+          <section className="ws-arena-empty" aria-label="Bắt đầu dựng cùng AI">
             <h2 className="ws-arena-empty-title">
-              Từ ý tưởng <em>đến bản dựng.</em>
+              Bắt đầu dựng <em>cùng AI.</em>
             </h2>
             <p className="ws-arena-empty-sub">
-              Mô tả giao diện hoặc chọn một mẫu khởi đầu bên dưới để tạo mã nguồn & kiểm định ngay.
+              Mô tả giao diện hoặc thành phần bạn muốn xây dựng. Khung Xem trực tiếp và Mã nguồn sẽ tự mở ngay khi tệp web được tạo hoặc nạp từ Kho mẫu.
             </p>
-            <ul className="ws-arena-suggest-list">
-              {starters.map((starter) => (
-                <li key={starter.label}>
+            {(onOpenByok || onOpenExplore || onOpenUpload) && (
+              <div className="ws-arena-empty-pills">
+                {onOpenByok && (
                   <button
                     type="button"
-                    className="ws-arena-suggest-row"
-                    onClick={() => onPickStarter(starter.prompt)}
+                    className="ws-arena-quick-pill ws-arena-quick-pill--accent"
+                    onClick={onOpenByok}
                   >
-                    <FileCode2 size={15} aria-hidden="true" />
-                    <span className="ws-arena-suggest-label">{starter.label}</span>
-                    <span className="ws-arena-suggest-preview">{starter.prompt}</span>
+                    <KeyRound size={14} aria-hidden="true" />
+                    <span>Khóa riêng (BYOK)</span>
                   </button>
-                </li>
-              ))}
-            </ul>
+                )}
+                {onOpenExplore && (
+                  <button
+                    type="button"
+                    className="ws-arena-quick-pill"
+                    onClick={onOpenExplore}
+                  >
+                    <Compass size={14} aria-hidden="true" />
+                    <span>Kho 7.662 mẫu</span>
+                  </button>
+                )}
+                {onOpenUpload && (
+                  <button
+                    type="button"
+                    className="ws-arena-quick-pill"
+                    onClick={onOpenUpload}
+                  >
+                    <Upload size={14} aria-hidden="true" />
+                    <span>Nạp tệp HTML/CSS</span>
+                  </button>
+                )}
+              </div>
+            )}
           </section>
         )}
 
@@ -261,10 +279,29 @@ export const Thread: React.FC<ThreadProps> = ({
 
               <div className="ws-arena-assistant-prose">{plainContent}</div>
 
-              {message.fallback && (
-                <p className="ws-turn-flag">
-                  Tổng hợp cục bộ. Mở cấu hình BYOK để gắn khóa API riêng.
-                </p>
+              {message.fallback && (onOpenByok || onOpenExplore) && (
+                <div className="ws-turn-actions">
+                  {onOpenByok && (
+                    <button
+                      type="button"
+                      className="ws-arena-quick-pill ws-arena-quick-pill--sm"
+                      onClick={onOpenByok}
+                    >
+                      <KeyRound size={12} aria-hidden="true" />
+                      <span>Cài đặt → Khóa riêng (BYOK)</span>
+                    </button>
+                  )}
+                  {onOpenExplore && (
+                    <button
+                      type="button"
+                      className="ws-arena-quick-pill ws-arena-quick-pill--sm"
+                      onClick={onOpenExplore}
+                    >
+                      <Compass size={12} aria-hidden="true" />
+                      <span>Mở Kho 7.662 mẫu</span>
+                    </button>
+                  )}
+                </div>
               )}
 
               <footer className="ws-arena-turn-foot">

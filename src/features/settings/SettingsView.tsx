@@ -40,7 +40,6 @@ type SectionId = 'appearance' | 'workspace' | 'ai' | 'data';
 interface PresetDefinition {
   id: WallpaperPreset;
   name: string;
-  desc: string;
   tone: 'dark' | 'light' | 'auto';
   targetTheme?: ThemePreference;
   swatches: [string, string, string];
@@ -53,8 +52,7 @@ interface PresetDefinition {
 const PRESETS: PresetDefinition[] = [
   {
     id: 'video',
-    name: 'Gradient Video (Mặc định)',
-    desc: 'Video Gradient Lab lặp mượt Crossfade (Light 001 / Dark 002) với lớp phủ trong trẻo giảm 10% độ tối.',
+    name: 'Gradient Video',
     tone: 'auto',
     targetTheme: 'system',
     swatches: ['#141312', '#1f8f7a', '#f5f1e8'],
@@ -66,7 +64,6 @@ const PRESETS: PresetDefinition[] = [
   {
     id: 'godray-amber',
     name: 'Godray Hoàng Kim',
-    desc: 'Luồng sáng Godray hổ phách rọi từ đỉnh màn hình, ấm áp và giàu chiều sâu studio.',
     tone: 'dark',
     targetTheme: 'dark',
     swatches: ['#16120e', '#f97316', '#fbbf24'],
@@ -78,7 +75,6 @@ const PRESETS: PresetDefinition[] = [
   {
     id: 'godray-prism',
     name: 'Godray Lăng Kính',
-    desc: 'Dải quang phổ tán sắc cyan, magenta và chàm dịu mắt theo cảm hứng lăng kính quang học.',
     tone: 'dark',
     targetTheme: 'dark',
     swatches: ['#0c1018', '#06b6d4', '#ec4899'],
@@ -90,7 +86,6 @@ const PRESETS: PresetDefinition[] = [
   {
     id: 'mesh-aurora',
     name: 'Mesh Cực Quang',
-    desc: 'Lưới cực quang ngọc lục bảo, lam và tím trầm chuyển động mượt theo con trỏ chuột.',
     tone: 'dark',
     targetTheme: 'dark',
     swatches: ['#0b1312', '#10b981', '#3b82f6'],
@@ -102,7 +97,6 @@ const PRESETS: PresetDefinition[] = [
   {
     id: 'silk-twilight',
     name: 'Lụa Hoàng Hôn',
-    desc: 'Chuyển sắc lụa hoàng hôn mịn không gãy tầng giữa sắc chàm sâu và hồng lựu.',
     tone: 'dark',
     targetTheme: 'dark',
     swatches: ['#15132b', '#e11d48', '#4f46e5'],
@@ -114,7 +108,6 @@ const PRESETS: PresetDefinition[] = [
   {
     id: 'constellation',
     name: 'Tinh Vân Thiên Hà',
-    desc: 'Chòm sao hạt tương tác theo vị trí trỏ chuột trên nền tinh vân đêm sâu.',
     tone: 'dark',
     targetTheme: 'dark',
     swatches: ['#0f1218', '#f2c05e', '#38bdf8'],
@@ -125,8 +118,7 @@ const PRESETS: PresetDefinition[] = [
   },
   {
     id: 'obsidian-glass',
-    name: 'Kính Obsidian Tối Giản',
-    desc: 'Nền đen carbon nguyên chất với ánh phản chiếu mép gương bạc tối đa độ tập trung.',
+    name: 'Kính Obsidian',
     tone: 'dark',
     targetTheme: 'dark',
     swatches: ['#111010', '#2b2928', '#f8f4ec'],
@@ -137,8 +129,7 @@ const PRESETS: PresetDefinition[] = [
   },
   {
     id: 'paper-warm',
-    name: 'Giấy Ấm Editorial',
-    desc: 'Nền giấy thủ công sắc kem cát điểm ánh hổ phách nhẹ, đọc tài liệu và code lâu không mỏi mắt.',
+    name: 'Giấy Ấm',
     tone: 'light',
     targetTheme: 'light',
     swatches: ['#f5f1e8', '#0b7a59', '#14120e'],
@@ -177,10 +168,10 @@ const SECTIONS: Array<{ id: SectionId; label: string; icon: React.ReactNode; key
 ];
 
 const EFFECT_CHIPS = [
-  { id: 'droplet', label: 'Giọt nước (Droplet)' },
-  { id: 'rain', label: 'Mưa rơi (Rain)' },
-  { id: 'diwali', label: 'Ánh sáng (Diwali)' },
-  { id: 'none', label: 'Tắt hiệu ứng' },
+  { id: 'droplet', label: 'Giọt nước' },
+  { id: 'rain', label: 'Mưa rơi' },
+  { id: 'diwali', label: 'Ánh sáng' },
+  { id: 'none', label: 'Tắt' },
 ];
 
 const DENSITY_CHIPS = [
@@ -201,7 +192,7 @@ const EXPORT_TARGET_CHIPS = [
 
 const BYOK_MODE_CHIPS = [
   { id: 'shared', label: 'Gateway mặc định' },
-  { id: 'byok', label: 'Khóa cá nhân (BYOK)' },
+  { id: 'byok', label: 'Khóa cá nhân' },
 ];
 
 const PROTOCOL_LIST = [
@@ -211,7 +202,7 @@ const PROTOCOL_LIST = [
 ];
 
 const MODEL_LIST = [
-  { id: 'studio-smart-route', label: 'Studio Smart Route (Khuyên dùng)', swatch: 'var(--accent-deep, #1f8f7a)' },
+  { id: 'studio-smart-route', label: 'Studio Smart Route', swatch: 'var(--accent-deep, #1f8f7a)' },
   { id: 'gemini-2.5-flash', label: 'Gemini 2.5 Flash', swatch: 'var(--harbour)' },
   { id: 'gemini-2.5-pro', label: 'Gemini 2.5 Pro', swatch: 'var(--fg-muted, #8a9a96)' },
   { id: 'claude-sonnet-4-5', label: 'Claude Sonnet 4.5', swatch: 'var(--accent, #2fb59a)' },
@@ -219,22 +210,18 @@ const MODEL_LIST = [
 ];
 
 const SHORTCUTS = [
-  { keys: 'Ctrl+E', desc: 'Mở bảng điều khiển nhanh' },
-  { keys: 'Esc', desc: 'Đóng hộp thoại hoặc menu' },
+  { keys: 'Ctrl+E', desc: 'Bảng điều khiển' },
+  { keys: 'Esc', desc: 'Đóng hộp thoại' },
 ];
 
 const UI_MODE_OPTIONS: Array<{
   id: UiMode;
   title: string;
-  badge: string;
-  desc: string;
   icon: React.ReactNode;
 }> = [
   {
     id: 'fabulous',
     title: 'Fabulous',
-    badge: '100% PinUI & CodeFronts',
-    desc: 'Kích hoạt 100% tài nguyên UI cao cấp từ PinUI, ThreeUI, Glacier & CodeFronts trên Tìm kiếm, Thanh điều hướng, Chat, Tri thức & Workspace.',
     icon: (
       <svg className="st-uimode-svg" viewBox="0 0 32 32" fill="none" aria-hidden="true">
         <path
@@ -257,8 +244,6 @@ const UI_MODE_OPTIONS: Array<{
   {
     id: 'balanced',
     title: 'Balanced',
-    badge: 'Mặc định',
-    desc: 'Cân bằng thẩm mỹ & hiệu năng mặc định của F-Forum.',
     icon: (
       <svg className="st-uimode-svg" viewBox="0 0 32 32" fill="none" aria-hidden="true">
         <circle cx="12.5" cy="16" r="7.5" stroke="currentColor" strokeWidth="1.75" />
@@ -270,8 +255,6 @@ const UI_MODE_OPTIONS: Array<{
   {
     id: 'eco',
     title: 'Eco',
-    badge: 'Tiết kiệm pin',
-    desc: 'Tiết kiệm pin, tắt nền video/WebGL & chuyển động nặng.',
     icon: (
       <svg className="st-uimode-svg" viewBox="0 0 32 32" fill="none" aria-hidden="true">
         <path
@@ -425,42 +408,37 @@ export const SettingsView: React.FC = () => {
     () => [
       {
         pos: 1,
-        label: 'Ngăn 1 · Dự án Workspace',
-        summary: `${projects.length} dự án đang lưu cục bộ trên trình duyệt.`,
+        label: 'Dự án Workspace',
         actionLabel: 'Mở Workspace',
         run: () => navigate('workspace'),
       },
       {
         pos: 2,
-        label: 'Ngăn 2 · Mục đã lưu',
-        summary: `${savedItemIds.length} thành phần & mẫu được đánh dấu bookmark.`,
+        label: 'Mục đã lưu',
         actionLabel: 'Xem trong Hồ sơ',
         run: () => navigate('profile'),
       },
       {
         pos: 3,
-        label: 'Ngăn 3 · Xuất tệp sao lưu JSON',
-        summary: 'Đóng gói dự án, thiết lập giao diện và bookmark (không chứa API key).',
+        label: 'Tải sao lưu JSON',
         actionLabel: 'Tải JSON',
         run: handleExportDownload,
       },
       {
         pos: 4,
-        label: 'Ngăn 4 · Sao chép JSON nhanh',
-        summary: 'Chép toàn bộ bản sao lưu cấu hình vào clipboard chỉ với một lần bấm.',
+        label: 'Sao chép JSON',
         actionLabel: 'Chép JSON',
         run: () => void handleCopyJson(),
       },
       {
         pos: 5,
-        label: 'Ngăn 5 · Khôi phục / Đặt lại mặc định',
-        summary: 'Xóa dữ liệu cục bộ để đưa Workspace và Cài đặt về trạng thái sạch.',
+        label: 'Đặt lại dữ liệu',
         actionLabel: 'Đặt lại dữ liệu',
         danger: true,
         run: () => setConfirmReset(true),
       },
     ],
-    [projects.length, savedItemIds.length, navigate, handleExportDownload, handleCopyJson]
+    [navigate, handleExportDownload, handleCopyJson]
   );
 
   const activeArchiveFolder = archiveFolders[Math.max(0, Math.min(4, dataFolderPos - 1))];
@@ -542,15 +520,12 @@ export const SettingsView: React.FC = () => {
           {activeSection === 'appearance' && (
             <div className="st-stack">
               <header className="st-section-head">
-                <div>
-                  <h2 className="st-section-title">Giao diện & Hình nền</h2>
-                  <p className="st-hint">Chọn chế độ hiệu ứng, sắc độ Sáng / Tối, cỡ chữ và nền hiển thị.</p>
-                </div>
+                <h2 className="st-section-title">Giao diện &amp; Hình nền</h2>
               </header>
 
-              <section className="st-panel" aria-label="Chế độ Giao diện và Hiệu ứng">
+              <section className="st-panel" aria-label="Chế độ giao diện">
                 <div className="st-panel-label">
-                  <span>Chế độ Giao diện & Hiệu ứng (Fabulous / Balanced / Eco)</span>
+                  <span>Chế độ giao diện</span>
                 </div>
                 <div className="st-uimode-grid" role="radiogroup" aria-label="Chọn chế độ giao diện">
                   {UI_MODE_OPTIONS.map((opt) => {
@@ -567,17 +542,12 @@ export const SettingsView: React.FC = () => {
                           updateSettings({ uiMode: opt.id });
                           addToast({
                             type: 'info',
-                            title: `Đã chuyển sang chế độ ${opt.title}`,
-                            message: opt.desc,
+                            title: opt.title,
                           });
                         }}
                       >
-                        <div className="st-uimode-top">
-                          <span className="st-uimode-icon">{opt.icon}</span>
-                          <span className="st-uimode-badge">{opt.badge}</span>
-                        </div>
+                        <span className="st-uimode-icon">{opt.icon}</span>
                         <strong className="st-uimode-title">{opt.title}</strong>
-                        <p className="st-uimode-desc">{opt.desc}</p>
                       </button>
                     );
                   })}
@@ -615,10 +585,7 @@ export const SettingsView: React.FC = () => {
 
               <section className="st-card" aria-label="Chủ đề Sáng Tối và hiệu ứng">
                 <div className="st-row st-row--first">
-                  <div>
-                    <span className="st-label">Chế độ Sáng / Tối</span>
-                    <p className="st-hint">Đồng bộ trực tiếp với nút Đêm / Ngày trên thanh điều hướng.</p>
-                  </div>
+                  <span className="st-label">Chế độ Sáng / Tối</span>
                   <Chips
                     items={THEME_PREF_CHIPS}
                     selectedIds={[currentThemePref]}
@@ -629,10 +596,7 @@ export const SettingsView: React.FC = () => {
                 </div>
 
                 <div className="st-row">
-                  <div>
-                    <span className="st-label">Hiệu ứng chuyển Sáng / Tối toàn trang</span>
-                    <p className="st-hint">Hiệu ứng chuyển cảnh khi đổi giữa giao diện Sáng và Tối.</p>
-                  </div>
+                  <span className="st-label">Hiệu ứng chuyển cảnh</span>
                   <Chips
                     items={EFFECT_CHIPS}
                     selectedIds={[currentEffect]}
@@ -643,10 +607,7 @@ export const SettingsView: React.FC = () => {
                 </div>
 
                 <div className="st-row">
-                  <div>
-                    <span className="st-label">Mẫu hình nền</span>
-                    <p className="st-hint">Chọn lớp nền hiển thị khi chế độ Eco chưa bật.</p>
-                  </div>
+                  <span className="st-label">Mẫu hình nền</span>
                   <select
                     className="st-select"
                     aria-label="Chọn mẫu hình nền"
@@ -672,7 +633,7 @@ export const SettingsView: React.FC = () => {
 
                 <div className="st-grid-2">
                   <div className="st-toggleCard">
-                    <span className="st-label">Nền động mượt (Crossfade Loop)</span>
+                    <span className="st-label">Nền động mượt</span>
                     <button
                       type="button"
                       role="switch"
@@ -718,9 +679,8 @@ export const SettingsView: React.FC = () => {
             <section id="st-workspace" className="st-card" aria-labelledby={idFor('workspace')}>
               <div className="st-cardHead">
                 <h2 className="st-cardTitle" id={idFor('workspace')}>
-                  Workspace & Vibe Coder
+                  Workspace
                 </h2>
-                <span className="tag st-mono">{defaultViewport}px</span>
               </div>
 
               <div className="st-row st-row--first">
@@ -779,11 +739,9 @@ export const SettingsView: React.FC = () => {
             <section id="st-ai" className="st-card" aria-labelledby={idFor('ai')}>
               <div className="st-cardHead">
                 <h2 className="st-cardTitle" id={idFor('ai')}>
-                  AI Gateway & BYOK
+                  AI &amp; BYOK
                 </h2>
-                <span className={`tag ${!quota.unlimited && quota.exhausted ? 'tag-red' : 'tag-green'}`}>
-                  {quotaText}
-                </span>
+                <span className="st-head-meta st-mono">{quotaText}</span>
               </div>
 
               <div className="st-row st-row--first">
@@ -824,7 +782,7 @@ export const SettingsView: React.FC = () => {
               {byok.enabled && (
                 <div className="st-grid-2">
                   <label className="st-block" htmlFor={idFor('model')}>
-                    <span className="st-label">Tên mô hình tùy chỉnh</span>
+                    <span className="st-label">Tên mô hình</span>
                     <input
                       id={idFor('model')}
                       type="text"
@@ -849,7 +807,7 @@ export const SettingsView: React.FC = () => {
 
                   <div className="st-block st-span2">
                     <label className="st-label" htmlFor={idFor('key')}>
-                      Khóa API cá nhân
+                      Khóa API
                     </label>
                     <div className="st-secret">
                       <input
@@ -873,9 +831,6 @@ export const SettingsView: React.FC = () => {
                         {showApiKey ? <EyeOff size={18} aria-hidden="true" /> : <Eye size={18} aria-hidden="true" />}
                       </button>
                     </div>
-                    {!byok.apiKey.trim() && (
-                      <p className="st-note">Chưa có khóa API, hệ thống dùng Gateway mặc định nếu còn lượt.</p>
-                    )}
                   </div>
                 </div>
               )}
@@ -886,9 +841,9 @@ export const SettingsView: React.FC = () => {
             <section id="st-data" className="st-card" aria-labelledby={idFor('data')}>
               <div className="st-cardHead">
                 <h2 className="st-cardTitle" id={idFor('data')}>
-                  Kho lưu trữ &amp; Sao lưu cục bộ
+                  Dữ liệu &amp; Sao lưu
                 </h2>
-                <span className="tag st-mono">
+                <span className="st-head-meta st-mono">
                   {projects.length} dự án · {savedItemIds.length} mục
                 </span>
               </div>
@@ -899,11 +854,10 @@ export const SettingsView: React.FC = () => {
                     theme={theme}
                     onPull={({ position }) => setDataFolderPos(position)}
                   />
-                  <span className="st-archive-cap">Kéo từng ngăn màu để mở nhanh dữ liệu lưu trữ</span>
                 </div>
 
                 <div className="st-archive-detail">
-                  <div className="st-archive-pills" role="tablist" aria-label="5 ngăn lưu trữ cục bộ">
+                  <div className="st-archive-pills" role="tablist" aria-label="Ngăn lưu trữ">
                     {archiveFolders.map((item) => (
                       <button
                         key={item.pos}
@@ -920,7 +874,6 @@ export const SettingsView: React.FC = () => {
 
                   <div className="st-archive-panel">
                     <h3>{activeArchiveFolder.label}</h3>
-                    <p className="st-hint">{activeArchiveFolder.summary}</p>
                     <div className="st-exportActions">
                       <button
                         type="button"
@@ -939,10 +892,10 @@ export const SettingsView: React.FC = () => {
                   </div>
 
                   <div className="st-block">
-                    <span className="st-label">Khôi phục từ tệp JSON</span>
+                    <span className="st-label">Khôi phục JSON</span>
                     <DynamicDropZone
-                      label="Kéo thả tệp JSON sao lưu vào đây"
-                      hintText="Định dạng .json · Chỉ khôi phục cấu hình & dự án cục bộ"
+                      label="Chọn hoặc thả tệp JSON"
+                      hintText=""
                       accept=".json,application/json"
                       multiple={false}
                       onFilesAdded={handleFilesDropped}

@@ -375,12 +375,13 @@ describe('Vault Hydration & Anti-Arena Regression Suite', () => {
       'TidewellStage must not contain Reelmark branding or copy'
     );
     assert.ok(
-      tidewellTsx.includes('Chạm Mẫu Sống,') && tidewellTsx.includes('Học Từ Bản Gốc'),
-      'TidewellStage must render the F-Forum Vietnamese editorial headline'
+      tidewellTsx.includes('Dùng Thử Trực Tiếp') && tidewellTsx.includes('Trên Trình Duyệt'),
+      'TidewellStage must render the updated concise F-Forum Vietnamese headline'
     );
-    assert.ok(
-      tidewellTsx.includes('&lt;-') && tidewellTsx.includes('-&gt;'),
-      'TidewellStage must provide <- and -> navigation buttons'
+    assert.equal(
+      tidewellTsx.includes('Trộn ngẫu nhiên') || tidewellTsx.includes('rm-subline'),
+      false,
+      'TidewellStage must remove subline copy and prev/next/shuffle controls in favor of direct trial trigger'
     );
     assert.ok(
       tidewellTsx.includes('key={idx}') && !tidewellTsx.includes('key={`${card.id}-${idx}`}'),

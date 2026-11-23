@@ -782,14 +782,15 @@
   .st-uimode-card {
     display: flex;
     flex-direction: column;
-    align-items: flex-start;
-    gap: 8px;
-    padding: 16px;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 18px 16px;
     border-radius: 16px;
     border: 1px solid var(--line);
     background: color-mix(in srgb, var(--bg-sunken) 78%, transparent);
     color: var(--fg);
-    text-align: left;
+    text-align: center;
     cursor: pointer;
     transition:
       border-color var(--dur-1) var(--ease-ux),
@@ -809,19 +810,11 @@
     box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.14);
   }
 
-  .st-uimode-top {
-    width: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 8px;
-  }
-
   .st-uimode-icon {
     display: inline-grid;
     place-items: center;
-    width: 40px;
-    height: 40px;
+    width: 44px;
+    height: 44px;
     border-radius: 12px;
     border: 1px solid var(--line);
     background: var(--bg-card-surface);
@@ -834,24 +827,8 @@
   }
 
   .st-uimode-svg {
-    width: 22px;
-    height: 22px;
-  }
-
-  .st-uimode-badge {
-    font-family: var(--font-mono);
-    font-size: 10.5px;
-    font-weight: 600;
-    padding: 3px 8px;
-    border-radius: var(--radius-pill);
-    border: 1px solid var(--line);
-    color: var(--fg-muted);
-    background: var(--bg-card-surface);
-  }
-
-  .st-uimode-card[aria-checked='true'] .st-uimode-badge {
-    border-color: color-mix(in srgb, var(--accent, #2fb59a) 45%, transparent);
-    color: var(--accent, #2fb59a);
+    width: 24px;
+    height: 24px;
   }
 
   .st-uimode-title {
@@ -861,10 +838,9 @@
     color: var(--fg);
   }
 
-  .st-uimode-desc {
-    margin: 0;
+  .st-head-meta {
     font-size: var(--text-xs);
-    line-height: 1.5;
+    font-weight: 600;
     color: var(--fg-muted);
   }
 

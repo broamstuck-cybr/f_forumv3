@@ -1,17 +1,17 @@
 import React, { useEffect, useId, useMemo, useRef, useState } from 'react';
 import {
-  AlertTriangle,
   ArrowUpRight,
   CheckCircle2,
   ChevronDown,
   ChevronsLeft,
   ChevronsRight,
+  Compass,
+  KeyRound,
   Layers,
   PanelLeft,
   PanelLeftClose,
   Share2,
   SlidersHorizontal,
-  Wrench,
   X,
 } from 'lucide-react';
 import { DynamicDropZone } from '../../components/pinui/DynamicDropZone';
@@ -33,7 +33,6 @@ import type { ReviewTab } from './ReviewZone';
 import {
   stripModeTag,
   Thread,
-  type StarterPrompt,
 } from './Thread';
 import { useMediaQuery } from './useMediaQuery';
 import './workspace.css';
@@ -50,24 +49,6 @@ const MODEL_OPTIONS = [
   { id: 'gemini-2.5-flash', name: 'Gemini 2.5 Flash', note: 'Phản hồi nhanh' },
   { id: 'gemini-2.5-pro', name: 'Gemini 2.5 Pro', note: 'Tư duy hệ thống' },
   { id: 'claude-sonnet-4-5', name: 'Claude Sonnet 4.5', note: 'Giao diện tinh gọn' },
-];
-
-const STARTERS: StarterPrompt[] = [
-  {
-    label: 'Lịch sinh hoạt CLB & Đăng ký',
-    prompt:
-      'Tạo trang câu lạc bộ gồm lịch họp theo tuần, bộ lọc sự kiện theo chủ đề và form đăng ký tham gia có kiểm tra email.',
-  },
-  {
-    label: 'Bảng điểm & Xếp hạng lớp',
-    prompt:
-      'Thiết kế bảng tra cứu điểm môn học: ô tìm theo tên, sắp xếp điểm trung bình tăng giảm và hiển thị gọn trên màn hình 390px.',
-  },
-  {
-    label: 'Hồ sơ dự án cá nhân',
-    prompt:
-      'Xây trang hồ sơ kỹ sư phần mềm với thẻ dự án chuyển tab theo công nghệ, mục kinh nghiệm làm việc và biểu mẫu liên hệ trực tiếp.',
-  },
 ];
 
 const COMMUNITY_POSTS_STORAGE_KEY = 'fforum_v3_community_posts_v7';
@@ -138,34 +119,30 @@ function prependCommunityPostToLocalStorage(post: CommunityPost): void {
   }
 }
 
-function buildEvalRepairPrompt(project: WorkspaceProject): string {
-  const report = project.checksReport;
-  if (!report) return '';
-  const flagged = report.results.filter(
-    (entry) => entry.status === 'fail' || entry.status === 'warn'
-  );
-  if (flagged.length === 0) return '';
+function hasRealWorkspaceContent(project: WorkspaceProject): boolean {
+  if (project.files.length === 0) return false;
+  if (project.attachedItems.length > 0) return true;
+  if (project.files.length > 3) return true;
 
-  const lines = flagged.map((entry) => {
-    const tag = entry.status === 'fail' ? 'LỖI' : 'CẢNH BÁO';
-    const details =
-      entry.issues.length > 0
-        ? entry.issues
-            .slice(0, 3)
-            .map((issue) =>
-              issue.line
-                ? `${issue.file}:${issue.line} (${issue.message})`
-                : `${issue.file} (${issue.message})`
-            )
-            .join('; ')
-        : entry.summary;
-    return `- [${tag}] ${entry.title}: ${details}`;
-  });
+  for (const file of project.files) {
+    if (file.path !== 'index.html' && file.path !== 'styles.css' && file.path !== 'app.js') {
+      return true;
+    }
+    if (file.path === 'styles.css' || file.path === 'app.js') {
+      if (file.content.trim().length > 0) return true;
+    }
+    if (file.path === 'index.html') {
+      const bodyMatch = /<body[^>]*>([\s\S]*?)<\/body>/i.exec(file.content);
+      const bodyInner = (bodyMatch ? bodyMatch[1] : file.content)
+        .replace(/<script\b[^>]*src=["'](?:\.\/)?app\.js["'][^>]*>\s*<\/script>/gi, '')
+        .trim();
+      if (bodyInner.length > 0) return true;
+      const titleMatch = /<title>([\s\S]*?)<\/title>/i.exec(file.content);
+      if (titleMatch && titleMatch[1].trim() !== 'Dự án mới') return true;
+    }
+  }
 
-  return [
-    'Sửa toàn bộ lỗi và cảnh báo kiểm định 6 lớp bên dưới, giữ nguyên bố cục đang hoạt động ổn định:',
-    ...lines,
-  ].join('\n');
+  return false;
 }
 
 export const WorkspaceView: React.FC = () => {
@@ -225,18 +202,10 @@ export const WorkspaceView: React.FC = () => {
   const [agentMode, setAgentMode] = useState<AgentExecutionMode>('Build');
   const [selectedModel, setSelectedModel] = useState('auto');
 
-  const hasGeneratedArtifact = useMemo(() => {
-    if (activeProject.files.length === 0) return false;
-    const hasUserTurn = activeProject.messages.some((m) => m.role === 'user');
-    const hasAiReply = activeProject.messages.some(
-      (m) => m.role === 'assistant' && m.id !== 'msg-welcome'
-    );
-    const hasRealFileChanges =
-      activeProject.diffs.some((d) => d.additions > 0 || d.deletions > 0) ||
-      activeProject.files.length > 3 ||
-      activeProject.processes.some((p) => p.kind === 'setup_bundle' || p.kind === 'ai_generation');
-    return hasUserTurn || hasAiReply || hasRealFileChanges;
-  }, [activeProject]);
+  const hasGeneratedArtifact = useMemo(
+    () => hasRealWorkspaceContent(activeProject),
+    [activeProject]
+  );
 
   const [rightMode, setRightMode] = useState<'compact' | 'split' | 'closed'>(() =>
     hasGeneratedArtifact ? 'split' : 'closed'
@@ -380,9 +349,6 @@ export const WorkspaceView: React.FC = () => {
   const stageDataAttr = !isDesktop ? 'open' : rightMode;
   const threadHidden = !isDesktop && mobilePane !== 'chat';
   const stageHidden = (isDesktop && rightMode === 'closed') || (!isDesktop && mobilePane !== 'stage');
-  const evalFailCount = activeProject.checksReport?.failCount ?? 0;
-  const evalWarnCount = activeProject.checksReport?.warnCount ?? 0;
-  const hasEvalIssues = evalFailCount > 0 || evalWarnCount > 0;
   const checksPassLabel = activeProject.checksReport
     ? `${activeProject.checksReport.passCount}/${activeProject.checksReport.results.length} phép kiểm đạt`
     : 'Kiểm định 6 lớp';
@@ -405,11 +371,6 @@ export const WorkspaceView: React.FC = () => {
   const handleRegenerate = () => {
     if (isGenerating || quotaBlocked) return;
     void regenerateLastPrompt({ model: selectedModel, agentMode });
-  };
-
-  const handlePickStarter = (prompt: string) => {
-    setComposerValue(prompt);
-    dockRef.current?.querySelector<HTMLElement>('input, textarea')?.focus();
   };
 
   const handleExportZip = async () => {
@@ -503,14 +464,6 @@ export const WorkspaceView: React.FC = () => {
     if (!isDesktop) {
       setMobilePane('stage');
     }
-  };
-
-  const handleGenerateFixPrompt = () => {
-    const prompt = buildEvalRepairPrompt(activeProject);
-    if (!prompt) return;
-    setAgentMode('Refine');
-    setComposerValue(prompt);
-    dockRef.current?.querySelector<HTMLElement>('textarea, input')?.focus();
   };
 
   const openPublishModal = () => {
@@ -839,9 +792,9 @@ export const WorkspaceView: React.FC = () => {
               <button
                 type="button"
                 className="ws-icon-pill ws-icon-pill--sm"
-                aria-label={rightOpen ? 'Thu gọn panel workspace phải' : 'Mở panel workspace phải'}
-                title={rightOpen ? 'Thu gọn panel phải' : 'Mở panel phải'}
-                onClick={() => setRightMode(rightOpen ? 'closed' : 'compact')}
+                aria-label={rightOpen ? 'Thu gọn panel workspace phải' : 'Mở panel xem trước & mã nguồn'}
+                title={rightOpen ? 'Đóng Xem trước & Mã nguồn' : 'Mở Xem trước & Mã nguồn'}
+                onClick={() => setRightMode(rightOpen ? 'closed' : 'split')}
               >
                 {rightOpen ? (
                   <ChevronsRight size={15} aria-hidden="true" />
@@ -860,8 +813,9 @@ export const WorkspaceView: React.FC = () => {
           streamingPreview={aiStreamingPreview}
           modelUsed={aiModelUsed}
           userName={formatUserDisplayName(currentUser?.name, 'Bạn')}
-          starters={STARTERS}
-          onPickStarter={handlePickStarter}
+          onOpenByok={() => setSetupDrawerOpen(true)}
+          onOpenExplore={() => navigate('explore')}
+          onOpenUpload={() => setDropZoneOpen(true)}
           onOpenFile={handleOpenFileInStage}
           onOpenPreview={handleOpenPreviewStage}
           onOpenDiff={handleOpenDiffStage}
@@ -948,30 +902,6 @@ export const WorkspaceView: React.FC = () => {
               </div>
             )}
 
-            {hasEvalIssues && (
-              <div
-                className="ws-eval-bar"
-                data-severity={evalFailCount > 0 ? 'fail' : 'warn'}
-                role="status"
-              >
-                <span className="ws-eval-msg">
-                  <AlertTriangle size={14} aria-hidden="true" />
-                  <span>
-                    Phát hiện {evalFailCount} lỗi / {evalWarnCount} cảnh báo kiểm định
-                  </span>
-                </span>
-                <button
-                  type="button"
-                  className="ws-eval-btn"
-                  onClick={handleGenerateFixPrompt}
-                  disabled={isGenerating}
-                >
-                  <Wrench size={13} aria-hidden="true" />
-                  <span>Tạo lệnh sửa lỗi</span>
-                </button>
-              </div>
-            )}
-
             <div className="ws-arena-composer-shell">
               <div className="ws-arena-repo-strip">
                 <div className="ws-arena-repo-pills">
@@ -979,31 +909,58 @@ export const WorkspaceView: React.FC = () => {
                     <Layers size={12} aria-hidden="true" />
                     <span>{activeProject.name}</span>
                   </span>
-                  <span className="ws-arena-branch-name" title="Số tệp mã nguồn trong phiên">
-                    {activeProject.files.length} tệp
-                  </span>
+                  {hasGeneratedArtifact && (
+                    <span className="ws-arena-branch-name" title="Số tệp mã nguồn trong phiên">
+                      {activeProject.files.length} tệp
+                    </span>
+                  )}
                 </div>
 
                 <div className="ws-arena-actions">
-                  <button
-                    type="button"
-                    className="ws-arena-diff-pill"
-                    onClick={handleOpenDiffStage}
-                    title="Mở bảng đối chiếu Diff"
-                  >
-                    <span className="ws-add">+{diffTotals.added}</span>
-                    <span className="ws-del">−{diffTotals.removed}</span>
-                    <span aria-hidden="true">›</span>
-                  </button>
-                  <button
-                    type="button"
-                    className="ws-arena-action-btn ws-arena-action-btn--accent"
-                    onClick={handleShareToKnowledge}
-                    title="Chia sẻ mẫu giao diện này lên Tri thức cộng đồng"
-                  >
-                    <Share2 size={12} aria-hidden="true" />
-                    <span>Đăng Tri thức</span>
-                  </button>
+                  {hasGeneratedArtifact ? (
+                    <>
+                      <button
+                        type="button"
+                        className="ws-arena-diff-pill"
+                        onClick={handleOpenDiffStage}
+                        title="Mở bảng đối chiếu Diff"
+                      >
+                        <span className="ws-add">+{diffTotals.added}</span>
+                        <span className="ws-del">−{diffTotals.removed}</span>
+                        <span aria-hidden="true">›</span>
+                      </button>
+                      <button
+                        type="button"
+                        className="ws-arena-action-btn ws-arena-action-btn--accent"
+                        onClick={handleShareToKnowledge}
+                        title="Chia sẻ mẫu giao diện này lên Tri thức cộng đồng"
+                      >
+                        <Share2 size={12} aria-hidden="true" />
+                        <span>Đăng Tri thức</span>
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      <button
+                        type="button"
+                        className="ws-arena-action-btn"
+                        onClick={() => setSetupDrawerOpen(true)}
+                        title="Mở Cài đặt -> Khóa riêng (BYOK)"
+                      >
+                        <KeyRound size={12} aria-hidden="true" />
+                        <span>BYOK</span>
+                      </button>
+                      <button
+                        type="button"
+                        className="ws-arena-action-btn ws-arena-action-btn--accent"
+                        onClick={() => navigate('explore')}
+                        title="Duyệt và nạp mẫu thật từ Kho 7.662 mẫu"
+                      >
+                        <Compass size={12} aria-hidden="true" />
+                        <span>Kho 7.662 mẫu</span>
+                      </button>
+                    </>
+                  )}
                 </div>
               </div>
 

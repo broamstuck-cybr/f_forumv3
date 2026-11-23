@@ -16,6 +16,13 @@ export interface HonorMetric {
   value: string;
 }
 
+export interface HonorPhotoSpec {
+  src: string;
+  cropYStart?: number;
+  cropYEnd?: number;
+  focusY?: number;
+}
+
 export interface HonorExhibit {
   id: string;
   code: string;
@@ -25,6 +32,7 @@ export interface HonorExhibit {
   kicker: string;
   milestone: string;
   motif: HonorMotif;
+  photo?: HonorPhotoSpec;
   palette: {
     bgTop: string;
     bgBottom: string;
@@ -53,11 +61,17 @@ export const HONOR_EXHIBITS: HonorExhibit[] = [
     id: 'team-core',
     code: '01',
     title: 'Ban Phát Triển FPT Forum',
-    subtitle: 'Nhóm Kiến Trúc & Thi Công Nền Tảng',
-    track: 'Tập thể Tác giả · TH, THCS & THPT FPT',
-    kicker: 'HỒ SƠ SÁNG LẬP · 01',
+    subtitle: 'Kiến Trúc Giao Diện & Xưởng Lắp Ráp Mở',
+    track: 'Thành viên Sáng lập · TH, THCS & THPT FPT',
+    kicker: 'ĐỘI NGŨ PHÁT TRIỂN · 01',
     milestone: 'Phiên bản 3.0 · 2026',
     motif: 'compass',
+    photo: {
+      src: '/assets/team/member-1.jpg',
+      cropYStart: 0.0,
+      cropYEnd: 0.92,
+      focusY: 0.22,
+    },
     palette: {
       bgTop: '#101c1a',
       bgBottom: '#0a1211',
@@ -85,15 +99,103 @@ export const HONOR_EXHIBITS: HonorExhibit[] = [
       gratitude:
         'Tri ân các thành viên nòng cốt đã bền bỉ thử nghiệm qua từng bản dựng, giữ vững tinh thần làm sản phẩm thật phục vụ cộng đồng học sinh FPT.',
     },
-    relatedIds: ['mentors-council', 'system-architecture', 'open-assembly-roadmap'],
+    relatedIds: ['team-systems', 'team-ai-robotics', 'mentors-council'],
+  },
+  {
+    id: 'team-systems',
+    code: '02',
+    title: 'Đội Ngũ Kỹ Thuật & Dữ Liệu',
+    subtitle: 'Hạ Tầng Thử Nghiệm & Kiểm Chứng Thực Tế',
+    track: 'Thành viên Phát triển · TH, THCS & THPT FPT',
+    kicker: 'ĐỘI NGŨ PHÁT TRIỂN · 02',
+    milestone: '7.662 Mẫu · 195 Khảo sát',
+    motif: 'nodes',
+    photo: {
+      src: '/assets/team/member-2.jpg',
+      cropYStart: 0.04,
+      cropYEnd: 0.96,
+      focusY: 0.3,
+    },
+    palette: {
+      bgTop: '#f5f1e7',
+      bgBottom: '#e7e1d1',
+      ink: '#15201d',
+      muted: '#4d5d57',
+      accent: '#0b7a59',
+      secondary: '#9c622d',
+      frameTint: '#d8d0be',
+    },
+    metrics: [
+      { label: 'Thành phần đã kiểm', value: '7.662 UI' },
+      { label: 'Công cụ & Repo', value: '60 / 122' },
+      { label: 'Kiểm định tự động', value: '6 lớp' },
+    ],
+    options: {
+      roles: ['Kỹ sư Hệ thống', 'Phân tích Dữ liệu', 'Kiểm thử Giao diện'],
+      categories: ['Kho tài nguyên', 'Khảo sát học đường', 'Hiệu năng trình duyệt'],
+      phases: ['Thu thập dữ liệu', 'Chuẩn hóa shard', 'Kiểm thử đa màn hình'],
+    },
+    accordions: {
+      coreContribution:
+        'Phụ trách tổng hợp, phân loại và xác minh tính khả thi của từng mẫu giao diện, bảo đảm mọi tài nguyên hiển thị đều có mã nguồn đối chiếu và câu lệnh sử dụng minh bạch.',
+      architectureResults:
+        'Tổ chức dữ liệu theo các mảnh nén tải theo nhu cầu, kết hợp trình xem trước cô lập giúp học sinh thử nghiệm trực tiếp mà không phải cấu hình môi trường phức tạp.',
+      gratitude:
+        'Cảm ơn các bạn học sinh và thành viên câu lạc bộ đã trực tiếp tham gia thử nghiệm hiệu năng trên nhiều thiết bị thực tế.',
+    },
+    relatedIds: ['team-core', 'team-ai-robotics', 'research-195'],
+  },
+  {
+    id: 'team-ai-robotics',
+    code: '03',
+    title: 'Nghiên Cứu AI & Robotics',
+    subtitle: 'Ứng Dụng Tư Duy Kỹ Thuật & Giao Lưu Quốc Tế',
+    track: 'Thành viên Nghiên cứu · TH, THCS & THPT FPT',
+    kicker: 'ĐỘI NGŨ PHÁT TRIỂN · 03',
+    milestone: 'AI & Robotics · 2026',
+    motif: 'spiral',
+    photo: {
+      src: '/assets/team/member-3.png',
+      cropYStart: 0.24,
+      cropYEnd: 0.84,
+      focusY: 0.52,
+    },
+    palette: {
+      bgTop: '#161b22',
+      bgBottom: '#0d1217',
+      ink: '#f3f6f4',
+      muted: '#a4b4be',
+      accent: '#38c99a',
+      secondary: '#7aa8b8',
+      frameTint: '#242d37',
+    },
+    metrics: [
+      { label: 'Lĩnh vực nghiên cứu', value: 'AI & Robotics' },
+      { label: 'Chế độ giao diện', value: 'Eco / Balanced / Fab' },
+      { label: 'Định hướng', value: 'Học tập chủ động' },
+    ],
+    options: {
+      roles: ['Nghiên cứu AI', 'Thiết kế Tương tác', 'Thử nghiệm Ứng dụng'],
+      categories: ['Tư duy phản biện', 'Tương tác 3D', 'Giáo dục STEM'],
+      phases: ['Nghiên cứu nền tảng', 'Thử nghiệm mô hình', 'Chia sẻ cộng đồng'],
+    },
+    accordions: {
+      coreContribution:
+        'Kết nối tinh thần nghiên cứu AI & Robotics học đường vào trải nghiệm thiết kế web, khuyến khích học sinh hiểu nguyên lý hoạt động bên dưới thay vì sao chép kết quả có sẵn.',
+      architectureResults:
+        'Đóng góp ý tưởng cho các chế độ hiển thị thích ứng và trải nghiệm tương tác trực quan, giúp người học quan sát trực tiếp cấu trúc mã nguồn song song với kết quả hiển thị.',
+      gratitude:
+        'Trân trọng cảm ơn gia đình, thầy cô và bạn bè đã luôn đồng hành, khích lệ tinh thần sáng tạo khoa học kỹ thuật qua từng cuộc thi và dự án.',
+    },
+    relatedIds: ['team-core', 'team-systems', 'anti-slop-engine'],
   },
   {
     id: 'mentors-council',
-    code: '02',
+    code: '04',
     title: 'Hội Đồng Thầy Cô Cố Vấn',
     subtitle: 'Định Hướng Sư Phạm & Khoa Học Kỹ Thuật',
     track: 'Cố vấn Chuyên môn · TH, THCS & THPT FPT',
-    kicker: 'TRI ÂN CỐ VẤN · 02',
+    kicker: 'TRI ÂN CỐ VẤN · 04',
     milestone: 'Đồng hành xuyên suốt',
     motif: 'pillars',
     palette: {
@@ -119,19 +221,19 @@ export const HONOR_EXHIBITS: HonorExhibit[] = [
       coreContribution:
         'Định hướng câu hỏi nghiên cứu cốt lõi: làm thế nào để học sinh sử dụng AI như một công cụ nâng cao năng lực thiết kế và tư duy phản biện thay vì sao chép thụ động.',
       architectureResults:
-        'Chuẩn hóa khung đánh giá sản phẩm theo tiêu chí minh bạch, yêu cầu mọi mẫu giao diện đều có giải thích cấu trúc, mã nguồn đối chiếu và câu lệnh gợi ý rõ ràng.',
+        'Chuẩn hóa khung đánh giá sản phẩm theo tiêu chí minh bạch, yêu cầu mọi mẫu giao diện đều có cấu trúc rõ ràng, mã nguồn đối chiếu và câu lệnh gợi ý cụ thể.',
       gratitude:
         'Xin gửi lời cảm ơn sâu sắc tới quý thầy cô đã kiên nhẫn lắng nghe, góp ý từng chi tiết nhỏ từ bố cục câu hỏi khảo sát đến quy trình kiểm thử thực tế.',
     },
-    relatedIds: ['research-195', 'team-core', 'community-hub'],
+    relatedIds: ['research-195', 'team-core', 'system-architecture'],
   },
   {
     id: 'research-195',
-    code: '03',
+    code: '05',
     title: 'Khảo Sát 195 Học Sinh',
     subtitle: 'Dữ Liệu Thực Chứng & Đối Chiếu OECD PISA 2025',
     track: 'Nhóm Nghiên cứu Khoa học · FPT Schools',
-    kicker: 'BẰNG CHỨNG THỰC NGHIỆM · 03',
+    kicker: 'BẰNG CHỨNG THỰC NGHIỆM · 05',
     milestone: '195 phiếu hợp lệ · 91,2%',
     motif: 'chart195',
     palette: {
@@ -165,11 +267,11 @@ export const HONOR_EXHIBITS: HonorExhibit[] = [
   },
   {
     id: 'system-architecture',
-    code: '04',
+    code: '06',
     title: 'Kiến Trúc Lõi & Đồng Bộ',
     subtitle: 'Cầu Nối API Bảo Mật & Workspace Thời Gian Thực',
     track: 'Nhóm Hạ tầng Kỹ thuật · Core Runtime',
-    kicker: 'HẠ TẦNG HỆ THỐNG · 04',
+    kicker: 'HẠ TẦNG HỆ THỐNG · 06',
     milestone: 'Node + React 19 + Vite',
     motif: 'lattice',
     palette: {
@@ -203,11 +305,11 @@ export const HONOR_EXHIBITS: HonorExhibit[] = [
   },
   {
     id: 'anti-slop-engine',
-    code: '05',
+    code: '07',
     title: 'Động Cơ Chống "AI Slop"',
     subtitle: 'Chuẩn Kiểm Định 6 Lớp & Kỷ Luật Thiết Kế',
     track: 'Nhóm Chất lượng Mã & Thẩm mỹ · QA Gate',
-    kicker: 'TIÊU CHUẨN CHẤT LƯỢNG · 05',
+    kicker: 'TIÊU CHUẨN CHẤT LƯỢNG · 07',
     milestone: 'Zero-Slop · 6 Layers',
     motif: 'prism',
     palette: {
@@ -241,11 +343,11 @@ export const HONOR_EXHIBITS: HonorExhibit[] = [
   },
   {
     id: 'ui-vault-7662',
-    code: '06',
+    code: '08',
     title: 'Kho 7.662 Mẫu Giao Diện',
     subtitle: 'Bản Địa Hóa 6 Thư Viện UI/UX Mở Hàng Đầu',
     track: 'Nhóm Thẩm mỹ & Biên soạn · Design Vault',
-    kicker: 'TỦ SÁCH TÀI NGUYÊN · 06',
+    kicker: 'TỦ SÁCH TÀI NGUYÊN · 08',
     milestone: '7.662 UI · 60 Công cụ · 122 Repo',
     motif: 'grid7662',
     palette: {
@@ -275,15 +377,15 @@ export const HONOR_EXHIBITS: HonorExhibit[] = [
       gratitude:
         'Tri ân các tác giả mã nguồn mở theo giấy phép MIT và nhóm biên soạn đã kiểm duyệt từng mẫu để bảo đảm tính minh bạch về bản quyền và chất lượng.',
     },
-    relatedIds: ['anti-slop-engine', 'research-195', 'open-assembly-roadmap'],
+    relatedIds: ['anti-slop-engine', 'research-195', 'security-shield'],
   },
   {
     id: 'security-shield',
-    code: '07',
-    title: 'Lá Chắn Bảo Mật & Riêng Tư',
-    subtitle: 'Rà Quét Bí Mật, Kiểm Duyệt AI & Bảo Vệ Phiên',
-    track: 'Nhóm An toàn Thông tin · Security Guard',
-    kicker: 'AN TOÀN HỆ THỐNG · 07',
+    code: '09',
+    title: 'Lá Chắn Bảo Mật & Cộng Đồng Mở',
+    subtitle: 'Rà Quét Bí Mật, Sandbox Cô Lập & Chia Sẻ Học Thuật',
+    track: 'An toàn Hệ thống & Cộng đồng · F-Forum',
+    kicker: 'BẢO MẬT & CỘNG ĐỒNG · 09',
     milestone: 'Zero Secret Leak',
     motif: 'shield',
     palette: {
@@ -297,99 +399,23 @@ export const HONOR_EXHIBITS: HonorExhibit[] = [
     },
     metrics: [
       { label: 'Rà quét khóa API', value: 'Trước khi xuất ZIP' },
-      { label: 'Cô lập xem trước', value: 'Không same-origin' },
-      { label: 'Kiểm duyệt diễn đàn', value: 'Lọc spam tự động' },
+      { label: 'Cô lập xem trước', value: 'Sandbox an toàn' },
+      { label: 'Lưu giữ tri thức', value: 'Học liệu mở' },
     ],
     options: {
-      roles: ['Chuyên trách Bảo mật', 'Kiểm duyệt Nội dung', 'Quản trị Dữ liệu'],
-      categories: ['Secret Scanner', 'Sandbox Isolation', 'Chống Spam Cộng đồng'],
-      phases: ['Rà soát đầu cuối', 'Khóa đường dẫn rò rỉ', 'Kiểm thử xâm nhập'],
+      roles: ['Chuyên trách Bảo mật', 'Điều phối Cộng đồng', 'Quản trị Dữ liệu'],
+      categories: ['Secret Scanner', 'Sandbox Isolation', 'Hồ sơ CLB'],
+      phases: ['Rà soát đầu cuối', 'Khóa đường dẫn rò rỉ', 'Chuyển giao tri thức'],
     },
     accordions: {
       coreContribution:
-        'Xây dựng hàng rào bảo vệ đa tầng: trình quét khóa bí mật trước khi đóng gói ZIP, tách biệt khung xem trước khỏi dữ liệu phiên và bộ lọc nội dung tự động cho diễn đàn.',
+        'Xây dựng hàng rào bảo vệ đa tầng: trình quét khóa bí mật trước khi đóng gói ZIP, tách biệt khung xem trước khỏi dữ liệu phiên và giữ không gian trao đổi học thuật lành mạnh.',
       architectureResults:
         'Đảm bảo mọi cấu hình khóa API cá nhân chỉ lưu cục bộ trên trình duyệt người dùng, không rò rỉ thông tin nhạy cảm vào lịch sử mã nguồn hay tệp báo cáo.',
       gratitude:
-        'Cảm ơn các thành viên phụ trách an toàn hệ thống đã luôn đặt sự an tâm của thầy cô và học sinh lên hàng đầu trong mọi bản cập nhật.',
+        'Cảm ơn các thành viên phụ trách an toàn hệ thống và cộng đồng câu lạc bộ công nghệ đã luôn đặt sự an tâm của thầy cô và học sinh lên hàng đầu.',
     },
-    relatedIds: ['system-architecture', 'community-hub', 'anti-slop-engine'],
-  },
-  {
-    id: 'community-hub',
-    code: '08',
-    title: 'Không Gian Tri Thức Mở',
-    subtitle: 'Hỏi Đáp, Hộp Cát Showcase & Chuyển Giao CLB',
-    track: 'Nhóm Cộng đồng Học thuật · Community Hub',
-    kicker: 'KẾT NỐI CỘNG ĐỒNG · 08',
-    milestone: '4 Kênh · Học liệu Mở',
-    motif: 'nodes',
-    palette: {
-      bgTop: '#f3efe6',
-      bgBottom: '#e3ddd0',
-      ink: '#141c1a',
-      muted: '#4d5b56',
-      accent: '#0b7a59',
-      secondary: '#7aa8b8',
-      frameTint: '#d2cab8',
-    },
-    metrics: [
-      { label: 'Kênh chuyên môn', value: 'Hỏi đáp · Drops' },
-      { label: 'Hồ sơ CLB', value: 'Bàn giao minh bạch' },
-      { label: 'Trình diễn mã', value: 'Hộp cát trực tiếp' },
-    ],
-    options: {
-      roles: ['Điều phối Cộng đồng', 'Biên tập Học liệu', 'Chủ nhiệm CLB'],
-      categories: ['Hỏi đáp Kỹ thuật', 'Showcase Mã nguồn', 'Hồ sơ Chuyển giao'],
-      phases: ['Khởi tạo diễn đàn', 'Gắn kết CLB', 'Lưu giữ tri thức'],
-    },
-    accordions: {
-      coreContribution:
-        'Xây dựng văn hóa chia sẻ học thuật lành mạnh: câu hỏi kỹ thuật có giải pháp được chấp nhận, bản trình diễn chạy trực tiếp và hồ sơ bàn giao dự án giữa các thế hệ câu lạc bộ.',
-      architectureResults:
-        'Giúp tri thức của các anh chị khóa trước không bị thất truyền khi chuyển giao nhiệm kỳ, đồng thời cho phép học sinh mới sao chép thẳng gói cấu hình vào Workspace để thực hành.',
-      gratitude:
-        'Tri ân cộng đồng câu lạc bộ công nghệ và các bạn học sinh đã đóng góp câu hỏi, chia sẻ kinh nghiệm sửa lỗi và duy trì không khí trao đổi cởi mở.',
-    },
-    relatedIds: ['mentors-council', 'security-shield', 'open-assembly-roadmap'],
-  },
-  {
-    id: 'open-assembly-roadmap',
-    code: '09',
-    title: 'Xưởng Lắp Ráp Mở Tương Lai',
-    subtitle: 'Tầm Nhìn FPT Forum Notebook & Học Tập Suốt Đời',
-    track: 'Định hướng Phát triển · FPT Forum Roadmap',
-    kicker: 'TẦM NHÌN TIẾP NỐI · 09',
-    milestone: 'FPT Forum Notebook',
-    motif: 'spiral',
-    palette: {
-      bgTop: '#111b1b',
-      bgBottom: '#0b1111',
-      ink: '#f4f7f5',
-      muted: '#a9bdb6',
-      accent: '#38c99a',
-      secondary: '#e6b385',
-      frameTint: '#1c2b2a',
-    },
-    metrics: [
-      { label: 'Truy cập công cụ', value: '100% Miễn phí' },
-      { label: 'Hỗ trợ BYOK', value: 'Đa giao thức AI' },
-      { label: 'Chế độ tiết kiệm', value: 'Eco / Balanced / Fab' },
-    ],
-    options: {
-      roles: ['Hoạch định Lộ trình', 'Mở rộng Cộng đồng', 'Phát triển Mở'],
-      categories: ['Học liệu Tương tác', 'Tối ưu Hiệu năng', 'Kết nối Liên trường'],
-      phases: ['Mở rộng kho mẫu', 'Chế độ Eco xanh', 'Lan tỏa tri thức'],
-    },
-    accordions: {
-      coreContribution:
-        'Định vị FPT Forum không chỉ là một trang web tĩnh mà là cuốn Sổ tay Lắp ráp Mở đồng hành lâu dài cùng hành trình tự học lập trình và thiết kế của học sinh.',
-      architectureResults:
-        'Tiếp tục mở rộng chế độ hiển thị linh hoạt (Eco tiết kiệm pin, Balanced cân bằng, Fabulous trải nghiệm toàn phần) cùng kho tài nguyên liên tục được thẩm định.',
-      gratitude:
-        'Hành trình này chỉ mới bắt đầu — cảm ơn bạn đã ghé thăm phòng vinh danh 3D và trở thành một phần của cộng đồng sáng tạo FPT Forum.',
-    },
-    relatedIds: ['team-core', 'ui-vault-7662', 'community-hub'],
+    relatedIds: ['system-architecture', 'anti-slop-engine', 'team-core'],
   },
 ];
 
@@ -397,6 +423,8 @@ export interface CachedHonorArtwork {
   canvas: HTMLCanvasElement;
   dataUrl: string;
   texture: THREE.CanvasTexture | null;
+  loadedPhoto: boolean;
+  listeners: Set<() => void>;
 }
 
 const artworkCache = new Map<string, CachedHonorArtwork>();
@@ -612,7 +640,13 @@ function drawMotif(
       ctx.stroke();
       ctx.fillStyle = secondary;
       ctx.beginPath();
-      ctx.arc(Math.cos(Math.PI * 2 * turns) * radius * 0.88, Math.sin(Math.PI * 2 * turns) * radius * 0.88, 7, 0, Math.PI * 2);
+      ctx.arc(
+        Math.cos(Math.PI * 2 * turns) * radius * 0.88,
+        Math.sin(Math.PI * 2 * turns) * radius * 0.88,
+        7,
+        0,
+        Math.PI * 2
+      );
       ctx.fill();
       break;
     }
@@ -642,12 +676,169 @@ function wrapTextLines(
   return lines;
 }
 
+function paintPlateBase(
+  ctx: CanvasRenderingContext2D,
+  exhibit: HonorExhibit,
+  W: number,
+  H: number,
+  loadedImg?: HTMLImageElement
+): void {
+  const { bgTop, bgBottom, ink, muted, accent, secondary } = exhibit.palette;
+  const grad = ctx.createLinearGradient(0, 0, 0, H);
+  grad.addColorStop(0, bgTop);
+  grad.addColorStop(1, bgBottom);
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, W, H);
+
+  ctx.strokeStyle = `${ink}12`;
+  ctx.lineWidth = 1;
+  for (let x = 44; x < W - 40; x += 64) {
+    ctx.beginPath();
+    ctx.moveTo(x, 32);
+    ctx.lineTo(x, H - 32);
+    ctx.stroke();
+  }
+
+  ctx.strokeStyle = `${ink}2e`;
+  ctx.lineWidth = 1.25;
+  ctx.strokeRect(24, 24, W - 48, H - 48);
+
+  ctx.strokeStyle = accent;
+  ctx.lineWidth = 2;
+  const corner = 16;
+  const corners: Array<[number, number, number, number]> = [
+    [24, 24, 1, 1],
+    [W - 24, 24, -1, 1],
+    [24, H - 24, 1, -1],
+    [W - 24, H - 24, -1, -1],
+  ];
+  for (const [cx0, cy0, sx, sy] of corners) {
+    ctx.beginPath();
+    ctx.moveTo(cx0, cy0 + sy * corner);
+    ctx.lineTo(cx0, cy0);
+    ctx.lineTo(cx0 + sx * corner, cy0);
+    ctx.stroke();
+  }
+
+  ctx.fillStyle = accent;
+  ctx.font = '500 13px "IBM Plex Mono", ui-monospace, monospace';
+  ctx.fillText(exhibit.kicker, 46, 62);
+
+  ctx.fillStyle = muted;
+  ctx.textAlign = 'right';
+  ctx.font = '500 13px "IBM Plex Mono", ui-monospace, monospace';
+  ctx.fillText(exhibit.milestone, W - 46, 62);
+  ctx.textAlign = 'left';
+
+  ctx.strokeStyle = `${ink}22`;
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(46, 80);
+  ctx.lineTo(W - 46, 80);
+  ctx.stroke();
+
+  if (exhibit.photo) {
+    const boxX = 42;
+    const boxY = 98;
+    const boxW = W - 84;
+    const boxH = 382;
+
+    ctx.save();
+    ctx.beginPath();
+    ctx.roundRect(boxX, boxY, boxW, boxH, 10);
+    ctx.clip();
+
+    ctx.fillStyle = exhibit.palette.frameTint;
+    ctx.fillRect(boxX, boxY, boxW, boxH);
+
+    if (loadedImg && loadedImg.naturalWidth > 0 && loadedImg.naturalHeight > 0) {
+      const cropYStart = exhibit.photo.cropYStart ?? 0;
+      const cropYEnd = exhibit.photo.cropYEnd ?? 1;
+      const srcBaseY = loadedImg.naturalHeight * cropYStart;
+      const srcBandH = Math.max(1, loadedImg.naturalHeight * (cropYEnd - cropYStart));
+      const srcBandW = loadedImg.naturalWidth;
+
+      const boxRatio = boxW / boxH;
+      const bandRatio = srcBandW / srcBandH;
+
+      let sx = 0;
+      let sy = srcBaseY;
+      let sw = srcBandW;
+      let sh = srcBandH;
+
+      if (bandRatio > boxRatio) {
+        sw = srcBandH * boxRatio;
+        sx = (srcBandW - sw) * 0.5;
+      } else {
+        sh = srcBandW / boxRatio;
+        const focus = exhibit.photo.focusY ?? 0.35;
+        sy = srcBaseY + Math.max(0, srcBandH - sh) * focus;
+      }
+
+      ctx.drawImage(loadedImg, sx, sy, sw, sh, boxX, boxY, boxW, boxH);
+    } else {
+      drawMotif(ctx, exhibit, W / 2, boxY + boxH / 2, 110);
+    }
+    ctx.restore();
+
+    ctx.strokeStyle = `${accent}66`;
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.roundRect(boxX, boxY, boxW, boxH, 10);
+    ctx.stroke();
+  } else {
+    drawMotif(ctx, exhibit, W / 2, 290, 138);
+  }
+
+  ctx.fillStyle = `${ink}12`;
+  ctx.font = '600 84px "Cormorant Garamond", Georgia, serif';
+  ctx.textAlign = 'right';
+  ctx.fillText(exhibit.code, W - 44, 526);
+  ctx.textAlign = 'left';
+
+  ctx.fillStyle = secondary;
+  ctx.font = '600 13px "Be Vietnam Pro", system-ui, sans-serif';
+  ctx.fillText(exhibit.track.toUpperCase(), 46, 514);
+
+  ctx.fillStyle = ink;
+  ctx.font = '600 34px "Cormorant Garamond", Georgia, serif';
+  const titleLines = wrapTextLines(ctx, exhibit.title, W - 96);
+  let ty = 558;
+  for (const line of titleLines.slice(0, 2)) {
+    ctx.fillText(line, 46, ty);
+    ty += 40;
+  }
+
+  ctx.fillStyle = muted;
+  ctx.font = '400 15.5px "Be Vietnam Pro", system-ui, sans-serif';
+  const subLines = wrapTextLines(ctx, exhibit.subtitle, W - 96);
+  let sy = ty + 6;
+  for (const line of subLines.slice(0, 2)) {
+    ctx.fillText(line, 46, sy);
+    sy += 22;
+  }
+
+  ctx.strokeStyle = `${ink}22`;
+  ctx.beginPath();
+  ctx.moveTo(46, H - 72);
+  ctx.lineTo(W - 46, H - 72);
+  ctx.stroke();
+
+  ctx.fillStyle = muted;
+  ctx.font = '500 12px "IBM Plex Mono", ui-monospace, monospace';
+  ctx.fillText('F-FORUM NOTEBOOK · TH, THCS & THPT FPT', 46, H - 44);
+}
+
 export function createHonorArtwork(
   exhibit: HonorExhibit,
-  maxAnisotropy = 4
+  maxAnisotropy = 4,
+  onUpdate?: () => void
 ): CachedHonorArtwork {
   const existing = artworkCache.get(exhibit.id);
   if (existing) {
+    if (onUpdate && !existing.loadedPhoto) {
+      existing.listeners.add(onUpdate);
+    }
     if (!existing.texture && typeof document !== 'undefined') {
       const tex = new THREE.CanvasTexture(existing.canvas);
       tex.colorSpace = THREE.SRGBColorSpace;
@@ -666,99 +857,7 @@ export function createHonorArtwork(
   const ctx = canvas.getContext('2d');
 
   if (ctx) {
-    const { bgTop, bgBottom, ink, muted, accent, secondary } = exhibit.palette;
-    const grad = ctx.createLinearGradient(0, 0, 0, H);
-    grad.addColorStop(0, bgTop);
-    grad.addColorStop(1, bgBottom);
-    ctx.fillStyle = grad;
-    ctx.fillRect(0, 0, W, H);
-
-    ctx.strokeStyle = `${ink}12`;
-    ctx.lineWidth = 1;
-    for (let x = 44; x < W - 40; x += 64) {
-      ctx.beginPath();
-      ctx.moveTo(x, 32);
-      ctx.lineTo(x, H - 32);
-      ctx.stroke();
-    }
-
-    ctx.strokeStyle = `${ink}2e`;
-    ctx.lineWidth = 1.25;
-    ctx.strokeRect(24, 24, W - 48, H - 48);
-
-    ctx.strokeStyle = accent;
-    ctx.lineWidth = 2;
-    const corner = 16;
-    const corners: Array<[number, number, number, number]> = [
-      [24, 24, 1, 1],
-      [W - 24, 24, -1, 1],
-      [24, H - 24, 1, -1],
-      [W - 24, H - 24, -1, -1],
-    ];
-    for (const [cx0, cy0, sx, sy] of corners) {
-      ctx.beginPath();
-      ctx.moveTo(cx0, cy0 + sy * corner);
-      ctx.lineTo(cx0, cy0);
-      ctx.lineTo(cx0 + sx * corner, cy0);
-      ctx.stroke();
-    }
-
-    ctx.fillStyle = accent;
-    ctx.font = '500 13px "IBM Plex Mono", ui-monospace, monospace';
-    ctx.fillText(exhibit.kicker, 46, 62);
-
-    ctx.fillStyle = muted;
-    ctx.textAlign = 'right';
-    ctx.font = '500 13px "IBM Plex Mono", ui-monospace, monospace';
-    ctx.fillText(exhibit.milestone, W - 46, 62);
-    ctx.textAlign = 'left';
-
-    ctx.strokeStyle = `${ink}22`;
-    ctx.lineWidth = 1;
-    ctx.beginPath();
-    ctx.moveTo(46, 80);
-    ctx.lineTo(W - 46, 80);
-    ctx.stroke();
-
-    drawMotif(ctx, exhibit, W / 2, 290, 138);
-
-    ctx.fillStyle = `${ink}12`;
-    ctx.font = '600 92px "Cormorant Garamond", Georgia, serif';
-    ctx.textAlign = 'right';
-    ctx.fillText(exhibit.code, W - 44, 520);
-    ctx.textAlign = 'left';
-
-    ctx.fillStyle = secondary;
-    ctx.font = '600 13px "Be Vietnam Pro", system-ui, sans-serif';
-    ctx.fillText(exhibit.track.toUpperCase(), 46, 510);
-
-    ctx.fillStyle = ink;
-    ctx.font = '600 36px "Cormorant Garamond", Georgia, serif';
-    const titleLines = wrapTextLines(ctx, exhibit.title, W - 92);
-    let ty = 556;
-    for (const line of titleLines.slice(0, 2)) {
-      ctx.fillText(line, 46, ty);
-      ty += 42;
-    }
-
-    ctx.fillStyle = muted;
-    ctx.font = '400 16px "Be Vietnam Pro", system-ui, sans-serif';
-    const subLines = wrapTextLines(ctx, exhibit.subtitle, W - 92);
-    let sy = ty + 6;
-    for (const line of subLines.slice(0, 2)) {
-      ctx.fillText(line, 46, sy);
-      sy += 23;
-    }
-
-    ctx.strokeStyle = `${ink}22`;
-    ctx.beginPath();
-    ctx.moveTo(46, H - 72);
-    ctx.lineTo(W - 46, H - 72);
-    ctx.stroke();
-
-    ctx.fillStyle = muted;
-    ctx.font = '500 12px "IBM Plex Mono", ui-monospace, monospace';
-    ctx.fillText('F-FORUM NOTEBOOK · TH, THCS & THPT FPT', 46, H - 44);
+    paintPlateBase(ctx, exhibit, W, H);
   }
 
   let texture: THREE.CanvasTexture | null = null;
@@ -778,11 +877,42 @@ export function createHonorArtwork(
     dataUrl = '';
   }
 
-  const record: CachedHonorArtwork = { canvas, dataUrl, texture };
+  const record: CachedHonorArtwork = {
+    canvas,
+    dataUrl,
+    texture,
+    loadedPhoto: !exhibit.photo,
+    listeners: new Set(onUpdate ? [onUpdate] : []),
+  };
   artworkCache.set(exhibit.id, record);
+
+  if (exhibit.photo && typeof Image !== 'undefined' && ctx) {
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onload = () => {
+      paintPlateBase(ctx, exhibit, W, H, img);
+      try {
+        record.dataUrl = canvas.toDataURL('image/png');
+      } catch {
+        record.dataUrl = '';
+      }
+      if (record.texture) {
+        record.texture.needsUpdate = true;
+      }
+      record.loadedPhoto = true;
+      record.listeners.forEach((cb) => cb());
+      record.listeners.clear();
+    };
+    img.onerror = () => {
+      record.loadedPhoto = true;
+      record.listeners.clear();
+    };
+    img.src = exhibit.photo.src;
+  }
+
   return record;
 }
 
-export function getHonorPlateDataUrl(exhibit: HonorExhibit): string {
-  return createHonorArtwork(exhibit).dataUrl;
+export function getHonorPlateDataUrl(exhibit: HonorExhibit, onUpdate?: () => void): string {
+  return createHonorArtwork(exhibit, 4, onUpdate).dataUrl;
 }
