@@ -64,11 +64,29 @@ function detectSystemTheme(): ThemeMode {
   return 'dark';
 }
 
+const VALID_WALLPAPER_PRESETS: ReadonlySet<WallpaperPreset> = new Set([
+  'video',
+  'godray-amber',
+  'godray-prism',
+  'mesh-aurora',
+  'silk-twilight',
+  'constellation',
+  'obsidian-glass',
+  'paper-warm',
+  'auto',
+  'dark',
+  'light',
+  'ember',
+  'harbour',
+  'aurora',
+  'indigo',
+]);
+
 const DEFAULT_SETTINGS: SettingsState = {
   theme: 'dark',
   themePreference: 'dark',
   ambientVideo: true,
-  wallpaperPreset: 'dark',
+  wallpaperPreset: 'video',
   autoRunChecks: true,
   defaultViewport: 1440,
   themeEffect: 'rain',
@@ -96,7 +114,7 @@ function syncThemeDom(
     const root = document.documentElement;
     root.setAttribute('data-theme', theme);
     root.setAttribute('data-ambient', ambientVideo === false ? 'off' : 'on');
-    root.setAttribute('data-wallpaper', wallpaperPreset || 'dark');
+    root.setAttribute('data-wallpaper', wallpaperPreset || 'video');
     root.setAttribute('data-effect', themeEffect || 'rain');
     root.setAttribute('data-density', compactDensity ? 'compact' : 'roomy');
     root.classList.toggle('dark', theme === 'dark');
@@ -741,16 +759,9 @@ export const AppStoreProvider: React.FC<{ children: React.ReactNode }> = ({ chil
           ? parsed.themeEffect
           : 'rain';
       const resolvedWallpaper: WallpaperPreset =
-        parsed.wallpaperPreset === 'auto' ||
-        parsed.wallpaperPreset === 'dark' ||
-        parsed.wallpaperPreset === 'light' ||
-        parsed.wallpaperPreset === 'ember' ||
-        parsed.wallpaperPreset === 'harbour' ||
-        parsed.wallpaperPreset === 'aurora' ||
-        parsed.wallpaperPreset === 'constellation' ||
-        parsed.wallpaperPreset === 'indigo'
+        parsed.wallpaperPreset && VALID_WALLPAPER_PRESETS.has(parsed.wallpaperPreset)
           ? parsed.wallpaperPreset
-          : 'dark';
+          : 'video';
       return {
         ...DEFAULT_SETTINGS,
         ...parsed,

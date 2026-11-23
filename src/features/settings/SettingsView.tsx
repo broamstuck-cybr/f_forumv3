@@ -55,99 +55,99 @@ interface PresetDefinition {
 
 const PRESETS: PresetDefinition[] = [
   {
-    id: 'auto',
-    name: 'Tự động',
-    desc: 'Đồng bộ Sáng hoặc Tối theo hệ thống kèm dải sáng mềm.',
+    id: 'video',
+    name: 'Gradient Video (Mặc định)',
+    desc: 'Video Gradient Lab lặp mượt Crossfade (Light 001 / Dark 002) với lớp phủ trong trẻo giảm 10% độ tối.',
     tone: 'auto',
     targetTheme: 'system',
-    swatches: ['#f5f1e8', '#121110', '#e04430'],
-    previewBg: 'conic-gradient(from 210deg at 35% 30%, #f5f1e8 0deg, #1b1917 180deg, #e04430 310deg)',
-    previewCard: 'rgba(255,255,255,0.14)',
+    swatches: ['#141312', '#d63a27', '#f5f1e8'],
+    previewBg: 'radial-gradient(circle at 24% 22%, rgba(214,58,39,0.58), transparent 56%), radial-gradient(circle at 78% 76%, rgba(125,163,187,0.52), #121110 78%)',
+    previewCard: 'rgba(26, 24, 22, 0.82)',
     previewAccent: '#e04430',
     ambient: true,
   },
   {
-    id: 'dark',
-    name: 'Obsidian Godray',
-    desc: 'Nền tối gốc #121110 điểm tia sáng hổ phách dịu, tương phản chữ rõ nét.',
+    id: 'godray-amber',
+    name: 'Godray Hoàng Kim',
+    desc: 'Luồng sáng Godray hổ phách rọi từ đỉnh màn hình, ấm áp và giàu chiều sâu studio.',
     tone: 'dark',
     targetTheme: 'dark',
-    swatches: ['#121110', '#ff6e5a', '#f8f4ec'],
-    previewBg: 'conic-gradient(from 215deg at 18% 12%, rgba(224,68,48,0.34), #121110 75deg, rgba(140,176,199,0.22) 170deg, #121110 290deg)',
-    previewCard: 'rgba(28, 26, 24, 0.88)',
-    previewAccent: '#ff6e5a',
+    swatches: ['#16120e', '#f97316', '#fbbf24'],
+    previewBg: 'radial-gradient(ellipse 90% 60% at 50% -10%, rgba(249,115,22,0.52), transparent 70%), conic-gradient(from 220deg at 50% 0%, #14110f 0deg, rgba(251,191,36,0.34) 40deg, #12100f 90deg)',
+    previewCard: 'rgba(30, 22, 16, 0.86)',
+    previewAccent: '#f97316',
     ambient: true,
   },
   {
-    id: 'light',
-    name: 'Paper Sunburst',
-    desc: 'Nền giấy kem #f5f1e8 với ánh nắng sớm, đọc chữ lâu không mỏi mắt.',
-    tone: 'light',
-    targetTheme: 'light',
-    swatches: ['#f5f1e8', '#c42a18', '#14120e'],
-    previewBg: 'radial-gradient(circle at 22% 18%, rgba(221,173,149,0.58), transparent 58%), radial-gradient(circle at 85% 82%, rgba(186,217,230,0.62), #f5f1e8 76%)',
-    previewCard: 'rgba(255, 253, 248, 0.92)',
-    previewAccent: '#c42a18',
-    ambient: true,
-  },
-  {
-    id: 'ember',
-    name: 'Ember Godray',
-    desc: 'Luồng sáng Godray hổ phách ấm kết hợp chiều sâu mực tối.',
+    id: 'godray-prism',
+    name: 'Godray Lăng Kính',
+    desc: 'Dải quang phổ tán sắc cyan, magenta và chàm dịu mắt theo cảm hứng lăng kính quang học.',
     tone: 'dark',
     targetTheme: 'dark',
-    swatches: ['#18120e', '#eb6e38', '#ffe0b8'],
-    previewBg: 'conic-gradient(from 205deg at 20% 8%, rgba(235,110,56,0.62) 0deg, #161210 68deg, rgba(255,178,102,0.35) 140deg, #12100f 240deg)',
-    previewCard: 'rgba(34, 24, 18, 0.82)',
-    previewAccent: '#eb6e38',
+    swatches: ['#0c1018', '#06b6d4', '#ec4899'],
+    previewBg: 'conic-gradient(from 180deg at 22% 0%, rgba(6,182,212,0.5) 0deg, rgba(236,72,153,0.44) 55deg, #0c1018 125deg)',
+    previewCard: 'rgba(18, 22, 34, 0.86)',
+    previewAccent: '#06b6d4',
     ambient: true,
   },
   {
-    id: 'harbour',
-    name: 'Frost Prism',
-    desc: 'Lớp sương sáng xanh lam ngọc pha trắng kem dịu mắt.',
-    tone: 'light',
-    targetTheme: 'light',
-    swatches: ['#eff4f7', '#1a5875', '#86c8e8'],
-    previewBg: 'conic-gradient(from 225deg at 78% 12%, rgba(125,185,218,0.55) 0deg, #eff4f7 82deg, rgba(218,240,248,0.65) 160deg, #e5eef3 260deg)',
-    previewCard: 'rgba(255, 255, 255, 0.88)',
-    previewAccent: '#1a5875',
-    ambient: true,
-  },
-  {
-    id: 'aurora',
-    name: 'Aurora Mesh',
-    desc: 'Bốn cực cầu cực quang ngọc lục bảo pha xanh lam chuyển động mượt.',
+    id: 'mesh-aurora',
+    name: 'Mesh Cực Quang',
+    desc: 'Lưới cực quang ngọc lục bảo, lam và tím trầm chuyển động mượt theo con trỏ chuột.',
     tone: 'dark',
     targetTheme: 'dark',
-    swatches: ['#0b1312', '#6ce0b3', '#5b8def'],
-    previewBg: 'radial-gradient(circle at 22% 24%, rgba(108,224,179,0.55), transparent 55%), radial-gradient(circle at 80% 70%, rgba(91,141,239,0.52), #0b1312 78%)',
-    previewCard: 'rgba(19, 31, 29, 0.82)',
-    previewAccent: '#6ce0b3',
+    swatches: ['#0b1312', '#10b981', '#3b82f6'],
+    previewBg: 'radial-gradient(circle at 20% 22%, rgba(16,185,129,0.55), transparent 55%), radial-gradient(circle at 82% 72%, rgba(59,130,246,0.52), #0b1312 78%)',
+    previewCard: 'rgba(16, 28, 26, 0.84)',
+    previewAccent: '#10b981',
+    ambient: true,
+  },
+  {
+    id: 'silk-twilight',
+    name: 'Lụa Hoàng Hôn',
+    desc: 'Chuyển sắc lụa hoàng hôn mịn không gãy tầng giữa sắc chàm sâu và hồng lựu.',
+    tone: 'dark',
+    targetTheme: 'dark',
+    swatches: ['#15132b', '#e11d48', '#4f46e5'],
+    previewBg: 'linear-gradient(135deg, #1e1b4b 0%, #0f172a 100%), radial-gradient(circle at 42% 40%, rgba(225,29,72,0.45), transparent 62%)',
+    previewCard: 'rgba(24, 22, 46, 0.86)',
+    previewAccent: '#e11d48',
     ambient: true,
   },
   {
     id: 'constellation',
-    name: 'Golden Nebula',
-    desc: 'Tinh vân ánh vàng mật ong tương tác theo vị trí trỏ chuột.',
+    name: 'Tinh Vân Thiên Hà',
+    desc: 'Chòm sao hạt tương tác theo vị trí trỏ chuột trên nền tinh vân đêm sâu.',
     tone: 'dark',
     targetTheme: 'dark',
-    swatches: ['#0f1218', '#f2c05e', '#7da3bb'],
-    previewBg: 'conic-gradient(from 195deg at 52% 5%, rgba(242,192,94,0.48) 0deg, #0f1218 65deg, rgba(125,163,187,0.34) 150deg, #0f1218 250deg)',
-    previewCard: 'rgba(21, 26, 36, 0.84)',
+    swatches: ['#0f1218', '#f2c05e', '#38bdf8'],
+    previewBg: 'radial-gradient(circle at 50% 100%, rgba(88,28,135,0.55), transparent 65%), radial-gradient(circle at 20% 20%, rgba(30,58,138,0.55), #0c1018 75%)',
+    previewCard: 'rgba(18, 22, 34, 0.84)',
     previewAccent: '#f2c05e',
     ambient: true,
   },
   {
-    id: 'indigo',
-    name: 'Midnight Sapphire',
-    desc: 'Chiều sâu lam cobalt pha hào quang chàm dịu thị giác.',
+    id: 'obsidian-glass',
+    name: 'Kính Obsidian Tối Giản',
+    desc: 'Nền đen carbon nguyên chất với ánh phản chiếu mép gương bạc tối đa độ tập trung.',
     tone: 'dark',
     targetTheme: 'dark',
-    swatches: ['#0c101b', '#86b2ff', '#6366f1'],
-    previewBg: 'radial-gradient(circle at 20% 20%, rgba(56,189,248,0.45), transparent 56%), radial-gradient(circle at 82% 78%, rgba(99,102,241,0.5), #0c101b 78%)',
-    previewCard: 'rgba(18, 25, 44, 0.84)',
-    previewAccent: '#86b2ff',
+    swatches: ['#111010', '#2b2928', '#f8f4ec'],
+    previewBg: 'radial-gradient(circle at 50% -15%, rgba(255,255,255,0.2), transparent 65%), #111010',
+    previewCard: 'rgba(28, 26, 25, 0.92)',
+    previewAccent: '#f8f4ec',
+    ambient: true,
+  },
+  {
+    id: 'paper-warm',
+    name: 'Giấy Ấm Editorial',
+    desc: 'Nền giấy thủ công sắc kem cát điểm ánh hổ phách nhẹ, đọc tài liệu và code lâu không mỏi mắt.',
+    tone: 'light',
+    targetTheme: 'light',
+    swatches: ['#f5f1e8', '#c42a18', '#14120e'],
+    previewBg: 'radial-gradient(circle at 14% 14%, rgba(245,158,11,0.28), transparent 58%), radial-gradient(circle at 86% 86%, rgba(180,83,9,0.2), #f5f1e8 76%)',
+    previewCard: 'rgba(255, 253, 248, 0.94)',
+    previewAccent: '#c42a18',
     ambient: true,
   },
 ];
@@ -282,7 +282,7 @@ export const SettingsView: React.FC = () => {
   }, [uiScale]);
 
   const byok = settings.byok;
-  const currentWallpaper: WallpaperPreset = settings.wallpaperPreset || 'ember';
+  const currentWallpaper: WallpaperPreset = settings.wallpaperPreset || 'video';
   const currentEffect: ThemeEffect = settings.themeEffect || 'droplet';
   const ambientEnabled = settings.ambientVideo !== false;
   const autoRunChecks = settings.autoRunChecks !== false;
@@ -295,7 +295,7 @@ export const SettingsView: React.FC = () => {
       : `Còn ${quota.remaining ?? Math.max(0, quotaLimit - quota.used)}/${quotaLimit}`;
 
   const activePreset = useMemo(
-    () => PRESETS.find((p) => p.id === currentWallpaper) || PRESETS[3],
+    () => PRESETS.find((p) => p.id === currentWallpaper) || PRESETS[0],
     [currentWallpaper]
   );
 
@@ -592,7 +592,7 @@ export const SettingsView: React.FC = () => {
                           style={{ background: preset.previewBg }}
                           aria-hidden="true"
                         >
-                          {preset.id === 'auto' ? (
+                          {preset.id === 'video' ? (
                             <div className="st-mini-auto">
                               <Sun size={16} className="st-mini-auto-sun" />
                               <Moon size={16} className="st-mini-auto-moon" />

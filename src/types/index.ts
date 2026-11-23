@@ -33,13 +33,20 @@ export type ThemeMode = 'dark' | 'light';
 export type ThemeEffect = 'droplet' | 'rain' | 'diwali' | 'none';
 
 export type WallpaperPreset =
+  | 'video'
+  | 'godray-amber'
+  | 'godray-prism'
+  | 'mesh-aurora'
+  | 'silk-twilight'
+  | 'constellation'
+  | 'obsidian-glass'
+  | 'paper-warm'
   | 'auto'
   | 'dark'
   | 'light'
   | 'ember'
   | 'harbour'
   | 'aurora'
-  | 'constellation'
   | 'indigo';
 
 export type UserRole = 'user' | 'admin' | 'SUPER_ADMIN' | 'CLUB_LEADER' | 'STUDENT';

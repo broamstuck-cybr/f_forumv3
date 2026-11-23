@@ -117,7 +117,9 @@ const BeatBlock: React.FC<{
   return (
     <article className="lp-hm-beat" data-active={active}>
       <div className="lp-hm-beatTop">
-        <span className="lp-hm-index">{String(index + 1).padStart(2, '0')} / 04</span>
+        <span className="lp-hm-index">
+          {String(index + 1).padStart(2, '0')} / {String(MANIFESTO_BEATS.length).padStart(2, '0')}
+        </span>
         <div className="lp-hm-badgeWrap">
           <GeometricBadge kind={beat.badge} active={active} />
         </div>
@@ -235,7 +237,7 @@ export const LandingManifesto: React.FC<LandingManifestoProps> = ({ onNavigate }
   };
 
   return (
-    <section id="tuyen-ngon" aria-label="Bốn điều F-Forum giúp bạn làm được" className="lp-hm-root">
+    <section id="tuyen-ngon" aria-label="Nghiên cứu và cơ sở khoa học FPT Forum" className="lp-hm-root">
       <div
         ref={runwayRef}
         className="lp-hm-runway"
@@ -244,7 +246,7 @@ export const LandingManifesto: React.FC<LandingManifestoProps> = ({ onNavigate }
         <div className="lp-hm-sticky">
           <div className="wrap-wide lp-hm-header">
             <p className="t-label" style={{ color: '#b5afa3' }}>
-              vì sao chọn f-forum
+              nghiên cứu khoa học · th, thcs và thpt fpt
             </p>
             <div className="lp-hm-meter" aria-hidden="true">
               <span style={{ transform: `scaleX(${isDesktopHorizontal ? Math.max(0.08, mp) : 1})` }} />
@@ -254,18 +256,18 @@ export const LandingManifesto: React.FC<LandingManifestoProps> = ({ onNavigate }
           <div ref={trackRef} className="lp-hm-track">
             <div className="lp-hm-intro">
               <h2 className="lp-hm-title">
-                Từ cảm hứng đến sản phẩm.
+                Từ thực trạng PISA 2025
                 <br />
-                Dựng web <span className="t-note">cùng cộng đồng.</span>
+                đến <span className="t-note">Xưởng lắp ráp mở.</span>
               </h2>
               <p className="lp-hm-lead">
-                Bốn lát cắt giữ trọn nhịp sáng tạo: chạm vào giao diện sống, hiểu rõ cấu trúc bên dưới và cùng nhau hoàn thiện từng chi tiết.
+                Toàn cảnh 8 lát cắt nghiên cứu của FPT Forum: giải quyết 3 điểm nghẽn dùng AI, chống AI Slop, kết quả khảo sát 195 người dùng (91,2%) và kiến trúc JSON · Bộ lọc AI · WebSocket.
               </p>
             </div>
 
             {MANIFESTO_BEATS.map((beat, idx) => {
-              const threshold = idx * 0.22;
-              const active = !isDesktopHorizontal || mp >= threshold - 0.05;
+              const threshold = idx * (0.85 / Math.max(1, MANIFESTO_BEATS.length - 1));
+              const active = !isDesktopHorizontal || mp >= threshold - 0.06;
               return (
                 <BeatBlock
                   key={beat.id}
@@ -283,12 +285,12 @@ export const LandingManifesto: React.FC<LandingManifestoProps> = ({ onNavigate }
       <div className="lp-section sheet">
         <div className="wrap lp-desk">
           <div className="lp-desk-head">
-            <p className="t-label">khởi tạo trực tiếp</p>
+            <p className="t-label">đối chiếu nhu cầu &amp; gợi ý starter kit</p>
             <h2 className="t-title">
-              Gõ ý tưởng của bạn <Mark kind="underline">ngay tại đây</Mark>
+              Chọn bộ khung mẫu <Mark kind="underline">ngay tại đây</Mark>
             </h2>
             <p className="t-lead">
-              Chọn một thẻ tác vụ hoặc mô tả giao diện bạn cần để mở thẳng Workspace cùng Live View và Diff &amp; Check.
+              Mô tả bài toán học tập hoặc dự án phổ thông của bạn — F-Forum đối chiếu kho tài nguyên chuẩn để mở thẳng Workspace kèm Live View và kiểm định tự động.
             </p>
           </div>
 

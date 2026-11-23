@@ -60,12 +60,12 @@ export const LandingFAQ: React.FC<LandingFAQProps> = ({ onEnterApp }) => {
             </div>
 
             <aside className="lp-faq-aside">
-              <p className="t-label">source of knowledge</p>
+              <p className="t-label">fpt forum · th, thcs và thpt fpt</p>
               <h3 className="t-title" style={{ fontSize: 'var(--text-2xl)' }}>
-                Mở mẫu, đọc mã, rồi hỏi cộng đồng
+                Hỏi đáp, Threads, Kho đề thi &amp; WebSocket
               </h3>
               <p className="t-lead" style={{ fontSize: 'var(--text-sm)' }}>
-                Thảo luận trong Source of Knowledge gắn với mẫu thật, mã nguồn đi kèm và nguồn gốc ghi rõ.
+                Mọi thảo luận trong không gian Tri thức đi kèm mã nguồn mẫu, Bộ lọc AI chống spam/ngôn từ thô tục và đồng bộ thời gian thực.
               </p>
               <div>
                 <button type="button" className="btn btn-red" onClick={onEnterApp}>
@@ -80,10 +80,10 @@ export const LandingFAQ: React.FC<LandingFAQProps> = ({ onEnterApp }) => {
       <section aria-label="Bắt đầu dựng ngay" className="lp-closing scene-red">
         <div className="wrap lp-closing-row">
           <h2 className="lp-closing-title">
-            Chọn một mẫu, <span className="t-italic">sửa ngay trong Workspace.</span>
+            Tự chọn khung mẫu, <span className="t-italic">làm chủ quy trình cùng AI.</span>
           </h2>
           <button type="button" className="btn btn-solid btn-lg" onClick={onEnterApp}>
-            Mở Workspace
+            Mở Xưởng lắp ráp
           </button>
         </div>
       </section>

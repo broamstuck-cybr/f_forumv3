@@ -1,207 +1,28 @@
 .iris-qr-section {
   --iris-bg: #0b0b11;
-  --iris-nav: #12131a;
-  --iris-line: rgba(255, 255, 255, 0.06);
-  --iris-text: #ffffff;
-  --iris-muted: #a3a3b2;
-  --iris-link: #c8c8d4;
-  --iris-violet: #7c4dff;
-  --iris-violet-2: #8f66ff;
-  --iris-nav-h: 62px;
+  --iris-surface: #14141e;
+  --iris-surface-2: #1a1a28;
+  --iris-line: rgba(255, 255, 255, 0.09);
+  --iris-text: #f6f4ef;
+  --iris-muted: #b4b2c4;
+  --iris-violet: #8c6cff;
+  --iris-amber: #e6b385;
+  --iris-sage: #8bc9a8;
+  --iris-steel: #8cb7d4;
   position: relative;
   width: 100%;
   background: var(--iris-bg);
   color: var(--iris-text);
-  font-family: 'Figtree', 'Be Vietnam Pro', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  font-family: var(--font-sans, 'Be Vietnam Pro', system-ui, sans-serif);
   -webkit-font-smoothing: antialiased;
   overflow: hidden;
   isolation: isolate;
   border-top: 1px solid rgba(255, 255, 255, 0.08);
 }
 
-.iris-nav {
-  position: relative;
-  z-index: 20;
-  height: var(--iris-nav-h);
-  background: rgba(18, 19, 26, 0.86);
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
-  border-bottom: 1px solid var(--iris-line);
-}
-
-.iris-nav-inner {
-  max-width: 1344px;
-  height: 100%;
-  margin: 0 auto;
-  padding: 0 68px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  position: relative;
-}
-
-.iris-brand {
-  display: inline-flex;
-  align-items: center;
-  gap: 11px;
-  font-weight: 600;
-  font-size: 21px;
-  letter-spacing: -0.01em;
-  color: #ffffff;
-  background: none;
-  border: 0;
-  cursor: pointer;
-}
-
-.iris-brand-orb {
-  width: 26px;
-  height: 26px;
-  border-radius: 50%;
-  background: radial-gradient(circle at 32% 28%, #c9b8ff 0%, #8b6cff 38%, #5b3df0 72%, #3a24b8 100%);
-  box-shadow: 0 0 14px rgba(124, 77, 255, 0.55), inset -2px -3px 6px rgba(20, 8, 70, 0.55);
-  flex-shrink: 0;
-}
-
-.iris-nav-right {
-  display: flex;
-  align-items: center;
-  gap: 30px;
-}
-
-.iris-nav-links {
-  display: flex;
-  align-items: center;
-  gap: 38px;
-  font-size: 14px;
-  font-weight: 500;
-  color: var(--iris-link);
-}
-
-.iris-nav-link {
-  color: var(--iris-link);
-  background: none;
-  border: 0;
-  font: inherit;
-  cursor: pointer;
-  transition: color 0.2s;
-}
-
-.iris-nav-link:hover {
-  color: #ffffff;
-}
-
-.iris-btn-open {
-  background: #ffffff;
-  color: #0b0b11;
-  font-weight: 600;
-  font-size: 14px;
-  padding: 10px 19px;
-  border-radius: 999px;
-  border: 0;
-  cursor: pointer;
-  transition: transform 0.2s, box-shadow 0.2s;
-}
-
-.iris-btn-open:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 6px 20px rgba(255, 255, 255, 0.15);
-}
-
-.iris-menu-btn {
-  display: none;
-  width: 40px;
-  height: 40px;
-  border-radius: 12px;
-  background: rgba(255, 255, 255, 0.06);
-  border: 1px solid var(--iris-line);
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-}
-
-.iris-menu-btn span {
-  position: relative;
-  display: block;
-  width: 16px;
-  height: 1.6px;
-  background: #ffffff;
-  border-radius: 2px;
-  transition: background 0.2s;
-}
-
-.iris-menu-btn span::before,
-.iris-menu-btn span::after {
-  content: '';
-  position: absolute;
-  left: 0;
-  width: 16px;
-  height: 1.6px;
-  background: #ffffff;
-  border-radius: 2px;
-  transition: transform 0.22s, top 0.22s;
-}
-
-.iris-menu-btn span::before {
-  top: -5px;
-}
-
-.iris-menu-btn span::after {
-  top: 5px;
-}
-
-.iris-nav.open .iris-menu-btn span {
-  background: transparent;
-}
-
-.iris-nav.open .iris-menu-btn span::before {
-  top: 0;
-  transform: rotate(45deg);
-}
-
-.iris-nav.open .iris-menu-btn span::after {
-  top: 0;
-  transform: rotate(-45deg);
-}
-
-.iris-mobile-panel {
-  display: none;
-  position: absolute;
-  top: calc(var(--iris-nav-h) + 8px);
-  left: 16px;
-  right: 16px;
-  background: rgba(20, 21, 30, 0.96);
-  border: 1px solid var(--iris-line);
-  border-radius: 18px;
-  padding: 8px;
-  flex-direction: column;
-  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
-  z-index: 30;
-}
-
-.iris-mobile-panel button {
-  text-align: left;
-  padding: 14px 16px;
-  border-radius: 12px;
-  font-weight: 500;
-  font-size: 14px;
-  color: var(--iris-link);
-  background: none;
-  border: 0;
-  cursor: pointer;
-}
-
-.iris-mobile-panel button:hover {
-  background: rgba(255, 255, 255, 0.05);
-  color: #ffffff;
-}
-
-.iris-nav.open .iris-mobile-panel {
-  display: flex;
-}
-
 .iris-hero {
   position: relative;
-  min-height: 760px;
+  min-height: 620px;
   overflow: hidden;
   isolation: isolate;
 }
@@ -233,8 +54,8 @@
   width: 46px;
   height: 46px;
   border-radius: 50%;
-  border: 2px solid rgba(143, 102, 255, 0.18);
-  border-top-color: #8f66ff;
+  border: 2px solid rgba(140, 108, 255, 0.18);
+  border-top-color: var(--iris-violet);
   transform: translate(-50%, -50%);
   animation: iris-spin 1s linear infinite;
   transition: opacity 0.5s;
@@ -255,143 +76,51 @@
   position: relative;
   z-index: 2;
   pointer-events: none;
-  max-width: 1344px;
+  max-width: 1280px;
   margin: 0 auto;
-  min-height: 760px;
-  padding: 56px 68px 64px;
+  min-height: 620px;
+  padding: 56px 64px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+}
+
+.iris-harmony-dock {
+  pointer-events: auto;
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
-  gap: 36px;
-}
-
-.iris-copy {
-  max-width: 600px;
-  pointer-events: auto;
-  margin-top: 28px;
-}
-
-.iris-eyebrow {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 6px 14px;
-  border-radius: 999px;
-  background: rgba(124, 77, 255, 0.14);
-  border: 1px solid rgba(143, 102, 255, 0.32);
-  color: #d7c9ff;
-  font-size: 12px;
-  font-weight: 600;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  margin-bottom: 18px;
-}
-
-.iris-headline {
-  font-size: clamp(40px, 5.1vw, 70px);
-  line-height: 1.04;
-  font-weight: 700;
-  letter-spacing: -0.025em;
-  color: #ffffff;
-}
-
-.iris-sub {
-  margin-top: 26px;
-  color: var(--iris-muted);
-  font-size: clamp(17px, 1.65vw, 22px);
-  line-height: 1.55;
-  font-weight: 400;
-}
-
-.iris-cta-row {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 14px;
-  margin-top: 36px;
-}
-
-.iris-btn-try {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  height: 59px;
-  padding: 0 38px;
-  border-radius: 999px;
-  background: linear-gradient(180deg, #8f66ff, #7c4dff);
-  color: #ffffff;
-  font-weight: 600;
-  font-size: 20px;
-  letter-spacing: -0.005em;
-  border: 0;
-  cursor: pointer;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.22);
-  transition: transform 0.25s, filter 0.25s;
-}
-
-.iris-btn-try:hover {
-  transform: translateY(-2px);
-  filter: brightness(1.08);
-}
-
-.iris-btn-secondary {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  height: 52px;
-  padding: 0 24px;
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.06);
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  color: #e4e4ef;
-  font-weight: 600;
-  font-size: 15px;
-  cursor: pointer;
-  transition: background 0.2s, border-color 0.2s;
-}
-
-.iris-btn-secondary:hover {
-  background: rgba(255, 255, 255, 0.12);
-  border-color: rgba(255, 255, 255, 0.28);
-}
-
-.iris-qr-corner {
-  pointer-events: auto;
-  display: flex;
-  align-items: center;
-  gap: 20px;
-  max-width: 520px;
-  padding: 16px;
-  border-radius: 24px;
-  background: rgba(18, 19, 28, 0.88);
-  border: 1px solid rgba(143, 102, 255, 0.28);
-  box-shadow:
-    0 20px 48px rgba(0, 0, 0, 0.55),
-    inset 0 1px 0 rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
+  align-items: flex-start;
+  gap: 24px;
 }
 
 .iris-qr-plate {
   position: relative;
-  width: 124px;
-  height: 124px;
-  flex-shrink: 0;
-  padding: 8px;
-  border-radius: 16px;
+  width: 196px;
+  height: 196px;
+  padding: 14px;
+  border-radius: 26px;
   background: #ffffff;
-  box-shadow: 0 0 24px rgba(124, 77, 255, 0.35);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow:
+    0 24px 56px rgba(0, 0, 0, 0.55),
+    0 0 36px rgba(140, 108, 255, 0.28);
   cursor: pointer;
-  border: 0;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: transform 0.2s, box-shadow 0.2s;
+  transition: transform 240ms cubic-bezier(0.22, 1, 0.36, 1), box-shadow 240ms ease;
 }
 
 .iris-qr-plate:hover {
-  transform: scale(1.03);
-  box-shadow: 0 0 32px rgba(143, 102, 255, 0.6);
+  transform: translateY(-3px) scale(1.02);
+  box-shadow:
+    0 28px 64px rgba(0, 0, 0, 0.62),
+    0 0 44px rgba(140, 108, 255, 0.42);
+}
+
+.iris-qr-plate:focus-visible {
+  outline: 2px solid var(--iris-amber);
+  outline-offset: 4px;
 }
 
 .iris-qr-img {
@@ -400,67 +129,95 @@
   object-fit: contain;
   display: block;
   image-rendering: pixelated;
+  border-radius: 12px;
 }
 
-.iris-qr-info {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  min-width: 0;
+/* PinUI-crafted Dev Team Honor Button */
+.iris-honor-btn {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 54px;
+  padding: 10px 24px 10px 12px;
+  border-radius: 999px;
+  border: 1px solid rgba(230, 179, 133, 0.36);
+  background: linear-gradient(
+    180deg,
+    rgba(30, 29, 44, 0.94) 0%,
+    rgba(19, 18, 30, 0.96) 100%
+  );
+  color: #f8f5ef;
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  cursor: pointer;
+  overflow: hidden;
+  box-shadow:
+    0 16px 38px rgba(0, 0, 0, 0.52),
+    inset 0 1px 0 rgba(255, 255, 255, 0.16),
+    inset 0 -1px 0 rgba(140, 108, 255, 0.22);
+  transition:
+    transform 240ms cubic-bezier(0.22, 1, 0.36, 1),
+    border-color 220ms ease,
+    box-shadow 240ms ease;
 }
 
-.iris-qr-tag {
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: #b497ff;
+.iris-honor-btn-glow {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    110% 130% at 14% 0%,
+    rgba(230, 179, 133, 0.22) 0%,
+    rgba(140, 108, 255, 0.14) 48%,
+    transparent 76%
+  );
+  opacity: 0.78;
+  pointer-events: none;
+  transition: opacity 220ms ease;
 }
 
-.iris-qr-title {
-  font-size: 18px;
-  font-weight: 700;
-  line-height: 1.25;
-  color: #ffffff;
-}
-
-.iris-qr-desc {
-  font-size: 13.5px;
-  line-height: 1.45;
-  color: var(--iris-muted);
-}
-
-.iris-qr-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-top: 6px;
-}
-
-.iris-qr-btn {
+.iris-honor-btn-icon {
+  position: relative;
+  z-index: 1;
+  width: 34px;
+  height: 34px;
+  border-radius: 999px;
+  background: linear-gradient(145deg, rgba(230, 179, 133, 0.26), rgba(140, 108, 255, 0.28));
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  color: #f8e5d0;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 7px 13px;
-  border-radius: 999px;
-  font-size: 12.5px;
-  font-weight: 600;
-  background: rgba(143, 102, 255, 0.18);
-  border: 1px solid rgba(143, 102, 255, 0.38);
-  color: #e2d6ff;
-  cursor: pointer;
-  transition: background 0.2s, color 0.2s;
+  flex-shrink: 0;
 }
 
-.iris-qr-btn:hover {
-  background: rgba(143, 102, 255, 0.34);
-  color: #ffffff;
+.iris-honor-btn-label {
+  position: relative;
+  z-index: 1;
 }
 
-.iris-qr-btn--ghost {
-  background: rgba(255, 255, 255, 0.06);
-  border-color: rgba(255, 255, 255, 0.14);
-  color: #c8c8d4;
+.iris-honor-btn:hover {
+  transform: translateY(-2px);
+  border-color: rgba(230, 179, 133, 0.62);
+  box-shadow:
+    0 22px 46px rgba(0, 0, 0, 0.6),
+    0 0 28px rgba(140, 108, 255, 0.26),
+    inset 0 1px 0 rgba(255, 255, 255, 0.24);
+}
+
+.iris-honor-btn:hover .iris-honor-btn-glow {
+  opacity: 1;
+}
+
+.iris-honor-btn:active {
+  transform: translateY(0) scale(0.985);
+}
+
+.iris-honor-btn:focus-visible {
+  outline: 2px solid var(--iris-amber);
+  outline-offset: 4px;
 }
 
 .iris-fallback-bot {
@@ -475,33 +232,44 @@
   justify-content: center;
 }
 
-.iris-qr-modal-backdrop {
+/* QR Zoom & Honor Modals (portaled to document.body) */
+.iris-qr-modal-backdrop,
+.iris-honor-backdrop {
+  --iris-surface: #14141e;
+  --iris-line: rgba(255, 255, 255, 0.09);
+  --iris-text: #f6f4ef;
+  --iris-muted: #b4b2c4;
+  --iris-violet: #8c6cff;
+  --iris-amber: #e6b385;
+  --iris-sage: #8bc9a8;
+  --iris-steel: #8cb7d4;
   position: fixed;
   inset: 0;
-  z-index: 1200;
-  background: rgba(7, 7, 12, 0.82);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  z-index: 12000;
+  background: rgba(7, 7, 12, 0.84);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 20px;
+  padding: max(24px, env(safe-area-inset-top)) 16px max(24px, env(safe-area-inset-bottom));
+  font-family: var(--font-sans, 'Be Vietnam Pro', system-ui, sans-serif);
+  color: var(--iris-text);
+  overflow-y: auto;
 }
 
 .iris-qr-modal {
   width: 100%;
-  max-width: 420px;
+  max-width: 360px;
   padding: 24px;
   border-radius: 28px;
-  background: #14151f;
-  border: 1px solid rgba(143, 102, 255, 0.35);
+  background: var(--iris-surface);
+  border: 1px solid var(--iris-line);
   box-shadow: 0 28px 80px rgba(0, 0, 0, 0.72);
   display: flex;
   flex-direction: column;
   align-items: center;
-  text-align: center;
-  gap: 16px;
-  color: #ffffff;
+  gap: 18px;
 }
 
 .iris-qr-modal-frame {
@@ -510,7 +278,6 @@
   padding: 14px;
   border-radius: 20px;
   background: #ffffff;
-  box-shadow: 0 0 36px rgba(124, 77, 255, 0.42);
 }
 
 .iris-qr-modal-frame img {
@@ -521,117 +288,326 @@
   image-rendering: pixelated;
 }
 
-.iris-reveal {
-  opacity: 0;
-  transform: translateY(18px);
-  animation: iris-rise 0.9s cubic-bezier(0.2, 0.7, 0.2, 1) forwards;
+.iris-qr-modal-actions {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  flex-wrap: wrap;
 }
 
-.iris-d1 {
-  animation-delay: 0.08s;
-}
-.iris-d2 {
-  animation-delay: 0.2s;
-}
-.iris-d3 {
-  animation-delay: 0.32s;
+.iris-qr-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 40px;
+  padding: 8px 18px;
+  border-radius: 999px;
+  font-size: 13.5px;
+  font-weight: 600;
+  background: rgba(230, 179, 133, 0.18);
+  border: 1px solid rgba(230, 179, 133, 0.42);
+  color: #f8eadc;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background-color 180ms ease, color 180ms ease;
 }
 
-@keyframes iris-rise {
-  to {
-    opacity: 1;
-    transform: none;
-  }
+.iris-qr-btn:hover {
+  background: rgba(230, 179, 133, 0.3);
+  color: #ffffff;
 }
 
-@media (max-width: 1100px) {
-  .iris-nav-inner,
-  .iris-hero-inner {
-    padding-left: 40px;
-    padding-right: 40px;
-  }
-  .iris-nav-links {
-    gap: 26px;
-  }
+.iris-qr-btn--ghost {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.16);
+  color: #d6d4e0;
+}
+
+.iris-qr-btn--ghost:hover {
+  background: rgba(255, 255, 255, 0.12);
+  color: #ffffff;
+}
+
+/* Dev Team Honor Modal */
+.iris-honor-modal {
+  width: 100%;
+  max-width: 920px;
+  max-height: min(88dvh, 820px);
+  border-radius: 26px;
+  background: linear-gradient(165deg, #161622 0%, #101019 100%);
+  border: 1px solid rgba(230, 179, 133, 0.24);
+  box-shadow:
+    0 32px 96px rgba(0, 0, 0, 0.72),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  color: var(--iris-text);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  margin: auto;
+}
+
+.iris-honor-head {
+  padding: 22px 26px 18px;
+  border-bottom: 1px solid var(--iris-line);
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.iris-honor-kicker {
+  margin: 0 0 6px;
+  font-size: 11.5px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--iris-amber);
+}
+
+.iris-honor-title {
+  margin: 0;
+  font-family: var(--font-display, 'Be Vietnam Pro', sans-serif);
+  font-size: clamp(22px, 2.8vw, 30px);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: #ffffff;
+}
+
+.iris-honor-close {
+  width: 40px;
+  height: 40px;
+  border-radius: 999px;
+  border: 1px solid var(--iris-line);
+  background: rgba(255, 255, 255, 0.05);
+  color: #e6e4f0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background-color 180ms ease, border-color 180ms ease;
+}
+
+.iris-honor-close:hover {
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.26);
+}
+
+.iris-honor-metrics {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  padding: 16px 26px;
+  background: rgba(255, 255, 255, 0.02);
+  border-bottom: 1px solid var(--iris-line);
+}
+
+.iris-honor-metric {
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.iris-honor-metric strong {
+  font-family: var(--font-display, 'Be Vietnam Pro', sans-serif);
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--iris-amber);
+}
+
+.iris-honor-metric span {
+  font-size: 12.5px;
+  line-height: 1.4;
+  color: var(--iris-muted);
+}
+
+.iris-honor-grid {
+  padding: 20px 26px;
+  overflow-y: auto;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.iris-honor-card {
+  padding: 18px;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--iris-line);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.iris-honor-card[data-accent='iris'] {
+  border-color: rgba(140, 108, 255, 0.26);
+}
+.iris-honor-card[data-accent='amber'] {
+  border-color: rgba(230, 179, 133, 0.28);
+}
+.iris-honor-card[data-accent='sage'] {
+  border-color: rgba(139, 201, 168, 0.26);
+}
+.iris-honor-card[data-accent='steel'] {
+  border-color: rgba(140, 183, 212, 0.26);
+}
+
+.iris-honor-card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.iris-honor-card-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: var(--iris-amber);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.iris-honor-card[data-accent='iris'] .iris-honor-card-icon {
+  color: #c2b0ff;
+}
+.iris-honor-card[data-accent='sage'] .iris-honor-card-icon {
+  color: var(--iris-sage);
+}
+.iris-honor-card[data-accent='steel'] .iris-honor-card-icon {
+  color: var(--iris-steel);
+}
+
+.iris-honor-card-code {
+  font-family: var(--font-mono, monospace);
+  font-size: 12px;
+  color: var(--iris-muted);
+}
+
+.iris-honor-card-track {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--iris-amber);
+}
+
+.iris-honor-card-title {
+  margin: 0;
+  font-size: 16.5px;
+  font-weight: 700;
+  line-height: 1.3;
+  color: #ffffff;
+}
+
+.iris-honor-card-body {
+  margin: 0;
+  font-size: 13.5px;
+  line-height: 1.55;
+  color: var(--iris-muted);
+}
+
+.iris-honor-tags {
+  margin-top: auto;
+  padding-top: 6px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.iris-honor-tag {
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #e2e0ec;
+  font-size: 11.5px;
+  font-weight: 500;
+}
+
+.iris-honor-foot {
+  padding: 16px 26px 20px;
+  border-top: 1px solid var(--iris-line);
+  background: rgba(0, 0, 0, 0.22);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 14px;
+}
+
+.iris-honor-note {
+  margin: 0;
+  flex: 1 1 380px;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--iris-muted);
+}
+
+.iris-honor-foot-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
 }
 
 @media (max-width: 860px) {
-  .iris-nav-links {
-    display: none;
-  }
-  .iris-menu-btn {
-    display: inline-flex;
-  }
-  .iris-nav-right {
-    gap: 10px;
-  }
   .iris-hero {
-    min-height: 880px;
+    min-height: 660px;
   }
+
   .iris-hero-inner {
-    min-height: 880px;
-    justify-content: flex-end;
-    text-align: center;
-    align-items: center;
-    padding: 340px 24px 44px;
-  }
-  .iris-copy {
-    max-width: 560px;
-    margin-top: 0;
-  }
-  .iris-headline {
-    font-size: clamp(36px, 9.2vw, 56px);
-  }
-  .iris-sub {
-    margin-top: 16px;
-  }
-  .iris-cta-row {
-    margin-top: 26px;
+    min-height: 660px;
+    padding: 310px 20px 44px;
+    align-items: flex-end;
     justify-content: center;
   }
-  .iris-qr-corner {
-    text-align: left;
-    width: 100%;
-    max-width: 480px;
+
+  .iris-harmony-dock {
+    align-items: center;
+  }
+
+  .iris-qr-plate {
+    width: 164px;
+    height: 164px;
+    padding: 12px;
+  }
+
+  .iris-honor-metrics,
+  .iris-honor-grid {
+    grid-template-columns: minmax(0, 1fr);
   }
 }
 
 @media (max-width: 480px) {
-  .iris-nav-inner {
-    padding: 0 16px;
-  }
-  .iris-hero-inner {
-    padding: 300px 16px 36px;
-  }
-  .iris-brand {
-    font-size: 19px;
-  }
-  .iris-btn-open {
-    padding: 9px 15px;
-    font-size: 13px;
-  }
-  .iris-btn-try {
-    height: 54px;
-    padding: 0 32px;
-    font-size: 18px;
-  }
-  .iris-qr-corner {
-    flex-direction: column;
-    align-items: center;
-    text-align: center;
-  }
-  .iris-qr-actions {
+  .iris-honor-btn {
+    width: 100%;
     justify-content: center;
+    padding: 10px 18px 10px 12px;
+    font-size: 14px;
+  }
+
+  .iris-honor-head,
+  .iris-honor-metrics,
+  .iris-honor-grid,
+  .iris-honor-foot {
+    padding-left: 16px;
+    padding-right: 16px;
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .iris-reveal {
-    animation: none;
-    opacity: 1;
-    transform: none;
-  }
   .iris-loader {
     animation: none;
+  }
+  .iris-qr-plate,
+  .iris-honor-btn {
+    transition: none;
   }
 }

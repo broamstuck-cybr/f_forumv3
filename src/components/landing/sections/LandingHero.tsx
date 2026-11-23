@@ -284,8 +284,8 @@ export const LandingHero: React.FC<LandingHeroProps> = ({
         <div className="lp-hero-grid">
           <motion.div style={reduced ? undefined : { y: copyY }} className="lp-hero-copy">
             <p className="lp-kicker t-label">
-              <span>F-Forum</span>
-              <span>trải nghiệm mẫu sống, dựng web cùng cộng đồng</span>
+              <span>FPT Forum · TH, THCS và THPT FPT</span>
+              <span>Xưởng lắp ráp mở &amp; Chống AI Slop</span>
             </p>
 
             <div className="lp-assembly" aria-label="Chuỗi 7 bước từ ý tưởng đến tệp xuất">
@@ -359,27 +359,27 @@ export const LandingHero: React.FC<LandingHeroProps> = ({
 
             <h1 className="lp-hero-title">
               <span className="lp-hero-line" data-visible={activeCount >= 1}>
-                <span className="t-script lp-cap">T</span>ừ phác thảo đến{' '}
-                <em className="t-italic lp-hero-em">sản phẩm</em>,
+                <span className="t-script lp-cap">T</span>ừ ý tưởng đến{' '}
+                <em className="t-italic lp-hero-em">sản phẩm thật</em>,
               </span>{' '}
               <span className="lp-hero-line" data-visible={activeCount >= 3}>
                 <Mark kind="underline" active>
-                  xem được
+                  làm chủ AI
                 </Mark>{' '}
-                cả mã nguồn.
+                không rập khuôn.
               </span>
             </h1>
 
             <p className="lp-hero-lead">
-              F-Forum là sân chơi và kho tư liệu mở cho cộng đồng thiết kế, lập trình web — nơi bạn trải nghiệm trực tiếp từng thành phần, hiểu cách vận hành và đưa thẳng vào dự án thực tế.
+              Báo cáo OECD PISA 2025 (9/2026) ghi nhận 95,9% học sinh dùng AI trong sáng tạo — nhưng điểm nghẽn lớn nhất là thiếu lộ trình và nguồn mẫu chuẩn. FPT Forum mở ra một Xưởng lắp ráp mở bản địa hóa tiếng Việt giúp học sinh chống &ldquo;AI Slop&rdquo; và hoàn thiện sản phẩm thực tế.
             </p>
 
             <div className="lp-actions">
               <button type="button" className="btn btn-red btn-lg" onClick={onEnterApp}>
-                Bắt đầu
+                Mở Xưởng lắp ráp
               </button>
               <button type="button" className="btn btn-line btn-lg" onClick={() => onNavigate('explore')}>
-                Khám phá
+                Khám phá 7.662 mẫu
               </button>
               {!currentUser && (
                 <button type="button" className="btn btn-ghost btn-lg" onClick={onOpenLogin}>
@@ -390,16 +390,22 @@ export const LandingHero: React.FC<LandingHeroProps> = ({
 
             <dl className="lp-colophon">
               <div>
-                <dt className="t-label">kho trải nghiệm</dt>
-                <dd>Thử tương tác trực tiếp ngay trên trình duyệt</dd>
+                <dt className="t-label">7.662 mẫu giao diện</dt>
+                <dd>
+                  41 PinUI · 321 Motion AI · 961 ThreeUI · 892 GetLayers · 400 LucianLabs · 5.047 CodeFronts
+                </dd>
               </div>
               <div>
-                <dt className="t-label">không gian dựng</dt>
-                <dd className="lp-colophon-accent">Tùy biến mã nguồn · Chép Prompt · Mở rộng dự án</dd>
+                <dt className="t-label">195 người dùng khảo sát</dt>
+                <dd className="lp-colophon-accent">
+                  91,2% đánh giá cao mẫu UI/UX trực quan · 95,9% học sinh dùng AI (OECD PISA 2025)
+                </dd>
               </div>
               <div>
-                <dt className="t-label">cộng đồng</dt>
-                <dd>Chia sẻ mẫu &amp; hỏi đáp kỹ thuật mở</dd>
+                <dt className="t-label">Xưởng lắp ráp mở FPT</dt>
+                <dd>
+                  Chống AI Slop · Kho Skill &amp; Mã nguồn mở · Cộng đồng TH, THCS &amp; THPT FPT
+                </dd>
               </div>
             </dl>
           </motion.div>

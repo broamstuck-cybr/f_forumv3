@@ -87,12 +87,12 @@ export const LandingProjects: React.FC<LandingProjectsProps> = ({ onNavigate }) 
       <div className="wrap-wide">
         <div className="lp-head">
           <div className="lp-head-copy">
-            <p className="t-label">mẫu có thể mở và chỉnh ngay</p>
+            <p className="t-label">kiến trúc hệ thống &amp; starter kits đã kiểm định</p>
             <h2 className="t-title">
-              Dự án thực chiến, <Mark kind="underline">mở là chạy</Mark> được
+              Bộ khung mẫu chuẩn, <Mark kind="underline">mở là chạy</Mark> được
             </h2>
             <p className="t-lead">
-              Mở trực tiếp trên trình duyệt, xem cấu trúc gọn gàng và tùy biến ngay theo dự án của bạn.
+              Mỗi Starter Kit đều được phân loại, kiểm tra tính khả thi trước khi vào Tủ sách tài nguyên — sẵn sàng cho Hỏi đáp, Threads, Kho đề thi và dự án học tập.
             </p>
           </div>
         </div>

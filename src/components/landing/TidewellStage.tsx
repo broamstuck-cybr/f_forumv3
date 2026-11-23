@@ -1,13 +1,14 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import type { DimensionView } from '../../types/index';
 import { useAppStore } from '../../store/appStore';
 import {
-  REELMARK_POSTER_URL,
-  REELMARK_VIDEO_URL,
   buildRandomInterleaved25,
   buildRoundedQuadClipPath,
-  type ReelmarkExperienceCard,
-  type ReelmarkLibraryKind,
+  buildShowcase50,
+  type ShowcaseExperienceCard,
+  type ShowcaseFilterMode,
+  type ShowcaseLibraryKind,
 } from '../../data/reelmarkCarouselData';
 import { PinUIPlayground } from '../pinui';
 import { usePrefersReducedMotion } from './useLandingMotion';
@@ -18,37 +19,101 @@ export interface TidewellStageProps {
 }
 
 export {
-  REELMARK_POSTER_URL,
-  REELMARK_VIDEO_URL,
   buildRandomInterleaved25,
   buildRoundedQuadClipPath,
-  type ReelmarkExperienceCard,
-  type ReelmarkLibraryKind,
+  buildShowcase50,
+  type ShowcaseExperienceCard,
+  type ShowcaseFilterMode,
+  type ShowcaseLibraryKind,
 };
+
+interface MotionFullEntry {
+  liveHtml?: string;
+  promptText?: string;
+}
+
+let motionFullCache: Record<string, MotionFullEntry> | null = null;
+let motionFullPromise: Promise<Record<string, MotionFullEntry>> | null = null;
+
+async function fetchMotionSitesFull(): Promise<Record<string, MotionFullEntry>> {
+  if (motionFullCache) return motionFullCache;
+  if (!motionFullPromise) {
+    motionFullPromise = fetch('/data/motionsites-full.json')
+      .then((res) => (res.ok ? res.json() : { items: {} }))
+      .then((data: { items?: Record<string, MotionFullEntry> }) => {
+        motionFullCache = data.items || {};
+        return motionFullCache;
+      })
+      .catch(() => {
+        motionFullCache = {};
+        return {};
+      });
+  }
+  return motionFullPromise;
+}
+
+function circularIndexDistance(i: number, active: number, total: number): number {
+  const diff = Math.abs(i - active);
+  return Math.min(diff, total - diff);
+}
+
+class PinUIMiniBoundary extends React.Component<
+  { children: React.ReactNode; fallbackTitle: string },
+  { hasError: boolean }
+> {
+  constructor(props: { children: React.ReactNode; fallbackTitle: string }) {
+    super(props);
+    this.state = { hasError: false };
+  }
+
+  static getDerivedStateFromError(): { hasError: boolean } {
+    return { hasError: true };
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="rm-card-pinui-fallback" aria-hidden="true">
+          <span>PinUI Live</span>
+          <strong>{this.props.fallbackTitle}</strong>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
+const FILTER_OPTIONS: Array<{ id: ShowcaseFilterMode; label: string }> = [
+  { id: 'all', label: 'Tất cả 50' },
+  { id: 'Motion AI', label: '25 Motion AI' },
+  { id: 'PinUI', label: '25 PinUI' },
+];
 
 export const TidewellStage: React.FC<TidewellStageProps> = ({ onNavigate }) => {
   const { launchPromptToWorkspace, openExperience } = useAppStore();
   const reduced = usePrefersReducedMotion();
 
   const [seed, setSeed] = useState<number>(() => Math.floor(Math.random() * 1000000) + 1);
-  const cards = useMemo(() => buildRandomInterleaved25(seed), [seed]);
+  const [filterMode, setFilterMode] = useState<ShowcaseFilterMode>('all');
+  const cards = useMemo(() => buildShowcase50(seed, filterMode), [seed, filterMode]);
 
   const [activeIndex, setActiveIndex] = useState(0);
   const [dragging, setDragging] = useState(false);
-  const [selectedCard, setSelectedCard] = useState<ReelmarkExperienceCard | null>(null);
-  const [videoReady, setVideoReady] = useState(false);
+  const [selectedCard, setSelectedCard] = useState<ShowcaseExperienceCard | null>(null);
+  const [modalMode, setModalMode] = useState<'interactive' | 'video'>('interactive');
+  const [pinuiModalTheme, setPinuiModalTheme] = useState<'dark' | 'light'>('dark');
+  const [liveHtmlContent, setLiveHtmlContent] = useState<string | null>(null);
+  const [liveHtmlLoading, setLiveHtmlLoading] = useState(false);
+  const [readyVideos, setReadyVideos] = useState<Record<string, boolean>>({});
 
   const frameRef = useRef<HTMLDivElement>(null);
   const trackLayerRef = useRef<HTMLDivElement>(null);
   const cardElsRef = useRef<Array<HTMLDivElement | null>>([]);
-  const tileHostElsRef = useRef<Array<HTMLDivElement | null>>([]);
-  const videoElsRef = useRef<Array<HTMLVideoElement | null>>([]);
 
   const offsetRef = useRef<number>(0);
   const velocityRef = useRef<number>(0);
   const targetStepDeltaRef = useRef<number>(0);
   const isDraggingRef = useRef<boolean>(false);
-  const pointerStartXRef = useRef<number>(0);
   const pointerLastXRef = useRef<number>(0);
   const pointerLastTimeRef = useRef<number>(0);
   const dragDistanceRef = useRef<number>(0);
@@ -67,69 +132,63 @@ export const TidewellStage: React.FC<TidewellStageProps> = ({ onNavigate }) => {
     setDragging(false);
     targetStepDeltaRef.current = 0;
     velocityRef.current = 0;
+    offsetRef.current = 0;
+    setActiveIndex(0);
     setSeed((prev) => prev + Math.floor(Math.random() * 9973) + 17);
   }, []);
 
-  useEffect(() => {
-    if (reduced || typeof window === 'undefined') return undefined;
-    const frame = frameRef.current;
-    if (!frame || typeof frame.animate !== 'function') return undefined;
-
-    const anims: Animation[] = [];
-    const runAnim = (
-      selector: string,
-      keyframes: Keyframe[],
-      options: KeyframeAnimationOptions
-    ) => {
-      const els = frame.querySelectorAll<HTMLElement | SVGElement>(selector);
-      els.forEach((el) => {
-        if (typeof el.animate === 'function') {
-          anims.push(el.animate(keyframes, { fill: 'both', easing: 'cubic-bezier(0.22, 1, 0.36, 1)', ...options }));
-        }
-      });
-    };
-
-    runAnim('.rm-topbar', [{ opacity: 0, transform: 'translateY(-16px)' }, { opacity: 1, transform: 'translateY(0)' }], { duration: 420 });
-    runAnim('.rm-badge', [{ opacity: 0, transform: 'translateX(-50%) scale(0.86)' }, { opacity: 1, transform: 'translateX(-50%) scale(1)' }], { duration: 420, delay: 60 });
-    runAnim('.rm-headline-line1', [{ opacity: 0, transform: 'translateY(18px)', filter: 'blur(8px)' }, { opacity: 1, transform: 'translateY(0)', filter: 'blur(0px)' }], { duration: 480, delay: 110 });
-    runAnim('.rm-headline-line2', [{ opacity: 0, transform: 'translateY(18px)', filter: 'blur(8px)' }, { opacity: 1, transform: 'translateY(0)', filter: 'blur(0px)' }], { duration: 480, delay: 170 });
-    runAnim('.rm-subline', [{ opacity: 0, transform: 'translateX(-50%) translateY(14px)' }, { opacity: 1, transform: 'translateX(-50%) translateY(0)' }], { duration: 460, delay: 220 });
-    runAnim('.rm-carousel-layer', [{ opacity: 0, transform: 'translateY(26px)' }, { opacity: 1, transform: 'translateY(0)' }], { duration: 520, delay: 260 });
-    runAnim('.rm-cta-ring', [{ opacity: 0, transform: 'scale(0.86)' }, { opacity: 1, transform: 'scale(1)' }], { duration: 440, delay: 320 });
-    runAnim('.rm-note-beseen, .rm-note-zerocost', [{ opacity: 0 }, { opacity: 1 }], { duration: 420, delay: 360 });
-
-    const clearStylesTimeout = window.setTimeout(() => {
-      anims.forEach((a) => a.cancel());
-    }, 950);
-
-    return () => {
-      window.clearTimeout(clearStylesTimeout);
-      anims.forEach((a) => a.cancel());
-    };
-  }, [reduced]);
+  const handleFilterChange = useCallback((next: ShowcaseFilterMode) => {
+    setFilterMode(next);
+    isDraggingRef.current = false;
+    setDragging(false);
+    targetStepDeltaRef.current = 0;
+    velocityRef.current = 0;
+    offsetRef.current = 0;
+    setActiveIndex(0);
+  }, []);
 
   useEffect(() => {
-    if (reduced) return undefined;
-    const master = videoElsRef.current[0];
-    if (!master) return undefined;
+    if (!selectedCard) {
+      setLiveHtmlContent(null);
+      setLiveHtmlLoading(false);
+      return undefined;
+    }
 
-    const syncAll = () => {
-      const t = master.currentTime;
-      for (let i = 1; i < videoElsRef.current.length; i += 1) {
-        const v = videoElsRef.current[i];
-        if (v && Math.abs(v.currentTime - t) > 0.18) {
-          try {
-            v.currentTime = t;
-          } catch {
-            void 0;
-          }
-        }
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setSelectedCard(null);
       }
     };
+    window.addEventListener('keydown', onKeyDown);
 
-    const interval = window.setInterval(syncAll, 1500);
-    return () => window.clearInterval(interval);
-  }, [reduced, cards]);
+    if (selectedCard.library === 'PinUI') {
+      setModalMode('interactive');
+      setLiveHtmlContent(null);
+      setLiveHtmlLoading(false);
+    } else if (selectedCard.hasLiveHtml && selectedCard.motionsitesSlug) {
+      setModalMode('video');
+      setLiveHtmlLoading(true);
+      let cancelled = false;
+      void fetchMotionSitesFull().then((items) => {
+        if (cancelled) return;
+        const entry = items[selectedCard.motionsitesSlug!];
+        setLiveHtmlContent(entry?.liveHtml ?? null);
+        setLiveHtmlLoading(false);
+      });
+      return () => {
+        cancelled = true;
+        window.removeEventListener('keydown', onKeyDown);
+      };
+    } else {
+      setModalMode('video');
+      setLiveHtmlContent(null);
+      setLiveHtmlLoading(false);
+    }
+
+    return () => {
+      window.removeEventListener('keydown', onKeyDown);
+    };
+  }, [selectedCard]);
 
   useEffect(() => {
     if (typeof window === 'undefined') return undefined;
@@ -174,7 +233,7 @@ export const TidewellStage: React.FC<TidewellStageProps> = ({ onNavigate }) => {
           } else {
             velocityRef.current = 0;
             if (!reduced && !selectedCard) {
-              offsetRef.current -= 50 * dt;
+              offsetRef.current -= 46 * dt;
             }
           }
         }
@@ -187,7 +246,6 @@ export const TidewellStage: React.FC<TidewellStageProps> = ({ onNavigate }) => {
 
       for (let i = 0; i < TOTAL_CARDS; i += 1) {
         const cardEl = cardElsRef.current[i];
-        const tileHostEl = tileHostElsRef.current[i];
         if (!cardEl) continue;
 
         let t = i * PITCH + offsetRef.current;
@@ -207,18 +265,18 @@ export const TidewellStage: React.FC<TidewellStageProps> = ({ onNavigate }) => {
 
         const pushedX = 720 + t * (1 + 0.083 * Math.pow(t / 706, 2));
         const d = Math.abs(pushedX - 720) / 706;
-        const cardW = 170 + 48 * d * d;
+        const cardW = 172 + 48 * d * d;
 
         const xL = pushedX - cardW * 0.5;
         const xR = pushedX + cardW * 0.5;
         const qL = Math.abs(xL - 720) / 706;
         const qR = Math.abs(xR - 720) / 706;
 
-        const hL = 280 + 92 * Math.pow(qL, 2.6);
-        const hR = 280 + 92 * Math.pow(qR, 2.6);
-        const layerHeight = layerEl.clientHeight || (isPhone ? 250 : 1080 * u);
-        const phoneCenterU = layerHeight / Math.max(0.2, u) * 0.5 + 8;
-        const cy = isPhone ? phoneCenterU - 10 * d * d : 687 - 12 * d * d;
+        const hL = 282 + 92 * Math.pow(qL, 2.6);
+        const hR = 282 + 92 * Math.pow(qR, 2.6);
+        const layerHeight = layerEl.clientHeight || (isPhone ? 260 : 1080 * u);
+        const phoneCenterU = (layerHeight / Math.max(0.2, u)) * 0.5 + 8;
+        const cy = isPhone ? phoneCenterU - 10 * d * d : 675 - 12 * d * d;
 
         const boxH = Math.max(hL, hR);
         const boxTop = cy - boxH * 0.5;
@@ -239,17 +297,6 @@ export const TidewellStage: React.FC<TidewellStageProps> = ({ onNavigate }) => {
         cardEl.style.transform = `translate3d(${pxLeft.toFixed(1)}px, ${pxTop.toFixed(1)}px, 0)`;
         cardEl.style.clipPath = buildRoundedQuadClipPath(pxW, topL, pxHL, topR, pxHR, cornerR);
         cardEl.style.zIndex = String(100 - Math.round(d * 40));
-
-        if (tileHostEl) {
-          const tileIdx = i % 10;
-          const col = tileIdx % 5;
-          const row = Math.floor(tileIdx / 5);
-          const tileH = Math.max(pxH, pxW / 0.7111);
-          const tileW = tileH * 0.7111;
-          tileHostEl.style.width = `${(tileW * 5).toFixed(1)}px`;
-          tileHostEl.style.height = `${(tileH * 2).toFixed(1)}px`;
-          tileHostEl.style.transform = `translate3d(${(-col * tileW).toFixed(1)}px, ${(-row * tileH).toFixed(1)}px, 0)`;
-        }
       }
 
       setActiveIndex((prev) => (prev === closestIdx ? prev : closestIdx));
@@ -268,7 +315,6 @@ export const TidewellStage: React.FC<TidewellStageProps> = ({ onNavigate }) => {
     setDragging(true);
     targetStepDeltaRef.current = 0;
     velocityRef.current = 0;
-    pointerStartXRef.current = e.clientX;
     pointerLastXRef.current = e.clientX;
     pointerLastTimeRef.current = performance.now();
     dragDistanceRef.current = 0;
@@ -301,19 +347,19 @@ export const TidewellStage: React.FC<TidewellStageProps> = ({ onNavigate }) => {
     e.currentTarget.releasePointerCapture?.(e.pointerId);
   };
 
-  const handleCardClick = (card: ReelmarkExperienceCard) => {
+  const handleCardClick = (card: ShowcaseExperienceCard) => {
     if (dragDistanceRef.current > 10) return;
     setSelectedCard(card);
   };
 
   const activeCard = cards[activeIndex] ?? cards[0];
 
-  const handleLaunchActiveInWorkspace = (card: ReelmarkExperienceCard) => {
+  const handleLaunchActiveInWorkspace = (card: ShowcaseExperienceCard) => {
     setSelectedCard(null);
     void launchPromptToWorkspace(card.promptText);
   };
 
-  const handleOpenInExperienceView = (card: ReelmarkExperienceCard) => {
+  const handleOpenInExperienceView = (card: ShowcaseExperienceCard) => {
     setSelectedCard(null);
     openExperience(card.sourceId);
   };
@@ -321,7 +367,7 @@ export const TidewellStage: React.FC<TidewellStageProps> = ({ onNavigate }) => {
   return (
     <section
       id="quy-trinh"
-      aria-label="Reelmark — Trải nghiệm dải thẻ cong 25 mẫu ngẫu nhiên xen kẽ PinUI và Motion AI"
+      aria-label="FPT Forum — Dải thẻ cong 50 Trưng bày Thực tế từ Motion AI và PinUI"
       className="rm-stage"
     >
       <div id="san-pham" className="rm-anchor-product" aria-hidden="true" />
@@ -334,125 +380,61 @@ export const TidewellStage: React.FC<TidewellStageProps> = ({ onNavigate }) => {
               className="rm-logo"
               onClick={() => onNavigate('explore')}
             >
-              <svg
-                viewBox="0 0 28 28"
-                fill="none"
-                className="rm-logo-leaf"
-                aria-hidden="true"
+              <span className="rm-logo-dot" aria-hidden="true" />
+              <span>FPT Forum · 50 Trưng bày</span>
+            </button>
+
+            <div className="rm-filter-group" role="group" aria-label="Lọc thư viện trưng bày">
+              {FILTER_OPTIONS.map((opt) => (
+                <button
+                  key={opt.id}
+                  type="button"
+                  className="rm-filter-pill"
+                  aria-pressed={filterMode === opt.id}
+                  onClick={() => handleFilterChange(opt.id)}
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>
+
+            <div className="rm-topbar-actions">
+              <button
+                type="button"
+                className="rm-btn-secondary"
+                onClick={handleReshuffle}
               >
-                <path
-                  d="M23.5 4.5C15.2 4.5 7.5 9.6 5.4 18.2C4.9 20.3 5.2 22.4 5.2 22.4C5.2 22.4 7.3 22.7 9.4 22.2C18 20.1 23.5 12.8 23.5 4.5Z"
-                  fill="currentColor"
-                />
-                <path
-                  d="M5.5 22.5C10.5 16.5 15.8 12.2 22.2 8.5"
-                  stroke="#F5F8EF"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                />
-              </svg>
-              <span>Reelmark</span>
-            </button>
-
-            <nav className="rm-nav" aria-label="Điều hướng bộ sưu tập">
-              <button type="button" className="rm-nav-item" onClick={() => onNavigate('experience')}>
-                Brands
+                Trộn mẫu
               </button>
-              <button type="button" className="rm-nav-item" onClick={() => onNavigate('explore')}>
-                Creators
+              <button
+                type="button"
+                className="rm-btn-primary"
+                onClick={() => onNavigate('explore')}
+              >
+                Mở Bàn soi
               </button>
-              <button type="button" className="rm-nav-item" onClick={() => onNavigate('workspace')}>
-                Pricing
-              </button>
-              <button type="button" className="rm-nav-item" onClick={() => onNavigate('community')}>
-                Use Cases
-              </button>
-              <button type="button" className="rm-nav-item" onClick={handleReshuffle}>
-                Contact
-              </button>
-            </nav>
-
-            <button
-              type="button"
-              className="rm-btn-login"
-              onClick={handleReshuffle}
-              title="Trộn ngẫu nhiên 25 trải nghiệm PinUI & Motion AI"
-            >
-              Log in
-            </button>
-            <button
-              type="button"
-              className="rm-btn-signup"
-              onClick={() => onNavigate('explore')}
-            >
-              Sign up
-            </button>
+            </div>
           </header>
 
           <div className="rm-badge">
-            Trusted by 120,000+ indie makers · 25 mẫu PinUI &amp; Motion AI
+            FPT Forum · 25 Motion AI + 25 PinUI nguyên bản · Chống AI Slop
           </div>
 
           <h2 className="rm-headline">
-            <span className="rm-headline-line1">Captivate Crowds</span>
-            <span className="rm-headline-line2">with Snackable Reels</span>
+            <span className="rm-headline-line1">Chạm Mẫu Sống,</span>
+            <span className="rm-headline-line2">Học Từ Bản Gốc</span>
           </h2>
 
           <p className="rm-subline">
-            Grow your brand with short, snappy product clips by our handpicked video makers.
-            Kéo ngang dải thẻ cong hoặc nhấn &lt;- hay -&gt; để trải nghiệm 25 mẫu ngẫu nhiên xen kẽ giữa PinUI và Motion AI.
+            50 trải nghiệm chạy thật trích trực tiếp từ MotionSites AI và PinUI — kéo dải thẻ cong hoặc nhấn &lt;- / -&gt; để xem video và tương tác bản gốc trước khi lắp ráp trong Workspace.
           </p>
-
-          <svg
-            viewBox="0 0 44 48"
-            fill="none"
-            className="rm-doodle-slashes"
-            aria-hidden="true"
-          >
-            <path
-              d="M16 6 C12 18 8 30 4 42 M34 4 C29 17 24 30 19 43"
-              stroke="currentColor"
-              strokeWidth="3.2"
-              strokeLinecap="round"
-              className="rm-draw-path"
-            />
-          </svg>
-
-          <div className="rm-note-beseen" aria-hidden="true">
-            Be seen
-            <br />
-            with clips
-          </div>
-
-          <svg
-            viewBox="0 0 96 124"
-            fill="none"
-            className="rm-arrow-beseen"
-            aria-hidden="true"
-          >
-            <path
-              d="M42 6 C68 28 74 72 40 112"
-              stroke="currentColor"
-              strokeWidth="2.6"
-              strokeLinecap="round"
-              className="rm-draw-path"
-            />
-            <path
-              d="M35 98 L39 114 L55 107"
-              stroke="currentColor"
-              strokeWidth="2.6"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              className="rm-draw-path"
-            />
-          </svg>
 
           <div
             ref={trackLayerRef}
             className="rm-carousel-layer"
             data-dragging={dragging ? 'true' : 'false'}
             role="region"
-            aria-label="Băng chuyền cong 25 trải nghiệm ngẫu nhiên xen kẽ từ PinUI và Motion AI"
+            aria-label="Băng chuyền cong 50 trải nghiệm thực tế từ Motion AI và PinUI"
             tabIndex={0}
             onPointerDown={handlePointerDown}
             onPointerMove={handlePointerMove}
@@ -468,146 +450,138 @@ export const TidewellStage: React.FC<TidewellStageProps> = ({ onNavigate }) => {
               }
             }}
           >
-            {cards.map((card, idx) => (
-              <div
-                key={idx}
-                ref={(el) => {
-                  cardElsRef.current[idx] = el;
-                }}
-                className="rm-card"
-                role="button"
-                tabIndex={-1}
-                aria-label={`${card.library}: ${card.title} (${card.category})`}
-                onClick={() => handleCardClick(card)}
-              >
+            {cards.map((card, idx) => {
+              const dist = circularIndexDistance(idx, activeIndex, TOTAL_CARDS);
+              const isPinUI = card.library === 'PinUI';
+              const shouldMountPinUI = isPinUI && !selectedCard && dist <= 3;
+              const shouldPlayVideo =
+                !isPinUI && !reduced && !selectedCard && dist <= 4 && Boolean(card.videoUrl);
+              const isVidReady = Boolean(readyVideos[card.id]);
+
+              return (
                 <div
+                  key={idx}
                   ref={(el) => {
-                    tileHostElsRef.current[idx] = el;
+                    cardElsRef.current[idx] = el;
                   }}
-                  className="rm-card-tile-host"
-                  aria-hidden="true"
+                  className="rm-card"
+                  data-lib={card.library}
+                  role="button"
+                  tabIndex={-1}
+                  aria-label={`${card.library}: ${card.title} (${card.category})`}
+                  onClick={() => handleCardClick(card)}
                 >
-                  <img
-                    src={REELMARK_POSTER_URL}
-                    alt=""
-                    className="rm-card-poster"
-                    loading="eager"
-                    decoding="async"
-                  />
-                  {!reduced && (
-                    <video
-                      ref={(el) => {
-                        videoElsRef.current[idx] = el;
-                      }}
-                      src={REELMARK_VIDEO_URL}
-                      className="rm-card-video"
-                      data-ready={videoReady ? 'true' : 'false'}
-                      muted
-                      loop
-                      playsInline
-                      autoPlay
-                      onLoadedData={() => setVideoReady(true)}
-                    />
+                  {isPinUI ? (
+                    <div className="rm-card-pinui-stage" aria-hidden="true">
+                      {shouldMountPinUI ? (
+                        <div className="rm-card-pinui-scale">
+                          <PinUIMiniBoundary fallbackTitle={card.title}>
+                            <PinUIPlayground itemId={card.sourceId} theme="dark" compact />
+                          </PinUIMiniBoundary>
+                        </div>
+                      ) : (
+                        <div className="rm-card-pinui-fallback">
+                          <span>PinUI Interactive</span>
+                          <strong>{card.title}</strong>
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <>
+                      <img
+                        src={card.imageUrl || card.fallbackUrl}
+                        alt={card.title}
+                        className="rm-card-thumb"
+                        loading="lazy"
+                        decoding="async"
+                        referrerPolicy="no-referrer"
+                        onError={(e) => {
+                          const target = e.currentTarget;
+                          if (target.src !== card.fallbackUrl) {
+                            target.src = card.fallbackUrl;
+                          }
+                        }}
+                      />
+
+                      {shouldPlayVideo && card.videoUrl && (
+                        <video
+                          key={card.videoUrl}
+                          src={card.videoUrl}
+                          poster={card.imageUrl || card.fallbackUrl}
+                          className="rm-card-video"
+                          data-ready={isVidReady ? 'true' : 'false'}
+                          muted
+                          loop
+                          playsInline
+                          autoPlay
+                          preload="metadata"
+                          onLoadedData={() =>
+                            setReadyVideos((prev) =>
+                              prev[card.id] ? prev : { ...prev, [card.id]: true }
+                            )
+                          }
+                        />
+                      )}
+                    </>
                   )}
-                </div>
 
-                <img
-                  src={card.imageUrl}
-                  alt={card.title}
-                  className="rm-card-thumb"
-                  loading="lazy"
-                  decoding="async"
-                  referrerPolicy="no-referrer"
-                  onError={(e) => {
-                    const target = e.currentTarget;
-                    if (target.src !== card.fallbackUrl) {
-                      target.src = card.fallbackUrl;
-                    }
-                  }}
-                />
+                  <div className="rm-card-shade" aria-hidden="true" />
 
-                <div className="rm-card-shade" aria-hidden="true" />
+                  <div className="rm-card-top">
+                    <span className="rm-card-lib" data-lib={card.library}>
+                      {card.library}
+                    </span>
+                    <span className="rm-card-num">
+                      {String(idx + 1).padStart(2, '0')}/{TOTAL_CARDS}
+                    </span>
+                  </div>
 
-                <div className="rm-card-top">
-                  <span className="rm-card-lib" data-lib={card.library}>
-                    {card.library}
-                  </span>
-                  <span className="rm-card-num">
-                    {String(idx + 1).padStart(2, '0')}/25
-                  </span>
-                </div>
-
-                <div className="rm-card-bottom">
-                  <span className="rm-card-play" aria-hidden="true">
-                    <svg viewBox="0 0 16 16" width="13" height="13" fill="currentColor">
-                      <polygon points="4,2.5 13.5,8 4,13.5" />
-                    </svg>
-                  </span>
-                  <div className="rm-card-meta">
-                    <span className="rm-card-cat">{card.category}</span>
-                    <span className="rm-card-title">{card.title}</span>
+                  <div className="rm-card-bottom">
+                    <span className="rm-card-play" aria-hidden="true">
+                      <svg viewBox="0 0 16 16" width="13" height="13" fill="currentColor">
+                        <polygon points="4,2.5 13.5,8 4,13.5" />
+                      </svg>
+                    </span>
+                    <div className="rm-card-meta">
+                      <span className="rm-card-cat">{card.category}</span>
+                      <span className="rm-card-title">{card.title}</span>
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
-
-          <div className="rm-note-zerocost" aria-hidden="true">
-            Zero cost
-          </div>
-          <svg
-            viewBox="0 0 48 36"
-            fill="none"
-            className="rm-arrow-zerocost"
-            aria-hidden="true"
-          >
-            <path
-              d="M4 28 C18 30 30 22 42 10"
-              stroke="currentColor"
-              strokeWidth="2.4"
-              strokeLinecap="round"
-              className="rm-draw-path"
-            />
-            <path
-              d="M33 8 L43 9 L41 19"
-              stroke="currentColor"
-              strokeWidth="2.4"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              className="rm-draw-path"
-            />
-          </svg>
 
           <div className="rm-cta-ring">
             <button
               type="button"
               className="rm-cta-btn"
-              onClick={() => setSelectedCard(activeCard)}
+              onClick={() => activeCard && setSelectedCard(activeCard)}
             >
-              Make a Reel
+              Mở mẫu đang chọn
             </button>
           </div>
 
-          <div className="rm-arrow-controls" role="group" aria-label="Điều khiển lướt 25 trải nghiệm">
+          <div className="rm-arrow-controls" role="group" aria-label="Điều khiển lướt 50 trải nghiệm">
             <button
               type="button"
               className="rm-step-btn"
               onClick={() => stepCarousel(1)}
-              aria-label="Trải nghiệm trước (<-)"
+              aria-label="Trải nghiệm trước"
             >
               <span>&lt;-</span>
               <span>Trước</span>
             </button>
 
             <span className="rm-active-pill" aria-live="polite">
-              {String(activeIndex + 1).padStart(2, '0')}/25 · {activeCard?.library} · {activeCard?.title}
+              {String(activeIndex + 1).padStart(2, '0')}/{TOTAL_CARDS} · {activeCard?.library} · {activeCard?.title}
             </span>
 
             <button
               type="button"
               className="rm-step-btn"
               onClick={() => stepCarousel(-1)}
-              aria-label="Trải nghiệm tiếp theo (->)"
+              aria-label="Trải nghiệm tiếp theo"
             >
               <span>Tiếp</span>
               <span>-&gt;</span>
@@ -617,7 +591,7 @@ export const TidewellStage: React.FC<TidewellStageProps> = ({ onNavigate }) => {
               type="button"
               className="rm-step-btn"
               onClick={handleReshuffle}
-              aria-label="Trộn ngẫu nhiên 25 trải nghiệm PinUI và Motion AI"
+              aria-label="Trộn ngẫu nhiên các trải nghiệm"
             >
               Trộn ngẫu nhiên
             </button>
@@ -625,20 +599,22 @@ export const TidewellStage: React.FC<TidewellStageProps> = ({ onNavigate }) => {
         </div>
       </div>
 
-      {selectedCard && (
-        <div
-          className="rm-modal-backdrop"
-          role="dialog"
-          aria-modal="true"
-          aria-label={`Trải nghiệm ${selectedCard.title}`}
-          onClick={() => setSelectedCard(null)}
-        >
-          <div className="rm-modal" onClick={(e) => e.stopPropagation()}>
+      {selectedCard &&
+        typeof document !== 'undefined' &&
+        createPortal(
+          <div
+            className="rm-modal-backdrop"
+            role="dialog"
+            aria-modal="true"
+            aria-label={`Trải nghiệm gốc ${selectedCard.title}`}
+            onClick={() => setSelectedCard(null)}
+          >
+            <div className="rm-modal" onClick={(e) => e.stopPropagation()}>
             <div className="rm-modal-head">
               <div className="rm-modal-title-group">
                 <span className="rm-modal-badge">{selectedCard.library}</span>
                 <h3 className="rm-modal-title">{selectedCard.title}</h3>
-                <span style={{ fontSize: 13, color: '#5e5e61' }}>· {selectedCard.category}</span>
+                <span className="rm-modal-cat">· {selectedCard.category}</span>
               </div>
 
               <div className="rm-modal-actions">
@@ -689,78 +665,109 @@ export const TidewellStage: React.FC<TidewellStageProps> = ({ onNavigate }) => {
             </div>
 
             <div className="rm-modal-body">
-              <p style={{ fontSize: 14.5, color: '#3b423c', lineHeight: 1.55 }}>
-                {selectedCard.summaryVi}
-              </p>
+              <div className="rm-modal-subbar">
+                <p className="rm-modal-summary">{selectedCard.summaryVi}</p>
+
+                {selectedCard.library === 'PinUI' ? (
+                  <div className="rm-modal-mode-tabs" role="group" aria-label="Sắc độ PinUI">
+                    <button
+                      type="button"
+                      className="rm-modal-tab"
+                      aria-pressed={pinuiModalTheme === 'dark'}
+                      onClick={() => setPinuiModalTheme('dark')}
+                    >
+                      Nền tối
+                    </button>
+                    <button
+                      type="button"
+                      className="rm-modal-tab"
+                      aria-pressed={pinuiModalTheme === 'light'}
+                      onClick={() => setPinuiModalTheme('light')}
+                    >
+                      Nền sáng
+                    </button>
+                  </div>
+                ) : (
+                  <div className="rm-modal-mode-tabs" role="group" aria-label="Chế độ xem Motion AI">
+                    <button
+                      type="button"
+                      className="rm-modal-tab"
+                      aria-pressed={modalMode === 'video'}
+                      onClick={() => setModalMode('video')}
+                    >
+                      Video MotionSites gốc
+                    </button>
+                    {selectedCard.hasLiveHtml && (
+                      <button
+                        type="button"
+                        className="rm-modal-tab"
+                        aria-pressed={modalMode === 'interactive'}
+                        onClick={() => setModalMode('interactive')}
+                      >
+                        Bản chạy HTML gốc
+                      </button>
+                    )}
+                    {selectedCard.liveUrl && (
+                      <a
+                        href={selectedCard.liveUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="rm-modal-tab rm-modal-tab--link"
+                      >
+                        Trang gốc ↗
+                      </a>
+                    )}
+                  </div>
+                )}
+              </div>
 
               <div className="rm-modal-stage">
                 {selectedCard.library === 'PinUI' ? (
-                  <div style={{ width: '100%', padding: 16 }}>
-                    <PinUIPlayground itemId={selectedCard.sourceId} theme="dark" />
+                  <div className="rm-modal-pinui-wrap">
+                    <PinUIPlayground itemId={selectedCard.sourceId} theme={pinuiModalTheme} />
                   </div>
-                ) : (
-                  <div
-                    style={{
-                      width: '100%',
-                      padding: 24,
-                      display: 'grid',
-                      gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))',
-                      gap: 20,
-                      alignItems: 'center',
-                    }}
-                  >
-                    <img
-                      src={selectedCard.imageUrl}
-                      alt={selectedCard.title}
-                      style={{
-                        width: '100%',
-                        maxHeight: 320,
-                        objectFit: 'cover',
-                        borderRadius: 12,
-                        border: '1px solid rgba(255,255,255,0.14)',
-                      }}
-                      onError={(e) => {
-                        if (e.currentTarget.src !== selectedCard.fallbackUrl) {
-                          e.currentTarget.src = selectedCard.fallbackUrl;
-                        }
-                      }}
+                ) : selectedCard.library === 'Motion AI' && modalMode === 'interactive' ? (
+                  liveHtmlLoading ? (
+                    <div className="rm-modal-status">Đang nạp bản dựng HTML nguyên bản từ MotionSites...</div>
+                  ) : liveHtmlContent ? (
+                    <iframe
+                      title={`Trình diễn gốc ${selectedCard.title}`}
+                      srcDoc={liveHtmlContent}
+                      sandbox="allow-scripts"
+                      className="rm-modal-iframe"
                     />
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                      <span
-                        style={{
-                          fontSize: 11,
-                          fontWeight: 700,
-                          letterSpacing: '0.08em',
-                          textTransform: 'uppercase',
-                          color: '#dae7c7',
-                        }}
-                      >
-                        Đặc tả chuyển động · Motion AI
+                  ) : (
+                    <div className="rm-modal-status">Đang hiển thị bản video nguyên bản MotionSites.</div>
+                  )
+                ) : (
+                  <div className="rm-modal-video-grid">
+                    <div className="rm-modal-video-wrap">
+                      <video
+                        key={selectedCard.videoUrl}
+                        src={selectedCard.videoUrl}
+                        poster={selectedCard.imageUrl || selectedCard.fallbackUrl}
+                        controls
+                        autoPlay
+                        loop
+                        muted
+                        playsInline
+                        className="rm-modal-video"
+                      />
+                    </div>
+                    <div className="rm-modal-spec">
+                      <span className="rm-modal-spec-label">
+                        Đặc tả bản gốc · {selectedCard.library}
                       </span>
-                      <pre
-                        style={{
-                          margin: 0,
-                          padding: 14,
-                          borderRadius: 10,
-                          background: 'rgba(255,255,255,0.06)',
-                          color: '#e5ece0',
-                          fontSize: 12.5,
-                          lineHeight: 1.5,
-                          whiteSpace: 'pre-wrap',
-                          maxHeight: 220,
-                          overflowY: 'auto',
-                        }}
-                      >
-                        {selectedCard.promptText}
-                      </pre>
+                      <pre className="rm-modal-spec-pre">{selectedCard.promptText}</pre>
                     </div>
                   </div>
                 )}
               </div>
             </div>
           </div>
-        </div>
-      )}
+          </div>,
+          document.body
+        )}
     </section>
   );
 };

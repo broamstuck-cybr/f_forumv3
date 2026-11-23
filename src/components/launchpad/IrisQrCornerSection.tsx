@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer.js';
@@ -6,13 +7,13 @@ import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPass.js';
 import { OutputPass } from 'three/examples/jsm/postprocessing/OutputPass.js';
 import { mergeVertices } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
+import { Cpu, Layers, ShieldCheck, Sparkles, Users, X } from 'lucide-react';
 import type { DimensionView } from '../../types/index';
 import { useAppStore } from '../../store/appStore';
 import {
   IRIS_ARM_GLB,
   IRIS_HEAD_GLB,
   IRIS_QR_CODE_URL,
-  IRIS_ROBOT_STANDALONE_HTML,
 } from '../../data/irisRobotHtml';
 import './iris-qr-corner.css';
 
@@ -20,6 +21,64 @@ export interface IrisQrCornerSectionProps {
   onNavigate?: (view: DimensionView) => void;
   contextLabel?: 'home' | 'landing';
 }
+
+interface HonorTrackItem {
+  id: string;
+  code: string;
+  roleTitle: string;
+  trackLabel: string;
+  contribution: string;
+  highlights: string[];
+  accent: 'amber' | 'iris' | 'sage' | 'steel';
+  icon: React.ReactNode;
+}
+
+const DEV_TEAM_HONOR_TRACKS: HonorTrackItem[] = [
+  {
+    id: 'track-architecture',
+    code: '01',
+    roleTitle: 'Kiến trúc Hệ thống & Hạ tầng Lõi',
+    trackLabel: 'Nhóm Kỹ thuật Nền tảng · FPT Forum',
+    contribution:
+      'Xây dựng kiến trúc ứng dụng Web, cầu nối API có mã bảo mật riêng, lưu trữ dữ liệu mã hóa trong hệ thống tệp JSON và đồng bộ WebSocket hai chiều theo thời gian thực.',
+    highlights: ['API & Mã hóa JSON', 'WebSocket thời gian thực', 'Workspace Live View'],
+    accent: 'iris',
+    icon: <Cpu size={18} aria-hidden="true" />,
+  },
+  {
+    id: 'track-design',
+    code: '02',
+    roleTitle: 'Thiết kế UI/UX & Chống "AI Slop"',
+    trackLabel: 'Nhóm Thẩm mỹ & Tủ sách Tài nguyên',
+    contribution:
+      'Phân loại và kiểm tra tính khả thi cho 7.662 mẫu giao diện chuẩn (PinUI, Motion AI, ThreeUI, GetLayers, LucianLabs, CodeFronts) tạo nên Xưởng lắp ráp mở bản địa hóa tiếng Việt.',
+    highlights: ['7.662 mẫu giao diện', 'Starter Kits & Skills', 'Đáp ứng 390/768/1440px'],
+    accent: 'amber',
+    icon: <Layers size={18} aria-hidden="true" />,
+  },
+  {
+    id: 'track-research',
+    code: '03',
+    roleTitle: 'Nghiên cứu Khoa học & Khảo sát Học đường',
+    trackLabel: 'Nhóm Nghiên cứu · TH, THCS và THPT FPT',
+    contribution:
+      'Khảo sát thực tế trên 195 học sinh và người dùng (91,2% đánh giá cao mẫu UI/UX trực quan), phân tích 3 thực trạng ứng dụng AI từ báo cáo OECD PISA 2025 (95,9%) và đo lường tỷ lệ hoàn thiện sản phẩm.',
+    highlights: ['195 người dùng khảo sát', '91,2% đánh giá cao', 'Tư duy phản biện'],
+    accent: 'sage',
+    icon: <Sparkles size={18} aria-hidden="true" />,
+  },
+  {
+    id: 'track-community',
+    code: '04',
+    roleTitle: 'Cộng đồng Tri thức & Bộ lọc An toàn AI',
+    trackLabel: 'Nhóm Cộng đồng & Kiểm duyệt Thông minh',
+    contribution:
+      'Phát triển hệ sinh thái Hỏi đáp, Threads, Kho đề thi, Hồ sơ và Bộ lọc AI tự động ghi nhận spam, ngôn từ thô tục để cảnh cáo và vô hiệu hóa bài viết vi phạm.',
+    highlights: ['Bộ lọc AI chống spam', 'Hỏi đáp & Kho đề thi', 'Văn hóa học thuật mở'],
+    accent: 'steel',
+    icon: <ShieldCheck size={18} aria-hidden="true" />,
+  },
+];
 
 function clamp(v: number, lo: number, hi: number): number {
   return v < lo ? lo : v > hi ? hi : v;
@@ -264,64 +323,40 @@ export const IrisQrCornerSection: React.FC<IrisQrCornerSectionProps> = ({
   onNavigate,
   contextLabel = 'landing',
 }) => {
-  const { projects, createProject, selectProject, addWorkspaceFiles, navigate, addToast } = useAppStore();
+  const { navigate } = useAppStore();
   const heroRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const copyRef = useRef<HTMLDivElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
   const loaderRef = useRef<HTMLDivElement>(null);
   const fallbackRef = useRef<HTMLDivElement>(null);
 
-  const [menuOpen, setMenuOpen] = useState(false);
   const [loaderHidden, setLoaderHidden] = useState(false);
   const [webglFallback, setWebglFallback] = useState(false);
   const [qrModalOpen, setQrModalOpen] = useState(false);
+  const [honorModalOpen, setHonorModalOpen] = useState(false);
 
   const go = (view: DimensionView) => {
-    setMenuOpen(false);
+    setHonorModalOpen(false);
     if (onNavigate) onNavigate(view);
     else navigate(view);
   };
 
-  const handleOpenIrisInWorkspace = () => {
-    setMenuOpen(false);
-    const irisId = 'iris-3d-assistant';
-    const existing = projects.find(
-      (p) => !p.archived && p.attachedItems.some((a) => a.id === irisId)
-    );
-    if (existing) {
-      selectProject(existing.id);
-      go('workspace');
-      return;
-    }
-
-    createProject(
-      'Iris — Smart AI Assistant (3D Three.js)',
-      'Robot 3D tương tác theo chuột với mắt xoay tự động, tay lơ lửng và hiệu ứng Fresnel Rim + UnrealBloomPass trong 1 tệp index.html duy nhất.',
-      [
-        {
-          id: irisId,
-          kind: 'template',
-          title: 'Iris — Smart AI Assistant',
-          summary: 'Hero 3D Robot Three.js r169 trong 1 tệp HTML độc lập',
-          tags: ['Three.js', 'WebGL', '3D Robot', 'Single-file HTML'],
-        },
-      ]
-    );
-    window.setTimeout(() => {
-      addWorkspaceFiles([
-        {
-          path: 'index.html',
-          content: IRIS_ROBOT_STANDALONE_HTML,
-          summary: 'Iris 3D Smart AI Assistant — Single standalone HTML file',
-        },
-      ]);
-      go('workspace');
-      addToast({
-        type: 'success',
-        title: 'Đã mở mã nguồn Iris 3D (index.html) trong Workspace Live View.',
-      });
-    }, 30);
-  };
+  useEffect(() => {
+    if (!qrModalOpen && !honorModalOpen) return undefined;
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setQrModalOpen(false);
+        setHonorModalOpen(false);
+      }
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => {
+      document.body.style.overflow = prevOverflow;
+      window.removeEventListener('keydown', onKeyDown);
+    };
+  }, [qrModalOpen, honorModalOpen]);
 
   useEffect(() => {
     const hero = heroRef.current;
@@ -756,9 +791,9 @@ export const IrisQrCornerSection: React.FC<IrisQrCornerSectionProps> = ({
     });
 
     let W = 1280;
-    let H = 760;
+    let H = 640;
     let isMobile = false;
-    const anchor = { x: 890, y: 380 };
+    const anchor = { x: 830, y: 320 };
 
     const layout = () => {
       const rect = hero.getBoundingClientRect();
@@ -772,16 +807,16 @@ export const IrisQrCornerSection: React.FC<IrisQrCornerSectionProps> = ({
 
       let robotPx: number;
       if (!isMobile) {
-        robotPx = Math.min(H * 0.62, W * 0.4, 640);
-        anchor.x = W * 0.695;
-        anchor.y = H * 0.5 + 8;
+        robotPx = Math.min(H * 0.72, W * 0.42, 540);
+        anchor.x = W * 0.65;
+        anchor.y = H * 0.5;
       } else {
-        const copyEl = copyRef.current;
-        const copyTop = copyEl ? copyEl.getBoundingClientRect().top - rect.top : H * 0.46;
-        const room = Math.max(copyTop - 40, 220);
-        robotPx = Math.min(room * 0.92, W * 0.82);
+        const panelEl = panelRef.current;
+        const panelTop = panelEl ? panelEl.getBoundingClientRect().top - rect.top : H * 0.52;
+        const room = Math.max(panelTop - 24, 240);
+        robotPx = Math.min(room * 0.9, W * 0.76);
         anchor.x = W / 2;
-        anchor.y = 30 + room * 0.5;
+        anchor.y = 20 + room * 0.5;
       }
 
       const fovRad = (camera.fov * Math.PI) / 180;
@@ -991,70 +1026,9 @@ export const IrisQrCornerSection: React.FC<IrisQrCornerSectionProps> = ({
   return (
     <section
       id={`iris-qr-${contextLabel}`}
-      aria-label="Iris 3D Smart AI Assistant và Góc mã QR truy cập nhanh"
+      aria-label="Không gian Robot 3D, mã QR và Khu Vinh Danh Đội Ngũ Phát Triển FPT Forum"
       className="iris-qr-section"
     >
-      <header className={`iris-nav ${menuOpen ? 'open' : ''}`}>
-        <div className="iris-nav-inner">
-          <button
-            type="button"
-            className="iris-brand"
-            onClick={handleOpenIrisInWorkspace}
-          >
-            <span className="iris-brand-orb" aria-hidden="true" />
-            <span>Iris</span>
-          </button>
-
-          <div className="iris-nav-right">
-            <nav className="iris-nav-links" aria-label="Điều hướng Iris 3D">
-              <button type="button" className="iris-nav-link" onClick={() => go('explore')}>
-                Overview
-              </button>
-              <button type="button" className="iris-nav-link" onClick={() => go('experience')}>
-                Ecosystem
-              </button>
-              <button type="button" className="iris-nav-link" onClick={() => go('community')}>
-                Socials
-              </button>
-              <button type="button" className="iris-nav-link" onClick={() => setQrModalOpen(true)}>
-                Help
-              </button>
-            </nav>
-            <button
-              type="button"
-              className="iris-btn-open"
-              onClick={handleOpenIrisInWorkspace}
-            >
-              Get Iris
-            </button>
-            <button
-              type="button"
-              className="iris-menu-btn"
-              aria-label="Menu"
-              aria-expanded={menuOpen}
-              onClick={() => setMenuOpen((prev) => !prev)}
-            >
-              <span />
-            </button>
-          </div>
-
-          <div className="iris-mobile-panel">
-            <button type="button" onClick={() => go('explore')}>
-              Overview
-            </button>
-            <button type="button" onClick={() => go('experience')}>
-              Ecosystem
-            </button>
-            <button type="button" onClick={() => go('community')}>
-              Socials
-            </button>
-            <button type="button" onClick={() => setQrModalOpen(true)}>
-              Help
-            </button>
-          </div>
-        </div>
-      </header>
-
       <div ref={heroRef} className="iris-hero">
         <canvas ref={canvasRef} className="iris-stage-canvas" aria-hidden="true" />
         <div
@@ -1090,123 +1064,166 @@ export const IrisQrCornerSection: React.FC<IrisQrCornerSectionProps> = ({
         )}
 
         <div className="iris-hero-inner">
-          <div ref={copyRef} className="iris-copy">
-            <span className="iris-eyebrow">3D Interactive Stage · Three.js r169</span>
-            <h2 className="iris-headline iris-reveal iris-d1">
-              Introducing a
-              <br />
-              Smart AI Assistant
-            </h2>
-            <p className="iris-sub iris-reveal iris-d2">
-              Easy to start. Effortless to explore.
-              <br />
-              Capable in every conversation.
-            </p>
-            <div className="iris-cta-row iris-reveal iris-d3">
-              <button
-                type="button"
-                className="iris-btn-try"
-                onClick={handleOpenIrisInWorkspace}
-              >
-                Start free
-              </button>
-              <a
-                href="/iris-assistant.html"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="iris-btn-secondary"
-              >
-                Mở bản HTML độc lập
-              </a>
-            </div>
-          </div>
-
-          <aside
-            className="iris-qr-corner"
-            aria-label="Góc riêng mã QR truy cập nhanh"
-          >
+          <div ref={panelRef} className="iris-harmony-dock">
             <button
               type="button"
               className="iris-qr-plate"
               onClick={() => setQrModalOpen(true)}
-              aria-label="Phóng to mã QR truy cập nhanh"
+              aria-label="Phóng to mã QR FPT Forum"
               title="Nhấn để phóng to mã QR"
             >
               <img
                 src={IRIS_QR_CODE_URL}
-                alt="Mã QR kết nối nhanh F-Forum"
+                alt="Mã QR kết nối FPT Forum"
                 className="iris-qr-img"
                 loading="eager"
                 decoding="sync"
               />
             </button>
 
-            <div className="iris-qr-info">
-              <span className="iris-qr-tag">Góc QR riêng · Kết nối di động</span>
-              <h3 className="iris-qr-title">Quét mã QR hoặc thử trực tiếp Iris 3D</h3>
-              <p className="iris-qr-desc">
-                Đầu và đồng tử robot xoay theo con trỏ chuột của bạn. Quét mã QR bên cạnh hoặc mở thẳng tệp index.html trong Workspace.
-              </p>
-              <div className="iris-qr-actions">
-                <button
-                  type="button"
-                  className="iris-qr-btn"
-                  onClick={() => setQrModalOpen(true)}
-                >
-                  Phóng to mã QR
-                </button>
-                <button
-                  type="button"
-                  className="iris-qr-btn iris-qr-btn--ghost"
-                  onClick={handleOpenIrisInWorkspace}
-                >
-                  Mở mã nguồn 3D
-                </button>
-              </div>
-            </div>
-          </aside>
+            <button
+              type="button"
+              className="iris-honor-btn"
+              onClick={() => setHonorModalOpen(true)}
+            >
+              <span className="iris-honor-btn-glow" aria-hidden="true" />
+              <span className="iris-honor-btn-icon" aria-hidden="true">
+                <Users size={17} strokeWidth={2} />
+              </span>
+              <span className="iris-honor-btn-label">Gặp gỡ đội ngũ phát triển của tôi :)</span>
+            </button>
+          </div>
         </div>
       </div>
 
-      {qrModalOpen && (
-        <div
-          className="iris-qr-modal-backdrop"
-          role="dialog"
-          aria-modal="true"
-          aria-label="Mã QR phóng to"
-          onClick={() => setQrModalOpen(false)}
-        >
-          <div className="iris-qr-modal" onClick={(e) => e.stopPropagation()}>
-            <span className="iris-qr-tag">Góc QR · Quét trực tiếp</span>
-            <h3 className="iris-qr-title">Quét mã QR trên điện thoại</h3>
-            <div className="iris-qr-modal-frame">
-              <img
-                src={IRIS_QR_CODE_URL}
-                alt="Mã QR phóng to"
-              />
+      {qrModalOpen &&
+        typeof document !== 'undefined' &&
+        createPortal(
+          <div
+            className="iris-qr-modal-backdrop"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Mã QR phóng to"
+            onClick={() => setQrModalOpen(false)}
+          >
+            <div className="iris-qr-modal" onClick={(e) => e.stopPropagation()}>
+              <div className="iris-qr-modal-frame">
+                <img src={IRIS_QR_CODE_URL} alt="Mã QR kết nối FPT Forum" />
+              </div>
+              <div className="iris-qr-modal-actions">
+                <a
+                  href={IRIS_QR_CODE_URL}
+                  download="fforum-qr-code.png"
+                  className="iris-qr-btn"
+                >
+                  Tải mã QR
+                </a>
+                <button
+                  type="button"
+                  className="iris-qr-btn iris-qr-btn--ghost"
+                  onClick={() => setQrModalOpen(false)}
+                >
+                  Đóng
+                </button>
+              </div>
             </div>
-            <p className="iris-qr-desc">
-              Đưa camera điện thoại vào khung mã QR để mở nhanh hoặc tải ảnh QR về máy.
-            </p>
-            <div className="iris-qr-actions" style={{ justifyContent: 'center' }}>
-              <a
-                href={IRIS_QR_CODE_URL}
-                download="fforum-qr-code.png"
-                className="iris-qr-btn"
-              >
-                Tải ảnh QR
-              </a>
-              <button
-                type="button"
-                className="iris-qr-btn iris-qr-btn--ghost"
-                onClick={() => setQrModalOpen(false)}
-              >
-                Đóng
-              </button>
+          </div>,
+          document.body
+        )}
+
+      {honorModalOpen &&
+        typeof document !== 'undefined' &&
+        createPortal(
+          <div
+            className="iris-honor-backdrop"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby={`iris-honor-title-${contextLabel}`}
+            onClick={() => setHonorModalOpen(false)}
+          >
+            <div className="iris-honor-modal" onClick={(e) => e.stopPropagation()}>
+              <header className="iris-honor-head">
+                <div>
+                  <p className="iris-honor-kicker">TH, THCS VÀ THPT FPT · DỰ ÁN FPT FORUM</p>
+                  <h2 id={`iris-honor-title-${contextLabel}`} className="iris-honor-title">
+                    Khu Vinh Danh Đội Ngũ Phát Triển
+                  </h2>
+                </div>
+                <button
+                  type="button"
+                  className="iris-honor-close"
+                  onClick={() => setHonorModalOpen(false)}
+                  aria-label="Đóng bảng vinh danh"
+                >
+                  <X size={18} aria-hidden="true" />
+                </button>
+              </header>
+
+              <div className="iris-honor-metrics" aria-label="Dấu ấn nghiên cứu FPT Forum">
+                <div className="iris-honor-metric">
+                  <strong>95,9%</strong>
+                  <span>Học sinh dùng AI sáng tạo (OECD PISA 2025)</span>
+                </div>
+                <div className="iris-honor-metric">
+                  <strong>91,2% / 195</strong>
+                  <span>Người dùng đánh giá cao mẫu UI/UX trực quan</span>
+                </div>
+                <div className="iris-honor-metric">
+                  <strong>7.662</strong>
+                  <span>Mẫu giao diện chuẩn hóa trong Xưởng lắp ráp mở</span>
+                </div>
+              </div>
+
+              <div className="iris-honor-grid">
+                {DEV_TEAM_HONOR_TRACKS.map((track) => (
+                  <article
+                    key={track.id}
+                    className="iris-honor-card"
+                    data-accent={track.accent}
+                  >
+                    <div className="iris-honor-card-top">
+                      <span className="iris-honor-card-icon">{track.icon}</span>
+                      <span className="iris-honor-card-code">{track.code}</span>
+                    </div>
+                    <p className="iris-honor-card-track">{track.trackLabel}</p>
+                    <h3 className="iris-honor-card-title">{track.roleTitle}</h3>
+                    <p className="iris-honor-card-body">{track.contribution}</p>
+                    <div className="iris-honor-tags">
+                      {track.highlights.map((tag) => (
+                        <span key={tag} className="iris-honor-tag">
+                          {tag}
+                        </span>
+                      ))}
+                    </div>
+                  </article>
+                ))}
+              </div>
+
+              <footer className="iris-honor-foot">
+                <p className="iris-honor-note">
+                  Tri ân tập thể thầy cô cố vấn, các thành viên nghiên cứu và cộng đồng học sinh TH, THCS và THPT FPT đã đồng hành xây dựng FPT Forum — không gian học tập tích hợp AI minh bạch, miễn phí và chống &ldquo;AI Slop&rdquo;.
+                </p>
+                <div className="iris-honor-foot-actions">
+                  <button
+                    type="button"
+                    className="iris-qr-btn"
+                    onClick={() => go('explore')}
+                  >
+                    Khám phá Xưởng lắp ráp
+                  </button>
+                  <button
+                    type="button"
+                    className="iris-qr-btn iris-qr-btn--ghost"
+                    onClick={() => setHonorModalOpen(false)}
+                  >
+                    Đóng
+                  </button>
+                </div>
+              </footer>
             </div>
-          </div>
-        </div>
-      )}
+          </div>,
+          document.body
+        )}
     </section>
   );
 };
