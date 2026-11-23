@@ -456,6 +456,42 @@
         "forks": 12,
         "fileType": "text",
         "payload": "Mỗi lần đổi model hoặc chỉnh system prompt, chạy lại 42 ca kiểm định cố định: 14 ca kiểm tra tràn ngang 390px, 14 ca đo tương phản >= 4.5:1 trên nền tối và sáng, 14 ca rà phím Tab và prefers-reduced-motion. Chỉ ghép nhánh khi tỷ lệ đạt >= 40/42."
+      },
+      {
+        "id": "drop-exam-01",
+        "title": "Bộ đề ôn tập Cấu trúc dữ liệu & Giải thuật (kèm hướng dẫn giải)",
+        "author": {
+          "id": "user-admin-00",
+          "name": "Đặng Quốc Bảo",
+          "handle": "bao_sys",
+          "avatarUrl": "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&auto=format&fit=crop&q=80",
+          "role": "Điều hành"
+        },
+        "category": "Kho đề thi / Học liệu",
+        "tags": [
+          "de-thi",
+          "hoc-lieu",
+          "dsa"
+        ],
+        "createdAt": "2026-11-20T08:00:00Z",
+        "forks": 7,
+        "fileType": "markdown",
+        "payload": "# Đề ôn tập DSA\n1. Cài đặt stack bằng mảng.\n2. So sánh độ phức tạp quicksort và mergesort.\n3. Tìm đường đi ngắn nhất bằng Dijkstra.",
+        "answers": [
+          {
+            "id": "ans-drop-01",
+            "author": {
+              "id": "user-dev-01",
+              "name": "Nguyễn Văn Minh",
+              "handle": "minh_dev",
+              "avatarUrl": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80",
+              "role": "Thành viên"
+            },
+            "createdAt": "2026-11-19T09:10:00Z",
+            "votes": 9,
+            "content": "Chạy bước kiểm tra tất định bằng script trước khi gọi reviewer giúp đội mình chặn 7 ca lộ key mẫu trong tuần đầu áp dụng."
+          }
+        ]
       }
     ],
     "clubs": [

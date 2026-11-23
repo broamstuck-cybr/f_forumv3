@@ -29,6 +29,9 @@ import {
   VolumeX,
   X,
 } from 'lucide-react';
+import { moderateFields } from './moderationFilter';
+import { computeFeedScore } from './feedRanking';
+import { CommunityChatRoom } from './CommunityChatRoom';
 import type {
   ClubHandoverDossier,
   CommunityAnswer,
@@ -68,7 +71,7 @@ import './community.css';
 
 type FeedTabId = 'all' | 'following' | 'newest' | 'trending' | 'demos' | 'saved';
 const FOLLOWING_STORAGE_KEY = 'fforum_v3_following_handles';
-type ChannelFilterId = 'all' | CommunityChannel | 'saved';
+type ChannelFilterId = 'all' | CommunityChannel | 'saved' | 'exams';
 type SortMode = 'newest' | 'top' | 'discussed';
 type CodeDisplayMode = 'collapsed' | 'live' | 'code';
 
@@ -78,6 +81,7 @@ const CHANNEL_ITEMS: Array<{ id: ChannelFilterId; label: string }> = [
   { id: 'showcase', label: 'trưng-bày' },
   { id: 'drops', label: 'rules-prompt' },
   { id: 'clubs', label: 'clb-dự-án' },
+  { id: 'exams', label: 'kho-đề-thi' },
   { id: 'saved', label: 'đã-lưu' },
 ];
 
@@ -630,6 +634,9 @@ export const CommunityView: React.FC = () => {
       showcase: 0,
       drops: 0,
       clubs: 0,
+      exams: allPosts.filter((p) =>
+        p.tags.some((t) => ['de-thi', 'hoc-lieu', 'exam'].includes(t.toLowerCase()))
+      ).length,
       saved: savedCommunityPosts.length,
     };
     for (const post of allPosts) {
@@ -821,6 +828,10 @@ export const CommunityView: React.FC = () => {
 
     if (activeChannel === 'saved' || feedTab === 'saved') {
       pool = pool.filter((p) => savedItemIds.includes(p.id));
+    } else if (activeChannel === 'exams') {
+      pool = pool.filter((p) =>
+        p.tags.some((t) => ['de-thi', 'hoc-lieu', 'exam'].includes(t.toLowerCase()))
+      );
     } else if (activeChannel !== 'all') {
       pool = pool.filter((p) => p.channel === activeChannel);
     }
@@ -859,13 +870,33 @@ export const CommunityView: React.FC = () => {
       );
     }
 
+    const interestTags = Array.from(
+      new Set(
+        allPosts
+          .filter((p) => savedItemIds.includes(p.id))
+          .flatMap((p) => p.tags.map((t) => t.toLowerCase()))
+      )
+    );
+    const personalization = { followedHandles: followingHandles, interestTags };
+    const rank = (post: CommunityPost) =>
+      computeFeedScore(
+        {
+          createdAt: post.createdAt,
+          votes: getPostScore(post),
+          comments: getPostAnswers(post).length,
+          hasAccepted: getPostAnswers(post).some((a) => a.isAccepted),
+          bookmarks: savedItemIds.includes(post.id) ? 1 : 0,
+          authorHandle: post.author.handle,
+          tags: post.tags,
+        },
+        personalization
+      );
     return [...pool].sort((a, b) => {
-      if (feedTab !== 'newest' && (feedTab === 'trending' || sortMode === 'top')) {
-        const scoreA = getPostScore(a) * 2 + getPostAnswers(a).length * 3;
-        const scoreB = getPostScore(b) * 2 + getPostAnswers(b).length * 3;
-        if (scoreB !== scoreA) return scoreB - scoreA;
+      if (feedTab === 'trending' || sortMode === 'top') {
+        const diff = rank(b) - rank(a);
+        if (diff !== 0) return diff;
       }
-      if (feedTab !== 'newest' && sortMode === 'discussed') {
+      if (sortMode === 'discussed') {
         const diff = getPostAnswers(b).length - getPostAnswers(a).length;
         if (diff !== 0) return diff;
       }
@@ -873,6 +904,7 @@ export const CommunityView: React.FC = () => {
     });
   }, [
     moderatedPosts,
+    allPosts,
     activeChannel,
     feedTab,
     followingHandles,
@@ -1411,6 +1443,12 @@ export const CommunityView: React.FC = () => {
     const titleTrimmed = composeTitle.trim();
     if (!titleTrimmed) return;
 
+    const verdict = moderateFields([titleTrimmed, composeBody, composeTagsInput], 'post');
+    if (!verdict.ok) {
+      addToast({ type: 'error', title: 'Bài viết bị chặn', message: verdict.message });
+      return;
+    }
+
     setSubmittingPost(true);
     const parsedTags = composeTagsInput
       .split(',')
@@ -1550,6 +1588,12 @@ export const CommunityView: React.FC = () => {
     const formEl = event.currentTarget;
     const draft = (replyDrafts[post.id] || '').trim();
     if (!draft) return;
+
+    const verdict = moderateFields([draft], 'comment');
+    if (!verdict.ok) {
+      addToast({ type: 'error', title: 'Bình luận bị chặn', message: verdict.message });
+      return;
+    }
 
     setSubmittingReplyId(post.id);
     const replyTarget = replyTargets[post.id];
@@ -1699,8 +1743,33 @@ export const CommunityView: React.FC = () => {
     [composeTagsInput]
   );
 
+  const [mode, setMode] = useState<'feed' | 'chat'>('feed');
+
+  if (mode === 'chat') {
+    return (
+      <div className="cm">
+        <div className="wrap-wide">
+          <div className="cm-mode-switch" role="tablist" aria-label="Chế độ Tri thức">
+            <button type="button" role="tab" aria-selected={false} onClick={() => setMode('feed')}>Bảng tin</button>
+            <button type="button" role="tab" aria-selected onClick={() => setMode('chat')}>Phòng chat</button>
+          </div>
+          <CommunityChatRoom
+            currentHandle={currentUser?.username || 'builder_vn'}
+            currentName={formatUserDisplayName(currentUser?.name, 'Thành viên')}
+          />
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="cm">
+      <div className="wrap-wide cm-mode-wrap">
+        <div className="cm-mode-switch" role="tablist" aria-label="Chế độ Tri thức">
+          <button type="button" role="tab" aria-selected onClick={() => setMode('feed')}>Bảng tin</button>
+          <button type="button" role="tab" aria-selected={false} onClick={() => setMode('chat')}>Phòng chat</button>
+        </div>
+      </div>
       <div className="wrap-wide cm-shell">
         <aside className="cm-rail-left" aria-label="Danh sách kênh Tri thức">
           <div className="cm-channels-panel">
@@ -1792,7 +1861,7 @@ export const CommunityView: React.FC = () => {
                   aria-pressed={sortMode === 'top'}
                   onClick={() => setSortMode('top')}
                 >
-                  Nổi bật
+                  Nổi bật / Đề xuất
                 </button>
                 <button
                   type="button"
@@ -1800,7 +1869,7 @@ export const CommunityView: React.FC = () => {
                   aria-pressed={sortMode === 'discussed'}
                   onClick={() => setSortMode('discussed')}
                 >
-                  Thảo luận
+                  Thảo luận sôi nổi
                 </button>
               </div>
             </div>
