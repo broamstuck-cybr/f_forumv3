@@ -127,11 +127,13 @@ export interface FeedRankInput {
   tags: string[];
   category: string;
   authorHandle: string;
+  authorPostCountInWindow?: number;
 }
 
 export interface FeedRankContext {
   onboardingTopics: string[];
   followedHandles: string[];
+  recentAuthorOccurrences?: Record<string, number>;
 }
 
 export function computeFeedRankScore(
@@ -158,7 +160,13 @@ export function computeFeedRankScore(
   );
   const affinityMultiplier = (1 + topicMatches * 0.35) * (followed ? 1.25 : 1);
 
-  return (engagement * affinityMultiplier) / Math.pow(ageHours + 2, 1.35);
+  // Creator diversity boost: prevent single author from flooding consecutive slots
+  const authorPriorCount =
+    input.authorPostCountInWindow ??
+    (ctx.recentAuthorOccurrences?.[input.authorHandle.toLowerCase()] ?? 0);
+  const diversityFactor = 1 / (1 + authorPriorCount * 0.3);
+
+  return (engagement * affinityMultiplier * diversityFactor) / Math.pow(ageHours + 2, 1.35);
 }
 
 interface ModerationPrefs {
@@ -394,6 +402,7 @@ export const CommunityView: React.FC = () => {
     loadJsonFromStorage<string[]>(LOCAL_ONBOARDING_TOPICS_KEY, [])
   );
   const [openReactionPickerId, setOpenReactionPickerId] = useState<string | null>(null);
+  const reactionHoverTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const [selectedPostId, setSelectedPostId] = useState<string | null>(null);
   const [openCommentDrawers, setOpenCommentDrawers] = useState<Record<string, boolean>>({});
@@ -928,13 +937,14 @@ export const CommunityView: React.FC = () => {
         },
         rankCtx
       );
-    return [...pool].sort((a, b) => {
+    const sorted = [...pool].sort((a, b) => {
       if (sortMode === 'discussed') {
         const diff = getPostAnswers(b).length - getPostAnswers(a).length;
         if (diff !== 0) return diff;
       } else if (
         feedTab === 'all' ||
         feedTab === 'trending' ||
+        feedTab === 'following' ||
         sortMode === 'top'
       ) {
         if (feedTab !== 'newest' && sortMode !== 'newest') {
@@ -944,6 +954,24 @@ export const CommunityView: React.FC = () => {
       }
       return Date.parse(b.createdAt) - Date.parse(a.createdAt);
     });
+
+    // Creator diversity boost: interleave so one author doesn't flood consecutive slots
+    if (sorted.length <= 2) return sorted;
+    const diversified: CommunityPost[] = [];
+    const remaining = [...sorted];
+    while (remaining.length > 0) {
+      const lastAuthor = diversified[diversified.length - 1]?.author?.handle?.toLowerCase();
+      const nextIdx = remaining.findIndex(
+        (p) => !lastAuthor || p.author.handle.toLowerCase() !== lastAuthor
+      );
+      if (nextIdx !== -1) {
+        diversified.push(remaining.splice(nextIdx, 1)[0]);
+      } else {
+        diversified.push(...remaining);
+        break;
+      }
+    }
+    return diversified;
   }, [
     moderatedPosts,
     allPosts,
@@ -2108,7 +2136,7 @@ export const CommunityView: React.FC = () => {
             </div>
           )}
 
-          <section className="cm-stories-strip" aria-label="Điểm nhấn Tri thức">
+          <section className="cm-stories-strip" aria-label="Điểm nhấn Tri thức & Kênh">
             <button
               type="button"
               className="cm-story-card cm-story-card--create"
@@ -2122,6 +2150,33 @@ export const CommunityView: React.FC = () => {
                 <span>Chia sẻ lên Bảng tin</span>
               </span>
             </button>
+
+            {/* Instagram-style Channel Highlights */}
+            {CHANNEL_ITEMS.filter((c) => c.id !== 'all' && c.id !== 'saved').map((ch) => {
+              const active = activeChannel === ch.id;
+              const count = channelCounts[ch.id] ?? 0;
+              return (
+                <button
+                  key={`ch-story-${ch.id}`}
+                  type="button"
+                  className="cm-story-card cm-story-card--channel"
+                  data-active-channel={active ? 'true' : undefined}
+                  onClick={() => handleSelectChannel(ch.id)}
+                  title={`Xem kênh #${ch.label}`}
+                >
+                  <span className="cm-story-top">
+                    <span className="cm-story-avatar cm-story-avatar--channel" aria-hidden="true">
+                      <Hash size={14} />
+                    </span>
+                    <span className="cm-story-badge">{count}</span>
+                  </span>
+                  <span className="cm-story-bottom">
+                    <span className="cm-story-title">#{ch.label}</span>
+                    <span className="cm-story-author">Kênh Tri thức</span>
+                  </span>
+                </button>
+              );
+            })}
 
             {storyPosts.length === 0 ? (
               <button
@@ -2642,7 +2697,21 @@ export const CommunityView: React.FC = () => {
                           const DisplayIcon = activeReaction ? activeReaction.Icon : ThumbsUp;
                           const isPickerOpen = openReactionPickerId === post.id;
                           return (
-                            <div className="cm-react-wrap">
+                            <div
+                              className="cm-react-wrap"
+                              onPointerEnter={() => {
+                                if (reactionHoverTimerRef.current) clearTimeout(reactionHoverTimerRef.current);
+                                reactionHoverTimerRef.current = setTimeout(() => {
+                                  setOpenReactionPickerId(post.id);
+                                }, 180);
+                              }}
+                              onPointerLeave={() => {
+                                if (reactionHoverTimerRef.current) clearTimeout(reactionHoverTimerRef.current);
+                                reactionHoverTimerRef.current = setTimeout(() => {
+                                  setOpenReactionPickerId((prev) => (prev === post.id ? null : prev));
+                                }, 300);
+                              }}
+                            >
                               {isPickerOpen && (
                                 <div
                                   className="cm-react-tray"
@@ -3830,6 +3899,16 @@ export const CommunityView: React.FC = () => {
           </div>
         )}
       </Modal>
+
+      <button
+        type="button"
+        className="cm-fab"
+        onClick={() => openQuickComposer('default')}
+        aria-label="Tạo bài viết mới"
+        title="Tạo bài viết mới"
+      >
+        <Plus size={22} aria-hidden="true" />
+      </button>
     </div>
   );
 };

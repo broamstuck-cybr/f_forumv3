@@ -325,7 +325,7 @@ export const MOTION_AI_EXPERIENCE_POOL: Array<Omit<ShowcaseExperienceCard, 'tile
     title: 'Guardnet Benefits',
     category: 'Kêu gọi hành động',
     summaryVi: 'Bố cục trình bày quyền lợi bảo mật sắc nét kèm chuyển động thị giác nguyên bản MotionSites.',
-    imageUrl: 'https://images.higgs.ai/?default=1&output=webp&url=https%3A%2F%2Fd8j0ntlcm91z4.cloudfront.net%2Fuser_38xzZboKViGWJOttwIXH07lWA1P%2Fhf_20261029_050506_a830ff21-4c71-4272-bc39-b61cacb54463.png&w=720&q=85',
+    imageUrl: 'https://motionsites.ai/assets/hero-guardnet-preview-DAQqiNXC.gif',
     videoUrl: 'https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260421_072701_f6a01abb-eb30-4559-9d6e-774362defbc3.mp4',
     fallbackUrl: 'https://threeui.com/social/pages/hero/advanced-glass-material.jpg',
     promptText: 'Tạo khối quyền lợi Guardnet với 6 thẻ tính năng bảo mật, chỉ số cam kết hoạt động 99.99% và cụm nút đăng ký kiểm thử.',

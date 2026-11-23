@@ -224,6 +224,10 @@ export const WorkspaceView: React.FC = () => {
       setRightMode(hasGeneratedArtifact ? 'split' : 'closed');
       return;
     }
+    if (!hasGeneratedArtifact) {
+      setRightMode('closed');
+      return;
+    }
     if (artifactAppeared || (aiActivity === 'streaming' && hasGeneratedArtifact)) {
       setStageTab('preview');
       setRightMode('split');
@@ -788,7 +792,7 @@ export const WorkspaceView: React.FC = () => {
           )}
 
           <div className="ws-chat-controls">
-            {isDesktop && (
+            {isDesktop && hasGeneratedArtifact && (
               <button
                 type="button"
                 className="ws-icon-pill ws-icon-pill--sm"

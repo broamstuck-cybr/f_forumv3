@@ -246,7 +246,7 @@ export const HomeView: React.FC<HomeViewProps> = () => {
             </div>
           </header>
 
-          <div className="hm-composer">
+          <div className="hm-composer hm-composer-dock">
             <PromptComposer
               layoutId="ff-prompt-composer"
               theme={theme}

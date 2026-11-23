@@ -118,6 +118,7 @@ interface Props {
 
 export const CommunityChatRoom: React.FC<Props> = ({ currentHandle, currentName }) => {
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [lightboxUrl, setLightboxUrl] = useState<string | null>(null);
   const [customThreads, setCustomThreads] = useState<ChatThread[]>(() => load(THREADS_KEY, []));
   const [messages, setMessages] = useState<ChatMessage[]>(() => load(STORE_KEY, SEED));
   const [readAt, setReadAt] = useState<Record<string, number>>(() => load(READ_KEY, {}));
@@ -376,7 +377,6 @@ export const CommunityChatRoom: React.FC<Props> = ({ currentHandle, currentName 
               <span className="chat-story-inner">
                 <Plus size={18} aria-hidden="true" />
               </span>
-              <span className="chat-online-dot" aria-hidden="true" />
             </span>
             <span className="chat-story-label">{currentName.split(/\s+/)[0] || 'Bạn'}</span>
           </button>
@@ -395,7 +395,6 @@ export const CommunityChatRoom: React.FC<Props> = ({ currentHandle, currentName 
               >
                 <span className="chat-story-ring" data-active-ring={t.online || isUnread || isActive}>
                   <span className="chat-story-inner">{threadInitial(t.name)}</span>
-                  {t.online && <span className="chat-online-dot" aria-hidden="true" />}
                 </span>
                 <span className="chat-story-label">{t.name.replace(/^#/, '')}</span>
               </button>
@@ -425,6 +424,7 @@ export const CommunityChatRoom: React.FC<Props> = ({ currentHandle, currentName 
             const previewText = last
               ? `${last.authorHandle === currentHandle ? 'Bạn: ' : ''}${last.text || (last.imageUrl ? 'Đã gửi ảnh' : 'Đã chia sẻ đoạn code')}`
               : 'Chưa có tin nhắn';
+            const isChannel = t.kind === 'channel';
             return (
               <li key={t.id}>
                 <button
@@ -434,9 +434,9 @@ export const CommunityChatRoom: React.FC<Props> = ({ currentHandle, currentName 
                   data-unread={n > 0}
                   onClick={() => openThread(t.id)}
                 >
-                  <span className="chat-avatar-ring" data-unread={n > 0} data-online={t.online}>
+                  <span className="chat-avatar-ring" data-unread={n > 0} data-online={!isChannel && t.online}>
                     <span className="chat-avatar">{threadInitial(t.name)}</span>
-                    {t.online && <span className="chat-online-dot" aria-hidden="true" />}
+                    {!isChannel && t.online && <span className="chat-online-dot" aria-hidden="true" />}
                   </span>
                   <span className="chat-thread-body">
                     <span className="chat-thread-top">
@@ -467,11 +467,15 @@ export const CommunityChatRoom: React.FC<Props> = ({ currentHandle, currentName 
             </button>
             <span className="chat-avatar chat-avatar--head">
               {threadInitial(thread.name)}
-              {thread.online && <span className="chat-online-dot" aria-hidden="true" />}
+              {thread.kind !== 'channel' && thread.online && <span className="chat-online-dot" aria-hidden="true" />}
             </span>
             <div className="chat-head-meta">
               <strong>{thread.name}</strong>
-              <span className="chat-sub">{thread.online ? 'Đang hoạt động' : 'Ngoại tuyến'}</span>
+              <span className="chat-sub">
+                {thread.kind === 'channel'
+                  ? 'Kênh thảo luận công khai'
+                  : (thread.online ? 'Đang hoạt động' : 'Ngoại tuyến')}
+              </span>
             </div>
           </div>
 
@@ -535,7 +539,16 @@ export const CommunityChatRoom: React.FC<Props> = ({ currentHandle, currentName 
                       </blockquote>
                     )}
                     {m.text && <p>{m.text}</p>}
-                    {m.imageUrl && <img className="chat-photo" src={m.imageUrl} alt="Ảnh đính kèm trong tin nhắn" loading="lazy" />}
+                    {m.imageUrl && (
+                      <button
+                        type="button"
+                        className="chat-photo-btn"
+                        onClick={() => setLightboxUrl(m.imageUrl || null)}
+                        aria-label="Xem ảnh phóng to"
+                      >
+                        <img className="chat-photo" src={m.imageUrl} alt="Ảnh đính kèm trong tin nhắn" loading="lazy" />
+                      </button>
+                    )}
                     {m.snippet && (
                       <div className="chat-code-wrap">
                         <div className="chat-code-bar">
@@ -696,6 +709,28 @@ export const CommunityChatRoom: React.FC<Props> = ({ currentHandle, currentName 
           </div>
         </form>
       </div>
+
+      {lightboxUrl && (
+        <div
+          className="chat-lightbox"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Xem ảnh phóng to"
+          onClick={() => setLightboxUrl(null)}
+        >
+          <div className="chat-lightbox-content" onClick={(e) => e.stopPropagation()}>
+            <img src={lightboxUrl} alt="Ảnh phóng to" className="chat-lightbox-img" />
+            <button
+              type="button"
+              className="chat-lightbox-close"
+              onClick={() => setLightboxUrl(null)}
+              aria-label="Đóng xem ảnh"
+            >
+              <X size={20} />
+            </button>
+          </div>
+        </div>
+      )}
     </section>
   );
 };

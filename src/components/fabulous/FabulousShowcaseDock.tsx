@@ -192,6 +192,20 @@ export const FabulousShowcaseDock: React.FC = () => {
     addToast({ type: 'success', title: `Đã bật lớp nền 3D: ${item.title}` });
   };
 
+  const handleToggleQuickAtmosphere = () => {
+    if (activeAtmosphere) {
+      setActiveAtmosphere(null);
+      return;
+    }
+    const defaultShader =
+      (fabulousManifest.glacier50[0] as FabulousManifestItem | undefined) ??
+      (fabulousManifest.threeui50[0] as FabulousManifestItem | undefined);
+    if (defaultShader) {
+      setActiveAtmosphere(defaultShader);
+      addToast({ type: 'success', title: `Đã bật lớp nền 3D: ${defaultShader.title}` });
+    }
+  };
+
   const handleTrial = (item: FabulousManifestItem) => {
     setOpen(false);
     openExperience(item.id);
@@ -237,19 +251,17 @@ export const FabulousShowcaseDock: React.FC = () => {
             <span>Fabulous · {FABULOUS_TOTAL_COUNT}</span>
           </button>
 
-          {activeAtmosphere && (
-            <button
-              type="button"
-              className="fab-studio-clear"
-              onClick={() => setActiveAtmosphere(null)}
-              aria-label={`Tắt nền ${activeAtmosphere.title}`}
-              title={`Tắt nền: ${activeAtmosphere.title}`}
-            >
-              <Layers size={13} aria-hidden="true" />
-              <span>{activeAtmosphere.title}</span>
-              <X size={13} aria-hidden="true" />
-            </button>
-          )}
+          <button
+            type="button"
+            className="fab-studio-pill fab-studio-pill--shader"
+            aria-pressed={Boolean(activeAtmosphere)}
+            onClick={handleToggleQuickAtmosphere}
+            aria-label={activeAtmosphere ? `Tắt nền ${activeAtmosphere.title}` : 'Bật lớp nền 3D / Glacier'}
+          >
+            <Layers size={13} aria-hidden="true" />
+            <span>{activeAtmosphere ? activeAtmosphere.title : 'Nền 3D / Glacier'}</span>
+            {activeAtmosphere && <X size={13} aria-hidden="true" />}
+          </button>
         </div>
 
         <AnimatePresence>
@@ -313,94 +325,96 @@ export const FabulousShowcaseDock: React.FC = () => {
                 </label>
               </div>
 
-              {bucket === 'ui50' && (
-                <div className="fab-interactive-deck">
-                  <div className="fab-preset-bar">
-                    <span className="t-label">CodeFronts CSS:</span>
-                    {CODEFRONTS_PRESETS.map((p) => (
-                      <button
-                        key={p.id}
-                        type="button"
-                        className="fab-preset-chip"
-                        aria-pressed={preset === p.id}
-                        onClick={() => setPreset(p.id)}
-                      >
-                        {p.label}
-                      </button>
-                    ))}
-                  </div>
-
-                  <div className="fab-widget-bar">
-                    <span className="t-label">PinUI Live:</span>
-                    {PINUI_WIDGETS.map((w) => (
-                      <button
-                        key={w.id}
-                        type="button"
-                        className="fab-preset-chip"
-                        aria-pressed={activeWidget === w.id}
-                        onClick={() => setActiveWidget(w.id)}
-                      >
-                        {w.label}
-                      </button>
-                    ))}
-                  </div>
-
-                  <div className="fab-widget-stage">
-                    {activeWidget === 'theme' && (
-                      <ThemeSwitch
-                        theme={theme}
-                        onThemeChange={() => triggerPinuiThemeToggle()}
-                      />
-                    )}
-                    {activeWidget === 'lamp' && (
-                      <LampSwitch
-                        on={theme === 'light'}
-                        onToggle={() => triggerPinuiThemeToggle()}
-                        onLabel="Giấy sáng"
-                        offLabel="Mực tối"
-                      />
-                    )}
-                    {activeWidget === 'heart' && (
-                      <PinHeartButton
-                        liked={likedDemo}
-                        count={likedDemo ? 200 : 199}
-                        onToggle={() => setLikedDemo((v) => !v)}
-                        ariaLabel="Thả tim PinUI"
-                      />
-                    )}
-                    {activeWidget === 'copypad' && (
-                      <CopyPastePad theme={theme} />
-                    )}
-                    {activeWidget === 'reader' && (
-                      <ReaderCard
-                        title="Fabulous Design System"
-                        subtitle="PinUI + CodeFronts"
-                        excerptLines={[
-                          'Bo góc đồng tâm, kính mờ VisionOS và tương phản >= 4.5:1.',
-                        ]}
-                        paragraphs={[
-                          'Chế độ Fabulous kết hợp 41 thành phần tương tác PinUI, 9 công thức CSS CodeFronts, 50 mô hình ThreeUI, 50 cảnh Glacier 3D và 50 chuyển động Motion AI.',
-                        ]}
-                        theme={theme}
-                      />
-                    )}
-                    {activeWidget === 'voice' && (
-                      <LiquidVoice
-                        theme={theme}
-                        onSend={(ms) =>
-                          addToast({
-                            type: 'info',
-                            title: `Đã thu âm mẫu ${(ms / 1000).toFixed(1)}s`,
-                          })
-                        }
-                      />
-                    )}
-                    {activeWidget === 'balance' && (
-                      <BalanceCard balance={200} presets={[10, 50, 100, 200]} />
-                    )}
-                  </div>
+              <div className="fab-interactive-deck">
+                <div className="fab-preset-bar">
+                  <span className="t-label">CodeFronts CSS:</span>
+                  {CODEFRONTS_PRESETS.map((p) => (
+                    <button
+                      key={p.id}
+                      type="button"
+                      className="fab-preset-chip"
+                      aria-pressed={preset === p.id}
+                      onClick={() => setPreset(p.id)}
+                    >
+                      {p.label}
+                    </button>
+                  ))}
                 </div>
-              )}
+
+                {bucket === 'ui50' && (
+                  <>
+                    <div className="fab-widget-bar">
+                      <span className="t-label">PinUI Live:</span>
+                      {PINUI_WIDGETS.map((w) => (
+                        <button
+                          key={w.id}
+                          type="button"
+                          className="fab-preset-chip"
+                          aria-pressed={activeWidget === w.id}
+                          onClick={() => setActiveWidget(w.id)}
+                        >
+                          {w.label}
+                        </button>
+                      ))}
+                    </div>
+
+                    <div className="fab-widget-stage">
+                      {activeWidget === 'theme' && (
+                        <ThemeSwitch
+                          theme={theme}
+                          onThemeChange={() => triggerPinuiThemeToggle()}
+                        />
+                      )}
+                      {activeWidget === 'lamp' && (
+                        <LampSwitch
+                          on={theme === 'light'}
+                          onToggle={() => triggerPinuiThemeToggle()}
+                          onLabel="Giấy sáng"
+                          offLabel="Mực tối"
+                        />
+                      )}
+                      {activeWidget === 'heart' && (
+                        <PinHeartButton
+                          liked={likedDemo}
+                          count={likedDemo ? 200 : 199}
+                          onToggle={() => setLikedDemo((v) => !v)}
+                          ariaLabel="Thả tim PinUI"
+                        />
+                      )}
+                      {activeWidget === 'copypad' && (
+                        <CopyPastePad theme={theme} />
+                      )}
+                      {activeWidget === 'reader' && (
+                        <ReaderCard
+                          title="Fabulous Design System"
+                          subtitle="PinUI + CodeFronts"
+                          excerptLines={[
+                            'Bo góc đồng tâm, kính mờ VisionOS và tương phản >= 4.5:1.',
+                          ]}
+                          paragraphs={[
+                            'Chế độ Fabulous kết hợp 41 thành phần tương tác PinUI, 9 công thức CSS CodeFronts, 50 mô hình ThreeUI, 50 cảnh Glacier 3D và 50 chuyển động Motion AI.',
+                          ]}
+                          theme={theme}
+                        />
+                      )}
+                      {activeWidget === 'voice' && (
+                        <LiquidVoice
+                          theme={theme}
+                          onSend={(ms) =>
+                            addToast({
+                              type: 'info',
+                              title: `Đã thu âm mẫu ${(ms / 1000).toFixed(1)}s`,
+                            })
+                          }
+                        />
+                      )}
+                      {activeWidget === 'balance' && (
+                        <BalanceCard balance={200} presets={[10, 50, 100, 200]} />
+                      )}
+                    </div>
+                  </>
+                )}
+              </div>
 
               <div className="fab-asset-grid">
                 {items.map((item) => (

@@ -103,16 +103,26 @@ html[data-ui-mode='fabulous'] .pf-cover,
 html[data-ui-mode='fabulous'] .pf-stat,
 html[data-ui-mode='fabulous'] .pf-card,
 html[data-ui-mode='fabulous'] .pf-timeline-card,
+html[data-ui-mode='fabulous'] .hm-card,
 html[data-ui-mode='fabulous'] .hm-blueprint,
 html[data-ui-mode='fabulous'] .hm-fab-kit,
-html[data-ui-mode='fabulous'] .lp-card {
-  background: color-mix(in srgb, var(--bg-card-surface) 84%, transparent);
-  backdrop-filter: blur(22px) saturate(150%);
-  -webkit-backdrop-filter: blur(22px) saturate(150%);
-  border: 1px solid color-mix(in srgb, var(--accent, #38c99a) 20%, var(--line));
+html[data-ui-mode='fabulous'] .lp-card,
+html[data-ui-mode='fabulous'] .ex-card,
+html[data-ui-mode='fabulous'] .ex-plate-frame,
+html[data-ui-mode='fabulous'] .ex-bench-stage-frame,
+html[data-ui-mode='fabulous'] .ex-bench-dossier {
+  position: relative;
+  background: linear-gradient(
+    155deg,
+    color-mix(in srgb, var(--accent, #38c99a) 7%, var(--bg-card-surface)) 0%,
+    color-mix(in srgb, var(--bg-card-surface) 84%, transparent) 100%
+  );
+  backdrop-filter: blur(22px) saturate(155%);
+  -webkit-backdrop-filter: blur(22px) saturate(155%);
+  border: 1px solid color-mix(in srgb, var(--accent, #38c99a) 24%, var(--line));
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.22),
-    0 24px 48px -28px rgba(0, 0, 0, 0.45);
+    inset 0 1px 0 rgba(255, 255, 255, 0.26),
+    0 20px 44px -26px rgba(0, 0, 0, 0.42);
   transition:
     transform 0.24s cubic-bezier(0.2, 0.8, 0.2, 1),
     border-color 0.22s ease,
@@ -122,12 +132,84 @@ html[data-ui-mode='fabulous'] .lp-card {
 html[data-ui-mode='fabulous'] .cm-post-card:hover,
 html[data-ui-mode='fabulous'] .pf-card:hover,
 html[data-ui-mode='fabulous'] .pf-stat:hover,
-html[data-ui-mode='fabulous'] .lp-card:hover {
-  transform: perspective(900px) translateY(-2px);
-  border-color: color-mix(in srgb, var(--accent, #38c99a) 44%, var(--line));
+html[data-ui-mode='fabulous'] .hm-card:hover,
+html[data-ui-mode='fabulous'] .hm-blueprint:hover,
+html[data-ui-mode='fabulous'] .lp-card:hover,
+html[data-ui-mode='fabulous'] .ex-card:hover,
+html[data-ui-mode='fabulous'] .ex-plate:hover .ex-plate-frame {
+  transform: perspective(900px) translateY(-3px) rotateX(1deg);
+  border-color: color-mix(in srgb, var(--accent, #38c99a) 52%, var(--line));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.34),
+    0 28px 54px -24px color-mix(in srgb, var(--accent, #38c99a) 28%, rgba(0, 0, 0, 0.48));
+}
+
+/* --- ExploreView Specular Dock, Mode Tabs, Chips & Buttons --- */
+html[data-ui-mode='fabulous'] .ex-search-dock {
+  padding: 6px;
+  border-radius: 20px;
+  background: color-mix(in srgb, var(--bg-card-surface) 82%, transparent);
+  backdrop-filter: blur(20px) saturate(155%);
+  -webkit-backdrop-filter: blur(20px) saturate(155%);
+  border: 1px solid color-mix(in srgb, var(--accent, #38c99a) 26%, var(--line));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.26),
+    0 16px 36px -22px rgba(0, 0, 0, 0.42);
+}
+
+html[data-ui-mode='fabulous'] .ex-modes {
+  gap: 8px;
+  padding: 5px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--bg-card-surface) 80%, transparent);
+  backdrop-filter: blur(18px) saturate(150%);
+  -webkit-backdrop-filter: blur(18px) saturate(150%);
+  border: 1px solid color-mix(in srgb, var(--accent, #38c99a) 22%, var(--line));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+html[data-ui-mode='fabulous'] .ex-mode {
+  border-radius: 999px;
+  padding-inline: 14px;
+  transition: background-color 0.18s ease, box-shadow 0.18s ease, color 0.18s ease;
+}
+
+html[data-ui-mode='fabulous'] .ex-mode[aria-selected='true'] {
+  background: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--accent, #38c99a) 22%, var(--bg-card-surface)),
+    color-mix(in srgb, var(--accent-deep, #109b72) 14%, var(--bg-card-surface))
+  );
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.3),
+    0 6px 16px -8px color-mix(in srgb, var(--accent, #38c99a) 55%, transparent);
+}
+
+html[data-ui-mode='fabulous'] .ex-vault-dock-btn,
+html[data-ui-mode='fabulous'] .ex-pill,
+html[data-ui-mode='fabulous'] .btn {
+  border-color: color-mix(in srgb, var(--accent, #38c99a) 30%, var(--line));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.22);
+  transition: transform 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease;
+}
+
+html[data-ui-mode='fabulous'] .ex-vault-dock-btn:hover,
+html[data-ui-mode='fabulous'] .ex-pill:hover,
+html[data-ui-mode='fabulous'] .btn:hover {
+  transform: translateY(-1px);
+  border-color: color-mix(in srgb, var(--accent, #38c99a) 58%, var(--line));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.3),
+    0 10px 22px -12px color-mix(in srgb, var(--accent, #38c99a) 45%, transparent);
+}
+
+html[data-ui-mode='fabulous'] .ex-pill[aria-pressed='true'],
+html[data-ui-mode='fabulous'] .ex-pinui-chips [aria-pressed='true'] {
+  border-color: var(--accent, #38c99a);
+  background: color-mix(in srgb, var(--accent, #38c99a) 18%, var(--bg-card-surface));
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.28),
-    0 28px 54px -26px color-mix(in srgb, var(--accent, #38c99a) 24%, rgba(0, 0, 0, 0.5));
+    0 8px 20px -12px color-mix(in srgb, var(--accent, #38c99a) 55%, transparent);
 }
 
 /* --- CodeFronts: Specular Glowing-Border CTA Buttons & Active Pills --- */
@@ -387,9 +469,31 @@ html[data-ui-mode='fabulous'] .ws-toolbar {
   max-width: calc(100vw - 32px);
 }
 
+@media (min-width: 960px) {
+  .shell:has(.ws) .fab-studio-anchor {
+    left: auto;
+    right: 16px;
+    top: 8px;
+    bottom: auto;
+    flex-direction: column;
+    align-items: flex-end;
+  }
+}
+
+.shell:has(.thg-root) .fab-studio-anchor {
+  display: none;
+}
+
 @media (max-width: 767px) {
   .fab-studio-anchor {
-    bottom: 76px;
+    bottom: calc(92px + env(safe-area-inset-bottom, 0px));
+    left: 12px;
+  }
+
+  .fab-studio-pill {
+    min-height: 32px;
+    padding: 0 11px;
+    font-size: 11px;
   }
 }
 
@@ -433,6 +537,18 @@ html[data-ui-mode='fabulous'] .ws-toolbar {
   border-radius: 999px;
   background: var(--accent, #38c99a);
   box-shadow: 0 0 10px var(--accent, #38c99a);
+}
+
+.fab-studio-pill--shader[aria-pressed='true'] {
+  border-color: var(--accent, #38c99a);
+  background: color-mix(in srgb, var(--accent, #38c99a) 20%, var(--bg-card-surface));
+}
+
+.fab-studio-pill--shader span {
+  max-width: 180px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .fab-studio-clear {
@@ -752,11 +868,66 @@ html[data-ui-mode='fabulous'] .ws-toolbar {
   color: var(--fg-muted);
 }
 
+/* ==========================================================================
+   4. CODEFRONTS PRESET SWITCHER ([data-fabulous-preset])
+   ========================================================================== */
+html[data-ui-mode='fabulous'][data-fabulous-preset='specular-emerald'] .st-panel,
+html[data-ui-mode='fabulous'][data-fabulous-preset='specular-emerald'] .st-card,
+html[data-ui-mode='fabulous'][data-fabulous-preset='specular-emerald'] .cm-post-card,
+html[data-ui-mode='fabulous'][data-fabulous-preset='specular-emerald'] .ws-arena-composer-shell,
+html[data-ui-mode='fabulous'][data-fabulous-preset='specular-emerald'] .hm-card,
+html[data-ui-mode='fabulous'][data-fabulous-preset='specular-emerald'] .hm-blueprint,
+html[data-ui-mode='fabulous'][data-fabulous-preset='specular-emerald'] .ex-plate-frame,
+html[data-ui-mode='fabulous'][data-fabulous-preset='specular-emerald'] .ex-card {
+  border-color: color-mix(in srgb, var(--accent, #38c99a) 52%, var(--line));
+  background: linear-gradient(
+    145deg,
+    color-mix(in srgb, var(--accent, #38c99a) 14%, var(--bg-card-surface)),
+    color-mix(in srgb, var(--bg-card-surface) 90%, transparent)
+  );
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.34),
+    0 20px 48px -22px color-mix(in srgb, var(--accent, #38c99a) 38%, rgba(0, 0, 0, 0.45));
+}
+
+html[data-ui-mode='fabulous'][data-fabulous-preset='tilt-3d'] .cm-post-card:hover,
+html[data-ui-mode='fabulous'][data-fabulous-preset='tilt-3d'] .pf-card:hover,
+html[data-ui-mode='fabulous'][data-fabulous-preset='tilt-3d'] .hm-card:hover,
+html[data-ui-mode='fabulous'][data-fabulous-preset='tilt-3d'] .hm-blueprint:hover,
+html[data-ui-mode='fabulous'][data-fabulous-preset='tilt-3d'] .ex-card:hover,
+html[data-ui-mode='fabulous'][data-fabulous-preset='tilt-3d'] .ex-plate:hover .ex-plate-frame {
+  transform: perspective(840px) translateY(-5px) rotateX(2.4deg) rotateY(-1.2deg);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.38),
+    0 34px 64px -22px color-mix(in srgb, var(--accent, #38c99a) 35%, rgba(0, 0, 0, 0.55));
+}
+
+html[data-ui-mode='fabulous'][data-fabulous-preset='kinetic-ink'] .st-panel,
+html[data-ui-mode='fabulous'][data-fabulous-preset='kinetic-ink'] .st-card,
+html[data-ui-mode='fabulous'][data-fabulous-preset='kinetic-ink'] .cm-post-card,
+html[data-ui-mode='fabulous'][data-fabulous-preset='kinetic-ink'] .ws-arena-composer-shell,
+html[data-ui-mode='fabulous'][data-fabulous-preset='kinetic-ink'] .hm-card,
+html[data-ui-mode='fabulous'][data-fabulous-preset='kinetic-ink'] .hm-blueprint,
+html[data-ui-mode='fabulous'][data-fabulous-preset='kinetic-ink'] .ex-plate-frame,
+html[data-ui-mode='fabulous'][data-fabulous-preset='kinetic-ink'] .ex-card {
+  border: 1.5px solid color-mix(in srgb, var(--fg) 26%, var(--accent, #38c99a));
+  box-shadow:
+    0 6px 0 -2px color-mix(in srgb, var(--accent, #38c99a) 32%, transparent),
+    0 18px 36px -22px rgba(0, 0, 0, 0.45);
+}
+
 @media (prefers-reduced-motion: reduce) {
   html[data-ui-mode='fabulous'] .cm-post-card:hover,
   html[data-ui-mode='fabulous'] .pf-card:hover,
   html[data-ui-mode='fabulous'] .pf-stat:hover,
+  html[data-ui-mode='fabulous'] .hm-card:hover,
+  html[data-ui-mode='fabulous'] .hm-blueprint:hover,
   html[data-ui-mode='fabulous'] .lp-card:hover,
+  html[data-ui-mode='fabulous'] .ex-card:hover,
+  html[data-ui-mode='fabulous'] .ex-plate:hover .ex-plate-frame,
+  html[data-ui-mode='fabulous'] .ex-vault-dock-btn:hover,
+  html[data-ui-mode='fabulous'] .ex-pill:hover,
+  html[data-ui-mode='fabulous'] .btn:hover,
   .fab-studio-pill:hover {
     transform: none !important;
   }

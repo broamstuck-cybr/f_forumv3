@@ -221,8 +221,34 @@ describe('Vault Hydration & Anti-Arena Regression Suite', () => {
       path.join(projectRoot, 'src', 'components', 'launchpad', 'MotionMarqueeGrid.tsx'),
       'utf8'
     );
-    assert.ok(marqueeTsx.includes("activeTab === 'code'"), 'MotionMarqueeGrid modal must include Mã nguồn tab');
+    assert.ok(
+      marqueeTsx.includes("activeTab === 'code'"), 'MotionMarqueeGrid modal must include Mã nguồn tab');
     assert.ok(marqueeTsx.includes('Mã nguồn'), 'MotionMarqueeGrid modal must label Mã nguồn tab');
+    assert.ok(
+      marqueeTsx.includes("setActiveTab(hasLive ? 'live' : 'video')"),
+      'MotionMarqueeGrid must open the full live demo first when live HTML exists (A5)'
+    );
+    assert.ok(
+      marqueeTsx.includes('buildMotionThemeOverrideCss'),
+      'MotionMarqueeGrid must apply stage theme override CSS inside SandboxPreview'
+    );
+    assert.equal(
+      /mmq-card-badge|mmq-heart-btn|mmq-card-sub/.test(marqueeTsx),
+      false,
+      'Marquee tiles must stay clean: no corner pills, heart counters, or summary lines'
+    );
+
+    const catalogTs = fs.readFileSync(
+      path.join(projectRoot, 'src', 'data', 'motionShowcaseCatalog.ts'),
+      'utf8'
+    );
+    const posterUrls = [...catalogTs.matchAll(/"imageUrl":\s*"([^"]+)"/g)].map((m) => m[1]);
+    assert.ok(posterUrls.length >= 40, 'Motion marquee catalog must keep >= 40 items');
+    assert.equal(
+      new Set(posterUrls).size,
+      posterUrls.length,
+      'Every motion marquee item must have a distinct imageUrl (no shared posters)'
+    );
 
     const appTsx = fs.readFileSync(path.join(projectRoot, 'src', 'App.tsx'), 'utf8');
     assert.ok(appTsx.includes('<CommandPalette />'), 'App.tsx must mount CommandPalette');
@@ -376,12 +402,25 @@ describe('Vault Hydration & Anti-Arena Regression Suite', () => {
     );
     assert.ok(
       tidewellTsx.includes('Dùng Thử Trực Tiếp') && tidewellTsx.includes('Trên Trình Duyệt'),
-      'TidewellStage must render the updated concise F-Forum Vietnamese headline'
+      'TidewellStage must render the Dùng Thử Trực Tiếp / Trên Trình Duyệt headline'
     );
     assert.equal(
-      tidewellTsx.includes('Trộn ngẫu nhiên') || tidewellTsx.includes('rm-subline'),
+      /rm-subline|Trộn ngẫu nhiên|&lt;-|-&gt;/.test(tidewellTsx),
       false,
-      'TidewellStage must remove subline copy and prev/next/shuffle controls in favor of direct trial trigger'
+      'TidewellStage must not render rm-subline, arrow glyphs, or shuffle controls'
+    );
+    assert.ok(
+      tidewellTsx.includes("setModalMode('interactive')"),
+      'TidewellStage must open the interactive trial first (A5), video only as fallback'
+    );
+    const tidewellCss = fs.readFileSync(
+      path.join(projectRoot, 'src', 'components', 'landing', 'tidewell.css'),
+      'utf8'
+    );
+    assert.equal(
+      /rm-subline|Trộn ngẫu nhiên/.test(tidewellCss),
+      false,
+      'tidewell.css must not style rm-subline or shuffle controls'
     );
     assert.ok(
       tidewellTsx.includes('key={idx}') && !tidewellTsx.includes('key={`${card.id}-${idx}`}'),

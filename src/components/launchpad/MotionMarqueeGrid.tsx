@@ -7,7 +7,11 @@ import {
 } from '../../data/motionShowcaseCatalog';
 import { useAppStore } from '../../store/appStore';
 import { SandboxPreview } from '../../features/explore/SandboxPreview';
-import type { PreviewTheme, PreviewViewport } from '../../features/explore/catalog';
+import {
+  buildMotionThemeOverrideCss,
+  type PreviewTheme,
+  type PreviewViewport,
+} from '../../features/explore/catalog';
 
 export interface MotionMarqueeGridProps {
   onLaunchPrompt: (prompt: string) => Promise<void> | void;
@@ -89,36 +93,12 @@ const MotionVideoThumb: React.FC<{
   hovered?: boolean;
   reduced?: boolean;
 }> = ({ item, posterSrc, videoSrc, eager = false, hovered = false, reduced = false }) => {
-  const hostRef = useRef<HTMLDivElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
-  const [inView, setInView] = useState(eager);
   const [imgLoaded, setImgLoaded] = useState(false);
   const [imgFailed, setImgFailed] = useState(false);
   const [videoReady, setVideoReady] = useState(false);
 
-  useEffect(() => {
-    const el = hostRef.current;
-    if (!el || typeof IntersectionObserver !== 'function') {
-      setInView(true);
-      return undefined;
-    }
-    const obs = new IntersectionObserver(
-      (entries) => {
-        for (const entry of entries) {
-          if (entry.isIntersecting) {
-            setInView(true);
-          } else if (!hovered) {
-            setInView(false);
-          }
-        }
-      },
-      { rootMargin: '120px' }
-    );
-    obs.observe(el);
-    return () => obs.disconnect();
-  }, [hovered]);
-
-  const shouldMountVideo = !reduced && Boolean(videoSrc) && (hovered || inView);
+  const shouldMountVideo = !reduced && Boolean(videoSrc) && hovered;
 
   useEffect(() => {
     const v = videoRef.current;
@@ -131,7 +111,7 @@ const MotionVideoThumb: React.FC<{
   }, [shouldMountVideo]);
 
   return (
-    <div ref={hostRef} className="mmq-thumb-host">
+    <div className="mmq-thumb-host">
       {(!imgLoaded || imgFailed) && (
         <div
           className="mmq-thumb-plate"
@@ -194,6 +174,7 @@ export const MotionMarqueeGrid: React.FC<MotionMarqueeGridProps> = ({
   const [viewport, setViewport] = useState<PreviewViewport>(1440);
   const [stageTheme, setStageTheme] = useState<PreviewTheme>(theme);
   const [nonce, setNonce] = useState(0);
+  const userPickedTabRef = useRef(false);
 
   useEffect(() => {
     setStageTheme(theme);
@@ -238,14 +219,19 @@ export const MotionMarqueeGrid: React.FC<MotionMarqueeGridProps> = ({
 
   const handleOpenItem = (item: MotionMarqueeItem) => {
     const rec = resolveMotionRecord(fullMap, item.id);
-    const hasVideo = Boolean(rec?.previewVideo || item.videoUrl);
     const hasLive = Boolean(splitLiveHtmlCss(rec?.liveHtml));
+    userPickedTabRef.current = false;
     setActiveItem(item);
-    setActiveTab(hasVideo ? 'video' : hasLive ? 'live' : 'code');
+    setActiveTab(hasLive ? 'live' : 'video');
     setCodeSubTab('code');
     setCopiedCode(false);
     setViewport(1440);
     setNonce((n) => n + 1);
+  };
+
+  const selectTab = (tab: ModalTab) => {
+    userPickedTabRef.current = true;
+    setActiveTab(tab);
   };
 
   const copyRawText = async (text: string): Promise<void> => {
@@ -331,6 +317,19 @@ export const MotionMarqueeGrid: React.FC<MotionMarqueeGridProps> = ({
     () => (activeItem ? splitLiveHtmlCss(activeFull?.liveHtml) : null),
     [activeFull?.liveHtml, activeItem]
   );
+
+  useEffect(() => {
+    if (!activeItem || !liveParts || userPickedTabRef.current) return;
+    setActiveTab('live');
+  }, [activeItem, liveParts]);
+
+  const stageCss = useMemo(() => {
+    if (!liveParts) return '';
+    const override = activeFull?.liveHtml
+      ? buildMotionThemeOverrideCss(activeFull.liveHtml, stageTheme)
+      : '';
+    return [liveParts.css, override].filter(Boolean).join('\n\n');
+  }, [liveParts, activeFull?.liveHtml, stageTheme]);
   const activeCodeBlocks = useMemo(() => {
     const list: Array<{ id: CodeSubTab; label: string; content: string }> = [];
     if (activeFull?.code?.trim()) {
@@ -469,22 +468,13 @@ export const MotionMarqueeGrid: React.FC<MotionMarqueeGridProps> = ({
 
               <div className="mmq-modal-tabs-bar">
                 <div className="mmq-modal-tabs" role="tablist" aria-label="Chế độ xem thử">
-                  <button
-                    type="button"
-                    role="tab"
-                    aria-selected={activeTab === 'video'}
-                    className="mmq-modal-tab"
-                    onClick={() => setActiveTab('video')}
-                  >
-                    Video Trial
-                  </button>
                   {liveParts && (
                     <button
                       type="button"
                       role="tab"
                       aria-selected={activeTab === 'live'}
                       className="mmq-modal-tab"
-                      onClick={() => setActiveTab('live')}
+                      onClick={() => selectTab('live')}
                     >
                       Live HTML
                     </button>
@@ -492,9 +482,18 @@ export const MotionMarqueeGrid: React.FC<MotionMarqueeGridProps> = ({
                   <button
                     type="button"
                     role="tab"
+                    aria-selected={activeTab === 'video'}
+                    className="mmq-modal-tab"
+                    onClick={() => selectTab('video')}
+                  >
+                    Video Trial
+                  </button>
+                  <button
+                    type="button"
+                    role="tab"
                     aria-selected={activeTab === 'code'}
                     className="mmq-modal-tab"
-                    onClick={() => setActiveTab('code')}
+                    onClick={() => selectTab('code')}
                   >
                     Mã nguồn
                   </button>
@@ -503,7 +502,7 @@ export const MotionMarqueeGrid: React.FC<MotionMarqueeGridProps> = ({
                     role="tab"
                     aria-selected={activeTab === 'prompt'}
                     className="mmq-modal-tab"
-                    onClick={() => setActiveTab('prompt')}
+                    onClick={() => selectTab('prompt')}
                   >
                     Prompt gốc
                   </button>
@@ -512,7 +511,7 @@ export const MotionMarqueeGrid: React.FC<MotionMarqueeGridProps> = ({
                     role="tab"
                     aria-selected={activeTab === 'specs'}
                     className="mmq-modal-tab"
-                    onClick={() => setActiveTab('specs')}
+                    onClick={() => selectTab('specs')}
                   >
                     Kiến trúc
                   </button>
@@ -578,7 +577,7 @@ export const MotionMarqueeGrid: React.FC<MotionMarqueeGridProps> = ({
                       <SandboxPreview
                         title={activeItem.title}
                         html={liveParts.html}
-                        css={liveParts.css}
+                        css={stageCss}
                         theme={stageTheme}
                         viewport={viewport}
                         nonce={nonce}
@@ -644,7 +643,7 @@ export const MotionMarqueeGrid: React.FC<MotionMarqueeGridProps> = ({
                           <button
                             type="button"
                             className="btn btn-line btn-sm"
-                            onClick={() => setActiveTab('prompt')}
+                            onClick={() => selectTab('prompt')}
                           >
                             Mở Prompt gốc
                           </button>

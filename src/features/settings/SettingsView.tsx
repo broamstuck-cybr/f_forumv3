@@ -210,8 +210,8 @@ const MODEL_LIST = [
 ];
 
 const SHORTCUTS = [
-  { keys: 'Ctrl+E', desc: 'Bảng điều khiển' },
-  { keys: 'Esc', desc: 'Đóng hộp thoại' },
+  { keys: 'Ctrl+E' },
+  { keys: 'Esc' },
 ];
 
 const UI_MODE_OPTIONS: Array<{
@@ -303,7 +303,6 @@ function readInitialScale(): number {
 
 export const SettingsView: React.FC = () => {
   const {
-    quota,
     settings,
     updateSettings,
     updateByok,
@@ -348,12 +347,6 @@ export const SettingsView: React.FC = () => {
   const ambientEnabled = settings.ambientVideo !== false;
   const autoRunChecks = settings.autoRunChecks !== false;
   const defaultViewport = String(settings.defaultViewport ?? 1440);
-  const quotaLimit = quota.limit;
-  const quotaText = quota.unlimited
-    ? 'Không giới hạn'
-    : quotaLimit === null
-      ? `Đã dùng ${quota.used}`
-      : `Còn ${quota.remaining ?? Math.max(0, quotaLimit - quota.used)}/${quotaLimit}`;
 
   const filteredSections = useMemo(() => {
     const q = searchQuery.trim().toLowerCase();
@@ -727,7 +720,6 @@ export const SettingsView: React.FC = () => {
                   {SHORTCUTS.map((item) => (
                     <li key={item.keys} className="st-shortcutItem">
                       <kbd className="st-kbd">{item.keys}</kbd>
-                      <span>{item.desc}</span>
                     </li>
                   ))}
                 </ul>
@@ -741,7 +733,6 @@ export const SettingsView: React.FC = () => {
                 <h2 className="st-cardTitle" id={idFor('ai')}>
                   AI &amp; BYOK
                 </h2>
-                <span className="st-head-meta st-mono">{quotaText}</span>
               </div>
 
               <div className="st-row st-row--first">
@@ -824,7 +815,6 @@ export const SettingsView: React.FC = () => {
                         type="button"
                         className="icon-btn"
                         aria-label={showApiKey ? 'Ẩn khóa API' : 'Hiện khóa API'}
-                        title={showApiKey ? 'Ẩn khóa API' : 'Hiện khóa API'}
                         aria-pressed={showApiKey}
                         onClick={() => setShowApiKey((v) => !v)}
                       >
@@ -843,9 +833,6 @@ export const SettingsView: React.FC = () => {
                 <h2 className="st-cardTitle" id={idFor('data')}>
                   Dữ liệu &amp; Sao lưu
                 </h2>
-                <span className="st-head-meta st-mono">
-                  {projects.length} dự án · {savedItemIds.length} mục
-                </span>
               </div>
 
               <div className="st-archive-split">
@@ -944,7 +931,6 @@ export const SettingsView: React.FC = () => {
       >
         <div className="st-dialog-body">
           <h2>Đặt lại toàn bộ dữ liệu?</h2>
-          <p>Toàn bộ dự án, mục đã lưu và thiết lập cục bộ sẽ bị xóa.</p>
           <div className="st-dialog-actions">
             <button type="button" className="btn btn-line btn-sm" onClick={() => setConfirmReset(false)}>
               Hủy

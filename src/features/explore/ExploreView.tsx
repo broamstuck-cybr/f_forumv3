@@ -49,7 +49,8 @@ function resolveIncomingMode(value: string | undefined | null): ExploreMode | nu
 }
 
 export const ExploreView: React.FC = () => {
-  const { sourceCatalog, resourceLibrary, savedItemIds, openExperience, theme } = useAppStore();
+  const { sourceCatalog, resourceLibrary, savedItemIds, openExperience, theme, settings } = useAppStore();
+  const isFabulous = settings.uiMode === 'fabulous';
   const calm = useCalm();
   const tabRefs = useRef<Array<HTMLButtonElement | null>>([]);
   const [mode, setMode] = useState<ExploreMode>(() => {
@@ -125,7 +126,7 @@ export const ExploreView: React.FC = () => {
   const clearTopic = () => setTopicChip('');
 
   return (
-    <div className="ex">
+    <div className={isFabulous ? 'ex ex--fabulous' : 'ex'} data-fabulous={isFabulous ? 'true' : undefined}>
       <header className="wrap-wide ex-head">
         <h1 className="t-display ex-title">
           <span className="t-script ex-title-cap">B</span>àn soi

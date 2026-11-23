@@ -143,14 +143,17 @@ export const TidewellStage: React.FC<TidewellStageProps> = () => {
       setLiveHtmlContent(null);
       setLiveHtmlLoading(false);
     } else if (selectedCard.hasLiveHtml && selectedCard.motionsitesSlug) {
-      setModalMode('video');
+      setModalMode('interactive');
+      setLiveHtmlContent(null);
       setLiveHtmlLoading(true);
       let cancelled = false;
       void fetchMotionSitesFull().then((items) => {
         if (cancelled) return;
         const entry = items[selectedCard.motionsitesSlug!];
-        setLiveHtmlContent(entry?.liveHtml ?? null);
+        const html = entry?.liveHtml ?? null;
+        setLiveHtmlContent(html);
         setLiveHtmlLoading(false);
+        if (!html) setModalMode('video');
       });
       return () => {
         cancelled = true;
@@ -576,14 +579,6 @@ export const TidewellStage: React.FC<TidewellStageProps> = () => {
                     </div>
                   ) : (
                     <div className="rm-modal-mode-tabs" role="group" aria-label="Chế độ xem Motion AI">
-                      <button
-                        type="button"
-                        className="rm-modal-tab"
-                        aria-pressed={modalMode === 'video'}
-                        onClick={() => setModalMode('video')}
-                      >
-                        Video gốc
-                      </button>
                       {selectedCard.hasLiveHtml && (
                         <button
                           type="button"
@@ -594,6 +589,14 @@ export const TidewellStage: React.FC<TidewellStageProps> = () => {
                           HTML tương tác
                         </button>
                       )}
+                      <button
+                        type="button"
+                        className="rm-modal-tab"
+                        aria-pressed={modalMode === 'video'}
+                        onClick={() => setModalMode('video')}
+                      >
+                        Video gốc
+                      </button>
                     </div>
                   )}
                 </div>
@@ -603,19 +606,15 @@ export const TidewellStage: React.FC<TidewellStageProps> = () => {
                     <div className="rm-modal-pinui-wrap">
                       <PinUIPlayground itemId={selectedCard.sourceId} theme={pinuiModalTheme} />
                     </div>
-                  ) : selectedCard.library === 'Motion AI' && modalMode === 'interactive' ? (
-                    liveHtmlLoading ? (
-                      <div className="rm-modal-status">Đang nạp mã HTML tương tác...</div>
-                    ) : liveHtmlContent ? (
-                      <iframe
-                        title={`Trình diễn gốc ${selectedCard.title}`}
-                        srcDoc={liveHtmlContent}
-                        sandbox="allow-scripts"
-                        className="rm-modal-iframe"
-                      />
-                    ) : (
-                      <div className="rm-modal-status">Đang hiển thị video minh họa mẫu giao diện.</div>
-                    )
+                  ) : modalMode === 'interactive' && liveHtmlContent ? (
+                    <iframe
+                      title={`Trình diễn gốc ${selectedCard.title}`}
+                      srcDoc={liveHtmlContent}
+                      sandbox="allow-scripts"
+                      className="rm-modal-iframe"
+                    />
+                  ) : modalMode === 'interactive' && liveHtmlLoading ? (
+                    <div className="rm-modal-status">Đang nạp mã HTML tương tác...</div>
                   ) : (
                     <div className="rm-modal-video-grid">
                       <div className="rm-modal-video-wrap">
