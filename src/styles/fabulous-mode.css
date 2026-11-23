@@ -408,12 +408,6 @@ html[data-ui-mode='fabulous'] .ws-toolbar {
   gap: 14px;
 }
 
-.foot__fabRail {
-  margin-bottom: 18px;
-  display: flex;
-  justify-content: center;
-}
-
 /* ==========================================================================
    3. FABULOUS STUDIO DOCK (200-Asset Live Switcher & 3D Atmosphere)
    ========================================================================== */
