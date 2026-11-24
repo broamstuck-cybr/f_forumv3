@@ -77,9 +77,9 @@ const ROUTE_META: Record<
     path: '/workspace',
   },
   community: {
-    title: 'Tra cứu tri thức — F-Forum',
+    title: 'Tri thức & Cộng đồng — F-Forum',
     description:
-      'Tra cứu 8.322 mẫu giao diện từ SOURCEOFKNOWLEDGFORAI theo tiêu đề, thẻ, khả năng chạy và độ tin cậy nguồn; mở thẳng sân khấu trải nghiệm.',
+      'Bảng tin kỹ thuật và phòng chat trực tiếp của cộng đồng F-Forum — chia sẻ bản dựng, thảo luận thiết kế và giải đáp thời gian thực.',
     path: '/community',
   },
   profile: {

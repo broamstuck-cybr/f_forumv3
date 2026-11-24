@@ -234,6 +234,11 @@ export const WorkspaceView: React.FC = () => {
     [activeProject]
   );
 
+  const isWelcome = useMemo(
+    () => !hasGeneratedArtifact && activeProject.messages.every((message) => message.role !== 'user'),
+    [hasGeneratedArtifact, activeProject.messages]
+  );
+
   const [rightMode, setRightMode] = useState<'compact' | 'split' | 'closed'>(() =>
     hasGeneratedArtifact ? 'split' : 'closed'
   );
@@ -378,8 +383,10 @@ export const WorkspaceView: React.FC = () => {
   const stageInline = isDesktop && rightOpen;
   const isSplitStage = isDesktop && rightMode === 'split';
   const stageDataAttr = !isDesktop ? 'open' : rightMode;
-  const threadHidden = !isDesktop && mobilePane !== 'chat';
-  const stageHidden = (isDesktop && rightMode === 'closed') || (!isDesktop && mobilePane !== 'stage');
+  const threadHidden = !isDesktop && hasGeneratedArtifact && mobilePane !== 'chat';
+  const stageHidden = isDesktop
+    ? rightMode === 'closed'
+    : !hasGeneratedArtifact || mobilePane !== 'stage';
   const checksPassLabel = activeProject.checksReport
     ? `${activeProject.checksReport.passCount}/${activeProject.checksReport.results.length} phép kiểm đạt`
     : 'Kiểm định 6 lớp';
@@ -672,6 +679,7 @@ export const WorkspaceView: React.FC = () => {
       data-layout={layout}
       data-rail={railInline ? 'open' : 'closed'}
       data-stage={stageDataAttr}
+      data-welcome={isWelcome ? 'true' : undefined}
       data-density={settings.compactDensity ? 'compact' : 'roomy'}
       data-resizing={isResizing ? 'true' : undefined}
       style={{ '--ws-split-ratio': splitRatio } as React.CSSProperties}
@@ -864,7 +872,15 @@ export const WorkspaceView: React.FC = () => {
           canRetry={!isGenerating && !quotaBlocked}
           canRegenerate={!isGenerating && !quotaBlocked}
           starters={STARTER_PROMPTS}
-          onUseStarter={(prompt) => setComposerValue(prompt)}
+          onUseStarter={(prompt) => {
+            setComposerValue(prompt);
+            window.requestAnimationFrame(() => {
+              dockRef.current?.querySelector<HTMLInputElement>('.pcmp__input')?.focus({
+                preventScroll: true,
+              });
+            });
+          }}
+          welcome={isWelcome}
         />
 
         <footer className="ws-dock">
@@ -1038,66 +1054,68 @@ export const WorkspaceView: React.FC = () => {
                 </section>
               )}
 
-              <div className="ws-arena-repo-strip">
-                <div className="ws-arena-repo-pills">
-                  <span className="ws-arena-repo-name" title={`Dự án: ${activeProject.name}`}>
-                    <Layers size={12} aria-hidden="true" />
-                    <span>{activeProject.name}</span>
-                  </span>
-                  {hasGeneratedArtifact && (
-                    <span className="ws-arena-branch-name" title="Số tệp mã nguồn trong phiên">
-                      {activeProject.files.length} tệp
+              {!isWelcome && (
+                <div className="ws-arena-repo-strip">
+                  <div className="ws-arena-repo-pills">
+                    <span className="ws-arena-repo-name" title={`Dự án: ${activeProject.name}`}>
+                      <Layers size={12} aria-hidden="true" />
+                      <span>{activeProject.name}</span>
                     </span>
-                  )}
-                </div>
+                    {hasGeneratedArtifact && (
+                      <span className="ws-arena-branch-name" title="Số tệp mã nguồn trong phiên">
+                        {activeProject.files.length} tệp
+                      </span>
+                    )}
+                  </div>
 
-                <div className="ws-arena-actions">
-                  {hasGeneratedArtifact ? (
-                    <>
-                      <button
-                        type="button"
-                        className="ws-arena-diff-pill"
-                        onClick={handleOpenDiffStage}
-                        title="Mở bảng đối chiếu Diff"
-                      >
-                        <span className="ws-add">+{diffTotals.added}</span>
-                        <span className="ws-del">−{diffTotals.removed}</span>
-                        <span aria-hidden="true">›</span>
-                      </button>
-                      <button
-                        type="button"
-                        className="ws-arena-action-btn ws-arena-action-btn--accent"
-                        onClick={handleShareToKnowledge}
-                        title="Chia sẻ mẫu giao diện này lên Tri thức cộng đồng"
-                      >
-                        <Share2 size={12} aria-hidden="true" />
-                        <span>Đăng Tri thức</span>
-                      </button>
-                    </>
-                  ) : (
-                    <>
-                      <button
-                        type="button"
-                        className="ws-arena-action-btn"
-                        onClick={() => setSetupDrawerOpen(true)}
-                        title="Mở Cài đặt -> Khóa riêng (BYOK)"
-                      >
-                        <KeyRound size={12} aria-hidden="true" />
-                        <span>BYOK</span>
-                      </button>
-                      <button
-                        type="button"
-                        className="ws-arena-action-btn ws-arena-action-btn--accent"
-                        onClick={() => navigate('explore')}
-                        title="Duyệt và nạp mẫu thật từ Kho 8.322 mẫu"
-                      >
-                        <Compass size={12} aria-hidden="true" />
-                        <span>Kho 8.322 mẫu</span>
-                      </button>
-                    </>
-                  )}
+                  <div className="ws-arena-actions">
+                    {hasGeneratedArtifact ? (
+                      <>
+                        <button
+                          type="button"
+                          className="ws-arena-diff-pill"
+                          onClick={handleOpenDiffStage}
+                          title="Mở bảng đối chiếu Diff"
+                        >
+                          <span className="ws-add">+{diffTotals.added}</span>
+                          <span className="ws-del">−{diffTotals.removed}</span>
+                          <span aria-hidden="true">›</span>
+                        </button>
+                        <button
+                          type="button"
+                          className="ws-arena-action-btn ws-arena-action-btn--accent"
+                          onClick={handleShareToKnowledge}
+                          title="Chia sẻ mẫu giao diện này lên Tri thức cộng đồng"
+                        >
+                          <Share2 size={12} aria-hidden="true" />
+                          <span>Đăng Tri thức</span>
+                        </button>
+                      </>
+                    ) : (
+                      <>
+                        <button
+                          type="button"
+                          className="ws-arena-action-btn"
+                          onClick={() => setSetupDrawerOpen(true)}
+                          title="Mở Cài đặt -> Khóa riêng (BYOK)"
+                        >
+                          <KeyRound size={12} aria-hidden="true" />
+                          <span>BYOK</span>
+                        </button>
+                        <button
+                          type="button"
+                          className="ws-arena-action-btn ws-arena-action-btn--accent"
+                          onClick={() => navigate('explore')}
+                          title="Duyệt và nạp mẫu thật từ Kho 7.750 mẫu công khai"
+                        >
+                          <Compass size={12} aria-hidden="true" />
+                          <span>Kho 7.750 mẫu</span>
+                        </button>
+                      </>
+                    )}
+                  </div>
                 </div>
-              </div>
+              )}
 
               <PromptComposer
                 layoutId="ff-prompt-composer"
@@ -1145,7 +1163,11 @@ export const WorkspaceView: React.FC = () => {
                     </button>
                   </div>
                 }
-                placeholder="Bạn muốn dựng hoặc chỉnh sửa giao diện gì? (Enter để gửi)..."
+                placeholder={
+                  isWelcome
+                    ? 'Mô tả giao diện bạn muốn dựng, Enter để gửi'
+                    : 'Yêu cầu chỉnh sửa tiếp theo, Enter để gửi'
+                }
                 onAttachClick={() => setDropZoneOpen((value) => !value)}
                 onSend={(text) => {
                   setComposerValue('');
@@ -1182,7 +1204,7 @@ export const WorkspaceView: React.FC = () => {
 
       {liveStageElement(false)}
 
-      {!isDesktop && (
+      {!isDesktop && hasGeneratedArtifact && (
         <nav className="ws-switch" aria-label="Chuyển vùng làm việc">
           <button
             type="button"
@@ -1201,7 +1223,7 @@ export const WorkspaceView: React.FC = () => {
               setMobilePane('stage');
             }}
           >
-            Xem
+            Live View
           </button>
           <button
             type="button"
@@ -1212,7 +1234,7 @@ export const WorkspaceView: React.FC = () => {
               setMobilePane('stage');
             }}
           >
-            Mã
+            Mã nguồn
           </button>
           <button
             type="button"
@@ -1223,7 +1245,7 @@ export const WorkspaceView: React.FC = () => {
               setMobilePane('stage');
             }}
           >
-            Kiểm
+            Kiểm định
           </button>
         </nav>
       )}

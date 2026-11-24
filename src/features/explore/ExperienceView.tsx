@@ -52,7 +52,6 @@ import {
   type VaultIndexItem,
   type VaultLibraryKey,
   type VaultShardPayload,
-  resolveOriginalLiveUrl,
 } from './vaultLoader';
 import './explore.css';
 
@@ -371,10 +370,6 @@ export const ExperienceView: React.FC = () => {
     (isMotion ? motionEntry?.previewImage || '' : '') ||
     (activePreview?.kind === 'image' ? activePreview.src : '') ||
     '';
-  const activeOriginalUrl =
-    shardPayload?.u ||
-    activeCatalogItem?.officialUrl ||
-    (activeVaultItem ? resolveOriginalLiveUrl(activeVaultItem.l, activeVaultItem.i) : '');
 
   const [motionStageMode, setMotionStageMode] = useState<'html' | 'video'>('html');
 
@@ -948,7 +943,6 @@ export const ExperienceView: React.FC = () => {
                       itemId={activeVaultItem.i}
                       title={activeTitle}
                       image={activeOriginalImage || undefined}
-                      sourceUrl={activeOriginalUrl}
                     />
                   ) : isGlacier && activeOriginalVideo ? (
                     <BackgroundLab
@@ -956,7 +950,6 @@ export const ExperienceView: React.FC = () => {
                       title={activeTitle}
                       videoSrc={activeOriginalVideo}
                       poster={activeOriginalImage || undefined}
-                      sourceUrl={activeOriginalUrl}
                     />
                   ) : activeOriginalVideo ? (
                     <SpecimenMedia
@@ -979,7 +972,7 @@ export const ExperienceView: React.FC = () => {
                         preview={{
                           kind: 'image',
                           src: activeOriginalImage,
-                          credit: isThreeUI ? 'threeui.com' : isGlacier ? 'getlayers.ai' : 'motionsites.ai',
+                          credit: isThreeUI ? '3D WebGL' : isGlacier ? 'Nền động' : 'Motion AI',
                         }}
                         title={activeTitle}
                         fallbackLabel={activeGroupLabel}
@@ -1100,16 +1093,6 @@ export const ExperienceView: React.FC = () => {
                 >
                   Mở Workspace
                 </button>
-                {activeOriginalUrl ? (
-                  <a
-                    className="btn btn-line"
-                    href={activeOriginalUrl}
-                    target="_blank"
-                    rel="noreferrer"
-                  >
-                    Bản gốc ↗
-                  </a>
-                ) : null}
               </div>
             ) : null}
           </section>

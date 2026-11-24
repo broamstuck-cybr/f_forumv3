@@ -765,7 +765,7 @@ export const PlateTable: React.FC<PlateTableProps> = ({
                     preview={{
                       kind: 'image',
                       src: activeImage,
-                      credit: isThreeUI ? 'threeui.com' : isGlacier ? 'getlayers.ai' : 'motionsites.ai',
+                      credit: isThreeUI ? '3D WebGL' : isGlacier ? 'Nền động' : 'Motion AI',
                     }}
                     title={activeTitle}
                     fallbackLabel={activeLibLabel}
@@ -830,16 +830,6 @@ export const PlateTable: React.FC<PlateTableProps> = ({
               >
                 Đính kèm
               </button>
-              {activeItem.officialUrl ? (
-                <a
-                  className="btn btn-line"
-                  href={activeItem.officialUrl}
-                  target="_blank"
-                  rel="noreferrer"
-                >
-                  Bản gốc ↗
-                </a>
-              ) : null}
               <ReactionBar id={activeItem.id} title={activeTitle} showLabel />
               <button
                 type="button"

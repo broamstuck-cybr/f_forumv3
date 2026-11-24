@@ -88,12 +88,12 @@ export function resolveOriginalLiveUrl(
       : `https://codefronts.com/${id}/`;
   }
   if (library === 'threeui') {
-    return `https://threeui.com/${id}`;
+    return '';
   }
   return '';
 }
 
-export const VAULT_CACHE_VERSION = 'v9.6';
+export const VAULT_CACHE_VERSION = 'v9.7-free';
 
 let vaultIndexCache: VaultIndexData | null = null;
 let vaultIndexPromise: Promise<VaultIndexData> | null = null;

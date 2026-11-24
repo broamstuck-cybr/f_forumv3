@@ -880,8 +880,21 @@ function main() {
     writeGzipJson(path.join(VAULT_DIR, `${shardName}.jgz`), payload);
   }
 
+  const threeuiFreeMapPath = path.join(PROJECT_ROOT, 'public/data/threeui-previews.json');
+  const threeuiFreeItems = fs.existsSync(threeuiFreeMapPath)
+    ? JSON.parse(fs.readFileSync(threeuiFreeMapPath, 'utf8')).items || {}
+    : {};
+
+  // Clean stale ThreeUI shards before hydrating Free/Public-only ThreeUI items
+  for (const file of fs.readdirSync(VAULT_DIR)) {
+    if (/^tu-\d+\.jgz$/.test(file)) {
+      fs.unlinkSync(path.join(VAULT_DIR, file));
+    }
+  }
+
+  const freeTuList = tuMf.filter((it) => Boolean(threeuiFreeItems[it.id]?.v));
   const tuShards = new Map();
-  tuMf.forEach((it, idx) => {
+  freeTuList.forEach((it, idx) => {
     const itemFile = it.path ? path.join(SOURCE_ROOT, it.path) : '';
     const raw = itemFile && fs.existsSync(itemFile) ? fs.readFileSync(itemFile, 'utf8') : '';
     const cleanBrief = stripExternalSourceLines(stripFrontmatter(raw));
@@ -896,8 +909,10 @@ function main() {
       .join('\n\n')
       .trim();
 
+    const freePreview = threeuiFreeItems[it.id];
+    const previewImg = freePreview?.t || it.preview || '';
     tuPromptById.set(it.id, fullPrompt);
-    tuMediaById.set(it.id, { img: it.preview || '', u: it.url || '' });
+    tuMediaById.set(it.id, { img: previewImg, u: '' });
 
     const bucket = Math.floor(idx / 320);
     const shardName = `tu-${bucket}`;
@@ -907,11 +922,12 @@ function main() {
       c: '',
       j: '',
       p: fullPrompt,
-      ...(it.preview ? { img: it.preview } : {}),
-      ...(it.url ? { u: it.url } : {}),
+      ...(previewImg ? { img: previewImg } : {}),
+      ...(freePreview?.v ? { vid: freePreview.v } : {}),
       m: {
         runtime: it.runtime || 'Three.js, WebGL',
         category: it.category || '3D',
+        access: 'free',
       },
     };
 
@@ -922,10 +938,10 @@ function main() {
       g: 'Không gian 3D',
       c: it.category || '3D',
       tg: Array.from(
-        new Set(['3d', 'webgl', slugifyShard(it.category), slugifyShard(it.subcategory)].filter(Boolean))
+        new Set(['3d', 'webgl', 'free', slugifyShard(it.category)].filter(Boolean))
       ).slice(0, 4),
       s: shardName,
-      d: it.preview ? 1 : 0,
+      d: 1,
     });
   });
   for (const [shardName, payload] of tuShards.entries()) {

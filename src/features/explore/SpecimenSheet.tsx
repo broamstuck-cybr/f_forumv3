@@ -383,7 +383,7 @@ export const SpecimenSheet: React.FC<SpecimenSheetProps> = ({
                   preview={{
                     kind: 'image',
                     src: originalImage,
-                    credit: isThreeUI ? 'threeui.com' : isGlacier ? 'getlayers.ai' : 'motionsites.ai',
+                    credit: isThreeUI ? '3D WebGL' : isGlacier ? 'Nền động' : 'Motion AI',
                   }}
                   title={safeTitle}
                   fallbackLabel={libLabel}

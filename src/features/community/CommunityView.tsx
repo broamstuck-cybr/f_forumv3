@@ -1923,10 +1923,16 @@ export const CommunityView: React.FC = () => {
         <div className="wrap-wide cm-mode-wrap">
           <div className="cm-mode-header">
             <div className="cm-mode-switch" role="tablist" aria-label="Chế độ Tri thức">
-              <button type="button" role="tab" aria-selected={false} onClick={() => setMode('feed')}>Bảng tin</button>
-              <button type="button" role="tab" aria-selected onClick={() => setMode('chat')}>Phòng chat</button>
+              <button type="button" role="tab" aria-selected={false} onClick={() => setMode('feed')}>
+                <BookOpen size={15} aria-hidden="true" />
+                <span>Bảng tin</span>
+              </button>
+              <button type="button" role="tab" aria-selected onClick={() => setMode('chat')}>
+                <MessageSquare size={15} aria-hidden="true" />
+                <span>Phòng chat</span>
+              </button>
             </div>
-            <p className="cm-mode-caption">Trao đổi trực tiếp, chia sẻ đoạn mã và góp ý giao diện theo thời gian thực.</p>
+            <p className="cm-mode-caption">Trao đổi trực tiếp, chia sẻ đoạn mã, ghi âm thoại và góp ý giao diện theo thời gian thực.</p>
           </div>
           <CommunityChatRoom
             currentHandle={currentUser?.username || 'builder_vn'}
@@ -1942,8 +1948,14 @@ export const CommunityView: React.FC = () => {
       <div className="wrap-wide cm-mode-wrap">
         <div className="cm-mode-header">
           <div className="cm-mode-switch" role="tablist" aria-label="Chế độ Tri thức">
-            <button type="button" role="tab" aria-selected onClick={() => setMode('feed')}>Bảng tin</button>
-            <button type="button" role="tab" aria-selected={false} onClick={() => setMode('chat')}>Phòng chat</button>
+            <button type="button" role="tab" aria-selected onClick={() => setMode('feed')}>
+              <BookOpen size={15} aria-hidden="true" />
+              <span>Bảng tin</span>
+            </button>
+            <button type="button" role="tab" aria-selected={false} onClick={() => setMode('chat')}>
+              <MessageSquare size={15} aria-hidden="true" />
+              <span>Phòng chat</span>
+            </button>
           </div>
           <p className="cm-mode-caption">Không gian chia sẻ bài viết kỹ thuật, trưng bày bản dựng và hỏi đáp cộng đồng.</p>
         </div>
@@ -2314,7 +2326,7 @@ export const CommunityView: React.FC = () => {
                     ref={(el) => {
                       postRefs.current[post.id] = el;
                     }}
-                    className="cm-post"
+                    className="cm-post cm-post-card"
                     data-selected={isSelected ? 'true' : undefined}
                   >
                     <div className="cm-post-head">
@@ -2673,7 +2685,7 @@ export const CommunityView: React.FC = () => {
                                 </div>
                               )}
                               <div className="cm-action-pair">
-                                {settings.uiMode === 'fabulous' && !activeReactionId ? (
+                                {!activeReactionId || activeReactionId === 'love' ? (
                                   <PinHeartButton
                                     liked={isLiked}
                                     count={score}

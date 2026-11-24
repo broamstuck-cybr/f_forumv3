@@ -33,13 +33,15 @@ function readShardJson(shardPath) {
 }
 
 describe('Vault Hydration & Anti-Arena Regression Suite', () => {
-  test('hydrates all 8,322 vault items across 6 libraries with valid compact gzipped shard files (<15MB total)', () => {
+  test('hydrates all 7,750 free/public vault items across 6 libraries with valid compact gzipped shard files (<15MB total)', () => {
     const indexPath = path.join(projectRoot, 'public', 'data', 'studio-vault.json');
     assert.ok(fs.existsSync(indexPath), 'studio-vault.json must exist');
     const data = JSON.parse(fs.readFileSync(indexPath, 'utf8'));
 
-    assert.equal(data.total, 8322, `Expected 8322 vault items, got ${data.total}`);
-    assert.equal(data.items.length, 8322);
+    assert.equal(data.total, 7750, `Expected 7750 free/public vault items, got ${data.total}`);
+    assert.equal(data.items.length, 7750);
+    const threeuiCount = data.items.filter((item) => item.l === 'threeui').length;
+    assert.equal(threeuiCount, 389, `Expected 389 Free/Public ThreeUI items, got ${threeuiCount}`);
     const ext = data.shardExt || 'jgz';
 
     const libs = new Set(data.items.map((item) => item.l));

@@ -11,12 +11,9 @@ import {
   Globe,
   Maximize2,
   Minimize2,
-  Monitor,
   RotateCw,
   Share2,
   ShieldCheck,
-  Smartphone,
-  Tablet,
   X,
 } from 'lucide-react';
 import { FileBox, type FileBoxTab } from '../../components/pinui/FileBox';
@@ -56,47 +53,12 @@ export interface LiveStageProps {
   hidden?: boolean;
 }
 
-const VIEWPORT_CYCLE: PreviewViewport[] = ['fit', 1440, 768, 390];
-
-function getViewportMeta(viewport: PreviewViewport): {
-  next: PreviewViewport;
-  badge: string;
-  label: string;
-  title: string;
-} {
-  const index = VIEWPORT_CYCLE.indexOf(viewport);
-  const next = VIEWPORT_CYCLE[(index + 1) % VIEWPORT_CYCLE.length];
-  if (viewport === 'fit') {
-    return {
-      next,
-      badge: 'Fit',
-      label: 'Chế độ tràn khung (Fit 100%, nhấn chuyển Desktop 1440px)',
-      title: 'Tràn khung 100% · Nhấn test 1440px',
-    };
-  }
-  if (viewport === 1440) {
-    return {
-      next,
-      badge: '1440',
-      label: 'Đổi khung nhìn (hiện tại Desktop 1440px, kế tiếp Tablet 768px)',
-      title: 'Desktop 1440px · Nhấn chuyển 768px',
-    };
-  }
-  if (viewport === 768) {
-    return {
-      next,
-      badge: '768',
-      label: 'Đổi khung nhìn (hiện tại Tablet 768px, kế tiếp Mobile 390px)',
-      title: 'Tablet 768px · Nhấn chuyển 390px',
-    };
-  }
-  return {
-    next,
-    badge: '390',
-    label: 'Đổi khung nhìn (hiện tại Mobile 390px, kế tiếp Tràn khung Fit)',
-    title: 'Mobile 390px · Nhấn chuyển tràn khung',
-  };
-}
+const VIEWPORT_OPTIONS: Array<{ value: PreviewViewport; badge: string; label: string }> = [
+  { value: 'fit', badge: 'Fit', label: 'Tràn khung 100%' },
+  { value: 1440, badge: '1440', label: 'Desktop 1440px' },
+  { value: 768, badge: '768', label: 'Tablet 768px' },
+  { value: 390, badge: '390', label: 'Mobile 390px' },
+];
 
 export const LiveStage: React.FC<LiveStageProps> = ({
   project,
@@ -150,10 +112,8 @@ export const LiveStage: React.FC<LiveStageProps> = ({
     [activeFile]
   );
 
-  const vpMeta = getViewportMeta(viewport);
-
-  const handleCycleViewport = () => {
-    onViewportChange(vpMeta.next);
+  const handlePickViewport = (next: PreviewViewport) => {
+    onViewportChange(next);
     if (stageTab !== 'preview') {
       onStageTabChange('preview');
     }
@@ -342,10 +302,10 @@ export const LiveStage: React.FC<LiveStageProps> = ({
             className="ws-arena-tab"
             data-active={stageTab === 'preview' ? 'true' : undefined}
             onClick={() => onStageTabChange('preview')}
-            title="Xem trực tiếp bản dựng"
+            title="Live View — Xem trực tiếp bản dựng"
           >
             <Eye size={13} aria-hidden="true" />
-            <span>Xem trực tiếp</span>
+            <span>Live View</span>
           </button>
 
           <button
@@ -372,7 +332,7 @@ export const LiveStage: React.FC<LiveStageProps> = ({
             title="Đối chiếu & Kiểm định 6 lớp"
           >
             <ShieldCheck size={13} aria-hidden="true" />
-            <span>Đối chiếu</span>
+            <span>Kiểm định &amp; Diff</span>
             <span className="ws-arena-diff-stat">
               <span className="ws-add">+{totals.added}</span>
               <span className="ws-del">−{totals.removed}</span>
@@ -382,22 +342,21 @@ export const LiveStage: React.FC<LiveStageProps> = ({
         </div>
 
         <div className="ws-arena-stage-tools">
-          <button
-            type="button"
-            className="ws-stage-vp-btn"
-            aria-label={vpMeta.label}
-            title={vpMeta.title}
-            onClick={handleCycleViewport}
-          >
-            {viewport === 768 ? (
-              <Tablet size={13} aria-hidden="true" />
-            ) : viewport === 390 ? (
-              <Smartphone size={13} aria-hidden="true" />
-            ) : (
-              <Monitor size={13} aria-hidden="true" />
-            )}
-            <span>{vpMeta.badge}</span>
-          </button>
+          <div className="ws-vp-pills" role="group" aria-label="Khung nhìn xem trước">
+            {VIEWPORT_OPTIONS.map((option) => (
+              <button
+                key={String(option.value)}
+                type="button"
+                className="ws-vp-pill"
+                aria-pressed={viewport === option.value}
+                aria-label={option.label}
+                title={option.label}
+                onClick={() => handlePickViewport(option.value)}
+              >
+                {option.badge}
+              </button>
+            ))}
+          </div>
 
           <button
             type="button"
@@ -412,24 +371,26 @@ export const LiveStage: React.FC<LiveStageProps> = ({
           {onOpenPublish && (
             <button
               type="button"
-              className="ws-icon-pill ws-icon-pill--sm"
+              className="ws-stage-action-pill ws-stage-action-pill--accent"
               aria-label="Đăng bản dựng lên Tri thức"
               title="Đăng lên Tri thức"
               onClick={onOpenPublish}
             >
-              <Share2 size={14} aria-hidden="true" />
+              <Share2 size={13} aria-hidden="true" />
+              <span>Đăng Tri thức</span>
             </button>
           )}
 
           <button
             type="button"
-            className="ws-icon-pill ws-icon-pill--sm"
-            aria-label={exporting ? 'Đang nén gói ZIP' : 'Tải gói ZIP'}
-            title={exporting ? 'Đang nén gói ZIP...' : 'Tải ZIP'}
+            className="ws-stage-action-pill"
+            aria-label={exporting ? 'Đang nén gói ZIP' : 'Xuất gói ZIP'}
+            title={exporting ? 'Đang nén gói ZIP...' : 'Xuất ZIP'}
             disabled={exporting}
             onClick={onExportZip}
           >
-            <Download size={14} aria-hidden="true" />
+            <Download size={13} aria-hidden="true" />
+            <span>{exporting ? 'Đang nén...' : 'Export ZIP'}</span>
           </button>
 
           <button

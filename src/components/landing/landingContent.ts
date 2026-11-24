@@ -208,7 +208,7 @@ export const PROJECT_SHOWCASE_THUMBS: Record<string, string> = {
 };
 
 export const OPEN_ACCESS_FEATURES: string[] = [
-  '8.322 mẫu giao diện & Starter Kits kiểm định khả thi (42 PinUI · 826 Motion AI · 961 ThreeUI · 966 GetLayers · 480 LucianLabs · 5.047 CodeFronts) cùng 60 công cụ và 122 repo',
+  '7.750 mẫu giao diện công khai & Starter Kits kiểm định khả thi (42 PinUI · 826 Motion AI · 389 ThreeUI miễn phí · 966 GetLayers · 480 LucianLabs · 5.047 CodeFronts) cùng 60 công cụ và 122 repo',
   'Bản địa hóa tiếng Việt theo bài toán học tập của học sinh & sinh viên yêu công nghệ — Chống "AI Slop", rèn tư duy phản biện',
   'Xác minh tài khoản API, mã hóa dữ liệu tệp JSON cùng Bộ lọc AI phát hiện và xử lý spam, ngôn từ thô tục',
   'Không gian Hỏi đáp, Threads, Kho đề thi, Hồ sơ học tập, đóng gói website riêng và đồng bộ WebSocket thời gian thực',
@@ -231,7 +231,7 @@ export const FAQ_ITEMS: Array<{ id: string; question: string; answer: string }> 
     id: 'f3',
     question: 'Kết quả khảo sát trên 195 người dùng cho thấy điều gì?',
     answer:
-      'Khảo sát trên 195 học sinh và người dùng ghi nhận 91,2% đánh giá cao việc tiếp cận trực tiếp các mẫu thiết kế web và thành phần UI/UX trực quan thay vì tự thiết kế từ con số không. Việc hệ thống hóa 8.322 mẫu giao diện, 60 công cụ và 122 repo từ GitHub giúp rút ngắn thời gian tra cứu và nâng tỷ lệ hoàn thiện sản phẩm thực tế.',
+      'Khảo sát trên 195 học sinh và người dùng ghi nhận 91,2% đánh giá cao việc tiếp cận trực tiếp các mẫu thiết kế web và thành phần UI/UX trực quan thay vì tự thiết kế từ con số không. Việc hệ thống hóa 7.750 mẫu giao diện công khai, 60 công cụ và 122 repo từ GitHub giúp rút ngắn thời gian tra cứu và nâng tỷ lệ hoàn thiện sản phẩm thực tế.',
   },
   {
     id: 'f4',

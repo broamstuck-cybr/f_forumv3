@@ -1,20 +1,16 @@
 import React, { useState } from 'react';
-import { ExternalLink, Layers, RotateCw } from 'lucide-react';
+import { Layers, RotateCw } from 'lucide-react';
 
 interface BackgroundLabProps {
   title: string;
   videoSrc: string;
   poster?: string;
-  sourceUrl?: string;
-  credit?: string;
 }
 
 export const BackgroundLab: React.FC<BackgroundLabProps> = ({
   title,
   videoSrc,
   poster,
-  sourceUrl,
-  credit = 'getlayers.ai',
 }) => {
   const [blur, setBlur] = useState(0);
   const [overlay, setOverlay] = useState(42);
@@ -54,19 +50,6 @@ export const BackgroundLab: React.FC<BackgroundLabProps> = ({
           Đây là trang mẫu chạy trên chính video nền. Kéo độ mờ và độ phủ để kiểm
           tra tương phản chữ trước khi dùng.
         </p>
-        <div className="ex-bg-lab-actions">
-          {sourceUrl ? (
-            <a
-              className="ex-bg-lab-secondary"
-              href={sourceUrl}
-              target="_blank"
-              rel="noreferrer"
-            >
-              Mở trên {credit}
-              <ExternalLink size={13} aria-hidden="true" />
-            </a>
-          ) : null}
-        </div>
       </div>
 
       <div className="ex-bg-lab-controls" aria-label="Điều khiển nền mẫu">

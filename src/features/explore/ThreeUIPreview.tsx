@@ -1,11 +1,10 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { ExternalLink, Maximize2, Pause, Play, RotateCcw } from 'lucide-react';
+import { Maximize2, Pause, Play, RotateCcw } from 'lucide-react';
 import './threeui-preview.css';
 
 type ThreeUIPreviewEntry = {
   v?: string;
   t?: string;
-  /** True when this clip is a published example of a category index. */
   r?: boolean;
 };
 
@@ -20,7 +19,7 @@ let previewRequest: Promise<ThreeUIPreviewIndex> | null = null;
 function loadThreeUIPreviews(): Promise<ThreeUIPreviewIndex> {
   if (previewIndex) return Promise.resolve(previewIndex);
   if (!previewRequest) {
-    previewRequest = fetch('/data/threeui-previews.json?v=2026-11-24c')
+    previewRequest = fetch('/data/threeui-previews.json?v=2026-11-24-free')
       .then((res) => {
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         return res.json() as Promise<ThreeUIPreviewIndex>;
@@ -51,7 +50,7 @@ export const ThreeUIPreview: React.FC<{
   title: string;
   image?: string;
   sourceUrl?: string;
-}> = ({ itemId, title, image, sourceUrl }) => {
+}> = ({ itemId, title, image }) => {
   const stageRef = useRef<HTMLDivElement | null>(null);
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const [entry, setEntry] = useState<ThreeUIPreviewEntry | null>(null);
@@ -79,7 +78,6 @@ export const ThreeUIPreview: React.FC<{
   const videoSrc = entry?.v || '';
   const poster = entry?.t || image || '';
   const hasVideo = Boolean(videoSrc) && !failed;
-  const isRepresentative = Boolean(entry?.r);
 
   useEffect(() => {
     setProgress(0);
@@ -179,20 +177,14 @@ export const ThreeUIPreview: React.FC<{
         <div className="ex-3ui-head">
           <span className="ex-3ui-kicker">
             <span className="ex-3ui-dot" aria-hidden="true" />
-            {hasVideo
-              ? isRepresentative
-                ? 'Mẫu đại diện · chuyển động'
-                : 'Cảnh 3D · chuyển động'
-              : 'Cảnh 3D · ảnh tĩnh'}
+            {hasVideo ? 'Cảnh 3D công khai · chuyển động' : 'Cảnh 3D · xem trước'}
           </span>
           <h2>{title}</h2>
         </div>
         <div className="ex-3ui-hint">
           {hasVideo
-            ? isRepresentative
-              ? 'Một mẫu tiêu biểu trong tuyển tập này. Mở cảnh gốc để xem toàn bộ.'
-              : 'Tua để xem các góc máy. Mở cảnh gốc để tương tác trực tiếp.'
-            : 'ThreeUI chưa công bố video cho mẫu này. Mở cảnh gốc để xoay và tương tác trực tiếp.'}
+            ? 'Tua thanh thời gian hoặc mở toàn màn hình để xem trực tiếp từng góc chuyển động ngay tại đây.'
+            : 'Xem trực tiếp bố cục 3D và nạp thẳng vào Workspace để tinh chỉnh.'}
         </div>
       </div>
 
@@ -230,21 +222,10 @@ export const ThreeUIPreview: React.FC<{
             <span className="ex-3ui-time">{timeLabel}</span>
           </>
         ) : (
-          <span className="ex-3ui-time">Chỉ có ảnh chính thức từ ThreeUI</span>
+          <span className="ex-3ui-time">Xem trước trực tiếp trên F-Forum</span>
         )}
 
         <div className="ex-3ui-actions">
-          {sourceUrl ? (
-            <a
-              className="ex-3ui-open"
-              href={sourceUrl}
-              target="_blank"
-              rel="noreferrer"
-            >
-              Mở cảnh tương tác
-              <ExternalLink size={14} aria-hidden="true" />
-            </a>
-          ) : null}
           <button
             type="button"
             className="ex-3ui-icon"

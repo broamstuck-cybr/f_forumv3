@@ -8,10 +8,15 @@ import {
   Eye,
   GitCompareArrows,
   KeyRound,
+  LayoutDashboard,
+  LayoutTemplate,
   RotateCw,
+  ScanSearch,
   ShieldCheck,
   Terminal,
+  ToggleRight,
   Upload,
+  type LucideIcon,
 } from 'lucide-react';
 import type { AIActivityState, AIStreamingStage, ChatMessage } from '../../types/index';
 import { formatClock } from './time';
@@ -37,6 +42,16 @@ interface ThreadProps {
   canRegenerate: boolean;
   starters?: Array<{ label: string; note: string; prompt: string }>;
   onUseStarter?: (prompt: string) => void;
+  welcome?: boolean;
+}
+
+const STARTER_ICONS: LucideIcon[] = [LayoutTemplate, LayoutDashboard, ToggleRight, ScanSearch];
+
+function trackSpotlight(event: React.PointerEvent<HTMLElement>) {
+  const node = event.currentTarget;
+  const rect = node.getBoundingClientRect();
+  node.style.setProperty('--ws-mx', `${event.clientX - rect.left}px`);
+  node.style.setProperty('--ws-my', `${event.clientY - rect.top}px`);
 }
 
 const MODE_TAG = /^\[Mode:\s*([A-Za-z]+)\]\s*/i;
@@ -92,6 +107,7 @@ export const Thread: React.FC<ThreadProps> = ({
   canRegenerate,
   starters = [],
   onUseStarter,
+  welcome = false,
 }) => {
   const scrollRef = useRef<HTMLDivElement>(null);
   const previewRef = useRef<HTMLPreElement>(null);
@@ -150,62 +166,65 @@ export const Thread: React.FC<ThreadProps> = ({
     <div ref={scrollRef} className="ws-scroll">
       <div className="ws-measure ws-arena-stream">
         {untouched && !busy && (
-          <section className="ws-arena-empty" aria-label="Bắt đầu dựng cùng AI">
-            <h2 className="ws-arena-empty-title">
-              Bắt đầu dựng <em>cùng AI.</em>
-            </h2>
-            <p className="ws-arena-empty-sub">
-              Mô tả giao diện hoặc thành phần bạn muốn xây dựng. Khung Xem trực tiếp và Mã nguồn sẽ tự mở ngay khi tệp web được tạo hoặc nạp từ Kho mẫu.
-            </p>
+          <section
+            className="ws-welcome"
+            aria-label="Bắt đầu dựng cùng AI"
+            data-variant={welcome ? 'canvas' : 'panel'}
+          >
+            <header className="ws-welcome-head">
+              <h2 className="ws-welcome-title">
+                Dựng giao diện thật, <em>từ một câu mô tả.</em>
+              </h2>
+              <p className="ws-welcome-sub">
+                Khung Xem trực tiếp và Mã nguồn chỉ mở khi có tệp HTML, CSS hoặc JS thật được sinh ra hoặc nạp từ Kho mẫu.
+              </p>
+            </header>
+
             {starters.length > 0 && onUseStarter && (
-              <div className="ws-arena-starters" aria-label="Gợi ý bắt đầu">
-                <span className="ws-arena-starters-label">Bắt đầu nhanh</span>
-                <div className="ws-arena-starters-grid">
-                  {starters.map((starter) => (
-                    <button
-                      key={starter.label}
-                      type="button"
-                      className="ws-arena-starter"
-                      onClick={() => onUseStarter(starter.prompt)}
-                    >
-                      <span className="ws-arena-starter-label">{starter.label}</span>
-                      <span className="ws-arena-starter-note">{starter.note}</span>
-                    </button>
-                  ))}
-                </div>
-              </div>
+              <ul className="ws-welcome-cards" aria-label="Gợi ý bắt đầu">
+                {starters.map((starter, index) => {
+                  const Icon = STARTER_ICONS[index % STARTER_ICONS.length];
+                  return (
+                    <li key={starter.label} className="ws-welcome-cell">
+                      <button
+                        type="button"
+                        className="ws-welcome-card"
+                        onPointerMove={trackSpotlight}
+                        onClick={() => onUseStarter(starter.prompt)}
+                      >
+                        <span className="ws-welcome-card-icon" aria-hidden="true">
+                          <Icon size={18} />
+                        </span>
+                        <span className="ws-welcome-card-body">
+                          <span className="ws-welcome-card-label">{starter.label}</span>
+                          <span className="ws-welcome-card-note">{starter.note}</span>
+                        </span>
+                        <span className="ws-welcome-card-prompt">{starter.prompt}</span>
+                      </button>
+                    </li>
+                  );
+                })}
+              </ul>
             )}
 
             {(onOpenByok || onOpenExplore || onOpenUpload) && (
-              <div className="ws-arena-empty-pills">
-                {onOpenByok && (
-                  <button
-                    type="button"
-                    className="ws-arena-quick-pill ws-arena-quick-pill--accent"
-                    onClick={onOpenByok}
-                  >
-                    <KeyRound size={14} aria-hidden="true" />
-                    <span>Khóa riêng (BYOK)</span>
-                  </button>
-                )}
+              <div className="ws-welcome-actions" role="group" aria-label="Nguồn bắt đầu khác">
                 {onOpenExplore && (
-                  <button
-                    type="button"
-                    className="ws-arena-quick-pill"
-                    onClick={onOpenExplore}
-                  >
-                    <Compass size={14} aria-hidden="true" />
-                    <span>Kho 8.322 mẫu</span>
+                  <button type="button" className="ws-welcome-action" onClick={onOpenExplore}>
+                    <Compass size={15} aria-hidden="true" />
+                    <span>Kho 7.750 mẫu</span>
                   </button>
                 )}
                 {onOpenUpload && (
-                  <button
-                    type="button"
-                    className="ws-arena-quick-pill"
-                    onClick={onOpenUpload}
-                  >
-                    <Upload size={14} aria-hidden="true" />
+                  <button type="button" className="ws-welcome-action" onClick={onOpenUpload}>
+                    <Upload size={15} aria-hidden="true" />
                     <span>Nạp tệp HTML/CSS</span>
+                  </button>
+                )}
+                {onOpenByok && (
+                  <button type="button" className="ws-welcome-action" onClick={onOpenByok}>
+                    <KeyRound size={15} aria-hidden="true" />
+                    <span>Khóa riêng (BYOK)</span>
                   </button>
                 )}
               </div>
@@ -321,7 +340,7 @@ export const Thread: React.FC<ThreadProps> = ({
                       onClick={onOpenExplore}
                     >
                       <Compass size={12} aria-hidden="true" />
-                      <span>Mở Kho 8.322 mẫu</span>
+                      <span>Mở Kho 7.750 mẫu</span>
                     </button>
                   )}
                 </div>

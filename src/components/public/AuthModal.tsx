@@ -35,7 +35,6 @@ export const AuthModal: React.FC<AuthModalProps> = ({ open, onClose }) => {
     setAuthModalOpen,
     login,
     register,
-    navigate,
     refreshAuthAndQuota,
     addToast,
     theme,
@@ -190,11 +189,6 @@ export const AuthModal: React.FC<AuthModalProps> = ({ open, onClose }) => {
     }
   };
 
-  const handleAdminPortal = () => {
-    handleClose();
-    navigate('admin');
-  };
-
   return (
     <AnimatePresence>
       {isOpen ? (
@@ -254,7 +248,6 @@ export const AuthModal: React.FC<AuthModalProps> = ({ open, onClose }) => {
                 onSubmit={handleSubmit}
                 error={error}
                 loading={loading}
-                onAdminLink={handleAdminPortal}
               />
 
               <div className="px-4 pb-3 pt-1">
@@ -312,22 +305,14 @@ export const AuthModal: React.FC<AuthModalProps> = ({ open, onClose }) => {
             </div>
 
             <div
-              className="flex items-center justify-between gap-3 border-t px-6 py-3.5 text-xs"
+              className="flex items-center justify-center gap-3 border-t px-6 py-3.5 text-xs"
               style={{
                 backgroundColor: 'var(--bg-panel)',
                 borderColor: 'var(--border-subtle)',
                 color: 'var(--ink-muted)',
               }}
             >
-              <span>Phiên tiêu chuẩn: 15 lượt AI miễn phí</span>
-              <button
-                type="button"
-                onClick={handleAdminPortal}
-                className="inline-flex items-center font-medium underline-offset-4 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2"
-                style={{ color: 'var(--ink-secondary)' }}
-              >
-                <span>Quản trị</span>
-              </button>
+              <span>Tài khoản thành viên nhận 15 lượt dựng AI miễn phí mỗi phiên</span>
             </div>
           </motion.div>
         </motion.div>

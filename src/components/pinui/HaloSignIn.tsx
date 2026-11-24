@@ -268,17 +268,6 @@ export const HaloSignIn: React.FC<HaloSignInProps> = ({
             {mode === 'login' ? 'Đăng ký' : 'Đăng nhập'}
           </button>
         </span>
-
-        {onAdminLink && (
-          <button
-            type="button"
-            onClick={onAdminLink}
-            className="inline-flex items-center bg-transparent border-0 p-0 font-mono text-[11px] cursor-pointer"
-            style={{ color: 'var(--ink-muted)' }}
-          >
-            <span>Quản trị</span>
-          </button>
-        )}
       </div>
     </motion.div>
   );

@@ -426,7 +426,7 @@ export const PlateRibbon: React.FC<PlateRibbonProps> = ({
                           src: imgSrc,
                           credit:
                             item.vaultLibrary === 'threeui'
-                              ? 'threeui.com'
+                              ? '3D WebGL'
                               : item.vaultLibrary === 'glacier'
                                 ? 'getlayers.ai'
                                 : 'motionsites.ai',
