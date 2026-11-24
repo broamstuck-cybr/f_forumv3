@@ -1,0 +1,231 @@
+/* CodeFronts-inspired Admin Panel Analytics & Role Distribution Widgets */
+.cf-adm-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20px;
+  margin-bottom: 20px;
+}
+
+.cf-adm-card {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 20px;
+  border-radius: 16px;
+  border: 1px solid var(--line);
+  background: var(--bg-raised);
+  transition: border-color 180ms ease, transform 180ms ease;
+}
+
+.cf-adm-card:hover {
+  border-color: color-mix(in srgb, var(--accent) 40%, var(--line));
+}
+
+.cf-adm-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.cf-adm-kicker {
+  display: block;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: var(--fg-muted);
+  margin-bottom: 4px;
+}
+
+.cf-adm-title {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 650;
+  color: var(--fg);
+}
+
+.cf-adm-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  background: color-mix(in srgb, var(--accent) 16%, transparent);
+  color: var(--accent);
+  white-space: nowrap;
+}
+
+.cf-adm-heroStat {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 16px;
+  border-radius: 12px;
+  border: 1px solid color-mix(in srgb, var(--accent) 26%, var(--line));
+  background: color-mix(in srgb, var(--accent) 8%, var(--bg-base, var(--bg)));
+}
+
+.cf-adm-heroIcon {
+  width: 42px;
+  height: 42px;
+  border-radius: 10px;
+  display: inline-grid;
+  place-items: center;
+  background: color-mix(in srgb, var(--accent) 18%, transparent);
+  color: var(--accent);
+  flex: none;
+}
+
+.cf-adm-heroBody {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+
+.cf-adm-heroLabel {
+  font-size: 0.78rem;
+  color: var(--fg-muted);
+}
+
+.cf-adm-heroVal {
+  font-size: 1.15rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--fg);
+}
+
+.cf-adm-subgrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.cf-adm-tile {
+  display: grid;
+  gap: 4px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1px solid var(--line);
+  background: var(--bg-base, var(--bg));
+}
+
+.cf-adm-tileHead {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.76rem;
+  color: var(--fg-muted);
+}
+
+.cf-adm-tileVal {
+  font-size: 1.35rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--fg);
+}
+
+.cf-adm-tileMeta {
+  font-size: 0.74rem;
+  color: var(--fg-muted);
+}
+
+.cf-adm-stacked {
+  display: flex;
+  height: 12px;
+  width: 100%;
+  border-radius: 999px;
+  overflow: hidden;
+  gap: 3px;
+  background: var(--bg-base, var(--bg));
+}
+
+.cf-adm-seg {
+  height: 100%;
+  border-radius: 999px;
+}
+
+.cf-adm-seg--admin,
+.cf-adm-dot--admin {
+  background: var(--accent);
+}
+
+.cf-adm-seg--member,
+.cf-adm-dot--member {
+  background: color-mix(in srgb, var(--accent) 48%, var(--fg));
+}
+
+.cf-adm-seg--guest,
+.cf-adm-dot--guest {
+  background: var(--fg-muted);
+  opacity: 0.55;
+}
+
+.cf-adm-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 18px;
+  font-size: 0.8rem;
+  color: var(--fg-muted);
+}
+
+.cf-adm-legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.cf-adm-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  display: inline-block;
+}
+
+.cf-adm-roleList {
+  display: grid;
+  gap: 8px;
+}
+
+.cf-adm-roleRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid var(--line);
+  background: var(--bg-base, var(--bg));
+}
+
+.cf-adm-roleInfo {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.cf-adm-roleInfo strong {
+  font-size: 0.85rem;
+  color: var(--fg);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cf-adm-roleInfo span {
+  font-size: 0.75rem;
+  color: var(--fg-muted);
+}
+
+.cf-adm-empty {
+  margin: 0;
+  font-size: 0.82rem;
+  color: var(--fg-muted);
+}
+
+@media (max-width: 900px) {
+  .cf-adm-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

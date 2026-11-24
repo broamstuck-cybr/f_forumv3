@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import type { DimensionView } from '../../../types/index';
 import { useAppStore } from '../../../store/appStore';
 import { Mark } from '../../../ui/Mark';
@@ -181,10 +181,56 @@ const BeatBlock: React.FC<{
 export const LandingManifesto: React.FC<LandingManifestoProps> = ({ onNavigate }) => {
   const { launchPromptToWorkspace, theme } = useAppStore();
   const reduced = usePrefersReducedMotion();
+  const runwayRef = useRef<HTMLDivElement>(null);
+  const trackRef = useRef<HTMLDivElement>(null);
 
+  const [mp, setMp] = useState(0);
+  const [isDesktopHorizontal, setIsDesktopHorizontal] = useState(true);
   const [promptText, setPromptText] = useState('');
   const [selectedAction, setSelectedAction] = useState<string | null>(null);
   const [selectedModel, setSelectedModel] = useState('Định tuyến');
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const mq = window.matchMedia('(min-width: 768px)');
+    const syncMode = () => setIsDesktopHorizontal(mq.matches && !reduced);
+    syncMode();
+    mq.addEventListener('change', syncMode);
+    return () => mq.removeEventListener('change', syncMode);
+  }, [reduced]);
+
+  useEffect(() => {
+    if (!isDesktopHorizontal || typeof window === 'undefined') {
+      setMp(1);
+      return;
+    }
+
+    let rafId = 0;
+    let smoothMp = 0;
+
+    const tick = () => {
+      const runway = runwayRef.current;
+      const track = trackRef.current;
+      if (runway && track) {
+        const rect = runway.getBoundingClientRect();
+        const vh = window.innerHeight || 900;
+        const vw = window.innerWidth || 1440;
+        const scrollable = Math.max(1, rect.height - vh);
+        const rawMp = Math.max(0, Math.min(1, -rect.top / scrollable));
+        smoothMp += (rawMp - smoothMp) * 0.16;
+        const val = Math.abs(rawMp - smoothMp) < 0.0008 ? rawMp : smoothMp;
+        const maxShift = Math.max(0, track.scrollWidth - vw + 48);
+        track.style.transform = `translate3d(${(-val * maxShift).toFixed(2)}px, 0, 0)`;
+        setMp((prev) => (Math.abs(prev - val) > 0.015 ? val : prev));
+      }
+      rafId = requestAnimationFrame(tick);
+    };
+
+    rafId = requestAnimationFrame(tick);
+    return () => {
+      if (rafId) cancelAnimationFrame(rafId);
+    };
+  }, [isDesktopHorizontal]);
 
   const handleSend = (prompt: string) => {
     void launchPromptToWorkspace(prompt);
@@ -192,9 +238,22 @@ export const LandingManifesto: React.FC<LandingManifestoProps> = ({ onNavigate }
 
   return (
     <section id="tuyen-ngon" aria-label="Nghiên cứu và cơ sở khoa học F-Forum" className="lp-hm-root">
-      <div className="lp-hm-runway" data-horizontal="false">
+      <div
+        ref={runwayRef}
+        className="lp-hm-runway"
+        data-horizontal={isDesktopHorizontal ? 'true' : 'false'}
+      >
         <div className="lp-hm-sticky">
-          <div className="lp-hm-track">
+          <div className="wrap-wide lp-hm-header">
+            <p className="t-label" style={{ color: 'var(--fg-muted)' }}>
+              Cơ sở nghiên cứu &amp; kiến trúc
+            </p>
+            <div className="lp-hm-meter" aria-hidden="true">
+              <span style={{ transform: `scaleX(${isDesktopHorizontal ? Math.max(0.08, mp) : 1})` }} />
+            </div>
+          </div>
+
+          <div ref={trackRef} className="lp-hm-track">
             <div className="lp-hm-intro">
               <h2 className="lp-hm-title">
                 Từ thực trạng PISA 2025
@@ -206,15 +265,19 @@ export const LandingManifesto: React.FC<LandingManifestoProps> = ({ onNavigate }
               </p>
             </div>
 
-            {MANIFESTO_BEATS.map((beat, idx) => (
-              <BeatBlock
-                key={beat.id}
-                beat={beat}
-                index={idx}
-                active
-                reduced={reduced}
-              />
-            ))}
+            {MANIFESTO_BEATS.map((beat, idx) => {
+              const threshold = idx * (0.85 / Math.max(1, MANIFESTO_BEATS.length - 1));
+              const active = !isDesktopHorizontal || mp >= threshold - 0.06;
+              return (
+                <BeatBlock
+                  key={beat.id}
+                  beat={beat}
+                  index={idx}
+                  active={active}
+                  reduced={reduced}
+                />
+              );
+            })}
           </div>
         </div>
       </div>
@@ -244,15 +307,6 @@ export const LandingManifesto: React.FC<LandingManifestoProps> = ({ onNavigate }
               onSend={handleSend}
               onAttachClick={() => onNavigate('explore')}
             />
-          </div>
-
-          <div className="lp-actions">
-            <button type="button" className="btn btn-line" onClick={() => onNavigate('home')}>
-              Trang chủ
-            </button>
-            <button type="button" className="btn btn-solid" onClick={() => onNavigate('workspace')}>
-              Workspace
-            </button>
           </div>
         </div>
       </div>

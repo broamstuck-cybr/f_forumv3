@@ -6,6 +6,7 @@ import { useAppStore } from '../../store/appStore';
 import { KineticLogo } from '../brand/KineticLogo';
 import { BackToTopButton } from '../landing/BackToTopButton';
 import { triggerPinuiThemeToggle } from './GlobalThemeAtmosphere';
+import { NotificationBell } from './NotificationBell';
 import './app-shell.css';
 
 export interface AppNavbarProps {
@@ -189,6 +190,7 @@ export const AppNavbar: React.FC<AppNavbarProps> = () => {
         </div>
 
         <div className="nav__side">
+          <NotificationBell onNavigate={go} />
           <button
             type="button"
             className="icon-btn nav__themeBtn"

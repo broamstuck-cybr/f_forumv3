@@ -1,8 +1,28 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
 import { X } from 'lucide-react';
 import { HaloSignIn } from '../pinui/HaloSignIn';
+import { apiClient } from '../../services/apiClient';
 import { useAppStore } from '../../store/appStore';
+
+declare global {
+  interface Window {
+    google?: {
+      accounts?: {
+        id?: {
+          initialize: (config: {
+            client_id: string;
+            callback: (res: { credential?: string }) => void;
+          }) => void;
+          renderButton: (
+            el: HTMLElement,
+            options: Record<string, string | number>
+          ) => void;
+        };
+      };
+    };
+  }
+}
 
 interface AuthModalProps {
   open?: boolean;
@@ -10,11 +30,25 @@ interface AuthModalProps {
 }
 
 export const AuthModal: React.FC<AuthModalProps> = ({ open, onClose }) => {
-  const { authModalOpen, setAuthModalOpen, login, register, navigate } = useAppStore();
+  const {
+    authModalOpen,
+    setAuthModalOpen,
+    login,
+    register,
+    navigate,
+    refreshAuthAndQuota,
+    addToast,
+    theme,
+  } = useAppStore();
   const isOpen = typeof open === 'boolean' ? open : authModalOpen;
   const [mode, setMode] = useState<'login' | 'register'>('login');
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [googleClientId, setGoogleClientId] = useState<string>(
+    () => (import.meta.env.VITE_GOOGLE_CLIENT_ID as string | undefined)?.trim() || ''
+  );
+  const [googleReady, setGoogleReady] = useState(false);
+  const googleBtnRef = useRef<HTMLDivElement>(null);
 
   const handleClose = () => {
     setError(null);
@@ -24,6 +58,98 @@ export const AuthModal: React.FC<AuthModalProps> = ({ open, onClose }) => {
       setAuthModalOpen(false);
     }
   };
+
+  useEffect(() => {
+    if (!isOpen) return;
+    let cancelled = false;
+    void apiClient
+      .getGoogleAuthConfig()
+      .then((cfg) => {
+        if (!cancelled && cfg.enabled && cfg.clientId) {
+          setGoogleClientId(cfg.clientId);
+        }
+      })
+      .catch(() => undefined);
+    return () => {
+      cancelled = true;
+    };
+  }, [isOpen]);
+
+  useEffect(() => {
+    if (!isOpen || !googleClientId) return;
+    let cancelled = false;
+
+    const initGoogleButton = () => {
+      if (cancelled || !googleBtnRef.current || !window.google?.accounts?.id) return;
+      window.google.accounts.id.initialize({
+        client_id: googleClientId,
+        callback: (response) => {
+          const credential = response?.credential;
+          if (!credential) {
+            setError('Không nhận được mã xác thực từ Google.');
+            return;
+          }
+          setError(null);
+          setLoading(true);
+          void apiClient
+            .loginWithGoogle(credential)
+            .then(async (res) => {
+              await refreshAuthAndQuota();
+              addToast({ title: `Đã đăng nhập Google: ${res.user.name}`, type: 'success' });
+              handleClose();
+            })
+            .catch((err) => {
+              setError(
+                err instanceof Error ? err.message : 'Xác minh tài khoản Google thất bại.'
+              );
+            })
+            .finally(() => {
+              setLoading(false);
+            });
+        },
+      });
+      googleBtnRef.current.innerHTML = '';
+      window.google.accounts.id.renderButton(googleBtnRef.current, {
+        type: 'standard',
+        theme: theme === 'dark' ? 'filled_black' : 'outline',
+        size: 'large',
+        shape: 'pill',
+        text: 'continue_with',
+        locale: 'vi',
+        width: 360,
+      });
+      setGoogleReady(true);
+    };
+
+    if (window.google?.accounts?.id) {
+      initGoogleButton();
+      return () => {
+        cancelled = true;
+      };
+    }
+
+    const existingScript = document.querySelector<HTMLScriptElement>(
+      'script[src="https://accounts.google.com/gsi/client"]'
+    );
+    if (existingScript) {
+      existingScript.addEventListener('load', initGoogleButton, { once: true });
+      return () => {
+        cancelled = true;
+        existingScript.removeEventListener('load', initGoogleButton);
+      };
+    }
+
+    const script = document.createElement('script');
+    script.src = 'https://accounts.google.com/gsi/client';
+    script.async = true;
+    script.defer = true;
+    script.onload = initGoogleButton;
+    document.head.appendChild(script);
+
+    return () => {
+      cancelled = true;
+    };
+  }, [isOpen, googleClientId, theme, refreshAuthAndQuota, addToast]);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -130,6 +256,59 @@ export const AuthModal: React.FC<AuthModalProps> = ({ open, onClose }) => {
                 loading={loading}
                 onAdminLink={handleAdminPortal}
               />
+
+              <div className="px-4 pb-3 pt-1">
+                <div className="flex items-center gap-3 my-2 text-[11px]" style={{ color: 'var(--ink-muted)' }}>
+                  <span className="h-px flex-1" style={{ backgroundColor: 'var(--border-subtle)' }} />
+                  <span>hoặc xác thực qua Google</span>
+                  <span className="h-px flex-1" style={{ backgroundColor: 'var(--border-subtle)' }} />
+                </div>
+
+                {googleClientId ? (
+                  <div className="flex justify-center min-h-[44px]" ref={googleBtnRef}>
+                    {!googleReady && (
+                      <span className="text-xs self-center" style={{ color: 'var(--ink-muted)' }}>
+                        Đang tải nút Google Sign-In...
+                      </span>
+                    )}
+                  </div>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setError(
+                        'Chưa cấu hình GOOGLE_CLIENT_ID trên máy chủ. Thêm OAuth 2.0 Web Client ID từ Google Cloud Console vào biến môi trường GOOGLE_CLIENT_ID (và VITE_GOOGLE_CLIENT_ID) trên Vercel để bật đăng nhập Google thật.'
+                      )
+                    }
+                    className="w-full inline-flex items-center justify-center gap-2.5 h-11 rounded-full border px-4 text-sm font-medium cursor-pointer"
+                    style={{
+                      backgroundColor: 'var(--bg-panel)',
+                      borderColor: 'var(--line-strong)',
+                      color: 'var(--ink-primary)',
+                    }}
+                  >
+                    <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true">
+                      <path
+                        fill="#4285F4"
+                        d="M23.49 12.27c0-.79-.07-1.54-.2-2.27H12v4.3h6.45a5.52 5.52 0 0 1-2.39 3.62v3h3.87c2.26-2.08 3.56-5.15 3.56-8.65z"
+                      />
+                      <path
+                        fill="#34A853"
+                        d="M12 24c3.24 0 5.95-1.07 7.93-2.9l-3.87-3c-1.07.72-2.45 1.15-4.06 1.15-3.12 0-5.77-2.11-6.71-4.95H1.29v3.1A12 12 0 0 0 12 24z"
+                      />
+                      <path
+                        fill="#FBBC05"
+                        d="M5.29 14.3a7.2 7.2 0 0 1 0-4.6V6.6H1.29a12 12 0 0 0 0 10.8l4-3.1z"
+                      />
+                      <path
+                        fill="#EA4335"
+                        d="M12 4.75c1.76 0 3.34.61 4.59 1.8l3.44-3.44C17.95 1.19 15.24 0 12 0A12 12 0 0 0 1.29 6.6l4 3.1c.94-2.84 3.59-4.95 6.71-4.95z"
+                      />
+                    </svg>
+                    <span>Tiếp tục với Google</span>
+                  </button>
+                )}
+              </div>
             </div>
 
             <div

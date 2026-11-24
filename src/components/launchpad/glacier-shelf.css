@@ -32,15 +32,15 @@
 
 html[data-theme='dark'] .gb-shelf-root,
 .scene-ink .gb-shelf-root {
-  --paper: #161513;
-  --sheet: #1d1c19;
-  --ink: #efece6;
-  --muted: #a6a198;
-  --cobalt: #4c74f0;
-  --rule: rgba(239, 236, 230, 0.72);
-  --rule-soft: rgba(239, 236, 230, 0.18);
-  --book-paper: #f4f2ed;
-  --book-ink: #141414;
+  --paper: var(--bg-base, #0b1110);
+  --sheet: var(--bg-raised, #111917);
+  --ink: var(--ink-primary, #eaf2ee);
+  --muted: var(--ink-muted, #94a8a0);
+  --cobalt: var(--accent, #38c99a);
+  --rule: rgba(234, 242, 238, 0.22);
+  --rule-soft: rgba(234, 242, 238, 0.1);
+  --book-paper: #121c19;
+  --book-ink: #eaf2ee;
 }
 
 .gb-probe {
@@ -206,13 +206,13 @@ html[data-theme='dark'] .gb-shelf-root,
   position: absolute;
   top: calc(var(--h-px) / -2);
   height: var(--h-px);
-  border-radius: 3px;
+  border-radius: 6px;
   backface-visibility: hidden;
   overflow: hidden;
   box-sizing: border-box;
   background-color: var(--book-paper);
   color: var(--book-ink);
-  border: 1px solid rgba(20, 20, 20, 0.88);
+  border: 1px solid color-mix(in srgb, var(--ink) 20%, transparent);
 }
 
 .gb-sp::after,
@@ -220,7 +220,7 @@ html[data-theme='dark'] .gb-shelf-root,
   content: '';
   position: absolute;
   inset: 0;
-  background-color: #0e0c0a;
+  background-color: #070c0b;
   opacity: var(--shade, 0);
   pointer-events: none;
 }
@@ -230,9 +230,9 @@ html[data-theme='dark'] .gb-shelf-root,
   left: calc(var(--ws) / -2);
   transform: translateZ(calc(var(--d) / 2));
   box-shadow:
-    inset -4px 0 9px rgba(15, 12, 8, 0.26),
-    inset 3px 0 6px rgba(255, 255, 255, 0.48),
-    inset 0 1px 0 rgba(255, 255, 255, 0.35);
+    inset -4px 0 10px rgba(0, 0, 0, 0.34),
+    inset 2px 0 5px rgba(255, 255, 255, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
 }
 
 .gb-cv {
@@ -240,12 +240,10 @@ html[data-theme='dark'] .gb-shelf-root,
   left: calc(var(--d) / -2);
   transform: rotateY(90deg) translateZ(calc(var(--ws) / 2));
   box-shadow:
-    0 32px 64px -26px rgba(20, 16, 10, 0.58),
-    inset 12px 0 20px -8px rgba(0, 0, 0, 0.45),
-    inset -3px 0 0 #fbfaf7,
-    inset -4px 0 0 rgba(20, 20, 20, 0.24),
-    inset -7px 0 0 #f2efe9,
-    inset -8px 0 0 rgba(20, 20, 20, 0.3);
+    0 28px 56px -22px rgba(0, 0, 0, 0.62),
+    inset 12px 0 20px -8px rgba(0, 0, 0, 0.42),
+    inset -2px 0 0 color-mix(in srgb, var(--book-ink) 14%, transparent),
+    inset -5px 0 0 color-mix(in srgb, var(--book-paper) 88%, var(--book-ink));
 }
 
 .gb-sp-in {
@@ -256,18 +254,23 @@ html[data-theme='dark'] .gb-shelf-root,
   justify-content: space-between;
   width: 100%;
   height: 100%;
-  padding: 13px 5px;
+  padding: 14px 6px;
   box-sizing: border-box;
   background:
-    repeating-linear-gradient(90deg, rgba(20, 20, 20, 0.028) 0 1px, transparent 1px 3px),
-    linear-gradient(180deg, var(--sc) 0%, var(--book-paper) 20%, var(--book-paper) 80%, var(--sc) 100%);
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--ac) 16%, var(--book-paper)) 0%,
+      var(--book-paper) 22%,
+      var(--book-paper) 78%,
+      color-mix(in srgb, var(--ac) 14%, var(--book-paper)) 100%
+    );
 }
 
 .gb-sp-band {
   position: absolute;
   left: 0;
   right: 0;
-  height: 5px;
+  height: 4px;
   background-color: var(--ac);
 }
 
@@ -280,17 +283,16 @@ html[data-theme='dark'] .gb-shelf-root,
 }
 
 .gb-sp-art {
-  width: 82%;
+  width: 80%;
   aspect-ratio: 1 / 1;
-  border: 1px solid var(--ac);
-  border-radius: 3px;
-  background-color: var(--sc);
+  border: 1px solid color-mix(in srgb, var(--ac) 55%, transparent);
+  border-radius: 6px;
+  background-color: color-mix(in srgb, var(--ac) 14%, var(--book-paper));
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 4px;
   box-sizing: border-box;
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.52);
 }
 
 .gb-sp-title {
@@ -355,14 +357,13 @@ html[data-theme='dark'] .gb-shelf-root,
   justify-content: space-between;
   width: 100%;
   height: 100%;
-  padding: 14px 16px 13px 19px;
+  padding: 16px 16px 14px 20px;
   box-sizing: border-box;
   background:
-    repeating-linear-gradient(0deg, rgba(20, 20, 20, 0.018) 0 1px, transparent 1px 4px),
-    var(--book-paper);
+    linear-gradient(160deg, color-mix(in srgb, var(--ac) 12%, var(--book-paper)) 0%, var(--book-paper) 65%);
   box-shadow:
-    inset 12px 0 20px -8px rgba(0, 0, 0, 0.45),
-    inset 0 0 0 1px rgba(20, 20, 20, 0.22);
+    inset 12px 0 20px -8px rgba(0, 0, 0, 0.36),
+    inset 0 0 0 1px color-mix(in srgb, var(--book-ink) 14%, transparent);
 }
 
 .gb-cv-in::before {
@@ -374,8 +375,8 @@ html[data-theme='dark'] .gb-shelf-root,
   width: 2px;
   background: linear-gradient(
     90deg,
-    rgba(20, 20, 20, 0.28) 0%,
-    rgba(255, 255, 255, 0.65) 100%
+    rgba(0, 0, 0, 0.32) 0%,
+    rgba(255, 255, 255, 0.14) 100%
   );
 }
 
@@ -384,8 +385,8 @@ html[data-theme='dark'] .gb-shelf-root,
   align-items: center;
   justify-content: space-between;
   gap: 6px;
-  padding-bottom: 6px;
-  border-bottom: 1.5px solid rgba(20, 20, 20, 0.82);
+  padding-bottom: 8px;
+  border-bottom: 1px solid color-mix(in srgb, var(--book-ink) 22%, transparent);
   font-family: var(--font-mono);
   font-weight: 600;
   font-size: 8px;

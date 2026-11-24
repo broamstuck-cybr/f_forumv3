@@ -3,6 +3,7 @@ import { AnimatePresence, motion } from 'motion/react';
 import { Menu, X } from 'lucide-react';
 import type { User } from '../../types/index';
 import { KineticLogo } from '../brand/KineticLogo';
+import { NotificationBell } from '../layout/NotificationBell';
 import { LANDING_CHAPTERS } from './landingContent';
 import { scrollToSection, useActiveChapter, usePrefersReducedMotion } from './useLandingMotion';
 
@@ -122,6 +123,7 @@ export const LandingNav: React.FC<LandingNavProps> = ({
         </nav>
 
         <div className="lp-nav-actions">
+          <NotificationBell onNavigate={() => onEnterApp()} />
           {currentUser ? (
             <button
               type="button"

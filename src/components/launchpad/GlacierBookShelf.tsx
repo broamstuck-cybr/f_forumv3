@@ -1722,11 +1722,7 @@ export function GlacierBookShelf({ onNavigate, onLaunchPrompt }: GlacierBookShel
         <rect width="100%" height="100%" filter={`url(#${filterId})`} />
       </svg>
 
-      <div ref={cursorRef} className="gb-cur off" data-state="off" aria-hidden="true">
-        <span className="gb-cur-ring" />
-        <span className="gb-cur-dot" />
-        <span className="gb-cur-lbl">MỞ</span>
-      </div>
+      <div ref={cursorRef} className="gb-cur off" data-state="off" aria-hidden="true" style={{ display: 'none' }} />
 
       {dialog && dialogBook ? (
         <BookDialog

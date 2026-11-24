@@ -5,6 +5,7 @@ import { apiClient } from '../../services/apiClient';
 import { useAppStore } from '../../store/appStore';
 import { Chips, LampSwitch, LiquidTabs, SearchCard, SelectionList, SlingSlider } from '../../components/pinui';
 import { AdminTelemetryCharts, formatUptime } from './AdminTelemetryCharts';
+import { AdminCodeFrontsStats } from './AdminCodeFrontsStats';
 import './admin.css';
 
 type AdminTab = 'analytics' | 'users' | 'system' | 'logs';
@@ -693,6 +694,12 @@ export const AdminView: React.FC = () => {
 
         {activeTab === 'analytics' && (
           <div className="adm-analytics-stack">
+            <AdminCodeFrontsStats
+              adminState={adminState}
+              totalUsedAcrossSubjects={totalUsedAcrossSubjects}
+              projectsCount={projects.length}
+              onQuickToggleRole={(subjectId) => void handleToggleRole(subjectId)}
+            />
             <AdminTelemetryCharts
               adminState={adminState}
               totalUsedAcrossSubjects={totalUsedAcrossSubjects}

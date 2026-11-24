@@ -1222,3 +1222,82 @@
   min-width: 0;
   margin-bottom: var(--space-2);
 }
+
+/* Studio Web Core + CodeFronts Chat + LucianLabs Editorial Layer */
+.cm-mode-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px 24px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--line);
+}
+
+.cm-mode-caption {
+  margin: 0;
+  font-size: 0.875rem;
+  color: var(--fg-muted);
+  max-width: 56ch;
+}
+
+.cm--editorial .cm-post-card,
+.cm--editorial .cm-composer,
+.cm--editorial .cm-channels-panel,
+.cm--editorial .cm-rail-card {
+  border-radius: 16px;
+  border: 1px solid var(--line);
+  background: var(--bg-raised);
+  transition: border-color 180ms cubic-bezier(0.22, 1, 0.36, 1), transform 180ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.cm--editorial .cm-post-card:hover {
+  border-color: color-mix(in srgb, var(--accent) 42%, var(--line));
+  transform: translateY(-2px);
+}
+
+@keyframes cfBubblePop {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.chat .chat-bubble {
+  border-radius: 18px;
+  animation: cfBubblePop 200ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.chat .chat-row--mine .chat-bubble {
+  border-bottom-right-radius: 6px;
+  box-shadow: 0 8px 20px -12px color-mix(in srgb, var(--accent) 55%, transparent);
+}
+
+.chat .chat-row--other .chat-bubble {
+  border-bottom-left-radius: 6px;
+  border: 1px solid var(--chat-border);
+}
+
+.chat .chat-composer {
+  border-radius: 16px;
+  border: 1px solid var(--chat-border);
+  transition: border-color 160ms ease, box-shadow 160ms ease;
+}
+
+.chat .chat-composer:focus-within {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 18%, transparent);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .chat .chat-bubble,
+  .cm--editorial .cm-post-card {
+    animation: none;
+    transition: none;
+    transform: none;
+  }
+}

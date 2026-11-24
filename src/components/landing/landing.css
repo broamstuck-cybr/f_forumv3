@@ -590,12 +590,19 @@
     }
   }
 
+  .lp-hm-runway[data-horizontal='true'] {
+    height: 360vh;
+  }
+
   .lp-hm-runway[data-horizontal='true'] .lp-hm-track {
     display: flex;
     align-items: stretch;
     gap: clamp(28px, 4vw, 56px);
     padding-inline: var(--gutter);
     width: max-content;
+    max-width: none;
+    margin-inline: 0;
+    will-change: transform;
   }
 
   .lp-hm-intro {

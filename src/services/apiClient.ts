@@ -285,6 +285,17 @@ export const apiClient = {
     });
   },
 
+  getGoogleAuthConfig(): Promise<{ enabled: boolean; clientId: string }> {
+    return requestJson('/api/auth/google-config', { method: 'GET' });
+  },
+
+  loginWithGoogle(credential: string): Promise<{ user: User; quota: QuotaState }> {
+    return requestJson('/api/auth/google', {
+      method: 'POST',
+      body: JSON.stringify({ credential }),
+    });
+  },
+
   logoutUser(): Promise<{ ok: boolean; user: null; quota: QuotaState }> {
     return requestJson('/api/auth/logout', {
       method: 'POST',

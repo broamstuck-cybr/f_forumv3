@@ -36,7 +36,6 @@ import {
 } from 'lucide-react';
 import { moderateFields } from './moderationFilter';
 import { CommunityChatRoom } from './CommunityChatRoom';
-import { KnowledgeView } from '../knowledge/KnowledgeView';
 import { PinHeartButton } from '../../components/pinui/PinHeartButton';
 import type {
   ClubHandoverDossier,
@@ -1916,25 +1915,18 @@ export const CommunityView: React.FC = () => {
     [composeTagsInput]
   );
 
-  const [mode, setMode] = useState<'knowledge' | 'feed' | 'chat'>('knowledge');
-
-  if (mode === 'knowledge') {
-    return (
-      <KnowledgeView
-        onOpenFeed={() => setMode('feed')}
-        onOpenChat={() => setMode('chat')}
-      />
-    );
-  }
+  const [mode, setMode] = useState<'feed' | 'chat'>('feed');
 
   if (mode === 'chat') {
     return (
-      <div className="cm">
-        <div className="wrap-wide">
-          <div className="cm-mode-switch" role="tablist" aria-label="Chế độ Tri thức">
-            <button type="button" role="tab" aria-selected={false} onClick={() => setMode('knowledge')}>Tra cứu</button>
-            <button type="button" role="tab" aria-selected={false} onClick={() => setMode('feed')}>Bảng tin</button>
-            <button type="button" role="tab" aria-selected onClick={() => setMode('chat')}>Phòng chat</button>
+      <div className="cm cm--editorial">
+        <div className="wrap-wide cm-mode-wrap">
+          <div className="cm-mode-header">
+            <div className="cm-mode-switch" role="tablist" aria-label="Chế độ Tri thức">
+              <button type="button" role="tab" aria-selected={false} onClick={() => setMode('feed')}>Bảng tin</button>
+              <button type="button" role="tab" aria-selected onClick={() => setMode('chat')}>Phòng chat</button>
+            </div>
+            <p className="cm-mode-caption">Trao đổi trực tiếp, chia sẻ đoạn mã và góp ý giao diện theo thời gian thực.</p>
           </div>
           <CommunityChatRoom
             currentHandle={currentUser?.username || 'builder_vn'}
@@ -1946,12 +1938,14 @@ export const CommunityView: React.FC = () => {
   }
 
   return (
-    <div className="cm">
+    <div className="cm cm--editorial">
       <div className="wrap-wide cm-mode-wrap">
-        <div className="cm-mode-switch" role="tablist" aria-label="Chế độ Tri thức">
-          <button type="button" role="tab" aria-selected={false} onClick={() => setMode('knowledge')}>Tra cứu</button>
-          <button type="button" role="tab" aria-selected onClick={() => setMode('feed')}>Bảng tin</button>
-          <button type="button" role="tab" aria-selected={false} onClick={() => setMode('chat')}>Phòng chat</button>
+        <div className="cm-mode-header">
+          <div className="cm-mode-switch" role="tablist" aria-label="Chế độ Tri thức">
+            <button type="button" role="tab" aria-selected onClick={() => setMode('feed')}>Bảng tin</button>
+            <button type="button" role="tab" aria-selected={false} onClick={() => setMode('chat')}>Phòng chat</button>
+          </div>
+          <p className="cm-mode-caption">Không gian chia sẻ bài viết kỹ thuật, trưng bày bản dựng và hỏi đáp cộng đồng.</p>
         </div>
       </div>
       <div className="wrap-wide cm-shell">

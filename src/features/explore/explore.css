@@ -341,6 +341,11 @@
     background: var(--ex-accent-soft);
   }
 
+  .ex-pinui-search {
+    position: relative;
+    z-index: 90;
+  }
+
   .ex-pinui-search .psearch-bar {
     height: 44px;
     min-height: 44px !important;
@@ -357,14 +362,15 @@
   }
 
   .ex-pinui-search .psearch-dropdown {
-    margin-top: 2px;
+    margin-top: 4px;
     padding: 8px;
     border-radius: 14px;
     border: 1px solid var(--line-strong);
     background: var(--bg-raised);
-    box-shadow: var(--shadow-3);
-    z-index: 60;
-    overflow: visible;
+    box-shadow: 0 22px 48px -12px rgba(0, 0, 0, 0.72);
+    z-index: 160;
+    overflow: hidden;
+    isolation: isolate;
   }
 
   .ex-pinui-search .psearch-dropdown ul {

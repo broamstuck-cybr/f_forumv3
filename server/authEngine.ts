@@ -408,3 +408,108 @@ export function toggleUserRole(userId: string): User | null {
   saveUserRecord(target);
   return toPublicUser(target);
 }
+
+export function getGoogleClientId(): string {
+  ensureLocalEnvLoaded();
+  return (process.env.GOOGLE_CLIENT_ID || process.env.VITE_GOOGLE_CLIENT_ID || '').trim();
+}
+
+export async function verifyGoogleIdToken(
+  credential: string
+): Promise<
+  | { ok: true; email: string; name: string; sub: string; picture?: string }
+  | { ok: false; error: string }
+> {
+  const token = (credential || '').trim();
+  if (!token || token.split('.').length !== 3) {
+    return { ok: false, error: 'Google ID token không hợp lệ.' };
+  }
+
+  const expectedClientId = getGoogleClientId();
+  if (!expectedClientId) {
+    return {
+      ok: false,
+      error: 'Máy chủ chưa cấu hình GOOGLE_CLIENT_ID trong biến môi trường.',
+    };
+  }
+
+  try {
+    const response = await fetch(
+      `https://oauth2.googleapis.com/tokeninfo?id_token=${encodeURIComponent(token)}`,
+      { method: 'GET' }
+    );
+    if (!response.ok) {
+      return { ok: false, error: 'Google từ chối xác minh mã đăng nhập.' };
+    }
+    const payload = (await response.json()) as Record<string, string | boolean | undefined>;
+    const aud = String(payload.aud || '');
+    const iss = String(payload.iss || '');
+    const email = String(payload.email || '').trim().toLowerCase();
+    const sub = String(payload.sub || '').trim();
+    const exp = Number(payload.exp || 0);
+    const emailVerified = payload.email_verified === true || payload.email_verified === 'true';
+
+    if (aud !== expectedClientId) {
+      return { ok: false, error: 'Google Client ID không khớp với hệ thống.' };
+    }
+    if (iss !== 'https://accounts.google.com' && iss !== 'accounts.google.com') {
+      return { ok: false, error: 'Nguồn phát hành token Google không hợp lệ.' };
+    }
+    if (!emailVerified || !email || !sub) {
+      return { ok: false, error: 'Tài khoản Google chưa xác minh email.' };
+    }
+    if (!Number.isFinite(exp) || exp * 1000 <= Date.now()) {
+      return { ok: false, error: 'Phiên xác thực Google đã hết hạn, vui lòng thử lại.' };
+    }
+
+    const name = String(payload.name || email.split('@')[0] || 'Thành viên Google').trim();
+    const picture = typeof payload.picture === 'string' ? payload.picture : undefined;
+    return { ok: true, email, name, sub, picture };
+  } catch {
+    return { ok: false, error: 'Không thể kết nối máy chủ xác minh Google.' };
+  }
+}
+
+export function loginOrRegisterGoogleUser(profile: {
+  email: string;
+  name: string;
+  sub: string;
+  picture?: string;
+}): { ok: true; user: User; isNew: boolean } {
+  const email = profile.email.trim().toLowerCase();
+  const users = getUsersMap();
+  const existing = Object.values(users).find((u) => u.email.toLowerCase() === email);
+  if (existing) {
+    if (profile.name && existing.name !== profile.name) {
+      existing.name = profile.name;
+      saveUserRecord(existing);
+    }
+    return { ok: true, user: toPublicUser(existing), isNew: false };
+  }
+
+  const baseUsername = email
+    .split('@')[0]
+    .replace(/[^a-z0-9_.-]/gi, '')
+    .toLowerCase()
+    .slice(0, 20) || 'google_user';
+  let username = baseUsername;
+  let suffix = 1;
+  while (Object.values(users).some((u) => u.username.toLowerCase() === username)) {
+    username = `${baseUsername}${suffix++}`;
+  }
+
+  const id = `gg-${crypto.createHash('sha256').update(profile.sub).digest('hex').slice(0, 12)}`;
+  const record: StoredUserRecord = {
+    id,
+    username,
+    name: profile.name || username,
+    email,
+    passwordHash: hashPassword(crypto.randomBytes(24).toString('hex')),
+    role: 'user',
+    bio: 'Thành viên xác thực qua Google trên F-FORUM',
+    createdAt: new Date().toISOString(),
+  };
+  users[id] = record;
+  saveUserRecord(record);
+  return { ok: true, user: toPublicUser(record), isNew: true };
+}

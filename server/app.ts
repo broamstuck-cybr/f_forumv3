@@ -23,11 +23,14 @@ import { runAIGeneration, runAIGenerationStream } from './aiEngine.js';
 import {
   clearAuthCookies,
   getAuthenticatedUser,
+  getGoogleClientId,
   loginAdminUser,
+  loginOrRegisterGoogleUser,
   loginStandardUser,
   registerStandardUser,
   resolveGuestSessionId,
   setAuthCookies,
+  verifyGoogleIdToken,
 } from './authEngine.js';
 import {
   acceptCommunityAnswer,
@@ -255,6 +258,12 @@ export async function handleAuthAction(
     return;
   }
 
+  if (action === 'google-config') {
+    const clientId = getGoogleClientId();
+    res.status(200).json({ enabled: Boolean(clientId), clientId });
+    return;
+  }
+
   if (action === 'logout') {
     clearAuthCookies(res);
     const quota = getQuotaState(null, guestId);
@@ -311,6 +320,27 @@ export async function handleAuthAction(
     await flushSupabaseWrites();
     const quota = getQuotaState(stdAttempt.user, guestId);
     res.status(200).json({ user: stdAttempt.user, quota });
+    return;
+  }
+
+  if (action === 'google') {
+    const credential = String(body.credential || '');
+    const verified = await verifyGoogleIdToken(credential);
+    if (!verified.ok) {
+      res.status(401).json({ error: verified.error });
+      return;
+    }
+    const authRes = loginOrRegisterGoogleUser(verified);
+    setAuthCookies(res, authRes.user);
+    appendAuditLog(
+      authRes.user.username,
+      authRes.isNew ? 'GOOGLE_REGISTER' : 'GOOGLE_LOGIN',
+      authRes.user.id,
+      `Dang nhap Google da xac minh (${verified.email})`
+    );
+    await flushSupabaseWrites();
+    const quota = getQuotaState(authRes.user, guestId);
+    res.status(200).json({ user: authRes.user, quota });
     return;
   }
 

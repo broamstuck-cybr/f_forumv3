@@ -148,12 +148,11 @@ function prependCommunityPostToLocalStorage(post: CommunityPost): void {
 
 function hasRealWorkspaceContent(project: WorkspaceProject): boolean {
   if (project.files.length === 0) return false;
-  if (project.attachedItems.length > 0) return true;
   if (project.files.length > 3) return true;
 
   for (const file of project.files) {
     if (file.path !== 'index.html' && file.path !== 'styles.css' && file.path !== 'app.js') {
-      return true;
+      if (file.content.trim().length > 0) return true;
     }
     if (file.path === 'styles.css' || file.path === 'app.js') {
       if (file.content.trim().length > 0) return true;
@@ -164,8 +163,6 @@ function hasRealWorkspaceContent(project: WorkspaceProject): boolean {
         .replace(/<script\b[^>]*src=["'](?:\.\/)?app\.js["'][^>]*>\s*<\/script>/gi, '')
         .trim();
       if (bodyInner.length > 0) return true;
-      const titleMatch = /<title>([\s\S]*?)<\/title>/i.exec(file.content);
-      if (titleMatch && titleMatch[1].trim() !== 'Dự án mới') return true;
     }
   }
 
