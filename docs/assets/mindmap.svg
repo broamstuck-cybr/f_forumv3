@@ -1,0 +1,53 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 880 264" width="880" height="264" role="img" aria-label="F-Forum v3 System Architecture Mind-Map">
+  <style>@media (prefers-reduced-motion: reduce){animateMotion{display:none}}</style>
+  <rect x="0.5" y="0.5" width="879" height="263" rx="12" fill="#080e0d" stroke="#1d312c" stroke-width="1"/>
+  <text x="24" y="28" font-family="'JetBrains Mono', monospace" font-size="10" font-weight="600" fill="#8ea79f" letter-spacing="0.8">ARCHITECTURE MIND-MAP · DUAL-RUNTIME SPA + SERVERLESS</text>
+  <line x1="24" y1="38" x2="856" y2="38" stroke="#182a25" stroke-dasharray="3 4"/>
+
+  <!-- Bezier paths -->
+  <path d="M440,148 C348,148 326,90 272,90" fill="none" stroke="#223e36" stroke-width="1.5"/>
+  <path d="M440,148 C348,148 326,204 272,204" fill="none" stroke="#223e36" stroke-width="1.5"/>
+  <path d="M440,148 C532,148 554,90 608,90" fill="none" stroke="#223e36" stroke-width="1.5"/>
+  <path d="M440,148 C532,148 554,204 608,204" fill="none" stroke="#223e36" stroke-width="1.5"/>
+
+  <circle r="3" fill="#38c99a"><animateMotion dur="4.4s" repeatCount="indefinite" path="M440,148 C348,148 326,90 272,90"/></circle>
+  <circle r="3" fill="#38bdf8"><animateMotion dur="5.0s" repeatCount="indefinite" path="M440,148 C348,148 326,204 272,204"/></circle>
+  <circle r="3" fill="#e3b341"><animateMotion dur="4.8s" repeatCount="indefinite" path="M440,148 C532,148 554,90 608,90"/></circle>
+  <circle r="3" fill="#a78bfa"><animateMotion dur="5.2s" repeatCount="indefinite" path="M440,148 C532,148 554,204 608,204"/></circle>
+
+  <!-- Center core -->
+  <circle cx="440" cy="148" r="52" fill="#0f1b18" stroke="#38c99a" stroke-width="1.6"/>
+  <text x="440" y="142" font-family="'Inter', sans-serif" font-size="14" font-weight="700" fill="#f1f7f5" text-anchor="middle">F-FORUM</text>
+  <text x="440" y="159" font-family="'JetBrains Mono', monospace" font-size="9.5" fill="#38c99a" text-anchor="middle">React 19 · Vite 6</text>
+  <text x="440" y="173" font-family="'JetBrains Mono', monospace" font-size="8.5" fill="#8ea79f" text-anchor="middle">AppStore + API</text>
+
+  <!-- 4 Quadrants -->
+  <g transform="translate(24, 54)">
+    <rect width="248" height="74" rx="10" fill="#0f1917" stroke="#24473d"/>
+    <rect x="12" y="0" width="224" height="3" rx="1.5" fill="#38c99a"/>
+    <text x="14" y="24" font-family="'JetBrains Mono', monospace" font-size="9.5" font-weight="700" fill="#38c99a">01 · EXPLORE &amp; 7,750 VAULT</text>
+    <text x="14" y="42" font-family="'Inter', sans-serif" font-size="9.5" fill="#cbd5e1">CodeFronts · LucianLabs · PinUI · Motion</text>
+    <text x="14" y="58" font-family="'JetBrains Mono', monospace" font-size="8.5" fill="#8ea79f">389 Free ThreeUI · 248 gzip shards</text>
+  </g>
+  <g transform="translate(24, 168)">
+    <rect width="248" height="74" rx="10" fill="#0f1917" stroke="#1f3b52"/>
+    <rect x="12" y="0" width="224" height="3" rx="1.5" fill="#38bdf8"/>
+    <text x="14" y="24" font-family="'JetBrains Mono', monospace" font-size="9.5" font-weight="700" fill="#38bdf8">02 · 2027 AI WORKSPACE</text>
+    <text x="14" y="42" font-family="'Inter', sans-serif" font-size="9.5" fill="#cbd5e1">Centered Welcome · Split Live Preview</text>
+    <text x="14" y="58" font-family="'JetBrains Mono', monospace" font-size="8.5" fill="#8ea79f">Diff &amp; 6-Layer Audit · Secret-Safe ZIP</text>
+  </g>
+  <g transform="translate(608, 54)">
+    <rect width="248" height="74" rx="10" fill="#0f1917" stroke="#473818"/>
+    <rect x="12" y="0" width="224" height="3" rx="1.5" fill="#e3b341"/>
+    <text x="14" y="24" font-family="'JetBrains Mono', monospace" font-size="9.5" font-weight="700" fill="#e3b341">03 · COMMUNITY &amp; MESSENGER</text>
+    <text x="14" y="42" font-family="'Inter', sans-serif" font-size="9.5" fill="#cbd5e1">Editorial Feed · CodeFronts Chat Room</text>
+    <text x="14" y="58" font-family="'JetBrains Mono', monospace" font-size="8.5" fill="#8ea79f">Voice Notes · Code Blocks · Broadcast</text>
+  </g>
+  <g transform="translate(608, 168)">
+    <rect width="248" height="74" rx="10" fill="#0f1917" stroke="#372b59"/>
+    <rect x="12" y="0" width="224" height="3" rx="1.5" fill="#a78bfa"/>
+    <text x="14" y="24" font-family="'JetBrains Mono', monospace" font-size="9.5" font-weight="700" fill="#a78bfa">04 · AUTH, ADMIN &amp; TELEMETRY</text>
+    <text x="14" y="42" font-family="'Inter', sans-serif" font-size="9.5" fill="#cbd5e1">Google OAuth · Role Isolation · Metrics</text>
+    <text x="14" y="58" font-family="'JetBrains Mono', monospace" font-size="8.5" fill="#8ea79f">Supabase RLS / Local JSON · Express</text>
+  </g>
+</svg>

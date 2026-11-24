@@ -1,0 +1,63 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 880 220" width="880" height="220" role="img" aria-label="F-Forum v3 Spatial Web Studio Banner">
+  <defs>
+    <linearGradient id="ff3-bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#070c10"/>
+      <stop offset="55%" stop-color="#0c1715"/>
+      <stop offset="100%" stop-color="#09131c"/>
+    </linearGradient>
+    <radialGradient id="ff3-glow" cx="76%" cy="50%" r="44%">
+      <stop offset="0%" stop-color="#38c99a" stop-opacity="0.22"/>
+      <stop offset="60%" stop-color="#1793d1" stop-opacity="0.06"/>
+      <stop offset="100%" stop-color="#070c10" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="ff3-line" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#38c99a" stop-opacity="0.1"/>
+      <stop offset="50%" stop-color="#38c99a" stop-opacity="0.8"/>
+      <stop offset="100%" stop-color="#e3b341" stop-opacity="0.35"/>
+    </linearGradient>
+    <pattern id="ff3-grid" width="24" height="24" patternUnits="userSpaceOnUse">
+      <circle cx="1.5" cy="1.5" r="1" fill="#1e312c" fill-opacity="0.7"/>
+    </pattern>
+  </defs>
+  <style>@media (prefers-reduced-motion: reduce){animate,animateTransform{display:none}}</style>
+  <rect x="0.5" y="0.5" width="879" height="219" rx="14" fill="url(#ff3-bg)" stroke="#1e312c" stroke-width="1"/>
+  <rect x="1" y="1" width="878" height="218" rx="14" fill="url(#ff3-grid)"/>
+  <rect x="1" y="1" width="878" height="218" rx="14" fill="url(#ff3-glow)"/>
+  <path d="M0 176 C170 148, 320 198, 520 162 C670 134, 770 112, 880 128" fill="none" stroke="url(#ff3-line)" stroke-width="1.4"/>
+
+  <g transform="translate(36, 36)">
+    <rect x="0" y="0" width="214" height="24" rx="12" fill="#0e1b18" stroke="#224439" stroke-width="1"/>
+    <circle cx="13" cy="12" r="3.5" fill="#38c99a"><animate attributeName="opacity" values="1;0.35;1" dur="2.6s" repeatCount="indefinite"/></circle>
+    <text x="24" y="15.5" font-family="'JetBrains Mono', monospace" font-size="9" font-weight="600" fill="#38c99a" letter-spacing="0.8">LIVE · FFORUM3.VERCEL.APP</text>
+
+    <text x="0" y="72" font-family="'Inter', system-ui, sans-serif" font-size="36" font-weight="700" fill="#f1f7f5" letter-spacing="-0.03em">F-FORUM v3</text>
+    <text x="0" y="100" font-family="'Inter', system-ui, sans-serif" font-size="13" font-weight="500" fill="#9fb5ae">Spatial Web Workbench · 7,750 Curated Free UI/3D Specimens · Real-time Community</text>
+
+    <g transform="translate(0, 122)">
+      <rect x="0" y="0" width="94" height="24" rx="12" fill="#0d1c17" stroke="#235343"/><text x="47" y="15.5" font-family="'JetBrains Mono', monospace" font-size="9" font-weight="600" fill="#38c99a" text-anchor="middle">React 19</text>
+      <rect x="102" y="0" width="108" height="24" rx="12" fill="#0e1924" stroke="#1f415f"/><text x="156" y="15.5" font-family="'JetBrains Mono', monospace" font-size="9" font-weight="600" fill="#38bdf8" text-anchor="middle">TypeScript 5</text>
+      <rect x="218" y="0" width="120" height="24" rx="12" fill="#1c170d" stroke="#4f3e17"/><text x="278" y="15.5" font-family="'JetBrains Mono', monospace" font-size="9" font-weight="600" fill="#e3b341" text-anchor="middle">7,750 Free UI</text>
+      <rect x="346" y="0" width="114" height="24" rx="12" fill="#131b26" stroke="#2a3952"/><text x="403" y="15.5" font-family="'JetBrains Mono', monospace" font-size="9" font-weight="600" fill="#cbd5e1" text-anchor="middle">Google OAuth</text>
+    </g>
+  </g>
+
+  <g transform="translate(566, 30)">
+    <rect x="0" y="0" width="280" height="160" rx="12" fill="#0b1312" stroke="#203730" stroke-width="1"/>
+    <rect x="12" y="12" width="116" height="136" rx="8" fill="#101c19" stroke="#25483d"/>
+    <rect x="138" y="12" width="130" height="84" rx="8" fill="#101c19" stroke="#38c99a" stroke-width="1.3">
+      <animate attributeName="stroke-opacity" values="0.55;1;0.55" dur="4s" repeatCount="indefinite"/>
+    </rect>
+    <rect x="138" y="104" width="130" height="44" rx="8" fill="#101c19" stroke="#223a33"/>
+    <text x="24" y="34" font-family="'JetBrains Mono', monospace" font-size="9" font-weight="600" fill="#38c99a">WORKSPACE</text>
+    <rect x="24" y="46" width="84" height="7" rx="3.5" fill="#1d352e"/>
+    <rect x="24" y="60" width="66" height="7" rx="3.5" fill="#1d352e"/>
+    <rect x="24" y="78" width="90" height="24" rx="6" fill="#0b1412" stroke="#234339"/>
+    <rect x="24" y="110" width="90" height="24" rx="6" fill="#0b1412" stroke="#234339"/>
+    <text x="150" y="34" font-family="'JetBrains Mono', monospace" font-size="9" font-weight="600" fill="#e3b341">LIVE SANDBOX</text>
+    <circle cx="203" cy="64" r="18" fill="none" stroke="#38c99a" stroke-width="1.3" stroke-dasharray="4 3">
+      <animateTransform attributeName="transform" type="rotate" from="0 203 64" to="360 203 64" dur="14s" repeatCount="indefinite"/>
+    </circle>
+    <circle cx="203" cy="64" r="6" fill="#38c99a" fill-opacity="0.8"/>
+    <text x="150" y="130" font-family="'JetBrains Mono', monospace" font-size="8.5" fill="#9fb5ae">390 · 768 · 1440px</text>
+  </g>
+</svg>

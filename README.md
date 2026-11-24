@@ -1,119 +1,128 @@
-# F-FORUM v3
+<div align="center">
 
-[![Live production](https://img.shields.io/badge/live-fforum3.vercel.app-2fb59a)](https://fforum3.vercel.app)
+<img src="docs/assets/hero-art.jpg" alt="F-Forum v3 Nocturnal Glass Studio Artwork" width="880" />
 
-F-FORUM v3 is a developer workspace, curated UI/UX and AI resource index, and technical knowledge hub for building, inspecting, and exporting web interfaces. It combines a retained editorial landing experience at `/` with a four-part application shell (`Home`, `Explore`, `Workspace`, `Knowledge`), an AI build arena with sandboxed live preview, real system instructions and temperature controls, secret-scanned ZIP export, and a dual-runtime backend supporting local Express execution and Vercel Serverless Functions.
+<br />
 
-The Knowledge surface indexes **8,322 records** from [`broamstuck-cybr/SOURCEOFKNOWLEDGFORAI`](https://github.com/broamstuck-cybr/SOURCEOFKNOWLEDGFORAI), ranks them deterministically (title → tags/category → runnable source → source reliability), and routes every result into the Experience stage instead of stopping at a thumbnail.
+<img src="docs/assets/banner.svg" alt="F-Forum v3 — Spatial Web Workbench & 7,750 Free UI/3D Specimens" width="880" />
 
-## Screenshots
+<br />
 
-| Home | Knowledge search | Workspace |
-|---|---|---|
-| ![Home](./docs/screenshots/01-home.png) | ![Knowledge search](./docs/screenshots/02-knowledge.png) | ![Workspace with session instructions](./docs/screenshots/03-workspace.png) |
+[![Live Production](https://img.shields.io/badge/live-fforum3.vercel.app-0d825f?style=flat-square)](https://fforum3.vercel.app)
+[![React 19](https://img.shields.io/badge/React-19-111816?style=flat-square&logo=react&logoColor=38c99a)](https://react.dev)
+[![TypeScript 5](https://img.shields.io/badge/TypeScript-5-111816?style=flat-square&logo=typescript&logoColor=38bdf8)](https://www.typescriptlang.org)
+[![Tests](https://img.shields.io/badge/tests-28%2F28%20passing-1f4d35?style=flat-square)](./tests)
+[![License: MIT](https://img.shields.io/badge/license-MIT-263345?style=flat-square)](./LICENSE)
 
-Screenshots are desktop captures at 1440 px. Knowledge uses live vault data; Workspace shows a real session-instruction panel, not a mock overlay.
+</div>
 
-## Architecture
+---
+
+## Overview
+
+**F-Forum v3** is a full-stack web workbench, curated public UI/3D archive, and technical community built for Vietnamese learners and frontend builders. Instead of leaving users to prompt blank pages from scratch, the app pairs **7,750 free, directly viewable UI and 3D specimens** with a sandboxed AI build workspace, an editorial feed, and a real-time messenger.
+
+Every specimen in the vault comes from six public sources—CodeFronts (`5,047`), GetLayers (`966`), MotionSites (`826`), LucianLabs (`480`), ThreeUI public free (`389`, with all 548 Pro-only routes removed), and PinUI (`42`)—compressed into gzipped shards under `./public/data/vault/` so pages load fast without external vendor redirects.
+
+## Live Product Gallery
+
+Captures taken directly from the production deployment at [fforum3.vercel.app](https://fforum3.vercel.app) at `1440 × 900`:
+
+<table>
+  <tr>
+    <td width="50%" align="center">
+      <img src="docs/screenshots/01-landing.png" alt="F-Forum v3 Editorial Landing & Live Telemetry" width="100%" /><br />
+      <sub><strong>Landing &amp; Live Metrics</strong> — Obsidian/Emerald palette, real visitor &amp; usage-hour telemetry, randomized MotionSites kits</sub>
+    </td>
+    <td width="50%" align="center">
+      <img src="docs/screenshots/02-explore.png" alt="F-Forum v3 Explore 7,750 Public UI & 3D Specimens" width="100%" /><br />
+      <sub><strong>Explore Vault (7,750 Public Specimens)</strong> — Direct sandbox preview, Free ThreeUI motion clips, PinUI interactive demos</sub>
+    </td>
+  </tr>
+  <tr>
+    <td width="50%" align="center">
+      <img src="docs/screenshots/03-workspace.png" alt="F-Forum v3 2027 Spatial AI Workspace" width="100%" /><br />
+      <sub><strong>2027 Spatial Workspace</strong> — Centered prompt canvas when empty; split Live Preview, Diff &amp; 6-layer audit open once code exists</sub>
+    </td>
+    <td width="50%" align="center">
+      <img src="docs/screenshots/04-community.png" alt="F-Forum v3 Editorial Feed & Messenger" width="100%" /><br />
+      <sub><strong>Knowledge Feed &amp; Messenger</strong> — Layered editorial feed cards, grouped chat bubbles, 28-bar voice notes, live BroadcastChannel sync</sub>
+    </td>
+  </tr>
+</table>
+
+## Architecture & Mind-Map
+
+<div align="center">
+  <img src="docs/assets/mindmap.svg" alt="F-Forum v3 Architecture Mind-Map" width="880" />
+</div>
 
 ```mermaid
 flowchart LR
-  Client["React 19 + Vite SPA"] --> Router["Path & Query Router"]
-  Router --> Landing["/ Legacy Editorial Landing"]
-  Router --> AppShell["4-Tab App Shell (Home, Explore, Workspace, Knowledge)"]
-  Router --> Admin["/admin Unlimited Control Plane"]
-  AppShell --> Store["AppStore + LocalStorage Persistence"]
-  Store --> API["/api/* Dual-Runtime Gateway"]
-  API --> Auth["authEngine (HMAC-SHA256 HttpOnly Cookies)"]
+  SPA["React 19 + Vite 6 SPA"] --> Landing["/ Editorial Landing & Bookshelf"]
+  SPA --> Explore["/explore 7,750 Free Vault"]
+  SPA --> Workspace["/workspace AI Build & Audit"]
+  SPA --> Community["/community Feed & Chat"]
+  SPA --> Admin["/admin Isolated Control Plane"]
+
+  Explore --> Shards["public/data/vault/*.jgz (Gzip Shards)"]
+  Workspace --> API["/api/* Express & Vercel Serverless"]
+  Community --> API
+  Admin --> API
+
+  API --> Auth["authEngine (HMAC Cookies + Google OAuth)"]
   API --> Quota["quotaStore (15-Turn Cap / Admin Bypass)"]
-  API --> AIEngine["aiEngine (OpenAI / Anthropic / Gemini + Deterministic Fallback)"]
-  API --> Community["communityStore (Q&A, Showcase, Drops, Club Hub)"]
-  API --> Persistence["Persistence: Supabase PostgreSQL or local JSON fallback"]
+  API --> AI["aiEngine (OpenAI / Anthropic / Gemini)"]
+  API --> Metrics["metricsStore (Real Visitors & Active Hours)"]
+  API --> Store["Supabase RLS or Local JSON Fallback"]
 ```
 
-- **Frontend (`./src`)**: React 19, TypeScript, Tailwind CSS v4, Motion, Lucide icons, and JSZip.
-  - `src/features/launchpad/HomeView.tsx` & `src/components/launchpad/ScrollStoryEngine.tsx`: Spatial Home Launchpad with Liquid Glass `PromptComposer`, client-side Blueprint Builder, and 4-Act GPU Scroll Storytelling Engine (`src/styles/story.css`).
-  - `src/features/explore/ExperienceView.tsx`: live sandbox for CodeFronts/LucianLabs/PinUI, MotionSites trailer + prompt, a GetLayers background lab with real video/overlay/blur controls, and an external-demo handoff for ThreeUI pages that block iframes.
-  - `src/features/workspace/`: 3-column Build Workspace (`WorkspaceView.tsx`, `Thread.tsx`, `LivePreviewFrame.tsx`, `DiffViewer.tsx`, `ChecksPanel.tsx`, `AiProjectSetupDrawer.tsx`) with starter prompts, per-session system instructions and temperature.
-  - `src/features/knowledge/`: search-first Knowledge view (`KnowledgeView.tsx`), deterministic ranking (`knowledgeRanking.ts`) over `public/data/studio-vault.json`, source/category facets, runnable-only filter and paginated results.
-  - `src/features/community/CommunityView.tsx` & `src/features/admin/AdminView.tsx`: 3-mode Knowledge hub (`Tra cứu`, `Bảng tin`, `Phòng chat`) and unlimited `/admin` control plane.
-- **Backend (`./server` & `./api`)**: Shared TypeScript core in `./server` mounted by Express for local development and wrapped by Vercel Serverless handlers in `./api` for cloud deployment.
-- **Persistence**: Optional Supabase PostgreSQL (`supabase/schema.sql`, 8 tables with RLS) stores users, quotas, community content, audit logs, changelog and per-user workspace projects. When `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` are unset, the server falls back to a local JSON store in `./data`. Guest workspaces stay in browser `localStorage`; signed-in users sync projects through `/api/projects/*`.
-- **Design System**: Adaptive Dark (`Obsidian Foundry`) and Light (`Editorial Stone`) token palettes built on non-grid spatial layouts and traceable to the five libraries in `broamstuck-cybr/SOURCEOFKNOWLEDGFORAI`.
+## Key Capabilities
+
+- **Curated Public Vault (`src/features/explore`):** 7,750 verified free resources across 6 libraries, plus 60 developer tools and 122 GitHub repositories. All Pro-only ThreeUI items and outbound redirect buttons are excluded so users stay inside the sandbox.
+- **Spatial AI Workspace (`src/features/workspace`):** Keeps the preview pane hidden on blank sessions, opens a split `Live View / Source / Audit & Diff` workbench as soon as HTML/CSS/JS exists, checks 6 quality rules, and exports secret-scanned ZIP bundles.
+- **Editorial Feed & Messenger (`src/features/community`):** Two focused tabs (`Bảng tin` and `Phòng chat`) with layered editorial cards, live code embeds, polls, grouped chat bubbles, 28-bar voice recording/playback, syntax-highlighted snippets, and cross-tab typing indicators.
+- **Collector Bookshelf (`src/components/launchpad/GlacierBookShelf.tsx`):** 12-volume 3D tactile library with linen spine textures, physical shelf lighting, and a quick-jump reader dialog.
+- **Security, Google OAuth & Isolated Admin (`server/authEngine.ts`, `src/features/admin`):** Real Google Identity Services ID-token verification via `oauth2.googleapis.com/tokeninfo`, strict separation between user and admin controls/notifications, live traffic & usage-hour analytics, and role management.
 
 ## Prerequisites
 
-- Node.js 20.0.0 or newer
-- npm 10.0.0 or newer
+- **Node.js 20+** and **npm 10+**
+- Optional: **Supabase** project for cloud persistence, **Google Cloud OAuth 2.0 Web Client ID** for Google Sign-In, and an OpenAI/Anthropic/Gemini-compatible API endpoint.
 
-## Installation
+## Installation & Usage
 
 ```bash
 git clone https://github.com/broamstuck-cybr/f_forumv3.git
 cd f_forumv3
 npm install
 cp .env.example .env
+npm run dev
 ```
 
-## Usage
+Open `http://localhost:5173`. Both the Vite frontend and Express API run together in development; production builds target Vercel Serverless Functions via `./api/*`.
 
-Populate `.env` with your AI provider credentials and session secret before starting the development server.
+### Verification Commands
 
 ```bash
-# Run both the Vite frontend and the Express API server concurrently
-npm run dev
-
-# Run frontend or API server individually
-npm run dev:web
-npm run dev:api
-
-# Run static typecheck and lint verification
-npm run typecheck
-npm run lint
-
-# Run the automated Node test suite
-npm test
-
-# Build production assets into ./dist
-npm run build
-
-# Confirm Supabase tables and RLS (requires SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY)
-node scripts/verify-supabase.mjs
+npm run typecheck   # TypeScript strict check
+npm run lint        # Oxlint static analysis
+npm test            # 28 unit & regression tests (auth, quota, vault, metrics)
+npm run build       # Production Vite bundle
 ```
 
 ## Configuration
 
-All runtime secrets and gateway parameters are read from environment variables. Copy `.env.example` to `.env` for local execution or configure them in your deployment platform.
+| Variable | Required | Purpose |
+| --- | --- | --- |
+| `SESSION_SECRET` | Yes (prod) | HMAC-SHA256 signing key for HttpOnly session cookies |
+| `ADMIN_USERNAME` | Yes (admin) | Admin login identifier |
+| `ADMIN_PASSWORD_HASH` | Yes (admin) | Scrypt password hash for root admin authentication |
+| `GOOGLE_CLIENT_ID` | Optional | Google OAuth 2.0 Web Client ID verified by `/api/auth/google` |
+| `VITE_GOOGLE_CLIENT_ID` | Optional | Public Client ID loaded by Google Identity Services in `AuthModal` |
+| `AI_BASE_URL` / `AI_API_KEY` / `AI_MODEL` | Optional | Server-side AI gateway (users can also configure BYOK in Settings) |
+| `SUPABASE_URL` / `SUPABASE_SERVICE_ROLE_KEY` | Optional | Cloud PostgreSQL persistence (`supabase/schema.sql`); falls back to local JSON in `./data` |
 
-| Variable | Required | Default | Description |
-|---|---|---|---|
-| `AI_API_KEY` | Yes | empty | Server-side API key for the upstream LLM provider |
-| `AI_PROTOCOL` | No | `openai-compatible` | Upstream protocol (`openai-compatible`, `anthropic`, or `gemini`) |
-| `AI_BASE_URL` | No | `https://api.openai.com/v1` | Base endpoint URL for the configured AI protocol |
-| `AI_MODEL` | No | `gpt-4o-mini` | Default model identifier used for Workspace generation |
-| `SESSION_SECRET` | Yes | empty | HMAC-SHA256 signing key for `HttpOnly` authentication cookies |
-| `ADMIN_USERNAME` | Yes | `admin` | Dedicated administrator login identifier |
-| `ADMIN_PASSWORD_HASH` | Prod | empty | Scrypt password hash (`salt:hash`) for production administrator login |
-| `ADMIN_BOOTSTRAP_PASSWORD` | Dev only | empty | Local development bootstrap password when `ADMIN_PASSWORD_HASH` is unset |
-| `SUPABASE_URL` | No | empty | Supabase project URL; enables PostgreSQL persistence (server-only) |
-| `SUPABASE_SERVICE_ROLE_KEY` | No | empty | Supabase `service_role` key used by the server (never expose to the client) |
-| `PORT` | No | `8787` | Local Express API listening port |
+## Contributing & License
 
-## Documentation
-
-- [Product Specification](./docs/PRODUCT_SPEC.md)
-- [UI Architecture & Design Tokens](./docs/UI_ARCHITECTURE.md)
-- [Source of Knowledge Coverage (100%)](./docs/SOURCE_COVERAGE.md)
-- [Vercel Deployment Guide](./docs/DEPLOYMENT_VERCEL.md)
-- [Third-Party Notices & Attribution](./NOTICE.md)
-
-## Contributing
-
-1. Fork the repository and create a feature branch.
-2. Ensure `npm run typecheck`, `npm test`, and `npm run build` exit with code `0`.
-3. Verify that no secrets, `.env` files, or local absolute paths are included in staged commits.
-4. Submit a pull request with a clear technical summary of the changes.
-
-## License
-
-Released under the [MIT License](./LICENSE). Third-party pattern attributions are documented in [NOTICE.md](./NOTICE.md).
+Pull requests that keep tests green (`npm test`), zero console errors, and clean token styling are welcome. Licensed under the [MIT License](./LICENSE).
