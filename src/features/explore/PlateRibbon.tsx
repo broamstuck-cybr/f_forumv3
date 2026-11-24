@@ -374,15 +374,16 @@ export const PlateRibbon: React.FC<PlateRibbonProps> = ({
                       <PinUIThumb itemId={item.id} isBlocx={item.id.startsWith('blocx/')} />
                     </span>
                   </span>
-                ) : preferAnimatedImg && imgSrc ? (
+                ) : videoSrc ? (
                   <span className="plate ex-plate-frame">
                     <span className="ex-plate-shot">
                       <SpecimenMedia
                         eager={index < 6}
                         preview={{
-                          kind: 'image',
-                          src: imgSrc,
-                          credit: 'motionsites.ai',
+                          kind: 'video',
+                          src: videoSrc,
+                          poster: imgSrc,
+                          credit: item.vaultLibrary === 'glacier' ? 'getlayers.ai' : 'motionsites.ai',
                         }}
                         title={title}
                         fallbackLabel={libLabel}
@@ -400,16 +401,15 @@ export const PlateRibbon: React.FC<PlateRibbonProps> = ({
                       />
                     </span>
                   </span>
-                ) : videoSrc ? (
+                ) : preferAnimatedImg && imgSrc ? (
                   <span className="plate ex-plate-frame">
                     <span className="ex-plate-shot">
                       <SpecimenMedia
                         eager={index < 6}
                         preview={{
-                          kind: 'video',
-                          src: videoSrc,
-                          poster: imgSrc,
-                          credit: item.vaultLibrary === 'glacier' ? 'getlayers.ai' : 'motionsites.ai',
+                          kind: 'image',
+                          src: imgSrc,
+                          credit: 'motionsites.ai',
                         }}
                         title={title}
                         fallbackLabel={libLabel}

@@ -93,7 +93,7 @@ export function resolveOriginalLiveUrl(
   return '';
 }
 
-export const VAULT_CACHE_VERSION = 'v9.5';
+export const VAULT_CACHE_VERSION = 'v9.6';
 
 let vaultIndexCache: VaultIndexData | null = null;
 let vaultIndexPromise: Promise<VaultIndexData> | null = null;

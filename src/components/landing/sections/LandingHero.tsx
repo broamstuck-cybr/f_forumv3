@@ -368,7 +368,7 @@ export const LandingHero: React.FC<LandingHeroProps> = ({
             </h1>
 
             <p className="lp-hero-lead">
-              OECD PISA 2025 (9/2026) ghi nhận 95,9% học sinh dùng AI sáng tạo, nhưng nhiều bạn thiếu lộ trình và kho mẫu chuẩn. F-Forum xây dựng Xưởng lắp ráp mở bản địa hóa tiếng Việt cho học sinh &amp; sinh viên yêu công nghệ — quy tụ 7.662 mẫu giao diện, 60 công cụ và 122 repo giúp chống &ldquo;AI Slop&rdquo; và hoàn thiện sản phẩm thật.
+              OECD PISA 2025 (9/2026) ghi nhận 95,9% học sinh dùng AI sáng tạo, nhưng nhiều bạn thiếu lộ trình và kho mẫu chuẩn. F-Forum xây dựng Xưởng lắp ráp mở bản địa hóa tiếng Việt cho học sinh &amp; sinh viên yêu công nghệ — quy tụ 8.322 mẫu giao diện, 60 công cụ và 122 repo giúp chống &ldquo;AI Slop&rdquo; và hoàn thiện sản phẩm thật.
             </p>
 
             <div className="lp-actions">
@@ -376,7 +376,7 @@ export const LandingHero: React.FC<LandingHeroProps> = ({
                 Mở Xưởng lắp ráp
               </button>
               <button type="button" className="btn btn-line btn-lg" onClick={() => onNavigate('explore')}>
-                Khám phá 7.662 mẫu
+                Khám phá 8.322 mẫu
               </button>
               {!currentUser && (
                 <button type="button" className="btn btn-ghost btn-lg" onClick={onOpenLogin}>
@@ -389,7 +389,7 @@ export const LandingHero: React.FC<LandingHeroProps> = ({
               <div>
                 <dt className="t-label">Tổng tài nguyên &amp; mẫu</dt>
                 <dd className="lp-colophon-value">7.844 tài nguyên &amp; mẫu</dd>
-                <dd className="lp-colophon-sub">7.662 UI · 60 công cụ · 122 repo</dd>
+                <dd className="lp-colophon-sub">8.322 UI · 60 công cụ · 122 repo</dd>
               </div>
               <div>
                 <dt className="t-label">Tổng người truy cập</dt>

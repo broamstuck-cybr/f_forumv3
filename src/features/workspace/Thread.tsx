@@ -172,7 +172,7 @@ export const Thread: React.FC<ThreadProps> = ({
                     onClick={onOpenExplore}
                   >
                     <Compass size={14} aria-hidden="true" />
-                    <span>Kho 7.662 mẫu</span>
+                    <span>Kho 8.322 mẫu</span>
                   </button>
                 )}
                 {onOpenUpload && (
@@ -298,7 +298,7 @@ export const Thread: React.FC<ThreadProps> = ({
                       onClick={onOpenExplore}
                     >
                       <Compass size={12} aria-hidden="true" />
-                      <span>Mở Kho 7.662 mẫu</span>
+                      <span>Mở Kho 8.322 mẫu</span>
                     </button>
                   )}
                 </div>

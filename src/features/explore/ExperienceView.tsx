@@ -444,7 +444,7 @@ export const ExperienceView: React.FC = () => {
     if (!activeId) return;
     setNonce((n) => n + 1);
     setCopiedTarget(null);
-    setMotionStageMode('html');
+    setMotionStageMode('video');
   }, [activeId]);
 
   const availableTabs = useMemo(() => {
@@ -1077,6 +1077,16 @@ export const ExperienceView: React.FC = () => {
                 >
                   Mở Workspace
                 </button>
+                {activeCatalogItem?.officialUrl ? (
+                  <a
+                    className="btn btn-line"
+                    href={activeCatalogItem.officialUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    Bản gốc ↗
+                  </a>
+                ) : null}
               </div>
             ) : null}
           </section>

@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
-import { Layers, Play, Search, Sparkles, Video, X } from 'lucide-react';
+import { Layers, Play, Sparkles, Video, X } from 'lucide-react';
 import fabulousManifest from '../../data/fabulousManifest.json';
 import { useAppStore } from '../../store/appStore';
 import { triggerPinuiThemeToggle } from '../layout/GlobalThemeAtmosphere';
@@ -11,6 +11,7 @@ import {
   LiquidVoice,
   PinHeartButton,
   ReaderCard,
+  SearchCard,
   ThemeSwitch,
 } from '../pinui';
 
@@ -313,16 +314,13 @@ export const FabulousShowcaseDock: React.FC = () => {
                   ))}
                 </div>
 
-                <label className="fab-drawer-search">
-                  <Search size={14} aria-hidden="true" />
-                  <input
-                    type="search"
-                    value={query}
-                    onChange={(e) => setQuery(e.target.value)}
-                    placeholder="Lọc theo tên, thư viện, danh mục..."
-                    aria-label="Tìm trong 200 tài nguyên Fabulous"
-                  />
-                </label>
+                <SearchCard
+                  value={query}
+                  onChange={setQuery}
+                  placeholder="Lọc theo tên, thư viện, danh mục..."
+                  compact
+                  className="fab-pinui-search"
+                />
               </div>
 
               <div className="fab-interactive-deck">

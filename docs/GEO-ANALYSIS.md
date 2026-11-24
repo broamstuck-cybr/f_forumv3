@@ -19,7 +19,7 @@ No paid third-party rank-tracking or SERP-scraping API (such as DataForSEO or SE
 | Surface | Qualitative Readiness (Live Build) | Key Driver & Remaining Gap |
 |---|---|---|
 | **Google AI Overviews** | Ready technically; early domain authority | Indexed eligibility, canonical URL, clean Vietnamese metadata, static HTML content, and fast self-hosted fonts are live; classic Search ranking authority is still young on `.vercel.app`. |
-| **Google AI Mode** | High structural fit | Front-loaded self-contained 58-word definition, verifiable 7-row catalog table (`6.770 chi tiết UI/UX`, `196 giao diện`, `83 mẫu chuyển động`, `122 kho GitHub`, `61 công cụ AI`), Q&A answers, and fresh `dateModified` (`2026-11-21`) support query fan-out retrieval; needs external primary citations. |
+| **Google AI Mode** | High structural fit | Front-loaded self-contained 58-word definition, verifiable 7-row catalog table (`8.322 chi tiết UI/UX`, `196 giao diện`, `83 mẫu chuyển động`, `122 kho GitHub`, `61 công cụ AI`), Q&A answers, and fresh `dateModified` (`2026-11-21`) support query fan-out retrieval; needs external primary citations. |
 | **ChatGPT Search (`OAI-SearchBot`)** | High technical crawlability | `OAI-SearchBot` explicitly allowed in `public/robots.txt`, raw HTML inside `#root` readable without JS execution, and clear entity links via GitHub `sameAs`. External mentions (Reddit, YouTube, Wikipedia) are not yet established. |
 | **Perplexity (`PerplexityBot`)** | High technical crawlability | `PerplexityBot` explicitly allowed in `public/robots.txt`; raw-HTML answer blocks and comparison table extract cleanly without JS rendering. Community discussion visibility outside GitHub remains the primary off-site gap. |
 
@@ -49,7 +49,7 @@ No paid third-party rank-tracking or SERP-scraping API (such as DataForSEO or SE
 
 ## 4. `llms.txt` Status
 
-- **Live `https://fforum3.vercel.app/llms.txt` & local `public/llms.txt`:** Present and served as `text/plain; charset=utf-8`, mapping all 6 public routes (`/`, `/home`, `/explore`, `/explore/experience`, `/workspace`, `/community`) and key verifiable figures (`195 người truy cập`, `196 giao diện`, `6.770 chi tiết UI/UX`, `122 kho GitHub tiếng Việt`, `61 công cụ AI`, `83 mẫu chuyển động`, `6 phép kiểm`, `15 lượt miễn phí`).
+- **Live `https://fforum3.vercel.app/llms.txt` & local `public/llms.txt`:** Present and served as `text/plain; charset=utf-8`, mapping all 6 public routes (`/`, `/home`, `/explore`, `/explore/experience`, `/workspace`, `/community`) and key verifiable figures (`195 người truy cập`, `196 giao diện`, `8.322 chi tiết UI/UX`, `122 kho GitHub tiếng Việt`, `61 công cụ AI`, `83 mẫu chuyển động`, `6 phép kiểm`, `15 lượt miễn phí`).
 - **Weighting Note:** Carries **0 weight** in the GEO readiness score. Per Google's AI Optimization Guide (May 2026 / clarified June 2026), Google Search ignores `llms.txt`; it neither helps nor hurts rankings or citations. Included solely as an optional convenience map for non-Google LLM agents.
 
 ## 5. Brand Mention & Entity Authority Analysis
@@ -61,8 +61,8 @@ No paid third-party rank-tracking or SERP-scraping API (such as DataForSEO or SE
 
 ## 6. Passage-Level Citability
 
-- **Front-loaded definition (first 30% of HTML):** `index.html` opens `<article>` with an `<h2>F-Forum là gì?</h2>` heading and a self-contained 58-word Vietnamese answer block naming target users (`học sinh, sinh viên, giảng viên cùng vibe coder Việt Nam`) and concrete figures (`196 giao diện`, `6.770 chi tiết UI/UX`, `6 phép kiểm Diff & Check`, publish loop to `Tri thức`).
-- **Structured verifiable table:** Includes a 7-row HTML `<table>` detailing the 5 core libraries (`CodeFronts` 5.047, `ThreeUI` 961, `LucianLabs` 400, `MotionSites` 321, `PinUI` 41) alongside the `196 giao diện · 83 mẫu` and `122 kho · 61 công cụ` catalog counts.
+- **Front-loaded definition (first 30% of HTML):** `index.html` opens `<article>` with an `<h2>F-Forum là gì?</h2>` heading and a self-contained 58-word Vietnamese answer block naming target users (`học sinh, sinh viên, giảng viên cùng vibe coder Việt Nam`) and concrete figures (`196 giao diện`, `8.322 chi tiết UI/UX`, `6 phép kiểm Diff & Check`, publish loop to `Tri thức`).
+- **Structured verifiable table:** Includes a 7-row HTML `<table>` detailing the 5 core libraries (`CodeFronts` 5.047, `ThreeUI` 961, `GetLayers` 966, `LucianLabs` 480, `MotionSites` 826, `PinUI` 42) alongside the `196 giao diện · 83 mẫu` and `122 kho · 61 công cụ` catalog counts.
 - **Direct Q&A passages:** `FAQ_ITEMS` in `landingContent.ts` and the static `<article>` FAQ use natural query-matching headings and direct 40-65 word active-voice answers. Passage length is applied purely for human readability; Google's AI Optimization Guide confirms artificial chunking for AI is unnecessary.
 
 ## 7. Server-Side Rendering & Multi-Modal Accessibility Check
@@ -90,5 +90,5 @@ Not implemented intentionally: `FAQPage` JSON-LD remains omitted per Google's ri
 
 ## 10. Content Reformatting & Anti-Slop Discipline
 
-- All user-facing copy in `HomeView.tsx`, `landingContent.ts`, `index.html`, and `public/llms.txt` enforces active Vietnamese prose without AI buzzwords, passive voice, or Rule-of-Three filler, anchoring every claim to verifiable counts (`196 giao diện`, `6.770 chi tiết UI/UX`, `122 kho GitHub tiếng Việt`, `61 công cụ AI`, `83 mẫu chuyển động`, `6 phép kiểm`, `15 lượt miễn phí`).
+- All user-facing copy in `HomeView.tsx`, `landingContent.ts`, `index.html`, and `public/llms.txt` enforces active Vietnamese prose without AI buzzwords, passive voice, or Rule-of-Three filler, anchoring every claim to verifiable counts (`196 giao diện`, `8.322 chi tiết UI/UX`, `122 kho GitHub tiếng Việt`, `61 công cụ AI`, `83 mẫu chuyển động`, `6 phép kiểm`, `15 lượt miễn phí`).
 - For `Explore` (`Bàn soi`) and `Workspace`, semantic `<button>` elements and single `<main>` landmarks remain locked so browser agents and Lighthouse Agentic Browsing checks navigate reliably.

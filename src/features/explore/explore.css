@@ -2797,3 +2797,14 @@
     background: var(--bg-raised);
   }
 }
+
+/* Borderless stage: the preview is the frame, not a drawn outline. */
+.ex-bench-stage-wrap,
+.ex-xp-stage,
+.ex-xp-stage-frame {
+  border: 0 !important;
+}
+.ex-plate[data-active='true'] .ex-plate-frame,
+.ex-row-active {
+  box-shadow: none;
+}

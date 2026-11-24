@@ -843,3 +843,8 @@
     cursor: pointer;
   }
 }
+
+/* PinUI SearchCard keeps the original shell; only fit the sidebar width. */
+.st-pinui-search {
+  width: 100%;
+}

@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import type { AppRoute, DimensionView } from '../../types/index';
 import { useAppStore } from '../../store/appStore';
+import { SearchCard } from '../../components/pinui';
 import {
   HONOR_EXHIBITS,
   createHonorArtwork,
@@ -1114,28 +1115,14 @@ export const TeamHonorGallery: React.FC<TeamHonorGalleryProps> = ({ onBack, onNa
 
       {searchOpen && (
         <div className="thg-search-bar" role="search" aria-label="Lọc hồ sơ vinh danh">
-          <div className="thg-search-input-wrap">
-            <Search size={16} aria-hidden="true" />
-            <input
-              type="search"
-              className="thg-search-input"
-              placeholder="Tìm vai trò, khảo sát 195, kiến trúc, bảo mật..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              autoFocus
-            />
-            {searchQuery && (
-              <button
-                type="button"
-                className="thg-icon-btn"
-                style={{ width: 28, height: 28 }}
-                onClick={() => setSearchQuery('')}
-                aria-label="Xóa từ khóa"
-              >
-                <X size={14} />
-              </button>
-            )}
-          </div>
+          <SearchCard
+            value={searchQuery}
+            onChange={setSearchQuery}
+            placeholder="Tìm vai trò, khảo sát 195, kiến trúc, bảo mật..."
+            compact
+            autoFocus
+            className="thg-pinui-search"
+          />
           <div className="thg-search-results">
             {filteredExhibits.length === 0 ? (
               <p style={{ margin: '8px 4px', fontSize: 13, color: 'var(--thg-muted)' }}>

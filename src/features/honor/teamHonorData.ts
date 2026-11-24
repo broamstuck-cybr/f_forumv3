@@ -108,7 +108,7 @@ export const HONOR_EXHIBITS: HonorExhibit[] = [
     subtitle: 'Hạ Tầng Thử Nghiệm & Kiểm Chứng Thực Tế',
     track: 'Thành viên Phát triển · Cộng đồng F-Forum',
     kicker: 'ĐỘI NGŨ PHÁT TRIỂN · 02',
-    milestone: '7.662 Mẫu · 195 Khảo sát',
+    milestone: '8.322 Mẫu · 195 Khảo sát',
     motif: 'nodes',
     photo: {
       src: '/assets/team/member-2.jpg',
@@ -126,7 +126,7 @@ export const HONOR_EXHIBITS: HonorExhibit[] = [
       frameTint: '#d8d0be',
     },
     metrics: [
-      { label: 'Thành phần đã kiểm', value: '7.662 UI' },
+      { label: 'Thành phần đã kiểm', value: '8.322 UI' },
       { label: 'Công cụ & Repo', value: '60 / 122' },
       { label: 'Kiểm định tự động', value: '6 lớp' },
     ],
@@ -344,11 +344,11 @@ export const HONOR_EXHIBITS: HonorExhibit[] = [
   {
     id: 'ui-vault-7662',
     code: '08',
-    title: 'Kho 7.662 Mẫu Giao Diện',
+    title: 'Kho 8.322 Mẫu Giao Diện',
     subtitle: 'Bản Địa Hóa 6 Thư Viện UI/UX Mở Hàng Đầu',
     track: 'Nhóm Thẩm mỹ & Biên soạn · Design Vault',
     kicker: 'TỦ SÁCH TÀI NGUYÊN · 08',
-    milestone: '7.662 UI · 60 Công cụ · 122 Repo',
+    milestone: '8.322 UI · 60 Công cụ · 122 Repo',
     motif: 'grid7662',
     palette: {
       bgTop: '#f1ede2',
@@ -360,7 +360,7 @@ export const HONOR_EXHIBITS: HonorExhibit[] = [
       frameTint: '#cfc6b0',
     },
     metrics: [
-      { label: 'Thành phần UI chuẩn', value: '7.662 mẫu' },
+      { label: 'Thành phần UI chuẩn', value: '8.322 mẫu' },
       { label: 'Công cụ & Kho mã', value: '60 tools · 122 repo' },
       { label: 'Thư viện nguồn', value: '6 hệ sinh thái' },
     ],
@@ -371,7 +371,7 @@ export const HONOR_EXHIBITS: HonorExhibit[] = [
     },
     accordions: {
       coreContribution:
-        'Phân loại, kiểm tra tính khả thi và Việt hóa ngữ cảnh sử dụng cho 7.662 mẫu giao diện cùng 60 công cụ và 122 kho mã nguồn GitHub tuyển chọn.',
+        'Phân loại, kiểm tra tính khả thi và Việt hóa ngữ cảnh sử dụng cho 8.322 mẫu giao diện cùng 60 công cụ và 122 kho mã nguồn GitHub tuyển chọn.',
       architectureResults:
         'Đóng gói tài nguyên theo các mảnh dữ liệu nén (.jgz) tải theo nhu cầu, giúp trình duyệt tìm kiếm và xem trước hàng nghìn thành phần mượt mà không phụ thuộc máy chủ ngoài.',
       gratitude:

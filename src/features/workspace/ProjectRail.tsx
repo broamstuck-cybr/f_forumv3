@@ -19,6 +19,7 @@ import {
 } from 'lucide-react';
 import type { AppRoute, ThemeMode, WorkspaceProject } from '../../types/index';
 import { KineticLogo } from '../../components/brand/KineticLogo';
+import { SearchCard } from '../../components/pinui';
 import { triggerPinuiThemeToggle } from '../../components/layout/GlobalThemeAtmosphere';
 
 export interface ProjectRailProps {
@@ -287,14 +288,13 @@ export const ProjectRail: React.FC<ProjectRailProps> = ({
           </>
         )}
         {searchOpen && (
-          <input
-            type="search"
-            className="field ws-rail-inline-input"
+          <SearchCard
             value={query}
-            onChange={(e) => setQuery(e.target.value)}
+            onChange={setQuery}
             placeholder="Lọc phiên theo tên..."
-            aria-label="Lọc phiên theo tên"
+            compact
             autoFocus
+            className="ws-rail-inline-search"
           />
         )}
       </div>

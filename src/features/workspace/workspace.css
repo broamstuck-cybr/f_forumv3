@@ -3660,3 +3660,9 @@ html[data-theme='light'] .ws-setup-code {
 html[data-theme='light'] .ws-arena-assistant-prose {
   color: #111816;
 }
+
+/* PinUI SearchCard replaces the inline session filter. */
+.ws-rail-inline-search {
+  width: 100%;
+  min-width: 0;
+}

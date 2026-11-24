@@ -28,8 +28,8 @@ Một sản phẩm chỉ trưởng thành khi đội ngũ kỹ thuật nhìn th�
 
 1. **Hộp cát Live View cô lập tức thì trên trình duyệt, không cần CLI:**
    Mọi bản dựng trong Workspace đều nạp vào `<iframe sandbox="allow-scripts" referrerPolicy="no-referrer">` và tuyệt đối không bật `allow-same-origin`. Quyết định kiến trúc này cắt đứt hoàn toàn khả năng mã thử nghiệm đọc `localStorage`, đánh cắp cookie phiên hoặc gọi ngược lên DOM của trang chính. Người học đổi qua lại giữa ba khung chuẩn `390px`, `768px` và `1440px` trong chưa đầy một giây mà không cần cài bất kỳ trình biên dịch cục bộ nào.
-2. **Kho 6.770 chi tiết UI/UX gốc MIT và hệ sinh thái tiếng Việt có kiểm chứng:**
-   Thay vì để người dùng gõ prompt mò mẫm trước ô nhập trống, F-Forum biên tập sẵn `6.770 chi tiết UI/UX` chia theo 5 nhóm (`CodeFronts` 5.047 bố cục, `ThreeUI` 961 cảnh 3D, `LucianLabs` 400 hiệu ứng, `MotionSites` 321 chuyển động, `PinUI` 41 khối tương tác), đi kèm `196 giao diện` chạy trực tiếp, `83 mẫu chuyển động` có sẵn đặc tả tiếng Việt, `122 kho GitHub tiếng Việt` và `61 công cụ AI`. Mỗi mục đều gắn nguồn gốc cùng giấy phép rõ ràng.
+2. **Kho 8.322 chi tiết UI/UX gốc MIT và hệ sinh thái tiếng Việt có kiểm chứng:**
+   Thay vì để người dùng gõ prompt mò mẫm trước ô nhập trống, F-Forum biên tập sẵn `8.322 chi tiết UI/UX` chia theo 6 nhóm (`CodeFronts` 5.047 bố cục, `ThreeUI` 961 cảnh 3D, `GetLayers` 966 nền & lớp, `LucianLabs` 480 hiệu ứng, `MotionSites` 826 chuyển động, `PinUI` 42 khối tương tác), đi kèm `196 giao diện` chạy trực tiếp, `83 mẫu chuyển động` có sẵn đặc tả tiếng Việt, `122 kho GitHub tiếng Việt` và `61 công cụ AI`. Mỗi mục đều gắn nguồn gốc cùng giấy phép rõ ràng.
 3. **Bộ kiểm định Diff & Check 6 lớp kèm quét khóa bí mật trước khi xuất ZIP:**
    Khác với trình soạn thảo chỉ hiển thị giao diện, F-Forum bắt buộc bản dựng đi qua 6 phép kiểm tự động: cấu trúc HTML ngữ nghĩa, cú pháp JavaScript, độ tương thích khung nhìn `390/768/1440px`, chính sách liên kết nội bộ, tiêu chuẩn tiếp cận (A11y) và bộ quét khóa bí mật (`sk-*`, `AIza*`, `ghp_*`, `Bearer` JWT). Khi phát hiện khóa nhạy cảm, hệ thống cảnh báo ngay tại dòng mã và tự động che khóa trước khi đóng gói tệp `.zip`.
 
@@ -54,7 +54,7 @@ Lợi thế kiến trúc của F-Forum nằm ở việc khóa chặt bốn bư�
 
 ```
 [Khám phá & Trải nghiệm]  -->  [Workspace 3 vùng]  -->  [Diff & Check 6 phép kiểm]  -->  [Tri thức cộng đồng]
-  (196 giao diện, 6.770         (Tách HTML/CSS/JS,       (Soát HTML, JS, 390/768/1440,     (Đăng bản dựng đã qua
+  (196 giao diện, 8.322         (Tách HTML/CSS/JS,       (Soát HTML, JS, 390/768/1440,     (Đăng bản dựng đã qua
    chi tiết, 83 mẫu,             AI SSE + BYOK,           liên kết, A11y, che khóa          kiểm định kèm prompt
    122 kho GitHub, 61 AI)        Live View cô lập)        bí mật trước khi xuất ZIP)        để người sau mở lại)
 ```
@@ -75,7 +75,7 @@ Lộ trình năm 2027 tập trung giải quyết dứt điểm các giới hạn
 ### Q1/2027: Đóng Gói Đa Tệp Trong Trình Duyệt & Prerender Tĩnh Toàn Tuyến
 
 - **Tích hợp bộ đóng gói `esbuild-wasm` chạy trong Web Worker cho Sandbox:** Nâng cấp Workspace từ mô hình 3 tệp phẳng (`index.html`, `styles.css`, `app.js`) lên cây thư mục đa tệp hỗ trợ biên dịch TypeScript, JSX và CSS Modules ngay trên trình duyệt mà vẫn giữ nguyên nguyên tắc cô lập `sandbox="allow-scripts"` không chia sẻ `allow-same-origin`.
-- **Static Prerendering (SSG) lúc đóng gói cho `/explore`, `/explore/experience` và `/community`:** Mở rộng cơ chế HTML tĩnh hiện có ở `index.html` sang từng trang danh mục trong bộ `6.770 chi tiết UI/UX`, `196 giao diện` và `122 kho GitHub tiếng Việt` để công cụ tìm kiếm lẫn trình thu thập AI đọc được dữ liệu chi tiết theo từng đường dẫn riêng.
+- **Static Prerendering (SSG) lúc đóng gói cho `/explore`, `/explore/experience` và `/community`:** Mở rộng cơ chế HTML tĩnh hiện có ở `index.html` sang từng trang danh mục trong bộ `8.322 chi tiết UI/UX`, `196 giao diện` và `122 kho GitHub tiếng Việt` để công cụ tìm kiếm lẫn trình thu thập AI đọc được dữ liệu chi tiết theo từng đường dẫn riêng.
 
 ### Q2/2027: Đồng Bộ Đám Mây Supabase Chuẩn Hóa & Hộp Cát Nhúng Học Thuật
 

@@ -1215,3 +1215,10 @@
     }
   }
 }
+
+/* PinUI SearchCard replaces the hand-built conversation filter. */
+.chat-pinui-search {
+  width: 100%;
+  min-width: 0;
+  margin-bottom: var(--space-2);
+}

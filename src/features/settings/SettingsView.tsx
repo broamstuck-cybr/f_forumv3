@@ -7,7 +7,6 @@ import {
   LayoutTemplate,
   Moon,
   Palette,
-  Search,
   Sun,
 } from 'lucide-react';
 import { triggerPinuiThemeToggle } from '../../components/layout/GlobalThemeAtmosphere';
@@ -23,6 +22,7 @@ import { useAppStore } from '../../store/appStore';
 import {
   Chips,
   DynamicDropZone,
+  SearchCard,
   SelectionList,
   type DroppedFilePayload,
 } from '../../components/pinui';
@@ -504,17 +504,13 @@ export const SettingsView: React.FC = () => {
         <aside className="st-sidebar" aria-label="Danh mục cài đặt">
           <div className="st-sidebar-head">
             <h1 className="st-sidebar-title">Cài đặt</h1>
-            <div className="st-search-box">
-              <Search size={14} aria-hidden="true" />
-              <input
-                type="search"
-                className="st-search-input"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Tìm cài đặt..."
-                aria-label="Tìm cài đặt"
-              />
-            </div>
+            <SearchCard
+              value={searchQuery}
+              onChange={setSearchQuery}
+              placeholder="Tìm cài đặt..."
+              compact
+              className="st-pinui-search"
+            />
           </div>
 
           <nav className="st-nav" aria-label="Nhóm cài đặt">

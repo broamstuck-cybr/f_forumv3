@@ -351,7 +351,7 @@ export const PlateTable: React.FC<PlateTableProps> = ({
     setNonce((n) => n + 1);
     setBenchTab('html');
     setCopiedCode(false);
-    setMotionStageMode('html');
+    setMotionStageMode('video');
   }, [activeItem?.id]);
 
   const handleSelectPlate = (item: ExplorePlateItem) => {
@@ -830,6 +830,16 @@ export const PlateTable: React.FC<PlateTableProps> = ({
               >
                 Đính kèm
               </button>
+              {activeItem.officialUrl ? (
+                <a
+                  className="btn btn-line"
+                  href={activeItem.officialUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  Bản gốc ↗
+                </a>
+              ) : null}
               <ReactionBar id={activeItem.id} title={activeTitle} showLabel />
               <button
                 type="button"

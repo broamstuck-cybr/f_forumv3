@@ -958,10 +958,10 @@ export const WorkspaceView: React.FC = () => {
                         type="button"
                         className="ws-arena-action-btn ws-arena-action-btn--accent"
                         onClick={() => navigate('explore')}
-                        title="Duyệt và nạp mẫu thật từ Kho 7.662 mẫu"
+                        title="Duyệt và nạp mẫu thật từ Kho 8.322 mẫu"
                       >
                         <Compass size={12} aria-hidden="true" />
-                        <span>Kho 7.662 mẫu</span>
+                        <span>Kho 8.322 mẫu</span>
                       </button>
                     </>
                   )}

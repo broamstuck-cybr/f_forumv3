@@ -226,7 +226,7 @@ export const LandingManifesto: React.FC<LandingManifestoProps> = ({ onNavigate }
               Chọn bộ khung mẫu <Mark kind="underline">ngay tại đây</Mark>
             </h2>
             <p className="t-lead">
-              Nhập bài toán học tập hoặc dự án phổ thông của bạn — F-Forum đối chiếu kho 7.662 mẫu giao diện, 60 công cụ và 122 repo để mở thẳng Workspace kèm xem trước trực tiếp.
+              Nhập bài toán học tập hoặc dự án phổ thông của bạn — F-Forum đối chiếu kho 8.322 mẫu giao diện, 60 công cụ và 122 repo để mở thẳng Workspace kèm xem trước trực tiếp.
             </p>
           </div>
 

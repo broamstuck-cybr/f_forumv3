@@ -10,11 +10,11 @@ import {
   Pin,
   Plus,
   Reply,
-  Search,
   Send,
   ThumbsUp,
   X,
 } from 'lucide-react';
+import { SearchCard } from '../../components/pinui';
 import { moderateText } from './moderationFilter';
 import './chat.css';
 
@@ -402,20 +402,13 @@ export const CommunityChatRoom: React.FC<Props> = ({ currentHandle, currentName 
           })}
         </div>
 
-        <label className="chat-search">
-          <Search size={15} aria-hidden="true" />
-          <input
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="Tìm cuộc trò chuyện"
-            aria-label="Tìm cuộc trò chuyện"
-          />
-          {query && (
-            <button type="button" className="chat-search-clear" onClick={() => setQuery('')} aria-label="Xóa tìm kiếm">
-              <X size={13} />
-            </button>
-          )}
-        </label>
+        <SearchCard
+          value={query}
+          onChange={setQuery}
+          placeholder="Tìm cuộc trò chuyện"
+          compact
+          className="chat-pinui-search"
+        />
 
         <ul className="chat-threads">
           {visibleThreads.map((t) => {

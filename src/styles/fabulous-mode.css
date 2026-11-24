@@ -916,3 +916,10 @@ html[data-ui-mode='fabulous'][data-fabulous-preset='kinetic-ink'] .ex-card {
     transition-duration: 0.01ms !important;
   }
 }
+
+/* PinUI SearchCard replaces the hand-built Fabulous drawer filter. */
+.fab-pinui-search {
+  width: 100%;
+  min-width: 0;
+  margin-bottom: 10px;
+}

@@ -3,3 +3,8 @@
 @import "./styles/base.css";
 @import "./styles/pinui.css";
 @import "./styles/fabulous-mode.css";
+
+/* Borderless UI: keep layout, focus outlines and radii; hide every decorative stroke. */
+:where(*, *::before, *::after) {
+  border-color: transparent !important;
+}

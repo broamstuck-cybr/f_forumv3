@@ -11,6 +11,7 @@ export interface SearchCardProps {
   onSelectRecent?: (q: string) => void;
   compact?: boolean;
   className?: string;
+  autoFocus?: boolean;
 }
 
 export const SearchCard: React.FC<SearchCardProps> = ({
@@ -21,6 +22,7 @@ export const SearchCard: React.FC<SearchCardProps> = ({
   onSelectRecent,
   compact = false,
   className = '',
+  autoFocus = false,
 }) => {
   const reduced = Boolean(useReducedMotion());
   const { settings } = useAppStore();
@@ -54,6 +56,7 @@ export const SearchCard: React.FC<SearchCardProps> = ({
         <input
           ref={inputRef}
           type="search"
+          autoFocus={autoFocus}
           value={value}
           onFocus={() => setOpen(true)}
           onChange={(e) => onChange(e.target.value)}
