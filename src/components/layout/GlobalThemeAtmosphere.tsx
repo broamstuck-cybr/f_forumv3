@@ -128,12 +128,16 @@ export const GlobalThemeAtmosphere: React.FC = () => {
       const custom = event as CustomEvent<OriginPoint | null>;
       const vw = window.innerWidth || 1280;
       const vh = window.innerHeight || 720;
-      const pt = custom.detail
+      const rawPt = custom.detail
         ? {
             x: Math.max(24, Math.min(vw - 24, custom.detail.x)),
             y: Math.max(20, Math.min(vh - 20, custom.detail.y)),
           }
         : { x: Math.max(48, vw - 76), y: 28 };
+      const pt = {
+        x: rawPt.x,
+        y: rawPt.y < 120 ? Math.min(vh - 24, 140) : rawPt.y,
+      };
 
       pointRef.current = pt;
       button.style.left = `${pt.x - 27}px`;

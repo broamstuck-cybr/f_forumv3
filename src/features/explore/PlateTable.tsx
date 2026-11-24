@@ -136,6 +136,10 @@ export const PlateTable: React.FC<PlateTableProps> = ({
   }, [theme]);
 
   useEffect(() => {
+    setActiveId(null);
+  }, [library]);
+
+  useEffect(() => {
     if (!motionMap) {
       void fetchMotionSitesFullMap().then((loaded) => setMotionMap(loaded));
     }

@@ -5,9 +5,12 @@ import {
   Eye,
   EyeOff,
   LayoutTemplate,
+  Moon,
   Palette,
   Search,
+  Sun,
 } from 'lucide-react';
+import { triggerPinuiThemeToggle } from '../../components/layout/GlobalThemeAtmosphere';
 import OriginalFileBox from '../../components/pinui/original/file-box/FileBox';
 import type {
   AIProtocol,
@@ -357,10 +360,38 @@ export const SettingsView: React.FC = () => {
           ? 'dark'
           : 'light'
         : pref;
+    if (nextTheme !== theme) {
+      const originEl =
+        typeof document !== 'undefined' && document.activeElement instanceof HTMLElement
+          ? document.activeElement
+          : null;
+      updateSettings({ themePreference: pref });
+      triggerPinuiThemeToggle(originEl);
+      return;
+    }
     updateSettings({
       themePreference: pref,
       theme: nextTheme,
     });
+  };
+
+  const applyPreset = (preset: PresetDefinition, sourceEl?: HTMLElement | null) => {
+    const nextPref = preset.targetTheme || 'system';
+    const nextTheme =
+      nextPref === 'system'
+        ? typeof window !== 'undefined' && window.matchMedia?.('(prefers-color-scheme: dark)').matches
+          ? 'dark'
+          : 'light'
+        : nextPref;
+    updateSettings({
+      wallpaperPreset: preset.id,
+      themePreference: nextPref,
+      ambientVideo: preset.ambient,
+      ...(nextTheme === theme ? { theme: nextTheme } : {}),
+    });
+    if (nextTheme !== theme) {
+      triggerPinuiThemeToggle(sourceEl);
+    }
   };
 
   const handleExportDownload = useCallback(() => {
@@ -581,29 +612,49 @@ export const SettingsView: React.FC = () => {
                   />
                 </div>
 
-                <div className="st-row">
+                <div className="st-presets-block" aria-label="Mẫu hình nền">
                   <span className="st-label">Mẫu hình nền</span>
-                  <select
-                    className="st-select"
-                    aria-label="Chọn mẫu hình nền"
-                    value={currentWallpaper}
-                    onChange={(e) => {
-                      const next = PRESETS.find((p) => p.id === e.target.value);
-                      if (next) {
-                        updateSettings({
-                          wallpaperPreset: next.id,
-                          themePreference: next.targetTheme || 'system',
-                          ambientVideo: next.ambient,
-                        });
-                      }
-                    }}
-                  >
-                    {PRESETS.map((p) => (
-                      <option key={p.id} value={p.id}>
-                        {p.name}
-                      </option>
-                    ))}
-                  </select>
+                  <div className="st-presets-grid">
+                    {PRESETS.map((preset) => {
+                      const selected = preset.id === currentWallpaper;
+                      return (
+                        <button
+                          key={preset.id}
+                          type="button"
+                          className="st-preset-item"
+                          aria-pressed={selected}
+                          onClick={(e) => applyPreset(preset, e.currentTarget)}
+                        >
+                          <div
+                            className="st-preset-thumb"
+                            style={{ background: preset.previewBg }}
+                            aria-hidden="true"
+                          >
+                            {preset.id === 'auto' ? (
+                              <div className="st-mini-auto">
+                                <Sun size={16} className="st-mini-auto-sun" />
+                                <Moon size={16} className="st-mini-auto-moon" />
+                              </div>
+                            ) : (
+                              <div className="st-mini-ui">
+                                <div className="st-mini-rail">
+                                  <span style={{ background: preset.previewAccent }} />
+                                  <span />
+                                  <span />
+                                </div>
+                                <div className="st-mini-canvas" style={{ background: preset.previewCard }}>
+                                  <div className="st-mini-line st-mini-line--lg" />
+                                  <div className="st-mini-line st-mini-line--sm" />
+                                  <div className="st-mini-cta" style={{ background: preset.previewAccent }} />
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                          <span className="st-preset-name">{preset.name}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
                 </div>
 
                 <div className="st-grid-2">

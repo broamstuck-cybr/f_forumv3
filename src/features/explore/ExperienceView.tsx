@@ -261,17 +261,34 @@ export const ExperienceView: React.FC = () => {
   );
 
   const activeVaultItem: VaultIndexItem | null = useMemo(() => {
+    const hasFilter = category !== 'all' || savedOnly || Boolean(activeTag) || Boolean(query);
     if (experienceItemId && experienceItemId !== 'vault') {
+      const stripped = experienceItemId.replace(/^ms-/, '');
+      if (hasFilter) {
+        const inFiltered = filteredItems.find(
+          (item) => item.i === experienceItemId || item.i === stripped
+        );
+        if (inFiltered) return inFiltered;
+        return filteredItems[0] ?? null;
+      }
       const exact = allVaultItems.find((item) => item.i === experienceItemId);
       if (exact) return exact;
-      const stripped = experienceItemId.replace(/^ms-/, '');
       const byStripped = allVaultItems.find((item) => item.i === stripped);
       if (byStripped) return byStripped;
       const fromCatalog = catalogById.get(experienceItemId);
       if (fromCatalog) return catalogToVaultEntry(fromCatalog);
     }
     return filteredItems[0] ?? allVaultItems[0] ?? null;
-  }, [experienceItemId, allVaultItems, filteredItems, catalogById]);
+  }, [
+    experienceItemId,
+    allVaultItems,
+    filteredItems,
+    catalogById,
+    category,
+    savedOnly,
+    activeTag,
+    query,
+  ]);
 
   const activeCatalogItem = useMemo(() => {
     if (!activeVaultItem) return null;
@@ -651,6 +668,7 @@ export const ExperienceView: React.FC = () => {
               setCategory(nextCat);
               setActiveTag('');
               if (nextCat === 'saved') setSavedOnly(false);
+              openExperience('vault');
             }}
             multi={false}
             variant="filter"

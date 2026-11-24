@@ -519,9 +519,11 @@ function main() {
   const sourceCatalog = JSON.parse(fs.readFileSync(sourceCatalogPath, 'utf8'));
 
   const msPreviewsPath = path.join(PROJECT_ROOT, 'scripts/motionsites-previews.json');
-  const msBundlePreviews = fs.existsSync(msPreviewsPath)
+  const msPreviewsJson = fs.existsSync(msPreviewsPath)
     ? JSON.parse(fs.readFileSync(msPreviewsPath, 'utf8'))
     : {};
+  const msBySlug = msPreviewsJson.bySlug || {};
+  const msBundlePreviews = msPreviewsJson.bundle || msPreviewsJson;
 
   const pinuiMf = JSON.parse(fs.readFileSync(path.join(SOURCES_DIR, 'pinui/manifest.json'), 'utf8'));
   const cfMf = JSON.parse(fs.readFileSync(path.join(SOURCES_DIR, 'codefronts/manifest.json'), 'utf8'));
@@ -679,9 +681,17 @@ function main() {
     const raw = fs.existsSync(filePath) ? fs.readFileSync(filePath, 'utf8') : '';
     const mp4Match = raw.match(/https?:\/\/[^\s"'`)>]+\.(?:mp4|webm)/i);
     const imgMatch = raw.match(/https?:\/\/[^\s"'`)>]+\.(?:png|jpg|jpeg|webp|gif)/i);
+    const official = msBySlug[it.id];
     const bundle = findMotionBundlePreview(it.id);
-    const previewVideo = mp4Match ? mp4Match[0] : '';
-    const previewImage = bundle?.image || (imgMatch ? imgMatch[0] : '') || bundle?.poster || '';
+    const previewVideo =
+      official?.video || (official ? '' : mp4Match ? mp4Match[0] : '');
+    const previewImage =
+      official?.image ||
+      official?.poster ||
+      bundle?.image ||
+      (imgMatch ? imgMatch[0] : '') ||
+      bundle?.poster ||
+      '';
     const liveUrl = `https://motionsites.ai/sections#${it.id}`;
 
     const body = stripExternalSourceLines(stripFrontmatter(raw));

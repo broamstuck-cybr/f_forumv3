@@ -12,6 +12,7 @@ import {
   type PreviewTheme,
   type PreviewViewport,
 } from '../../features/explore/catalog';
+import { VAULT_CACHE_VERSION } from '../../features/explore/vaultLoader';
 
 export interface MotionMarqueeGridProps {
   onLaunchPrompt: (prompt: string) => Promise<void> | void;
@@ -47,7 +48,7 @@ function loadMotionSitesFull(): Promise<Record<string, MotionSiteFullRecord>> {
   if (typeof window === 'undefined' || typeof fetch !== 'function') {
     return Promise.resolve({});
   }
-  motionSitesPromise = fetch('/data/motionsites-full.json')
+  motionSitesPromise = fetch(`/data/motionsites-full.json?v=${VAULT_CACHE_VERSION}`)
     .then((res) => (res.ok ? res.json() : { items: {} }))
     .then((data: { items?: Record<string, MotionSiteFullRecord> }) => {
       cachedMotionSites = data.items ?? {};
@@ -249,7 +250,7 @@ export const MotionMarqueeGrid: React.FC<MotionMarqueeGridProps> = ({
     }
     const rec = resolveMotionRecord(fullMap, item.id);
     const hasLive = Boolean(splitLiveHtmlCss(rec?.liveHtml));
-    const hasVideo = Boolean(item.videoUrl || (item.id !== 'ms-nike-hover' && rec?.previewVideo));
+    const hasVideo = Boolean(item.videoUrl || rec?.previewVideo || item.imageUrl || rec?.previewImage);
     userPickedTabRef.current = false;
     setActiveItem(item);
     setActiveTab(hasLive ? 'live' : 'video');
@@ -342,10 +343,13 @@ export const MotionMarqueeGrid: React.FC<MotionMarqueeGridProps> = ({
   };
 
   const activeFull = activeItem ? resolveMotionRecord(fullMap, activeItem.id) : undefined;
-  const activeVideoUrl = activeItem
-    ? activeItem.videoUrl || (activeItem.id !== 'ms-nike-hover' ? activeFull?.previewVideo || '' : '')
+  const rawActiveVideoUrl = activeItem
+    ? activeItem.videoUrl || activeFull?.previewVideo || ''
     : '';
-  const activePosterUrl = activeItem ? activeItem.imageUrl || activeFull?.previewImage || '' : '';
+  const isPlayableMp4 =
+    Boolean(rawActiveVideoUrl) && !/\.(webp|gif|png|jpe?g|svg)(\?|$)/i.test(rawActiveVideoUrl);
+  const activeVideoUrl = isPlayableMp4 ? rawActiveVideoUrl : '';
+  const activePosterUrl = activeItem ? activeItem.imageUrl || activeFull?.previewImage || rawActiveVideoUrl : '';
   const activeVerbatimPrompt = activeItem ? getVerbatimPrompt(activeItem) : '';
   const activeTags = activeItem ? activeFull?.tags ?? activeItem.tags : [];
   const liveParts = useMemo(
@@ -592,17 +596,26 @@ export const MotionMarqueeGrid: React.FC<MotionMarqueeGridProps> = ({
               <div className="mmq-modal-body ff-scrollbar">
                 {activeTab === 'video' && (
                   <div className="mmq-video-trial-stage">
-                    <video
-                      key={activeVideoUrl}
-                      src={activeVideoUrl}
-                      poster={activePosterUrl}
-                      controls
-                      autoPlay
-                      loop
-                      muted
-                      playsInline
-                      className="mmq-trial-video"
-                    />
+                    {activeVideoUrl ? (
+                      <video
+                        key={activeVideoUrl}
+                        src={activeVideoUrl}
+                        poster={activePosterUrl}
+                        controls
+                        autoPlay
+                        loop
+                        muted
+                        playsInline
+                        className="mmq-trial-video"
+                      />
+                    ) : (
+                      <img
+                        src={activePosterUrl}
+                        alt={activeItem.title}
+                        referrerPolicy="no-referrer"
+                        className="mmq-trial-video"
+                      />
+                    )}
                   </div>
                 )}
 

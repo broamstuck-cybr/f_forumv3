@@ -194,12 +194,6 @@ export const LandingManifesto: React.FC<LandingManifestoProps> = ({ onNavigate }
     <section id="tuyen-ngon" aria-label="Nghiên cứu và cơ sở khoa học F-Forum" className="lp-hm-root">
       <div className="lp-hm-runway" data-horizontal="false">
         <div className="lp-hm-sticky">
-          <div className="wrap-wide lp-hm-header">
-            <div className="lp-hm-meter" aria-hidden="true">
-              <span style={{ transform: 'scaleX(1)' }} />
-            </div>
-          </div>
-
           <div className="lp-hm-track">
             <div className="lp-hm-intro">
               <h2 className="lp-hm-title">
@@ -208,7 +202,7 @@ export const LandingManifesto: React.FC<LandingManifestoProps> = ({ onNavigate }
                 đến <span className="t-note">Xưởng lắp ráp mở.</span>
               </h2>
               <p className="lp-hm-lead">
-                6 trụ cột nghiên cứu của F-Forum: giải quyết 3 điểm nghẽn khi dùng AI (95,9% học sinh theo OECD PISA 2025), chống AI Slop, khảo sát 195 người dùng (91,2%) và kiến trúc JSON · Bộ lọc AI · WebSocket.
+                6 trụ cột nghiên cứu của F-Forum: giải quyết 3 điểm nghẽn khi dùng AI (95,9% học sinh theo OECD PISA 2025), chống AI Slop, khảo sát 195 người dùng (91,2%) và kiến trúc JSON, Bộ lọc AI và WebSocket.
               </p>
             </div>
 

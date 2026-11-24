@@ -31,9 +31,13 @@ export const SpecimenMedia: React.FC<SpecimenMediaProps> = ({
     setPosterFailed(false);
   }, [preview.src, preview.poster]);
 
+  const isPlayableVideo =
+    preview.kind === 'video' &&
+    !/\.(webp|gif|png|jpe?g|svg)(\?|$)/i.test(preview.src);
+
   useEffect(() => {
     const video = videoRef.current;
-    if (!video || preview.kind !== 'video') return;
+    if (!video || !isPlayableVideo) return;
     if (video.error) {
       setFailed(true);
       return;
@@ -72,7 +76,7 @@ export const SpecimenMedia: React.FC<SpecimenMediaProps> = ({
     );
     io.observe(video);
     return () => io.disconnect();
-  }, [preview, activePlay]);
+  }, [preview, activePlay, isPlayableVideo]);
 
   const mediaStyle: React.CSSProperties = {
     width: '100%',
@@ -119,7 +123,7 @@ export const SpecimenMedia: React.FC<SpecimenMediaProps> = ({
     );
   }
 
-  if (preview.kind === 'video') {
+  if (isPlayableVideo) {
     return (
       <video
         ref={videoRef}

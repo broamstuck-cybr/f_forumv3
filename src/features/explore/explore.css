@@ -2511,6 +2511,8 @@
   .ex-xp-original-media {
     width: 100%;
     height: 100%;
+    min-height: 0;
+    overflow: hidden;
     display: grid;
     place-items: center;
   }

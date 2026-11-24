@@ -11,7 +11,7 @@ import type {
   SourceCatalogItem,
   SourceLibraryName,
 } from '../../types/index';
-import type { VaultLibraryKey } from './vaultLoader';
+import { VAULT_CACHE_VERSION, type VaultLibraryKey } from './vaultLoader';
 
 export interface ExplorePlateItem extends Omit<SourceCatalogItem, 'sourceLibrary'> {
   sourceLibrary: SourceLibraryName;
@@ -334,7 +334,7 @@ export function getCachedPinUISourceMap(): Record<string, PinUISourceEntry> | nu
 export function fetchPinUISourceMap(): Promise<Record<string, PinUISourceEntry>> {
   if (pinuiSourceCache) return Promise.resolve(pinuiSourceCache);
   if (!pinuiSourcePromise) {
-    pinuiSourcePromise = fetch('/data/pinui-source.json')
+    pinuiSourcePromise = fetch(`/data/pinui-source.json?v=${VAULT_CACHE_VERSION}`)
       .then((res) => {
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         return res.json() as Promise<{ items?: Record<string, PinUISourceEntry> }>;
@@ -358,7 +358,7 @@ export function getCachedMotionSitesFullMap(): Record<string, MotionSiteFullEntr
 export function fetchMotionSitesFullMap(): Promise<Record<string, MotionSiteFullEntry>> {
   if (motionsitesCache) return Promise.resolve(motionsitesCache);
   if (!motionsitesPromise) {
-    motionsitesPromise = fetch('/data/motionsites-full.json')
+    motionsitesPromise = fetch(`/data/motionsites-full.json?v=${VAULT_CACHE_VERSION}`)
       .then((res) => {
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         return res.json() as Promise<{ items?: Record<string, MotionSiteFullEntry> }>;

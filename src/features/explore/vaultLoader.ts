@@ -93,6 +93,8 @@ export function resolveOriginalLiveUrl(
   return '';
 }
 
+export const VAULT_CACHE_VERSION = 'v9.5';
+
 let vaultIndexCache: VaultIndexData | null = null;
 let vaultIndexPromise: Promise<VaultIndexData> | null = null;
 
@@ -106,7 +108,7 @@ export function getCachedVaultIndex(): VaultIndexData | null {
 export function fetchVaultIndex(): Promise<VaultIndexData> {
   if (vaultIndexCache) return Promise.resolve(vaultIndexCache);
   if (!vaultIndexPromise) {
-    vaultIndexPromise = fetch('/data/studio-vault.json')
+    vaultIndexPromise = fetch(`/data/studio-vault.json?v=${VAULT_CACHE_VERSION}`)
       .then((res) => {
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         return res.json() as Promise<VaultIndexData>;
@@ -163,7 +165,7 @@ export function fetchVaultShard(
   if (pending) return pending;
 
   const ext = vaultIndexCache?.shardExt || 'jgz';
-  const req = fetch(`/data/vault/${encodeURIComponent(shardName)}.${ext}`)
+  const req = fetch(`/data/vault/${encodeURIComponent(shardName)}.${ext}?v=${VAULT_CACHE_VERSION}`)
     .then((res) => {
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       return res.arrayBuffer();

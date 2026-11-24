@@ -597,6 +597,14 @@ html.reduce-motion *::after {
   pointer-events: none !important;
 }
 
+.pts--global[data-theme='dark'] .pts__ripple {
+  border-color: rgba(255, 255, 255, 0.45);
+}
+
+.pts--global[data-theme='light'] .pts__ripple {
+  border-color: rgba(18, 17, 16, 0.35);
+}
+
 .pts__global-proxy {
   position: fixed;
   width: 54px;

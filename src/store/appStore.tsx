@@ -65,7 +65,7 @@ function detectSystemTheme(): ThemeMode {
 }
 
 const LEGACY_WALLPAPER_ALIAS: Record<string, WallpaperPreset> = {
-  video: 'auto',
+  video: 'dark',
   'godray-amber': 'ember',
   'godray-prism': 'harbour',
   'mesh-aurora': 'aurora',

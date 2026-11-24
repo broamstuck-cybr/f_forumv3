@@ -13,6 +13,7 @@ import {
 import { PinUIPlayground } from '../pinui';
 import { SandboxPreview } from '../../features/explore/SandboxPreview';
 import { buildMotionThemeOverrideCss } from '../../features/explore/catalog';
+import { VAULT_CACHE_VERSION } from '../../features/explore/vaultLoader';
 import { usePrefersReducedMotion } from './useLandingMotion';
 import './tidewell.css';
 
@@ -59,7 +60,7 @@ let motionFullPromise: Promise<Record<string, MotionFullEntry>> | null = null;
 async function fetchMotionSitesFull(): Promise<Record<string, MotionFullEntry>> {
   if (motionFullCache) return motionFullCache;
   if (!motionFullPromise) {
-    motionFullPromise = fetch('/data/motionsites-full.json')
+    motionFullPromise = fetch(`/data/motionsites-full.json?v=${VAULT_CACHE_VERSION}`)
       .then((res) => (res.ok ? res.json() : { items: {} }))
       .then((data: { items?: Record<string, MotionFullEntry> }) => {
         motionFullCache = data.items || {};
