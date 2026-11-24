@@ -31,7 +31,7 @@ const PINUI_DRAWER_EASE = 'cubic-bezier(0.32, 0.72, 0, 1)';
 const PINUI_FLOOD_MS = 800;
 
 export const GlobalThemeAtmosphere: React.FC = () => {
-  const { theme, setTheme, reducedMotion } = useAppStore();
+  const { theme, setTheme, reducedMotion, themeEffect } = useAppStore();
 
   const rootRef = useRef<HTMLDivElement | null>(null);
   const buttonRef = useRef<HTMLButtonElement | null>(null);
@@ -41,6 +41,7 @@ export const GlobalThemeAtmosphere: React.FC = () => {
   const themeRef = useRef<ThemeName>(theme);
   const setThemeRef = useRef(setTheme);
   const reducedRef = useRef(reducedMotion);
+  const effectRef = useRef(themeEffect);
   const pointRef = useRef<OriginPoint>({ x: 0, y: 0 });
   const pendingTargetRef = useRef<ThemeName | null>(null);
   const transitionStartedRef = useRef(false);
@@ -49,10 +50,11 @@ export const GlobalThemeAtmosphere: React.FC = () => {
     themeRef.current = theme;
     setThemeRef.current = setTheme;
     reducedRef.current = reducedMotion;
+    effectRef.current = themeEffect;
     if (rootRef.current) {
       rootRef.current.dataset.theme = theme;
     }
-  }, [theme, setTheme, reducedMotion]);
+  }, [theme, setTheme, reducedMotion, themeEffect]);
 
   useEffect(() => {
     const root = rootRef.current;
@@ -66,7 +68,10 @@ export const GlobalThemeAtmosphere: React.FC = () => {
       root,
       button,
       fx,
-      effect: () => 'droplet',
+      effect: () => {
+        const current = effectRef.current;
+        return current === 'none' ? 'droplet' : current;
+      },
       sound: () => !reducedRef.current,
       onCommit: (next) => {
         pendingTargetRef.current = null;
@@ -147,7 +152,7 @@ export const GlobalThemeAtmosphere: React.FC = () => {
       pendingTargetRef.current = next;
       transitionStartedRef.current = false;
 
-      if (reducedRef.current) {
+      if (reducedRef.current || effectRef.current === 'none') {
         pendingTargetRef.current = null;
         setThemeRef.current(next);
         return;

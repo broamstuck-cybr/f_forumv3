@@ -14,6 +14,7 @@ import OriginalFileBox from '../../components/pinui/original/file-box/FileBox';
 import type {
   AIProtocol,
   ProjectSetupTarget,
+  ThemeEffect,
   ThemePreference,
   UiMode,
   WallpaperPreset,
@@ -138,6 +139,50 @@ const PRESETS: PresetDefinition[] = [
     previewBg: 'radial-gradient(circle at 22% 18%, rgba(99,102,241,0.58), transparent 56%), radial-gradient(circle at 84% 82%, rgba(56,189,248,0.44), #0b1024 78%)',
     previewCard: 'rgba(16, 22, 48, 0.86)',
     previewAccent: '#818cf8',
+    ambient: true,
+  },
+  {
+    id: 'lilac',
+    name: 'Lavender Frost',
+    tone: 'light',
+    targetTheme: 'light',
+    swatches: ['#fbf7ff', '#c4b5fd', '#5b3fd6'],
+    previewBg: 'radial-gradient(at 18% 18%, #fbcfe8 0px, transparent 52%), radial-gradient(at 82% 8%, #fde68a 0px, transparent 48%), radial-gradient(at 12% 86%, #c4b5fd 0px, transparent 52%), #fbf7ff',
+    previewCard: 'rgba(255, 252, 250, 0.9)',
+    previewAccent: '#5b3fd6',
+    ambient: true,
+  },
+  {
+    id: 'lagoon',
+    name: 'Abyssal Teal',
+    tone: 'dark',
+    targetTheme: 'dark',
+    swatches: ['#061a1c', '#22d3ee', '#5eead4'],
+    previewBg: 'radial-gradient(at 16% 14%, rgba(34,211,238,0.42) 0px, transparent 52%), radial-gradient(at 84% 18%, rgba(13,148,136,0.5) 0px, transparent 54%), radial-gradient(at 50% 92%, rgba(94,234,212,0.26) 0px, transparent 58%), #061a1c',
+    previewCard: 'rgba(8, 34, 36, 0.88)',
+    previewAccent: '#5eead4',
+    ambient: true,
+  },
+  {
+    id: 'sunset',
+    name: 'Sunset Current',
+    tone: 'dark',
+    targetTheme: 'dark',
+    swatches: ['#180d14', '#fb7185', '#f4d169'],
+    previewBg: 'conic-gradient(from 205deg at 18% 12%, rgba(251,113,133,0.56), rgba(244,209,105,0.34) 82deg, rgba(24,13,20,0.92) 220deg), radial-gradient(54% 46% at 86% 88%, rgba(154,42,88,0.5), transparent 68%)',
+    previewCard: 'rgba(38, 18, 27, 0.9)',
+    previewAccent: '#ffb07a',
+    ambient: true,
+  },
+  {
+    id: 'sage',
+    name: 'Verdant Glass',
+    tone: 'light',
+    targetTheme: 'light',
+    swatches: ['#f2f5ec', '#b7c9a8', '#3f6b4f'],
+    previewBg: 'radial-gradient(at 18% 20%, rgba(183,201,168,0.7) 0px, transparent 54%), radial-gradient(at 82% 12%, rgba(240,226,192,0.72) 0px, transparent 52%), radial-gradient(at 48% 90%, rgba(207,232,216,0.78) 0px, transparent 58%), #f2f5ec',
+    previewCard: 'rgba(255, 255, 252, 0.9)',
+    previewAccent: '#3f6b4f',
     ambient: true,
   },
 ];
@@ -282,6 +327,13 @@ const THEME_PREF_CHIPS = [
   { id: 'light', label: 'Sáng' },
 ];
 
+const THEME_EFFECT_OPTIONS = [
+  { id: 'droplet', label: 'Giọt nước' },
+  { id: 'rain', label: 'Mưa' },
+  { id: 'diwali', label: 'Pháo hoa' },
+  { id: 'none', label: 'Tắt' },
+];
+
 const UI_SCALE_KEY = 'fforum_v3_ui_scale';
 const SCALE_OPTIONS = [90, 95, 100, 105, 110, 115];
 
@@ -302,6 +354,8 @@ export const SettingsView: React.FC = () => {
     updateSettings,
     updateByok,
     theme,
+    themeEffect,
+    setThemeEffect,
     reducedMotion,
     setReducedMotion,
     savedItemIds,
@@ -605,6 +659,22 @@ export const SettingsView: React.FC = () => {
                     multi={false}
                     theme={theme}
                     onToggle={(id) => applyThemePref(id as ThemePreference)}
+                  />
+                </div>
+
+                <div className="st-row">
+                  <div className="st-effect-copy">
+                    <span className="st-label">Hiệu ứng chuyển</span>
+                    <p className="st-effect-hint">
+                      Hiệu ứng PinUI áp dụng cho toàn trang khi đổi sáng / tối.
+                    </p>
+                  </div>
+                  <Chips
+                    items={THEME_EFFECT_OPTIONS}
+                    selectedIds={[themeEffect]}
+                    multi={false}
+                    theme={theme}
+                    onToggle={(id) => setThemeEffect(id as ThemeEffect)}
                   />
                 </div>
 

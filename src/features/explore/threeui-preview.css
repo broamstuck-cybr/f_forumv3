@@ -1,0 +1,272 @@
+.ex-3ui {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  min-height: 460px;
+  overflow: hidden;
+  background: #071016;
+  color: #f4f8f6;
+}
+
+.ex-3ui-stage {
+  position: relative;
+  flex: 1;
+  min-height: 360px;
+  overflow: hidden;
+  background:
+    radial-gradient(80% 60% at 18% 10%, rgba(44, 130, 126, 0.22), transparent 70%),
+    #071016;
+}
+
+.ex-3ui-media {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  background: #071016;
+}
+
+.ex-3ui-media--still {
+  object-fit: contain;
+}
+
+.ex-3ui-empty {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-content: center;
+  gap: 8px;
+  padding: 24px;
+  text-align: center;
+  color: rgba(244, 248, 246, 0.72);
+}
+
+.ex-3ui-empty strong {
+  font-family: var(--font-display);
+  font-size: clamp(1.5rem, 2vw, 2.4rem);
+  font-weight: 500;
+  color: #f4f8f6;
+}
+
+.ex-3ui-scrim {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(180deg, rgba(4, 10, 13, 0.62) 0%, transparent 32%),
+    linear-gradient(0deg, rgba(4, 10, 13, 0.76) 0%, transparent 34%);
+}
+
+.ex-3ui-head {
+  position: absolute;
+  top: 18px;
+  left: 18px;
+  right: 18px;
+  display: grid;
+  gap: 6px;
+  pointer-events: none;
+}
+
+/* Still images already carry their own title art; do not repeat it on top. */
+.ex-3ui[data-ready='false'] .ex-3ui-head h2 {
+  display: none;
+}
+
+.ex-3ui-kicker {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  width: fit-content;
+  padding: 5px 9px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 999px;
+  background: rgba(6, 14, 18, 0.58);
+  backdrop-filter: blur(12px);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(244, 248, 246, 0.82);
+}
+
+.ex-3ui-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #5eead4;
+  box-shadow: 0 0 0 3px rgba(94, 234, 212, 0.16);
+}
+
+.ex-3ui-head h2 {
+  margin: 0;
+  max-width: 26ch;
+  font-family: var(--font-display);
+  font-size: clamp(1.2rem, 1.7vw, 1.9rem);
+  font-weight: 500;
+  line-height: 1.05;
+  letter-spacing: -0.03em;
+  color: #f7fbf9;
+  text-wrap: balance;
+}
+
+.ex-3ui-hint {
+  position: absolute;
+  left: 18px;
+  right: 18px;
+  bottom: 16px;
+  max-width: 52ch;
+  font-size: 11px;
+  line-height: 1.45;
+  color: rgba(244, 248, 246, 0.68);
+  pointer-events: none;
+}
+
+.ex-3ui-bar {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 46px;
+  padding: 8px 10px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(6, 14, 18, 0.92);
+  backdrop-filter: blur(18px);
+}
+
+.ex-3ui-icon {
+  display: inline-grid;
+  flex: none;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.055);
+  color: rgba(244, 248, 246, 0.86);
+  cursor: pointer;
+  transition:
+    background-color 160ms ease,
+    border-color 160ms ease,
+    color 160ms ease;
+}
+
+.ex-3ui-icon:hover {
+  border-color: rgba(94, 234, 212, 0.48);
+  background: rgba(94, 234, 212, 0.12);
+  color: #f7fbf9;
+}
+
+.ex-3ui-icon:focus-visible,
+.ex-3ui-open:focus-visible,
+.ex-3ui-range:focus-visible {
+  outline: 2px solid #5eead4;
+  outline-offset: 2px;
+}
+
+.ex-3ui-range {
+  flex: 1;
+  min-width: 60px;
+  height: 18px;
+  margin: 0;
+  accent-color: #5eead4;
+  cursor: pointer;
+}
+
+.ex-3ui-time {
+  flex: none;
+  min-width: 78px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-variant-numeric: tabular-nums;
+  color: rgba(244, 248, 246, 0.62);
+  white-space: nowrap;
+}
+
+.ex-3ui-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: auto;
+}
+
+.ex-3ui-open {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 30px;
+  padding: 0 10px;
+  border: 1px solid rgba(94, 234, 212, 0.32);
+  border-radius: 8px;
+  background: rgba(94, 234, 212, 0.1);
+  color: #d7fff7;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1;
+  text-decoration: none;
+  white-space: nowrap;
+  transition:
+    background-color 160ms ease,
+    border-color 160ms ease;
+}
+
+.ex-3ui-open:hover {
+  border-color: rgba(94, 234, 212, 0.62);
+  background: rgba(94, 234, 212, 0.18);
+}
+
+.ex-3ui:fullscreen {
+  width: 100vw;
+  height: 100vh;
+  min-height: 100vh;
+  background: #071016;
+}
+
+.ex-3ui:fullscreen .ex-3ui-stage {
+  min-height: 0;
+}
+
+@media (max-width: 640px) {
+  .ex-3ui-bar {
+    flex-wrap: wrap;
+    gap: 6px;
+    padding: 8px;
+  }
+
+  .ex-3ui-range {
+    order: 5;
+    flex-basis: calc(100% - 136px);
+  }
+
+  .ex-3ui-time {
+    order: 6;
+    min-width: auto;
+    font-size: 9px;
+  }
+
+  .ex-3ui-actions {
+    margin-left: auto;
+  }
+
+  .ex-3ui-open {
+    padding-inline: 8px;
+    font-size: 10px;
+  }
+
+  .ex-3ui-hint {
+    bottom: 12px;
+    font-size: 10px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ex-3ui-icon,
+  .ex-3ui-open {
+    transition-duration: 0.01ms;
+  }
+}

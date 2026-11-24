@@ -43,7 +43,11 @@ export type WallpaperPreset =
   | 'harbour'
   | 'aurora'
   | 'constellation'
-  | 'indigo';
+  | 'indigo'
+  | 'lilac'
+  | 'lagoon'
+  | 'sunset'
+  | 'sage';
 
 export type UserRole = 'user' | 'admin' | 'SUPER_ADMIN' | 'CLUB_LEADER' | 'STUDENT';
 

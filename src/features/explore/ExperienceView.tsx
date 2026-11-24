@@ -41,6 +41,7 @@ import {
   type PreviewViewport,
 } from './catalog';
 import { BackgroundLab } from './BackgroundLab';
+import { ThreeUIPreview } from './ThreeUIPreview';
 import { SandboxPreview } from './SandboxPreview';
 import {
   VAULT_LIBRARY_LABELS,
@@ -941,6 +942,14 @@ export const ExperienceView: React.FC = () => {
                       viewport={viewport}
                       nonce={nonce}
                     />
+                  ) : isThreeUI ? (
+                    <ThreeUIPreview
+                      key={`${activeVaultItem.i}-3ui`}
+                      itemId={activeVaultItem.i}
+                      title={activeTitle}
+                      image={activeOriginalImage || undefined}
+                      sourceUrl={activeOriginalUrl}
+                    />
                   ) : isGlacier && activeOriginalVideo ? (
                     <BackgroundLab
                       key={`${activeVaultItem.i}-lab`}
@@ -976,16 +985,6 @@ export const ExperienceView: React.FC = () => {
                         fallbackLabel={activeGroupLabel}
                         fit="contain"
                       />
-                      {isThreeUI && activeOriginalUrl ? (
-                        <a
-                          className="ex-xp-image-cta"
-                          href={activeOriginalUrl}
-                          target="_blank"
-                          rel="noreferrer"
-                        >
-                          Mở demo gốc ↗
-                        </a>
-                      ) : null}
                     </div>
                   ) : activePreview ? (
                     <SpecimenMedia

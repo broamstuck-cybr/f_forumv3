@@ -83,6 +83,10 @@ const VALID_WALLPAPER_PRESETS: ReadonlySet<WallpaperPreset> = new Set([
   'aurora',
   'constellation',
   'indigo',
+  'lilac',
+  'lagoon',
+  'sunset',
+  'sage',
 ]);
 
 function normalizeWallpaperPreset(raw: unknown): WallpaperPreset {

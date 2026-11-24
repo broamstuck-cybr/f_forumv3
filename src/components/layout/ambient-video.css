@@ -164,6 +164,101 @@ html[data-theme='light'] .ambient-backdrop {
     var(--bg);
 }
 
+.ambient-backdrop[data-preset='lilac'] .ambient-mesh-layer {
+  background:
+    radial-gradient(58% 50% at 16% 14%, rgba(196, 181, 253, 0.34), transparent 62%),
+    radial-gradient(54% 48% at 86% 12%, rgba(253, 230, 138, 0.26), transparent 64%),
+    radial-gradient(60% 50% at 20% 90%, rgba(251, 207, 232, 0.3), transparent 68%),
+    var(--bg);
+}
+
+html[data-theme='light'] .ambient-backdrop[data-preset='lilac'] .ambient-mesh-layer {
+  background:
+    radial-gradient(52% 46% at 14% 10%, rgba(196, 181, 253, 0.52), transparent 64%),
+    radial-gradient(48% 44% at 86% 8%, rgba(253, 230, 138, 0.4), transparent 62%),
+    radial-gradient(56% 46% at 18% 92%, rgba(251, 207, 232, 0.46), transparent 68%),
+    linear-gradient(152deg, #fbf5ff 0%, #f3e8ff 52%, #fff1e2 100%);
+}
+
+.ambient-backdrop[data-preset='lilac'] .ambient-godray-layer {
+  opacity: 0.64;
+  background:
+    conic-gradient(
+      from 206deg at 18% 8%,
+      rgba(196, 181, 253, 0.28) 0deg,
+      transparent 58deg,
+      rgba(253, 230, 138, 0.18) 126deg,
+      transparent 225deg
+    );
+}
+
+.ambient-backdrop[data-preset='lagoon'] .ambient-mesh-layer {
+  background:
+    radial-gradient(60% 52% at 16% 12%, rgba(34, 211, 238, 0.22), transparent 62%),
+    radial-gradient(56% 50% at 84% 20%, rgba(13, 148, 136, 0.3), transparent 66%),
+    radial-gradient(62% 50% at 50% 92%, rgba(94, 234, 212, 0.16), transparent 70%),
+    var(--bg);
+}
+
+.ambient-backdrop[data-preset='lagoon'] .ambient-godray-layer {
+  opacity: 0.7;
+  background:
+    conic-gradient(
+      from 232deg at 78% 8%,
+      rgba(94, 234, 212, 0.24) 0deg,
+      transparent 65deg,
+      rgba(34, 211, 238, 0.16) 145deg,
+      transparent 235deg
+    );
+}
+
+.ambient-backdrop[data-preset='sunset'] .ambient-mesh-layer {
+  background:
+    conic-gradient(from 205deg at 18% 8%, rgba(251, 113, 133, 0.26) 0deg, transparent 64deg, rgba(244, 209, 105, 0.2) 128deg, transparent 225deg),
+    radial-gradient(58% 50% at 86% 88%, rgba(154, 42, 88, 0.28), transparent 68%),
+    var(--bg);
+}
+
+.ambient-backdrop[data-preset='sunset'] .ambient-godray-layer {
+  opacity: 0.8;
+  background:
+    conic-gradient(
+      from 208deg at 22% 4%,
+      rgba(251, 113, 133, 0.28) 0deg,
+      transparent 52deg,
+      rgba(244, 209, 105, 0.2) 118deg,
+      transparent 190deg
+    );
+}
+
+.ambient-backdrop[data-preset='sage'] .ambient-mesh-layer {
+  background:
+    radial-gradient(58% 50% at 16% 14%, rgba(183, 201, 168, 0.4), transparent 62%),
+    radial-gradient(54% 48% at 86% 12%, rgba(240, 226, 192, 0.34), transparent 64%),
+    radial-gradient(60% 48% at 50% 92%, rgba(207, 232, 216, 0.32), transparent 70%),
+    var(--bg);
+}
+
+html[data-theme='light'] .ambient-backdrop[data-preset='sage'] .ambient-mesh-layer {
+  background:
+    radial-gradient(52% 46% at 14% 12%, rgba(183, 201, 168, 0.58), transparent 64%),
+    radial-gradient(48% 44% at 86% 8%, rgba(240, 226, 192, 0.5), transparent 62%),
+    radial-gradient(56% 46% at 48% 94%, rgba(207, 232, 216, 0.54), transparent 68%),
+    linear-gradient(152deg, #f7f8ee 0%, #eef3e3 54%, #fbf3df 100%);
+}
+
+.ambient-backdrop[data-preset='sage'] .ambient-godray-layer {
+  opacity: 0.58;
+  background:
+    conic-gradient(
+      from 204deg at 20% 8%,
+      rgba(183, 201, 168, 0.3) 0deg,
+      transparent 60deg,
+      rgba(240, 226, 192, 0.22) 136deg,
+      transparent 235deg
+    );
+}
+
 .ambient-aurora-canvas {
   position: fixed;
   inset: -6%;
