@@ -77,8 +77,9 @@ const ROUTE_META: Record<
     path: '/workspace',
   },
   community: {
-    title: 'Tri thức cộng đồng — F-Forum',
-    description: 'Phản biện kỹ thuật, trình diễn hộp cát, học liệu chuẩn hóa và hồ sơ chuyển giao câu lạc bộ.',
+    title: 'Tra cứu tri thức — F-Forum',
+    description:
+      'Tra cứu 8.322 mẫu giao diện từ SOURCEOFKNOWLEDGFORAI theo tiêu đề, thẻ, khả năng chạy và độ tin cậy nguồn; mở thẳng sân khấu trải nghiệm.',
     path: '/community',
   },
   profile: {
@@ -124,7 +125,7 @@ const ROUTE_LOAD_LABELS: Record<string, string> = {
   explore: 'Đang mở Bàn soi Khám phá...',
   experience: 'Đang nạp Trải nghiệm mẫu...',
   workspace: 'Đang khởi động Workspace F-Forum...',
-  community: 'Đang mở Tri thức cộng đồng...',
+  community: 'Đang mở Tra cứu tri thức...',
   profile: 'Đang mở Hồ sơ thành viên...',
   settings: 'Đang mở Cài đặt hệ thống...',
   admin: 'Đang mở Bảng điều khiển...',

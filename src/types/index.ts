@@ -500,6 +500,8 @@ export interface AIChatRequest {
   model?: string;
   agentMode?: string;
   stream?: boolean;
+  systemPrompt?: string;
+  temperature?: number;
   files: Array<{ path: string; content: string }>;
   attachedItems?: AttachedContextItem[];
   history?: Array<{ role: 'user' | 'assistant'; content: string }>;

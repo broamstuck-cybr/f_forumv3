@@ -40,6 +40,7 @@ import {
   type PreviewTheme,
   type PreviewViewport,
 } from './catalog';
+import { BackgroundLab } from './BackgroundLab';
 import { SandboxPreview } from './SandboxPreview';
 import {
   VAULT_LIBRARY_LABELS,
@@ -50,6 +51,7 @@ import {
   type VaultIndexItem,
   type VaultLibraryKey,
   type VaultShardPayload,
+  resolveOriginalLiveUrl,
 } from './vaultLoader';
 import './explore.css';
 
@@ -368,6 +370,10 @@ export const ExperienceView: React.FC = () => {
     (isMotion ? motionEntry?.previewImage || '' : '') ||
     (activePreview?.kind === 'image' ? activePreview.src : '') ||
     '';
+  const activeOriginalUrl =
+    shardPayload?.u ||
+    activeCatalogItem?.officialUrl ||
+    (activeVaultItem ? resolveOriginalLiveUrl(activeVaultItem.l, activeVaultItem.i) : '');
 
   const [motionStageMode, setMotionStageMode] = useState<'html' | 'video'>('html');
 
@@ -935,6 +941,14 @@ export const ExperienceView: React.FC = () => {
                       viewport={viewport}
                       nonce={nonce}
                     />
+                  ) : isGlacier && activeOriginalVideo ? (
+                    <BackgroundLab
+                      key={`${activeVaultItem.i}-lab`}
+                      title={activeTitle}
+                      videoSrc={activeOriginalVideo}
+                      poster={activeOriginalImage || undefined}
+                      sourceUrl={activeOriginalUrl}
+                    />
                   ) : activeOriginalVideo ? (
                     <SpecimenMedia
                       key={`${activeVaultItem.i}-vid`}
@@ -962,6 +976,16 @@ export const ExperienceView: React.FC = () => {
                         fallbackLabel={activeGroupLabel}
                         fit="contain"
                       />
+                      {isThreeUI && activeOriginalUrl ? (
+                        <a
+                          className="ex-xp-image-cta"
+                          href={activeOriginalUrl}
+                          target="_blank"
+                          rel="noreferrer"
+                        >
+                          Mở demo gốc ↗
+                        </a>
+                      ) : null}
                     </div>
                   ) : activePreview ? (
                     <SpecimenMedia
@@ -1077,10 +1101,10 @@ export const ExperienceView: React.FC = () => {
                 >
                   Mở Workspace
                 </button>
-                {activeCatalogItem?.officialUrl ? (
+                {activeOriginalUrl ? (
                   <a
                     className="btn btn-line"
-                    href={activeCatalogItem.officialUrl}
+                    href={activeOriginalUrl}
                     target="_blank"
                     rel="noreferrer"
                   >

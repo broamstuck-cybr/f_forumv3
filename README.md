@@ -1,6 +1,18 @@
 # F-FORUM v3
 
-F-FORUM v3 is a developer workspace, curated UI/UX and AI resource index, and technical knowledge hub for building, inspecting, and exporting web interfaces. It combines a retained editorial landing experience at `/` with a 4-stage application shell (`Home`, `Explore`, `Work`, `Source of Knowledge`), a 3-column AI build arena with sandboxed live preview and secret-scanned ZIP export, and a dual-runtime backend supporting local Express execution and Vercel Serverless Functions.
+[![Live production](https://img.shields.io/badge/live-fforum3.vercel.app-2fb59a)](https://fforum3.vercel.app)
+
+F-FORUM v3 is a developer workspace, curated UI/UX and AI resource index, and technical knowledge hub for building, inspecting, and exporting web interfaces. It combines a retained editorial landing experience at `/` with a four-part application shell (`Home`, `Explore`, `Workspace`, `Knowledge`), an AI build arena with sandboxed live preview, real system instructions and temperature controls, secret-scanned ZIP export, and a dual-runtime backend supporting local Express execution and Vercel Serverless Functions.
+
+The Knowledge surface indexes **8,322 records** from [`broamstuck-cybr/SOURCEOFKNOWLEDGFORAI`](https://github.com/broamstuck-cybr/SOURCEOFKNOWLEDGFORAI), ranks them deterministically (title → tags/category → runnable source → source reliability), and routes every result into the Experience stage instead of stopping at a thumbnail.
+
+## Screenshots
+
+| Home | Knowledge search | Workspace |
+|---|---|---|
+| ![Home](./docs/screenshots/01-home.png) | ![Knowledge search](./docs/screenshots/02-knowledge.png) | ![Workspace with session instructions](./docs/screenshots/03-workspace.png) |
+
+Screenshots are desktop captures at 1440 px. Knowledge uses live vault data; Workspace shows a real session-instruction panel, not a mock overlay.
 
 ## Architecture
 
@@ -8,7 +20,7 @@ F-FORUM v3 is a developer workspace, curated UI/UX and AI resource index, and te
 flowchart LR
   Client["React 19 + Vite SPA"] --> Router["Path & Query Router"]
   Router --> Landing["/ Legacy Editorial Landing"]
-  Router --> AppShell["4-Tab App Shell (Home, Explore, Work, Source of Knowledge)"]
+  Router --> AppShell["4-Tab App Shell (Home, Explore, Workspace, Knowledge)"]
   Router --> Admin["/admin Unlimited Control Plane"]
   AppShell --> Store["AppStore + LocalStorage Persistence"]
   Store --> API["/api/* Dual-Runtime Gateway"]
@@ -21,9 +33,10 @@ flowchart LR
 
 - **Frontend (`./src`)**: React 19, TypeScript, Tailwind CSS v4, Motion, Lucide icons, and JSZip.
   - `src/features/launchpad/HomeView.tsx` & `src/components/launchpad/ScrollStoryEngine.tsx`: Spatial Home Launchpad with Liquid Glass `PromptComposer`, client-side Blueprint Builder, and 4-Act GPU Scroll Storytelling Engine (`src/styles/story.css`).
-  - `src/features/explore/ExploreView.tsx` & `src/features/explore/RepoLeaderboard.tsx`: 3-mode Explore hub (`Thư viện Tài nguyên` with 26 verified items across 8 groups in `src/data/resourceLibrary.json`, `Kho Template UI/UX` with 60/40 Split-Stage over 121 items in `src/data/sourceCatalog.json`, and `Bảng Xếp Hạng Repo & Skills` with 41 GitHub API-verified items in `src/data/repoLeaderboard.json`).
-  - `src/features/workspace/`: 3-column Build Workspace (`WorkspaceView.tsx`, `LivePreviewFrame.tsx`, `DiffViewer.tsx`, `ChecksPanel.tsx`, `AiProjectSetupDrawer.tsx`).
-  - `src/features/community/CommunityView.tsx` & `src/features/admin/AdminView.tsx`: 4-channel Source of Knowledge hub (`qa`, `showcase`, `drops`, `clubs`) and unlimited `/admin` control plane.
+  - `src/features/explore/ExperienceView.tsx`: live sandbox for CodeFronts/LucianLabs/PinUI, MotionSites trailer + prompt, a GetLayers background lab with real video/overlay/blur controls, and an external-demo handoff for ThreeUI pages that block iframes.
+  - `src/features/workspace/`: 3-column Build Workspace (`WorkspaceView.tsx`, `Thread.tsx`, `LivePreviewFrame.tsx`, `DiffViewer.tsx`, `ChecksPanel.tsx`, `AiProjectSetupDrawer.tsx`) with starter prompts, per-session system instructions and temperature.
+  - `src/features/knowledge/`: search-first Knowledge view (`KnowledgeView.tsx`), deterministic ranking (`knowledgeRanking.ts`) over `public/data/studio-vault.json`, source/category facets, runnable-only filter and paginated results.
+  - `src/features/community/CommunityView.tsx` & `src/features/admin/AdminView.tsx`: 3-mode Knowledge hub (`Tra cứu`, `Bảng tin`, `Phòng chat`) and unlimited `/admin` control plane.
 - **Backend (`./server` & `./api`)**: Shared TypeScript core in `./server` mounted by Express for local development and wrapped by Vercel Serverless handlers in `./api` for cloud deployment.
 - **Persistence**: Optional Supabase PostgreSQL (`supabase/schema.sql`, 8 tables with RLS) stores users, quotas, community content, audit logs, changelog and per-user workspace projects. When `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` are unset, the server falls back to a local JSON store in `./data`. Guest workspaces stay in browser `localStorage`; signed-in users sync projects through `/api/projects/*`.
 - **Design System**: Adaptive Dark (`Obsidian Foundry`) and Light (`Editorial Stone`) token palettes built on non-grid spatial layouts and traceable to the five libraries in `broamstuck-cybr/SOURCEOFKNOWLEDGFORAI`.
@@ -36,8 +49,8 @@ flowchart LR
 ## Installation
 
 ```bash
-git clone https://github.com/broamstuck-cybr/fforum.git
-cd fforum
+git clone https://github.com/broamstuck-cybr/f_forumv3.git
+cd f_forumv3
 npm install
 cp .env.example .env
 ```

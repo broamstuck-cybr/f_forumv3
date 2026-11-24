@@ -407,9 +407,21 @@ export interface AppStoreContextValue {
   ) => Promise<void>;
   sendWorkspacePrompt: (
     prompt: string,
-    options?: { model?: string; agentMode?: string; attachedItems?: AttachedContextItem[]; stream?: boolean }
+    options?: {
+      model?: string;
+      agentMode?: string;
+      attachedItems?: AttachedContextItem[];
+      stream?: boolean;
+      systemPrompt?: string;
+      temperature?: number;
+    }
   ) => Promise<void>;
-  regenerateLastPrompt: (options?: { model?: string; agentMode?: string }) => Promise<void>;
+  regenerateLastPrompt: (options?: {
+    model?: string;
+    agentMode?: string;
+    systemPrompt?: string;
+    temperature?: number;
+  }) => Promise<void>;
   runChecksOnActiveProject: () => ChecksReport;
   createProjectSnapshot: (label?: string) => void;
   restoreProjectSnapshot: (snapshotId: string) => void;
@@ -1167,7 +1179,14 @@ export const AppStoreProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const sendWorkspacePrompt = useCallback(
     async (
       prompt: string,
-      options?: { model?: string; agentMode?: string; attachedItems?: AttachedContextItem[]; stream?: boolean }
+      options?: {
+        model?: string;
+        agentMode?: string;
+        attachedItems?: AttachedContextItem[];
+        stream?: boolean;
+        systemPrompt?: string;
+        temperature?: number;
+      }
     ) => {
       const trimmed = prompt.trim();
       if (!trimmed) return;
@@ -1222,6 +1241,8 @@ export const AppStoreProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         prompt: trimmed,
         model: options?.model,
         agentMode: options?.agentMode,
+        systemPrompt: options?.systemPrompt,
+        temperature: options?.temperature,
         files: projectSnapshot.files.map((f) => ({ path: f.path, content: f.content })),
         attachedItems: options?.attachedItems ?? projectSnapshot.attachedItems,
         history: projectSnapshot.messages
@@ -1383,7 +1404,12 @@ export const AppStoreProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   );
 
   const regenerateLastPrompt = useCallback(
-    async (options?: { model?: string; agentMode?: string }) => {
+    async (options?: {
+      model?: string;
+      agentMode?: string;
+      systemPrompt?: string;
+      temperature?: number;
+    }) => {
       const latestProject = activeProjectRef.current;
       const lastUserTurn = [...latestProject.messages].reverse().find((m) => m.role === 'user');
       if (!lastUserTurn) return;
@@ -1394,6 +1420,8 @@ export const AppStoreProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       await sendWorkspacePrompt(promptText, {
         model: options?.model,
         agentMode: options?.agentMode,
+        systemPrompt: options?.systemPrompt,
+        temperature: options?.temperature,
         stream: true,
       });
     },

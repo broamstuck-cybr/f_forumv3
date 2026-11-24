@@ -122,9 +122,9 @@ export const CommandPalette: React.FC = () => {
       },
       {
         id: 'go-community',
-        label: 'Tri thức cộng đồng',
+        label: 'Tra cứu tri thức',
         hint: '/community',
-        keywords: 'community tri thuc hoi dap trung bay',
+        keywords: 'community tri thuc tra cuu tim mau hoi dap trung bay',
         icon: <MessageSquare size={15} aria-hidden="true" />,
         run: () => closeAnd(() => navigate('community')),
       },

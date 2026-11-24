@@ -174,6 +174,8 @@ export async function handleAiChat(req: Request, res: Response): Promise<void> {
     model: typeof body.model === 'string' ? body.model.trim() : undefined,
     agentMode: typeof body.agentMode === 'string' ? body.agentMode.trim() : undefined,
     stream: body.stream === true,
+    systemPrompt: typeof body.systemPrompt === 'string' ? body.systemPrompt.slice(0, 2000) : undefined,
+    temperature: typeof body.temperature === 'number' ? body.temperature : undefined,
     files: Array.isArray(body.files) ? body.files : [],
     attachedItems: Array.isArray(body.attachedItems) ? body.attachedItems : [],
     history: Array.isArray(body.history) ? body.history : [],

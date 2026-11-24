@@ -35,6 +35,8 @@ interface ThreadProps {
   onRegenerate: () => void;
   canRetry: boolean;
   canRegenerate: boolean;
+  starters?: Array<{ label: string; note: string; prompt: string }>;
+  onUseStarter?: (prompt: string) => void;
 }
 
 const MODE_TAG = /^\[Mode:\s*([A-Za-z]+)\]\s*/i;
@@ -88,6 +90,8 @@ export const Thread: React.FC<ThreadProps> = ({
   onRegenerate,
   canRetry,
   canRegenerate,
+  starters = [],
+  onUseStarter,
 }) => {
   const scrollRef = useRef<HTMLDivElement>(null);
   const previewRef = useRef<HTMLPreElement>(null);
@@ -153,6 +157,25 @@ export const Thread: React.FC<ThreadProps> = ({
             <p className="ws-arena-empty-sub">
               Mô tả giao diện hoặc thành phần bạn muốn xây dựng. Khung Xem trực tiếp và Mã nguồn sẽ tự mở ngay khi tệp web được tạo hoặc nạp từ Kho mẫu.
             </p>
+            {starters.length > 0 && onUseStarter && (
+              <div className="ws-arena-starters" aria-label="Gợi ý bắt đầu">
+                <span className="ws-arena-starters-label">Bắt đầu nhanh</span>
+                <div className="ws-arena-starters-grid">
+                  {starters.map((starter) => (
+                    <button
+                      key={starter.label}
+                      type="button"
+                      className="ws-arena-starter"
+                      onClick={() => onUseStarter(starter.prompt)}
+                    >
+                      <span className="ws-arena-starter-label">{starter.label}</span>
+                      <span className="ws-arena-starter-note">{starter.note}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
             {(onOpenByok || onOpenExplore || onOpenUpload) && (
               <div className="ws-arena-empty-pills">
                 {onOpenByok && (

@@ -2808,3 +2808,265 @@
 .ex-row-active {
   box-shadow: none;
 }
+
+  .ex-bg-lab {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+    min-height: 460px;
+    overflow: hidden;
+    isolation: isolate;
+    color: #fff;
+  }
+
+  .ex-bg-lab-video,
+  .ex-bg-lab-scrim {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+  }
+
+  .ex-bg-lab-video {
+    object-fit: cover;
+    transition: filter var(--dur-2) var(--ease-ux);
+  }
+
+  .ex-bg-lab-scrim {
+    z-index: 1;
+    transition: background-color var(--dur-2) var(--ease-ux);
+  }
+
+  .ex-bg-lab-content {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+    width: min(560px, 82%);
+    margin-left: clamp(22px, 5vw, 64px);
+    padding-block: 48px;
+  }
+
+  .ex-bg-lab[data-align='center'] .ex-bg-lab-content {
+    align-items: center;
+    align-self: center;
+    margin-inline: auto;
+    text-align: center;
+  }
+
+  .ex-bg-lab-kicker {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: rgba(255, 255, 255, 0.72);
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+
+  .ex-bg-lab-content h2 {
+    margin: 0;
+    color: #fff;
+    font-family: var(--font-display);
+    font-size: clamp(2rem, 1.4rem + 3vw, 4.2rem);
+    font-weight: 400;
+    line-height: 0.98;
+    letter-spacing: -0.03em;
+    text-wrap: balance;
+  }
+
+  .ex-bg-lab-content p {
+    max-width: 46ch;
+    margin: 0;
+    color: rgba(255, 255, 255, 0.78);
+    font-size: 12.5px;
+    line-height: 1.55;
+  }
+
+  .ex-bg-lab-actions {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 8px;
+  }
+
+  .ex-bg-lab-secondary {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    min-height: 34px;
+    padding: 0 11px;
+    border-radius: 5px;
+    background: rgba(255, 255, 255, 0.13);
+    color: #fff;
+    font-family: var(--font-ui);
+    font-size: 11px;
+    font-weight: 600;
+    text-decoration: none;
+    backdrop-filter: blur(8px);
+  }
+
+  .ex-bg-lab-secondary:hover {
+    background: rgba(255, 255, 255, 0.22);
+  }
+
+  .ex-bg-lab-controls {
+    position: absolute;
+    right: 14px;
+    bottom: 14px;
+    z-index: 3;
+    display: flex;
+    align-items: flex-end;
+    gap: 10px;
+    max-width: calc(100% - 28px);
+    padding: 10px;
+    border-radius: 8px;
+    background: rgba(10, 14, 16, 0.68);
+    color: #fff;
+    backdrop-filter: blur(12px);
+  }
+
+  .ex-bg-lab-controls label {
+    display: grid;
+    grid-template-columns: auto 84px auto;
+    align-items: center;
+    gap: 6px;
+    color: rgba(255, 255, 255, 0.68);
+    font-family: var(--font-mono);
+    font-size: 8.5px;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+  }
+
+  .ex-bg-lab-controls input {
+    width: 84px;
+    accent-color: var(--accent, #2fb59a);
+  }
+
+  .ex-bg-lab-controls output {
+    min-width: 24px;
+    color: #fff;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .ex-bg-lab-seg {
+    display: flex;
+    gap: 2px;
+    padding: 2px;
+    border-radius: 4px;
+    background: rgba(255, 255, 255, 0.1);
+  }
+
+  .ex-bg-lab-seg button {
+    min-height: 24px;
+    padding: 0 7px;
+    border: 0;
+    border-radius: 3px;
+    background: transparent;
+    color: rgba(255, 255, 255, 0.68);
+    font-family: var(--font-ui);
+    font-size: 9px;
+    cursor: pointer;
+  }
+
+  .ex-bg-lab-seg button[aria-pressed='true'] {
+    background: #fff;
+    color: #111;
+  }
+
+  .ex-bg-lab-reset {
+    display: inline-grid;
+    place-items: center;
+    width: 26px;
+    height: 26px;
+    border: 0;
+    border-radius: 4px;
+    background: rgba(255, 255, 255, 0.1);
+    color: #fff;
+    cursor: pointer;
+  }
+
+  .ex-xp-original-media {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    min-height: 460px;
+  }
+
+  .ex-xp-original-media .ex-specimen-media,
+  .ex-xp-original-media .ex-specimen,
+  .ex-xp-original-media img,
+  .ex-xp-original-media video {
+    width: 100%;
+    height: 100%;
+    min-height: 460px;
+    object-fit: contain;
+  }
+
+  .ex-xp-image-cta {
+    position: absolute;
+    left: 14px;
+    bottom: 14px;
+    z-index: 2;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    min-height: 32px;
+    padding: 0 10px;
+    border-radius: 5px;
+    background: rgba(8, 11, 13, 0.78);
+    color: #fff;
+    font-family: var(--font-ui);
+    font-size: 10.5px;
+    font-weight: 600;
+    text-decoration: none;
+    backdrop-filter: blur(8px);
+  }
+
+  .ex-xp-image-cta:hover {
+    background: var(--accent, #2fb59a);
+    color: #07110e;
+  }
+
+  @media (max-width: 720px) {
+    .ex-bg-lab-content {
+      width: min(100%, 420px);
+      margin-inline: auto;
+      padding: 28px 18px 150px;
+    }
+
+    .ex-bg-lab-content p {
+      font-size: 12px;
+    }
+
+    .ex-bg-lab-controls {
+      left: 10px;
+      right: 10px;
+      bottom: calc(72px + env(safe-area-inset-bottom, 0px));
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .ex-bg-lab-controls label {
+      grid-template-columns: auto minmax(60px, 1fr) auto;
+      flex: 1 1 150px;
+    }
+
+    .ex-bg-lab-controls input {
+      width: 100%;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .ex-bg-lab-video,
+    .ex-bg-lab-scrim {
+      transition: none;
+    }
+  }

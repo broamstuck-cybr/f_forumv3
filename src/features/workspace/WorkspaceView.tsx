@@ -12,6 +12,7 @@ import {
   PanelLeftClose,
   Share2,
   SlidersHorizontal,
+  Sparkles,
   X,
 } from 'lucide-react';
 import { DynamicDropZone } from '../../components/pinui/DynamicDropZone';
@@ -52,6 +53,32 @@ const MODEL_OPTIONS = [
 ];
 
 const COMMUNITY_POSTS_STORAGE_KEY = 'fforum_v3_community_posts_v7';
+
+const STARTER_PROMPTS = [
+  {
+    label: 'Landing SaaS',
+    note: 'Hero + proof + CTA',
+    prompt: 'Dựng landing page SaaS tối giản, hero lớn, ba thẻ lợi ích và CTA rõ ràng. Dùng HTML/CSS thuần, responsive 390/1440.',
+  },
+  {
+    label: 'Dashboard vận hành',
+    note: 'Bảng số liệu + trạng thái',
+    prompt: 'Dựng dashboard vận hành một màn hình: KPI thật, bảng log, trạng thái dịch vụ và bộ lọc thời gian. Ưu tiên tương phản và bàn phím.',
+  },
+  {
+    label: 'Component có trạng thái',
+    note: 'Loading / empty / error',
+    prompt: 'Dựng một component card có đủ bốn trạng thái loading, empty, error và populated; có nút thử lại thật và không dùng dữ liệu giả.',
+  },
+  {
+    label: 'Soi bản dựng hiện tại',
+    note: 'Audit 6 lớp',
+    prompt: 'Soi bản dựng hiện tại: kiểm tra tương phản, bàn phím, responsive 390/768/1440, overflow và trạng thái lỗi. Chỉ sửa lỗi thật, giữ bố cục.',
+  },
+];
+
+const DEFAULT_SYSTEM_PROMPT =
+  'Ưu tiên HTML/CSS thuần, không thêm thư viện ngoài. Giữ bố cục hiện có nếu người dùng không yêu cầu đổi. Mọi trạng thái phải dùng được bằng bàn phím.';
 
 function derivePublishTags(project: WorkspaceProject): string {
   const collected: string[] = [];
@@ -201,6 +228,9 @@ export const WorkspaceView: React.FC = () => {
   const [composerValue, setComposerValue] = useState('');
   const [agentMode, setAgentMode] = useState<AgentExecutionMode>('Build');
   const [selectedModel, setSelectedModel] = useState('auto');
+  const [studioOpen, setStudioOpen] = useState(false);
+  const [systemPrompt, setSystemPrompt] = useState(DEFAULT_SYSTEM_PROMPT);
+  const [temperature, setTemperature] = useState(0.2);
 
   const hasGeneratedArtifact = useMemo(
     () => hasRealWorkspaceContent(activeProject),
@@ -364,6 +394,8 @@ export const WorkspaceView: React.FC = () => {
       model: selectedModel,
       agentMode,
       stream: true,
+      systemPrompt: systemPrompt.trim() || undefined,
+      temperature,
     });
   };
 
@@ -374,7 +406,12 @@ export const WorkspaceView: React.FC = () => {
 
   const handleRegenerate = () => {
     if (isGenerating || quotaBlocked) return;
-    void regenerateLastPrompt({ model: selectedModel, agentMode });
+    void regenerateLastPrompt({
+      model: selectedModel,
+      agentMode,
+      systemPrompt: systemPrompt.trim() || undefined,
+      temperature,
+    });
   };
 
   const handleExportZip = async () => {
@@ -829,6 +866,8 @@ export const WorkspaceView: React.FC = () => {
           onRegenerate={handleRegenerate}
           canRetry={!isGenerating && !quotaBlocked}
           canRegenerate={!isGenerating && !quotaBlocked}
+          starters={STARTER_PROMPTS}
+          onUseStarter={(prompt) => setComposerValue(prompt)}
         />
 
         <footer className="ws-dock">
@@ -907,6 +946,101 @@ export const WorkspaceView: React.FC = () => {
             )}
 
             <div className="ws-arena-composer-shell">
+              {studioOpen && (
+                <section className="ws-studio-panel" aria-label="Chỉ dẫn phiên AI">
+                  <div className="ws-studio-head">
+                    <div className="ws-studio-title">
+                      <Sparkles size={15} aria-hidden="true" />
+                      <span>
+                        <strong>Chỉ dẫn phiên</strong>
+                        <small>Áp dụng cho lượt gửi tiếp theo</small>
+                      </span>
+                    </div>
+                    <button
+                      type="button"
+                      className="ws-icon-pill ws-icon-pill--xs"
+                      aria-label="Đóng chỉ dẫn phiên"
+                      onClick={() => setStudioOpen(false)}
+                    >
+                      <X size={13} aria-hidden="true" />
+                    </button>
+                  </div>
+
+                  <label className="ws-studio-field">
+                    <span>System instructions</span>
+                    <textarea
+                      value={systemPrompt}
+                      rows={3}
+                      maxLength={2000}
+                      onChange={(event) => setSystemPrompt(event.target.value)}
+                      placeholder="Ví dụ: giữ bố cục hiện tại, chỉ sửa phần tiếp cận..."
+                    />
+                  </label>
+
+                  <div className="ws-studio-row">
+                    <label className="ws-studio-range">
+                      <span>
+                        Temperature
+                        <output>{temperature.toFixed(1)}</output>
+                      </span>
+                      <input
+                        type="range"
+                        min={0}
+                        max={1}
+                        step={0.1}
+                        value={temperature}
+                        onChange={(event) => setTemperature(Number(event.target.value))}
+                      />
+                    </label>
+                    <div className="ws-studio-model">
+                      <span>Model</span>
+                      <strong>
+                        {MODEL_OPTIONS.find((model) => model.id === selectedModel)?.name ?? 'Tự động'}
+                      </strong>
+                      <button
+                        type="button"
+                        className="ws-studio-link"
+                        onClick={() => setSetupDrawerOpen(true)}
+                      >
+                        Đổi model / BYOK
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="ws-studio-presets" aria-label="Mẫu chỉ dẫn">
+                    <button
+                      type="button"
+                      className="ws-studio-preset"
+                      onClick={() => setSystemPrompt(DEFAULT_SYSTEM_PROMPT)}
+                    >
+                      Tối giản
+                    </button>
+                    <button
+                      type="button"
+                      className="ws-studio-preset"
+                      onClick={() =>
+                        setSystemPrompt(
+                          'Bám sát mẫu đã đính kèm. Giữ hệ thống chữ, nhịp khoảng cách và tương phản; chỉ thay nội dung khi được yêu cầu.'
+                        )
+                      }
+                    >
+                      Bám thiết kế
+                    </button>
+                    <button
+                      type="button"
+                      className="ws-studio-preset"
+                      onClick={() =>
+                        setSystemPrompt(
+                          'Đóng vai kỹ sư kiểm định: rà soát bàn phím, tương phản, overflow 390/768/1440 và bốn trạng thái dữ liệu. Nêu lỗi cụ thể trước khi sửa.'
+                        )
+                      }
+                    >
+                      Kiểm định
+                    </button>
+                  </div>
+                </section>
+              )}
+
               <div className="ws-arena-repo-strip">
                 <div className="ws-arena-repo-pills">
                   <span className="ws-arena-repo-name" title={`Dự án: ${activeProject.name}`}>
@@ -993,6 +1127,16 @@ export const WorkspaceView: React.FC = () => {
                         </button>
                       ))}
                     </div>
+                    <button
+                      type="button"
+                      className="ws-arena-mini-icon"
+                      aria-pressed={studioOpen}
+                      aria-label="Chỉ dẫn phiên và temperature"
+                      title="Chỉ dẫn phiên và temperature"
+                      onClick={() => setStudioOpen((open) => !open)}
+                    >
+                      <Sparkles size={13} aria-hidden="true" />
+                    </button>
                     <button
                       type="button"
                       className="ws-arena-mini-icon"

@@ -101,7 +101,7 @@ export function resolveAIConfig(
   };
 }
 
-function buildSystemInstruction(suffix: string): string {
+function buildSystemInstruction(suffix: string, sessionInstructions = ''): string {
   const base = [
     'You are the F-FORUM v3 Workspace Code Synthesis Engine.',
     'Respond ONLY with a valid JSON object matching this exact schema:',
@@ -113,7 +113,15 @@ function buildSystemInstruction(suffix: string): string {
     '4. Use semantic HTML5, accessible aria attributes, and clean 8px spatial rhythm.',
     '5. Keep code concise, modular, and free of comments so the JSON response completes quickly.',
   ].join('\n');
-  return suffix ? `${base}\n${suffix}` : base;
+  const session = sessionInstructions.trim().slice(0, 2000);
+  return [base, suffix, session ? `SESSION INSTRUCTIONS (do not override the JSON schema or safety rules):\n${session}` : '']
+    .filter(Boolean)
+    .join('\n');
+}
+
+function clampTemperature(value: number | undefined): number {
+  if (typeof value !== 'number' || !Number.isFinite(value)) return 0.2;
+  return Math.min(1.2, Math.max(0, value));
 }
 
 function buildUserContextPrompt(req: AIChatRequest): string {
@@ -295,7 +303,7 @@ function buildFallbackResponse(
   const matched = findStrongCatalogMatch(req.prompt || '');
   if (matched) {
     return {
-      message: `Chưa kết nối khóa AI (${upstreamError}). Đã nạp mẫu thật khớp từ khóa: "${matched.title}" (${matched.sourceLibrary || 'Vault'}). Mở Cài đặt -> Khóa riêng (BYOK) để nhập API key thật (OpenAI / Gemini / OpenRouter / DeepSeek) hoặc mở Kho 7.662 mẫu để duyệt thêm.`,
+      message: `Chưa kết nối khóa AI (${upstreamError}). Đã nạp mẫu thật khớp từ khóa: "${matched.title}" (${matched.sourceLibrary || 'Vault'}). Mở Cài đặt -> Khóa riêng (BYOK) để nhập API key thật (OpenAI / Gemini / OpenRouter / DeepSeek) hoặc mở Kho 8.322 mẫu để duyệt thêm.`,
       files: buildFilesFromCatalogSample(matched),
       checksHint: [],
       fallback: true,
@@ -307,8 +315,8 @@ function buildFallbackResponse(
 
   const keyMissing = !config.apiKey;
   const message = keyMissing
-    ? 'Chưa kết nối khóa AI. Mở Cài đặt -> Khóa riêng (BYOK) để nhập API key thật (OpenAI / Gemini / OpenRouter / DeepSeek) giúp trợ lý sinh mã theo yêu cầu, hoặc bấm mở Kho 7.662 mẫu để nạp giao diện thật.'
-    : `Kết nối AI tạm gián đoạn (${upstreamError}). Kiểm tra lại khóa tại Cài đặt -> Khóa riêng (BYOK) (OpenAI / Gemini / OpenRouter / DeepSeek) hoặc bấm mở Kho 7.662 mẫu để nạp mẫu thật.`;
+    ? 'Chưa kết nối khóa AI. Mở Cài đặt -> Khóa riêng (BYOK) để nhập API key thật (OpenAI / Gemini / OpenRouter / DeepSeek) giúp trợ lý sinh mã theo yêu cầu, hoặc bấm mở Kho 8.322 mẫu để nạp giao diện thật.'
+    : `Kết nối AI tạm gián đoạn (${upstreamError}). Kiểm tra lại khóa tại Cài đặt -> Khóa riêng (BYOK) (OpenAI / Gemini / OpenRouter / DeepSeek) hoặc bấm mở Kho 8.322 mẫu để nạp mẫu thật.`;
 
   return {
     message,
@@ -575,7 +583,8 @@ export async function runAIGenerationStream(
     return fallbackOut;
   }
 
-  const systemInstruction = buildSystemInstruction(config.systemPromptSuffix);
+  const systemInstruction = buildSystemInstruction(config.systemPromptSuffix, req.systemPrompt);
+  const temperature = clampTemperature(req.temperature);
   const userContent = buildUserContextPrompt(req);
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 45000);
@@ -604,6 +613,7 @@ export async function runAIGenerationStream(
         body: JSON.stringify({
           model: config.model,
           max_tokens: 4096,
+          temperature,
           stream: streamUpstream,
           system: systemInstruction,
           messages: [{ role: 'user', content: userContent }],
@@ -624,6 +634,7 @@ export async function runAIGenerationStream(
         body: JSON.stringify({
           systemInstruction: { parts: [{ text: systemInstruction }] },
           contents: [{ role: 'user', parts: [{ text: userContent }] }],
+          generationConfig: { temperature },
         }),
         signal: controller.signal,
       });
@@ -655,7 +666,7 @@ export async function runAIGenerationStream(
             { role: 'system', content: systemInstruction },
             { role: 'user', content: userContent },
           ],
-          temperature: 0.2,
+          temperature,
         }),
         signal: controller.signal,
       });
