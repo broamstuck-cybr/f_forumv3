@@ -217,7 +217,7 @@ html:not(.light):not([data-theme='light']) .pltabs-pill {
 }
 
 .pltabs-card__row[data-selected='true'] .pltabs-card__avatar {
-  background: var(--accent-primary);
-  color: var(--ink-inverse);
+  background: var(--accent-fill);
+  color: var(--on-accent);
   transform: scale(1.06);
 }

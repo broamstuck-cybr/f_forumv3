@@ -60,7 +60,7 @@ export type MagnifyProps = {
 const baseline = (size: number) => 340 + size * 0.36;
 const GLYPH_SIZE = 500;
 const MICRO_SIZE = 5.6;
-const GLYPH_FONT = '"Inter", ui-sans-serif, system-ui, sans-serif';
+const GLYPH_FONT = '"Be Vietnam Pro", ui-sans-serif, system-ui, sans-serif';
 const MICRO_FONT = '"Helvetica Neue", Helvetica, Arial, sans-serif';
 
 /* What the lens sees: rows of micro-type, clipped to the big letter. */

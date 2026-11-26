@@ -1,28 +1,37 @@
-import React, { useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
-  Check,
-  ChevronRight,
-  Copy,
-  Download,
-  ExternalLink,
-  Eye,
-  FileCode2,
-  GitCompareArrows,
-  Globe,
-  Maximize2,
-  Minimize2,
-  RotateCw,
-  Share2,
-  ShieldCheck,
-  X,
-} from 'lucide-react';
+  IconAlertTriangle,
+  IconCheck,
+  IconChevronLeft,
+  IconChevronRight,
+  IconCopy,
+  IconDownload,
+  IconExternalLink,
+  IconEye,
+  IconFileCode2,
+  IconGitCompareArrows,
+  IconGlobe,
+  IconMaximize2,
+  IconMinimize2,
+  IconPlus,
+  IconRotateCw,
+  IconSearch,
+  IconShare2,
+  IconShieldCheck,
+  IconTrash2,
+  IconX,
+} from '../../ui/icons';
 import { FileBox, type FileBoxTab } from '../../components/pinui/FileBox';
+import { sanitizeFilesForZipExport } from '../../services/secretScanner';
 import type { WorkspaceProject } from '../../types/index';
 import {
   buildStandalonePreviewDoc,
+  compileWorkspaceSrcDoc,
   LivePreviewFrame,
+  type PreviewRuntimeError,
   type PreviewViewport,
 } from './LivePreviewFrame';
+import { Popover } from './Popover';
 import { ReviewZone, type ReviewTab } from './ReviewZone';
 
 export type StageTabId = 'preview' | 'source' | 'review';
@@ -38,6 +47,7 @@ export interface LiveStageProps {
   onViewportChange: (viewport: PreviewViewport) => void;
   onSelectFile: (path: string) => void;
   onUpdateFile: (path: string, content: string) => void;
+  onDeleteFile?: (path: string) => void;
   onRunChecks: () => void;
   onExportZip: () => void;
   exporting: boolean;
@@ -50,15 +60,86 @@ export interface LiveStageProps {
   onEnterSplit?: (tab: StageTabId, subReview?: ReviewTab) => void;
   onExitSplit?: () => void;
   hasArtifact?: boolean;
+  isGenerating?: boolean;
+  hasError?: boolean;
+  onRetry?: () => void;
+  onNotify?: (toast: { type?: 'info' | 'success' | 'warning' | 'error'; title: string; message?: string }) => void;
   hidden?: boolean;
 }
 
 const VIEWPORT_OPTIONS: Array<{ value: PreviewViewport; badge: string; label: string }> = [
-  { value: 'fit', badge: 'Fit', label: 'Tràn khung 100%' },
+  { value: 'fit', badge: 'Fit', label: 'Tràn khung' },
   { value: 1440, badge: '1440', label: 'Desktop 1440px' },
   { value: 768, badge: '768', label: 'Tablet 768px' },
   { value: 390, badge: '390', label: 'Mobile 390px' },
 ];
+
+const VALID_FILE_PATH = /^[a-zA-Z0-9][a-zA-Z0-9._/-]{0,63}$/;
+
+function countLines(text: string): number {
+  if (!text) return 1;
+  let lines = 1;
+  let idx = text.indexOf('\n');
+  while (idx !== -1) {
+    lines += 1;
+    idx = text.indexOf('\n', idx + 1);
+  }
+  return lines;
+}
+
+function starterTemplateFor(filePath: string): string {
+  const lower = filePath.toLowerCase();
+  if (lower.endsWith('.html') || lower.endsWith('.htm')) {
+    return '<!DOCTYPE html>\n<html lang="vi">\n<head>\n  <meta charset="UTF-8" />\n  <meta name="viewport" content="width=device-width, initial-scale=1.0" />\n  <title>Trang mới</title>\n</head>\n<body>\n  <main></main>\n</body>\n</html>\n';
+  }
+  if (lower.endsWith('.css')) {
+    return ':root {\n  --surface-gap: 16px;\n}\n';
+  }
+  if (lower.endsWith('.json')) {
+    return '{\n  "name": "workspace-module"\n}\n';
+  }
+  if (lower.endsWith('.md')) {
+    return '# Tài liệu mới\n';
+  }
+  if (lower.endsWith('.txt')) {
+    return 'Ghi chú mới\n';
+  }
+  if (lower.endsWith('.tsx') || lower.endsWith('.jsx')) {
+    return 'export function Component() {\n  return null;\n}\n';
+  }
+  if (lower.endsWith('.ts')) {
+    return 'export function init(): boolean {\n  return true;\n}\n';
+  }
+  return 'function init() {\n  return true;\n}\n';
+}
+
+function slugifyName(name: string): string {
+  return name
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+}
+
+const CodeLineGutter: React.FC<{ lineCount: number }> = React.memo(({ lineCount }) => {
+  const gutterText = useMemo(() => {
+    const safeCount = Math.max(1, lineCount);
+    const nums = new Array<string>(safeCount);
+    for (let i = 0; i < safeCount; i += 1) {
+      nums[i] = String(i + 1);
+    }
+    return nums.join('\n');
+  }, [lineCount]);
+
+  return (
+    <pre className="ws-source-gutter" aria-hidden="true">
+      {gutterText}
+    </pre>
+  );
+});
+
+CodeLineGutter.displayName = 'CodeLineGutter';
 
 export const LiveStage: React.FC<LiveStageProps> = ({
   project,
@@ -71,6 +152,7 @@ export const LiveStage: React.FC<LiveStageProps> = ({
   onViewportChange,
   onSelectFile,
   onUpdateFile,
+  onDeleteFile,
   onRunChecks,
   onExportZip,
   exporting,
@@ -83,11 +165,29 @@ export const LiveStage: React.FC<LiveStageProps> = ({
   onEnterSplit,
   onExitSplit,
   hasArtifact = true,
+  isGenerating = false,
+  hasError = false,
+  onRetry,
+  onNotify,
   hidden = false,
 }) => {
   const [reloadNonce, setReloadNonce] = useState(0);
   const [copiedFile, setCopiedFile] = useState<string | null>(null);
   const [compactTab, setCompactTab] = useState<'diff' | 'checks'>('diff');
+  const [runtimeErrors, setRuntimeErrors] = useState<PreviewRuntimeError[]>([]);
+
+  const [findOpen, setFindOpen] = useState(false);
+  const [findQuery, setFindQuery] = useState('');
+  const [matchIndex, setMatchIndex] = useState(0);
+
+  const [creatingFile, setCreatingFile] = useState(false);
+  const [newFileName, setNewFileName] = useState('');
+  const [fileError, setFileError] = useState<string | null>(null);
+  const [confirmDeleteFile, setConfirmDeleteFile] = useState(false);
+
+  const findInputRef = useRef<HTMLInputElement>(null);
+  const editorRef = useRef<HTMLTextAreaElement>(null);
+  const editorWrapRef = useRef<HTMLDivElement>(null);
 
   const activeFile = useMemo(
     () =>
@@ -102,15 +202,89 @@ export const LiveStage: React.FC<LiveStageProps> = ({
       project.files.map((file) => ({
         id: file.path,
         label: file.path,
-        meta: `${file.language.toUpperCase()} · ${file.content.split(/\r?\n/).length} dòng`,
+        meta: `${file.language.toUpperCase()} · ${countLines(file.content)} dòng`,
       })),
     [project.files]
   );
 
   const lineCount = useMemo(
-    () => (activeFile ? activeFile.content.split(/\r?\n/).length : 0),
+    () => (activeFile ? countLines(activeFile.content) : 0),
     [activeFile]
   );
+
+  const filesSignature = useMemo(
+    () => project.files.map((file) => `${file.path}:${file.content.length}:${file.content}`).join('\n'),
+    [project.files]
+  );
+
+  useEffect(() => {
+    setRuntimeErrors([]);
+  }, [project.id, reloadNonce, filesSignature]);
+
+  useEffect(() => {
+    setConfirmDeleteFile(false);
+  }, [activeFile?.path, project.id]);
+
+  useEffect(() => {
+    if (stageTab !== 'source' || hidden || compact) return;
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if ((event.ctrlKey || event.metaKey) && !event.altKey && event.key.toLowerCase() === 'f') {
+        event.preventDefault();
+        setFindOpen(true);
+        window.requestAnimationFrame(() => {
+          findInputRef.current?.focus();
+          findInputRef.current?.select();
+        });
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [stageTab, hidden, compact]);
+
+  const matches = useMemo(() => {
+    if (!findOpen || !activeFile) return [] as number[];
+    const needle = findQuery.trim().toLowerCase();
+    if (!needle) return [] as number[];
+    const haystack = activeFile.content.toLowerCase();
+    const hits: number[] = [];
+    let pos = haystack.indexOf(needle);
+    while (pos !== -1 && hits.length < 500) {
+      hits.push(pos);
+      pos = haystack.indexOf(needle, pos + needle.length);
+    }
+    return hits;
+  }, [findOpen, activeFile, findQuery]);
+
+  const safeMatchIndex = matches.length > 0 ? Math.min(matchIndex, matches.length - 1) : 0;
+
+  const jumpToMatch = useCallback(
+    (index: number) => {
+      if (!activeFile || matches.length === 0) return;
+      const bounded = ((index % matches.length) + matches.length) % matches.length;
+      setMatchIndex(bounded);
+      const start = matches[bounded];
+      const len = findQuery.trim().length;
+      const editor = editorRef.current;
+      const wrap = editorWrapRef.current;
+      if (editor) {
+        editor.focus({ preventScroll: true });
+        editor.setSelectionRange(start, start + len);
+      }
+      if (wrap && lineCount > 0) {
+        const lineBefore = countLines(activeFile.content.slice(0, start)) - 1;
+        const ratio = lineBefore / Math.max(1, lineCount);
+        wrap.scrollTop = Math.max(0, ratio * wrap.scrollHeight - wrap.clientHeight * 0.35);
+      }
+    },
+    [activeFile, matches, findQuery, lineCount]
+  );
+
+  const handleRuntimeError = useCallback((err: PreviewRuntimeError) => {
+    setRuntimeErrors((prev) => {
+      if (prev.length >= 20) return [...prev.slice(1), err];
+      return [...prev, err];
+    });
+  }, []);
 
   const handlePickViewport = (next: PreviewViewport) => {
     onViewportChange(next);
@@ -135,6 +309,37 @@ export const LiveStage: React.FC<LiveStageProps> = ({
     window.setTimeout(() => URL.revokeObjectURL(url), 60000);
   };
 
+  const handleExportHtml = () => {
+    const { clean, findings, sanitizedFiles } = sanitizeFilesForZipExport(project.files);
+    let htmlDoc = compileWorkspaceSrcDoc(sanitizedFiles, { includeErrorBridge: false });
+    if (!/<title\b[^>]*>/i.test(htmlDoc)) {
+      const safeTitle = project.name.replace(/&/g, '&amp;').replace(/</g, '&lt;');
+      if (/<head\b[^>]*>/i.test(htmlDoc)) {
+        htmlDoc = htmlDoc.replace(/<head\b[^>]*>/i, (match) => `${match}<title>${safeTitle}</title>`);
+      } else {
+        htmlDoc = `<title>${safeTitle}</title>\n${htmlDoc}`;
+      }
+    }
+    const slug = slugifyName(project.name) || 'f-forum-build';
+    const filename = `${slug}.html`;
+    const url = URL.createObjectURL(new Blob([htmlDoc], { type: 'text/html;charset=utf-8' }));
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+
+    onNotify?.({
+      type: clean ? 'success' : 'warning',
+      title: `Đã tải ${filename}`,
+      message: clean
+        ? 'Đã quét bảo mật: 0 chuỗi nhạy cảm trong tệp HTML.'
+        : `Đã ẩn ${findings.length} chuỗi nhạy cảm trước khi xuất HTML.`,
+    });
+  };
+
   const handleCopySource = async () => {
     if (!activeFile) return;
     try {
@@ -144,6 +349,34 @@ export const LiveStage: React.FC<LiveStageProps> = ({
     } catch {
       return;
     }
+  };
+
+  const handleCreateFileSubmit = (event: React.FormEvent) => {
+    event.preventDefault();
+    const clean = newFileName
+      .trim()
+      .replace(/^(?:\.\/)+/, '')
+      .replace(/\/{2,}/g, '/');
+    if (
+      !clean ||
+      !VALID_FILE_PATH.test(clean) ||
+      clean.includes('..') ||
+      clean.split('/').includes('.') ||
+      clean.endsWith('/')
+    ) {
+      setFileError('Tên tệp không hợp lệ');
+      return;
+    }
+    const lowerClean = clean.toLowerCase();
+    if (project.files.some((file) => file.path.toLowerCase() === lowerClean)) {
+      setFileError('Tệp đã tồn tại');
+      return;
+    }
+    onUpdateFile(clean, starterTemplateFor(clean));
+    onSelectFile(clean);
+    setNewFileName('');
+    setFileError(null);
+    setCreatingFile(false);
   };
 
   const checkCount = project.checksReport ? project.checksReport.passCount : 0;
@@ -184,12 +417,12 @@ export const LiveStage: React.FC<LiveStageProps> = ({
             <button
               type="button"
               className="ws-compact-dl"
-              aria-label={exporting ? 'Đang nén ZIP' : 'Tải ZIP dự án'}
-              title={exporting ? 'Đang nén ZIP...' : 'Tải gói ZIP'}
+              aria-label={exporting ? 'Đang nén ZIP' : 'Tải ZIP'}
+              title={exporting ? 'Đang nén' : 'Tải ZIP'}
               disabled={exporting}
               onClick={onExportZip}
             >
-              <Download size={13} aria-hidden="true" />
+              <IconDownload size={13} />
             </button>
           </div>
 
@@ -198,22 +431,22 @@ export const LiveStage: React.FC<LiveStageProps> = ({
               type="button"
               className="ws-compact-preview-trigger"
               onClick={() => onEnterSplit?.('preview')}
-              title="Mở khung xem trực tiếp chia đôi màn hình"
+              title="Mở Live View"
             >
-              <Globe size={14} className="ws-compact-globe" aria-hidden="true" />
-              <span className="ws-compact-preview-name">Xem trực tiếp · {project.name}</span>
+              <IconGlobe size={14} className="ws-compact-globe" />
+              <span className="ws-compact-preview-name">Live View · {project.name}</span>
             </button>
             <button
               type="button"
               className="ws-compact-refresh"
-              aria-label="Làm mới và mở xem trực tiếp"
-              title="Làm mới khung xem trực tiếp"
+              aria-label="Làm mới Live View"
+              title="Làm mới"
               onClick={() => {
                 handleRefresh();
                 onEnterSplit?.('preview');
               }}
             >
-              <RotateCw size={12} aria-hidden="true" />
+              <IconRotateCw size={12} />
             </button>
           </div>
 
@@ -222,7 +455,7 @@ export const LiveStage: React.FC<LiveStageProps> = ({
               <ul className="ws-compact-files" aria-label="Tệp trong phiên">
                 {project.files.map((file) => {
                   const diffEntry = project.diffs.find((d) => d.path === file.path);
-                  const adds = diffEntry?.additions ?? file.content.split(/\r?\n/).length;
+                  const adds = diffEntry?.additions ?? countLines(file.content);
                   const dels = diffEntry?.deletions ?? 0;
                   return (
                     <li key={file.path}>
@@ -249,14 +482,14 @@ export const LiveStage: React.FC<LiveStageProps> = ({
                 className="ws-compact-all-btn"
                 onClick={() => onEnterSplit?.('review', 'diff')}
               >
-                <span>Xem mọi thay đổi</span>
-                <ChevronRight size={14} aria-hidden="true" />
+                <span>Xem Diff</span>
+                <IconChevronRight size={14} />
               </button>
             </>
           ) : (
             <div className="ws-compact-checks">
               <div className="ws-compact-check-stat">
-                <ShieldCheck size={14} aria-hidden="true" />
+                <IconShieldCheck size={14} />
                 <span>
                   {checkCount}/{totalCheckCount} phép kiểm đạt chuẩn
                 </span>
@@ -266,8 +499,8 @@ export const LiveStage: React.FC<LiveStageProps> = ({
                 className="ws-compact-all-btn"
                 onClick={() => onEnterSplit?.('review', 'check')}
               >
-                <span>Mở bảng kiểm định chi tiết</span>
-                <ChevronRight size={14} aria-hidden="true" />
+                <span>Mở kiểm định</span>
+                <IconChevronRight size={14} />
               </button>
             </div>
           )}
@@ -278,8 +511,8 @@ export const LiveStage: React.FC<LiveStageProps> = ({
               className="ws-compact-all-btn"
               onClick={onOpenPublish}
             >
-              <span>Đăng lên Tri thức</span>
-              <Share2 size={13} aria-hidden="true" />
+              <span>Đăng Tri thức</span>
+              <IconShare2 size={13} />
             </button>
           )}
         </div>
@@ -302,9 +535,9 @@ export const LiveStage: React.FC<LiveStageProps> = ({
             className="ws-arena-tab"
             data-active={stageTab === 'preview' ? 'true' : undefined}
             onClick={() => onStageTabChange('preview')}
-            title="Live View — Xem trực tiếp bản dựng"
+            title="Live View (Ctrl+1)"
           >
-            <Eye size={13} aria-hidden="true" />
+            <IconEye size={13} />
             <span>Live View</span>
           </button>
 
@@ -315,9 +548,9 @@ export const LiveStage: React.FC<LiveStageProps> = ({
             className="ws-arena-tab"
             data-active={stageTab === 'source' ? 'true' : undefined}
             onClick={() => onStageTabChange('source')}
-            title={`Mã nguồn (${project.files.length} tệp)`}
+            title="Mã nguồn (Ctrl+2)"
           >
-            <FileCode2 size={13} aria-hidden="true" />
+            <IconFileCode2 size={13} />
             <span>Mã nguồn</span>
             <span className="ws-arena-tab-count">{project.files.length}</span>
           </button>
@@ -329,79 +562,109 @@ export const LiveStage: React.FC<LiveStageProps> = ({
             className="ws-arena-tab"
             data-active={stageTab === 'review' ? 'true' : undefined}
             onClick={() => onStageTabChange('review')}
-            title="Đối chiếu & Kiểm định 6 lớp"
+            title="Kiểm định Diff"
           >
-            <ShieldCheck size={13} aria-hidden="true" />
-            <span>Kiểm định &amp; Diff</span>
-            <span className="ws-arena-diff-stat">
-              <span className="ws-add">+{totals.added}</span>
-              <span className="ws-del">−{totals.removed}</span>
-            </span>
+            <IconShieldCheck size={13} />
+            <span>Kiểm định</span>
             <span className="ws-arena-tab-count">{checkCount}/{totalCheckCount}</span>
+            {runtimeErrors.length > 0 && (
+              <span className="ws-runtime-count" title="Lỗi runtime">
+                {runtimeErrors.length}
+              </span>
+            )}
           </button>
         </div>
 
         <div className="ws-arena-stage-tools">
-          <div className="ws-vp-pills" role="group" aria-label="Khung nhìn xem trước">
-            {VIEWPORT_OPTIONS.map((option) => (
-              <button
-                key={String(option.value)}
-                type="button"
-                className="ws-vp-pill"
-                aria-pressed={viewport === option.value}
-                aria-label={option.label}
-                title={option.label}
-                onClick={() => handlePickViewport(option.value)}
-              >
-                {option.badge}
-              </button>
-            ))}
-          </div>
+          {stageTab === 'preview' && (
+            <>
+              <div className="ws-vp-pills" role="group" aria-label="Khung nhìn xem trước">
+                {VIEWPORT_OPTIONS.map((option) => (
+                  <button
+                    key={String(option.value)}
+                    type="button"
+                    className="ws-vp-pill"
+                    aria-pressed={viewport === option.value}
+                    aria-label={option.label}
+                    title={option.label}
+                    onClick={() => handlePickViewport(option.value)}
+                  >
+                    {option.badge}
+                  </button>
+                ))}
+              </div>
 
-          <button
-            type="button"
-            className="ws-icon-pill ws-icon-pill--sm"
-            aria-label="Làm mới khung xem trực tiếp"
-            title="Làm mới"
-            onClick={handleRefresh}
-          >
-            <RotateCw size={14} aria-hidden="true" />
-          </button>
+              <button
+                type="button"
+                className="ws-icon-pill ws-icon-pill--sm"
+                aria-label="Làm mới khung xem trực tiếp"
+                title="Làm mới"
+                onClick={handleRefresh}
+              >
+                <IconRotateCw size={14} />
+              </button>
+
+              <button
+                type="button"
+                className="ws-icon-pill ws-icon-pill--sm"
+                aria-label="Mở bản xem trước ở tab mới"
+                title="Tab mới"
+                onClick={openInTab}
+              >
+                <IconExternalLink size={14} />
+              </button>
+            </>
+          )}
 
           {onOpenPublish && (
             <button
               type="button"
               className="ws-stage-action-pill ws-stage-action-pill--accent"
               aria-label="Đăng bản dựng lên Tri thức"
-              title="Đăng lên Tri thức"
+              title="Đăng Tri thức"
               onClick={onOpenPublish}
             >
-              <Share2 size={13} aria-hidden="true" />
+              <IconShare2 size={13} />
               <span>Đăng Tri thức</span>
             </button>
           )}
 
-          <button
-            type="button"
-            className="ws-stage-action-pill"
-            aria-label={exporting ? 'Đang nén gói ZIP' : 'Xuất gói ZIP'}
-            title={exporting ? 'Đang nén gói ZIP...' : 'Xuất ZIP'}
-            disabled={exporting}
-            onClick={onExportZip}
+          <Popover
+            label="Tải xuống"
+            triggerClassName="ws-icon-pill ws-icon-pill--sm"
+            align="right"
+            trigger={<IconDownload size={14} />}
           >
-            <Download size={13} aria-hidden="true" />
-            <span>{exporting ? 'Đang nén...' : 'Export ZIP'}</span>
-          </button>
-
-          <button
-            type="button"
-            className="ws-icon-pill ws-icon-pill--sm"
-            aria-label="Mở bản xem trước ở tab mới"
-            title="Mở tab mới"
-            onClick={openInTab}
-          >
-            <ExternalLink size={14} aria-hidden="true" />
-          </button>
+            {(close) => (
+              <ul className="ws-menu ws-download-menu">
+                <li>
+                  <button
+                    type="button"
+                    className="ws-menu-item"
+                    disabled={exporting}
+                    onClick={() => {
+                      close();
+                      onExportZip();
+                    }}
+                  >
+                    {exporting ? 'Đang nén...' : 'Tải gói ZIP'}
+                  </button>
+                </li>
+                <li>
+                  <button
+                    type="button"
+                    className="ws-menu-item"
+                    onClick={() => {
+                      close();
+                      handleExportHtml();
+                    }}
+                  >
+                    Xuất HTML
+                  </button>
+                </li>
+              </ul>
+            )}
+          </Popover>
 
           <button
             type="button"
@@ -410,22 +673,18 @@ export const LiveStage: React.FC<LiveStageProps> = ({
             title={expanded ? 'Thu nhỏ' : 'Toàn màn hình'}
             onClick={onToggleExpanded}
           >
-            {expanded ? (
-              <Minimize2 size={14} aria-hidden="true" />
-            ) : (
-              <Maximize2 size={14} aria-hidden="true" />
-            )}
+            {expanded ? <IconMinimize2 size={14} /> : <IconMaximize2 size={14} />}
           </button>
 
           {onExitSplit && (
             <button
               type="button"
               className="ws-icon-pill ws-icon-pill--sm"
-              aria-label="Đóng chia đôi để về thẻ gọn"
-              title="Đóng Split-Pane"
+              aria-label="Đóng khung xem trước"
+              title="Đóng"
               onClick={onExitSplit}
             >
-              <X size={14} aria-hidden="true" />
+              <IconX size={14} />
             </button>
           )}
         </div>
@@ -433,19 +692,75 @@ export const LiveStage: React.FC<LiveStageProps> = ({
 
       <div className="ws-stage-body">
         {stageTab === 'preview' &&
-          (hasArtifact ? (
-            <LivePreviewFrame
-              files={project.files}
-              title={project.name}
-              viewport={viewport}
-              reloadNonce={reloadNonce}
-            />
+          (isGenerating && !hasArtifact ? (
+            <div className="ws-stage-skeleton" role="status" aria-busy="true" aria-label="Đang dựng giao diện">
+              <div className="ws-skel-bar" />
+              <div className="ws-skel-hero" />
+              <div className="ws-skel-grid">
+                <div className="ws-skel-card" />
+                <div className="ws-skel-card" />
+              </div>
+              <p className="ws-skel-label">Đang dựng giao diện...</p>
+            </div>
+          ) : hasError && !hasArtifact ? (
+            <div className="ws-stage-error" role="alert">
+              <IconAlertTriangle size={26} />
+              <h3>Không thể sinh bản dựng</h3>
+              <p>Phiên gặp sự cố khi gọi AI hoặc hết hạn mức. Kiểm tra cấu hình BYOK hoặc thử gửi lại yêu cầu.</p>
+              {onRetry && (
+                <button type="button" className="btn btn-line btn-sm" onClick={onRetry}>
+                  Thử lại
+                </button>
+              )}
+            </div>
+          ) : hasArtifact ? (
+            <>
+              <LivePreviewFrame
+                files={project.files}
+                title={project.name}
+                viewport={viewport}
+                reloadNonce={reloadNonce}
+                onRuntimeError={handleRuntimeError}
+              />
+              {runtimeErrors.length > 0 && (
+                <div className="ws-runtime-banner" role="status">
+                  <div className="ws-runtime-banner-info">
+                    <IconAlertTriangle size={14} />
+                    <span className="ws-runtime-banner-msg">
+                      {runtimeErrors[runtimeErrors.length - 1].message}
+                    </span>
+                    <span className="ws-runtime-count">{runtimeErrors.length}</span>
+                  </div>
+                  <div className="ws-runtime-banner-actions">
+                    <button
+                      type="button"
+                      className="btn btn-ghost btn-sm"
+                      onClick={() => {
+                        onReviewTabChange('check');
+                        onStageTabChange('review');
+                      }}
+                    >
+                      Kiểm định
+                    </button>
+                    <button
+                      type="button"
+                      className="ws-icon-pill ws-icon-pill--xs"
+                      aria-label="Xóa log lỗi"
+                      title="Xóa log"
+                      onClick={() => setRuntimeErrors([])}
+                    >
+                      <IconX size={13} />
+                    </button>
+                  </div>
+                </div>
+              )}
+            </>
           ) : (
             <div className="ws-stage-empty" role="status">
-              <Globe size={28} aria-hidden="true" />
+              <IconGlobe size={28} />
               <h3>Chưa có bản dựng web trong phiên này</h3>
               <p>
-                Nhập mô tả giao diện ở khung chat để Agent sinh mã nguồn HTML/CSS/JS. Khung Xem trực tiếp sẽ tự động mở ngay khi tệp web được tạo.
+                Nhập mô tả giao diện ở khung chat để Agent sinh mã nguồn HTML/CSS/JS. Khung Live View sẽ tự động mở ngay khi tệp web được tạo.
               </p>
             </div>
           ))}
@@ -454,6 +769,102 @@ export const LiveStage: React.FC<LiveStageProps> = ({
           <div className="ws-source">
             <div className="ws-source-layout">
               <aside className="ws-source-filebox" aria-label="Danh sách tệp mã nguồn">
+                <div className="ws-source-filehead">
+                  <span className="t-label">Tệp ({project.files.length})</span>
+                  <div className="ws-source-filehead-acts">
+                    <button
+                      type="button"
+                      className="ws-icon-pill ws-icon-pill--xs"
+                      aria-label="Tạo tệp"
+                      title="Tạo tệp"
+                      onClick={() => {
+                        setConfirmDeleteFile(false);
+                        setFileError(null);
+                        setCreatingFile((val) => !val);
+                      }}
+                    >
+                      <IconPlus size={13} />
+                    </button>
+                    <button
+                      type="button"
+                      className="ws-icon-pill ws-icon-pill--xs"
+                      aria-label="Xóa tệp"
+                      title="Xóa tệp"
+                      disabled={project.files.length <= 1 || !onDeleteFile || !activeFile}
+                      onClick={() => {
+                        setCreatingFile(false);
+                        setConfirmDeleteFile((val) => !val);
+                      }}
+                    >
+                      <IconTrash2 size={13} />
+                    </button>
+                  </div>
+                </div>
+
+                {creatingFile && (
+                  <form className="ws-source-create-form" onSubmit={handleCreateFileSubmit}>
+                    <input
+                      type="text"
+                      className="field ws-source-create-input"
+                      aria-label="Nhập tên tệp"
+                      placeholder="Nhập tên tệp..."
+                      value={newFileName}
+                      autoFocus
+                      onChange={(event) => {
+                        setNewFileName(event.target.value);
+                        setFileError(null);
+                      }}
+                      onKeyDown={(event) => {
+                        if (event.key === 'Escape') {
+                          setCreatingFile(false);
+                          setFileError(null);
+                        }
+                      }}
+                    />
+                    <div className="ws-source-create-btns">
+                      <button type="submit" className="btn btn-solid btn-sm">
+                        Tạo
+                      </button>
+                      <button
+                        type="button"
+                        className="btn btn-line btn-sm"
+                        onClick={() => {
+                          setCreatingFile(false);
+                          setFileError(null);
+                        }}
+                      >
+                        Hủy
+                      </button>
+                    </div>
+                    {fileError && <p className="ws-source-file-err">{fileError}</p>}
+                  </form>
+                )}
+
+                {confirmDeleteFile && activeFile && onDeleteFile && (
+                  <div className="ws-source-delete-confirm">
+                    <span className="ws-source-delete-text">Xóa {activeFile.path}?</span>
+                    <div className="ws-source-create-btns">
+                      <button
+                        type="button"
+                        className="btn btn-red btn-sm"
+                        onClick={() => {
+                          onDeleteFile(activeFile.path);
+                          setConfirmDeleteFile(false);
+                        }}
+                      >
+                        Xóa
+                      </button>
+                      <button
+                        type="button"
+                        className="btn btn-line btn-sm"
+                        onClick={() => setConfirmDeleteFile(false)}
+                      >
+                        Hủy
+                      </button>
+                    </div>
+                  </div>
+                )}
+
                 <FileBox
                   title="Tệp dự án"
                   tabs={fileBoxTabs}
@@ -477,16 +888,36 @@ export const LiveStage: React.FC<LiveStageProps> = ({
                     <button
                       type="button"
                       className="ws-icon-pill ws-icon-pill--sm"
-                      aria-label={copiedFile === activeFile?.path ? 'Đã chép mã nguồn' : 'Chép mã nguồn'}
-                      title={copiedFile === activeFile?.path ? 'Đã chép mã' : 'Chép mã nguồn'}
+                      aria-label="Tìm trong mã"
+                      title="Tìm (Ctrl+F)"
+                      aria-pressed={findOpen}
+                      disabled={!activeFile}
+                      onClick={() => {
+                        setFindOpen((val) => {
+                          const next = !val;
+                          if (next) {
+                            window.requestAnimationFrame(() => findInputRef.current?.focus());
+                          }
+                          return next;
+                        });
+                      }}
+                    >
+                      <IconSearch size={14} />
+                    </button>
+
+                    <button
+                      type="button"
+                      className="ws-icon-pill ws-icon-pill--sm"
+                      aria-label={copiedFile === activeFile?.path ? 'Đã chép mã' : 'Chép mã'}
+                      title={copiedFile === activeFile?.path ? 'Đã chép' : 'Sao chép'}
                       disabled={!activeFile}
                       data-active={copiedFile === activeFile?.path ? 'true' : undefined}
                       onClick={() => void handleCopySource()}
                     >
                       {copiedFile === activeFile?.path ? (
-                        <Check size={14} aria-hidden="true" />
+                        <IconCheck size={14} />
                       ) : (
-                        <Copy size={14} aria-hidden="true" />
+                        <IconCopy size={14} />
                       )}
                     </button>
 
@@ -494,27 +925,85 @@ export const LiveStage: React.FC<LiveStageProps> = ({
                       type="button"
                       className="ws-icon-pill ws-icon-pill--sm"
                       aria-label="So sánh Diff"
-                      title="So sánh Diff"
+                      title="Diff"
                       onClick={() => {
                         onReviewTabChange('diff');
                         onStageTabChange('review');
                       }}
                     >
-                      <GitCompareArrows size={14} aria-hidden="true" />
+                      <IconGitCompareArrows size={14} />
                     </button>
                   </div>
                 </div>
 
+                {findOpen && activeFile && (
+                  <div className="ws-find-bar" role="search" aria-label="Tìm trong mã nguồn">
+                    <input
+                      ref={findInputRef}
+                      type="search"
+                      className="field ws-find-input"
+                      aria-label="Tìm trong mã"
+                      placeholder="Tìm trong mã..."
+                      value={findQuery}
+                      onChange={(event) => {
+                        setFindQuery(event.target.value);
+                        setMatchIndex(0);
+                      }}
+                      onKeyDown={(event) => {
+                        if (event.key === 'Escape') {
+                          event.preventDefault();
+                          setFindOpen(false);
+                          editorRef.current?.focus();
+                        } else if (event.key === 'Enter') {
+                          event.preventDefault();
+                          jumpToMatch(event.shiftKey ? safeMatchIndex - 1 : safeMatchIndex + 1);
+                        }
+                      }}
+                    />
+                    <span className="ws-find-count">
+                      {matches.length > 0 ? `${safeMatchIndex + 1}/${matches.length}` : '0/0'}
+                    </span>
+                    <button
+                      type="button"
+                      className="ws-icon-pill ws-icon-pill--xs"
+                      aria-label="Kết quả trước"
+                      title="Trước"
+                      disabled={matches.length === 0}
+                      onClick={() => jumpToMatch(safeMatchIndex - 1)}
+                    >
+                      <IconChevronLeft size={13} />
+                    </button>
+                    <button
+                      type="button"
+                      className="ws-icon-pill ws-icon-pill--xs"
+                      aria-label="Kết quả sau"
+                      title="Tiếp"
+                      disabled={matches.length === 0}
+                      onClick={() => jumpToMatch(safeMatchIndex + 1)}
+                    >
+                      <IconChevronRight size={13} />
+                    </button>
+                    <button
+                      type="button"
+                      className="ws-icon-pill ws-icon-pill--xs"
+                      aria-label="Đóng tìm kiếm"
+                      title="Đóng"
+                      onClick={() => setFindOpen(false)}
+                    >
+                      <IconX size={13} />
+                    </button>
+                  </div>
+                )}
+
                 {activeFile ? (
-                  <div className="ws-source-editor-wrap">
-                    <div className="ws-source-gutter" aria-hidden="true">
-                      {Array.from({ length: lineCount }, (_, index) => (
-                        <span key={index + 1}>{index + 1}</span>
-                      ))}
-                    </div>
+                  <div ref={editorWrapRef} className="ws-source-editor-wrap">
+                    <CodeLineGutter lineCount={lineCount} />
                     <textarea
+                      ref={editorRef}
                       className="ws-source-editor"
                       aria-label={`Trình sửa mã ${activeFile.path}`}
+                      rows={Math.max(20, lineCount)}
+                      wrap="off"
                       value={activeFile.content}
                       onChange={(event) => onUpdateFile(activeFile.path, event.target.value)}
                       spellCheck={false}
@@ -539,6 +1028,8 @@ export const LiveStage: React.FC<LiveStageProps> = ({
             onRunChecks={onRunChecks}
             onCreateSnapshot={onCreateSnapshot}
             onRestoreSnapshot={onRestoreSnapshot}
+            runtimeErrors={runtimeErrors}
+            onClearRuntimeErrors={() => setRuntimeErrors([])}
           />
         )}
       </div>

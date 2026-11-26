@@ -14,7 +14,7 @@ export interface DiffViewerProps {
 
 const VIEW_MODES: Array<{ id: DiffViewMode; label: string }> = [
   { id: 'unified', label: 'Gộp dòng' },
-  { id: 'split', label: 'So sánh 2 cột' },
+  { id: 'split', label: 'Hai cột' },
   { id: 'edit', label: 'Sửa mã' },
 ];
 

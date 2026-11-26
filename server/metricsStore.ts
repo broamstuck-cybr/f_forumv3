@@ -29,6 +29,18 @@ const SESSION_WINDOW_MS = 60_000;
 const SESSION_WINDOW_LIMIT_SECONDS = 60;
 const SESSION_STALE_MS = 10 * 60_000;
 
+const RESERVED_PROTOTYPE_KEYS = new Set([
+  '__proto__',
+  'constructor',
+  'prototype',
+  'toString',
+  'valueOf',
+  'hasOwnProperty',
+  'toLocaleString',
+  'isPrototypeOf',
+  'propertyIsEnumerable',
+]);
+
 interface SessionBucket {
   windowStartMs: number;
   usedSeconds: number;
@@ -43,8 +55,18 @@ interface MetricsState {
   sessions: Record<string, SessionBucket>;
 }
 
-const PRIMARY_FILE = path.resolve(process.cwd(), '.data', 'metrics.json');
 const FALLBACK_FILE = path.resolve('/tmp', 'fforum_metrics.json');
+
+function getPrimaryFile(): string {
+  const customDir = (process.env.FF_DATA_DIR || '').trim();
+  if (customDir) return path.resolve(customDir, 'metrics.json');
+  return path.resolve(process.cwd(), '.data', 'metrics.json');
+}
+
+function getCandidateFiles(): string[] {
+  const customDir = (process.env.FF_DATA_DIR || '').trim();
+  return customDir ? [getPrimaryFile()] : [getPrimaryFile(), FALLBACK_FILE];
+}
 
 let memoryState: MetricsState | null = null;
 
@@ -54,7 +76,7 @@ function createDefaultState(): MetricsState {
     activeSeconds: ACTIVE_SECONDS_BASELINE,
     lastUpdatedAt: new Date().toISOString(),
     visitorIds: [],
-    sessions: {},
+    sessions: Object.create(null) as Record<string, SessionBucket>,
   };
 }
 
@@ -73,10 +95,10 @@ function parseCount(value: unknown, min: number): number | null {
 }
 
 function normalizeSessions(raw: unknown): Record<string, SessionBucket> {
-  if (!raw || typeof raw !== 'object') return {};
-  const sessions: Record<string, SessionBucket> = {};
+  const sessions = Object.create(null) as Record<string, SessionBucket>;
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return sessions;
   for (const [sessionId, value] of Object.entries(raw as Record<string, unknown>)) {
-    if (!sessionId || !value || typeof value !== 'object') continue;
+    if (!sessionId || RESERVED_PROTOTYPE_KEYS.has(sessionId) || !value || typeof value !== 'object') continue;
     const bucket = value as Partial<SessionBucket>;
     if (typeof bucket.windowStartMs !== 'number' || !Number.isFinite(bucket.windowStartMs)) continue;
     if (typeof bucket.lastSeenMs !== 'number' || !Number.isFinite(bucket.lastSeenMs)) continue;
@@ -127,7 +149,7 @@ function readStateFile(filePath: string): MetricsState | null {
 
 function ensureState(): MetricsState {
   if (memoryState) return memoryState;
-  for (const candidate of [PRIMARY_FILE, FALLBACK_FILE]) {
+  for (const candidate of getCandidateFiles()) {
     const parsed = readStateFile(candidate);
     if (parsed) {
       memoryState = parsed;
@@ -140,12 +162,18 @@ function ensureState(): MetricsState {
 
 function persistState(state: MetricsState): void {
   const serialized = JSON.stringify(state);
-  for (const candidate of [PRIMARY_FILE, FALLBACK_FILE]) {
+  for (const candidate of getCandidateFiles()) {
     try {
       fs.mkdirSync(path.dirname(candidate), { recursive: true });
-      fs.writeFileSync(candidate, serialized, 'utf8');
+      const tmpPath = `${candidate}.${process.pid}.tmp`;
+      fs.writeFileSync(tmpPath, serialized, 'utf8');
+      fs.renameSync(tmpPath, candidate);
       return;
-    } catch {
+    } catch (err) {
+      console.error(
+        '[metricsStore] persistState failed:',
+        err instanceof Error ? err.message : String(err)
+      );
       continue;
     }
   }
@@ -153,11 +181,12 @@ function persistState(state: MetricsState): void {
 
 function pruneSessions(state: MetricsState, nowMs: number): void {
   const entries = Object.entries(state.sessions).filter(
-    ([, bucket]) => nowMs - bucket.lastSeenMs <= SESSION_STALE_MS
+    ([sessionId, bucket]) =>
+      !RESERVED_PROTOTYPE_KEYS.has(sessionId) && nowMs - bucket.lastSeenMs <= SESSION_STALE_MS
   );
   if (entries.length === Object.keys(state.sessions).length) return;
 
-  state.sessions = {};
+  state.sessions = Object.create(null) as Record<string, SessionBucket>;
   if (entries.length <= MAX_TRACKED_SESSIONS) {
     for (const [sessionId, bucket] of entries) state.sessions[sessionId] = bucket;
     return;
@@ -175,7 +204,7 @@ export function getSiteMetrics(): SiteMetrics {
 export function recordSiteVisit(visitorId: string): SiteVisitResult {
   const state = ensureState();
   const normalizedId = typeof visitorId === 'string' ? visitorId.trim() : '';
-  if (!normalizedId) {
+  if (!normalizedId || normalizedId.length > 128) {
     return { counted: false, metrics: toSnapshot(state) };
   }
 
@@ -195,7 +224,7 @@ export function recordSiteVisit(visitorId: string): SiteVisitResult {
 export function recordSiteHeartbeat(sessionId: string, deltaSeconds: number): SiteHeartbeatResult {
   const state = ensureState();
   const normalizedSession = typeof sessionId === 'string' ? sessionId.trim() : '';
-  if (!normalizedSession || normalizedSession.length > 128) {
+  if (!normalizedSession || normalizedSession.length > 128 || RESERVED_PROTOTYPE_KEYS.has(normalizedSession)) {
     return {
       ok: false,
       addedSeconds: 0,
@@ -221,7 +250,9 @@ export function recordSiteHeartbeat(sessionId: string, deltaSeconds: number): Si
   const nowMs = Date.now();
   pruneSessions(state, nowMs);
 
-  const previous = state.sessions[normalizedSession];
+  const previous = Object.hasOwn(state.sessions, normalizedSession)
+    ? state.sessions[normalizedSession]
+    : undefined;
   const bucket: SessionBucket =
     !previous || nowMs - previous.windowStartMs >= SESSION_WINDOW_MS
       ? { windowStartMs: nowMs, usedSeconds: 0, lastSeenMs: nowMs }

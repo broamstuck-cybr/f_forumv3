@@ -1,6 +1,6 @@
 import React, { useId, useState } from 'react';
 import { AnimatePresence, LayoutGroup, motion, useReducedMotion, type Transition } from 'motion/react';
-import { ChevronDown } from 'lucide-react';
+import { IconChevronDown } from '../../ui/icons';
 import './liquid-tabs.css';
 
 export interface LiquidTabItem {
@@ -182,7 +182,7 @@ export const LiquidTabsCard: React.FC<LiquidTabsCardProps> = ({
               aria-expanded={menuOpen}
               onClick={() => setMenuOpen((o) => !o)}
             >
-              <ChevronDown className="h-4 w-4" aria-hidden="true" />
+              <IconChevronDown className="h-4 w-4" aria-hidden="true" />
             </button>
           )}
         </div>

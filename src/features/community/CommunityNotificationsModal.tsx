@@ -1,5 +1,11 @@
 import React from 'react';
-import { ArrowBigUp, BarChart3, Check, MessageSquare, X } from 'lucide-react';
+import {
+  IconArrowBigUp,
+  IconBarChart3,
+  IconCheck,
+  IconMessageSquare,
+  IconX,
+} from '../../ui/icons';
 import { Modal } from '../workspace/Modal';
 
 export type CommunityNotificationGroup = 'replies' | 'votes' | 'community';
@@ -58,7 +64,7 @@ export const CommunityNotificationsModal: React.FC<CommunityNotificationsModalPr
                 className="cm-clear-btn"
                 onClick={onMarkAllRead}
               >
-                <Check size={13} aria-hidden="true" />
+                <IconCheck size={13} aria-hidden="true" />
                 <span>Đọc hết</span>
               </button>
             )}
@@ -69,7 +75,7 @@ export const CommunityNotificationsModal: React.FC<CommunityNotificationsModalPr
               title="Đóng"
               onClick={onClose}
             >
-              <X size={16} aria-hidden="true" />
+              <IconX size={16} aria-hidden="true" />
             </button>
           </div>
         </div>
@@ -95,16 +101,17 @@ export const CommunityNotificationsModal: React.FC<CommunityNotificationsModalPr
                         <button
                           type="button"
                           className="cm-notif-row"
+                          data-card-trigger
                           data-unread={!item.read ? 'true' : undefined}
                           onClick={() => onSelectNotification(item)}
                         >
                           <span className="cm-notif-icon" aria-hidden="true">
                             {item.group === 'replies' ? (
-                              <MessageSquare size={15} />
+                              <IconMessageSquare size={15} />
                             ) : item.group === 'votes' ? (
-                              <ArrowBigUp size={16} />
+                              <IconArrowBigUp size={16} />
                             ) : (
-                              <BarChart3 size={15} />
+                              <IconBarChart3 size={15} />
                             )}
                           </span>
                           <span className="cm-notif-copy">

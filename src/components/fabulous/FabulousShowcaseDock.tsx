@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
-import { Layers, Play, Sparkles, Video, X } from 'lucide-react';
+import { IconLayers, IconPlay, IconSparkles, IconVideo, IconX } from '../../ui/icons';
 import fabulousManifest from '../../data/fabulousManifest.json';
 import { useAppStore } from '../../store/appStore';
 import { triggerPinuiThemeToggle } from '../layout/GlobalThemeAtmosphere';
@@ -96,14 +96,14 @@ const AssetCard: React.FC<{
           <img src={item.img} alt={item.title} loading="lazy" className="fab-asset-img" />
         ) : (
           <div className="fab-asset-fallback" aria-hidden="true">
-            {item.vid ? <Video size={18} /> : <Sparkles size={18} />}
+            {item.vid ? <IconVideo size={18} /> : <IconSparkles size={18} />}
             <span>{item.library}</span>
           </div>
         )}
         <span className="fab-asset-badge">{item.library}</span>
         {item.vid && (
           <span className="fab-asset-vid-tag" aria-hidden="true">
-            <Play size={10} />
+            <IconPlay size={10} />
           </span>
         )}
       </div>
@@ -248,7 +248,7 @@ export const FabulousShowcaseDock: React.FC = () => {
             aria-label="Mở kho 200 tài nguyên Fabulous Studio"
           >
             <span className="fab-studio-dot" aria-hidden="true" />
-            <Sparkles size={14} aria-hidden="true" />
+            <IconSparkles size={14} aria-hidden="true" />
             <span>Fabulous · {FABULOUS_TOTAL_COUNT}</span>
           </button>
 
@@ -259,9 +259,9 @@ export const FabulousShowcaseDock: React.FC = () => {
             onClick={handleToggleQuickAtmosphere}
             aria-label={activeAtmosphere ? `Tắt nền ${activeAtmosphere.title}` : 'Bật lớp nền 3D / Glacier'}
           >
-            <Layers size={13} aria-hidden="true" />
+            <IconLayers size={13} aria-hidden="true" />
             <span>{activeAtmosphere ? activeAtmosphere.title : 'Nền 3D / Glacier'}</span>
-            {activeAtmosphere && <X size={13} aria-hidden="true" />}
+            {activeAtmosphere && <IconX size={13} aria-hidden="true" />}
           </button>
         </div>
 
@@ -293,7 +293,7 @@ export const FabulousShowcaseDock: React.FC = () => {
                   onClick={() => setOpen(false)}
                   aria-label="Đóng Fabulous Studio"
                 >
-                  <X size={18} />
+                  <IconX size={18} />
                 </button>
               </header>
 

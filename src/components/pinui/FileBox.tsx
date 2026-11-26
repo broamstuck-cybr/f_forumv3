@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion, useReducedMotion } from 'motion/react';
-import { ArrowUpRight, FolderOpen } from 'lucide-react';
+import { IconArrowUpRight, IconFolderOpen } from '../../ui/icons';
 
 export interface FileBoxTab {
   id: string;
@@ -37,7 +37,7 @@ export const FileBox: React.FC<FileBoxProps> = ({
     <div className={`pfbox-card ${className}`}>
       <div className="flex items-center justify-between gap-2 mb-3">
         <div className="flex items-center gap-2 min-w-0">
-          <FolderOpen className="h-4 w-4 shrink-0" style={{ color: 'var(--accent-primary)' }} aria-hidden="true" />
+          <IconFolderOpen className="h-4 w-4 shrink-0" style={{ color: 'var(--accent-primary)' }} aria-hidden="true" />
           <h4 className="text-[13.5px] font-semibold truncate" style={{ color: 'var(--ink-primary)' }}>
             {title}
           </h4>
@@ -97,7 +97,7 @@ export const FileBox: React.FC<FileBoxProps> = ({
                       color: 'var(--ink-secondary)',
                     }}
                   >
-                    <ArrowUpRight className="h-3.5 w-3.5" aria-hidden="true" />
+                    <IconArrowUpRight className="h-3.5 w-3.5" aria-hidden="true" />
                   </button>
                 )}
               </div>

@@ -1,6 +1,6 @@
 import React, { useRef, useState, type ChangeEvent, type DragEvent } from 'react';
 import { motion, useReducedMotion } from 'motion/react';
-import { Check, Upload } from 'lucide-react';
+import { IconCheck, IconUpload } from '../../ui/icons';
 
 export interface DroppedFilePayload {
   name: string;
@@ -158,9 +158,9 @@ export const DynamicDropZone: React.FC<DynamicDropZoneProps> = ({
           }}
         >
           {phase === 'done' ? (
-            <Check className="h-4 w-4" aria-hidden="true" />
+            <IconCheck className="h-4 w-4" aria-hidden="true" />
           ) : (
-            <Upload className="h-4 w-4" aria-hidden="true" />
+            <IconUpload className="h-4 w-4" aria-hidden="true" />
           )}
         </span>
         <div className="text-left min-w-0 flex-1">

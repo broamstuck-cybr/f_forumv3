@@ -5,8 +5,8 @@
   --ink: #000000;
   --ink-80: rgba(0, 0, 0, 0.8);
   --ink-soft: #666666;
-  --blue: #008bff;
-  --blue-pill: #249cff;
+  --blue: #0066cc;
+  --blue-pill: #0066cc;
   --blue-line: #84c7ff;
   --blue-line-2: #65b9ff;
   --ice: #e5f3ff;
@@ -465,9 +465,7 @@
     border-radius: 999px;
     background: rgba(0, 0, 0, 0.14);
     cursor: pointer;
-    transition:
-      width 0.4s cubic-bezier(0.16, 1, 0.3, 1),
-      background-color 0.3s ease;
+    transition: background-color 0.3s ease;
   }
   
   .op-pricing__dot::after {

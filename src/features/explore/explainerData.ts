@@ -234,7 +234,6 @@ function buildInstallCommandForTool(item: ResourceItem): string {
   if (item.id === 'res-tailwind-css') return 'npm install tailwindcss @tailwindcss/vite';
   if (item.id === 'res-threejs-core') return 'npm install three @types/three';
   if (item.id === 'res-framer-motion') return 'npm install motion';
-  if (item.id === 'res-lucide-icons') return 'npm install lucide-react';
   if (item.id === 'res-vite-bundler') return 'npm create vite@latest my-app -- --template react-ts';
   if (item.id === 'res-playwright-test') return 'npm init playwright@latest';
   if (item.id === 'res-ollama-local') return 'curl -fsSL https://ollama.com/install.sh | sh && ollama run qwen2.5-coder';

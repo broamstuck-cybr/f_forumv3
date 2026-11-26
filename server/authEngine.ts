@@ -27,14 +27,36 @@ export interface StoredUserRecord {
   role: 'user' | 'admin';
   bio: string;
   createdAt: string;
+  tokenVersion?: number;
 }
 
 interface PersistedAuthData {
   users: Record<string, StoredUserRecord>;
+  revokedTokens?: Record<string, number>;
 }
 
-const memoryUsers: Record<string, StoredUserRecord> = {};
+const memoryUsers: Record<string, StoredUserRecord> = Object.create(null) as Record<
+  string,
+  StoredUserRecord
+>;
+const memoryRevokedTokens: Record<string, number> = Object.create(null) as Record<string, number>;
+let revokedLoaded = false;
 const fallbackEphemeralSecret = crypto.randomBytes(32).toString('hex');
+let warnedMissingSecret = false;
+
+function isProdCookie(): boolean {
+  return process.env.NODE_ENV === 'production' || process.env.VERCEL === '1';
+}
+
+function getSessionSecret(): string {
+  ensureLocalEnvLoaded();
+  const configured = (process.env.SESSION_SECRET || '').trim();
+  if (!configured && isProdCookie() && !warnedMissingSecret) {
+    warnedMissingSecret = true;
+    console.error('[SECURITY] SESSION_SECRET is missing in production environment.');
+  }
+  return configured || fallbackEphemeralSecret;
+}
 
 function toUserRow(rec: StoredUserRecord): Record<string, unknown> {
   return {
@@ -71,30 +93,80 @@ function fromUserRow(row: Record<string, unknown>): StoredUserRecord | null {
 }
 
 registerHydrator('users', async () => {
-  const rows = await sbSelect<Record<string, unknown>>('ff_users', 'select=*');
+  const [rows, revokedRows] = await Promise.all([
+    sbSelect<Record<string, unknown>>('ff_users', 'select=*'),
+    sbSelect<Record<string, unknown>>('ff_admin_config', 'select=*&key=eq.revokedTokens'),
+  ]);
   for (const row of rows) {
     const parsed = fromUserRow(row);
     if (parsed) {
       memoryUsers[parsed.id] = parsed;
     }
   }
+  const revRow = revokedRows[0];
+  if (revRow && revRow.value && typeof revRow.value === 'object') {
+    const now = Date.now();
+    for (const [k, exp] of Object.entries(revRow.value as Record<string, unknown>)) {
+      if (typeof exp === 'number' && exp > now) {
+        memoryRevokedTokens[k] = exp;
+      }
+    }
+  }
+  revokedLoaded = true;
 });
-
-function getSessionSecret(): string {
-  ensureLocalEnvLoaded();
-  return process.env.SESSION_SECRET || fallbackEphemeralSecret;
-}
 
 function getUsersMap(): Record<string, StoredUserRecord> {
   if (!isSupabaseEnabled()) {
     const persisted = readLocalSection<PersistedAuthData>('authStore', { users: {} });
     for (const [id, rec] of Object.entries(persisted.users || {})) {
-      if (!memoryUsers[id]) {
+      if (!Object.hasOwn(memoryUsers, id)) {
         memoryUsers[id] = rec;
       }
     }
+    if (!revokedLoaded && persisted.revokedTokens && typeof persisted.revokedTokens === 'object') {
+      const now = Date.now();
+      for (const [k, exp] of Object.entries(persisted.revokedTokens)) {
+        if (typeof exp === 'number' && exp > now) {
+          memoryRevokedTokens[k] = exp;
+        }
+      }
+      revokedLoaded = true;
+    }
   }
   return memoryUsers;
+}
+
+function getRevokedTokensMap(): Record<string, number> {
+  getUsersMap();
+  const now = Date.now();
+  for (const [k, exp] of Object.entries(memoryRevokedTokens)) {
+    if (exp <= now) {
+      delete memoryRevokedTokens[k];
+    }
+  }
+  return memoryRevokedTokens;
+}
+
+function hashTokenForRevocation(rawToken: string): string {
+  return crypto.createHash('sha256').update(rawToken).digest('hex').slice(0, 32);
+}
+
+function saveRevokedTokens(): void {
+  const map = getRevokedTokensMap();
+  if (isSupabaseEnabled()) {
+    enqueueWrite(
+      sbUpsert(
+        'ff_admin_config',
+        [{ key: 'revokedTokens', value: map, updated_at: new Date().toISOString() }],
+        'key'
+      )
+    );
+    return;
+  }
+  writeLocalSection<PersistedAuthData>('authStore', {
+    users: memoryUsers,
+    revokedTokens: map,
+  });
 }
 
 function saveUserRecord(record: StoredUserRecord): void {
@@ -102,7 +174,10 @@ function saveUserRecord(record: StoredUserRecord): void {
     enqueueWrite(sbUpsert('ff_users', [toUserRow(record)], 'id'));
     return;
   }
-  writeLocalSection<PersistedAuthData>('authStore', { users: memoryUsers });
+  writeLocalSection<PersistedAuthData>('authStore', {
+    users: memoryUsers,
+    revokedTokens: getRevokedTokensMap(),
+  });
 }
 
 export function hashPassword(password: string, existingSalt?: string): string {
@@ -114,7 +189,7 @@ export function hashPassword(password: string, existingSalt?: string): string {
 export function verifyPasswordHash(password: string, storedHash: string): boolean {
   if (!storedHash || !storedHash.includes(':')) return false;
   const [salt, keyHex] = storedHash.split(':');
-  if (!salt || !keyHex) return false;
+  if (!salt || !keyHex || !/^[0-9a-f]+$/i.test(keyHex) || keyHex.length !== 128) return false;
   const derived = crypto.scryptSync(password, salt, 64);
   const storedBuf = Buffer.from(keyHex, 'hex');
   if (derived.length !== storedBuf.length) return false;
@@ -133,6 +208,8 @@ interface SessionPayload {
   username: string;
   role: 'user' | 'admin';
   exp: number;
+  jti?: string;
+  tokenVersion?: number;
 }
 
 export function signSessionToken(payload: SessionPayload): string {
@@ -172,7 +249,12 @@ export function parseCookies(cookieHeader: string | undefined): Record<string, s
     if (idx <= 0) continue;
     const k = part.slice(0, idx).trim();
     const v = part.slice(idx + 1).trim();
-    if (k) out[k] = decodeURIComponent(v);
+    if (!k) continue;
+    try {
+      out[k] = decodeURIComponent(v);
+    } catch {
+      out[k] = v;
+    }
   }
   return out;
 }
@@ -191,42 +273,137 @@ function appendSetCookie(res: ServerResponse, cookieValue: string): void {
 }
 
 export function setAuthCookies(res: ServerResponse, user: User): string {
+  const users = getUsersMap();
+  const stored = Object.hasOwn(users, user.id) ? users[user.id] : undefined;
   const token = signSessionToken({
     userId: user.id,
     username: user.username,
     role: user.role,
     exp: Date.now() + SESSION_TTL_SECONDS * 1000,
+    jti: crypto.randomBytes(8).toString('hex'),
+    tokenVersion: stored?.tokenVersion ?? 0,
   });
-  const secureFlag = process.env.NODE_ENV === 'production' ? '; Secure' : '';
+  const secureFlag = isProdCookie() ? '; Secure' : '';
   const cookie = `${SESSION_COOKIE_NAME}=${encodeURIComponent(token)}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${SESSION_TTL_SECONDS}${secureFlag}`;
   appendSetCookie(res, cookie);
   return token;
 }
 
+export function extractRequestSessionToken(req: IncomingMessage): string {
+  const cookies = parseCookies(req.headers.cookie);
+  const authHeader = req.headers.authorization;
+  const bearerToken =
+    typeof authHeader === 'string' && authHeader.startsWith('Bearer ')
+      ? authHeader.slice(7).trim()
+      : '';
+  return cookies[SESSION_COOKIE_NAME] || bearerToken;
+}
+
+export function revokeSessionFromRequest(req: IncomingMessage): void {
+  const rawToken = extractRequestSessionToken(req);
+  if (!rawToken) return;
+  const payload = verifySessionToken(rawToken);
+  if (!payload) return;
+  const revoked = getRevokedTokensMap();
+  const tokenKey = payload.jti || hashTokenForRevocation(rawToken);
+  revoked[tokenKey] = payload.exp;
+  saveRevokedTokens();
+}
+
 export function clearAuthCookies(res: ServerResponse): void {
-  const cookie = `${SESSION_COOKIE_NAME}=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0`;
+  const secureFlag = isProdCookie() ? '; Secure' : '';
+  const cookie = `${SESSION_COOKIE_NAME}=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0${secureFlag}`;
   appendSetCookie(res, cookie);
+}
+
+export function resolveTrustProxy(): number | false {
+  const raw = (process.env.TRUST_PROXY || '').trim().toLowerCase();
+  if (raw === '0' || raw === 'false') return false;
+  if (raw === '1' || raw === 'true') return 1;
+  const hops = Number(raw);
+  if (Number.isInteger(hops) && hops > 0 && hops <= 10) return hops;
+  if (process.env.VERCEL === '1') return 1;
+  if (process.env.NODE_ENV === 'test') return 1;
+  return false;
+}
+
+export function getClientIp(req: IncomingMessage): string {
+  if (process.env.VERCEL === '1') {
+    const vercelHeader = req.headers['x-vercel-forwarded-for'];
+    const rawVercel = Array.isArray(vercelHeader) ? vercelHeader[0] : vercelHeader;
+    const cleanVercel = typeof rawVercel === 'string' ? rawVercel.split(',')[0].trim() : '';
+    if (cleanVercel) return cleanVercel;
+  }
+
+  const trustProxy = resolveTrustProxy();
+  if (trustProxy !== false) {
+    const expressIp = (req as { ip?: string }).ip;
+    if (expressIp && expressIp.trim()) return expressIp.trim();
+
+    if (process.env.NODE_ENV === 'test') {
+      const forwarded = req.headers['x-forwarded-for'];
+      const rawForwarded = Array.isArray(forwarded) ? forwarded[0] : forwarded;
+      const cleanForwarded = typeof rawForwarded === 'string' ? rawForwarded.split(',')[0].trim() : '';
+      if (cleanForwarded) return cleanForwarded;
+    }
+  }
+
+  return (req.socket?.remoteAddress || '127.0.0.1').trim();
+}
+
+export function getClientIpHash(req: IncomingMessage): string {
+  return crypto
+    .createHmac('sha256', getSessionSecret())
+    .update(`ip:${getClientIp(req)}`)
+    .digest('hex')
+    .slice(0, 24);
+}
+
+function signGuestId(gid: string, ipHash: string): string {
+  return crypto
+    .createHmac('sha256', getSessionSecret())
+    .update(`guest:${gid}:${ipHash}`)
+    .digest('hex')
+    .slice(0, 24);
 }
 
 export function resolveGuestSessionId(req: IncomingMessage, res?: ServerResponse): string {
   const cookies = parseCookies(req.headers.cookie);
-  if (cookies[GUEST_COOKIE_NAME]) {
-    return cookies[GUEST_COOKIE_NAME];
+  const ipHash = getClientIpHash(req);
+  const rawCookie = cookies[GUEST_COOKIE_NAME];
+  if (rawCookie && rawCookie.includes('.')) {
+    const [gid, sig] = rawCookie.split('.');
+    if (gid && sig && /^[a-f0-9]{16,32}$/i.test(gid)) {
+      const expected = signGuestId(gid, ipHash);
+      if (safeCompareStrings(sig, expected)) {
+        return gid;
+      }
+    }
   }
-  const headerGuest = req.headers['x-ff-guest-id'];
-  if (typeof headerGuest === 'string' && headerGuest.trim().length >= 6) {
-    return headerGuest.trim().slice(0, 64);
-  }
-  const forwarded = req.headers['x-forwarded-for'];
-  const ip = typeof forwarded === 'string'
-    ? forwarded.split(',')[0].trim()
-    : req.socket?.remoteAddress || 'local-guest';
-  const generated = crypto.createHash('sha256').update(ip).digest('hex').slice(0, 20);
+  const gid = ipHash;
+  const sig = signGuestId(gid, ipHash);
   if (res) {
-    const cookie = `${GUEST_COOKIE_NAME}=${encodeURIComponent(generated)}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${SESSION_TTL_SECONDS}`;
+    const secureFlag = isProdCookie() ? '; Secure' : '';
+    const cookie = `${GUEST_COOKIE_NAME}=${encodeURIComponent(`${gid}.${sig}`)}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${SESSION_TTL_SECONDS}${secureFlag}`;
     appendSetCookie(res, cookie);
   }
-  return generated;
+  return gid;
+}
+
+export type SafeClientUser = Omit<User, 'email' | 'scopedClubIds'>;
+
+export function toSafeClientUser(user: User): SafeClientUser {
+  return {
+    id: user.id,
+    username: user.username,
+    name: user.name,
+    role: user.role,
+    avatar: user.avatar,
+    bio: user.bio,
+    createdAt: user.createdAt,
+    level: user.level,
+    xp: user.xp,
+  };
 }
 
 function toPublicUser(rec: StoredUserRecord): User {
@@ -262,24 +439,31 @@ export function getEnvAdminUser(): User {
 }
 
 export function getAuthenticatedUser(req: IncomingMessage): User | null {
-  const cookies = parseCookies(req.headers.cookie);
-  const authHeader = req.headers.authorization;
-  const bearerToken = typeof authHeader === 'string' && authHeader.startsWith('Bearer ')
-    ? authHeader.slice(7).trim()
-    : '';
-  const rawToken = cookies[SESSION_COOKIE_NAME] || bearerToken;
+  const rawToken = extractRequestSessionToken(req);
   if (!rawToken) return null;
 
   const payload = verifySessionToken(rawToken);
   if (!payload) return null;
+
+  const revoked = getRevokedTokensMap();
+  const tokenKey = payload.jti || hashTokenForRevocation(rawToken);
+  if (Object.hasOwn(revoked, tokenKey)) {
+    return null;
+  }
 
   if (payload.userId === 'sys-admin-root' && payload.role === 'admin') {
     return getEnvAdminUser();
   }
 
   const users = getUsersMap();
-  const found = users[payload.userId];
+  const found = Object.hasOwn(users, payload.userId) ? users[payload.userId] : undefined;
   if (!found) return null;
+  if (
+    typeof payload.tokenVersion === 'number' &&
+    payload.tokenVersion !== (found.tokenVersion ?? 0)
+  ) {
+    return null;
+  }
   return toPublicUser(found);
 }
 
@@ -294,14 +478,20 @@ export function registerStandardUser(input: {
   const password = input.password || '';
   const name = (input.name || input.username || '').trim();
 
-  if (username.length < 3 || !/^[a-z0-9_.-]+$/.test(username)) {
-    return { ok: false, error: 'Username phải từ 3 ký tự và chỉ gồm chữ thường, số, dấu gạch.' };
+  if (username.length < 3 || username.length > 40 || !/^[a-z0-9_.-]+$/.test(username)) {
+    return {
+      ok: false,
+      error: 'Username phải từ 3 đến 40 ký tự và chỉ gồm chữ thường, số, dấu gạch.',
+    };
   }
-  if (!email.includes('@') || email.length < 5) {
+  if (name.length > 80) {
+    return { ok: false, error: 'Tên hiển thị tối đa 80 ký tự.' };
+  }
+  if (!email.includes('@') || email.length < 5 || email.length > 160) {
     return { ok: false, error: 'Email không hợp lệ.' };
   }
-  if (password.length < 6) {
-    return { ok: false, error: 'Mật khẩu phải từ 6 ký tự trở lên.' };
+  if (password.length < 6 || password.length > 128) {
+    return { ok: false, error: 'Mật khẩu phải từ 6 đến 128 ký tự.' };
   }
 
   const envAdminUsername = (process.env.ADMIN_USERNAME || 'admin').trim().toLowerCase();
@@ -342,15 +532,15 @@ export function loginStandardUser(input: {
 }): { ok: true; user: User } | { ok: false; error: string } {
   const identifier = (input.identifier || '').trim().toLowerCase();
   const password = input.password || '';
-  if (!identifier || !password) {
-    return { ok: false, error: 'Vui lòng nhập đầy đủ tài khoản và mật khẩu.' };
+  if (!identifier || !password || identifier.length > 160 || password.length > 128) {
+    return { ok: false, error: 'Vui lòng nhập đầy đủ tài khoản và mật khẩu hợp lệ.' };
   }
 
   const users = getUsersMap();
   const matched = Object.values(users).find(
     (u) => u.username.toLowerCase() === identifier || u.email.toLowerCase() === identifier
   );
-  if (!matched || !verifyPasswordHash(password, matched.passwordHash)) {
+  if (!matched || matched.role === 'admin' || !verifyPasswordHash(password, matched.passwordHash)) {
     return { ok: false, error: 'Thông tin đăng nhập không chính xác.' };
   }
 
@@ -364,6 +554,9 @@ export function loginAdminUser(input: {
   ensureLocalEnvLoaded();
   const username = (input.username || '').trim();
   const password = input.password || '';
+  if (!username || !password || username.length > 160 || password.length > 128) {
+    return { ok: false, error: 'Thông tin xác thực Admin không hợp lệ.' };
+  }
   const expectedUsername = (process.env.ADMIN_USERNAME || '').trim();
   const configuredHash = (process.env.ADMIN_PASSWORD_HASH || '').trim();
   const bootstrapPassword = (process.env.ADMIN_BOOTSTRAP_PASSWORD || '').trim();
@@ -372,7 +565,12 @@ export function loginAdminUser(input: {
     if (configuredHash && verifyPasswordHash(password, configuredHash)) {
       return { ok: true, user: getEnvAdminUser() };
     }
-    if (bootstrapPassword && safeCompareStrings(password, bootstrapPassword)) {
+    if (
+      process.env.NODE_ENV !== 'production' &&
+      !configuredHash &&
+      bootstrapPassword &&
+      safeCompareStrings(password, bootstrapPassword)
+    ) {
       return { ok: true, user: getEnvAdminUser() };
     }
   }
@@ -391,6 +589,98 @@ export function loginAdminUser(input: {
   return { ok: false, error: 'Thông tin xác thực Admin không hợp lệ.' };
 }
 
+const LOGIN_LOCKOUT_WINDOW_MS = 15 * 60_000;
+const MAX_LOGIN_FAILURE_KEYS = 5000;
+const MAX_TIMESTAMPS_PER_KEY = 20;
+const MAX_LOCKOUT_IDENTIFIER_LEN = 120;
+const loginFailures = new Map<string, number[]>();
+
+function buildLockoutKeys(scope: 'user' | 'admin', ipHash: string, identifier: string): string[] {
+  const keys = [`${scope}:ip:${ipHash}`];
+  const cleanId = identifier.trim().toLowerCase().slice(0, MAX_LOCKOUT_IDENTIFIER_LEN);
+  if (cleanId) keys.push(`${scope}:ip:${ipHash}:id:${cleanId}`);
+  return keys;
+}
+
+function pruneLoginFailures(now: number): void {
+  if (loginFailures.size < MAX_LOGIN_FAILURE_KEYS) return;
+  for (const [key, timestamps] of loginFailures.entries()) {
+    const fresh = timestamps.filter((ts) => now - ts < LOGIN_LOCKOUT_WINDOW_MS);
+    if (fresh.length === 0) {
+      loginFailures.delete(key);
+    } else {
+      loginFailures.set(key, fresh.slice(-MAX_TIMESTAMPS_PER_KEY));
+    }
+  }
+  if (loginFailures.size >= MAX_LOGIN_FAILURE_KEYS) {
+    for (const oldestKey of loginFailures.keys()) {
+      loginFailures.delete(oldestKey);
+      if (loginFailures.size < MAX_LOGIN_FAILURE_KEYS) break;
+    }
+  }
+}
+
+export function getLoginFailuresSizeForTest(): number {
+  return loginFailures.size;
+}
+
+export function checkLoginLockout(
+  scope: 'user' | 'admin',
+  ipHash: string,
+  identifier: string
+): { locked: boolean; retryAfterSec: number } {
+  const maxFailures = scope === 'admin' ? 5 : 10;
+  const now = Date.now();
+  const keys = buildLockoutKeys(scope, ipHash, identifier);
+
+  let maxRetrySec = 0;
+  let locked = false;
+  for (const key of keys) {
+    const list = (loginFailures.get(key) || [])
+      .filter((ts) => now - ts < LOGIN_LOCKOUT_WINDOW_MS)
+      .slice(-MAX_TIMESTAMPS_PER_KEY);
+    if (list.length === 0) {
+      loginFailures.delete(key);
+    } else {
+      loginFailures.set(key, list);
+    }
+    if (list.length >= maxFailures) {
+      locked = true;
+      const oldest = list[0] || now;
+      maxRetrySec = Math.max(maxRetrySec, Math.ceil((oldest + LOGIN_LOCKOUT_WINDOW_MS - now) / 1000));
+    }
+  }
+  return { locked, retryAfterSec: maxRetrySec };
+}
+
+export function recordLoginFailure(
+  scope: 'user' | 'admin',
+  ipHash: string,
+  identifier: string
+): void {
+  const now = Date.now();
+  const keys = buildLockoutKeys(scope, ipHash, identifier);
+  for (const key of keys) {
+    const list = (loginFailures.get(key) || []).filter((ts) => now - ts < LOGIN_LOCKOUT_WINDOW_MS);
+    list.push(now);
+    loginFailures.delete(key);
+    if (loginFailures.size >= MAX_LOGIN_FAILURE_KEYS) {
+      pruneLoginFailures(now);
+    }
+    loginFailures.set(key, list.slice(-MAX_TIMESTAMPS_PER_KEY));
+  }
+}
+
+export function clearLoginFailures(
+  scope: 'user' | 'admin',
+  ipHash: string,
+  identifier: string
+): void {
+  for (const key of buildLockoutKeys(scope, ipHash, identifier)) {
+    loginFailures.delete(key);
+  }
+}
+
 export function listAllUsers(): User[] {
   const users = getUsersMap();
   const list = Object.values(users).map(toPublicUser);
@@ -402,9 +692,10 @@ export function toggleUserRole(userId: string): User | null {
     return getEnvAdminUser();
   }
   const users = getUsersMap();
-  const target = users[userId];
+  const target = Object.hasOwn(users, userId) ? users[userId] : undefined;
   if (!target) return null;
   target.role = target.role === 'admin' ? 'user' : 'admin';
+  target.tokenVersion = (target.tokenVersion ?? 0) + 1;
   saveUserRecord(target);
   return toPublicUser(target);
 }
@@ -475,11 +766,14 @@ export function loginOrRegisterGoogleUser(profile: {
   name: string;
   sub: string;
   picture?: string;
-}): { ok: true; user: User; isNew: boolean } {
+}): { ok: true; user: User; isNew: boolean } | { ok: false; error: string } {
   const email = profile.email.trim().toLowerCase();
   const users = getUsersMap();
   const existing = Object.values(users).find((u) => u.email.toLowerCase() === email);
   if (existing) {
+    if (existing.role === 'admin') {
+      return { ok: false, error: 'Tài khoản quản trị phải đăng nhập qua cổng Admin.' };
+    }
     if (profile.name && existing.name !== profile.name) {
       existing.name = profile.name;
       saveUserRecord(existing);

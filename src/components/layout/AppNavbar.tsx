@@ -1,6 +1,14 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
-import { Bell, Compass, Home, Menu, Plus, User as UserIcon, X } from 'lucide-react';
+import {
+  IconBell,
+  IconCompass,
+  IconHome,
+  IconMenu,
+  IconPlus,
+  IconUser,
+  IconX,
+} from '../../ui/icons';
 import type { AppRoute } from '../../types/index';
 import { useAppStore } from '../../store/appStore';
 import { KineticLogo } from '../brand/KineticLogo';
@@ -197,7 +205,7 @@ export const AppNavbar: React.FC<AppNavbarProps> = () => {
             data-theme-state={theme}
             onClick={(event) => triggerPinuiThemeToggle(event.currentTarget)}
             aria-label={themeToggleLabel}
-            title={themeToggleLabel}
+            title={theme === 'dark' ? 'Chế độ sáng' : 'Chế độ tối'}
           >
             <svg className="nav__ptsIcon nav__ptsIcon--moon" width="19" height="19" viewBox="0 0 24 24" fill="none" aria-hidden="true">
               <path
@@ -267,11 +275,6 @@ export const AppNavbar: React.FC<AppNavbarProps> = () => {
                     <button type="button" className="nav__menuItem" onClick={() => go('settings')}>
                       Cài đặt
                     </button>
-                    {isAdmin && (
-                      <button type="button" className="nav__menuItem" onClick={() => go('admin')}>
-                        Quản trị
-                      </button>
-                    )}
                     {currentUser ? (
                       <button type="button" className="nav__menuItem" data-tone="red" onClick={signOut}>
                         Đăng xuất
@@ -296,7 +299,7 @@ export const AppNavbar: React.FC<AppNavbarProps> = () => {
             title="Mở menu"
             aria-expanded={sheetOpen}
           >
-            <Menu size={20} strokeWidth={1.75} aria-hidden="true" />
+            <IconMenu size={20} strokeWidth={1.75} aria-hidden="true" />
           </button>
         </div>
       </div>
@@ -331,7 +334,7 @@ export const AppNavbar: React.FC<AppNavbarProps> = () => {
                 aria-label="Đóng menu"
                 title="Đóng menu"
               >
-                <X size={20} strokeWidth={1.75} aria-hidden="true" />
+                <IconX size={20} strokeWidth={1.75} aria-hidden="true" />
               </button>
             </div>
             <ul className="navsheet__list">
@@ -376,7 +379,7 @@ export const AppNavbar: React.FC<AppNavbarProps> = () => {
                     data-theme-state={theme}
                     onClick={(event) => triggerPinuiThemeToggle(event.currentTarget)}
                     aria-label={themeToggleLabel}
-                    title={themeToggleLabel}
+                    title={theme === 'dark' ? 'Chế độ sáng' : 'Chế độ tối'}
                   >
                     <svg className="nav__ptsIcon nav__ptsIcon--moon" width="19" height="19" viewBox="0 0 24 24" fill="none" aria-hidden="true">
                       <path
@@ -410,11 +413,6 @@ export const AppNavbar: React.FC<AppNavbarProps> = () => {
                 <button type="button" className="btn btn-line" onClick={() => go('settings')}>
                   Cài đặt
                 </button>
-                {isAdmin && (
-                  <button type="button" className="btn btn-line" onClick={() => go('admin')}>
-                    Quản trị
-                  </button>
-                )}
                 {currentUser ? (
                   <button type="button" className="btn btn-ghost" onClick={signOut}>
                     Đăng xuất
@@ -438,7 +436,7 @@ export const AppNavbar: React.FC<AppNavbarProps> = () => {
         aria-current={currentRoute === 'home' ? 'page' : undefined}
         onClick={() => go('home')}
       >
-        <Home size={18} strokeWidth={1.85} aria-hidden="true" />
+        <IconHome size={18} strokeWidth={1.85} aria-hidden="true" />
         <span>Trang chủ</span>
       </button>
 
@@ -448,7 +446,7 @@ export const AppNavbar: React.FC<AppNavbarProps> = () => {
         aria-current={currentRoute === 'explore' || currentRoute === 'experience' ? 'page' : undefined}
         onClick={() => go('explore')}
       >
-        <Compass size={18} strokeWidth={1.85} aria-hidden="true" />
+        <IconCompass size={18} strokeWidth={1.85} aria-hidden="true" />
         <span>Khám phá</span>
       </button>
 
@@ -470,7 +468,7 @@ export const AppNavbar: React.FC<AppNavbarProps> = () => {
         }}
       >
         <span className="mobile-bnav__compose-badge" aria-hidden="true">
-          <Plus size={18} strokeWidth={2.2} />
+          <IconPlus size={18} strokeWidth={2.2} />
         </span>
         <span>Đăng bài</span>
       </button>
@@ -494,7 +492,7 @@ export const AppNavbar: React.FC<AppNavbarProps> = () => {
         }}
       >
         <span className="mobile-bnav__icon-wrap" aria-hidden="true">
-          <Bell size={18} strokeWidth={1.85} />
+          <IconBell size={18} strokeWidth={1.85} />
           {unreadCount > 0 && <span className="mobile-bnav__dot" />}
         </span>
         <span>Thông báo</span>
@@ -509,7 +507,7 @@ export const AppNavbar: React.FC<AppNavbarProps> = () => {
           go('profile');
         }}
       >
-        <UserIcon size={18} strokeWidth={1.85} aria-hidden="true" />
+        <IconUser size={18} strokeWidth={1.85} aria-hidden="true" />
         <span>Hồ sơ</span>
       </button>
     </nav>

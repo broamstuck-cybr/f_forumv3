@@ -1,7 +1,5 @@
 import type {
   AdminChangelogEntry,
-  AdminGatewayOverride,
-  AdminState,
   AIChatRequest,
   AIChatResponse,
   AIStreamCallbacks,
@@ -13,26 +11,10 @@ import type {
   CommunityChannelsData,
   CommunityPost,
   ModerationReport,
-  ModerationReportStatus,
   QuotaState,
   User,
   WorkspaceProject,
 } from '../types/index';
-
-const GUEST_ID_STORAGE_KEY = 'fforum_v3_guest_sid';
-
-export function getOrCreateClientGuestId(): string {
-  if (typeof window === 'undefined') return 'server-guest-sid';
-  try {
-    const existing = window.localStorage.getItem(GUEST_ID_STORAGE_KEY);
-    if (existing && existing.length >= 8) return existing;
-    const generated = `guest-${Math.random().toString(36).slice(2, 10)}-${Date.now().toString(36)}`;
-    window.localStorage.setItem(GUEST_ID_STORAGE_KEY, generated);
-    return generated;
-  } catch {
-    return 'ephemeral-guest-sid';
-  }
-}
 
 function buildApiHeaders(
   extraHeaders?: Record<string, string>,
@@ -40,7 +22,6 @@ function buildApiHeaders(
 ): Record<string, string> {
   const headers: Record<string, string> = {
     'content-type': 'application/json',
-    'x-ff-guest-id': getOrCreateClientGuestId(),
     ...(extraHeaders || {}),
   };
 
@@ -63,7 +44,7 @@ async function createHttpError(response: Response): Promise<Error & { status?: n
   return err;
 }
 
-async function requestJson<T>(
+export async function requestJson<T>(
   path: string,
   options: RequestInit = {},
   byok?: BYOKConfig
@@ -138,6 +119,81 @@ export function sendSiteHeartbeat(
   });
 }
 
+export interface CommunityListQuery {
+  page?: number;
+  limit?: number;
+  channel?: CommunityChannel;
+  q?: string;
+}
+
+export interface CommunityStateResponse {
+  items: CommunityPost[];
+  total: number;
+  page: number;
+  limit: number;
+  hasMore: boolean;
+  activeDossier: ClubHandoverDossier | null;
+  channelCounts?: Record<'all' | CommunityChannel, number>;
+  channels: CommunityChannelsData;
+  posts: CommunityPost[];
+  reports: ModerationReport[];
+}
+
+export interface CommunityMutationResponse {
+  post: CommunityPost;
+  channels?: CommunityChannelsData;
+  posts?: CommunityPost[];
+  reports?: ModerationReport[];
+}
+
+export function groupCommunityPostsToChannels(posts: CommunityPost[]): CommunityChannelsData {
+  const channels: CommunityChannelsData = { qa: [], showcase: [], drops: [], clubs: [] };
+  for (const post of posts) {
+    if (!post || typeof post !== 'object' || post.hidden) continue;
+    const ch: CommunityChannel =
+      post.channel === 'showcase' || post.channel === 'drops' || post.channel === 'clubs'
+        ? post.channel
+        : 'qa';
+    channels[ch].push(post);
+  }
+  return channels;
+}
+
+export function normalizeCommunityChannels(
+  raw:
+    | {
+        channels?: Partial<CommunityChannelsData>;
+        items?: CommunityPost[];
+        posts?: CommunityPost[];
+      }
+    | null
+    | undefined,
+  fallback?: CommunityChannelsData
+): CommunityChannelsData {
+  const base: CommunityChannelsData = {
+    qa: Array.isArray(fallback?.qa) ? fallback.qa : [],
+    showcase: Array.isArray(fallback?.showcase) ? fallback.showcase : [],
+    drops: Array.isArray(fallback?.drops) ? fallback.drops : [],
+    clubs: Array.isArray(fallback?.clubs) ? fallback.clubs : [],
+  };
+  if (!raw || typeof raw !== 'object') return base;
+  if (raw.channels && typeof raw.channels === 'object') {
+    return {
+      qa: Array.isArray(raw.channels.qa) ? raw.channels.qa : base.qa,
+      showcase: Array.isArray(raw.channels.showcase) ? raw.channels.showcase : base.showcase,
+      drops: Array.isArray(raw.channels.drops) ? raw.channels.drops : base.drops,
+      clubs: Array.isArray(raw.channels.clubs) ? raw.channels.clubs : base.clubs,
+    };
+  }
+  if (Array.isArray(raw.items)) {
+    return groupCommunityPostsToChannels(raw.items);
+  }
+  if (Array.isArray(raw.posts)) {
+    return groupCommunityPostsToChannels(raw.posts);
+  }
+  return base;
+}
+
 export const apiClient = {
   fetchHealth(): Promise<{
     status: string;
@@ -153,12 +209,17 @@ export const apiClient = {
     return requestJson('/api/ai/quota', { method: 'GET' });
   },
 
-  sendAiChat(payload: AIChatRequest, byok?: BYOKConfig): Promise<AIChatResponse> {
+  sendAiChat(
+    payload: AIChatRequest,
+    byok?: BYOKConfig,
+    options?: { signal?: AbortSignal }
+  ): Promise<AIChatResponse> {
     return requestJson<AIChatResponse>(
       '/api/ai/chat',
       {
         method: 'POST',
         body: JSON.stringify(payload),
+        signal: options?.signal,
       },
       byok
     );
@@ -275,16 +336,6 @@ export const apiClient = {
     });
   },
 
-  loginAdmin(input: {
-    username: string;
-    password: string;
-  }): Promise<{ user: User; quota: QuotaState }> {
-    return requestJson('/api/auth/admin-login', {
-      method: 'POST',
-      body: JSON.stringify(input),
-    });
-  },
-
   getGoogleAuthConfig(): Promise<{ enabled: boolean; clientId: string }> {
     return requestJson('/api/auth/google-config', { method: 'GET' });
   },
@@ -303,12 +354,60 @@ export const apiClient = {
     });
   },
 
-  fetchCommunityState(): Promise<{
-    channels: CommunityChannelsData;
-    posts: CommunityPost[];
-    reports: ModerationReport[];
-  }> {
-    return requestJson('/api/community/list', { method: 'GET' });
+  async fetchCommunityState(params?: CommunityListQuery): Promise<CommunityStateResponse> {
+    const qs = new URLSearchParams();
+    qs.set('page', String(params?.page ?? 1));
+    qs.set('limit', String(params?.limit ?? 50));
+    if (params?.channel) qs.set('channel', params.channel);
+    if (params?.q && params.q.trim()) qs.set('q', params.q.trim());
+    const raw = await requestJson<Partial<CommunityStateResponse>>(
+      `/api/community/list?${qs.toString()}`,
+      { method: 'GET' }
+    );
+    const channels = normalizeCommunityChannels(raw);
+    const items = Array.isArray(raw?.items)
+      ? raw.items
+      : Array.isArray(raw?.posts)
+        ? raw.posts
+        : [...channels.qa, ...channels.showcase, ...channels.drops, ...channels.clubs];
+    const rawCounts = raw?.channelCounts as Record<string, unknown> | undefined;
+    let channelCounts: CommunityStateResponse['channelCounts'];
+    if (
+      rawCounts &&
+      typeof rawCounts === 'object' &&
+      !Array.isArray(rawCounts) &&
+      (Object.getPrototypeOf(rawCounts) === Object.prototype ||
+        Object.getPrototypeOf(rawCounts) === null)
+    ) {
+      const keys = ['all', 'qa', 'showcase', 'drops', 'clubs'] as const;
+      const isFiniteCount = (v: unknown): v is number =>
+        typeof v === 'number' && Number.isFinite(v) && v >= 0;
+      const hasValidShape =
+        keys.every((k) => rawCounts[k] === undefined || isFiniteCount(rawCounts[k])) &&
+        keys.some((k) => isFiniteCount(rawCounts[k]));
+      if (hasValidShape) {
+        const qa = isFiniteCount(rawCounts.qa) ? rawCounts.qa : 0;
+        const showcase = isFiniteCount(rawCounts.showcase) ? rawCounts.showcase : 0;
+        const drops = isFiniteCount(rawCounts.drops) ? rawCounts.drops : 0;
+        const clubs = isFiniteCount(rawCounts.clubs) ? rawCounts.clubs : 0;
+        const all = isFiniteCount(rawCounts.all)
+          ? rawCounts.all
+          : qa + showcase + drops + clubs;
+        channelCounts = { all, qa, showcase, drops, clubs };
+      }
+    }
+    return {
+      items,
+      total: typeof raw?.total === 'number' ? raw.total : items.length,
+      page: typeof raw?.page === 'number' ? raw.page : params?.page ?? 1,
+      limit: typeof raw?.limit === 'number' ? raw.limit : params?.limit ?? 50,
+      hasMore: Boolean(raw?.hasMore),
+      activeDossier: raw?.activeDossier ?? null,
+      ...(channelCounts ? { channelCounts } : {}),
+      channels,
+      posts: items,
+      reports: Array.isArray(raw?.reports) ? raw.reports : [],
+    };
   },
 
   createCommunityPost(input: {
@@ -321,23 +420,14 @@ export const apiClient = {
     payload?: string;
     fileType?: string;
     activeDossier?: ClubHandoverDossier;
-  }): Promise<{
-    post: CommunityPost;
-    channels: CommunityChannelsData;
-    posts: CommunityPost[];
-    reports: ModerationReport[];
-  }> {
+  }): Promise<CommunityMutationResponse> {
     return requestJson('/api/community/create', {
       method: 'POST',
       body: JSON.stringify(input),
     });
   },
 
-  upvoteCommunityPost(postId: string): Promise<{
-    post: CommunityPost;
-    channels: CommunityChannelsData;
-    posts: CommunityPost[];
-  }> {
+  upvoteCommunityPost(postId: string): Promise<CommunityMutationResponse> {
     return requestJson('/api/community/upvote', {
       method: 'POST',
       body: JSON.stringify({ postId }),
@@ -347,11 +437,7 @@ export const apiClient = {
   addCommunityAnswer(
     postId: string,
     content: string
-  ): Promise<{
-    post: CommunityPost;
-    channels: CommunityChannelsData;
-    posts: CommunityPost[];
-  }> {
+  ): Promise<CommunityMutationResponse> {
     return requestJson('/api/community/answer', {
       method: 'POST',
       body: JSON.stringify({ postId, content }),
@@ -361,22 +447,14 @@ export const apiClient = {
   acceptCommunityAnswer(
     postId: string,
     answerId: string
-  ): Promise<{
-    post: CommunityPost;
-    channels: CommunityChannelsData;
-    posts: CommunityPost[];
-  }> {
+  ): Promise<CommunityMutationResponse> {
     return requestJson('/api/community/accept', {
       method: 'POST',
       body: JSON.stringify({ postId, answerId }),
     });
   },
 
-  forkCommunityItem(postId: string): Promise<{
-    post: CommunityPost;
-    channels: CommunityChannelsData;
-    posts: CommunityPost[];
-  }> {
+  forkCommunityItem(postId: string): Promise<CommunityMutationResponse> {
     return requestJson('/api/community/fork', {
       method: 'POST',
       body: JSON.stringify({ postId }),
@@ -386,11 +464,7 @@ export const apiClient = {
   updateClubDossier(
     clubId: string,
     dossier: ClubHandoverDossier
-  ): Promise<{
-    post: CommunityPost;
-    channels: CommunityChannelsData;
-    posts: CommunityPost[];
-  }> {
+  ): Promise<CommunityMutationResponse> {
     return requestJson('/api/community/dossier', {
       method: 'POST',
       body: JSON.stringify({ clubId, dossier }),
@@ -401,10 +475,12 @@ export const apiClient = {
     targetId: string,
     reason: string
   ): Promise<{
-    report: ModerationReport;
-    channels: CommunityChannelsData;
-    posts: CommunityPost[];
-    reports: ModerationReport[];
+    ok?: boolean;
+    reportId?: string;
+    report?: ModerationReport;
+    channels?: CommunityChannelsData;
+    posts?: CommunityPost[];
+    reports?: ModerationReport[];
   }> {
     return requestJson('/api/community/report', {
       method: 'POST',
@@ -412,56 +488,8 @@ export const apiClient = {
     });
   },
 
-  fetchAdminState(): Promise<{ state: AdminState }> {
-    return requestJson('/api/admin/state', { method: 'GET' });
-  },
-
-  updateAdminGateway(
-    input: Partial<AdminGatewayOverride>
-  ): Promise<{ gateway: AdminGatewayOverride; state: AdminState }> {
-    return requestJson('/api/admin/gateway', {
-      method: 'POST',
-      body: JSON.stringify(input),
-    });
-  },
-
-  resetAdminQuota(subjectId: string): Promise<{ state: AdminState }> {
-    return requestJson('/api/admin/reset-quota', {
-      method: 'POST',
-      body: JSON.stringify({ subjectId }),
-    });
-  },
-
-  toggleAdminUserRole(userId: string): Promise<{ state: AdminState }> {
-    return requestJson('/api/admin/toggle-role', {
-      method: 'POST',
-      body: JSON.stringify({ userId }),
-    });
-  },
-
-  moderateAdminReport(
-    reportId: string,
-    status: ModerationReportStatus
-  ): Promise<{ state: AdminState }> {
-    return requestJson('/api/admin/moderate', {
-      method: 'POST',
-      body: JSON.stringify({ reportId, status }),
-    });
-  },
-
-  publishAdminChangelog(input: {
-    version: string;
-    title: string;
-    notes: string;
-  }): Promise<{ entry: AdminChangelogEntry; state: AdminState }> {
-    return requestJson('/api/admin/changelog', {
-      method: 'POST',
-      body: JSON.stringify(input),
-    });
-  },
-
   fetchPublicChangelog(): Promise<{ changelog: AdminChangelogEntry[] }> {
-    return requestJson('/api/admin/changelog', { method: 'GET' });
+    return requestJson('/api/changelog', { method: 'GET' });
   },
 
   fetchUserProjects(): Promise<{ authenticated: boolean; projects: WorkspaceProject[] }> {

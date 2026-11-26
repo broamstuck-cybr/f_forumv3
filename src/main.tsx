@@ -23,6 +23,9 @@ import '@fontsource/newsreader/400.css';
 import '@fontsource/newsreader/400-italic.css';
 import './index.css';
 import { App } from './App';
+import { initConsoleSecurityWarning } from './utils/securityGuard';
+
+initConsoleSecurityWarning();
 
 const rootEl = document.getElementById('root');
 if (rootEl) {

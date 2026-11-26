@@ -366,8 +366,13 @@ describe('Vault Hydration & Anti-Arena Regression Suite', () => {
       'IrisQrCornerSection.tsx must handle webglcontextlost and dispose scene geometries/materials on unmount'
     );
     assert.ok(
-      irisSectionTsx.includes('Gặp gỡ đội ngũ phát triển của tôi :)'),
-      'IrisQrCornerSection.tsx must include the Dev Team Honor button'
+      irisSectionTsx.includes('Sổ Vinh Danh'),
+      'IrisQrCornerSection.tsx must include the concise Dev Team Honor CTA button'
+    );
+    assert.equal(
+      /:\)|Gặp gỡ đội ngũ/.test(irisSectionTsx),
+      false,
+      'IrisQrCornerSection.tsx must not contain ASCII emoticon :) or verbose Honor CTA'
     );
     assert.equal(
       irisSectionTsx.includes('Get Iris') || irisSectionTsx.includes('Introducing a Smart AI Assistant'),
@@ -460,5 +465,88 @@ describe('Vault Hydration & Anti-Arena Regression Suite', () => {
     assert.notEqual(orderA, orderB, 'Different seeds must produce different randomized interleaved orderings');
 
     assert.ok(clip.startsWith("path('M ") && clip.endsWith("Z')"), 'buildRoundedQuadClipPath must return valid SVG path()');
+  });
+
+  test('verifies M3 Landing Cards 07–09 StarterLiveStage, Team Honor dossier cleanup, and zero lucide-react / zoom regressions', () => {
+    const landingProjectsTsx = fs.readFileSync(
+      path.join(projectRoot, 'src', 'components', 'landing', 'sections', 'LandingProjects.tsx'),
+      'utf8'
+    );
+    assert.ok(
+      landingProjectsTsx.includes('StarterLiveStage'),
+      'LandingProjects.tsx must render StarterLiveStage on Cards 07–09'
+    );
+    assert.equal(
+      /hovered &&|<iframe/.test(landingProjectsTsx),
+      false,
+      'LandingProjects.tsx must not gate Cards 07–09 behind hover or iframes'
+    );
+    assert.ok(
+      landingProjectsTsx.includes('createProject') &&
+        landingProjectsTsx.includes('addWorkspaceFiles') &&
+        landingProjectsTsx.includes('openExperience'),
+      'LandingProjects.tsx must wire Workspace Live View and Explore deep-links'
+    );
+    assert.ok(
+      landingProjectsTsx.includes('handleImageError') && landingProjectsTsx.includes('handleVideoError'),
+      'LandingProjects.tsx must attach media onError fallbacks'
+    );
+
+    const starterLiveStageTsx = fs.readFileSync(
+      path.join(projectRoot, 'src', 'components', 'landing', 'sections', 'StarterLiveStage.tsx'),
+      'utf8'
+    );
+    assert.ok(
+      starterLiveStageTsx.includes('starter-live-stage') &&
+        starterLiveStageTsx.includes('hms-space-voyage') &&
+        starterLiveStageTsx.includes('hms-codenest'),
+      'StarterLiveStage.tsx must implement all 3 interactive starter stages'
+    );
+
+    const landingCss = fs.readFileSync(
+      path.join(projectRoot, 'src', 'components', 'landing', 'landing.css'),
+      'utf8'
+    );
+    assert.equal(
+      /zoom:|grid-template-rows/.test(landingCss),
+      false,
+      'landing.css must not use zoom: or grid-template-rows transitions'
+    );
+
+    const m3Dirs = [
+      path.join(projectRoot, 'src', 'components', 'landing'),
+      path.join(projectRoot, 'src', 'components', 'launchpad'),
+      path.join(projectRoot, 'src', 'features', 'honor'),
+    ];
+    for (const dir of m3Dirs) {
+      for (const file of walkSourceFiles(dir)) {
+        const content = fs.readFileSync(file, 'utf8');
+        assert.equal(
+          content.includes('lucide-react'),
+          false,
+          `lucide-react import still present in ${path.relative(projectRoot, file)}`
+        );
+      }
+    }
+
+    const honorTsx = fs.readFileSync(
+      path.join(projectRoot, 'src', 'features', 'honor', 'TeamHonorGallery.tsx'),
+      'utf8'
+    );
+    const honorDataTs = fs.readFileSync(
+      path.join(projectRoot, 'src', 'features', 'honor', 'teamHonorData.ts'),
+      'utf8'
+    );
+    const honorCss = fs.readFileSync(
+      path.join(projectRoot, 'src', 'features', 'honor', 'team-honor.css'),
+      'utf8'
+    );
+    assert.equal(
+      /Lưu vào hồ sơ|Hồ sơ đã lưu|MỞ BỘ SƯU TẬP|thg-chip|updateDraftChoice|STORAGE_HONOR_SAVED/.test(
+        honorTsx + honorDataTs + honorCss
+      ),
+      false,
+      'src/features/honor/ must not retain saved drawer or filter-like .thg-chip pills'
+    );
   });
 });

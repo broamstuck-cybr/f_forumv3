@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { AnimatePresence, motion, useReducedMotion, type Transition } from 'motion/react';
-import { X } from 'lucide-react';
+import { IconX } from '../../ui/icons';
 import { glassSheet } from './reader-card-glass';
 import './reader-card.css';
 
@@ -204,7 +204,7 @@ export const ReaderCard: React.FC<ReaderCardProps> = ({
                     title="Đóng"
                     onClick={() => toggleOpen(false)}
                   >
-                    <X size={16} aria-hidden="true" />
+                    <IconX size={16} aria-hidden="true" />
                   </button>
                 </div>
               </div>

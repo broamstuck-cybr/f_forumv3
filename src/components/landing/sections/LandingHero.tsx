@@ -199,75 +199,94 @@ function buildSplinePath(): string {
 }
 
 export const LandingHero: React.FC<LandingHeroProps> = ({
-  currentUser,
-  onOpenLogin,
   onEnterApp,
   onNavigate,
 }) => {
   const reduced = usePrefersReducedMotion();
   const { visitors, activeSeconds } = useLiveMetrics();
   const sectionRef = useRef<HTMLElement>(null);
+  const flightSvgRef = useRef<SVGSVGElement>(null);
+  const flightPathRef = useRef<SVGPathElement>(null);
+  const flightPlaneRef = useRef<SVGGElement>(null);
   const [activeCount, setActiveCount] = useState<number>(() => (reduced ? PIXEL_ICONS.length : 0));
-  const [planeState, setPlaneState] = useState<{
-    x: number;
-    y: number;
-    angle: number;
-    opacity: number;
-    progress: number;
-  }>({ x: 22, y: 62, angle: 0, opacity: 0, progress: 0 });
   const [focusedIcon, setFocusedIcon] = useState<number | null>(null);
+  const [showPhone, setShowPhone] = useState(false);
 
   const splinePath = useMemo(() => buildSplinePath(), []);
 
   useEffect(() => {
+    let rafId = 0;
+    let timerId = 0;
+    rafId = requestAnimationFrame(() => {
+      timerId = window.setTimeout(() => setShowPhone(true), 120);
+    });
+    return () => {
+      if (rafId) cancelAnimationFrame(rafId);
+      if (timerId) window.clearTimeout(timerId);
+    };
+  }, []);
+
+  useEffect(() => {
     if (reduced) {
       setActiveCount(PIXEL_ICONS.length);
-      setPlaneState((prev) => ({ ...prev, opacity: 0, progress: 1 }));
-      return;
+      return undefined;
     }
 
     let rafId = 0;
+    let stepInterval = 0;
     const start = performance.now();
 
-    const tick = (now: number) => {
+    const tickFlight = (now: number) => {
       const elapsed = (now - start) / 1000;
+      const svg = flightSvgRef.current;
+      const path = flightPathRef.current;
+      const plane = flightPlaneRef.current;
 
-      if (elapsed >= 0.15 && elapsed <= 1.48) {
-        const flightU = Math.max(0, Math.min(1, (elapsed - 0.33) / (1.27 - 0.33)));
-        const eased =
-          flightU < 0.5 ? 2 * flightU * flightU : 1 - Math.pow(-2 * flightU + 2, 2) / 2;
-        const pos = catmullRomPoint(FLIGHT_POINTS, eased);
-        const fadeIn = Math.min(1, Math.max(0, (elapsed - 0.15) / 0.18));
-        const fadeOut = elapsed > 1.27 ? Math.max(0, 1 - (elapsed - 1.27) / 0.2) : 1;
-        setPlaneState({
-          x: pos.x,
-          y: pos.y,
-          angle: pos.angle,
-          opacity: fadeIn * fadeOut,
-          progress: eased,
-        });
-      } else if (elapsed > 1.48) {
-        setPlaneState((prev) => (prev.opacity === 0 ? prev : { ...prev, opacity: 0, progress: 1 }));
-      }
+      if (elapsed <= 1.52) {
+        if (elapsed >= 0.15 && svg && path && plane) {
+          const flightU = Math.max(0, Math.min(1, (elapsed - 0.33) / (1.27 - 0.33)));
+          const eased =
+            flightU < 0.5 ? 2 * flightU * flightU : 1 - Math.pow(-2 * flightU + 2, 2) / 2;
+          const pos = catmullRomPoint(FLIGHT_POINTS, eased);
+          const fadeIn = Math.min(1, Math.max(0, (elapsed - 0.15) / 0.18));
+          const fadeOut = elapsed > 1.27 ? Math.max(0, 1 - (elapsed - 1.27) / 0.2) : 1;
+          const opacity = fadeIn * fadeOut;
 
-      if (elapsed >= 1.25) {
-        const step = Math.min(
-          PIXEL_ICONS.length,
-          Math.floor((elapsed - 1.25) / 0.32) + 1
-        );
-        setActiveCount((prev) => (prev >= step ? prev : step));
-      }
-
-      if (elapsed < 5.2) {
-        rafId = requestAnimationFrame(tick);
-      } else {
-        setActiveCount(PIXEL_ICONS.length);
+          svg.style.opacity = opacity > 0.01 ? '1' : '0';
+          path.setAttribute('stroke-opacity', (0.55 * opacity).toFixed(3));
+          path.setAttribute('stroke-dashoffset', (1 - eased).toFixed(4));
+          plane.setAttribute(
+            'transform',
+            `translate(${pos.x.toFixed(1)}, ${pos.y.toFixed(1)}) rotate(${pos.angle.toFixed(1)})`
+          );
+          plane.setAttribute('opacity', opacity.toFixed(3));
+        }
+        rafId = requestAnimationFrame(tickFlight);
+      } else if (svg) {
+        svg.style.opacity = '0';
       }
     };
 
-    rafId = requestAnimationFrame(tick);
+    rafId = requestAnimationFrame(tickFlight);
+
+    const stepStartTimer = window.setTimeout(() => {
+      setActiveCount((prev) => (prev >= 1 ? prev : 1));
+      stepInterval = window.setInterval(() => {
+        setActiveCount((prev) => {
+          const next = prev + 1;
+          if (next >= PIXEL_ICONS.length) {
+            window.clearInterval(stepInterval);
+            return PIXEL_ICONS.length;
+          }
+          return next;
+        });
+      }, 320);
+    }, 1250);
+
     return () => {
       if (rafId) cancelAnimationFrame(rafId);
+      window.clearTimeout(stepStartTimer);
+      if (stepInterval) window.clearInterval(stepInterval);
     };
   }, [reduced]);
 
@@ -286,26 +305,26 @@ export const LandingHero: React.FC<LandingHeroProps> = ({
         <div className="lp-hero-grid">
           <motion.div style={reduced ? undefined : { y: copyY }} className="lp-hero-copy">
             <div className="lp-assembly" aria-label="Chuỗi 7 bước từ ý tưởng đến tệp xuất">
-              {!reduced && planeState.opacity > 0.01 && (
+              {!reduced && (
                 <svg
+                  ref={flightSvgRef}
                   className="lp-flight-svg"
                   viewBox="0 0 360 92"
                   fill="none"
                   aria-hidden="true"
+                  style={{ opacity: 0 }}
                 >
                   <path
+                    ref={flightPathRef}
                     d={splinePath}
                     stroke="#38C99A"
                     strokeWidth="1.25"
                     strokeDasharray="4 5"
-                    strokeOpacity={0.55 * planeState.opacity}
+                    strokeOpacity={0}
                     pathLength={1}
-                    strokeDashoffset={1 - planeState.progress}
+                    strokeDashoffset={1}
                   />
-                  <g
-                    transform={`translate(${planeState.x.toFixed(1)}, ${planeState.y.toFixed(1)}) rotate(${planeState.angle.toFixed(1)})`}
-                    opacity={planeState.opacity}
-                  >
+                  <g ref={flightPlaneRef} transform="translate(22, 62) rotate(0)" opacity={0}>
                     <polygon points="10,0 -8,-6 -4,0 -8,6" fill="#F4F7F5" stroke="#161D1D" strokeWidth="1" />
                     <polygon points="10,0 -4,0 -8,6" fill="#38C99A" />
                     <line x1="-4" y1="0" x2="8" y2="0" stroke="#E6B385" strokeWidth="1" />
@@ -373,16 +392,11 @@ export const LandingHero: React.FC<LandingHeroProps> = ({
 
             <div className="lp-actions">
               <button type="button" className="btn btn-red btn-lg" onClick={onEnterApp}>
-                Mở Xưởng lắp ráp
+                Mở Workspace
               </button>
               <button type="button" className="btn btn-line btn-lg" onClick={() => onNavigate('explore')}>
-                Khám phá 7.750 mẫu
+                Kho mẫu
               </button>
-              {!currentUser && (
-                <button type="button" className="btn btn-ghost btn-lg" onClick={onOpenLogin}>
-                  Đăng nhập
-                </button>
-              )}
             </div>
 
             <dl className="lp-colophon" aria-label="Số liệu thực của F-Forum">
@@ -408,8 +422,15 @@ export const LandingHero: React.FC<LandingHeroProps> = ({
             </dl>
           </motion.div>
 
-          <motion.div style={reduced ? undefined : { y: phoneY }} className="lp-hero-phone">
-            <HardwareShowcase onNavigate={onNavigate} />
+          <motion.div
+            style={
+              reduced
+                ? { minHeight: 'clamp(590px, 78vh, 790px)' }
+                : { y: phoneY, minHeight: 'clamp(590px, 78vh, 790px)' }
+            }
+            className="lp-hero-phone"
+          >
+            {showPhone && <HardwareShowcase onNavigate={onNavigate} />}
           </motion.div>
         </div>
       </motion.div>

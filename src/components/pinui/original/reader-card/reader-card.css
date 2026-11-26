@@ -35,7 +35,7 @@
 
   --prc-serif: var(--font-newsreader, "Newsreader"), Georgia, "Times New Roman", serif;
   --prc-times: "Times New Roman", var(--font-tinos, "Tinos"), Times, serif;
-  --prc-sans: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --prc-sans: var(--font-ui, "Be Vietnam Pro", ui-sans-serif, system-ui, sans-serif);
 
   position: relative;
   width: 100%;
@@ -559,7 +559,6 @@
   color: var(--prc-ink);
   hanging-punctuation: first;
   text-wrap: pretty;
-  transition: font-size 0.25s ease;
 }
 
 .prc__prose p + p {
@@ -610,10 +609,10 @@
 @keyframes prc-resume-flash {
   0%,
   25% {
-    background: color-mix(in srgb, var(--prc-accent) 34%, transparent);
+    opacity: 0.72;
   }
   100% {
-    background: var(--prc-mark);
+    opacity: 1;
   }
 }
 

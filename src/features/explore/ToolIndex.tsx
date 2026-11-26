@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { BookOpen } from 'lucide-react';
+import { IconBookOpen } from '../../ui/icons';
 import type { ResourceGroup, ResourceItem, VerificationStatus } from '../../types/index';
 import { useAppStore } from '../../store/appStore';
 import {
@@ -274,7 +274,7 @@ export const ToolIndex: React.FC<ToolIndexProps> = ({ query, onClearQuery, saved
                                 className="ex-text ex-text-strong ex-explainer-trigger"
                                 onClick={() => setExplainerItem(item)}
                               >
-                                <BookOpen size={14} aria-hidden="true" />
+                                <IconBookOpen size={14} aria-hidden="true" />
                                 <span>Giải thích &amp; Hướng dẫn</span>
                               </button>
                               <ReactionBar id={item.id} title={title} showLabel />

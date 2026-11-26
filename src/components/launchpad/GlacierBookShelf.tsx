@@ -9,22 +9,22 @@ import React, {
   useState,
 } from 'react';
 import {
-  ArrowUpRight,
-  BookOpen,
-  Bookmark,
-  Check,
-  ChevronLeft,
-  ChevronRight,
-  Compass,
-  Copy,
-  Heart,
-  Layers,
-  Moon,
-  RotateCw,
-  SlidersHorizontal,
-  Sun,
-  X,
-} from 'lucide-react';
+  IconArrowUpRight,
+  IconBookOpen,
+  IconBookmark,
+  IconCheck,
+  IconChevronLeft,
+  IconChevronRight,
+  IconCompass,
+  IconCopy,
+  IconHeart,
+  IconLayers,
+  IconMoon,
+  IconRotateCw,
+  IconSlidersHorizontal,
+  IconSun,
+  IconX,
+} from '../../ui/icons';
 import {
   GLACIER_BOOKS,
   type GlacierBookMotif,
@@ -784,19 +784,25 @@ function BookDialog({
         aria-labelledby={titleId}
       >
         <div className="gb-sheet-bar">
-          <button ref={closeRef} type="button" className="gb-txt-btn gb-btn-icon-label" onClick={close}>
-            <X size={15} aria-hidden="true" />
-            <span>Đóng</span>
+          <button
+            ref={closeRef}
+            type="button"
+            className="gb-icon-btn"
+            aria-label="Đóng"
+            title="Đóng"
+            onClick={close}
+          >
+            <IconX size={16} aria-hidden="true" />
           </button>
           <div className="gb-sheet-nav">
             <button
               type="button"
               className="gb-icon-btn"
               aria-label="Cuốn sách trước"
-              title="Cuốn sách trước (Phím mũi tên trái)"
+              title="Sách trước"
               onClick={() => onStepBook(-1)}
             >
-              <ChevronLeft size={18} aria-hidden="true" />
+              <IconChevronLeft size={18} aria-hidden="true" />
             </button>
             <span className="gb-lbl gb-sheet-nav-lbl">
               {book.editionTag} · {book.title} ({String(bookIndex + 1).padStart(2, '0')} /{' '}
@@ -806,10 +812,10 @@ function BookDialog({
               type="button"
               className="gb-icon-btn"
               aria-label="Cuốn sách tiếp theo"
-              title="Cuốn sách tiếp theo (Phím mũi tên phải)"
+              title="Sách tiếp"
               onClick={() => onStepBook(1)}
             >
-              <ChevronRight size={18} aria-hidden="true" />
+              <IconChevronRight size={18} aria-hidden="true" />
             </button>
           </div>
           <div className="gb-bar-r-group">
@@ -819,11 +825,10 @@ function BookDialog({
             {onNavigate ? (
               <button
                 type="button"
-                className="gb-txt-btn gb-btn-icon-label gb-bar-explore"
+                className="gb-txt-btn gb-bar-explore"
                 onClick={handleOpenExploreCatalog}
               >
-                <Compass size={14} aria-hidden="true" />
-                <span>Kho Khám phá</span>
+                Khám phá
               </button>
             ) : null}
           </div>
@@ -869,7 +874,7 @@ function BookDialog({
                       data-on={bookLiked ? 'true' : 'false'}
                       onClick={() => toggleLikedItem(book.id)}
                     >
-                      <Heart size={15} aria-hidden="true" />
+                      <IconHeart size={15} aria-hidden="true" />
                     </button>
                     <span className="gb-count">{getHeartCount(book.id)}</span>
                   </div>
@@ -882,7 +887,7 @@ function BookDialog({
                     data-on={bookSaved ? 'true' : 'false'}
                     onClick={() => toggleSavedItem(book.id)}
                   >
-                    <Bookmark size={15} aria-hidden="true" />
+                    <IconBookmark size={15} aria-hidden="true" />
                   </button>
                 </div>
               </div>
@@ -920,7 +925,7 @@ function BookDialog({
                   className={`gb-txt-btn gb-btn-icon-label${stageMode === 'resource' ? ' gb-solid' : ''}`}
                   onClick={() => setStageMode('resource')}
                 >
-                  <Layers size={14} aria-hidden="true" />
+                  <IconLayers size={14} aria-hidden="true" />
                   <span>Mẫu thực tế</span>
                 </button>
                 <button
@@ -930,7 +935,7 @@ function BookDialog({
                   className={`gb-txt-btn gb-btn-icon-label${stageMode === 'glacier' ? ' gb-solid' : ''}`}
                   onClick={() => setStageMode('glacier')}
                 >
-                  <SlidersHorizontal size={14} aria-hidden="true" />
+                  <IconSlidersHorizontal size={14} aria-hidden="true" />
                   <span>Glacier CSS</span>
                 </button>
               </div>
@@ -958,55 +963,55 @@ function BookDialog({
                     <div className="gb-actions">
                       <button
                         type="button"
-                        className="gb-txt-btn gb-solid gb-btn-icon-label"
+                        className="gb-txt-btn gb-solid"
                         onClick={handleOpenWorkspace}
                       >
-                        <ArrowUpRight size={15} aria-hidden="true" />
-                        <span>Mở Workspace</span>
+                        Mở Workspace
                       </button>
                       <button
                         type="button"
-                        className="gb-txt-btn gb-btn-icon-label"
+                        className="gb-txt-btn"
                         onClick={handleOpenExplore}
                       >
-                        <Compass size={15} aria-hidden="true" />
-                        <span>Mở trong Khám phá</span>
+                        Khám phá
                       </button>
                       <button
                         type="button"
-                        className="gb-txt-btn gb-btn-icon-label"
+                        className="gb-icon-btn"
+                        aria-label="Chép mã"
+                        title="Chép mã"
                         onClick={() => void doCopyResource('code')}
                       >
                         {copied === 'Đã chép mã' ? (
-                          <Check size={14} aria-hidden="true" />
+                          <IconCheck size={15} aria-hidden="true" />
                         ) : (
-                          <Copy size={14} aria-hidden="true" />
+                          <IconCopy size={15} aria-hidden="true" />
                         )}
-                        <span>Chép mã</span>
                       </button>
                       <button
                         type="button"
-                        className="gb-txt-btn gb-btn-icon-label"
+                        className="gb-icon-btn"
+                        aria-label="Chép Prompt"
+                        title="Chép Prompt"
                         onClick={() => void doCopyResource('prompt')}
                       >
                         {copied === 'Đã chép Prompt' ? (
-                          <Check size={14} aria-hidden="true" />
+                          <IconCheck size={15} aria-hidden="true" />
                         ) : (
-                          <Copy size={14} aria-hidden="true" />
+                          <IconCopy size={15} aria-hidden="true" />
                         )}
-                        <span>Chép Prompt</span>
                       </button>
                       <div className="gb-actions-utils">
                         <button
                           type="button"
                           className="gb-icon-btn"
                           aria-label={itemSaved ? 'Bỏ lưu mẫu tài nguyên này' : 'Lưu Bookmark mẫu tài nguyên này'}
-                          title={itemSaved ? 'Đã lưu Bookmark' : 'Lưu Bookmark'}
+                          title={itemSaved ? 'Đã lưu' : 'Lưu mẫu'}
                           aria-pressed={itemSaved}
                           data-on={itemSaved ? 'true' : 'false'}
                           onClick={() => toggleSavedItem(selectedItem.id)}
                         >
-                          <Bookmark size={16} aria-hidden="true" />
+                          <IconBookmark size={16} aria-hidden="true" />
                         </button>
                         <button
                           type="button"
@@ -1016,23 +1021,23 @@ function BookDialog({
                               ? 'Chuyển sân khấu sang nền sáng'
                               : 'Chuyển sân khấu sang nền tối'
                           }
-                          title={stageTheme === 'dark' ? 'Nền tối — Đổi sang sáng' : 'Nền sáng — Đổi sang tối'}
+                          title={stageTheme === 'dark' ? 'Nền sáng' : 'Nền tối'}
                           onClick={() => setStageTheme((prev) => (prev === 'dark' ? 'light' : 'dark'))}
                         >
                           {stageTheme === 'dark' ? (
-                            <Moon size={16} aria-hidden="true" />
+                            <IconMoon size={16} aria-hidden="true" />
                           ) : (
-                            <Sun size={16} aria-hidden="true" />
+                            <IconSun size={16} aria-hidden="true" />
                           )}
                         </button>
                         <button
                           type="button"
                           className="gb-icon-btn"
-                          aria-label="Tải lại sân khấu chạy thử"
-                          title="Tải lại sân khấu chạy thử"
+                          aria-label="Tải lại"
+                          title="Tải lại"
                           onClick={() => setDemoKey((k) => k + 1)}
                         >
-                          <RotateCw size={16} aria-hidden="true" />
+                          <IconRotateCw size={16} aria-hidden="true" />
                         </button>
                       </div>
                       <span className="gb-toast" role="status" aria-live="polite">
@@ -1132,13 +1137,14 @@ function BookDialog({
                         </div>
                         <button
                           type="button"
-                          className="gb-txt-btn gb-btn-icon-label"
+                          className="gb-icon-btn"
+                          aria-label={codeTab === 'prompt' ? 'Chép Prompt' : 'Chép mã'}
+                          title={codeTab === 'prompt' ? 'Chép Prompt' : 'Chép mã'}
                           onClick={() =>
                             void doCopyResource(codeTab === 'prompt' ? 'prompt' : 'code')
                           }
                         >
-                          <Copy size={14} aria-hidden="true" />
-                          <span>{codeTab === 'prompt' ? 'Chép Prompt' : 'Chép mã'}</span>
+                          <IconCopy size={15} aria-hidden="true" />
                         </button>
                       </div>
                       <pre className="gb-code" tabIndex={0} aria-label="Mã nguồn và Prompt mẫu đang chọn">
@@ -1157,19 +1163,17 @@ function BookDialog({
                   <div className="gb-actions">
                     <button
                       type="button"
-                      className="gb-txt-btn gb-solid gb-btn-icon-label"
+                      className="gb-txt-btn gb-solid"
                       onClick={() => setStageMode('glacier')}
                     >
-                      <SlidersHorizontal size={14} aria-hidden="true" />
-                      <span>Mở thông số Glacier CSS</span>
+                      Glacier CSS
                     </button>
                     <button
                       type="button"
-                      className="gb-txt-btn gb-btn-icon-label"
+                      className="gb-txt-btn"
                       onClick={handleOpenExploreCatalog}
                     >
-                      <Compass size={14} aria-hidden="true" />
-                      <span>Mở trong Khám phá</span>
+                      Khám phá
                     </button>
                   </div>
                 </div>
@@ -1180,31 +1184,30 @@ function BookDialog({
                   <div className="gb-actions">
                     <button
                       type="button"
-                      className="gb-txt-btn gb-solid gb-btn-icon-label"
+                      className="gb-txt-btn gb-solid"
                       onClick={handleOpenWorkspace}
                     >
-                      <ArrowUpRight size={15} aria-hidden="true" />
-                      <span>Mở Workspace</span>
+                      Mở Workspace
                     </button>
                     <button
                       type="button"
-                      className="gb-txt-btn gb-btn-icon-label"
+                      className="gb-txt-btn"
                       onClick={handleOpenExploreCatalog}
                     >
-                      <Compass size={15} aria-hidden="true" />
-                      <span>Mở trong Khám phá</span>
+                      Khám phá
                     </button>
                     <button
                       type="button"
-                      className="gb-txt-btn gb-btn-icon-label"
+                      className="gb-icon-btn"
+                      aria-label="Chép CSS"
+                      title="Chép CSS"
                       onClick={() => void doCopyResource('glacier')}
                     >
                       {copied === 'Đã chép CSS' ? (
-                        <Check size={14} aria-hidden="true" />
+                        <IconCheck size={15} aria-hidden="true" />
                       ) : (
-                        <Copy size={14} aria-hidden="true" />
+                        <IconCopy size={15} aria-hidden="true" />
                       )}
-                      <span>Chép CSS</span>
                     </button>
                     <span className="gb-toast" role="status" aria-live="polite">
                       {copied}
@@ -1217,11 +1220,12 @@ function BookDialog({
                       <span className="gb-lbl">Phòng thử thông số Glacier · {book.editionTag}</span>
                       <button
                         type="button"
-                        className="gb-txt-btn gb-btn-icon-label"
+                        className="gb-icon-btn"
+                        aria-label="Tải lại"
+                        title="Tải lại"
                         onClick={() => setDemoKey((k) => k + 1)}
                       >
-                        <RotateCw size={14} aria-hidden="true" />
-                        <span>Tải lại</span>
+                        <IconRotateCw size={15} aria-hidden="true" />
                       </button>
                     </div>
                     <div className="gb-live-stage">
@@ -1757,13 +1761,13 @@ export function GlacierBookShelf({ onNavigate, onLaunchPrompt }: GlacierBookShel
           type="button"
           className="gb-stage-nav gb-stage-nav--prev"
           aria-label="Cuốn sách trước"
-          title="Cuốn sách trước (Phím mũi tên trái)"
+          title="Sách trước"
           onClick={(ev) => {
             ev.stopPropagation();
             step(-1);
           }}
         >
-          <ChevronLeft size={22} aria-hidden="true" />
+          <IconChevronLeft size={22} aria-hidden="true" />
         </button>
 
         <div className="gb-origin">{tapes}</div>
@@ -1773,26 +1777,26 @@ export function GlacierBookShelf({ onNavigate, onLaunchPrompt }: GlacierBookShel
           type="button"
           className="gb-ring"
           aria-label={`Mở sách ${activeBook.title}`}
-          title={`Mở sách ${activeBook.title}`}
+          title="Mở sách"
           onClick={(ev) => {
             ev.stopPropagation();
             openBook();
           }}
         >
-          <BookOpen size={17} aria-hidden="true" />
+          <IconBookOpen size={17} aria-hidden="true" />
         </button>
 
         <button
           type="button"
           className="gb-stage-nav gb-stage-nav--next"
           aria-label="Cuốn sách tiếp theo"
-          title="Cuốn sách tiếp theo (Phím mũi tên phải)"
+          title="Sách tiếp"
           onClick={(ev) => {
             ev.stopPropagation();
             step(1);
           }}
         >
-          <ChevronRight size={22} aria-hidden="true" />
+          <IconChevronRight size={22} aria-hidden="true" />
         </button>
       </div>
 
@@ -1804,7 +1808,7 @@ export function GlacierBookShelf({ onNavigate, onLaunchPrompt }: GlacierBookShel
           title="Sách trước"
           onClick={() => step(-1)}
         >
-          <ChevronLeft size={18} aria-hidden="true" />
+          <IconChevronLeft size={18} aria-hidden="true" />
         </button>
         <div className="gb-cap" aria-hidden="true">
           <div
@@ -1833,7 +1837,7 @@ export function GlacierBookShelf({ onNavigate, onLaunchPrompt }: GlacierBookShel
           title="Sách sau"
           onClick={() => step(1)}
         >
-          <ChevronRight size={18} aria-hidden="true" />
+          <IconChevronRight size={18} aria-hidden="true" />
         </button>
       </div>
 

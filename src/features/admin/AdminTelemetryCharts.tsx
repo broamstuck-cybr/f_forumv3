@@ -1,8 +1,8 @@
 import React, { useMemo, useState } from 'react';
-import type { AdminState } from '../../types/index';
+import type { AdminStateView } from './adminTypes';
 
 interface AdminTelemetryChartsProps {
-  adminState: AdminState | null;
+  adminState: AdminStateView | null;
   totalUsedAcrossSubjects: number;
   projectsCount: number;
 }
@@ -55,45 +55,52 @@ export const AdminTelemetryCharts: React.FC<AdminTelemetryChartsProps> = ({
   totalUsedAcrossSubjects,
   projectsCount,
 }) => {
-  const [activeRingId, setActiveRingId] = useState<string | null>(null);
+  const [selectedRingId, setSelectedRingId] = useState<string | null>(null);
+  const [hoveredRingId, setHoveredRingId] = useState<string | null>(null);
   const [hoveredDayIdx, setHoveredDayIdx] = useState<number>(6);
+  const activeRingId = hoveredRingId ?? selectedRingId;
+
+  const toggleSelectedRing = (id: string) => {
+    setHoveredRingId(null);
+    setSelectedRingId((prev) => (prev === id ? null : id));
+  };
 
   const rings = useMemo<RingMetric[]>(() => {
     const telemetry = adminState?.telemetry;
     const totalReq = Math.max(0, telemetry?.totalAiRequests ?? totalUsedAcrossSubjects);
     const okReq = Math.max(0, telemetry?.successfulAiRequests ?? totalReq);
     const fallbackReq = Math.max(0, telemetry?.fallbackAiRequests ?? 0);
-    const sessions = telemetry?.activeSessionsCount ?? 0;
-    const users = telemetry?.registeredUsersCount ?? 0;
+    const sessions = Math.max(0, telemetry?.activeSessionsCount ?? 0);
+    const users = Math.max(0, telemetry?.registeredUsersCount ?? 0);
 
     const successPct = totalReq > 0 ? Math.min(100, Math.round((okReq / totalReq) * 100)) : 100;
     const stabilityPct =
       totalReq > 0
-        ? Math.max(15, Math.min(100, Math.round(((totalReq - fallbackReq) / totalReq) * 100)))
+        ? Math.max(0, Math.min(100, Math.round(((totalReq - fallbackReq) / totalReq) * 100)))
         : 100;
     const activityPct =
       users > 0
-        ? Math.max(18, Math.min(100, Math.round((sessions / Math.max(1, users + 2)) * 100)))
-        : projectsCount > 0
-          ? 36
-          : 12;
+        ? Math.min(100, Math.round((sessions / Math.max(1, users)) * 100))
+        : sessions > 0
+          ? Math.min(100, sessions * 10)
+          : 0;
 
     return [
       {
         id: 'success',
         label: 'Phản hồi AI chuẩn',
         pct: successPct,
-        valueLabel: `${okReq}/${totalReq || 0}`,
+        valueLabel: `${okReq}/${totalReq}`,
         detail: `${successPct}% yêu cầu hoàn tất không lỗi`,
-        color: 'var(--green)',
+        color: 'var(--accent)',
       },
       {
         id: 'stability',
-        label: 'Độ ổn định Gateway',
+        label: 'Độ ổn định Pool',
         pct: stabilityPct,
         valueLabel: formatUptime(telemetry?.uptimeSeconds),
         detail: `${fallbackReq} lượt chuyển dự phòng`,
-        color: 'var(--red)',
+        color: 'var(--amber)',
       },
       {
         id: 'engagement',
@@ -127,7 +134,7 @@ export const AdminTelemetryCharts: React.FC<AdminTelemetryChartsProps> = ({
     for (const u of usersList) {
       const k = (u.updatedAt || '').slice(0, 10);
       if (usrByDay.has(k)) {
-        usrByDay.set(k, (usrByDay.get(k) || 0) + Math.max(1, u.used));
+        usrByDay.set(k, (usrByDay.get(k) || 0) + Math.max(0, u.dailyUsed ?? u.used));
       }
     }
 
@@ -137,7 +144,10 @@ export const AdminTelemetryCharts: React.FC<AdminTelemetryChartsProps> = ({
       const existingToday = reqByDay.get(baseTail) || 0;
       reqByDay.set(baseTail, Math.max(existingToday, totalTelemetryReq));
       const existingUsrToday = usrByDay.get(baseTail) || 0;
-      usrByDay.set(baseTail, Math.max(existingUsrToday, adminState?.telemetry.registeredUsersCount ?? usersList.length));
+      usrByDay.set(
+        baseTail,
+        Math.max(existingUsrToday, adminState?.telemetry.registeredUsersCount ?? usersList.length)
+      );
     }
 
     return dayBuckets.map((d) => ({
@@ -191,17 +201,19 @@ export const AdminTelemetryCharts: React.FC<AdminTelemetryChartsProps> = ({
   const inspectedRing = rings.find((r) => r.id === activeRingId) || rings[0];
   const inspectedDay = trendPoints[hoveredDayIdx] || trendPoints[trendPoints.length - 1];
 
+  if (!adminState) return null;
+
   return (
     <div className="adm-grid-2 adm-charts-top">
       <section aria-label="Vòng hiệu năng hệ thống" className="adm-card">
-        <div className="adm-card-head">
+        <div className="adm-card-head adm-rings-head">
           <div>
             <h2 className="adm-card-title">Hiệu năng &amp; Phản hồi</h2>
-            <p className="adm-card-sub">
+            <p className="adm-card-sub" aria-live="polite">
               {inspectedRing.label} · {inspectedRing.detail}
             </p>
           </div>
-          <span className="tag">{inspectedRing.pct}%</span>
+          <span className="tag font-mono">{inspectedRing.pct}%</span>
         </div>
 
         <div className="adm-rings-layout">
@@ -213,7 +225,27 @@ export const AdminTelemetryCharts: React.FC<AdminTelemetryChartsProps> = ({
                 const dash = (circ * ring.pct) / 100;
                 const isFocused = activeRingId === ring.id;
                 return (
-                  <g key={ring.id} transform="rotate(-90 90 90)">
+                  <g
+                    key={ring.id}
+                    transform="rotate(-90 90 90)"
+                    opacity={activeRingId && !isFocused ? 0.34 : 1}
+                    tabIndex={0}
+                    role="button"
+                    aria-label={`${ring.label}: ${ring.pct}% (${ring.valueLabel})`}
+                    aria-pressed={selectedRingId === ring.id}
+                    className="adm-ring-arc"
+                    onMouseEnter={() => setHoveredRingId(ring.id)}
+                    onMouseLeave={() => setHoveredRingId(null)}
+                    onFocus={() => setHoveredRingId(ring.id)}
+                    onBlur={() => setHoveredRingId(null)}
+                    onClick={() => toggleSelectedRing(ring.id)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        toggleSelectedRing(ring.id);
+                      }
+                    }}
+                  >
                     <circle cx={90} cy={90} r={r} fill="none" stroke="var(--bg-sunken)" strokeWidth={10} />
                     <circle
                       cx={90}
@@ -221,13 +253,18 @@ export const AdminTelemetryCharts: React.FC<AdminTelemetryChartsProps> = ({
                       r={r}
                       fill="none"
                       stroke={ring.color}
-                      strokeWidth={isFocused ? 11.5 : 10}
+                      strokeWidth={10}
                       strokeLinecap="round"
                       strokeDasharray={`${dash.toFixed(2)} ${circ.toFixed(2)}`}
-                      opacity={activeRingId && !isFocused ? 0.36 : 1}
-                      style={{ cursor: 'pointer', transition: 'stroke-width 180ms ease, opacity 180ms ease' }}
-                      onMouseEnter={() => setActiveRingId(ring.id)}
-                      onMouseLeave={() => setActiveRingId(null)}
+                    />
+                    <circle
+                      cx={90}
+                      cy={90}
+                      r={r}
+                      fill="none"
+                      stroke="transparent"
+                      strokeWidth={16}
+                      pointerEvents="stroke"
                     />
                   </g>
                 );
@@ -247,10 +284,12 @@ export const AdminTelemetryCharts: React.FC<AdminTelemetryChartsProps> = ({
                     type="button"
                     className="adm-legend-btn"
                     data-active={active}
-                    onMouseEnter={() => setActiveRingId(ring.id)}
-                    onMouseLeave={() => setActiveRingId(null)}
-                    onFocus={() => setActiveRingId(ring.id)}
-                    onBlur={() => setActiveRingId(null)}
+                    aria-pressed={selectedRingId === ring.id}
+                    onMouseEnter={() => setHoveredRingId(ring.id)}
+                    onMouseLeave={() => setHoveredRingId(null)}
+                    onFocus={() => setHoveredRingId(ring.id)}
+                    onBlur={() => setHoveredRingId(null)}
+                    onClick={() => toggleSelectedRing(ring.id)}
                   >
                     <span className="adm-legend-left">
                       <span className="adm-swatch" style={{ background: ring.color }} aria-hidden="true" />
@@ -269,13 +308,20 @@ export const AdminTelemetryCharts: React.FC<AdminTelemetryChartsProps> = ({
         <div className="adm-card-head">
           <div>
             <h2 className="adm-card-title">Xu hướng hoạt động 7 ngày</h2>
-            <p className="adm-card-sub">
-              Ngày {inspectedDay?.label}: {inspectedDay?.requests ?? 0} tác vụ AI · {inspectedDay?.users ?? 0} lượt thành viên
+            <p className="adm-card-sub" aria-live="polite">
+              Ngày {inspectedDay?.label}: {inspectedDay?.requests ?? 0} tác vụ AI ·{' '}
+              {inspectedDay?.users ?? 0} lượt đối tượng
             </p>
           </div>
           <div className="adm-trend-legend">
-            <span><i style={{ background: 'var(--red)' }} />Tác vụ</span>
-            <span><i style={{ background: 'var(--green)' }} />Thành viên</span>
+            <span>
+              <i style={{ background: 'var(--accent)' }} />
+              Tác vụ
+            </span>
+            <span>
+              <i style={{ background: 'var(--harbour)' }} />
+              Đối tượng
+            </span>
           </div>
         </div>
 
@@ -283,8 +329,8 @@ export const AdminTelemetryCharts: React.FC<AdminTelemetryChartsProps> = ({
           <svg viewBox="0 0 520 176" className="adm-chart-svg" role="img" aria-label="Biểu đồ đường xu hướng 7 ngày">
             <defs>
               <linearGradient id="admTrendArea" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="var(--red)" stopOpacity="0.28" />
-                <stop offset="100%" stopColor="var(--red)" stopOpacity="0" />
+                <stop offset="0%" stopColor="var(--accent)" stopOpacity="0.24" />
+                <stop offset="100%" stopColor="var(--accent)" stopOpacity="0" />
               </linearGradient>
             </defs>
             {[0, 0.5, 1].map((t) => {
@@ -304,7 +350,7 @@ export const AdminTelemetryCharts: React.FC<AdminTelemetryChartsProps> = ({
             {svgCoords.reqArea && <path d={svgCoords.reqArea} fill="url(#admTrendArea)" />}
             <polyline
               fill="none"
-              stroke="var(--red)"
+              stroke="var(--accent)"
               strokeWidth="2.5"
               strokeLinejoin="round"
               strokeLinecap="round"
@@ -312,7 +358,7 @@ export const AdminTelemetryCharts: React.FC<AdminTelemetryChartsProps> = ({
             />
             <polyline
               fill="none"
-              stroke="var(--green)"
+              stroke="var(--harbour)"
               strokeWidth="2.2"
               strokeDasharray="5 3"
               strokeLinejoin="round"
@@ -323,13 +369,33 @@ export const AdminTelemetryCharts: React.FC<AdminTelemetryChartsProps> = ({
               const pReq = svgCoords.reqPts[idx];
               const pUsr = svgCoords.usrPts[idx];
               const isHot = hoveredDayIdx === idx;
+              const hitX = Math.max(0, pReq.x - 37);
+              const hitW = Math.min(74, 520 - hitX);
               return (
                 <g
                   key={pt.key}
-                  style={{ cursor: 'pointer' }}
+                  className="adm-chart-hit"
+                  tabIndex={0}
+                  role="button"
+                  aria-pressed={isHot}
+                  aria-label={`Ngày ${pt.label}: ${pt.requests} tác vụ AI, ${pt.users} lượt đối tượng`}
                   onMouseEnter={() => setHoveredDayIdx(idx)}
                   onFocus={() => setHoveredDayIdx(idx)}
+                  onClick={() => setHoveredDayIdx(idx)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      setHoveredDayIdx(idx);
+                    } else if (e.key === 'ArrowRight') {
+                      e.preventDefault();
+                      setHoveredDayIdx((prev) => Math.min(trendPoints.length - 1, prev + 1));
+                    } else if (e.key === 'ArrowLeft') {
+                      e.preventDefault();
+                      setHoveredDayIdx((prev) => Math.max(0, prev - 1));
+                    }
+                  }}
                 >
+                  <rect x={hitX} y={12} width={hitW} height={158} fill="transparent" pointerEvents="all" />
                   <line
                     x1={pReq.x}
                     y1={18}
@@ -338,8 +404,8 @@ export const AdminTelemetryCharts: React.FC<AdminTelemetryChartsProps> = ({
                     stroke={isHot ? 'var(--line-strong)' : 'transparent'}
                     strokeWidth="1"
                   />
-                  <circle cx={pReq.x} cy={pReq.y} r={isHot ? 5 : 3.5} fill="var(--red)" />
-                  <circle cx={pUsr.x} cy={pUsr.y} r={isHot ? 4.5 : 3} fill="var(--green)" />
+                  <circle cx={pReq.x} cy={pReq.y} r={isHot ? 5 : 3.5} fill="var(--accent)" />
+                  <circle cx={pUsr.x} cy={pUsr.y} r={isHot ? 4.5 : 3} fill="var(--harbour)" />
                   <text
                     x={pReq.x}
                     y={166}

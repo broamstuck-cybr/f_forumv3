@@ -73,9 +73,6 @@
   cursor: grab;
   outline: none;
   -webkit-tap-highlight-color: transparent;
-  transition:
-    background 0.35s ease,
-    box-shadow 0.35s ease;
 }
 
 .pdial__card[data-dragging="true"] {

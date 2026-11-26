@@ -18,6 +18,7 @@ import type {
   ChecksReport,
   ClubHandoverDossier,
   CommunityAuthor,
+  CommunityChannel,
   CommunityChannelsData,
   CommunityPost,
   DimensionView,
@@ -36,7 +37,7 @@ import type {
   WorkspaceFile,
   WorkspaceProject,
 } from '../types/index';
-import { apiClient, getOrCreateClientGuestId } from '../services/apiClient';
+import { apiClient, normalizeCommunityChannels } from '../services/apiClient';
 import { runWorkspaceChecks } from '../services/checksRunner';
 import { computeWorkspaceDiffs } from '../services/diffEngine';
 import { generateProjectSetupBundle } from '../services/projectSetupGenerator';
@@ -369,6 +370,46 @@ function buildFallbackSeedChannels(): CommunityChannelsData {
   return { qa: [], showcase: [], drops: [], clubs: [] };
 }
 
+function upsertPostInChannels(
+  prev: CommunityChannelsData,
+  post: CommunityPost | null | undefined,
+  options?: { prepend?: boolean }
+): CommunityChannelsData {
+  const safePrev = normalizeCommunityChannels({ channels: prev });
+  if (!post || typeof post !== 'object' || !post.id) return safePrev;
+  const ch: CommunityChannel =
+    post.channel === 'showcase' || post.channel === 'drops' || post.channel === 'clubs'
+      ? post.channel
+      : 'qa';
+  const next: CommunityChannelsData = {
+    qa: safePrev.qa.filter((p) => p.id !== post.id || ch === 'qa'),
+    showcase: safePrev.showcase.filter((p) => p.id !== post.id || ch === 'showcase'),
+    drops: safePrev.drops.filter((p) => p.id !== post.id || ch === 'drops'),
+    clubs: safePrev.clubs.filter((p) => p.id !== post.id || ch === 'clubs'),
+  };
+  const list = next[ch];
+  if (list.some((p) => p.id === post.id)) {
+    next[ch] = list.map((p) => (p.id === post.id ? { ...p, ...post } : p));
+  } else {
+    next[ch] = options?.prepend === false ? [...list, post] : [post, ...list];
+  }
+  return next;
+}
+
+function applyCommunityMutationResponse(
+  prev: CommunityChannelsData,
+  res: { channels?: CommunityChannelsData; post?: CommunityPost } | null | undefined,
+  options?: { prepend?: boolean }
+): CommunityChannelsData {
+  if (res?.channels && typeof res.channels === 'object') {
+    return normalizeCommunityChannels({ channels: res.channels }, prev);
+  }
+  if (res?.post) {
+    return upsertPostInChannels(prev, res.post, options);
+  }
+  return normalizeCommunityChannels({ channels: prev });
+}
+
 export interface AppStoreContextValue {
   currentRoute: AppRoute;
   navigate: (route: AppRoute | DimensionView) => void;
@@ -400,6 +441,7 @@ export interface AppStoreContextValue {
   toggleArchiveProject: (projectId: string) => void;
   setActiveFilePath: (filePath: string) => void;
   updateWorkspaceFile: (filePath: string, content: string) => void;
+  deleteWorkspaceFile: (filePath: string) => void;
   addWorkspaceFiles: (files: Array<{ path: string; content: string; summary?: string }>) => void;
   attachItemToWorkspace: (item: AttachedContextItem, navigateToWorkspace?: boolean) => void;
   openInWorkspace: (item: AttachedContextItem) => void;
@@ -442,7 +484,6 @@ export interface AppStoreContextValue {
   quota: QuotaState;
   refreshAuthAndQuota: () => Promise<void>;
   login: (identifier: string, password: string) => Promise<User>;
-  loginAdmin: (username: string, password: string) => Promise<User>;
   register: (input: {
     username: string;
     email: string;
@@ -501,7 +542,11 @@ export const AppStoreProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     if (typeof window === 'undefined') return [];
     try {
       const raw = window.localStorage.getItem(STORAGE_SAVED_ITEMS_KEY);
-      return raw ? (JSON.parse(raw) as string[]) : [];
+      if (!raw) return [];
+      const parsed: unknown = JSON.parse(raw);
+      return Array.isArray(parsed)
+        ? parsed.filter((id): id is string => typeof id === 'string')
+        : [];
     } catch {
       return [];
     }
@@ -511,7 +556,11 @@ export const AppStoreProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     if (typeof window === 'undefined') return [];
     try {
       const raw = window.localStorage.getItem(STORAGE_LIKED_ITEMS_KEY);
-      return raw ? (JSON.parse(raw) as string[]) : [];
+      if (!raw) return [];
+      const parsed: unknown = JSON.parse(raw);
+      return Array.isArray(parsed)
+        ? parsed.filter((id): id is string => typeof id === 'string')
+        : [];
     } catch {
       return [];
     }
@@ -542,7 +591,19 @@ export const AppStoreProvider: React.FC<{ children: React.ReactNode }> = ({ chil
           themePreference: legacyTheme ?? 'dark',
         };
       }
-      const parsed = JSON.parse(raw) as Partial<SettingsState>;
+      const parsedRaw: unknown = JSON.parse(raw);
+      if (!parsedRaw || typeof parsedRaw !== 'object' || Array.isArray(parsedRaw)) {
+        return {
+          ...DEFAULT_SETTINGS,
+          theme: legacyTheme ?? 'dark',
+          themePreference: legacyTheme ?? 'dark',
+        };
+      }
+      const parsed = parsedRaw as Partial<SettingsState>;
+      const safeByok =
+        parsed.byok && typeof parsed.byok === 'object' && !Array.isArray(parsed.byok)
+          ? parsed.byok
+          : {};
       const resolvedPref =
         parsed.themePreference === 'light' ||
         parsed.themePreference === 'dark' ||
@@ -576,7 +637,7 @@ export const AppStoreProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         wallpaperPreset: resolvedWallpaper,
         byok: {
           ...DEFAULT_SETTINGS.byok,
-          ...(parsed.byok || {}),
+          ...safeByok,
         },
       };
     } catch {
@@ -588,15 +649,147 @@ export const AppStoreProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     }
   });
 
+function isPlainRecord(value: unknown): value is Record<string, unknown> {
+  return Boolean(value) && typeof value === 'object' && !Array.isArray(value);
+}
+
+const VALID_FILE_LANGUAGES = new Set<WorkspaceFile['language']>([
+  'html',
+  'css',
+  'javascript',
+  'typescript',
+  'json',
+  'markdown',
+]);
+
+function normalizeStoredWorkspaceFile(raw: unknown, fallbackTime: string): WorkspaceFile | null {
+  if (
+    !isPlainRecord(raw) ||
+    typeof raw.path !== 'string' ||
+    !raw.path.trim() ||
+    typeof raw.content !== 'string'
+  ) {
+    return null;
+  }
+  const language: WorkspaceFile['language'] =
+    typeof raw.language === 'string' && VALID_FILE_LANGUAGES.has(raw.language as WorkspaceFile['language'])
+      ? (raw.language as WorkspaceFile['language'])
+      : 'html';
+  return {
+    path: raw.path,
+    content: raw.content,
+    language,
+    summary: typeof raw.summary === 'string' ? raw.summary : undefined,
+    updatedAt: typeof raw.updatedAt === 'string' ? raw.updatedAt : fallbackTime,
+  };
+}
+
+function normalizeStoredProject(raw: unknown): WorkspaceProject | null {
+  if (!isPlainRecord(raw) || typeof raw.id !== 'string' || !raw.id.trim() || !Array.isArray(raw.files)) {
+    return null;
+  }
+  const now = new Date().toISOString();
+  const createdAt = typeof raw.createdAt === 'string' ? raw.createdAt : now;
+  const updatedAt = typeof raw.updatedAt === 'string' ? raw.updatedAt : createdAt;
+  const files = raw.files
+    .map((f) => normalizeStoredWorkspaceFile(f, updatedAt))
+    .filter((f): f is WorkspaceFile => f !== null);
+  if (raw.files.length > 0 && files.length === 0) {
+    return null;
+  }
+  const previousFiles = Array.isArray(raw.previousFiles)
+    ? raw.previousFiles
+        .map((f) => normalizeStoredWorkspaceFile(f, updatedAt))
+        .filter((f): f is WorkspaceFile => f !== null)
+    : files;
+  const snapshots: WorkspaceProject['snapshots'] = Array.isArray(raw.snapshots)
+    ? raw.snapshots
+        .filter(
+          (s): s is Record<string, unknown> =>
+            isPlainRecord(s) && typeof s.id === 'string' && Array.isArray(s.files)
+        )
+        .map((s) => ({
+          id: s.id as string,
+          label: typeof s.label === 'string' ? s.label : 'Mốc lưu',
+          createdAt: typeof s.createdAt === 'string' ? s.createdAt : updatedAt,
+          files: (s.files as unknown[])
+            .map((f) => normalizeStoredWorkspaceFile(f, updatedAt))
+            .filter((f): f is WorkspaceFile => f !== null),
+        }))
+    : [];
+  const messages = Array.isArray(raw.messages)
+    ? raw.messages.filter(
+        (m): m is WorkspaceProject['messages'][number] =>
+          isPlainRecord(m) &&
+          typeof m.id === 'string' &&
+          (m.role === 'user' || m.role === 'assistant' || m.role === 'system') &&
+          typeof m.content === 'string'
+      )
+    : [];
+  const attachedItems = Array.isArray(raw.attachedItems)
+    ? raw.attachedItems.filter(
+        (a): a is AttachedContextItem =>
+          isPlainRecord(a) &&
+          typeof a.id === 'string' &&
+          typeof a.title === 'string' &&
+          typeof a.summary === 'string'
+      )
+    : [];
+  const diffs = Array.isArray(raw.diffs)
+    ? raw.diffs.filter(
+        (d): d is WorkspaceProject['diffs'][number] =>
+          isPlainRecord(d) && typeof d.path === 'string' && Array.isArray(d.hunks) && Array.isArray(d.splitRows)
+      )
+    : [];
+  const processes = Array.isArray(raw.processes)
+    ? raw.processes.filter(
+        (proc): proc is ProcessItem =>
+          isPlainRecord(proc) &&
+          typeof proc.id === 'string' &&
+          typeof proc.name === 'string' &&
+          typeof proc.detail === 'string'
+      )
+    : [];
+  const checksReport =
+    isPlainRecord(raw.checksReport) && Array.isArray(raw.checksReport.results)
+      ? (raw.checksReport as unknown as ChecksReport)
+      : null;
+  const activeFilePath =
+    typeof raw.activeFilePath === 'string' && files.some((f) => f.path === raw.activeFilePath)
+      ? raw.activeFilePath
+      : files[0]?.path || 'index.html';
+
+  return sanitizeProjectLabels({
+    id: raw.id,
+    name: typeof raw.name === 'string' ? raw.name : 'Dự án mới',
+    description: typeof raw.description === 'string' ? raw.description : '',
+    createdAt,
+    updatedAt,
+    activeFilePath,
+    files,
+    previousFiles,
+    snapshots,
+    messages,
+    attachedItems,
+    diffs,
+    checksReport,
+    processes,
+    pinned: typeof raw.pinned === 'boolean' ? raw.pinned : undefined,
+    archived: typeof raw.archived === 'boolean' ? raw.archived : undefined,
+  });
+}
+
   const [projects, setProjects] = useState<WorkspaceProject[]>(() => {
     if (typeof window === 'undefined') return [createInitialProject()];
     try {
       const raw = window.localStorage.getItem(STORAGE_PROJECTS_KEY);
       if (!raw) return [createInitialProject()];
-      const parsed = JSON.parse(raw) as WorkspaceProject[];
-      return Array.isArray(parsed) && parsed.length > 0
-        ? parsed.map(sanitizeProjectLabels)
-        : [createInitialProject()];
+      const parsed: unknown = JSON.parse(raw);
+      if (!Array.isArray(parsed)) return [createInitialProject()];
+      const valid = parsed
+        .map(normalizeStoredProject)
+        .filter((p): p is WorkspaceProject => p !== null);
+      return valid.length > 0 ? valid : [createInitialProject()];
     } catch {
       return [createInitialProject()];
     }
@@ -618,7 +811,6 @@ export const AppStoreProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [quota, setQuota] = useState<QuotaState>(() => ({
     ...DEFAULT_QUOTA,
-    subjectId: `guest:${getOrCreateClientGuestId()}`,
   }));
 
   const [communityChannels, setCommunityChannels] = useState<CommunityChannelsData>(() =>
@@ -803,6 +995,8 @@ export const AppStoreProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       const nextPath = routeToPathname(nextRoute);
       if (window.location.pathname !== nextPath) {
         window.history.pushState({}, '', nextPath);
+      } else if (nextRoute === 'community') {
+        window.dispatchEvent(new CustomEvent('ff:community-sync-url'));
       }
       window.scrollTo({ top: 0, behavior: 'auto' });
     }
@@ -825,13 +1019,8 @@ export const AppStoreProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const refreshCommunity = useCallback(async () => {
     try {
       const data = await apiClient.fetchCommunityState();
-      if (data && data.channels) {
-        setCommunityChannels((prev) => ({
-          qa: Array.isArray(data.channels.qa) ? data.channels.qa : prev.qa,
-          showcase: Array.isArray(data.channels.showcase) ? data.channels.showcase : prev.showcase,
-          drops: Array.isArray(data.channels.drops) ? data.channels.drops : prev.drops,
-          clubs: Array.isArray(data.channels.clubs) ? data.channels.clubs : prev.clubs,
-        }));
+      if (data) {
+        setCommunityChannels((prev) => normalizeCommunityChannels(data, prev));
       }
     } catch {
       return;
@@ -840,8 +1029,7 @@ export const AppStoreProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
   useEffect(() => {
     void refreshAuthAndQuota();
-    void refreshCommunity();
-  }, [refreshAuthAndQuota, refreshCommunity]);
+  }, [refreshAuthAndQuota]);
 
   const currentUserId = currentUser ? currentUser.id : null;
 
@@ -1011,6 +1199,32 @@ export const AppStoreProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         return {
           ...proj,
           updatedAt: now,
+          files: nextFiles,
+          diffs: nextDiffs,
+          checksReport: nextChecks,
+        };
+      });
+    },
+    [updateActiveProject]
+  );
+
+  const deleteWorkspaceFile = useCallback(
+    (filePath: string) => {
+      const target = filePath.trim();
+      if (!target) return;
+      const now = new Date().toISOString();
+      updateActiveProject((proj) => {
+        if (proj.files.length <= 1) return proj;
+        const nextFiles = proj.files.filter((f) => f.path !== target);
+        if (nextFiles.length === proj.files.length) return proj;
+        const nextActive =
+          proj.activeFilePath === target ? (nextFiles[0]?.path || '') : proj.activeFilePath;
+        const nextDiffs = computeWorkspaceDiffs(proj.previousFiles, nextFiles);
+        const nextChecks = runWorkspaceChecks(nextFiles);
+        return {
+          ...proj,
+          updatedAt: now,
+          activeFilePath: nextActive,
           files: nextFiles,
           diffs: nextDiffs,
           checksReport: nextChecks,
@@ -1279,7 +1493,7 @@ export const AppStoreProvider: React.FC<{ children: React.ReactNode }> = ({ chil
           : await (() => {
               setAiActivity('streaming');
               setAiStreamingStage('generating');
-              return apiClient.sendAiChat(requestPayload, activeByok);
+              return apiClient.sendAiChat(requestPayload, activeByok, { signal: controller.signal });
             })();
 
         if (controller.signal.aborted) return;
@@ -1582,25 +1796,6 @@ export const AppStoreProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       addToast({
         type: 'success',
         title: `Xin chào, ${formatUserDisplayName(res.user.name)}`,
-        message: res.user.role === 'admin' ? 'Quyền quản trị không giới hạn lượt AI' : undefined,
-      });
-      return res.user;
-    },
-    [addToast]
-  );
-
-  const loginAdmin = useCallback(
-    async (username: string, password: string): Promise<User> => {
-      const res = await apiClient.loginAdmin({ username, password });
-      setCurrentUser(res.user);
-      if (res?.quota && typeof res.quota.unlimited === 'boolean') {
-        setQuota(res.quota);
-      }
-      setAuthModalOpen(false);
-      addToast({
-        type: 'success',
-        title: 'Đã xác thực Quản trị viên',
-        message: 'Hạn mức không giới hạn lượt AI đã kích hoạt.',
       });
       return res.user;
     },
@@ -1645,7 +1840,7 @@ export const AppStoreProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const createPost = useCallback(
     async (input: Parameters<typeof apiClient.createCommunityPost>[0]) => {
       const res = await apiClient.createCommunityPost(input);
-      setCommunityChannels(res.channels);
+      setCommunityChannels((prev) => applyCommunityMutationResponse(prev, res, { prepend: true }));
       addToast({
         type: 'success',
         title: 'Đã đăng bài lên Cộng đồng',
@@ -1657,13 +1852,13 @@ export const AppStoreProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
   const upvotePost = useCallback(async (postId: string) => {
     const res = await apiClient.upvoteCommunityPost(postId);
-    setCommunityChannels(res.channels);
+    setCommunityChannels((prev) => applyCommunityMutationResponse(prev, res));
   }, []);
 
   const answerPost = useCallback(
     async (postId: string, content: string) => {
       const res = await apiClient.addCommunityAnswer(postId, content);
-      setCommunityChannels(res.channels);
+      setCommunityChannels((prev) => applyCommunityMutationResponse(prev, res));
       addToast({
         type: 'success',
         title: 'Đã gửi phản hồi kỹ thuật',
@@ -1675,7 +1870,7 @@ export const AppStoreProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const acceptAnswer = useCallback(
     async (postId: string, answerId: string) => {
       const res = await apiClient.acceptCommunityAnswer(postId, answerId);
-      setCommunityChannels(res.channels);
+      setCommunityChannels((prev) => applyCommunityMutationResponse(prev, res));
       addToast({
         type: 'success',
         title: 'Đã chọn lời giải chuẩn',
@@ -1686,9 +1881,12 @@ export const AppStoreProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
   const forkPostToWorkspace = useCallback(
     (post: CommunityPost) => {
-      void apiClient.forkCommunityItem(post.id).then((res) => {
-        setCommunityChannels(res.channels);
-      }).catch(() => undefined);
+      void apiClient
+        .forkCommunityItem(post.id)
+        .then((res) => {
+          setCommunityChannels((prev) => applyCommunityMutationResponse(prev, res));
+        })
+        .catch(() => undefined);
 
       attachItemToWorkspace(
         {
@@ -1712,7 +1910,7 @@ export const AppStoreProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const updateDossier = useCallback(
     async (clubId: string, dossier: ClubHandoverDossier) => {
       const res = await apiClient.updateClubDossier(clubId, dossier);
-      setCommunityChannels(res.channels);
+      setCommunityChannels((prev) => applyCommunityMutationResponse(prev, res));
       addToast({
         type: 'success',
         title: 'Đã cập nhật hồ sơ bàn giao CLB',
@@ -1732,23 +1930,39 @@ export const AppStoreProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     [addToast]
   );
 
-  const updateSettings = useCallback((partial: Partial<SettingsState>) => {
-    setSettings((prev) => {
-      const nextPref = partial.themePreference ?? prev.themePreference ?? 'system';
-      let nextTheme = partial.theme ?? prev.theme;
-      if (partial.themePreference === 'system' && !partial.theme) {
-        nextTheme = detectSystemTheme();
-      } else if (partial.themePreference === 'light' || partial.themePreference === 'dark') {
-        nextTheme = partial.themePreference;
-      }
-      return {
-        ...prev,
-        ...partial,
-        themePreference: nextPref,
-        theme: nextTheme,
-      };
-    });
+  const persistSettingsSync = useCallback((next: SettingsState) => {
+    settingsRef.current = next;
+    if (typeof window === 'undefined') return;
+    try {
+      window.localStorage.setItem(STORAGE_SETTINGS_KEY, JSON.stringify(next));
+      window.localStorage.setItem('fforum_theme', next.theme);
+    } catch {
+      return;
+    }
   }, []);
+
+  const updateSettings = useCallback(
+    (partial: Partial<SettingsState>) => {
+      setSettings((prev) => {
+        const nextPref = partial.themePreference ?? prev.themePreference ?? 'system';
+        let nextTheme = partial.theme ?? prev.theme;
+        if (partial.themePreference === 'system' && !partial.theme) {
+          nextTheme = detectSystemTheme();
+        } else if (partial.themePreference === 'light' || partial.themePreference === 'dark') {
+          nextTheme = partial.themePreference;
+        }
+        const next: SettingsState = {
+          ...prev,
+          ...partial,
+          themePreference: nextPref,
+          theme: nextTheme,
+        };
+        persistSettingsSync(next);
+        return next;
+      });
+    },
+    [persistSettingsSync]
+  );
 
   const updateByok = useCallback((partial: Partial<BYOKConfig>) => {
     setSettings((prev) => ({
@@ -1760,24 +1974,43 @@ export const AppStoreProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     }));
   }, []);
 
-  const setTheme = useCallback((theme: ThemeMode) => {
-    setSettings((prev) =>
-      prev.theme === theme && prev.themePreference === theme
-        ? prev
-        : { ...prev, theme, themePreference: theme }
-    );
-  }, []);
+  const setTheme = useCallback(
+    (theme: ThemeMode) => {
+      const prev = settingsRef.current;
+      if (prev.theme !== theme || prev.themePreference !== theme) {
+        persistSettingsSync({ ...prev, theme, themePreference: theme });
+      }
+      setSettings((current) => {
+        if (current.theme === theme && current.themePreference === theme) {
+          return current;
+        }
+        const next: SettingsState = { ...current, theme, themePreference: theme };
+        persistSettingsSync(next);
+        return next;
+      });
+    },
+    [persistSettingsSync]
+  );
 
   const toggleTheme = useCallback(() => {
-    setSettings((prev) => {
-      const nextTheme: ThemeMode = prev.theme === 'dark' ? 'light' : 'dark';
-      return {
-        ...prev,
-        theme: nextTheme,
-        themePreference: nextTheme,
-      };
+    const prev = settingsRef.current;
+    const nextTheme: ThemeMode = prev.theme === 'dark' ? 'light' : 'dark';
+    persistSettingsSync({
+      ...prev,
+      theme: nextTheme,
+      themePreference: nextTheme,
     });
-  }, []);
+    setSettings((current) => {
+      const resolvedTheme: ThemeMode = current.theme === 'dark' ? 'light' : 'dark';
+      const next: SettingsState = {
+        ...current,
+        theme: resolvedTheme,
+        themePreference: resolvedTheme,
+      };
+      persistSettingsSync(next);
+      return next;
+    });
+  }, [persistSettingsSync]);
 
   const setThemeEffect = useCallback((themeEffect: ThemeEffect) => {
     setSettings((prev) => ({ ...prev, themeEffect }));
@@ -1815,6 +2048,7 @@ export const AppStoreProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       toggleArchiveProject,
       setActiveFilePath,
       updateWorkspaceFile,
+      deleteWorkspaceFile,
       addWorkspaceFiles,
       attachItemToWorkspace,
       openInWorkspace,
@@ -1835,7 +2069,6 @@ export const AppStoreProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       quota,
       refreshAuthAndQuota,
       login,
-      loginAdmin,
       register,
       logout,
       communityChannels,
@@ -1890,6 +2123,7 @@ export const AppStoreProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       toggleArchiveProject,
       setActiveFilePath,
       updateWorkspaceFile,
+      deleteWorkspaceFile,
       addWorkspaceFiles,
       attachItemToWorkspace,
       openInWorkspace,
@@ -1909,7 +2143,6 @@ export const AppStoreProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       quota,
       refreshAuthAndQuota,
       login,
-      loginAdmin,
       register,
       logout,
       communityChannels,

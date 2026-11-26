@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ArrowRight, Check, X } from 'lucide-react';
+import { IconCheck, IconX } from '../../ui/icons';
 import type { CommunityChannel } from '../../types/index';
 
 export interface OnboardingSpaceOption {
@@ -146,7 +146,7 @@ export const CommunityOnboardingCard: React.FC<CommunityOnboardingCardProps> = (
               data-done={step > item.n ? 'true' : undefined}
               onClick={() => setStep(item.n)}
             >
-              {step > item.n && <Check size={12} aria-hidden="true" />}
+              {step > item.n && <IconCheck size={12} aria-hidden="true" />}
               <span>{item.label}</span>
             </button>
           ))}
@@ -156,10 +156,10 @@ export const CommunityOnboardingCard: React.FC<CommunityOnboardingCardProps> = (
           type="button"
           className="cm-icon-btn cm-icon-btn--sm"
           aria-label="Đóng hướng dẫn bắt đầu"
-          title="Ẩn hướng dẫn"
+          title="Đóng"
           onClick={onDismiss}
         >
-          <X size={14} aria-hidden="true" />
+          <IconX size={14} aria-hidden="true" />
         </button>
       </div>
 
@@ -180,7 +180,7 @@ export const CommunityOnboardingCard: React.FC<CommunityOnboardingCardProps> = (
                   aria-pressed={active}
                   onClick={() => toggleInterest(opt.id)}
                 >
-                  {active && <Check size={13} aria-hidden="true" />}
+                  {active && <IconCheck size={13} aria-hidden="true" />}
                   <span>{opt.label}</span>
                 </button>
               );
@@ -196,7 +196,6 @@ export const CommunityOnboardingCard: React.FC<CommunityOnboardingCardProps> = (
               onClick={() => setStep(2)}
             >
               <span>Tiếp tục</span>
-              <ArrowRight size={14} aria-hidden="true" />
             </button>
           </div>
         </div>
@@ -242,7 +241,6 @@ export const CommunityOnboardingCard: React.FC<CommunityOnboardingCardProps> = (
               onClick={() => setStep(3)}
             >
               <span>Bước cuối</span>
-              <ArrowRight size={14} aria-hidden="true" />
             </button>
           </div>
         </div>

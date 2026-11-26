@@ -3,7 +3,7 @@ import logoUrl from "./assets/storybook-logo.svg";
 import illustrationUrl from "./assets/storybook-illustration.webp";
 import "./storybook-hero.css";
 const NAV_LINKS = [
-    { label: "Home", href: "#", current: true },
+    { label: "Home", href: "#sbh-top", current: true },
     { label: "Features", href: "#features" },
     { label: "Pricing", href: "#pricing" },
     { label: "About Us", href: "#about" },
@@ -49,11 +49,11 @@ export default function StorybookHero() {
         };
     }, [menuOpen]);
     let wordIndex = 0;
-    return (<section className={`sbh`} aria-labelledby="sbh-title">
+    return (<section id="sbh-top" className={`sbh`} aria-labelledby="sbh-title">
       <div className="sbh__grain" aria-hidden="true"/>
 
       <header className="sbh__nav">
-        <a href="#" className="sbh__logo" aria-label="Home">
+        <a href="#sbh-top" className="sbh__logo" aria-label="Home" onClick={(e) => e.preventDefault()}>
           
           <img src={logoUrl} alt="" width={31} height={28}/>
         </a>
@@ -114,8 +114,8 @@ export default function StorybookHero() {
         </h1>
 
         <p className="sbh__sub">
-          Simplify your workflow, bring your ideas together, and turn them into meaningful results with one
-          seamless platform.
+          Simplify your workflow, bring your ideas together, and turn them into measurable results in one calm
+          workspace.
         </p>
 
         <div className="sbh__ctas">

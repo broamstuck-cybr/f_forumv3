@@ -105,8 +105,8 @@
     0 calc(var(--lift) + 9px * var(--shade)) calc(18px * var(--shade)) -7px
       rgb(var(--pchips-cast-rgb) / var(--cast));
   transition:
-    box-shadow 0.16s ease,
-    background 0.28s ease,
+    transform 0.16s ease,
+    background-color 0.28s ease,
     color 0.28s ease;
 }
 

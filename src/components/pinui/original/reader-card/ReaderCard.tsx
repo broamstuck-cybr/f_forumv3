@@ -359,13 +359,13 @@ export default function ReaderCard({ theme = "light", fill = false, onOpenChange
         shadow.style.opacity = "0";
         scrim.style.opacity = "0";
         ensurePreview(1);
-        reader.dataset.state = "open";
+        if (reader?.dataset) reader.dataset.state = "open";
         reader.inert = false;
         scrim.hidden = false;
         syncReaderToCard();
         card.style.visibility = "hidden";
         stage.inert = true;
-        root!.dataset.open = "";
+        if (root?.dataset) root.dataset.open = "";
       } else {
         /* reversing a close: it is already a solid, clipped sheet */
         reader.classList.add("is-morphing");
@@ -453,7 +453,7 @@ export default function ReaderCard({ theme = "light", fill = false, onOpenChange
         if (t !== token) return;
       }
 
-      reader.dataset.state = "closed";
+      if (reader?.dataset) reader.dataset.state = "closed";
       reader.inert = true;
       scrim.hidden = true;
       dropPreview();
@@ -463,7 +463,7 @@ export default function ReaderCard({ theme = "light", fill = false, onOpenChange
       });
       card.style.visibility = "";
       stage.inert = false;
-      delete root!.dataset.open;
+      if (root?.dataset) delete root.dataset.open;
       state = "closed";
       openPill.focus({ preventScroll: true });
     }
@@ -513,14 +513,14 @@ export default function ReaderCard({ theme = "light", fill = false, onOpenChange
       glasses.forEach((g) => g.destroy());
       dropPreview();
       /* leave the markup as React rendered it, so a remount starts clean */
-      reader.dataset.state = "closed";
+      if (reader?.dataset) reader.dataset.state = "closed";
       reader.inert = true;
       reader.classList.remove("is-morphing");
       reader.style.clipPath = "";
       scrim.hidden = true;
       card.style.visibility = "";
       stage.inert = false;
-      delete root.dataset.open;
+      if (root?.dataset) delete root.dataset.open;
     };
   }, []);
 

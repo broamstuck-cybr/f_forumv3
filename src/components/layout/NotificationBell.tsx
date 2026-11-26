@@ -1,5 +1,4 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { useAppStore } from '../../store/appStore';
 import type { AppRoute } from '../../types/index';
 import './notification-bell.css';
 
@@ -9,13 +8,11 @@ export interface NotificationEntry {
   body: string;
   time: string;
   route: AppRoute;
-  kind: 'community' | 'vault' | 'workspace' | 'admin';
-  scope: 'user' | 'admin';
+  kind: 'community' | 'vault' | 'workspace';
   read: boolean;
 }
 
 const USER_STORAGE_KEY = 'fforum_v3_notifications_user_v3';
-const ADMIN_STORAGE_KEY = 'fforum_v3_notifications_admin_v3';
 const UNREAD_KEY = 'fforum_v3_unread_notifications';
 
 const DEFAULT_USER_NOTIFICATIONS: NotificationEntry[] = [
@@ -26,7 +23,6 @@ const DEFAULT_USER_NOTIFICATIONS: NotificationEntry[] = [
     time: 'Vừa xong',
     route: 'explore',
     kind: 'vault',
-    scope: 'user',
     read: false,
   },
   {
@@ -36,7 +32,6 @@ const DEFAULT_USER_NOTIFICATIONS: NotificationEntry[] = [
     time: '15 phút trước',
     route: 'community',
     kind: 'community',
-    scope: 'user',
     read: false,
   },
   {
@@ -46,38 +41,29 @@ const DEFAULT_USER_NOTIFICATIONS: NotificationEntry[] = [
     time: '1 giờ trước',
     route: 'workspace',
     kind: 'workspace',
-    scope: 'user',
     read: true,
   },
 ];
 
-const DEFAULT_ADMIN_NOTIFICATIONS: NotificationEntry[] = [
-  {
-    id: 'notif-admin-telemetry',
-    title: 'Bảng điều khiển quản trị đã đồng bộ',
-    body: 'Thống kê lưu lượng, số giờ hoạt động thực và danh sách phân quyền đã sẵn sàng.',
-    time: 'Vừa xong',
-    route: 'admin',
-    kind: 'admin',
-    scope: 'admin',
-    read: false,
-  },
-];
-
-function loadScopedNotifications(isAdmin: boolean): NotificationEntry[] {
-  const key = isAdmin ? ADMIN_STORAGE_KEY : USER_STORAGE_KEY;
-  const fallback = isAdmin
-    ? [...DEFAULT_ADMIN_NOTIFICATIONS, ...DEFAULT_USER_NOTIFICATIONS]
-    : DEFAULT_USER_NOTIFICATIONS;
-  if (typeof window === 'undefined') return fallback;
+function loadScopedNotifications(): NotificationEntry[] {
+  if (typeof window === 'undefined') return DEFAULT_USER_NOTIFICATIONS;
   try {
-    const raw = window.localStorage.getItem(key);
-    if (!raw) return fallback;
-    const parsed = JSON.parse(raw) as NotificationEntry[];
-    if (!Array.isArray(parsed) || parsed.length === 0) return fallback;
-    return isAdmin ? parsed : parsed.filter((item) => item.scope !== 'admin');
+    const raw = window.localStorage.getItem(USER_STORAGE_KEY);
+    if (!raw) return DEFAULT_USER_NOTIFICATIONS;
+    const parsed = JSON.parse(raw) as unknown;
+    if (!Array.isArray(parsed) || parsed.length === 0) return DEFAULT_USER_NOTIFICATIONS;
+    const filtered = parsed.filter(
+      (item): item is NotificationEntry & { scope?: string } =>
+        Boolean(item) &&
+        typeof item === 'object' &&
+        !Array.isArray(item) &&
+        typeof (item as { id?: unknown }).id === 'string' &&
+        typeof (item as { title?: unknown }).title === 'string' &&
+        (item as { scope?: unknown }).scope !== 'admin'
+    );
+    return filtered.length > 0 ? filtered : DEFAULT_USER_NOTIFICATIONS;
   } catch {
-    return fallback;
+    return DEFAULT_USER_NOTIFICATIONS;
   }
 }
 
@@ -124,19 +110,6 @@ const CategoryGlyph: React.FC<{ kind: NotificationEntry['kind'] }> = ({ kind }) 
       </svg>
     );
   }
-  if (kind === 'admin') {
-    return (
-      <svg viewBox="0 0 20 20" fill="none" aria-hidden="true">
-        <path
-          d="M10 2.8 15.8 5v4.7c0 3.7-2.4 6.5-5.8 7.6-3.4-1.1-5.8-3.9-5.8-7.6V5L10 2.8Z"
-          stroke="currentColor"
-          strokeWidth="1.65"
-          strokeLinejoin="round"
-        />
-        <path d="M7.6 10.1 9.3 11.8 12.8 8.3" stroke="currentColor" strokeWidth="1.65" strokeLinecap="round" strokeLinejoin="round" />
-      </svg>
-    );
-  }
   return (
     <svg viewBox="0 0 20 20" fill="none" aria-hidden="true">
       <rect x="3" y="4" width="14" height="12" rx="2.4" stroke="currentColor" strokeWidth="1.65" />
@@ -150,57 +123,43 @@ export interface NotificationBellProps {
 }
 
 export const NotificationBell: React.FC<NotificationBellProps> = ({ onNavigate }) => {
-  const { currentUser } = useAppStore();
-  const isAdmin = currentUser?.role === 'admin';
   const [open, setOpen] = useState(false);
   const [ringing, setRinging] = useState(false);
   const [tab, setTab] = useState<'all' | 'unread'>('all');
-  const [items, setItems] = useState<NotificationEntry[]>(() => loadScopedNotifications(isAdmin));
+  const [items, setItems] = useState<NotificationEntry[]>(() => loadScopedNotifications());
   const rootRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    setItems(loadScopedNotifications(isAdmin));
-  }, [isAdmin]);
-
-  const visibleItems = useMemo(() => {
-    const scoped = isAdmin ? items : items.filter((item) => item.scope !== 'admin');
-    return tab === 'unread' ? scoped.filter((item) => !item.read) : scoped;
-  }, [items, isAdmin, tab]);
+  const visibleItems = useMemo(
+    () => (tab === 'unread' ? items.filter((item) => !item.read) : items),
+    [items, tab]
+  );
 
   const unreadCount = useMemo(
-    () =>
-      (isAdmin ? items : items.filter((item) => item.scope !== 'admin')).filter((item) => !item.read)
-        .length,
-    [items, isAdmin]
+    () => items.filter((item) => !item.read).length,
+    [items]
   );
 
   useEffect(() => {
     try {
-      window.localStorage.setItem(
-        isAdmin ? ADMIN_STORAGE_KEY : USER_STORAGE_KEY,
-        JSON.stringify(items)
-      );
+      window.localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(items));
       window.localStorage.setItem(UNREAD_KEY, String(unreadCount));
       window.dispatchEvent(new CustomEvent('ff:community-unread', { detail: unreadCount }));
     } catch {
-      // Ignore storage quota errors
+      void 0;
     }
-  }, [items, unreadCount, isAdmin]);
+  }, [items, unreadCount]);
 
   useEffect(() => {
     const onPush = (event: Event) => {
       const detail = (event as CustomEvent<Partial<NotificationEntry>>).detail;
       if (!detail || !detail.title) return;
-      const scope = detail.scope === 'admin' ? 'admin' : 'user';
-      if (scope === 'admin' && !isAdmin) return;
       const entry: NotificationEntry = {
         id: detail.id || `notif-${Date.now()}`,
         title: detail.title,
         body: detail.body || '',
         time: detail.time || 'Vừa xong',
-        route: scope === 'admin' ? 'admin' : detail.route || 'community',
-        kind: detail.kind || (scope === 'admin' ? 'admin' : 'community'),
-        scope,
+        route: detail.route || 'community',
+        kind: detail.kind || 'community',
         read: false,
       };
       setItems((prev) => [entry, ...prev.slice(0, 14)]);
@@ -209,7 +168,7 @@ export const NotificationBell: React.FC<NotificationBellProps> = ({ onNavigate }
     };
     window.addEventListener('ff:push-notification', onPush);
     return () => window.removeEventListener('ff:push-notification', onPush);
-  }, [isAdmin]);
+  }, []);
 
   useEffect(() => {
     if (!open) return;
@@ -245,7 +204,6 @@ export const NotificationBell: React.FC<NotificationBellProps> = ({ onNavigate }
   const openItem = (entry: NotificationEntry) => {
     setItems((prev) => prev.map((item) => (item.id === entry.id ? { ...item, read: true } : item)));
     setOpen(false);
-    if (entry.scope === 'admin' && !isAdmin) return;
     onNavigate?.(entry.route);
   };
 
@@ -268,26 +226,27 @@ export const NotificationBell: React.FC<NotificationBellProps> = ({ onNavigate }
 
       <div
         className="u074-bell-panel"
-        role="dialog"
+        role={open ? 'dialog' : undefined}
         aria-label="Hộp thư thông báo"
         aria-hidden={!open}
+        inert={!open}
       >
         <div className="u074-bell-head">
-          <div className="u074-bell-tabs" role="tablist" aria-label="Bộ lọc thông báo">
+          <div className="u074-bell-tabs" role={open ? 'tablist' : undefined} aria-label="Bộ lọc thông báo">
             <button
               type="button"
-              role="tab"
+              role={open ? 'tab' : undefined}
               className="u074-bell-tab"
-              aria-selected={tab === 'all'}
+              aria-selected={open ? tab === 'all' : undefined}
               onClick={() => setTab('all')}
             >
               Tất cả
             </button>
             <button
               type="button"
-              role="tab"
+              role={open ? 'tab' : undefined}
               className="u074-bell-tab"
-              aria-selected={tab === 'unread'}
+              aria-selected={open ? tab === 'unread' : undefined}
               onClick={() => setTab('unread')}
             >
               Chưa đọc{unreadCount > 0 ? ` (${unreadCount})` : ''}

@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
-import { Menu, X } from 'lucide-react';
 import type { User } from '../../types/index';
+import { IconMenu, IconX } from '../../ui/icons';
 import { KineticLogo } from '../brand/KineticLogo';
 import { NotificationBell } from '../layout/NotificationBell';
 import { LANDING_CHAPTERS } from './landingContent';
@@ -9,12 +9,14 @@ import { scrollToSection, useActiveChapter, usePrefersReducedMotion } from './us
 
 export interface LandingNavProps {
   currentUser: User | null;
+  activeChapterId?: string;
   onOpenLogin: () => void;
   onOpenRegister: () => void;
   onEnterApp: () => void;
 }
 
 const CHAPTER_IDS = LANDING_CHAPTERS.map((c) => c.id);
+const EMPTY_CHAPTER_IDS: string[] = [];
 
 function userInitials(name: string): string {
   return (
@@ -29,13 +31,15 @@ function userInitials(name: string): string {
 
 export const LandingNav: React.FC<LandingNavProps> = ({
   currentUser,
+  activeChapterId,
   onOpenLogin,
   onEnterApp,
 }) => {
   const reduced = usePrefersReducedMotion();
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
-  const activeSection = useActiveChapter(CHAPTER_IDS);
+  const fallbackSection = useActiveChapter(activeChapterId === undefined ? CHAPTER_IDS : EMPTY_CHAPTER_IDS);
+  const activeSection = activeChapterId ?? fallbackSection;
   const closeRef = useRef<HTMLButtonElement>(null);
   const burgerRef = useRef<HTMLButtonElement>(null);
 
@@ -157,7 +161,7 @@ export const LandingNav: React.FC<LandingNavProps> = ({
           title="Mở menu"
           aria-expanded={menuOpen}
         >
-          <Menu size={20} strokeWidth={1.75} aria-hidden="true" />
+          <IconMenu size={20} strokeWidth={1.75} aria-hidden="true" />
         </button>
       </div>
 
@@ -183,7 +187,7 @@ export const LandingNav: React.FC<LandingNavProps> = ({
                 aria-label="Đóng menu"
                 title="Đóng menu"
               >
-                <X size={20} strokeWidth={1.75} aria-hidden="true" />
+                <IconX size={20} strokeWidth={1.75} aria-hidden="true" />
               </button>
             </div>
             <ul className="navsheet__list">

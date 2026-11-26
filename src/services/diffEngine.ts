@@ -162,17 +162,20 @@ export function computeFileDiff(
   oldContent: string,
   newContent: string
 ): DiffEntry {
-  const oldLines = oldContent ? oldContent.split(/\r?\n/) : [];
-  const newLines = newContent ? newContent.split(/\r?\n/) : [];
+  const safePath = typeof filePath === 'string' ? filePath : '';
+  const safeOld = typeof oldContent === 'string' ? oldContent : '';
+  const safeNew = typeof newContent === 'string' ? newContent : '';
+  const oldLines = safeOld ? safeOld.split(/\r?\n/) : [];
+  const newLines = safeNew ? safeNew.split(/\r?\n/) : [];
   const diffLines = buildDiffLines(oldLines, newLines);
 
   const additions = diffLines.filter((l) => l.type === 'add').length;
   const deletions = diffLines.filter((l) => l.type === 'del').length;
 
   let status: DiffEntry['status'] = 'unchanged';
-  if (!oldContent && newContent) {
+  if (!safeOld && safeNew) {
     status = 'added';
-  } else if (oldContent && !newContent) {
+  } else if (safeOld && !safeNew) {
     status = 'deleted';
   } else if (additions > 0 || deletions > 0) {
     status = 'modified';
@@ -189,8 +192,8 @@ export function computeFileDiff(
   };
 
   const patchLines = [
-    `--- a/${filePath}`,
-    `+++ b/${filePath}`,
+    `--- a/${safePath}`,
+    `+++ b/${safePath}`,
     header,
     ...diffLines.map((l) => {
       const prefix = l.type === 'add' ? '+' : l.type === 'del' ? '-' : ' ';
@@ -199,12 +202,12 @@ export function computeFileDiff(
   ];
 
   return {
-    path: filePath,
+    path: safePath,
     status,
     additions,
     deletions,
-    oldContent,
-    newContent,
+    oldContent: safeOld,
+    newContent: safeNew,
     unifiedPatch: patchLines.join('\n'),
     hunks: status === 'unchanged' ? [] : [hunk],
     splitRows: buildSplitRows(diffLines),
@@ -215,8 +218,22 @@ export function computeWorkspaceDiffs(
   previousFiles: WorkspaceFile[],
   currentFiles: WorkspaceFile[]
 ): DiffEntry[] {
-  const prevMap = new Map(previousFiles.map((f) => [f.path, f.content]));
-  const currMap = new Map(currentFiles.map((f) => [f.path, f.content]));
+  const prevMap = new Map<string, string>();
+  if (Array.isArray(previousFiles)) {
+    for (const f of previousFiles) {
+      if (f && typeof f === 'object' && typeof f.path === 'string' && f.path) {
+        prevMap.set(f.path, typeof f.content === 'string' ? f.content : '');
+      }
+    }
+  }
+  const currMap = new Map<string, string>();
+  if (Array.isArray(currentFiles)) {
+    for (const f of currentFiles) {
+      if (f && typeof f === 'object' && typeof f.path === 'string' && f.path) {
+        currMap.set(f.path, typeof f.content === 'string' ? f.content : '');
+      }
+    }
+  }
   const allPaths = Array.from(new Set([...prevMap.keys(), ...currMap.keys()])).sort();
 
   return allPaths.map((p) => computeFileDiff(p, prevMap.get(p) || '', currMap.get(p) || ''));

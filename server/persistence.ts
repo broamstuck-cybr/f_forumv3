@@ -4,25 +4,31 @@ import path from 'node:path';
 let envLoaded = false;
 
 export function ensureLocalEnvLoaded(): void {
+  if (process.env.FF_DISABLE_DOTENV === '1') {
+    envLoaded = true;
+    return;
+  }
   if (envLoaded) return;
   envLoaded = true;
-  try {
-    const envPath = path.resolve(process.cwd(), '.env');
-    if (!fs.existsSync(envPath)) return;
-    const raw = fs.readFileSync(envPath, 'utf8');
-    for (const line of raw.split(/\r?\n/)) {
-      const trimmed = line.trim();
-      if (!trimmed || trimmed.startsWith('#')) continue;
-      const eqIdx = trimmed.indexOf('=');
-      if (eqIdx <= 0) continue;
-      const key = trimmed.slice(0, eqIdx).trim();
-      const val = trimmed.slice(eqIdx + 1).trim().replace(/^['"]|['"]$/g, '');
-      if (key && process.env[key] === undefined) {
-        process.env[key] = val;
+  for (const filename of ['.env', '.env.local']) {
+    try {
+      const envPath = path.resolve(process.cwd(), filename);
+      if (!fs.existsSync(envPath)) continue;
+      const raw = fs.readFileSync(envPath, 'utf8');
+      for (const line of raw.split(/\r?\n/)) {
+        const trimmed = line.trim();
+        if (!trimmed || trimmed.startsWith('#')) continue;
+        const eqIdx = trimmed.indexOf('=');
+        if (eqIdx <= 0) continue;
+        const key = trimmed.slice(0, eqIdx).trim();
+        const val = trimmed.slice(eqIdx + 1).trim().replace(/^['"]|['"]$/g, '');
+        if (key && process.env[key] === undefined) {
+          process.env[key] = val;
+        }
       }
+    } catch {
+      continue;
     }
-  } catch {
-    return;
   }
 }
 
@@ -41,15 +47,27 @@ export function isSupabaseEnabled(): boolean {
 }
 
 function getRuntimeFilePath(): string {
+  const customDir = (process.env.FF_DATA_DIR || '').trim();
+  if (customDir) return path.resolve(customDir, 'runtime-state.json');
   return path.resolve(process.cwd(), 'data', 'runtime-state.json');
 }
 
+const RESERVED_KEYS = new Set([
+  '__proto__',
+  'constructor',
+  'prototype',
+  'toString',
+  'valueOf',
+  'hasOwnProperty',
+]);
+
 export function readLocalSection<T>(sectionKey: string, fallback: T): T {
+  if (!sectionKey || RESERVED_KEYS.has(sectionKey)) return fallback;
   try {
     const filePath = getRuntimeFilePath();
     if (!fs.existsSync(filePath)) return fallback;
     const parsed = JSON.parse(fs.readFileSync(filePath, 'utf8')) as Record<string, unknown>;
-    if (parsed && typeof parsed === 'object' && sectionKey in parsed) {
+    if (parsed && typeof parsed === 'object' && Object.hasOwn(parsed, sectionKey)) {
       return parsed[sectionKey] as T;
     }
     return fallback;
@@ -59,24 +77,35 @@ export function readLocalSection<T>(sectionKey: string, fallback: T): T {
 }
 
 export function writeLocalSection<T>(sectionKey: string, value: T): void {
+  if (!sectionKey || RESERVED_KEYS.has(sectionKey)) return;
   try {
     const filePath = getRuntimeFilePath();
     const dir = path.dirname(filePath);
     if (!fs.existsSync(dir)) {
       fs.mkdirSync(dir, { recursive: true });
     }
-    let existing: Record<string, unknown> = {};
+    let existing: Record<string, unknown> = Object.create(null) as Record<string, unknown>;
     if (fs.existsSync(filePath)) {
       try {
-        existing = JSON.parse(fs.readFileSync(filePath, 'utf8')) as Record<string, unknown>;
+        const raw = JSON.parse(fs.readFileSync(filePath, 'utf8')) as Record<string, unknown>;
+        if (raw && typeof raw === 'object' && !Array.isArray(raw)) {
+          for (const [k, v] of Object.entries(raw)) {
+            if (!RESERVED_KEYS.has(k)) existing[k] = v;
+          }
+        }
       } catch {
-        existing = {};
+        existing = Object.create(null) as Record<string, unknown>;
       }
     }
     existing[sectionKey] = value;
-    fs.writeFileSync(filePath, JSON.stringify(existing, null, 2), 'utf8');
-  } catch {
-    return;
+    const tmpPath = `${filePath}.${process.pid}.tmp`;
+    fs.writeFileSync(tmpPath, JSON.stringify(existing, null, 2), 'utf8');
+    fs.renameSync(tmpPath, filePath);
+  } catch (err) {
+    console.error(
+      '[persistence] writeLocalSection failed:',
+      err instanceof Error ? err.message : String(err)
+    );
   }
 }
 
@@ -129,6 +158,50 @@ export async function sbUpsert(
         Prefer: 'resolution=merge-duplicates,return=minimal',
       }),
       body: JSON.stringify(payload),
+    });
+    return resp.ok;
+  } catch {
+    return false;
+  }
+}
+
+export async function sbInsert(table: string, rows: unknown): Promise<boolean> {
+  if (!isSupabaseEnabled()) return false;
+  const { url } = getSupabaseConfig();
+  const payload = Array.isArray(rows) ? rows : [rows];
+  if (payload.length === 0) return true;
+  const endpoint = `${url}/rest/v1/${encodeURIComponent(table)}`;
+  try {
+    const resp = await fetch(endpoint, {
+      method: 'POST',
+      headers: buildSupabaseHeaders({
+        Prefer: 'return=minimal',
+      }),
+      body: JSON.stringify(payload),
+    });
+    return resp.ok;
+  } catch {
+    return false;
+  }
+}
+
+export async function sbPatch(
+  table: string,
+  filter: string,
+  patch: Record<string, unknown>
+): Promise<boolean> {
+  if (!isSupabaseEnabled()) return false;
+  const { url } = getSupabaseConfig();
+  const cleanFilter = filter.replace(/^\?/, '');
+  if (!cleanFilter) return false;
+  const endpoint = `${url}/rest/v1/${encodeURIComponent(table)}?${cleanFilter}`;
+  try {
+    const resp = await fetch(endpoint, {
+      method: 'PATCH',
+      headers: buildSupabaseHeaders({
+        Prefer: 'return=minimal',
+      }),
+      body: JSON.stringify(patch),
     });
     return resp.ok;
   } catch {

@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
-import { X } from 'lucide-react';
+import { IconX } from '../../ui/icons';
 import type { AdminChangelogEntry, SourceLibraryName } from '../../types/index';
 import { apiClient } from '../../services/apiClient';
 import { useAppStore } from '../../store/appStore';
@@ -161,7 +161,7 @@ export const NoticeStatusModal: React.FC<NoticeStatusModalProps> = ({ open, onCl
                   color: 'var(--ink-secondary)',
                 }}
               >
-                <X className="h-4 w-4" aria-hidden="true" />
+                <IconX className="h-4 w-4" aria-hidden="true" />
               </button>
             </div>
 

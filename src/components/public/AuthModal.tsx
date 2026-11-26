@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
-import { X } from 'lucide-react';
+import { IconX } from '../../ui/icons';
 import { HaloSignIn } from '../pinui/HaloSignIn';
 import { apiClient } from '../../services/apiClient';
 import { useAppStore } from '../../store/appStore';
@@ -235,7 +235,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ open, onClose }) => {
                 transition: 'transform 160ms cubic-bezier(0.2, 0.8, 0.2, 1), color 160ms ease',
               }}
             >
-              <X className="h-4 w-4" aria-hidden="true" />
+              <IconX className="h-4 w-4" aria-hidden="true" />
             </button>
 
             <div className="p-2 sm:p-3">

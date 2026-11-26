@@ -7,6 +7,6 @@
   "dependencies": [
     "motion"
   ],
-  "docs": "Liquid Tabs — A notifications card whose active tab is liquid, flowing from tab to tab.\n\nThe stylesheet sits next to the component and is imported by it, so keep the two together in components/pinui/.\n\nIt is drawn in Inter (500 and 600). If your project does not already load that face it will fall back to your system sans and look noticeably different.\n\nIt comes in two themes: pass theme=\"dark\" for the dark one, or wire the prop to your own theme switch.",
+  "docs": "Liquid Tabs — A notifications card whose active tab is liquid, flowing from tab to tab.\n\nThe stylesheet sits next to the component and is imported by it, so keep the two together in components/pinui/.\n\nIt is drawn in Be Vietnam Pro (500 and 600). If your project does not already load that face it will fall back to your system sans.\n\nIt comes in two themes: pass theme=\"dark\" for the dark one, or wire the prop to your own theme switch.",
   "$registry_url": "https://www.pinui.xyz/r/liquid-tabs.json"
 }

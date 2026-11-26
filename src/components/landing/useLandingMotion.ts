@@ -1,14 +1,21 @@
 import { useEffect, useRef, useState } from 'react';
 import Lenis from 'lenis';
 
+function readReducedMotion(): boolean {
+  if (typeof window === 'undefined') return false;
+  return (
+    window.matchMedia('(prefers-reduced-motion: reduce)').matches ||
+    document.documentElement.classList.contains('reduce-motion')
+  );
+}
+
 export function usePrefersReducedMotion(): boolean {
-  const [reduced, setReduced] = useState(false);
+  const [reduced, setReduced] = useState<boolean>(readReducedMotion);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
     const mq = window.matchMedia('(prefers-reduced-motion: reduce)');
-    const sync = () =>
-      setReduced(mq.matches || document.documentElement.classList.contains('reduce-motion'));
+    const sync = () => setReduced(readReducedMotion());
     sync();
     mq.addEventListener('change', sync);
     const observer = new MutationObserver(sync);
@@ -36,15 +43,30 @@ export function useLenisSmoothScroll(enabled: boolean): void {
     });
 
     let rafId = 0;
+    let idleUntil = performance.now() + 250;
+    const kick = () => {
+      idleUntil = performance.now() + 1400;
+      if (!rafId) rafId = window.requestAnimationFrame(raf);
+    };
     const raf = (time: number) => {
+      rafId = 0;
       lenis.raf(time);
-      rafId = window.requestAnimationFrame(raf);
+      if (lenis.isScrolling || performance.now() < idleUntil) {
+        rafId = window.requestAnimationFrame(raf);
+      }
     };
 
-    rafId = window.requestAnimationFrame(raf);
+    window.addEventListener('wheel', kick, { passive: true });
+    window.addEventListener('touchstart', kick, { passive: true });
+    window.addEventListener('touchmove', kick, { passive: true });
+    window.addEventListener('keydown', kick, { passive: true });
 
     return () => {
       if (rafId) window.cancelAnimationFrame(rafId);
+      window.removeEventListener('wheel', kick);
+      window.removeEventListener('touchstart', kick);
+      window.removeEventListener('touchmove', kick);
+      window.removeEventListener('keydown', kick);
       lenis.destroy();
     };
   }, [enabled, reduced]);

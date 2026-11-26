@@ -1,5 +1,5 @@
 import React from 'react';
-import { BarChart3, Check } from 'lucide-react';
+import { IconBarChart3, IconCheck } from '../../ui/icons';
 import type { CommunityPoll } from '../../types/index';
 
 export interface CommunityPollCardProps {
@@ -26,7 +26,7 @@ export const CommunityPollCard: React.FC<CommunityPollCardProps> = ({
     <section className="cm-poll" aria-label={`Thăm dò ý kiến: ${poll.question}`}>
       <header className="cm-poll-head">
         <span className="cm-poll-kicker">
-          <BarChart3 size={14} aria-hidden="true" />
+          <IconBarChart3 size={14} aria-hidden="true" />
           <span>Thăm dò ý kiến</span>
         </span>
         <span className="cm-count">
@@ -46,17 +46,18 @@ export const CommunityPollCard: React.FC<CommunityPollCardProps> = ({
               key={opt.id}
               type="button"
               className="cm-poll-opt"
+              data-card-trigger
               aria-pressed={selected}
               data-voted={hasVoted ? 'true' : undefined}
               onClick={() => onVote(postId, opt.id)}
             >
               <span
                 className="cm-poll-fill"
-                style={{ width: hasVoted ? `${pct}%` : '0%' }}
+                style={{ '--poll-scale': hasVoted ? String(pct / 100) : '0' } as React.CSSProperties}
                 aria-hidden="true"
               />
               <span className="cm-poll-opt-label">
-                {selected && <Check size={14} aria-hidden="true" />}
+                {selected && <IconCheck size={14} aria-hidden="true" />}
                 <span>{opt.label}</span>
               </span>
               {hasVoted && (

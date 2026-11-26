@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Layers, RotateCw } from 'lucide-react';
+import { IconLayers, IconRotateCw } from '../../ui/icons';
 
 interface BackgroundLabProps {
   title: string;
@@ -42,7 +42,7 @@ export const BackgroundLab: React.FC<BackgroundLabProps> = ({
       />
       <div className="ex-bg-lab-content">
         <span className="ex-bg-lab-kicker">
-          <Layers size={13} aria-hidden="true" />
+          <IconLayers size={13} aria-hidden="true" />
           GetLayers · nền động
         </span>
         <h2>{title}</h2>
@@ -100,7 +100,7 @@ export const BackgroundLab: React.FC<BackgroundLabProps> = ({
           aria-label="Đặt lại nền mẫu"
           title="Đặt lại"
         >
-          <RotateCw size={13} aria-hidden="true" />
+          <IconRotateCw size={13} aria-hidden="true" />
         </button>
       </div>
     </div>

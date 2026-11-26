@@ -51,7 +51,7 @@ export const GlobalThemeAtmosphere: React.FC = () => {
     setThemeRef.current = setTheme;
     reducedRef.current = reducedMotion;
     effectRef.current = themeEffect;
-    if (rootRef.current) {
+    if (rootRef.current?.dataset) {
       rootRef.current.dataset.theme = theme;
     }
   }, [theme, setTheme, reducedMotion, themeEffect]);
@@ -73,63 +73,13 @@ export const GlobalThemeAtmosphere: React.FC = () => {
         return current === 'none' ? 'droplet' : current;
       },
       sound: () => !reducedRef.current,
-      onCommit: (next) => {
+      onCommit: () => {
         pendingTargetRef.current = null;
-        if (themeRef.current !== next) {
-          setThemeRef.current(next);
-        }
       },
     });
     engineRef.current = engine;
 
-    const observer = new MutationObserver((mutations) => {
-      if (transitionStartedRef.current) return;
-      for (const m of mutations) {
-        for (const node of m.addedNodes) {
-          if (node instanceof HTMLElement && node.classList.contains('pts__flood')) {
-            const next = pendingTargetRef.current;
-            if (!next || themeRef.current === next) return;
-            transitionStartedRef.current = true;
-            const docWithVt = document as Document & {
-              startViewTransition?: (cb: () => void) => { ready: Promise<void> };
-            };
-            const { x, y } = pointRef.current;
-            if (!reducedRef.current && typeof docWithVt.startViewTransition === 'function') {
-              const R = Math.ceil(
-                Math.hypot(Math.max(x, window.innerWidth - x), Math.max(y, window.innerHeight - y))
-              );
-              const vt = docWithVt.startViewTransition(() => {
-                flushSync(() => {
-                  setThemeRef.current(next);
-                });
-              });
-              vt.ready
-                .then(() => {
-                  document.documentElement.animate(
-                    {
-                      clipPath: [`circle(0px at ${x}px ${y}px)`, `circle(${R}px at ${x}px ${y}px)`],
-                    },
-                    {
-                      duration: PINUI_FLOOD_MS,
-                      easing: PINUI_DRAWER_EASE,
-                      pseudoElement: '::view-transition-new(root)',
-                    }
-                  );
-                })
-                .catch(() => {
-                  if (themeRef.current !== next) setThemeRef.current(next);
-                });
-            } else {
-              setThemeRef.current(next);
-            }
-          }
-        }
-      }
-    });
-    observer.observe(root, { childList: true });
-
     const onTrigger = (event: Event) => {
-      if (engine.busy()) return;
       const custom = event as CustomEvent<OriginPoint | null>;
       const vw = window.innerWidth || 1280;
       const vh = window.innerHeight || 720;
@@ -145,34 +95,76 @@ export const GlobalThemeAtmosphere: React.FC = () => {
       };
 
       pointRef.current = pt;
-      button.style.left = `${pt.x - 27}px`;
-      button.style.top = `${pt.y - 27}px`;
 
       const next: ThemeName = themeRef.current === 'dark' ? 'light' : 'dark';
+      themeRef.current = next;
       pendingTargetRef.current = next;
       transitionStartedRef.current = false;
 
+      const applyThemeDomSync = (mode: ThemeName) => {
+        const docEl = document.documentElement;
+        docEl.setAttribute('data-theme', mode);
+        docEl.classList.toggle('dark', mode === 'dark');
+        docEl.classList.toggle('light', mode === 'light');
+        docEl.style.colorScheme = mode;
+      };
+
       if (reducedRef.current || effectRef.current === 'none') {
         pendingTargetRef.current = null;
+        applyThemeDomSync(next);
         setThemeRef.current(next);
         return;
       }
 
-      engine.prepare();
-      engine.toggle();
+      const docWithVt = document as Document & {
+        startViewTransition?: (cb: () => void) => { ready: Promise<void> };
+      };
+      if (typeof docWithVt.startViewTransition === 'function') {
+        const R = Math.ceil(
+          Math.hypot(Math.max(pt.x, vw - pt.x), Math.max(pt.y, vh - pt.y))
+        );
+        const vt = docWithVt.startViewTransition(() => {
+          applyThemeDomSync(next);
+          flushSync(() => {
+            setThemeRef.current(next);
+          });
+        });
+        vt.ready
+          .then(() => {
+            document.documentElement.animate(
+              {
+                clipPath: [`circle(0px at ${pt.x}px ${pt.y}px)`, `circle(${R}px at ${pt.x}px ${pt.y}px)`],
+              },
+              {
+                duration: PINUI_FLOOD_MS,
+                easing: PINUI_DRAWER_EASE,
+                pseudoElement: '::view-transition-new(root)',
+              }
+            );
+          })
+          .catch(() => undefined);
+      } else {
+        setThemeRef.current(next);
+      }
+
+      if (!engine.busy()) {
+        button.style.left = `${pt.x - 27}px`;
+        button.style.top = `${pt.y - 27}px`;
+        engine.prepare();
+        engine.toggle();
+      }
     };
 
     window.addEventListener(PINUI_THEME_EVENT, onTrigger);
     return () => {
       window.removeEventListener(PINUI_THEME_EVENT, onTrigger);
-      observer.disconnect();
       engine.destroy();
       engineRef.current = null;
     };
   }, []);
 
   return (
-    <div ref={rootRef} className="pts pts--global" data-theme={theme} aria-hidden="true">
+    <div ref={rootRef} className="pts pts--global" data-theme={theme} aria-hidden="true" inert>
       <button
         ref={buttonRef}
         type="button"

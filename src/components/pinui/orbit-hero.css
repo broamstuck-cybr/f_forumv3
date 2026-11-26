@@ -142,7 +142,7 @@
   height: 1.5px;
   border-radius: 2px;
   background: currentColor;
-  transition: transform 0.45s var(--ease-out), top 0.45s var(--ease-out);
+  transition: transform 0.45s var(--ease-out);
 }
 .oh-menu-btn__icon span:first-child {
   top: 0;
@@ -151,12 +151,10 @@
   top: calc(100% - 1.5px);
 }
 .oh-menu-btn.is-open .oh-menu-btn__icon span:first-child {
-  top: calc(50% - 0.75px);
-  transform: rotate(45deg);
+  transform: translateY(4.25px) rotate(45deg);
 }
 .oh-menu-btn.is-open .oh-menu-btn__icon span:last-child {
-  top: calc(50% - 0.75px);
-  transform: rotate(-45deg);
+  transform: translateY(-4.25px) rotate(-45deg);
 }
 
 .oh-menu-sheet {
@@ -306,7 +304,7 @@
   text-decoration: none;
   white-space: nowrap;
   cursor: pointer;
-  transition: box-shadow 0.5s var(--ease-out), color 0.3s;
+  transition: color 0.3s;
 }
 .oh-orbit-btn:hover {
   color: #fff;

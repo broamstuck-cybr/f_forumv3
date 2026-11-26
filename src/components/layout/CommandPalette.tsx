@@ -1,18 +1,17 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
-  Compass,
-  Home,
-  Layers,
-  MessageSquare,
-  Moon,
-  Search,
-  Settings,
-  Shield,
-  Sparkles,
-  Sun,
-  User as UserIcon,
-  X,
-} from 'lucide-react';
+  IconCompass,
+  IconHome,
+  IconLayers,
+  IconMessageSquare,
+  IconMoon,
+  IconSearch,
+  IconSettings,
+  IconSparkles,
+  IconSun,
+  IconUser,
+  IconX,
+} from '../../ui/icons';
 import { useAppStore } from '../../store/appStore';
 import { triggerPinuiThemeToggle } from './GlobalThemeAtmosphere';
 
@@ -26,7 +25,7 @@ interface PaletteAction {
 }
 
 export const CommandPalette: React.FC = () => {
-  const { navigate, openExperience, currentUser, theme, sourceCatalog } = useAppStore();
+  const { navigate, openExperience, theme, sourceCatalog } = useAppStore();
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState('');
   const [activeIndex, setActiveIndex] = useState(0);
@@ -93,7 +92,7 @@ export const CommandPalette: React.FC = () => {
         label: 'Trang chủ',
         hint: '/home',
         keywords: 'home trang chu khoi tao',
-        icon: <Home size={15} aria-hidden="true" />,
+        icon: <IconHome size={15} aria-hidden="true" />,
         run: () => closeAnd(() => navigate('home')),
       },
       {
@@ -101,7 +100,7 @@ export const CommandPalette: React.FC = () => {
         label: 'Bàn soi Khám phá',
         hint: '/explore',
         keywords: 'explore kham pha mau thanh phan repo',
-        icon: <Compass size={15} aria-hidden="true" />,
+        icon: <IconCompass size={15} aria-hidden="true" />,
         run: () => closeAnd(() => navigate('explore')),
       },
       {
@@ -109,7 +108,7 @@ export const CommandPalette: React.FC = () => {
         label: 'Không gian trải nghiệm (Kho tổng hợp)',
         hint: '/explore/experience',
         keywords: 'experience trai nghiem kho tong hop vault 7662',
-        icon: <Sparkles size={15} aria-hidden="true" />,
+        icon: <IconSparkles size={15} aria-hidden="true" />,
         run: () => closeAnd(() => openExperience(sourceCatalog[0]?.id ?? 'vault')),
       },
       {
@@ -117,7 +116,7 @@ export const CommandPalette: React.FC = () => {
         label: 'Workspace dựng giao diện',
         hint: '/workspace',
         keywords: 'workspace agent code du an live preview',
-        icon: <Layers size={15} aria-hidden="true" />,
+        icon: <IconLayers size={15} aria-hidden="true" />,
         run: () => closeAnd(() => navigate('workspace')),
       },
       {
@@ -125,7 +124,7 @@ export const CommandPalette: React.FC = () => {
         label: 'Tra cứu tri thức',
         hint: '/community',
         keywords: 'community tri thuc tra cuu tim mau hoi dap trung bay',
-        icon: <MessageSquare size={15} aria-hidden="true" />,
+        icon: <IconMessageSquare size={15} aria-hidden="true" />,
         run: () => closeAnd(() => navigate('community')),
       },
       {
@@ -133,7 +132,7 @@ export const CommandPalette: React.FC = () => {
         label: 'Hồ sơ cá nhân',
         hint: '/profile',
         keywords: 'profile ho so da luu',
-        icon: <UserIcon size={15} aria-hidden="true" />,
+        icon: <IconUser size={15} aria-hidden="true" />,
         run: () => closeAnd(() => navigate('profile')),
       },
       {
@@ -141,7 +140,7 @@ export const CommandPalette: React.FC = () => {
         label: 'Cài đặt giao diện & BYOK',
         hint: '/settings',
         keywords: 'settings cai dat theme gradient byok',
-        icon: <Settings size={15} aria-hidden="true" />,
+        icon: <IconSettings size={15} aria-hidden="true" />,
         run: () => closeAnd(() => navigate('settings')),
       },
       {
@@ -149,24 +148,13 @@ export const CommandPalette: React.FC = () => {
         label: theme === 'dark' ? 'Chuyển sang giao diện Sáng (Giấy)' : 'Chuyển sang giao diện Tối (Mực)',
         hint: 'Mực / Giấy',
         keywords: 'theme dark light sang toi muc giay',
-        icon: theme === 'dark' ? <Sun size={15} aria-hidden="true" /> : <Moon size={15} aria-hidden="true" />,
+        icon: theme === 'dark' ? <IconSun size={15} aria-hidden="true" /> : <IconMoon size={15} aria-hidden="true" />,
         run: () => closeAnd(() => triggerPinuiThemeToggle(null)),
       },
     ];
 
-    if (currentUser?.role === 'admin') {
-      list.push({
-        id: 'go-admin',
-        label: 'Bảng điều khiển Quản trị',
-        hint: '/admin',
-        keywords: 'admin quan tri thong ke bieu do',
-        icon: <Shield size={15} aria-hidden="true" />,
-        run: () => closeAnd(() => navigate('admin')),
-      });
-    }
-
     return list;
-  }, [navigate, openExperience, sourceCatalog, theme, currentUser?.role]);
+  }, [navigate, openExperience, sourceCatalog, theme]);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -205,7 +193,7 @@ export const CommandPalette: React.FC = () => {
     >
       <div className="cmdp-dialog" role="dialog" aria-modal="true" aria-label="Bảng điều khiển nhanh">
         <div className="cmdp-input-row">
-          <Search size={16} className="cmdp-icon" aria-hidden="true" />
+          <IconSearch size={16} className="cmdp-icon" aria-hidden="true" />
           <input
             ref={inputRef}
             type="search"
@@ -226,7 +214,7 @@ export const CommandPalette: React.FC = () => {
             aria-label="Đóng bảng điều khiển"
             onClick={closeWithRestore}
           >
-            <X size={15} aria-hidden="true" />
+            <IconX size={15} aria-hidden="true" />
           </button>
         </div>
 

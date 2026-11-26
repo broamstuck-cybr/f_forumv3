@@ -129,9 +129,7 @@
   font-size: 14px;
   font-weight: 500;
   cursor: pointer;
-  transition:
-    border-color 0.2s ease,
-    box-shadow 0.2s ease;
+  transition: border-color 0.2s ease;
 }
 
 .pksi__provider-icon {
@@ -183,9 +181,7 @@
   color: var(--pksi-text);
   font-size: 15px;
   outline: none;
-  transition:
-    border-color 0.2s ease,
-    box-shadow 0.2s ease;
+  transition: border-color 0.2s ease;
 }
 
 .pksi__input::placeholder {
@@ -243,7 +239,7 @@
 
 @keyframes pksi-spin {
   to {
-    rotate: 360deg;
+    transform: rotate(360deg);
   }
 }
 

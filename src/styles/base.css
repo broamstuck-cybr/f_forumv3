@@ -7,12 +7,11 @@
   }
 
   body {
+    position: relative;
     margin: 0;
     min-height: 100dvh;
     overflow-x: clip;
     background-color: var(--bg);
-    background-image: var(--ff-mesh-bg, none);
-    background-attachment: fixed;
     color: var(--fg);
     font-family: var(--font-ui);
     font-size: var(--text-base);
@@ -21,6 +20,25 @@
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     text-rendering: optimizeLegibility;
+  }
+
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    background-color: var(--bg);
+    background-image: var(--ff-mesh-bg, none);
+    transform: translateZ(0);
+  }
+
+  html[data-ambient='on'] body::before {
+    display: none;
+  }
+
+  dialog {
+    border: 0;
   }
 
   *,
@@ -324,17 +342,16 @@
 
   .link {
     color: var(--fg);
-    background-image: linear-gradient(currentColor, currentColor);
-    background-repeat: no-repeat;
-    background-position: 0 100%;
-    background-size: 100% 1px;
-    transition: background-size var(--dur-3) var(--ease-out), color var(--dur-2) var(--ease-ux);
+    text-decoration: underline;
+    text-decoration-color: currentColor;
+    text-decoration-thickness: 1px;
+    text-underline-offset: 3px;
+    transition: color var(--dur-2) var(--ease-ux), text-decoration-color var(--dur-2) var(--ease-ux);
   }
 
   .link:hover {
     color: var(--accent);
-    background-size: 0% 1px;
-    background-position: 100% 100%;
+    text-decoration-color: transparent;
   }
 
   .field {
@@ -610,6 +627,7 @@ html.reduce-motion *::after {
   width: 54px;
   height: 54px;
   opacity: 0;
+  visibility: hidden;
   pointer-events: none;
   border: 0;
   background: transparent;

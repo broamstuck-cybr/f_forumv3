@@ -62,6 +62,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
     <div className="lp select-text">
       <LandingNav
         currentUser={currentUser}
+        activeChapterId={activeChapterId}
         onOpenLogin={openLogin}
         onOpenRegister={openAuth}
         onEnterApp={enterApp}

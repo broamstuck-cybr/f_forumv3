@@ -1,6 +1,6 @@
 import React, { useId, useState, type FormEvent } from 'react';
 import { motion, useReducedMotion } from 'motion/react';
-import { Eye, EyeOff, Lock, Mail, User } from 'lucide-react';
+import { IconEye, IconEyeOff, IconLock, IconMail, IconUser } from '../../ui/icons';
 import { KineticLogo } from '../brand/KineticLogo';
 
 export interface HaloSignInPayload {
@@ -146,7 +146,7 @@ export const HaloSignIn: React.FC<HaloSignInProps> = ({
                 className="flex items-center gap-2.5 rounded-xl border px-3 h-11"
                 style={{ background: 'var(--bg-panel)', borderColor: 'var(--border-subtle)' }}
               >
-                <User className="h-4 w-4 shrink-0" style={{ color: 'var(--ink-muted)' }} aria-hidden="true" />
+                <IconUser className="h-4 w-4 shrink-0" style={{ color: 'var(--ink-muted)' }} aria-hidden="true" />
                 <input
                   id={`${uid}-name`}
                   type="text"
@@ -168,7 +168,7 @@ export const HaloSignIn: React.FC<HaloSignInProps> = ({
               className="flex items-center gap-2.5 rounded-xl border px-3 h-11"
               style={{ background: 'var(--bg-panel)', borderColor: 'var(--border-subtle)' }}
             >
-              <User className="h-4 w-4 shrink-0" style={{ color: 'var(--ink-muted)' }} aria-hidden="true" />
+              <IconUser className="h-4 w-4 shrink-0" style={{ color: 'var(--ink-muted)' }} aria-hidden="true" />
               <input
                 id={`${uid}-id`}
                 type="text"
@@ -192,7 +192,7 @@ export const HaloSignIn: React.FC<HaloSignInProps> = ({
                 className="flex items-center gap-2.5 rounded-xl border px-3 h-11"
                 style={{ background: 'var(--bg-panel)', borderColor: 'var(--border-subtle)' }}
               >
-                <Mail className="h-4 w-4 shrink-0" style={{ color: 'var(--ink-muted)' }} aria-hidden="true" />
+                <IconMail className="h-4 w-4 shrink-0" style={{ color: 'var(--ink-muted)' }} aria-hidden="true" />
                 <input
                   id={`${uid}-email`}
                   type="email"
@@ -216,7 +216,7 @@ export const HaloSignIn: React.FC<HaloSignInProps> = ({
               className="flex items-center gap-2.5 rounded-xl border px-3 h-11"
               style={{ background: 'var(--bg-panel)', borderColor: 'var(--border-subtle)' }}
             >
-              <Lock className="h-4 w-4 shrink-0" style={{ color: 'var(--ink-muted)' }} aria-hidden="true" />
+              <IconLock className="h-4 w-4 shrink-0" style={{ color: 'var(--ink-muted)' }} aria-hidden="true" />
               <input
                 id={`${uid}-pw`}
                 type={showPassword ? 'text' : 'password'}
@@ -237,7 +237,7 @@ export const HaloSignIn: React.FC<HaloSignInProps> = ({
                 className="inline-grid place-items-center h-7 w-7 rounded-lg cursor-pointer bg-transparent border-0"
                 style={{ color: 'var(--ink-muted)' }}
               >
-                {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                {showPassword ? <IconEyeOff className="h-4 w-4" /> : <IconEye className="h-4 w-4" />}
               </button>
             </div>
           </div>

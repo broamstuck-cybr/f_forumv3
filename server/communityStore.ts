@@ -27,6 +27,9 @@ interface PersistedCommunityData {
   initialized: boolean;
 }
 
+const MAX_POSTS_PER_CHANNEL = 300;
+const MAX_MODERATION_REPORTS = 500;
+
 let memoryCommunity: PersistedCommunityData | null = null;
 
 function normalizeSeedItem(raw: Record<string, unknown>, channel: CommunityChannel): CommunityPost {
@@ -272,29 +275,22 @@ registerHydrator('community', async () => {
 
 function ensureCommunityStore(): PersistedCommunityData {
   if (memoryCommunity && memoryCommunity.initialized) {
-    const totalCount =
-      memoryCommunity.channels.qa.length +
-      memoryCommunity.channels.showcase.length +
-      memoryCommunity.channels.drops.length +
-      memoryCommunity.channels.clubs.length;
-    if (totalCount > 0) {
-      return memoryCommunity;
-    }
+    return memoryCommunity;
   }
 
   if (!isSupabaseEnabled()) {
     const persisted = readLocalSection<PersistedCommunityData | null>('communityStore', null);
-    if (
-      persisted &&
-      persisted.initialized &&
-      persisted.channels &&
-      persisted.channels.qa.length +
-        persisted.channels.showcase.length +
-        persisted.channels.drops.length +
-        persisted.channels.clubs.length >
-        0
-    ) {
-      memoryCommunity = persisted;
+    if (persisted && persisted.initialized && persisted.channels && typeof persisted.channels === 'object') {
+      memoryCommunity = {
+        channels: {
+          qa: Array.isArray(persisted.channels.qa) ? persisted.channels.qa : [],
+          showcase: Array.isArray(persisted.channels.showcase) ? persisted.channels.showcase : [],
+          drops: Array.isArray(persisted.channels.drops) ? persisted.channels.drops : [],
+          clubs: Array.isArray(persisted.channels.clubs) ? persisted.channels.clubs : [],
+        },
+        reports: Array.isArray(persisted.reports) ? persisted.reports : [],
+        initialized: true,
+      };
       return memoryCommunity;
     }
   }
@@ -332,6 +328,221 @@ function saveReportMutation(report: ModerationReport, updatedPost?: CommunityPos
   }
   if (!memoryCommunity) return;
   writeLocalSection('communityStore', memoryCommunity);
+}
+
+export interface PublicCommunityPost {
+  id: string;
+  channel: CommunityChannel;
+  title: string;
+  author: CommunityAuthor;
+  category: string;
+  tags: string[];
+  createdAt: string;
+  votes: number;
+  viewerUpvoted: boolean;
+  body?: string;
+  description?: string;
+  answersCount?: number;
+  isAccepted?: boolean;
+  acceptedAnswer?: CommunityAnswer;
+  answers?: CommunityAnswer[];
+  likes?: number;
+  views?: number;
+  demoSnippet?: CommunityPost['demoSnippet'];
+  images?: CommunityPost['images'];
+  poll?: CommunityPost['poll'];
+  forks?: number;
+  fileType?: string;
+  payload?: string;
+  name?: string;
+  slug?: string;
+  lead?: string;
+  membersCount?: number;
+  activeDossier?: ClubHandoverDossier;
+}
+
+function sanitizePublicAnswer(ans: CommunityAnswer, full: boolean): CommunityAnswer {
+  const safeAuthor: CommunityAuthor = {
+    id: String(ans.author?.id || ''),
+    name: String(ans.author?.name || '').slice(0, 80),
+    handle: String(ans.author?.handle || '').slice(0, 60),
+    avatarUrl: typeof ans.author?.avatarUrl === 'string' ? ans.author.avatarUrl.slice(0, 500) : undefined,
+    role: String(ans.author?.role || '').slice(0, 40),
+    bio: typeof ans.author?.bio === 'string' ? ans.author.bio.slice(0, 300) : undefined,
+  };
+  return {
+    id: String(ans.id || ''),
+    author: safeAuthor,
+    createdAt: String(ans.createdAt || ''),
+    votes: typeof ans.votes === 'number' && Number.isFinite(ans.votes) ? ans.votes : 0,
+    content: typeof ans.content === 'string' ? (full ? ans.content.slice(0, 4000) : ans.content.slice(0, 1200)) : '',
+    isAccepted: Boolean(ans.isAccepted),
+    parentId: typeof ans.parentId === 'string' ? ans.parentId.slice(0, 80) : undefined,
+  };
+}
+
+export function toPublicCommunityPost(
+  post: CommunityPost,
+  viewerActorId: string,
+  options?: { fullDetail?: boolean }
+): PublicCommunityPost {
+  const full = Boolean(options?.fullDetail);
+  const bodyCap = full ? 8000 : 1200;
+  const descCap = full ? 8000 : 600;
+  const payloadCap = full ? 24000 : 800;
+  const snippetCap = full ? 24000 : 4000;
+
+  const safeAuthor: CommunityAuthor = {
+    id: post.author.id,
+    name: post.author.name,
+    handle: post.author.handle,
+    avatarUrl: post.author.avatarUrl,
+    role: post.author.role,
+    bio: post.author.bio,
+  };
+
+  const safeAnswers = Array.isArray(post.answers)
+    ? (full ? post.answers : post.answers.slice(-20)).map((ans) => sanitizePublicAnswer(ans, full))
+    : undefined;
+  const safeAcceptedAnswer =
+    post.acceptedAnswer && typeof post.acceptedAnswer === 'object'
+      ? sanitizePublicAnswer(post.acceptedAnswer, full)
+      : undefined;
+
+  const safeSnippet = post.demoSnippet
+    ? {
+        html: String(post.demoSnippet.html || '').slice(0, snippetCap),
+        css: String(post.demoSnippet.css || '').slice(0, snippetCap),
+        js: post.demoSnippet.js ? String(post.demoSnippet.js).slice(0, snippetCap) : undefined,
+      }
+    : undefined;
+
+  return {
+    id: post.id,
+    channel: post.channel,
+    title: post.title,
+    author: safeAuthor,
+    category: post.category,
+    tags: Array.isArray(post.tags) ? post.tags.slice(0, 10) : [],
+    createdAt: post.createdAt,
+    votes: post.votes,
+    viewerUpvoted: Boolean(viewerActorId && Array.isArray(post.upvotedBy) && post.upvotedBy.includes(viewerActorId)),
+    body: typeof post.body === 'string' ? post.body.slice(0, bodyCap) : undefined,
+    description: typeof post.description === 'string' ? post.description.slice(0, descCap) : undefined,
+    answersCount: post.answersCount,
+    isAccepted: post.isAccepted,
+    acceptedAnswer: safeAcceptedAnswer,
+    answers: safeAnswers,
+    likes: post.likes,
+    views: post.views,
+    demoSnippet: safeSnippet,
+    images: post.images,
+    poll: post.poll,
+    forks: post.forks,
+    fileType: post.fileType,
+    payload: typeof post.payload === 'string' ? post.payload.slice(0, payloadCap) : undefined,
+    name: post.name,
+    slug: post.slug,
+    lead: post.lead,
+    membersCount: post.membersCount,
+    activeDossier: post.activeDossier,
+  };
+}
+
+export function listCommunityPosts(params: {
+  channel?: string;
+  q?: string;
+  page?: number;
+  limit?: number;
+  viewerActorId: string;
+}): {
+  items: PublicCommunityPost[];
+  total: number;
+  page: number;
+  limit: number;
+  hasMore: boolean;
+  activeDossier: ClubHandoverDossier | null;
+  channelCounts: Record<'all' | CommunityChannel, number>;
+} {
+  const store = ensureCommunityStore();
+  const page = typeof params.page === 'number' && Number.isFinite(params.page)
+    ? Math.max(1, Math.floor(params.page))
+    : 1;
+  const limit = typeof params.limit === 'number' && Number.isFinite(params.limit)
+    ? Math.max(1, Math.min(50, Math.floor(params.limit)))
+    : 20;
+
+  const channelFilter =
+    params.channel === 'qa' ||
+    params.channel === 'showcase' ||
+    params.channel === 'drops' ||
+    params.channel === 'clubs'
+      ? params.channel
+      : null;
+
+  const query = (params.q || '').trim().toLowerCase();
+  const matchesQuery = (p: CommunityPost): boolean => {
+    if (!query) return true;
+    const hay = [
+      p.title,
+      p.body,
+      p.description,
+      p.category,
+      ...(p.tags || []),
+      p.author?.name,
+      p.author?.handle,
+    ]
+      .filter(Boolean)
+      .join(' ')
+      .toLowerCase();
+    return hay.includes(query);
+  };
+
+  const countVisible = (ch: CommunityChannel): number =>
+    store.channels[ch].filter((p) => !p.hidden && matchesQuery(p)).length;
+
+  const channelCounts: Record<'all' | CommunityChannel, number> = {
+    qa: countVisible('qa'),
+    showcase: countVisible('showcase'),
+    drops: countVisible('drops'),
+    clubs: countVisible('clubs'),
+    all: 0,
+  };
+  channelCounts.all =
+    channelCounts.qa + channelCounts.showcase + channelCounts.drops + channelCounts.clubs;
+
+  let pool: CommunityPost[] = channelFilter
+    ? [...store.channels[channelFilter]]
+    : [
+        ...store.channels.qa,
+        ...store.channels.showcase,
+        ...store.channels.drops,
+        ...store.channels.clubs,
+      ];
+
+  pool = pool.filter((p) => !p.hidden && matchesQuery(p));
+
+  pool.sort((a, b) => String(b.createdAt).localeCompare(String(a.createdAt)));
+
+  const total = pool.length;
+  const start = (page - 1) * limit;
+  const paged = pool.slice(start, start + limit);
+  const items = paged.map((p) => toPublicCommunityPost(p, params.viewerActorId));
+  const latestClub = store.channels.clubs.find((c) => !c.hidden && c.activeDossier);
+
+  return {
+    items,
+    total,
+    page,
+    limit,
+    hasMore: start + paged.length < total,
+    activeDossier: latestClub?.activeDossier || null,
+    channelCounts,
+  };
+}
+
+export function findCommunityPostById(postId: string, includeHidden = false): CommunityPost | null {
+  return findPostById(postId, includeHidden);
 }
 
 export function getCommunityState(includeHidden = false): {
@@ -406,14 +617,17 @@ export function createCommunityPost(input: {
     hidden: false,
   };
   store.channels[channel].unshift(post);
+  if (store.channels[channel].length > MAX_POSTS_PER_CHANNEL) {
+    store.channels[channel].length = MAX_POSTS_PER_CHANNEL;
+  }
   savePostMutation(post);
   return post;
 }
 
-function findPostById(postId: string): CommunityPost | null {
+function findPostById(postId: string, includeHidden = false): CommunityPost | null {
   const store = ensureCommunityStore();
   for (const ch of ['qa', 'showcase', 'drops', 'clubs'] as CommunityChannel[]) {
-    const found = store.channels[ch].find((p) => p.id === postId);
+    const found = store.channels[ch].find((p) => p.id === postId && (includeHidden || !p.hidden));
     if (found) return found;
   }
   return null;
@@ -522,6 +736,9 @@ export function submitModerationReport(input: {
     createdAt: new Date().toISOString(),
   };
   store.reports.unshift(report);
+  if (store.reports.length > MAX_MODERATION_REPORTS) {
+    store.reports.length = MAX_MODERATION_REPORTS;
+  }
   saveReportMutation(report);
   return report;
 }
@@ -538,7 +755,7 @@ export function resolveModerationReport(
   report.resolvedAt = new Date().toISOString();
   report.resolvedBy = actorName;
 
-  const post = findPostById(report.targetId);
+  const post = findPostById(report.targetId, true);
   if (post) {
     if (status === 'hidden') {
       post.hidden = true;

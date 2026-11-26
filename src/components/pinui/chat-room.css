@@ -173,3 +173,15 @@
   background: var(--accent-soft);
   color: var(--accent-primary);
 }
+
+@media (prefers-reduced-motion: reduce) {
+  .pvc__bar {
+    animation: none;
+  }
+
+  .pvc__pill,
+  .pvc__card,
+  .pvc__btn {
+    transition-duration: 0.01ms;
+  }
+}

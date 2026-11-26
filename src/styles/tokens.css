@@ -139,12 +139,12 @@ html[data-theme='light'] .scene-paper,
   --bg-inverse: #111816;
   --line: rgba(17, 24, 22, 0.13);
   --line-strong: rgba(17, 24, 22, 0.24);
-  --accent: #0b7a59;
-  --accent-fill: #0b7a59;
+  --accent: #086348;
+  --accent-fill: #086348;
   --on-accent: #ffffff;
-  --accent-soft: rgba(11, 122, 89, 0.11);
-  --accent-secondary: #8a5627;
-  --accent-secondary-soft: rgba(138, 86, 39, 0.11);
+  --accent-soft: rgba(8, 99, 72, 0.11);
+  --accent-secondary: #7a4a1e;
+  --accent-secondary-soft: rgba(122, 74, 30, 0.11);
   --red: var(--accent);
   --red-fill: var(--accent-fill);
   --on-red: var(--on-accent);
@@ -153,10 +153,10 @@ html[data-theme='light'] .scene-paper,
   --danger-soft: rgba(180, 35, 24, 0.11);
   --harbour: #1f5568;
   --harbour-soft: rgba(31, 85, 104, 0.12);
-  --green: #0b7a59;
-  --green-soft: rgba(11, 122, 89, 0.11);
-  --amber: #8a5627;
-  --amber-soft: rgba(138, 86, 39, 0.11);
+  --green: #086348;
+  --green-soft: rgba(8, 99, 72, 0.11);
+  --amber: #7a4a1e;
+  --amber-soft: rgba(122, 74, 30, 0.11);
   --shadow-1: 0 1px 2px rgba(17, 24, 22, 0.08);
   --shadow-2: 0 14px 30px -14px rgba(17, 24, 22, 0.2);
   --shadow-3: 0 40px 70px -30px rgba(17, 24, 22, 0.3);
@@ -178,12 +178,12 @@ html[data-theme='light'] .scene-paper,
   --bg-veil: rgba(12, 79, 60, 0.88);
   --fg: #f4fbf8;
   --fg-muted: rgba(244, 251, 248, 0.86);
-  --fg-faint: rgba(244, 251, 248, 0.72);
+  --fg-faint: rgba(244, 251, 248, 0.76);
   --fg-inverse: #0a3c2e;
   --bg-inverse: #f4fbf8;
   --line: rgba(244, 251, 248, 0.2);
   --line-strong: rgba(244, 251, 248, 0.38);
-  --accent: #9be8cc;
+  --accent: #d9fff1;
   --accent-fill: #0f1715;
   --on-accent: #f4fbf8;
   --accent-soft: rgba(244, 251, 248, 0.14);
@@ -191,8 +191,14 @@ html[data-theme='light'] .scene-paper,
   --red-fill: var(--accent-fill);
   --on-red: var(--on-accent);
   --red-soft: var(--accent-soft);
-  --harbour: #d8f2eb;
+  --danger: #ffd7d4;
+  --danger-soft: rgba(9, 13, 13, 0.28);
+  --harbour: #e2f7f2;
   --harbour-soft: rgba(244, 251, 248, 0.14);
+  --green: #d9fff1;
+  --green-soft: rgba(244, 251, 248, 0.14);
+  --amber: #ffe3c4;
+  --amber-soft: rgba(9, 13, 13, 0.24);
 }
 
 html[data-theme='dark'][data-wallpaper='ember'],
@@ -224,9 +230,9 @@ html[data-theme='light'][data-wallpaper='ember'] .scene-paper {
   --bg-veil: rgba(243, 246, 244, 0.88);
   --bg-glass-surface: rgba(250, 252, 250, 0.84);
   --bg-card-surface: rgba(255, 255, 255, 0.92);
-  --accent: #0b7a59;
-  --accent-fill: #0b7a59;
-  --accent-soft: rgba(11, 122, 89, 0.12);
+  --accent: #086348;
+  --accent-fill: #086348;
+  --accent-soft: rgba(8, 99, 72, 0.11);
   --on-accent: #ffffff;
   --ff-mesh-bg:
     conic-gradient(from 205deg at 16% 6%, rgba(56, 201, 154, 0.16) 0deg, transparent 62deg, rgba(230, 179, 133, 0.22) 128deg, transparent 230deg),
@@ -301,9 +307,9 @@ html[data-theme='light'][data-wallpaper='aurora'] .scene-paper {
   --bg-veil: rgba(239, 246, 242, 0.88);
   --bg-glass-surface: rgba(248, 252, 250, 0.84);
   --bg-card-surface: rgba(255, 255, 255, 0.92);
-  --accent: #0b7a59;
-  --accent-fill: #0b7a59;
-  --accent-soft: rgba(11, 122, 89, 0.12);
+  --accent: #086348;
+  --accent-fill: #086348;
+  --accent-soft: rgba(8, 99, 72, 0.11);
   --on-accent: #ffffff;
   --ff-mesh-bg:
     radial-gradient(58% 50% at 20% 18%, rgba(56, 201, 154, 0.2), transparent 66%),
@@ -340,9 +346,9 @@ html[data-theme='light'][data-wallpaper='constellation'] .scene-paper {
   --bg-veil: rgba(244, 246, 243, 0.88);
   --bg-glass-surface: rgba(251, 252, 250, 0.84);
   --bg-card-surface: rgba(255, 255, 255, 0.92);
-  --accent: #0b7a59;
-  --accent-fill: #0b7a59;
-  --accent-soft: rgba(11, 122, 89, 0.12);
+  --accent: #086348;
+  --accent-fill: #086348;
+  --accent-soft: rgba(8, 99, 72, 0.11);
   --on-accent: #ffffff;
   --ff-mesh-bg:
     conic-gradient(from 195deg at 52% 0%, rgba(230, 179, 133, 0.2) 0deg, transparent 58deg, rgba(135, 198, 182, 0.2) 124deg, transparent 230deg),
@@ -379,9 +385,9 @@ html[data-theme='light'][data-wallpaper='indigo'] .scene-paper {
   --bg-veil: rgba(239, 245, 247, 0.88);
   --bg-glass-surface: rgba(248, 251, 252, 0.84);
   --bg-card-surface: rgba(255, 255, 255, 0.92);
-  --accent: #0c6f5e;
-  --accent-fill: #0c6f5e;
-  --accent-soft: rgba(12, 111, 94, 0.12);
+  --accent: #095b4d;
+  --accent-fill: #095b4d;
+  --accent-soft: rgba(9, 91, 77, 0.11);
   --on-accent: #ffffff;
   --ff-mesh-bg:
     radial-gradient(64% 54% at 16% 14%, rgba(56, 189, 178, 0.2), transparent 66%),
@@ -459,9 +465,9 @@ html[data-theme='light'][data-wallpaper='lagoon'] .scene-paper {
   --bg-veil: rgba(237, 247, 246, 0.88);
   --bg-glass-surface: rgba(248, 252, 252, 0.84);
   --bg-card-surface: rgba(255, 255, 255, 0.94);
-  --accent: #0f6f68;
-  --accent-fill: #0f6f68;
-  --accent-soft: rgba(15, 111, 104, 0.12);
+  --accent: #0b5c56;
+  --accent-fill: #0b5c56;
+  --accent-soft: rgba(11, 92, 86, 0.11);
   --on-accent: #ffffff;
   --ff-mesh-bg:
     radial-gradient(58% 50% at 16% 12%, rgba(94, 234, 212, 0.3), transparent 64%),
@@ -538,9 +544,9 @@ html[data-theme='light'][data-wallpaper='sage'] .scene-paper {
   --bg-veil: rgba(242, 245, 236, 0.88);
   --bg-glass-surface: rgba(250, 252, 245, 0.84);
   --bg-card-surface: rgba(255, 255, 255, 0.94);
-  --accent: #3f6b4f;
-  --accent-fill: #3f6b4f;
-  --accent-soft: rgba(63, 107, 79, 0.12);
+  --accent: #335941;
+  --accent-fill: #335941;
+  --accent-soft: rgba(51, 89, 65, 0.11);
   --on-accent: #ffffff;
   --ff-mesh-bg:
     radial-gradient(58% 50% at 16% 14%, rgba(183, 201, 168, 0.34), transparent 64%),

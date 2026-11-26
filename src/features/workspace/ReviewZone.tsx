@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
-import { BookmarkPlus, RotateCcw, ShieldCheck } from 'lucide-react';
+import { IconBookmarkPlus, IconRotateCcw, IconShieldCheck } from '../../ui/icons';
 import type { WorkspaceProject } from '../../types/index';
 import { ChecksPanel } from './ChecksPanel';
 import { DiffViewer, type DiffViewMode } from './DiffViewer';
+import type { PreviewRuntimeError } from './LivePreviewFrame';
 import { formatStamp } from './time';
 
 export type ReviewTab = 'diff' | 'check' | 'files';
@@ -17,6 +18,8 @@ export interface ReviewZoneProps {
   onRunChecks: () => void;
   onCreateSnapshot?: () => void;
   onRestoreSnapshot?: (snapshotId: string) => void;
+  runtimeErrors?: PreviewRuntimeError[];
+  onClearRuntimeErrors?: () => void;
 }
 
 export const ReviewZone: React.FC<ReviewZoneProps> = ({
@@ -29,6 +32,8 @@ export const ReviewZone: React.FC<ReviewZoneProps> = ({
   onRunChecks,
   onCreateSnapshot,
   onRestoreSnapshot,
+  runtimeErrors = [],
+  onClearRuntimeErrors,
 }) => {
   const [diffMode, setDiffMode] = useState<DiffViewMode>('unified');
   const report = project.checksReport;
@@ -84,20 +89,20 @@ export const ReviewZone: React.FC<ReviewZoneProps> = ({
               type="button"
               className="ws-icon-pill"
               aria-label="Lưu mốc phiên"
-              title="Lưu mốc phiên"
+              title="Lưu mốc"
               onClick={onCreateSnapshot}
             >
-              <BookmarkPlus size={15} aria-hidden="true" />
+              <IconBookmarkPlus size={15} />
             </button>
           )}
           <button
             type="button"
             className="ws-icon-pill"
             aria-label="Chạy kiểm định 6 lớp"
-            title="Chạy kiểm định 6 lớp"
+            title="Kiểm định"
             onClick={onRunChecks}
           >
-            <ShieldCheck size={15} aria-hidden="true" />
+            <IconShieldCheck size={15} />
           </button>
         </div>
       </div>
@@ -109,6 +114,8 @@ export const ReviewZone: React.FC<ReviewZoneProps> = ({
             processes={project.processes}
             onRunChecks={onRunChecks}
             onSelectFile={openFileInEditor}
+            runtimeErrors={runtimeErrors}
+            onClearRuntimeErrors={onClearRuntimeErrors}
           />
         )}
 
@@ -146,10 +153,10 @@ export const ReviewZone: React.FC<ReviewZoneProps> = ({
                         type="button"
                         className="ws-icon-pill"
                         aria-label={`Khôi phục ${snapshot.label}`}
-                        title="Khôi phục mốc này"
+                        title="Khôi phục"
                         onClick={() => onRestoreSnapshot(snapshot.id)}
                       >
-                        <RotateCcw size={15} aria-hidden="true" />
+                        <IconRotateCcw size={15} />
                       </button>
                     )}
                   </li>

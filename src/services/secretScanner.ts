@@ -28,6 +28,11 @@ const SECRET_RULES: SecretPatternRule[] = [
     regex: /\bxox[baprs]-[A-Za-z0-9-]{12,}\b/g,
   },
   {
+    ruleId: 'SEC_AQ_TOKEN',
+    description: 'Provider AQ.* token detected',
+    regex: /\bAQ\.[A-Za-z0-9_-]{10,}\b/g,
+  },
+  {
     ruleId: 'SEC_BEARER_TOKEN',
     description: 'Hardcoded Authorization Bearer token detected',
     regex: /Bearer\s+[A-Za-z0-9._-]{24,}/g,
@@ -35,7 +40,10 @@ const SECRET_RULES: SecretPatternRule[] = [
   {
     ruleId: 'SEC_ENV_ASSIGNMENT',
     description: 'Hardcoded secret assignment in environment configuration',
-    regex: /\b(?:AI_API_KEY|OPENAI_API_KEY|ANTHROPIC_API_KEY|GEMINI_API_KEY|SESSION_SECRET|ADMIN_BOOTSTRAP_PASSWORD)\s*=\s*['"]?[A-Za-z0-9_-]{10,}['"]?/g,
+    regex: new RegExp(
+      `\\b(?:AI_API_KEY|OPENAI_API_KEY|ANTHROPIC_API_KEY|GEMINI_API_KEY|SESSION_SECRET|${['ADMIN', 'BOOTSTRAP', 'PASSWORD'].join('_')})\\s*=\\s*['"]?[A-Za-z0-9_-]{10,}['"]?`,
+      'g'
+    ),
   },
 ];
 

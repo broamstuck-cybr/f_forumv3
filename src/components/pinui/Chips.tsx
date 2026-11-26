@@ -23,6 +23,7 @@ export interface ChipsProps {
   corner?: number;
   shadow?: number;
   theme?: 'light' | 'dark';
+  itemRole?: 'option' | 'button';
 }
 
 function playChipTone(kind: 'press' | 'select') {
@@ -60,6 +61,7 @@ export const Chips: React.FC<ChipsProps> = ({
   corner,
   shadow,
   theme,
+  itemRole = 'option',
 }) => {
   const reduced = Boolean(useReducedMotion());
   const lastSoundRef = useRef(0);
@@ -75,8 +77,8 @@ export const Chips: React.FC<ChipsProps> = ({
   return (
     <div
       className={`pchips-wrap ${className}`}
-      role="listbox"
-      aria-multiselectable={multi}
+      role={itemRole === 'button' ? 'group' : 'listbox'}
+      aria-multiselectable={itemRole === 'option' ? multi : undefined}
       aria-label="Bộ chọn"
       data-theme={theme}
       style={
@@ -92,8 +94,9 @@ export const Chips: React.FC<ChipsProps> = ({
           <motion.button
             key={item.id}
             type="button"
-            role="option"
-            aria-selected={selected}
+            role={itemRole === 'option' ? 'option' : undefined}
+            aria-selected={itemRole === 'option' ? selected : undefined}
+            aria-pressed={itemRole === 'button' ? selected : undefined}
             data-selected={selected}
             className={`pchips-btn ${variant === 'tactile' ? 'pchips-btn--tactile' : ''}`}
             whileTap={reduced ? undefined : { scale: 0.98 }}

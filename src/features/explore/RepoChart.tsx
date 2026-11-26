@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { BookOpen } from 'lucide-react';
+import { IconBookOpen } from '../../ui/icons';
 import { useAppStore } from '../../store/appStore';
 import {
   RANKED_REPOS,
@@ -210,7 +210,7 @@ export const RepoChart: React.FC<RepoChartProps> = ({ query, onClearQuery, saved
                       setExplainerProfile(buildRankedRepoExplainer(repo, REPO_DATA.generatedAt))
                     }
                   >
-                    <BookOpen size={14} aria-hidden="true" />
+                    <IconBookOpen size={14} aria-hidden="true" />
                     <span>Giải thích &amp; Hướng dẫn</span>
                   </button>
                   <button
@@ -321,7 +321,7 @@ export const RepoChart: React.FC<RepoChartProps> = ({ query, onClearQuery, saved
                           setExplainerProfile(buildRankedRepoExplainer(repo, REPO_DATA.generatedAt))
                         }
                       >
-                        <BookOpen size={14} aria-hidden="true" />
+                        <IconBookOpen size={14} aria-hidden="true" />
                         <span>Giải thích &amp; Hướng dẫn</span>
                       </button>
                       <button
@@ -398,7 +398,7 @@ export const RepoChart: React.FC<RepoChartProps> = ({ query, onClearQuery, saved
                         className="ex-text ex-text-strong ex-explainer-trigger"
                         onClick={() => setExplainerProfile(buildStudioRepoExplainer(repo))}
                       >
-                        <BookOpen size={14} aria-hidden="true" />
+                        <IconBookOpen size={14} aria-hidden="true" />
                         <span>Giải thích</span>
                       </button>
                       <button

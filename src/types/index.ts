@@ -55,7 +55,7 @@ export interface User {
   id: string;
   username: string;
   name: string;
-  email: string;
+  email?: string;
   role: 'user' | 'admin';
   avatar?: string;
   bio?: string;
@@ -74,6 +74,13 @@ export interface QuotaState {
   unlimited: boolean;
   exhausted: boolean;
   updatedAt: string;
+  dailyUsed?: number;
+  dailyLimit?: number | null;
+  ipUsed?: number;
+  ipLimit?: number | null;
+  resetAt?: string;
+  role?: 'user' | 'admin' | 'guest';
+  sandboxEnabled?: boolean;
 }
 
 export type SourceLibraryName = 'threeui' | 'pinui' | 'motionsites' | 'lucianlabs' | 'codefronts';
@@ -331,6 +338,7 @@ export interface CommunityPost {
   createdAt: string;
   votes: number;
   upvotedBy?: string[];
+  viewerUpvoted?: boolean;
   body?: string;
   description?: string;
   answersCount?: number;
@@ -385,6 +393,8 @@ export interface AdminGatewayOverride {
   hasCustomApiKey?: boolean;
   systemPromptSuffix?: string;
   standardTurnLimit?: number;
+  dailyUserLimit?: number;
+  dailyIpLimit?: number;
   guestSandboxEnabled?: boolean;
   updatedAt: string;
 }
@@ -392,11 +402,16 @@ export interface AdminGatewayOverride {
 export interface AdminUserQuotaRecord {
   subjectId: string;
   subjectType: 'guest' | 'user' | 'admin';
+  kind?: 'user' | 'ip' | 'guest';
   username: string;
   email?: string;
   role: 'user' | 'admin';
   used: number;
   limit: number | null;
+  dailyUsed?: number;
+  dailyLimit?: number | null;
+  blocked?: boolean;
+  tokensTotal?: number;
   unlimited: boolean;
   updatedAt: string;
 }
@@ -432,6 +447,73 @@ export interface AdminChangelogEntry {
   author: string;
 }
 
+export interface AdminTokenTotals {
+  prompt: number;
+  completion: number;
+  total: number;
+}
+
+export interface AdminKeyPoolKeyStatus {
+  id: string;
+  mask: string;
+  status: 'active' | 'cooldown' | 'exhausted' | 'disabled' | 'error';
+  cooldownUntil: string | null;
+  requests: number;
+  failovers: number;
+  lastError: string | null;
+  tokens: AdminTokenTotals;
+}
+
+export interface AdminSharedAccountQuota {
+  dailyLimit: number;
+  dailyUsed: number;
+  rpmLimit: number;
+  rpmUsed: number;
+  remaining: number;
+  dateKey?: string;
+}
+
+export interface AdminKeyPoolStatus {
+  provider: string;
+  model: string;
+  parentAccountLabel: string;
+  sharedAccountQuota: AdminSharedAccountQuota;
+  keys: AdminKeyPoolKeyStatus[];
+  totalTokens: AdminTokenTotals;
+}
+
+export interface AdminSecurityEvent {
+  id: string;
+  timestamp: string;
+  type?: string;
+  event?: string;
+  status: number;
+  route?: string;
+  path?: string;
+  actor?: string;
+  ipHash?: string;
+  detail: string;
+}
+
+export interface AdminKeyPoolTestResult {
+  ok: boolean;
+  mode: 'pool' | 'key1' | 'key2' | 'failover_sim';
+  keyId: string;
+  keyMask: string;
+  mask?: string | null;
+  attemptedKeys?: string[];
+  usedKeyMask?: string | null;
+  model: string;
+  protocol?: AIProtocol;
+  failoverTriggered?: boolean;
+  latencyMs: number;
+  tokens: AdminTokenTotals;
+  replyPreview?: string;
+  preview?: string;
+  error?: string;
+  state?: AdminState;
+}
+
 export interface AdminState {
   gateway: AdminGatewayOverride;
   moderationQueue: ModerationReport[];
@@ -439,6 +521,9 @@ export interface AdminState {
   telemetry: AdminTelemetrySnapshot;
   auditLogs: AdminAuditLogEntry[];
   changelog: AdminChangelogEntry[];
+  keyPool?: AdminKeyPoolStatus;
+  totalTokens?: AdminTokenTotals;
+  securityEvents?: AdminSecurityEvent[];
 }
 
 export interface BYOKConfig {

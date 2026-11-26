@@ -1,8 +1,8 @@
 import React, { useRef } from 'react';
 import { motion, useScroll, useTransform } from 'motion/react';
-import { ArrowUpRight } from 'lucide-react';
 import type { DimensionView } from '../../../types/index';
 import { MARQUEE_ROW_1, MARQUEE_ROW_2, type MarqueeShowcaseItem } from '../../../data/realShowcaseData';
+import { IconArrowUpRight } from '../../../ui/icons';
 import { Mark } from '../../../ui/Mark';
 import { handleImageError } from '../../../utils/mediaFallback';
 import { usePrefersReducedMotion } from '../useLandingMotion';
@@ -37,17 +37,15 @@ const ShowcasePlate: React.FC<{
         <p className="t-label">{item.category}</p>
       </div>
       <div className="lp-plate-btns">
-        <button type="button" className="btn btn-line btn-sm" onClick={onOpenExplore}>
-          Soi mẫu
-        </button>
         <button
           type="button"
           aria-label={`Xem ${item.title} trong Explore`}
-          title={`Xem ${item.title} trong Explore`}
+          title="Soi mẫu"
           className="icon-btn"
+          data-card-trigger
           onClick={onOpenExplore}
         >
-          <ArrowUpRight size={17} aria-hidden="true" />
+          <IconArrowUpRight size={17} aria-hidden="true" />
         </button>
       </div>
     </div>

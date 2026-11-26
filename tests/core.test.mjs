@@ -6,6 +6,7 @@ import { promisify } from 'node:util';
 const execFileAsync = promisify(execFile);
 import net from 'node:net';
 import fs from 'node:fs';
+import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -16,7 +17,7 @@ const projectRoot = path.resolve(__dirname, '..');
 function getFreePort() {
   return new Promise((resolve, reject) => {
     const srv = net.createServer();
-    srv.listen(0, () => {
+    srv.listen(0, '127.0.0.1', () => {
       const port = srv.address().port;
       srv.close(() => resolve(port));
     });
@@ -35,7 +36,7 @@ describe('F-FORUM v3 Core Verification Suite', () => {
   let serverProcess;
   let baseUrl;
   let testPort;
-  const runtimeStatePath = path.join(projectRoot, 'data', 'runtime-state.json');
+  const testDataDir = fs.mkdtempSync(path.join(os.tmpdir(), 'fforum-core-test-'));
 
   before(async () => {
     testPort = await getFreePort();
@@ -45,9 +46,15 @@ describe('F-FORUM v3 Core Verification Suite', () => {
       ...process.env,
       PORT: String(testPort),
       NODE_ENV: 'test',
+      FF_DISABLE_DOTENV: '1',
+      FF_DATA_DIR: testDataDir,
       ADMIN_USERNAME: 'admin',
+      ADMIN_PASSWORD_HASH: '',
       ADMIN_BOOTSTRAP_PASSWORD: 'fforum-admin-local-dev',
       AI_API_KEY: '',
+      AI_API_KEY_1: '',
+      AI_API_KEY_2: '',
+      AI_API_KEYS: '',
       SUPABASE_URL: '',
       SUPABASE_SERVICE_ROLE_KEY: '',
     };
@@ -58,8 +65,11 @@ describe('F-FORUM v3 Core Verification Suite', () => {
       stdio: 'pipe',
     });
 
+    let stderrBuf = '';
     serverProcess.stdout.on('data', () => {});
-    serverProcess.stderr.on('data', () => {});
+    serverProcess.stderr.on('data', (chunk) => {
+      stderrBuf += String(chunk);
+    });
 
     const maxWait = 12000;
     const start = Date.now();
@@ -78,7 +88,7 @@ describe('F-FORUM v3 Core Verification Suite', () => {
     }
 
     if (!ready) {
-      throw new Error(`Server failed to start on ${baseUrl} within ${maxWait}ms`);
+      throw new Error(`Server failed to start on ${baseUrl} within ${maxWait}ms${stderrBuf ? `\n${stderrBuf}` : ''}`);
     }
   });
 
@@ -92,9 +102,7 @@ describe('F-FORUM v3 Core Verification Suite', () => {
     }
 
     try {
-      if (fs.existsSync(runtimeStatePath)) {
-        fs.unlinkSync(runtimeStatePath);
-      }
+      fs.rmSync(testDataDir, { recursive: true, force: true });
     } catch {
       void 0;
     }
@@ -209,7 +217,7 @@ describe('F-FORUM v3 Core Verification Suite', () => {
   describe('(b) Admin Unlimited Bypass & Route Protection', () => {
     test('protects /api/admin/state from unauthenticated and standard users', async () => {
       const anonRes = await fetch(`${baseUrl}/api/admin/state`);
-      assert.equal(anonRes.status, 403, 'Unauthenticated access to /api/admin/state must be 403');
+      assert.equal(anonRes.status, 401, 'Unauthenticated access to /api/admin/state must be 401');
 
       const uniqueSuffix = Date.now().toString().slice(-6);
       const regRes = await fetch(`${baseUrl}/api/auth/register`, {
@@ -713,6 +721,11 @@ describe('F-FORUM v3 Core Verification Suite', () => {
       const stdout = execFileSync('npx', ['tsx', '-e', script], {
         cwd: projectRoot,
         encoding: 'utf8',
+        env: {
+          ...process.env,
+          FF_DISABLE_DOTENV: '1',
+          FF_DATA_DIR: testDataDir,
+        },
       });
       const parsed = JSON.parse(stdout.trim());
 
@@ -774,6 +787,14 @@ describe('F-FORUM v3 Core Verification Suite', () => {
         const { stdout } = await execFileAsync('npx', ['tsx', '-e', script], {
           cwd: projectRoot,
           encoding: 'utf8',
+          env: {
+            ...process.env,
+            FF_DISABLE_DOTENV: '1',
+            FF_DATA_DIR: testDataDir,
+            AI_API_KEY_1: '',
+            AI_API_KEY_2: '',
+            AI_API_KEYS: '',
+          },
         });
         const parsed = JSON.parse(stdout.trim());
         assert.equal(parsed.fallback, false);

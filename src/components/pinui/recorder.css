@@ -273,9 +273,6 @@
   cursor: pointer;
   touch-action: manipulation;
   -webkit-tap-highlight-color: transparent;
-  transition:
-    background 140ms ease,
-    box-shadow 140ms ease;
 }
 
 .prec__glyphs {

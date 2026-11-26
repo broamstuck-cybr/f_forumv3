@@ -8,13 +8,13 @@ import { CommandPalette } from './components/layout/CommandPalette';
 import { GlobalRouteLoader } from './components/layout/GlobalRouteLoader';
 import { GlobalThemeAtmosphere } from './components/layout/GlobalThemeAtmosphere';
 import { AuthModal } from './components/public/AuthModal';
+import { DevToolsBanner } from './components/layout/DevToolsBanner';
 import { NoticeStatusModal } from './components/public/NoticeStatusModal';
+import { LandingPage } from './components/landing/LandingPage';
 import { ToastStack } from './components/public/ToastStack';
+import { ErrorBoundary } from './components/common/ErrorBoundary';
 import './components/layout/app-shell.css';
 
-const LandingPage = lazy(() =>
-  import('./components/landing/LandingPage').then((m) => ({ default: m.LandingPage }))
-);
 const HomeView = lazy(() =>
   import('./features/launchpad/HomeView').then((m) => ({ default: m.HomeView }))
 );
@@ -36,9 +36,7 @@ const ProfileView = lazy(() =>
 const SettingsView = lazy(() =>
   import('./features/settings/SettingsView').then((m) => ({ default: m.SettingsView }))
 );
-const AdminView = lazy(() =>
-  import('./features/admin/AdminView').then((m) => ({ default: m.AdminView }))
-);
+const OpsPortal = lazy(() => import('./features/admin/OpsPortal'));
 const TeamHonorGallery = lazy(() =>
   import('./features/honor/TeamHonorGallery').then((m) => ({ default: m.TeamHonorGallery }))
 );
@@ -92,12 +90,6 @@ const ROUTE_META: Record<
     description: 'Chuyển đổi Mực và Giấy, giảm chuyển động, cấu hình khóa API riêng BYOK và sao lưu dữ liệu cục bộ.',
     path: '/settings',
   },
-  admin: {
-    title: 'Quản trị — F-Forum',
-    description: 'Bảng điều khiển quản trị hệ thống F-Forum v3.',
-    path: '/admin',
-    noindex: true,
-  },
   honor: {
     title: 'Đội ngũ phát triển — F-Forum',
     description: 'Phòng trưng bày 3D tôn vinh đội ngũ phát triển và kiến trúc sư F-Forum.',
@@ -128,7 +120,6 @@ const ROUTE_LOAD_LABELS: Record<string, string> = {
   community: 'Đang mở Tra cứu tri thức...',
   profile: 'Đang mở Hồ sơ thành viên...',
   settings: 'Đang mở Cài đặt hệ thống...',
-  admin: 'Đang mở Bảng điều khiển...',
   honor: 'Đang mở Phòng trưng bày 3D Đội ngũ...',
 };
 
@@ -140,26 +131,30 @@ const AppShell: React.FC = () => {
   const firstRender = useRef(true);
 
   useEffect(() => {
-    const meta = ROUTE_META[currentRoute] ?? ROUTE_META.landing;
-    const fullUrl = `${SITE_ORIGIN}${meta.path}`;
-    document.title = meta.title;
-    setMetaContent('meta[name="description"]', meta.description);
-    setMetaContent('meta[name="robots"]', meta.noindex ? 'noindex, nofollow' : INDEX_ROBOTS);
-    setMetaContent('meta[property="og:title"]', meta.title);
-    setMetaContent('meta[property="og:description"]', meta.description);
-    setMetaContent('meta[property="og:url"]', fullUrl);
-    setMetaContent('meta[name="twitter:title"]', meta.title);
-    setMetaContent('meta[name="twitter:description"]', meta.description);
-    const canonEl = document.querySelector('link[rel="canonical"]');
-    if (currentRoute === 'not-found') {
-      canonEl?.remove();
-    } else if (canonEl) {
-      canonEl.setAttribute('href', fullUrl);
+    const meta = ROUTE_META[currentRoute];
+    if (!meta) {
+      setMetaContent('meta[name="robots"]', 'noindex, nofollow');
     } else {
-      const link = document.createElement('link');
-      link.setAttribute('rel', 'canonical');
-      link.setAttribute('href', fullUrl);
-      document.head.appendChild(link);
+      const fullUrl = `${SITE_ORIGIN}${meta.path}`;
+      document.title = meta.title;
+      setMetaContent('meta[name="description"]', meta.description);
+      setMetaContent('meta[name="robots"]', meta.noindex ? 'noindex, nofollow' : INDEX_ROBOTS);
+      setMetaContent('meta[property="og:title"]', meta.title);
+      setMetaContent('meta[property="og:description"]', meta.description);
+      setMetaContent('meta[property="og:url"]', fullUrl);
+      setMetaContent('meta[name="twitter:title"]', meta.title);
+      setMetaContent('meta[name="twitter:description"]', meta.description);
+      const canonEl = document.querySelector('link[rel="canonical"]');
+      if (currentRoute === 'not-found') {
+        canonEl?.remove();
+      } else if (canonEl) {
+        canonEl.setAttribute('href', fullUrl);
+      } else {
+        const link = document.createElement('link');
+        link.setAttribute('rel', 'canonical');
+        link.setAttribute('href', fullUrl);
+        document.head.appendChild(link);
+      }
     }
     if (firstRender.current) {
       firstRender.current = false;
@@ -200,38 +195,40 @@ const AppShell: React.FC = () => {
           {showNavbar && <AppNavbar onOpenNotice={() => setNoticeModalOpen(true)} />}
 
           <main id="noi-dung" ref={mainRef} tabIndex={-1} className="shell__main">
-            <Suspense
-              fallback={
-                <GlobalRouteLoader
-                  visible
-                  label={ROUTE_LOAD_LABELS[currentRoute] || 'Đang nạp trang...'}
-                />
-              }
-            >
-              {currentRoute === 'landing' && (
-                <LandingPage
-                  currentUser={currentUser}
-                  onOpenAuth={() => setAuthModalOpen(true)}
-                  onEnterApp={() => navigate('home')}
-                  onNavigate={(view) => navigate(view)}
-                />
-              )}
-              {currentRoute === 'home' && <HomeView />}
-              {currentRoute === 'explore' && <ExploreView />}
-              {currentRoute === 'experience' && <ExperienceView />}
-              {currentRoute === 'workspace' && <WorkspaceView />}
-              {currentRoute === 'community' && <CommunityView />}
-              {currentRoute === 'profile' && <ProfileView />}
-              {currentRoute === 'settings' && <SettingsView />}
-              {currentRoute === 'admin' && <AdminView />}
-              {currentRoute === 'honor' && (
-                <TeamHonorGallery
-                  onBack={() => navigate('home')}
-                  onNavigate={navigate}
-                />
-              )}
-              {currentRoute === 'not-found' && <Skybridge404 onNavigate={navigate} />}
-            </Suspense>
+            <ErrorBoundary key={currentRoute}>
+              <Suspense
+                fallback={
+                  <GlobalRouteLoader
+                    visible
+                    label={ROUTE_LOAD_LABELS[currentRoute] || 'Đang nạp trang...'}
+                  />
+                }
+              >
+                {currentRoute === 'landing' && (
+                  <LandingPage
+                    currentUser={currentUser}
+                    onOpenAuth={() => setAuthModalOpen(true)}
+                    onEnterApp={() => navigate('home')}
+                    onNavigate={(view) => navigate(view)}
+                  />
+                )}
+                {currentRoute === 'home' && <HomeView />}
+                {currentRoute === 'explore' && <ExploreView />}
+                {currentRoute === 'experience' && <ExperienceView />}
+                {currentRoute === 'workspace' && <WorkspaceView />}
+                {currentRoute === 'community' && <CommunityView />}
+                {currentRoute === 'profile' && <ProfileView />}
+                {currentRoute === 'settings' && <SettingsView />}
+                {currentRoute === 'admin' && <OpsPortal />}
+                {currentRoute === 'honor' && (
+                  <TeamHonorGallery
+                    onBack={() => navigate('home')}
+                    onNavigate={navigate}
+                  />
+                )}
+                {currentRoute === 'not-found' && <Skybridge404 onNavigate={navigate} />}
+              </Suspense>
+            </ErrorBoundary>
           </main>
 
           {showFooter && <AppFooter onNavigate={navigate} onOpenNotice={() => setNoticeModalOpen(true)} />}
@@ -239,6 +236,7 @@ const AppShell: React.FC = () => {
           <AuthModal open={authModalOpen} onClose={() => setAuthModalOpen(false)} />
           <NoticeStatusModal open={noticeModalOpen} onClose={() => setNoticeModalOpen(false)} />
           <CommandPalette />
+          <DevToolsBanner />
           <ToastStack />
         </div>
       </LayoutGroup>
@@ -248,9 +246,11 @@ const AppShell: React.FC = () => {
 
 export const App: React.FC = () => {
   return (
-    <AppProvider>
-      <AppShell />
-    </AppProvider>
+    <ErrorBoundary>
+      <AppProvider>
+        <AppShell />
+      </AppProvider>
+    </ErrorBoundary>
   );
 };
 

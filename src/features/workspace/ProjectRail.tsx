@@ -1,22 +1,23 @@
 import React, { useMemo, useState } from 'react';
 import {
-  Archive,
-  BookOpen,
-  ChevronDown,
-  ChevronRight,
-  Compass,
-  Folder,
-  Home,
-  Moon,
-  Pencil,
-  Pin,
-  PinOff,
-  PlusCircle,
-  Search,
-  Settings,
-  Sun,
-  Trash2,
-} from 'lucide-react';
+  IconArchive,
+  IconBookOpen,
+  IconChevronDown,
+  IconChevronRight,
+  IconCompass,
+  IconFolder,
+  IconHome,
+  IconMoon,
+  IconMoreHorizontal,
+  IconPencil,
+  IconPin,
+  IconPinOff,
+  IconPlusCircle,
+  IconSearch,
+  IconSettings,
+  IconSun,
+  IconTrash2,
+} from '../../ui/icons';
 import type { AppRoute, ThemeMode, WorkspaceProject } from '../../types/index';
 import { KineticLogo } from '../../components/brand/KineticLogo';
 import { SearchCard } from '../../components/pinui';
@@ -58,6 +59,7 @@ export const ProjectRail: React.FC<ProjectRailProps> = ({
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editDraft, setEditDraft] = useState('');
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+  const [touchActionsId, setTouchActionsId] = useState<string | null>(null);
 
   const archivedCount = useMemo(
     () => projects.filter((project) => project.archived).length,
@@ -82,6 +84,7 @@ export const ProjectRail: React.FC<ProjectRailProps> = ({
 
   const startRename = (project: WorkspaceProject) => {
     setConfirmDeleteId(null);
+    setTouchActionsId(null);
     setEditingId(project.id);
     setEditDraft(project.name);
   };
@@ -108,6 +111,7 @@ export const ProjectRail: React.FC<ProjectRailProps> = ({
             className="ws-rail-item"
             data-active={isCurrent ? 'true' : undefined}
             data-archived={project.archived ? 'true' : undefined}
+            data-touch-open={touchActionsId === project.id ? 'true' : undefined}
           >
             {isEditing ? (
               <form
@@ -148,6 +152,7 @@ export const ProjectRail: React.FC<ProjectRailProps> = ({
                     onClick={() => {
                       onDelete?.(project.id);
                       setConfirmDeleteId(null);
+                      setTouchActionsId(null);
                     }}
                   >
                     Xóa
@@ -162,16 +167,31 @@ export const ProjectRail: React.FC<ProjectRailProps> = ({
                 </div>
               </div>
             ) : (
-              <div className="ws-rail-row-wrap">
-                <button
-                  type="button"
-                  className="ws-rail-row ws-rail-row--flat"
-                  aria-current={isCurrent ? 'true' : undefined}
-                  onClick={() => onSelect(project.id)}
-                >
-                  <Folder size={13} className="ws-rail-branch-icon" aria-hidden="true" />
-                  <span className="ws-rail-name">{project.name}</span>
-                </button>
+              <>
+                <div className="ws-rail-row-wrap">
+                  <button
+                    type="button"
+                    className="ws-rail-row ws-rail-row--flat"
+                    aria-current={isCurrent ? 'true' : undefined}
+                    onClick={() => {
+                      setTouchActionsId(null);
+                      onSelect(project.id);
+                    }}
+                  >
+                    <IconFolder size={13} className="ws-rail-branch-icon" />
+                    <span className="ws-rail-name">{project.name}</span>
+                  </button>
+                  <button
+                    type="button"
+                    className="ws-rail-touch-toggle"
+                    aria-label={`Tác vụ ${project.name}`}
+                    title="Tác vụ"
+                    aria-expanded={touchActionsId === project.id}
+                    onClick={() => setTouchActionsId((id) => (id === project.id ? null : project.id))}
+                  >
+                    <IconMoreHorizontal size={15} />
+                  </button>
+                </div>
                 <div className="ws-rail-actions">
                   {onRename && (
                     <button
@@ -181,7 +201,7 @@ export const ProjectRail: React.FC<ProjectRailProps> = ({
                       title="Đổi tên"
                       onClick={() => startRename(project)}
                     >
-                      <Pencil size={12} aria-hidden="true" />
+                      <IconPencil size={13} />
                     </button>
                   )}
                   {onTogglePin && (
@@ -194,9 +214,9 @@ export const ProjectRail: React.FC<ProjectRailProps> = ({
                       onClick={() => onTogglePin(project.id)}
                     >
                       {project.pinned ? (
-                        <PinOff size={12} aria-hidden="true" />
+                        <IconPinOff size={13} />
                       ) : (
-                        <Pin size={12} aria-hidden="true" />
+                        <IconPin size={13} />
                       )}
                     </button>
                   )}
@@ -211,11 +231,11 @@ export const ProjectRail: React.FC<ProjectRailProps> = ({
                         setConfirmDeleteId(project.id);
                       }}
                     >
-                      <Trash2 size={12} aria-hidden="true" />
+                      <IconTrash2 size={13} />
                     </button>
                   )}
                 </div>
-              </div>
+              </>
             )}
           </li>
         );
@@ -230,7 +250,7 @@ export const ProjectRail: React.FC<ProjectRailProps> = ({
           type="button"
           className="ws-rail-brand"
           onClick={() => onNavigate?.('home')}
-          title="Về Trang chủ F-Forum"
+          title="Trang chủ"
         >
           <KineticLogo size={18} />
           <span>F-Forum</span>
@@ -240,12 +260,12 @@ export const ProjectRail: React.FC<ProjectRailProps> = ({
 
       <div className="ws-rail-quick">
         <button type="button" className="ws-rail-nav-btn" onClick={onCreate}>
-          <PlusCircle size={15} aria-hidden="true" />
+          <IconPlusCircle size={15} />
           <span>Phiên mới</span>
         </button>
         {onNavigate && (
           <button type="button" className="ws-rail-nav-btn" onClick={() => onNavigate('explore')}>
-            <Compass size={15} aria-hidden="true" />
+            <IconCompass size={15} />
             <span>Khám phá</span>
           </button>
         )}
@@ -255,7 +275,7 @@ export const ProjectRail: React.FC<ProjectRailProps> = ({
           aria-expanded={searchOpen}
           onClick={() => setSearchOpen((v) => !v)}
         >
-          <Search size={15} aria-hidden="true" />
+          <IconSearch size={15} />
           <span>Tìm kiếm</span>
         </button>
         {onNavigate && (
@@ -266,21 +286,21 @@ export const ProjectRail: React.FC<ProjectRailProps> = ({
               aria-expanded={moreOpen}
               onClick={() => setMoreOpen((v) => !v)}
             >
-              {moreOpen ? <ChevronDown size={14} aria-hidden="true" /> : <ChevronRight size={14} aria-hidden="true" />}
+              {moreOpen ? <IconChevronDown size={14} /> : <IconChevronRight size={14} />}
               <span>Xem thêm</span>
             </button>
             {moreOpen && (
               <div className="ws-rail-more-group">
                 <button type="button" className="ws-rail-nav-btn" onClick={() => onNavigate('home')}>
-                  <Home size={14} aria-hidden="true" />
+                  <IconHome size={14} />
                   <span>Trang chủ</span>
                 </button>
                 <button type="button" className="ws-rail-nav-btn" onClick={() => onNavigate('community')}>
-                  <BookOpen size={14} aria-hidden="true" />
+                  <IconBookOpen size={14} />
                   <span>Tri thức</span>
                 </button>
                 <button type="button" className="ws-rail-nav-btn" onClick={() => onNavigate('settings')}>
-                  <Settings size={14} aria-hidden="true" />
+                  <IconSettings size={14} />
                   <span>Cài đặt</span>
                 </button>
               </div>
@@ -323,8 +343,8 @@ export const ProjectRail: React.FC<ProjectRailProps> = ({
             aria-pressed={showArchived}
             onClick={() => setShowArchived((value) => !value)}
           >
-            <Archive size={13} aria-hidden="true" />
-            <span>{showArchived ? 'Ẩn lưu trữ' : `Đã lưu trữ (${archivedCount})`}</span>
+            <IconArchive size={13} />
+            <span>{showArchived ? 'Ẩn lưu trữ' : `Lưu trữ (${archivedCount})`}</span>
           </button>
         )}
       </div>
@@ -335,7 +355,7 @@ export const ProjectRail: React.FC<ProjectRailProps> = ({
             type="button"
             className="ws-rail-user-btn"
             onClick={() => onNavigate?.('profile')}
-            title="Hồ sơ cá nhân"
+            title="Hồ sơ"
           >
             <span className="ws-rail-avatar" aria-hidden="true">
               {(userName.trim()[0] || 'K').toUpperCase()}
@@ -352,24 +372,11 @@ export const ProjectRail: React.FC<ProjectRailProps> = ({
             className="ws-rail-theme-btn"
             onClick={(event) => triggerPinuiThemeToggle(event.currentTarget)}
             aria-label={theme === 'dark' ? 'Chuyển sang Sáng' : 'Chuyển sang Tối'}
-            title={theme === 'dark' ? 'Chế độ Sáng' : 'Chế độ Tối'}
+            title={theme === 'dark' ? 'Nền Sáng' : 'Nền Tối'}
           >
-            {theme === 'dark' ? <Sun size={14} aria-hidden="true" /> : <Moon size={14} aria-hidden="true" />}
+            {theme === 'dark' ? <IconSun size={14} /> : <IconMoon size={14} />}
           </button>
         </div>
-        {onNavigate && (
-          <div className="ws-rail-legal">
-            <button type="button" onClick={() => onNavigate('home')}>
-              Trang chủ
-            </button>
-            <button type="button" onClick={() => onNavigate('community')}>
-              Tri thức
-            </button>
-            <button type="button" onClick={() => onNavigate('settings')}>
-              Cài đặt
-            </button>
-          </div>
-        )}
       </footer>
     </>
   );

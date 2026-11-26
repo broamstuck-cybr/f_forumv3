@@ -81,9 +81,10 @@
   position: absolute;
   top: 0;
   left: 0;
+  transform-origin: 0 0;
   overflow: hidden;
   background: var(--bg-sunken);
-  will-change: transform, width, height, clip-path;
+  will-change: transform;
   cursor: pointer;
 }
 
@@ -97,35 +98,119 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  padding: calc(18 * var(--u)) calc(14 * var(--u)) calc(64 * var(--u));
   overflow: hidden;
   pointer-events: none;
+  background:
+    radial-gradient(circle at 80% 18%, var(--accent-soft), transparent 58%),
+    var(--bg-raised);
 }
 
-.rm-card-pinui-scale {
-  width: 440px;
-  height: 440px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transform: scale(var(--rm-pinui-scale, 0.54));
-  transform-origin: center center;
-  pointer-events: none;
-}
-
-.rm-card-pinui-fallback {
+.rm-card-pinui-preview {
+  width: 100%;
+  height: 100%;
+  border-radius: calc(12 * var(--u));
+  border: 1px solid var(--line);
+  background: var(--bg-sunken);
+  padding: calc(14 * var(--u));
   display: flex;
   flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  padding: 20px;
-  text-align: center;
-  color: var(--fg);
+  justify-content: space-between;
+  gap: calc(10 * var(--u));
 }
 
-.rm-card-pinui-fallback strong {
-  font-size: 16px;
+.rm-pinui-prev-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.rm-pinui-prev-badge {
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-size: calc(9.5 * var(--u));
+  letter-spacing: 0.1em;
+  color: var(--accent);
+}
+
+.rm-pinui-prev-dots {
+  display: inline-flex;
+  gap: calc(4 * var(--u));
+}
+
+.rm-pinui-prev-dots i {
+  display: block;
+  width: calc(6 * var(--u));
+  height: calc(6 * var(--u));
+  border-radius: 50%;
+  background: var(--line-strong);
+}
+
+.rm-pinui-prev-canvas {
+  display: flex;
+  flex-direction: column;
+  gap: calc(7 * var(--u));
+  padding: calc(12 * var(--u));
+  border-radius: calc(9 * var(--u));
+  border: 1px solid var(--line);
+  background: var(--bg-raised);
+}
+
+.rm-pinui-prev-line {
+  display: block;
+  height: calc(7 * var(--u));
+  border-radius: 999px;
+  background: var(--line-strong);
+}
+
+.rm-pinui-prev-line.is-wide {
+  width: 78%;
+}
+
+.rm-pinui-prev-line.is-mid {
+  width: 54%;
+  opacity: 0.72;
+}
+
+.rm-pinui-prev-row {
+  display: flex;
+  align-items: center;
+  gap: calc(6 * var(--u));
+  margin-top: calc(4 * var(--u));
+}
+
+.rm-pinui-prev-pill {
+  width: calc(46 * var(--u));
+  height: calc(16 * var(--u));
+  border-radius: 999px;
+  background: var(--accent-fill);
+}
+
+.rm-pinui-prev-chip {
+  width: calc(34 * var(--u));
+  height: calc(16 * var(--u));
+  border-radius: 999px;
+  border: 1px solid var(--line-strong);
+}
+
+.rm-pinui-prev-foot {
+  display: flex;
+  flex-direction: column;
+  gap: calc(2 * var(--u));
+  text-align: left;
+}
+
+.rm-pinui-prev-foot strong {
+  font-family: var(--font-display, 'Cormorant Garamond', Georgia, serif);
+  font-size: calc(15 * var(--u));
   font-weight: 600;
+  color: var(--fg);
+  line-height: 1.15;
+}
+
+.rm-pinui-prev-foot span {
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-size: calc(10 * var(--u));
+  color: var(--fg-muted);
 }
 
 .rm-card-thumb {
@@ -183,9 +268,7 @@
   width: calc(34 * var(--u));
   height: calc(34 * var(--u));
   border-radius: 50%;
-  background: rgba(15, 22, 21, 0.56);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
+  background: rgba(15, 22, 21, 0.78);
   border: 1px solid rgba(255, 255, 255, 0.24);
   color: #ffffff;
   display: inline-flex;

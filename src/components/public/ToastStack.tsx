@@ -1,6 +1,12 @@
 import React, { useEffect } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
-import { AlertTriangle, CheckCircle2, Info, X, XCircle } from 'lucide-react';
+import {
+  IconAlertTriangle,
+  IconCheckCircle2,
+  IconInfo,
+  IconX,
+  IconXCircle,
+} from '../../ui/icons';
 import type { ToastItem } from '../../types/index';
 import { useAppStore } from '../../store/appStore';
 
@@ -26,12 +32,12 @@ const ToastRow: React.FC<{ toast: ToastItem; onDismiss: (id: string) => void }> 
 
   const IconComponent =
     toast.type === 'success'
-      ? CheckCircle2
+      ? IconCheckCircle2
       : toast.type === 'warning'
-        ? AlertTriangle
+        ? IconAlertTriangle
         : toast.type === 'error'
-          ? XCircle
-          : Info;
+          ? IconXCircle
+          : IconInfo;
 
   return (
     <motion.div
@@ -73,7 +79,7 @@ const ToastRow: React.FC<{ toast: ToastItem; onDismiss: (id: string) => void }> 
         className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full focus-visible:outline-2 focus-visible:outline-offset-2"
         style={{ color: 'var(--ink-muted)' }}
       >
-        <X className="h-3.5 w-3.5" aria-hidden="true" />
+        <IconX className="h-3.5 w-3.5" aria-hidden="true" />
       </button>
     </motion.div>
   );

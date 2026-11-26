@@ -1,26 +1,26 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
-  ArrowLeft,
-  Check,
-  Code2,
-  Copy,
-  Flame,
-  Hash,
-  Heart,
-  Image as ImageIcon,
-  MessageCircle,
-  Mic,
-  Pause,
-  Pin,
-  Play,
-  Plus,
-  Reply,
-  Send,
-  Square,
-  ThumbsUp,
-  Upload,
-  X,
-} from 'lucide-react';
+  IconArrowLeft,
+  IconCheck,
+  IconCode2,
+  IconCopy,
+  IconFlame,
+  IconHash,
+  IconHeart,
+  IconImage,
+  IconMessageCircle,
+  IconMic,
+  IconPause,
+  IconPin,
+  IconPlay,
+  IconPlus,
+  IconReply,
+  IconSend,
+  IconSquare,
+  IconThumbsUp,
+  IconUpload,
+  IconX,
+} from '../../ui/icons';
 import { SearchCard } from '../../components/pinui';
 import { moderateText } from './moderationFilter';
 import './chat.css';
@@ -60,9 +60,9 @@ const READ_KEY = 'fforum_v3_chat_read_v1';
 const BUS = 'fforum_v3_chat_bus';
 
 const REACTIONS: Array<{ id: string; label: string; Icon: React.ComponentType<{ size?: number }> }> = [
-  { id: 'heart', label: 'Yêu thích', Icon: Heart },
-  { id: 'like', label: 'Thích', Icon: ThumbsUp },
-  { id: 'fire', label: 'Tuyệt vời', Icon: Flame },
+  { id: 'heart', label: 'Yêu thích', Icon: IconHeart },
+  { id: 'like', label: 'Thích', Icon: IconThumbsUp },
+  { id: 'fire', label: 'Tuyệt vời', Icon: IconFlame },
 ];
 const REACTION_ICON = Object.fromEntries(REACTIONS.map((r) => [r.id, r.Icon]));
 
@@ -139,10 +139,118 @@ function renderHighlightedCode(code: string): React.ReactNode[] {
 function load<T>(key: string, fallback: T): T {
   try {
     const raw = window.localStorage.getItem(key);
-    return raw ? (JSON.parse(raw) as T) : fallback;
+    if (!raw) return fallback;
+    const parsed: unknown = JSON.parse(raw);
+    if (Array.isArray(fallback)) {
+      return Array.isArray(parsed) ? (parsed as T) : fallback;
+    }
+    if (fallback !== null && typeof fallback === 'object') {
+      return parsed !== null && typeof parsed === 'object' && !Array.isArray(parsed)
+        ? (parsed as T)
+        : fallback;
+    }
+    return parsed !== null && typeof parsed === typeof fallback ? (parsed as T) : fallback;
   } catch {
     return fallback;
   }
+}
+
+function isPlainRecord(value: unknown): value is Record<string, unknown> {
+  return Boolean(value) && typeof value === 'object' && !Array.isArray(value);
+}
+
+function normalizeChatThread(raw: unknown): ChatThread | null {
+  if (
+    !isPlainRecord(raw) ||
+    typeof raw.id !== 'string' ||
+    !raw.id.trim() ||
+    typeof raw.name !== 'string' ||
+    !raw.name.trim() ||
+    (raw.kind !== 'channel' && raw.kind !== 'dm')
+  ) {
+    return null;
+  }
+  return {
+    id: raw.id,
+    name: raw.name,
+    kind: raw.kind,
+    online: typeof raw.online === 'boolean' ? raw.online : true,
+    rule: typeof raw.rule === 'string' ? raw.rule : undefined,
+  };
+}
+
+function normalizeChatMessage(raw: unknown): ChatMessage | null {
+  if (
+    !isPlainRecord(raw) ||
+    typeof raw.id !== 'string' ||
+    !raw.id.trim() ||
+    typeof raw.threadId !== 'string' ||
+    typeof raw.authorHandle !== 'string' ||
+    typeof raw.authorName !== 'string' ||
+    typeof raw.text !== 'string' ||
+    typeof raw.at !== 'string'
+  ) {
+    return null;
+  }
+  const reactions: Record<string, string[]> = {};
+  if (isPlainRecord(raw.reactions)) {
+    for (const [k, v] of Object.entries(raw.reactions)) {
+      if (Array.isArray(v)) {
+        reactions[k] = v.filter((u): u is string => typeof u === 'string');
+      }
+    }
+  }
+  let voiceNote: ChatVoiceNote | undefined;
+  if (
+    isPlainRecord(raw.voiceNote) &&
+    typeof raw.voiceNote.audioUrl === 'string' &&
+    typeof raw.voiceNote.durationSec === 'number' &&
+    Number.isFinite(raw.voiceNote.durationSec) &&
+    Array.isArray(raw.voiceNote.bars)
+  ) {
+    voiceNote = {
+      audioUrl: raw.voiceNote.audioUrl,
+      durationSec: raw.voiceNote.durationSec,
+      bars: raw.voiceNote.bars.filter((b): b is number => typeof b === 'number' && Number.isFinite(b)),
+      label: typeof raw.voiceNote.label === 'string' ? raw.voiceNote.label : undefined,
+    };
+  }
+  return {
+    id: raw.id,
+    threadId: raw.threadId,
+    authorHandle: raw.authorHandle,
+    authorName: raw.authorName,
+    text: raw.text,
+    at: raw.at,
+    replyToId: typeof raw.replyToId === 'string' ? raw.replyToId : undefined,
+    snippet: typeof raw.snippet === 'string' ? raw.snippet : undefined,
+    imageUrl: typeof raw.imageUrl === 'string' ? raw.imageUrl : undefined,
+    voiceNote,
+    reactions,
+  };
+}
+
+function loadCustomThreads(fallback: ChatThread[]): ChatThread[] {
+  return load<unknown[]>(THREADS_KEY, fallback)
+    .map(normalizeChatThread)
+    .filter((t): t is ChatThread => t !== null);
+}
+
+function loadChatMessages(fallback: ChatMessage[]): ChatMessage[] {
+  return load<unknown[]>(STORE_KEY, fallback)
+    .map(normalizeChatMessage)
+    .filter((m): m is ChatMessage => m !== null);
+}
+
+function loadReadAtMap(): Record<string, number> {
+  const raw = load<Record<string, unknown>>(READ_KEY, {});
+  const clean: Record<string, number> = {};
+  for (const [k, v] of Object.entries(raw)) {
+    if (typeof v === 'number' && Number.isFinite(v)) {
+      clean[k] = v;
+    }
+  }
+  return clean;
 }
 
 function buildWaveformBars(seedText: string, count = 28): number[] {
@@ -191,6 +299,23 @@ const dayLabel = (iso: string) => {
 
 const threadInitial = (name: string) =>
   name.replace(/^[#@]/, '').trim().slice(0, 1).toUpperCase() || 'F';
+
+const isSafeHttpImageUrl = (url: string): boolean => {
+  const clean = url.trim();
+  if (!/^https?:\/\/\S+$/i.test(clean)) return false;
+  try {
+    const parsed = new URL(clean);
+    return (parsed.protocol === 'https:' || parsed.protocol === 'http:') && Boolean(parsed.hostname);
+  } catch {
+    return false;
+  }
+};
+
+const isSafeDataImageUrl = (url: string): boolean =>
+  /^data:image\/(?:png|jpeg|jpg|webp|gif|avif|svg\+xml);base64,[a-z0-9+/=]+$/i.test(url.trim());
+
+const isSafeChatImageUrl = (url: string | undefined): url is string =>
+  Boolean(url && (isSafeHttpImageUrl(url) || isSafeDataImageUrl(url)));
 
 interface VoiceNoteCardProps {
   note: ChatVoiceNote;
@@ -281,7 +406,7 @@ const VoiceNoteCard: React.FC<VoiceNoteCardProps> = ({ note, mine }) => {
         onClick={() => void togglePlay()}
         aria-label={playing ? 'Tạm dừng ghi âm' : 'Phát ghi âm'}
       >
-        {playing ? <Pause size={15} aria-hidden="true" /> : <Play size={15} aria-hidden="true" />}
+        {playing ? <IconPause size={15} aria-hidden="true" /> : <IconPlay size={15} aria-hidden="true" />}
       </button>
       <div
         ref={waveRef}
@@ -350,9 +475,9 @@ export const CommunityChatRoom: React.FC<Props> = ({ currentHandle, currentName 
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [lightboxUrl, setLightboxUrl] = useState<string | null>(null);
   const [highlightedId, setHighlightedId] = useState<string | null>(null);
-  const [customThreads, setCustomThreads] = useState<ChatThread[]>(() => load(THREADS_KEY, []));
-  const [messages, setMessages] = useState<ChatMessage[]>(() => load(STORE_KEY, SEED));
-  const [readAt, setReadAt] = useState<Record<string, number>>(() => load(READ_KEY, {}));
+  const [customThreads, setCustomThreads] = useState<ChatThread[]>(() => loadCustomThreads([]));
+  const [messages, setMessages] = useState<ChatMessage[]>(() => loadChatMessages(SEED));
+  const [readAt, setReadAt] = useState<Record<string, number>>(() => loadReadAtMap());
   const [activeId, setActiveId] = useState<string>('chung');
   const [mobileThread, setMobileThread] = useState(false);
   const [query, setQuery] = useState('');
@@ -413,8 +538,8 @@ export const CommunityChatRoom: React.FC<Props> = ({ currentHandle, currentName 
     const bus = new BroadcastChannel(BUS);
     busRef.current = bus;
     bus.onmessage = (ev: MessageEvent<{ type: string; from?: string; thread?: string }>) => {
-      if (ev.data.type === 'sync') setMessages(load(STORE_KEY, SEED));
-      if (ev.data.type === 'threads') setCustomThreads(load(THREADS_KEY, []));
+      if (ev.data.type === 'sync') setMessages(loadChatMessages(SEED));
+      if (ev.data.type === 'threads') setCustomThreads(loadCustomThreads([]));
       if (ev.data.type === 'typing' && ev.data.from !== currentHandle && ev.data.thread === activeId) {
         setTypingFrom(ev.data.from ?? '');
         window.clearTimeout(typingTimer.current);
@@ -422,8 +547,8 @@ export const CommunityChatRoom: React.FC<Props> = ({ currentHandle, currentName 
       }
     };
     const onStorage = (e: StorageEvent) => {
-      if (e.key === STORE_KEY) setMessages(load(STORE_KEY, SEED));
-      if (e.key === THREADS_KEY) setCustomThreads(load(THREADS_KEY, []));
+      if (e.key === STORE_KEY) setMessages(loadChatMessages(SEED));
+      if (e.key === THREADS_KEY) setCustomThreads(loadCustomThreads([]));
     };
     window.addEventListener('storage', onStorage);
     return () => {
@@ -490,7 +615,7 @@ export const CommunityChatRoom: React.FC<Props> = ({ currentHandle, currentName 
       kind: isChannel ? 'channel' : 'dm',
       online: true,
     };
-    const next = [created, ...load<ChatThread[]>(THREADS_KEY, customThreads)];
+    const next = [created, ...loadCustomThreads(customThreads)];
     setCustomThreads(next);
     persistThreads(next);
     setActiveId(created.id);
@@ -504,8 +629,11 @@ export const CommunityChatRoom: React.FC<Props> = ({ currentHandle, currentName 
     if (!file || !file.type.startsWith('image/')) return;
     const reader = new FileReader();
     reader.onload = () => {
-      if (typeof reader.result === 'string') {
+      if (typeof reader.result === 'string' && isSafeDataImageUrl(reader.result)) {
         setPhotoUrl(reader.result);
+        setWarning('');
+      } else {
+        setWarning('Định dạng ảnh không được hỗ trợ.');
       }
     };
     reader.readAsDataURL(file);
@@ -601,6 +729,10 @@ export const CommunityChatRoom: React.FC<Props> = ({ currentHandle, currentName 
     const cleanSnippet = snippet.trim();
     const cleanPhoto = photoUrl.trim();
     if (!text && !cleanSnippet && !cleanPhoto && !voiceDraft) return;
+    if (cleanPhoto && !isSafeChatImageUrl(cleanPhoto)) {
+      setWarning('Liên kết ảnh phải bắt đầu bằng https:// hoặc http://.');
+      return;
+    }
     const verdict = moderateText(`${text}\n${cleanSnippet}`);
     if (!verdict.ok) {
       setWarning(verdict.message);
@@ -695,13 +827,14 @@ export const CommunityChatRoom: React.FC<Props> = ({ currentHandle, currentName 
         <button
           type="button"
           className="chat-thread"
+          data-card-trigger
           aria-current={t.id === activeId}
           data-unread={n > 0}
           onClick={() => openThread(t.id)}
         >
           <span className="chat-avatar-ring" data-unread={n > 0} data-online={t.online}>
             <span className="chat-avatar">
-              {isChannel ? <Hash size={15} aria-hidden="true" /> : threadInitial(t.name)}
+              {isChannel ? <IconHash size={15} aria-hidden="true" /> : threadInitial(t.name)}
             </span>
             {t.online && <span className="chat-online-dot" aria-hidden="true" />}
           </span>
@@ -730,7 +863,7 @@ export const CommunityChatRoom: React.FC<Props> = ({ currentHandle, currentName 
         <div className="chat-list-head">
           <div className="chat-title-group">
             <span className="chat-title-mark" aria-hidden="true">
-              <MessageCircle size={15} />
+              <IconMessageCircle size={15} />
             </span>
             <h2 className="chat-title">Phòng chat</h2>
           </div>
@@ -740,7 +873,7 @@ export const CommunityChatRoom: React.FC<Props> = ({ currentHandle, currentName 
             aria-expanded={newDmOpen}
             onClick={() => setNewDmOpen((v) => !v)}
           >
-            <Plus size={14} aria-hidden="true" />
+            <IconPlus size={14} aria-hidden="true" />
             <span>Nhắn mới</span>
           </button>
         </div>
@@ -780,7 +913,7 @@ export const CommunityChatRoom: React.FC<Props> = ({ currentHandle, currentName 
           >
             <span className="chat-story-ring" data-active-ring="true">
               <span className="chat-story-inner">
-                <Plus size={17} aria-hidden="true" />
+                <IconPlus size={17} aria-hidden="true" />
               </span>
             </span>
             <span className="chat-story-label">{currentName.split(/\s+/)[0] || 'Bạn'}</span>
@@ -794,6 +927,7 @@ export const CommunityChatRoom: React.FC<Props> = ({ currentHandle, currentName 
                 key={`story-${t.id}`}
                 type="button"
                 className="chat-story-btn"
+                data-card-trigger
                 aria-pressed={isActive}
                 onClick={() => openThread(t.id)}
                 title={t.name}
@@ -835,10 +969,10 @@ export const CommunityChatRoom: React.FC<Props> = ({ currentHandle, currentName 
               onClick={() => setMobileThread(false)}
               aria-label="Quay lại danh sách"
             >
-              <ArrowLeft size={18} />
+              <IconArrowLeft size={18} />
             </button>
             <span className="chat-avatar chat-avatar--head">
-              {thread.kind === 'channel' ? <Hash size={16} aria-hidden="true" /> : threadInitial(thread.name)}
+              {thread.kind === 'channel' ? <IconHash size={16} aria-hidden="true" /> : threadInitial(thread.name)}
               {thread.online && <span className="chat-online-dot" aria-hidden="true" />}
             </span>
             <div className="chat-head-meta">
@@ -864,7 +998,7 @@ export const CommunityChatRoom: React.FC<Props> = ({ currentHandle, currentName 
                 title="Quy tắc kênh"
                 onClick={() => setShowPin((v) => !v)}
               >
-                <Pin size={15} />
+                <IconPin size={15} />
               </button>
             )}
             <button
@@ -872,10 +1006,10 @@ export const CommunityChatRoom: React.FC<Props> = ({ currentHandle, currentName 
               className="chat-head-btn"
               aria-pressed={showSnippet}
               aria-label="Đính kèm đoạn mã"
-              title="Đính kèm đoạn mã"
+              title="Đính kèm mã"
               onClick={() => setShowSnippet((v) => !v)}
             >
-              <Code2 size={15} />
+              <IconCode2 size={15} />
             </button>
             <button
               type="button"
@@ -885,7 +1019,7 @@ export const CommunityChatRoom: React.FC<Props> = ({ currentHandle, currentName 
               title="Tin nhắn thoại"
               onClick={() => setShowVoice((v) => !v)}
             >
-              <Mic size={15} />
+              <IconMic size={15} />
             </button>
           </div>
         </header>
@@ -893,7 +1027,7 @@ export const CommunityChatRoom: React.FC<Props> = ({ currentHandle, currentName 
         {thread.rule && showPin && (
           <p className="chat-pin">
             <span className="chat-pin-text">
-              <Pin size={14} aria-hidden="true" />
+              <IconPin size={14} aria-hidden="true" />
               <span>{thread.rule}</span>
             </span>
             <button
@@ -902,7 +1036,7 @@ export const CommunityChatRoom: React.FC<Props> = ({ currentHandle, currentName 
               onClick={() => setShowPin(false)}
               aria-label="Ẩn thông báo ghim"
             >
-              <X size={13} />
+              <IconX size={13} />
             </button>
           </p>
         )}
@@ -911,7 +1045,7 @@ export const CommunityChatRoom: React.FC<Props> = ({ currentHandle, currentName 
           {threadMessages.length === 0 && (
             <div className="chat-empty-state">
               <span className="chat-empty-glyph" aria-hidden="true">
-                {thread.kind === 'channel' ? <Hash size={22} /> : <MessageCircle size={22} />}
+                {thread.kind === 'channel' ? <IconHash size={22} /> : <IconMessageCircle size={22} />}
               </span>
               <h3>Bắt đầu hội thoại tại {thread.name}</h3>
               <p>
@@ -969,6 +1103,7 @@ export const CommunityChatRoom: React.FC<Props> = ({ currentHandle, currentName 
                         <button
                           type="button"
                           className="chat-quote"
+                          data-card-trigger
                           onClick={() => jumpToMessage(quoted.id)}
                         >
                           <span className="chat-quote-author">{quoted.authorName}</span>
@@ -980,11 +1115,11 @@ export const CommunityChatRoom: React.FC<Props> = ({ currentHandle, currentName 
                       )}
                       {m.text && <p className="chat-msg-text">{m.text}</p>}
                       {m.voiceNote && <VoiceNoteCard note={m.voiceNote} mine={mine} />}
-                      {m.imageUrl && (
+                      {isSafeChatImageUrl(m.imageUrl) && (
                         <button
                           type="button"
                           className="chat-photo-btn"
-                          onClick={() => setLightboxUrl(m.imageUrl || null)}
+                          onClick={() => isSafeChatImageUrl(m.imageUrl) && setLightboxUrl(m.imageUrl)}
                           aria-label="Xem ảnh phóng to"
                         >
                           <img
@@ -992,6 +1127,7 @@ export const CommunityChatRoom: React.FC<Props> = ({ currentHandle, currentName 
                             src={m.imageUrl}
                             alt="Ảnh đính kèm trong tin nhắn"
                             loading="lazy"
+                            referrerPolicy="no-referrer"
                           />
                         </button>
                       )}
@@ -999,18 +1135,18 @@ export const CommunityChatRoom: React.FC<Props> = ({ currentHandle, currentName 
                         <div className="chat-code-wrap">
                           <div className="chat-code-bar">
                             <span className="chat-code-lang">
-                              <Code2 size={12} aria-hidden="true" />
+                              <IconCode2 size={12} aria-hidden="true" />
                               <span>snippet</span>
                             </span>
                             <button
                               type="button"
                               className="chat-code-copy"
                               data-copied={copiedId === m.id ? 'true' : undefined}
-                              aria-label="Chép đoạn code"
+                              aria-label="Chép mã"
+                              title={copiedId === m.id ? 'Đã chép' : 'Chép mã'}
                               onClick={() => void copySnippet(m.id, m.snippet || '')}
                             >
-                              {copiedId === m.id ? <Check size={12} /> : <Copy size={12} />}
-                              <span>{copiedId === m.id ? 'Đã chép' : 'Chép'}</span>
+                              {copiedId === m.id ? <IconCheck size={13} aria-hidden="true" /> : <IconCopy size={13} aria-hidden="true" />}
                             </button>
                           </div>
                           <pre className="chat-code">
@@ -1049,8 +1185,7 @@ export const CommunityChatRoom: React.FC<Props> = ({ currentHandle, currentName 
                         aria-label="Trả lời tin nhắn"
                         title="Trả lời"
                       >
-                        <Reply size={13} />
-                        <span>Trả lời</span>
+                        <IconReply size={14} aria-hidden="true" />
                       </button>
                     </div>
                   </div>
@@ -1099,15 +1234,15 @@ export const CommunityChatRoom: React.FC<Props> = ({ currentHandle, currentName 
           {replyTo && (
             <div className="chat-replying">
               <div className="chat-replying-copy">
-                <Reply size={13} aria-hidden="true" />
+                <IconReply size={13} aria-hidden="true" />
                 <span>
                   Trả lời <strong>{replyTo.authorName}</strong>:{' '}
                   {replyTo.text.slice(0, 64) ||
                     (replyTo.voiceNote ? 'Tin nhắn thoại' : replyTo.imageUrl ? 'Ảnh đính kèm' : 'Đoạn mã')}
                 </span>
               </div>
-              <button type="button" onClick={() => setReplyTo(null)} aria-label="Hủy trả lời">
-                <X size={14} />
+              <button type="button" onClick={() => setReplyTo(null)} aria-label="Hủy trả lời" title="Hủy">
+                <IconX size={14} />
               </button>
             </div>
           )}
@@ -1122,8 +1257,9 @@ export const CommunityChatRoom: React.FC<Props> = ({ currentHandle, currentName 
                     className="chat-search-clear"
                     onClick={() => setVoiceDraft(null)}
                     aria-label="Gỡ ghi âm"
+                    title="Gỡ"
                   >
-                    <X size={15} />
+                    <IconX size={15} />
                   </button>
                 </div>
               ) : (
@@ -1135,8 +1271,8 @@ export const CommunityChatRoom: React.FC<Props> = ({ currentHandle, currentName 
                       data-recording="true"
                       onClick={stopVoiceRecording}
                     >
-                      <Square size={13} aria-hidden="true" />
-                      <span>Dừng ghi ({formatDuration(recordSec)})</span>
+                      <IconSquare size={13} aria-hidden="true" />
+                      <span>Dừng ({formatDuration(recordSec)})</span>
                     </button>
                   ) : (
                     <button
@@ -1144,13 +1280,13 @@ export const CommunityChatRoom: React.FC<Props> = ({ currentHandle, currentName 
                       className="chat-voice-rec-btn"
                       onClick={() => void startVoiceRecording()}
                     >
-                      <Mic size={14} aria-hidden="true" />
-                      <span>Ghi âm thoại</span>
+                      <IconMic size={14} aria-hidden="true" />
+                      <span>Ghi âm</span>
                     </button>
                   )}
                   <label className="chat-photo-pick">
-                    <Upload size={13} aria-hidden="true" />
-                    <span>Tải tệp âm thanh</span>
+                    <IconUpload size={13} aria-hidden="true" />
+                    <span>Tải âm thanh</span>
                     <input
                       type="file"
                       accept="audio/*"
@@ -1170,7 +1306,7 @@ export const CommunityChatRoom: React.FC<Props> = ({ currentHandle, currentName 
           {showPhoto && (
             <div className="chat-photo-bar">
               <label className="chat-photo-pick">
-                <ImageIcon size={14} aria-hidden="true" />
+                <IconImage size={14} aria-hidden="true" />
                 <span>Chọn ảnh</span>
                 <input
                   type="file"
@@ -1185,20 +1321,26 @@ export const CommunityChatRoom: React.FC<Props> = ({ currentHandle, currentName 
               <input
                 type="url"
                 value={photoUrl.startsWith('data:') ? '' : photoUrl}
-                onChange={(e) => setPhotoUrl(e.target.value)}
+                onChange={(e) => {
+                  setPhotoUrl(e.target.value);
+                  if (warning) setWarning('');
+                }}
                 placeholder="Hoặc dán liên kết ảnh https://..."
                 aria-label="Liên kết ảnh"
               />
               {photoUrl && (
                 <span className="chat-photo-preview">
-                  <img src={photoUrl} alt="Xem trước ảnh" />
+                  {isSafeChatImageUrl(photoUrl) && (
+                    <img src={photoUrl.trim()} alt="Xem trước ảnh" referrerPolicy="no-referrer" />
+                  )}
                   <button
                     type="button"
                     className="chat-search-clear"
                     onClick={() => setPhotoUrl('')}
                     aria-label="Gỡ ảnh"
+                    title="Gỡ"
                   >
-                    <X size={14} />
+                    <IconX size={14} />
                   </button>
                 </span>
               )}
@@ -1229,9 +1371,9 @@ export const CommunityChatRoom: React.FC<Props> = ({ currentHandle, currentName 
               aria-pressed={showPhoto}
               onClick={() => setShowPhoto((v) => !v)}
               aria-label="Đính kèm ảnh"
-              title="Đính kèm ảnh"
+              title="Thêm ảnh"
             >
-              <ImageIcon size={18} />
+              <IconImage size={18} />
             </button>
             <button
               type="button"
@@ -1239,9 +1381,9 @@ export const CommunityChatRoom: React.FC<Props> = ({ currentHandle, currentName 
               aria-pressed={showSnippet}
               onClick={() => setShowSnippet((v) => !v)}
               aria-label="Đính kèm code"
-              title="Đính kèm code"
+              title="Thêm code"
             >
-              <Code2 size={18} />
+              <IconCode2 size={18} />
             </button>
             <button
               type="button"
@@ -1249,9 +1391,9 @@ export const CommunityChatRoom: React.FC<Props> = ({ currentHandle, currentName 
               aria-pressed={showVoice || Boolean(voiceDraft)}
               onClick={() => setShowVoice((v) => !v)}
               aria-label="Đính kèm tin nhắn thoại"
-              title="Tin nhắn thoại"
+              title="Ghi âm"
             >
-              <Mic size={18} />
+              <IconMic size={18} />
             </button>
             <input
               value={draft}
@@ -1259,14 +1401,14 @@ export const CommunityChatRoom: React.FC<Props> = ({ currentHandle, currentName 
               placeholder={`Nhắn tin tới ${thread.name}...`}
               aria-label="Nội dung tin nhắn"
             />
-            <button type="submit" className="chat-send" disabled={!hasSendable} aria-label="Gửi tin nhắn">
-              <Send size={16} />
+            <button type="submit" className="chat-send" disabled={!hasSendable} aria-label="Gửi tin nhắn" title="Gửi">
+              <IconSend size={16} />
             </button>
           </div>
         </form>
       </div>
 
-      {lightboxUrl && (
+      {isSafeChatImageUrl(lightboxUrl ?? undefined) && lightboxUrl && (
         <div
           className="chat-lightbox"
           role="dialog"
@@ -1275,14 +1417,20 @@ export const CommunityChatRoom: React.FC<Props> = ({ currentHandle, currentName 
           onClick={() => setLightboxUrl(null)}
         >
           <div className="chat-lightbox-content" onClick={(e) => e.stopPropagation()}>
-            <img src={lightboxUrl} alt="Ảnh phóng to" className="chat-lightbox-img" />
+            <img
+              src={lightboxUrl}
+              alt="Ảnh phóng to"
+              className="chat-lightbox-img"
+              referrerPolicy="no-referrer"
+            />
             <button
               type="button"
               className="chat-lightbox-close"
               onClick={() => setLightboxUrl(null)}
               aria-label="Đóng xem ảnh"
+              title="Đóng"
             >
-              <X size={20} />
+              <IconX size={20} />
             </button>
           </div>
         </div>

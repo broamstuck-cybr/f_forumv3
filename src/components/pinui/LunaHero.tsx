@@ -1,6 +1,6 @@
 import { useId, useRef, useState, type ReactNode } from "react";
 import { motion, useReducedMotion } from "motion/react";
-import { Search, ShoppingBag } from "lucide-react";
+import { IconSearch, IconShoppingBag } from "../../ui/icons";
 import LunaNavbar from "./LunaNavbar";
 import { LUNA_CATEGORIES, LUNA_LINKS, LUNA_NAV, LUNA_PRODUCTS, type LunaCategory, type LunaLink, type LunaProduct, } from "./luna-catalog";
 import "./luna-hero.css";
@@ -49,7 +49,7 @@ function CategoryAction({ href }: {
         Khám phá danh mục
       </a>
       <motion.span className="lh-category-glyph" aria-hidden="true" variants={{ hidden: { opacity: 0, x: -24, scale: 0.72 }, visible: { opacity: 1, x: 0, scale: 1 } }} transition={reduced ? { duration: 0 } : { type: "spring", stiffness: 520, damping: 30, mass: 0.7 }}>
-        <Search size={16} strokeWidth={2.4}/>
+        <IconSearch size={16} strokeWidth={2.4}/>
       </motion.span>
     </motion.div>);
 }
@@ -77,7 +77,7 @@ export default function LunaHero({ theme = "system", links, categories = LUNA_CA
               <div className="lh-actions">
                 <a className="lh-button" href={routes.store}>
                   <span className="lh-bag" aria-hidden="true">
-                    <ShoppingBag size={14} strokeWidth={2.4}/>
+                    <IconShoppingBag size={14} strokeWidth={2.4}/>
                   </span>
                   Xem sản phẩm
                 </a>

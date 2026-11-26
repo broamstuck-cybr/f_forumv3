@@ -12,7 +12,14 @@ import type {
 import { listAllUsers, toggleUserRole } from './authEngine.js';
 import { getCommunityState, resolveModerationReport } from './communityStore.js';
 import {
+  getKeyPoolSnapshot,
+  sanitizeErrorText,
+  type AdminKeyPoolSnapshot,
+  type TokenCounter,
+} from './keyPool.js';
+import {
   enqueueWrite,
+  ensureHydrated,
   ensureLocalEnvLoaded,
   isSupabaseEnabled,
   readLocalSection,
@@ -21,12 +28,63 @@ import {
   sbUpsert,
   writeLocalSection,
 } from './persistence.js';
-import { listAllQuotaEntries, MAX_STANDARD_TURNS, resetSubjectQuota } from './quotaStore.js';
+import {
+  DEFAULT_DAILY_IP_LIMIT,
+  listAllQuotaEntries,
+  MAX_STANDARD_TURNS,
+  resetSubjectQuota,
+  setQuotaPolicyProvider,
+  updateSubjectQuotaControl,
+} from './quotaStore.js';
 
 ensureLocalEnvLoaded();
 
+export interface ServerAdminGatewayOverride extends AdminGatewayOverride {
+  dailyUserLimit: number;
+  dailyIpLimit: number;
+}
+
+export interface ServerAdminUserQuotaRecord extends AdminUserQuotaRecord {
+  kind: 'user' | 'ip';
+  dailyUsed: number;
+  dailyLimit: number | null;
+  ipUsed?: number;
+  ipLimit?: number | null;
+  blocked: boolean;
+  tokensTotal: number;
+  customLimit?: number | null;
+}
+
+export interface AdminSecurityEvent {
+  id: string;
+  timestamp: string;
+  type:
+    | 'auth_failed'
+    | 'auth_locked'
+    | 'unauthorized_admin'
+    | 'forbidden_admin'
+    | 'rate_limited'
+    | 'quota_blocked'
+    | 'cors_blocked'
+    | 'idor_denied'
+    | 'invalid_input';
+  status: number;
+  route: string;
+  ipHash: string;
+  actor?: string;
+  detail: string;
+}
+
+export interface ServerAdminState extends AdminState {
+  gateway: ServerAdminGatewayOverride;
+  usersAndQuotas: ServerAdminUserQuotaRecord[];
+  keyPool: AdminKeyPoolSnapshot;
+  totalTokens: TokenCounter;
+  securityEvents: AdminSecurityEvent[];
+}
+
 interface PersistedAdminData {
-  gateway: AdminGatewayOverride;
+  gateway: ServerAdminGatewayOverride;
   telemetryCounters: {
     totalAiRequests: number;
     successfulAiRequests: number;
@@ -36,12 +94,15 @@ interface PersistedAdminData {
   };
   auditLogs: AdminAuditLogEntry[];
   changelog: AdminChangelogEntry[];
+  securityEvents: AdminSecurityEvent[];
 }
 
 const serverStartTimeMs = Date.now();
 let memoryAdmin: PersistedAdminData | null = null;
+let adminHydrated = false;
+const pendingPreHydrationEvents: AdminSecurityEvent[] = [];
 
-function getDefaultGateway(): AdminGatewayOverride {
+function getDefaultGateway(): ServerAdminGatewayOverride {
   ensureLocalEnvLoaded();
   const rawProtocol = (process.env.AI_PROTOCOL || 'openai-compatible').trim();
   const protocol: AIProtocol =
@@ -55,6 +116,8 @@ function getDefaultGateway(): AdminGatewayOverride {
     hasCustomApiKey: false,
     systemPromptSuffix: '',
     standardTurnLimit: MAX_STANDARD_TURNS,
+    dailyUserLimit: MAX_STANDARD_TURNS,
+    dailyIpLimit: DEFAULT_DAILY_IP_LIMIT,
     guestSandboxEnabled: true,
     updatedAt: new Date().toISOString(),
   };
@@ -91,6 +154,7 @@ function buildDefaultAdminData(): PersistedAdminData {
         author: 'System Administrator',
       },
     ],
+    securityEvents: [],
   };
 }
 
@@ -137,12 +201,13 @@ registerHydrator('admin', async () => {
   const defaults = buildDefaultAdminData();
   let gateway = defaults.gateway;
   let telemetryCounters = defaults.telemetryCounters;
+  let securityEvents = defaults.securityEvents;
   let hasGateway = false;
   let hasTelemetry = false;
 
   for (const row of configRows) {
     if (row.key === 'gateway' && row.value && typeof row.value === 'object') {
-      gateway = { ...defaults.gateway, ...(row.value as Partial<AdminGatewayOverride>) };
+      gateway = { ...defaults.gateway, ...(row.value as Partial<ServerAdminGatewayOverride>) };
       hasGateway = true;
     } else if (row.key === 'telemetryCounters' && row.value && typeof row.value === 'object') {
       telemetryCounters = {
@@ -150,6 +215,8 @@ registerHydrator('admin', async () => {
         ...(row.value as Partial<PersistedAdminData['telemetryCounters']>),
       };
       hasTelemetry = true;
+    } else if (row.key === 'securityEvents' && Array.isArray(row.value)) {
+      securityEvents = (row.value as AdminSecurityEvent[]).slice(0, 200);
     }
   }
 
@@ -188,20 +255,57 @@ registerHydrator('admin', async () => {
     changelog = changelogRows.map(fromChangelogRow);
   }
 
+  adminHydrated = true;
+  const queued = pendingPreHydrationEvents.splice(0);
+  if (queued.length > 0) {
+    const seen = new Set<string>();
+    const merged: AdminSecurityEvent[] = [];
+    for (const evt of [...queued, ...securityEvents]) {
+      if (seen.has(evt.id)) continue;
+      seen.add(evt.id);
+      merged.push(evt);
+      if (merged.length >= 200) break;
+    }
+    securityEvents = merged;
+  }
+
   memoryAdmin = {
     gateway,
     telemetryCounters,
     auditLogs,
     changelog,
+    securityEvents,
   };
+  if (queued.length > 0) {
+    enqueueWrite(
+      sbUpsert(
+        'ff_admin_config',
+        [
+          {
+            key: 'securityEvents',
+            value: memoryAdmin.securityEvents,
+            updated_at: new Date().toISOString(),
+          },
+        ],
+        'key'
+      )
+    );
+  }
 });
 
 function ensureAdminData(): PersistedAdminData {
   if (memoryAdmin) return memoryAdmin;
   if (!isSupabaseEnabled()) {
-    const persisted = readLocalSection<PersistedAdminData | null>('adminStore', null);
+    const persisted = readLocalSection<Partial<PersistedAdminData> | null>('adminStore', null);
     if (persisted && persisted.gateway && persisted.telemetryCounters) {
-      memoryAdmin = persisted;
+      const defaults = buildDefaultAdminData();
+      memoryAdmin = {
+        gateway: { ...defaults.gateway, ...persisted.gateway },
+        telemetryCounters: { ...defaults.telemetryCounters, ...persisted.telemetryCounters },
+        auditLogs: Array.isArray(persisted.auditLogs) ? persisted.auditLogs : defaults.auditLogs,
+        changelog: Array.isArray(persisted.changelog) ? persisted.changelog : defaults.changelog,
+        securityEvents: Array.isArray(persisted.securityEvents) ? persisted.securityEvents.slice(0, 200) : [],
+      };
       return memoryAdmin;
     }
   }
@@ -212,6 +316,15 @@ function ensureAdminData(): PersistedAdminData {
   }
   return memoryAdmin;
 }
+
+setQuotaPolicyProvider(() => {
+  const gw = ensureAdminData().gateway;
+  return {
+    dailyUserLimit: gw.dailyUserLimit ?? gw.standardTurnLimit ?? MAX_STANDARD_TURNS,
+    dailyIpLimit: gw.dailyIpLimit ?? DEFAULT_DAILY_IP_LIMIT,
+    guestSandboxEnabled: gw.guestSandboxEnabled !== false,
+  };
+});
 
 function saveAdminData(): void {
   if (!memoryAdmin) return;
@@ -226,7 +339,7 @@ export function appendAuditLog(actor: string, action: string, target: string, de
     actor,
     action,
     target,
-    detail,
+    detail: sanitizeErrorText(detail),
   };
   store.auditLogs.unshift(entry);
   if (store.auditLogs.length > 200) {
@@ -238,6 +351,62 @@ export function appendAuditLog(actor: string, action: string, target: string, de
     saveAdminData();
   }
   return entry;
+}
+
+export function recordSecurityEvent(input: {
+  type: AdminSecurityEvent['type'];
+  status: number;
+  route: string;
+  ipHash: string;
+  actor?: string;
+  detail: string;
+}): AdminSecurityEvent {
+  const event: AdminSecurityEvent = {
+    id: `sec-${crypto.randomBytes(4).toString('hex')}`,
+    timestamp: new Date().toISOString(),
+    type: input.type,
+    status: input.status,
+    route: input.route.slice(0, 120),
+    ipHash: input.ipHash.slice(0, 24),
+    actor: input.actor ? input.actor.slice(0, 80) : undefined,
+    detail: sanitizeErrorText(input.detail),
+  };
+  if (isSupabaseEnabled() && !adminHydrated) {
+    pendingPreHydrationEvents.unshift(event);
+    if (pendingPreHydrationEvents.length > 50) {
+      pendingPreHydrationEvents.length = 50;
+    }
+    void ensureHydrated().catch(() => undefined);
+    return event;
+  }
+  const store = ensureAdminData();
+  store.securityEvents.unshift(event);
+  if (store.securityEvents.length > 200) {
+    store.securityEvents = store.securityEvents.slice(0, 200);
+  }
+  if (isSupabaseEnabled()) {
+    enqueueWrite(
+      sbUpsert(
+        'ff_admin_config',
+        [
+          {
+            key: 'securityEvents',
+            value: store.securityEvents,
+            updated_at: event.timestamp,
+          },
+        ],
+        'key'
+      )
+    );
+  } else {
+    saveAdminData();
+  }
+  return event;
+}
+
+export function getSecurityEvents(limit = 50): AdminSecurityEvent[] {
+  const safeLimit = Number.isFinite(limit) ? Math.max(1, Math.min(200, Math.round(limit))) : 50;
+  return ensureAdminData().securityEvents.slice(0, safeLimit);
 }
 
 export function recordAiTelemetry(event: 'success' | 'fallback' | 'quota_blocked'): void {
@@ -270,14 +439,14 @@ export function recordAiTelemetry(event: 'success' | 'fallback' | 'quota_blocked
   }
 }
 
-export function getInternalGatewayOverride(): AdminGatewayOverride {
+export function getInternalGatewayOverride(): ServerAdminGatewayOverride {
   return ensureAdminData().gateway;
 }
 
 export function updateGatewayOverride(
-  input: Partial<AdminGatewayOverride>,
+  input: Partial<ServerAdminGatewayOverride> & { clearApiKey?: boolean },
   actor: string
-): AdminGatewayOverride {
+): ServerAdminGatewayOverride {
   const store = ensureAdminData();
   const current = store.gateway;
   if (typeof input.enabled === 'boolean') current.enabled = input.enabled;
@@ -294,18 +463,38 @@ export function updateGatewayOverride(
   if (typeof input.model === 'string' && input.model.trim()) {
     current.model = input.model.trim();
   }
-  if (typeof input.apiKey === 'string') {
+  if (input.clearApiKey === true) {
+    current.apiKey = '';
+    current.hasCustomApiKey = false;
+  } else if (typeof input.apiKey === 'string') {
     const trimmedKey = input.apiKey.trim();
     if (trimmedKey) {
       current.apiKey = trimmedKey;
       current.hasCustomApiKey = true;
+    } else {
+      current.apiKey = '';
+      current.hasCustomApiKey = false;
     }
   }
   if (typeof input.systemPromptSuffix === 'string') {
     current.systemPromptSuffix = input.systemPromptSuffix.trim();
   }
-  if (typeof input.standardTurnLimit === 'number' && Number.isFinite(input.standardTurnLimit)) {
-    current.standardTurnLimit = Math.max(1, Math.min(100, Math.round(input.standardTurnLimit)));
+  const hasStdTurn = typeof input.standardTurnLimit === 'number' && Number.isFinite(input.standardTurnLimit);
+  const hasDailyUser = typeof input.dailyUserLimit === 'number' && Number.isFinite(input.dailyUserLimit);
+  if (hasStdTurn) {
+    current.standardTurnLimit = Math.max(1, Math.min(500, Math.round(input.standardTurnLimit!)));
+    if (!hasDailyUser) {
+      current.dailyUserLimit = current.standardTurnLimit;
+    }
+  }
+  if (hasDailyUser) {
+    current.dailyUserLimit = Math.max(1, Math.min(500, Math.round(input.dailyUserLimit!)));
+    if (!hasStdTurn) {
+      current.standardTurnLimit = current.dailyUserLimit;
+    }
+  }
+  if (typeof input.dailyIpLimit === 'number' && Number.isFinite(input.dailyIpLimit)) {
+    current.dailyIpLimit = Math.max(1, Math.min(2000, Math.round(input.dailyIpLimit)));
   }
   if (typeof input.guestSandboxEnabled === 'boolean') {
     current.guestSandboxEnabled = input.guestSandboxEnabled;
@@ -343,11 +532,14 @@ export function updateGatewayOverride(
   };
 }
 
-export function buildUsersAndQuotasRegistry(): AdminUserQuotaRecord[] {
+export function buildUsersAndQuotasRegistry(): ServerAdminUserQuotaRecord[] {
+  const store = ensureAdminData();
+  const defaultUserLimit = store.gateway.dailyUserLimit ?? store.gateway.standardTurnLimit ?? MAX_STANDARD_TURNS;
+  const defaultIpLimit = store.gateway.dailyIpLimit ?? DEFAULT_DAILY_IP_LIMIT;
   const users = listAllUsers();
   const quotas = listAllQuotaEntries();
   const quotaMap = new Map(quotas.map((q) => [q.subjectId, q]));
-  const records: AdminUserQuotaRecord[] = [];
+  const records: ServerAdminUserQuotaRecord[] = [];
   const seenSubjects = new Set<string>();
 
   for (const u of users) {
@@ -357,29 +549,50 @@ export function buildUsersAndQuotasRegistry(): AdminUserQuotaRecord[] {
     const q = quotaMap.get(subjectId) || quotaMap.get(altSubjectId);
     seenSubjects.add(subjectId);
     seenSubjects.add(altSubjectId);
+    const effectiveLimit = u.role === 'admin' ? null : q?.customLimit ?? defaultUserLimit;
+    const used = q ? q.used : 0;
     records.push({
       subjectId,
       subjectType: u.role === 'admin' ? 'admin' : 'user',
+      kind: 'user',
       username: u.username,
       email: u.email,
       role: u.role,
-      used: q ? q.used : 0,
-      limit: u.role === 'admin' ? null : MAX_STANDARD_TURNS,
+      used,
+      limit: effectiveLimit,
+      dailyUsed: used,
+      dailyLimit: effectiveLimit,
       unlimited: u.role === 'admin',
+      blocked: Boolean(q?.blocked),
+      tokensTotal: q ? q.tokensTotal : 0,
+      customLimit: q?.customLimit ?? null,
       updatedAt: q ? q.updatedAt : u.createdAt,
     });
   }
 
   for (const q of quotas) {
     if (seenSubjects.has(q.subjectId)) continue;
+    const isIp = q.subjectType === 'ip';
+    const isAdmin = q.subjectType === 'admin';
+    const normalizedSubjectType: 'guest' | 'user' | 'admin' =
+      q.subjectType === 'admin' ? 'admin' : q.subjectType === 'user' ? 'user' : 'guest';
+    const effectiveLimit = isAdmin ? null : q.customLimit ?? (isIp ? defaultIpLimit : defaultUserLimit);
     records.push({
       subjectId: q.subjectId,
-      subjectType: q.subjectType,
+      subjectType: normalizedSubjectType,
+      kind: isIp ? 'ip' : 'user',
       username: q.subjectId,
-      role: q.subjectType === 'admin' ? 'admin' : 'user',
+      role: isAdmin ? 'admin' : 'user',
       used: q.used,
-      limit: q.subjectType === 'admin' ? null : MAX_STANDARD_TURNS,
-      unlimited: q.subjectType === 'admin',
+      limit: effectiveLimit,
+      dailyUsed: q.used,
+      dailyLimit: effectiveLimit,
+      ipUsed: isIp ? q.used : undefined,
+      ipLimit: isIp ? effectiveLimit : undefined,
+      unlimited: isAdmin,
+      blocked: Boolean(q.blocked),
+      tokensTotal: q.tokensTotal,
+      customLimit: q.customLimit ?? null,
       updatedAt: q.updatedAt,
     });
   }
@@ -390,6 +603,58 @@ export function buildUsersAndQuotasRegistry(): AdminUserQuotaRecord[] {
 export function adminResetQuota(subjectId: string, actor: string): void {
   resetSubjectQuota(subjectId);
   appendAuditLog(actor, 'RESET_QUOTA', subjectId, `Reset luot su dung AI ve 0 cho ${subjectId}`);
+}
+
+export function resolveAdminQuotaSubjectId(rawSubjectId: string, kind?: unknown): string {
+  const clean = rawSubjectId.trim();
+  if (!clean) return clean;
+  if (
+    clean.startsWith('user:') ||
+    clean.startsWith('admin:') ||
+    clean.startsWith('guest:') ||
+    clean.startsWith('ip:')
+  ) {
+    return clean;
+  }
+  if (kind === 'ip') return `ip:${clean}`;
+  if (kind === 'guest') return `guest:${clean}`;
+  const matchedUser = listAllUsers().find((u) => u.id === clean);
+  if (matchedUser) {
+    return `${matchedUser.role === 'admin' ? 'admin' : 'user'}:${matchedUser.id}`;
+  }
+  if (kind === 'user') return `user:${clean}`;
+  const quotas = listAllQuotaEntries();
+  for (const prefix of ['user:', 'ip:', 'guest:']) {
+    if (quotas.some((q) => q.subjectId === `${prefix}${clean}`)) {
+      return `${prefix}${clean}`;
+    }
+  }
+  return clean;
+}
+
+export function adminUpdateQuotaControl(
+  input: {
+    subjectId: string;
+    kind?: 'user' | 'ip' | 'guest';
+    customLimit?: number | null;
+    blocked?: boolean;
+    reset?: boolean;
+  },
+  actor: string
+): void {
+  const resolvedSubjectId = resolveAdminQuotaSubjectId(input.subjectId, input.kind);
+  const updated = updateSubjectQuotaControl({
+    subjectId: resolvedSubjectId,
+    customLimit: input.customLimit,
+    blocked: input.blocked,
+    reset: input.reset,
+  });
+  appendAuditLog(
+    actor,
+    'UPDATE_QUOTA_CONTROL',
+    updated.subjectId,
+    `Quota control: used=${updated.used}, customLimit=${updated.customLimit ?? 'default'}, blocked=${Boolean(updated.blocked)}`
+  );
 }
 
 export function adminToggleUserRole(userId: string, actor: string): void {
@@ -447,12 +712,17 @@ export function getPublicChangelog(): AdminChangelogEntry[] {
   return ensureAdminData().changelog;
 }
 
-export function getAdminStateSnapshot(): AdminState {
+export function getAdminStateSnapshot(): ServerAdminState {
   const store = ensureAdminData();
   const community = getCommunityState(true);
   const users = listAllUsers();
   const quotas = listAllQuotaEntries();
   const pendingReports = community.reports.filter((r) => r.status === 'pending').length;
+  const activeModel = store.gateway.enabled ? store.gateway.model : process.env.AI_MODEL || store.gateway.model;
+  const activeProtocol = store.gateway.enabled
+    ? store.gateway.protocol
+    : process.env.AI_PROTOCOL || store.gateway.protocol;
+  const keyPool = getKeyPoolSnapshot(activeModel, activeProtocol);
 
   const telemetry: AdminTelemetrySnapshot = {
     totalAiRequests: store.telemetryCounters.totalAiRequests,
@@ -478,5 +748,8 @@ export function getAdminStateSnapshot(): AdminState {
     telemetry,
     auditLogs: store.auditLogs,
     changelog: store.changelog,
+    keyPool,
+    totalTokens: keyPool.totalTokens,
+    securityEvents: store.securityEvents,
   };
 }

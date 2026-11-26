@@ -1,14 +1,14 @@
 import React, { useCallback, useEffect, useId, useMemo, useState } from 'react';
 import {
-  Cpu,
-  Database,
-  Eye,
-  EyeOff,
-  LayoutTemplate,
-  Moon,
-  Palette,
-  Sun,
-} from 'lucide-react';
+  IconCpu,
+  IconDatabase,
+  IconEye,
+  IconEyeOff,
+  IconLayoutTemplate,
+  IconMoon,
+  IconPalette,
+  IconSun,
+} from '../../ui/icons';
 import { triggerPinuiThemeToggle } from '../../components/layout/GlobalThemeAtmosphere';
 import OriginalFileBox from '../../components/pinui/original/file-box/FileBox';
 import type {
@@ -179,10 +179,10 @@ const PRESETS: PresetDefinition[] = [
     name: 'Verdant Glass',
     tone: 'light',
     targetTheme: 'light',
-    swatches: ['#f2f5ec', '#b7c9a8', '#3f6b4f'],
+    swatches: ['#f2f5ec', '#b7c9a8', '#335941'],
     previewBg: 'radial-gradient(at 18% 20%, rgba(183,201,168,0.7) 0px, transparent 54%), radial-gradient(at 82% 12%, rgba(240,226,192,0.72) 0px, transparent 52%), radial-gradient(at 48% 90%, rgba(207,232,216,0.78) 0px, transparent 58%), #f2f5ec',
     previewCard: 'rgba(255, 255, 252, 0.9)',
-    previewAccent: '#3f6b4f',
+    previewAccent: '#335941',
     ambient: true,
   },
 ];
@@ -191,25 +191,25 @@ const SECTIONS: Array<{ id: SectionId; label: string; icon: React.ReactNode; key
   {
     id: 'appearance',
     label: 'Giao diện & Nền',
-    icon: <Palette size={15} aria-hidden="true" />,
+    icon: <IconPalette size={15} aria-hidden="true" />,
     keywords: 'giao diện theme sáng tối hình nền preset aurora ember godray nebula sapphire cỡ chữ',
   },
   {
     id: 'workspace',
     label: 'Workspace',
-    icon: <LayoutTemplate size={15} aria-hidden="true" />,
+    icon: <IconLayoutTemplate size={15} aria-hidden="true" />,
     keywords: 'workspace khung nhìn kiểm định 6 lớp xuất mã phím tắt',
   },
   {
     id: 'ai',
     label: 'AI & BYOK',
-    icon: <Cpu size={15} aria-hidden="true" />,
+    icon: <IconCpu size={15} aria-hidden="true" />,
     keywords: 'ai model gateway byok api key hạn mức',
   },
   {
     id: 'data',
     label: 'Dữ liệu & Sao lưu',
-    icon: <Database size={15} aria-hidden="true" />,
+    icon: <IconDatabase size={15} aria-hidden="true" />,
     keywords: 'dữ liệu sao lưu json khôi phục đặt lại',
   },
 ];
@@ -698,8 +698,8 @@ export const SettingsView: React.FC = () => {
                           >
                             {preset.id === 'auto' ? (
                               <div className="st-mini-auto">
-                                <Sun size={16} className="st-mini-auto-sun" />
-                                <Moon size={16} className="st-mini-auto-moon" />
+                                <IconSun size={16} className="st-mini-auto-sun" />
+                                <IconMoon size={16} className="st-mini-auto-moon" />
                               </div>
                             ) : (
                               <div className="st-mini-ui">
@@ -759,6 +759,7 @@ export const SettingsView: React.FC = () => {
                     items={DENSITY_CHIPS}
                     selectedIds={[settings.compactDensity ? 'compact' : 'roomy']}
                     multi={false}
+                    itemRole="button"
                     theme={theme}
                     onToggle={(id) => updateSettings({ compactDensity: id === 'compact' })}
                   />
@@ -917,7 +918,7 @@ export const SettingsView: React.FC = () => {
                         aria-pressed={showApiKey}
                         onClick={() => setShowApiKey((v) => !v)}
                       >
-                        {showApiKey ? <EyeOff size={18} aria-hidden="true" /> : <Eye size={18} aria-hidden="true" />}
+                        {showApiKey ? <IconEyeOff size={18} aria-hidden="true" /> : <IconEye size={18} aria-hidden="true" />}
                       </button>
                     </div>
                   </div>

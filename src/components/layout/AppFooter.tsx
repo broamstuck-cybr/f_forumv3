@@ -36,8 +36,8 @@ export const AppFooter: React.FC<AppFooterProps> = ({ onNavigate, onOpenNotice }
             Từ phác thảo <span className="t-note">đến sản phẩm.</span>
           </p>
           <div className="foot__cols">
-            <nav className="foot__col" aria-label="Sản phẩm">
-              <h3>sản phẩm</h3>
+            <div className="foot__col" role="region" aria-labelledby="foot-col-product">
+              <h3 id="foot-col-product">sản phẩm</h3>
               <ul>
                 {PRODUCT.map((item) => (
                   <li key={item.id}>
@@ -47,9 +47,9 @@ export const AppFooter: React.FC<AppFooterProps> = ({ onNavigate, onOpenNotice }
                   </li>
                 ))}
               </ul>
-            </nav>
-            <nav className="foot__col" aria-label="Tài khoản">
-              <h3>tài khoản</h3>
+            </div>
+            <div className="foot__col" role="region" aria-labelledby="foot-col-account">
+              <h3 id="foot-col-account">tài khoản</h3>
               <ul>
                 {ACCOUNT.map((item) => (
                   <li key={item.id}>
@@ -59,9 +59,9 @@ export const AppFooter: React.FC<AppFooterProps> = ({ onNavigate, onOpenNotice }
                   </li>
                 ))}
               </ul>
-            </nav>
-            <nav className="foot__col" aria-label="Thông tin">
-              <h3>thông tin</h3>
+            </div>
+            <div className="foot__col" role="region" aria-labelledby="foot-col-info">
+              <h3 id="foot-col-info">thông tin</h3>
               <ul>
                 <li>
                   <button type="button" className="foot__link" onClick={onOpenNotice}>
@@ -69,7 +69,7 @@ export const AppFooter: React.FC<AppFooterProps> = ({ onNavigate, onOpenNotice }
                   </button>
                 </li>
               </ul>
-            </nav>
+            </div>
           </div>
         </div>
         <div className="foot__graffiti">

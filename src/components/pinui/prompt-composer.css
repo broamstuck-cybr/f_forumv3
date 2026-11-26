@@ -322,13 +322,23 @@
   border-radius: clamp(10px, 2.5cqw, 15px);
   box-shadow: var(--pcmp-card-shadow);
   transform-origin: 50% 100%;
-  transition: box-shadow 0.3s ease;
   will-change: transform;
 }
 
+.pcmp .pcmp__card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  box-shadow: var(--pcmp-card-lift);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+}
+
 @media (hover: hover) {
-  .pcmp .pcmp__card:hover {
-    box-shadow: var(--pcmp-card-lift);
+  .pcmp .pcmp__card:hover::before {
+    opacity: 1;
   }
 }
 
@@ -857,6 +867,7 @@
 
 @media (prefers-reduced-motion: reduce) {
   .pcmp .pcmp__card,
+  .pcmp .pcmp__card::before,
   .pcmp .pcmp__tool,
   .pcmp .pcmp__send,
   .pcmp__waveBar {

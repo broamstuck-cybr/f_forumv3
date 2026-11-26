@@ -156,8 +156,6 @@
     border: 1px solid var(--line);
     border-radius: 18px;
     background: var(--bg-card-surface);
-    backdrop-filter: blur(18px);
-    -webkit-backdrop-filter: blur(18px);
     box-shadow: var(--shadow-1);
     padding: var(--space-5);
     display: flex;
@@ -228,8 +226,8 @@
   }
 
   .st-size-btn[aria-checked='true'] {
-    background: var(--accent, #2fb59a);
-    color: var(--on-red);
+    background: var(--accent-fill, #0d825f);
+    color: var(--on-accent, #ffffff);
   }
 
   .st-active-preset {
@@ -313,8 +311,8 @@
   }
 
   .st-filter-btn[aria-pressed='true'] {
-    background: var(--accent, #2fb59a);
-    color: var(--on-red);
+    background: var(--accent-fill, #0d825f);
+    color: var(--on-accent, #ffffff);
   }
 
   .st-presets-grid {
@@ -352,8 +350,7 @@
     display: flex;
     transition:
       border-color var(--dur-1) var(--ease-ux),
-      transform var(--dur-1) var(--ease-ux),
-      box-shadow var(--dur-1) var(--ease-ux);
+      transform var(--dur-1) var(--ease-ux);
   }
 
   .st-preset-thumb--hero {
@@ -547,8 +544,8 @@
   }
 
   .st-switch[aria-checked='true'] {
-    background: var(--accent, #2fb59a);
-    border-color: var(--accent, #2fb59a);
+    background: var(--accent-fill, #0d825f);
+    border-color: var(--accent-fill, #0d825f);
   }
 
   .st-switchThumb {
@@ -561,7 +558,7 @@
   }
 
   .st-switch[aria-checked='true'] .st-switchThumb {
-    background: var(--on-red);
+    background: var(--on-accent, #ffffff);
     transform: translateX(18px);
   }
 
@@ -837,4 +834,15 @@
 /* PinUI SearchCard keeps the original shell; only fit the sidebar width. */
 .st-pinui-search {
   width: 100%;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .st-nav-item,
+  .st-size-btn,
+  .st-preset-thumb,
+  .st-switch,
+  .st-switchThumb,
+  .st-uimode-card {
+    transition-duration: 0.01ms;
+  }
 }

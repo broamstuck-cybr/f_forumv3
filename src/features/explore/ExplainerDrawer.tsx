@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { BookOpen, Check, Copy, Terminal, User, X } from 'lucide-react';
+import { IconBookOpen, IconCheck, IconCopy, IconTerminal, IconUser, IconX } from '../../ui/icons';
 import { useAppStore } from '../../store/appStore';
 import { copyText } from './catalog';
 import type { ExplainerProfile } from './explainerData';
@@ -93,7 +93,7 @@ export const ExplainerDrawer: React.FC<ExplainerDrawerProps> = ({ profile, onClo
               aria-label="Đóng bảng giải thích"
               onClick={() => dialogRef.current?.close()}
             >
-              <X size={20} aria-hidden="true" />
+              <IconX size={20} aria-hidden="true" />
             </button>
           </header>
 
@@ -114,13 +114,13 @@ export const ExplainerDrawer: React.FC<ExplainerDrawerProps> = ({ profile, onClo
             <div className="ex-explainer-meta-grid">
               <div className="ex-explainer-meta-card">
                 <span className="t-label">
-                  <User size={13} aria-hidden="true" /> Tác giả / Chuyên gia
+                  <IconUser size={13} aria-hidden="true" /> Tác giả / Chuyên gia
                 </span>
                 <strong className="ex-explainer-meta-val">{profile.author}</strong>
               </div>
               <div className="ex-explainer-meta-card">
                 <span className="t-label">
-                  <BookOpen size={13} aria-hidden="true" /> Trạng thái xác thực
+                  <IconBookOpen size={13} aria-hidden="true" /> Trạng thái xác thực
                 </span>
                 <strong className="ex-explainer-meta-val">{profile.statusLabel}</strong>
               </div>
@@ -139,7 +139,7 @@ export const ExplainerDrawer: React.FC<ExplainerDrawerProps> = ({ profile, onClo
 
             <section className="ex-explainer-section" aria-labelledby="ex-exp-works">
               <h3 id="ex-exp-works" className="ex-explainer-h3">
-                <BookOpen size={15} aria-hidden="true" />
+                <IconBookOpen size={15} aria-hidden="true" />
                 <span>Nguyên lý hoạt động</span>
               </h3>
               <ul className="ex-explainer-list">
@@ -151,7 +151,7 @@ export const ExplainerDrawer: React.FC<ExplainerDrawerProps> = ({ profile, onClo
 
             <section className="ex-explainer-section" aria-labelledby="ex-exp-steps">
               <h3 id="ex-exp-steps" className="ex-explainer-h3">
-                <Terminal size={15} aria-hidden="true" />
+                <IconTerminal size={15} aria-hidden="true" />
                 <span>Cách cài đặt &amp; sử dụng từng bước</span>
               </h3>
               <ol className="ex-explainer-steps">
@@ -168,7 +168,7 @@ export const ExplainerDrawer: React.FC<ExplainerDrawerProps> = ({ profile, onClo
                   className="btn btn-line btn-sm"
                   onClick={() => void handleCopyCommand()}
                 >
-                  {copiedCmd ? <Check size={14} aria-hidden="true" /> : <Copy size={14} aria-hidden="true" />}
+                  {copiedCmd ? <IconCheck size={14} aria-hidden="true" /> : <IconCopy size={14} aria-hidden="true" />}
                   <span>{copiedCmd ? 'Đã chép' : 'Chép lệnh'}</span>
                 </button>
               </div>

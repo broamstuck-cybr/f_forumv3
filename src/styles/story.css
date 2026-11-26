@@ -132,8 +132,7 @@
     box-shadow: var(--shadow-1);
     transition:
       transform var(--dur-2) var(--ease-out),
-      border-color var(--dur-2) var(--ease-ux),
-      box-shadow var(--dur-2) var(--ease-ux);
+      border-color var(--dur-2) var(--ease-ux);
   }
 
   .mmq-card:hover {
@@ -543,7 +542,6 @@
     min-height: 460px;
     flex: 0 1 auto;
     border-inline: 1px solid var(--line);
-    transition: width var(--dur-2) var(--ease-out);
   }
 
   .mmq-modal-sandbox[data-viewport='1440'] .ex-sandbox-viewport {

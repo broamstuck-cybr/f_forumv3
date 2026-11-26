@@ -1,26 +1,26 @@
 import { useEffect, useRef, useState } from "react";
 import {
-  AppWindow,
-  ArrowRight,
-  ChevronDown,
-  Coins,
-  Gamepad2,
-  Gift,
-  Menu,
-  Palette,
-  RefreshCw,
-  Search as SearchGlyph,
-  X,
-} from "lucide-react";
+  IconAppWindow,
+  IconArrowRight,
+  IconChevronDown,
+  IconCoins,
+  IconGamepad2,
+  IconGift,
+  IconMenu,
+  IconPalette,
+  IconRefreshCw,
+  IconSearch,
+  IconX,
+} from "../../ui/icons";
 import { LUNA_LINKS, type LunaCategory, type LunaLink, type LunaProduct } from "./luna-catalog";
 
 const glyphs = {
-  games: Gamepad2,
-  software: AppWindow,
-  subscriptions: RefreshCw,
-  gifts: Gift,
-  assets: Palette,
-  topups: Coins,
+  games: IconGamepad2,
+  software: IconAppWindow,
+  subscriptions: IconRefreshCw,
+  gifts: IconGift,
+  assets: IconPalette,
+  topups: IconCoins,
 };
 
 type NavbarProps = {
@@ -90,7 +90,7 @@ function CategoryMenu({ links, categories }: Pick<NavbarProps, "links" | "catego
         Danh mục
       </button>
       <span className="lh-caret" aria-hidden="true">
-        <ChevronDown size={12} />
+        <IconChevronDown size={12} />
       </span>
       {open && (
         <div className="lh-positioner">
@@ -103,19 +103,19 @@ function CategoryMenu({ links, categories }: Pick<NavbarProps, "links" | "catego
                 ))}
               </div>
               <a className="lh-all-categories" href={links.categories} onClick={close}>
-                Xem toàn bộ danh mục <ArrowRight size={16} aria-hidden="true" />
+                Xem toàn bộ danh mục <IconArrowRight size={16} aria-hidden="true" />
               </a>
             </div>
             <a className="lh-featured" href={links.store} onClick={close}>
               <div className="lh-featured-art" aria-hidden="true">
                 <div className="lh-featured-pixels" />
                 <span className="lh-featured-glyph">
-                  <Gamepad2 size={44} />
+                  <IconGamepad2 size={44} />
                 </span>
                 <span className="lh-featured-caption">Game sẵn sàng để chơi</span>
               </div>
               <strong>
-                Tựa game tiếp theo, giao ngay <ArrowRight size={16} aria-hidden="true" />
+                Tựa game tiếp theo, giao ngay <IconArrowRight size={16} aria-hidden="true" />
               </strong>
               <span>Duyệt sản phẩm số và kiểm tra khu vực áp dụng trước khi mua.</span>
             </a>
@@ -189,14 +189,14 @@ function Search({ links, categories, navLinks, products }: NavbarProps) {
         aria-label="Mở tìm kiếm"
         onClick={() => changeOpen(true)}
       >
-        <SearchGlyph size={18} aria-hidden="true" />
+        <IconSearch size={18} aria-hidden="true" />
       </button>
       {open && (
         <>
           <div className="lh-dialog-backdrop lh-fade" onClick={() => changeOpen(false)} />
           <div className="lh-search-dialog lh-pop" role="dialog" aria-modal="true" aria-label="Tìm kiếm Luna">
             <div className="lh-search-field">
-              <SearchGlyph size={20} aria-hidden="true" />
+              <IconSearch size={20} aria-hidden="true" />
               <input
                 ref={inputRef}
                 type="search"
@@ -206,7 +206,7 @@ function Search({ links, categories, navLinks, products }: NavbarProps) {
                 onChange={(event) => setQuery(event.target.value)}
               />
               <button type="button" className="lh-icon-button" aria-label="Đóng tìm kiếm" onClick={() => changeOpen(false)}>
-                <X size={18} aria-hidden="true" />
+                <IconX size={18} aria-hidden="true" />
               </button>
             </div>
             <div className="lh-search-results">
@@ -224,7 +224,7 @@ function Search({ links, categories, navLinks, products }: NavbarProps) {
                         <a key={item.href + item.label} href={item.href} className="lh-search-result" onClick={() => changeOpen(false)}>
                           <span>{item.label}</span>
                           {item.region && <span className="lh-region">{item.region}</span>}
-                          <ArrowRight size={16} aria-hidden="true" />
+                          <IconArrowRight size={16} aria-hidden="true" />
                         </a>
                       ))}
                     </div>
@@ -251,7 +251,7 @@ function MobileMenu({ links, categories, navLinks }: Omit<NavbarProps, "products
         aria-label="Mở menu điều hướng"
         onClick={() => setOpen(true)}
       >
-        <Menu size={22} aria-hidden="true" />
+        <IconMenu size={22} aria-hidden="true" />
       </button>
       {open && (
         <>
@@ -260,7 +260,7 @@ function MobileMenu({ links, categories, navLinks }: Omit<NavbarProps, "products
             <div className="lh-mobile-heading">
               <span>Luna</span>
               <button type="button" className="lh-icon-button" aria-label="Đóng menu điều hướng" onClick={close}>
-                <X size={22} aria-hidden="true" />
+                <IconX size={22} aria-hidden="true" />
               </button>
             </div>
             <nav aria-label="Điều hướng di động" className="lh-mobile-links">
@@ -269,7 +269,7 @@ function MobileMenu({ links, categories, navLinks }: Omit<NavbarProps, "products
                 <CategoryLink key={category.href} category={category} onClick={close} />
               ))}
               <a className="lh-all-categories" href={links.categories} onClick={close}>
-                Xem toàn bộ danh mục <ArrowRight size={16} aria-hidden="true" />
+                Xem toàn bộ danh mục <IconArrowRight size={16} aria-hidden="true" />
               </a>
               <div className="lh-mobile-pages">
                 {navLinks.map((link) => (

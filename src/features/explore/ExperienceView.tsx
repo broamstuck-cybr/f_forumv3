@@ -1,15 +1,15 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
-  Monitor,
-  Moon,
-  RotateCw,
-  Search,
-  Smartphone,
-  Sun,
-  Tablet,
-  ZoomIn,
-  ZoomOut,
-} from 'lucide-react';
+  IconMonitor,
+  IconMoon,
+  IconRotateCw,
+  IconSearch,
+  IconSmartphone,
+  IconSun,
+  IconTablet,
+  IconZoomIn,
+  IconZoomOut,
+} from '../../ui/icons';
 import type { AttachedContextItem, SourceCatalogItem } from '../../types/index';
 import { useAppStore } from '../../store/appStore';
 import {
@@ -819,15 +819,15 @@ export const ExperienceView: React.FC = () => {
                   type="button"
                   className="ex-stage-icon-btn"
                   aria-label="Đổi kích thước khung nhìn"
-                  title="Đổi khung nhìn Máy tính / Bảng / Điện thoại"
+                  title="Đổi khung nhìn"
                   onClick={cycleViewport}
                 >
                   {viewport === 1440 ? (
-                    <Monitor size={16} aria-hidden="true" />
+                    <IconMonitor size={16} aria-hidden="true" />
                   ) : viewport === 768 ? (
-                    <Tablet size={16} aria-hidden="true" />
+                    <IconTablet size={16} aria-hidden="true" />
                   ) : (
-                    <Smartphone size={16} aria-hidden="true" />
+                    <IconSmartphone size={16} aria-hidden="true" />
                   )}
                 </button>
                 <button
@@ -835,46 +835,46 @@ export const ExperienceView: React.FC = () => {
                   className="ex-stage-icon-btn"
                   aria-pressed={stageZoomed}
                   aria-label={stageZoomed ? 'Thu nhỏ sân khấu về 100%' : 'Phóng to sân khấu 115%'}
-                  title={stageZoomed ? 'Thu nhỏ sân khấu (100%)' : 'Phóng to sân khấu (115%)'}
+                  title={stageZoomed ? 'Thu nhỏ' : 'Phóng to'}
                   onClick={() => setStageZoomed((z) => !z)}
                 >
                   {stageZoomed ? (
-                    <ZoomOut size={16} aria-hidden="true" />
+                    <IconZoomOut size={16} aria-hidden="true" />
                   ) : (
-                    <ZoomIn size={16} aria-hidden="true" />
+                    <IconZoomIn size={16} aria-hidden="true" />
                   )}
                 </button>
                 <button
                   type="button"
                   className="ex-stage-icon-btn"
                   aria-label={stageTheme === 'dark' ? 'Chuyển sân khấu sang nền sáng' : 'Chuyển sân khấu sang nền tối'}
-                  title={stageTheme === 'dark' ? 'Nền tối — Bấm để đổi nền sáng' : 'Nền sáng — Bấm để đổi nền tối'}
+                  title={stageTheme === 'dark' ? 'Nền sáng' : 'Nền tối'}
                   onClick={() => setStageTheme((prev) => (prev === 'dark' ? 'light' : 'dark'))}
                 >
                   {stageTheme === 'dark' ? (
-                    <Moon size={16} aria-hidden="true" />
+                    <IconMoon size={16} aria-hidden="true" />
                   ) : (
-                    <Sun size={16} aria-hidden="true" />
+                    <IconSun size={16} aria-hidden="true" />
                   )}
                 </button>
                 <button
                   type="button"
                   className="ex-stage-icon-btn"
                   aria-label="Đặt lại sân khấu"
-                  title="Đặt lại sân khấu chạy thử"
+                  title="Đặt lại"
                   onClick={() => setNonce((n) => n + 1)}
                 >
-                  <RotateCw size={16} aria-hidden="true" />
+                  <IconRotateCw size={16} aria-hidden="true" />
                 </button>
                 <button
                   type="button"
                   className="ex-stage-icon-btn"
                   aria-pressed={magnifyOpen}
                   aria-label={magnifyOpen ? 'Tắt kính lúp soi chi tiết' : 'Bật kính lúp soi chi tiết'}
-                  title={magnifyOpen ? 'Tắt kính lúp soi chi tiết' : 'Bật kính lúp soi chi tiết'}
+                  title={magnifyOpen ? 'Tắt kính lúp' : 'Kính lúp'}
                   onClick={() => setMagnifyOpen((m) => !m)}
                 >
-                  <Search size={16} aria-hidden="true" />
+                  <IconSearch size={16} aria-hidden="true" />
                 </button>
               </div>
             </div>

@@ -185,7 +185,10 @@ export const LandingManifesto: React.FC<LandingManifestoProps> = ({ onNavigate }
   const trackRef = useRef<HTMLDivElement>(null);
 
   const [mp, setMp] = useState(0);
-  const [isDesktopHorizontal, setIsDesktopHorizontal] = useState(true);
+  const [isDesktopWidth, setIsDesktopWidth] = useState(() =>
+    typeof window !== 'undefined' ? window.matchMedia('(min-width: 768px)').matches : true
+  );
+  const isDesktopHorizontal = isDesktopWidth && !reduced;
   const [promptText, setPromptText] = useState('');
   const [selectedAction, setSelectedAction] = useState<string | null>(null);
   const [selectedModel, setSelectedModel] = useState('Định tuyến');
@@ -193,41 +196,73 @@ export const LandingManifesto: React.FC<LandingManifestoProps> = ({ onNavigate }
   useEffect(() => {
     if (typeof window === 'undefined') return;
     const mq = window.matchMedia('(min-width: 768px)');
-    const syncMode = () => setIsDesktopHorizontal(mq.matches && !reduced);
+    const syncMode = () => setIsDesktopWidth(mq.matches);
     syncMode();
     mq.addEventListener('change', syncMode);
     return () => mq.removeEventListener('change', syncMode);
-  }, [reduced]);
+  }, []);
 
   useEffect(() => {
     if (!isDesktopHorizontal || typeof window === 'undefined') {
+      if (trackRef.current) {
+        trackRef.current.style.transform = '';
+      }
       setMp(1);
-      return;
+      return undefined;
     }
 
     let rafId = 0;
     let smoothMp = 0;
+    let initialized = false;
+    let lastTransform = '';
 
     const tick = () => {
+      rafId = 0;
       const runway = runwayRef.current;
       const track = trackRef.current;
-      if (runway && track) {
-        const rect = runway.getBoundingClientRect();
-        const vh = window.innerHeight || 900;
-        const vw = window.innerWidth || 1440;
-        const scrollable = Math.max(1, rect.height - vh);
-        const rawMp = Math.max(0, Math.min(1, -rect.top / scrollable));
+      if (!runway || !track) return;
+
+      const rect = runway.getBoundingClientRect();
+      const vh = window.innerHeight || 900;
+      const vw = window.innerWidth || 1440;
+      const scrollable = Math.max(1, rect.height - vh);
+      const rawMp = Math.max(0, Math.min(1, -rect.top / scrollable));
+
+      if (!initialized || Math.abs(rawMp - smoothMp) > 0.12) {
+        smoothMp = rawMp;
+        initialized = true;
+      } else {
         smoothMp += (rawMp - smoothMp) * 0.16;
-        const val = Math.abs(rawMp - smoothMp) < 0.0008 ? rawMp : smoothMp;
-        const maxShift = Math.max(0, track.scrollWidth - vw + 48);
-        track.style.transform = `translate3d(${(-val * maxShift).toFixed(2)}px, 0, 0)`;
-        setMp((prev) => (Math.abs(prev - val) > 0.015 ? val : prev));
       }
+
+      const settled = Math.abs(rawMp - smoothMp) < 0.0008;
+      const val = settled ? rawMp : smoothMp;
+      const maxShift = Math.max(0, track.scrollWidth - vw + 48);
+      const nextTransform = `translate3d(${(-val * maxShift).toFixed(2)}px, 0, 0)`;
+      if (nextTransform !== lastTransform) {
+        lastTransform = nextTransform;
+        track.style.transform = nextTransform;
+      }
+      setMp((prev) => (Math.abs(prev - val) > 0.015 ? val : prev));
+
+      const nearViewport = rect.top <= vh + 240 && rect.bottom >= -240;
+      if (!settled && nearViewport) {
+        rafId = requestAnimationFrame(tick);
+      }
+    };
+
+    const scheduleTick = () => {
+      if (rafId !== 0) return;
       rafId = requestAnimationFrame(tick);
     };
 
-    rafId = requestAnimationFrame(tick);
+    tick();
+    window.addEventListener('scroll', scheduleTick, { passive: true });
+    window.addEventListener('resize', scheduleTick, { passive: true });
+
     return () => {
+      window.removeEventListener('scroll', scheduleTick);
+      window.removeEventListener('resize', scheduleTick);
       if (rafId) cancelAnimationFrame(rafId);
     };
   }, [isDesktopHorizontal]);

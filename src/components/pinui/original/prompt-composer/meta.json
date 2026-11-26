@@ -7,6 +7,6 @@
   "dependencies": [
     "motion"
   ],
-  "docs": "Prompt Composer — An assistant's field with its quick actions fanned out behind it.\n\nThe stylesheet sits next to the component and is imported by it, so keep the two together in components/pinui/.\n\nIt is drawn in Inter (400 to 500), with Inter Tight (700) for the date on the event card. If your project does not already load that face it will fall back to your system sans and look noticeably different.\n\nIt comes in two themes: pass theme=\"dark\" for the dark one, or wire the prop to your own theme switch.",
+  "docs": "Prompt Composer — An assistant's field with its quick actions fanned out behind it.\n\nThe stylesheet sits next to the component and is imported by it, so keep the two together in components/pinui/.\n\nIt is drawn in Be Vietnam Pro (400 to 700). If your project does not already load that face it will fall back to your system sans.\n\nIt comes in two themes: pass theme=\"dark\" for the dark one, or wire the prop to your own theme switch.",
   "$registry_url": "https://www.pinui.xyz/r/prompt-composer.json"
 }

@@ -115,7 +115,7 @@
   border-radius: 0 0 20px 20px;
   background: var(--bg-elevated);
   border: 1px solid var(--border-subtle);
-  transition: background-color 220ms ease, box-shadow 220ms ease;
+  transition: background-color 220ms ease;
 }
 
 .plamp__bulb[data-on='true'] {

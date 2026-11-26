@@ -26,7 +26,7 @@ export const LandingPricing: React.FC<LandingPricingProps> = ({ onEnterApp }) =>
             </div>
             <div>
               <button type="button" className="btn btn-solid btn-lg" onClick={onEnterApp}>
-                Mở Xưởng lắp ráp
+                Mở miễn phí
               </button>
             </div>
           </div>

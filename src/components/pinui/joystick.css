@@ -15,7 +15,6 @@
   user-select: none;
   -webkit-user-select: none;
   -webkit-tap-highlight-color: transparent;
-  transition: background 0.3s ease;
 }
 
 .pjoy[data-theme="dark"] {

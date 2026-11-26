@@ -1,6 +1,12 @@
 import React from 'react';
 import { motion, useReducedMotion } from 'motion/react';
-import { AlertCircle, CheckCircle2, Clock, Loader2, ShieldAlert } from 'lucide-react';
+import {
+  IconAlertCircle,
+  IconCheckCircle2,
+  IconClock,
+  IconLoader2,
+  IconShieldAlert,
+} from '../../ui/icons';
 
 export type TaskStatus = 'completed' | 'running' | 'waiting' | 'failed' | 'approval';
 
@@ -28,11 +34,11 @@ const STATUS_META: Record<TaskStatus, { label: string; color: string; bg: string
 };
 
 function StatusIcon({ status }: { status: TaskStatus }) {
-  if (status === 'completed') return <CheckCircle2 className="h-4 w-4" aria-hidden="true" />;
-  if (status === 'running') return <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />;
-  if (status === 'failed') return <AlertCircle className="h-4 w-4" aria-hidden="true" />;
-  if (status === 'approval') return <ShieldAlert className="h-4 w-4" aria-hidden="true" />;
-  return <Clock className="h-4 w-4" aria-hidden="true" />;
+  if (status === 'completed') return <IconCheckCircle2 className="h-4 w-4" aria-hidden="true" />;
+  if (status === 'running') return <IconLoader2 className="h-4 w-4 animate-spin" aria-hidden="true" />;
+  if (status === 'failed') return <IconAlertCircle className="h-4 w-4" aria-hidden="true" />;
+  if (status === 'approval') return <IconShieldAlert className="h-4 w-4" aria-hidden="true" />;
+  return <IconClock className="h-4 w-4" aria-hidden="true" />;
 }
 
 export const TaskCard: React.FC<TaskCardProps> = ({

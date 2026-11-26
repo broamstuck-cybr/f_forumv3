@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { X } from 'lucide-react';
+import { IconX } from '../../ui/icons';
 import { LiquidTabs } from '../../components/pinui/LiquidTabs';
 import { generateProjectSetupBundle } from '../../services/projectSetupGenerator';
 import { useAppStore } from '../../store/appStore';
@@ -28,9 +28,9 @@ const PROTOCOLS: Array<{ id: AIProtocol; label: string }> = [
 const PRESET_MODELS = [
   'studio-smart-route',
   'studio-heavy-route',
-  'ag/gemini-3.8-flash-low',
-  'ag/gemini-4-argon-high',
-  'ag/claude-sonnet-5-5-medium',
+  'gemini-2.5-flash',
+  'gemini-2.5-pro',
+  'claude-sonnet-4-5',
 ];
 
 export const AiProjectSetupDrawer: React.FC<AiProjectSetupDrawerProps> = ({
@@ -95,15 +95,15 @@ export const AiProjectSetupDrawer: React.FC<AiProjectSetupDrawerProps> = ({
         <header className="ws-head">
           <h2 className="ws-head-title">Model, BYOK &amp; Hồ sơ IDE</h2>
           <button type="button" className="icon-btn" aria-label="Đóng" title="Đóng" onClick={onClose}>
-            <X size={18} aria-hidden="true" />
+            <IconX size={18} />
           </button>
         </header>
 
         <div className="ws-setup-tabs">
           <LiquidTabs
             tabs={[
-              { id: 'byok', label: 'Model & Khóa BYOK' },
-              { id: 'bundle', label: 'Hồ sơ Thiết lập IDE', count: bundle.files.length },
+              { id: 'byok', label: 'Khóa BYOK' },
+              { id: 'bundle', label: 'Hồ sơ IDE', count: bundle.files.length },
             ]}
             activeId={drawerTab}
             onChange={(id) => setDrawerTab(id as 'byok' | 'bundle')}
@@ -128,7 +128,7 @@ export const AiProjectSetupDrawer: React.FC<AiProjectSetupDrawerProps> = ({
                     aria-pressed={!settings.byok.enabled}
                     onClick={() => updateByok({ enabled: false })}
                   >
-                    Cổng mặc định
+                    Mặc định
                   </button>
                   <button
                     type="button"
@@ -250,7 +250,7 @@ export const AiProjectSetupDrawer: React.FC<AiProjectSetupDrawerProps> = ({
                 ))}
               </div>
               <button type="button" className="btn btn-line btn-sm" onClick={handleAddAllToWorkspace}>
-                {injected ? 'Đã nạp vào phiên' : 'Nạp 5 tệp vào phiên'}
+                {injected ? 'Đã nạp' : 'Nạp 5 tệp'}
               </button>
             </div>
 

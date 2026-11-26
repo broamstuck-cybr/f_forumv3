@@ -1,6 +1,6 @@
 import React, { useId, useState } from 'react';
 import { LayoutGroup, motion, useReducedMotion, type Transition } from 'motion/react';
-import { X } from 'lucide-react';
+import { IconX } from '../../ui/icons';
 import './chat-room.css';
 
 export interface ChatRoomPerson {
@@ -170,7 +170,7 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({
                 title="Thu gọn"
                 onClick={() => handleOpen(false)}
               >
-                <X className="h-3.5 w-3.5" aria-hidden="true" />
+                <IconX className="h-3.5 w-3.5" aria-hidden="true" />
               </button>
             </div>
 

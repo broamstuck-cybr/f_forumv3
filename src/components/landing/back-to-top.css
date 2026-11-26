@@ -12,9 +12,7 @@
   padding: 0;
   border-radius: 50%;
   border: 1px solid var(--line);
-  background: var(--bg-glass-surface);
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
+  background: var(--bg-raised);
   color: var(--accent);
   cursor: pointer;
   box-shadow: var(--shadow-2);
@@ -24,8 +22,7 @@
   transition:
     opacity 240ms var(--ease-ux),
     transform 260ms var(--ease-spring),
-    border-color 180ms var(--ease-ux),
-    box-shadow 220ms var(--ease-ux);
+    border-color 180ms var(--ease-ux);
 }
 
 .ff-btt[data-shown='true'] {
@@ -66,7 +63,6 @@
   stroke: var(--accent);
   stroke-dasharray: var(--btt-c);
   stroke-dashoffset: calc(var(--btt-c) * (1 - var(--btt-p, 0)));
-  transition: stroke-dashoffset 100ms linear;
 }
 
 .ff-btt__arrow {

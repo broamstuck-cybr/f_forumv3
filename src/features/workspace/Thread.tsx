@@ -1,23 +1,23 @@
 import React, { useEffect, useRef, useState } from 'react';
 import {
-  Check,
-  ChevronDown,
-  ChevronRight,
-  Compass,
-  Copy,
-  Eye,
-  GitCompareArrows,
-  KeyRound,
-  LayoutDashboard,
-  LayoutTemplate,
-  RotateCw,
-  ScanSearch,
-  ShieldCheck,
-  Terminal,
-  ToggleRight,
-  Upload,
-  type LucideIcon,
-} from 'lucide-react';
+  IconCheck,
+  IconChevronDown,
+  IconChevronRight,
+  IconCompass,
+  IconCopy,
+  IconEye,
+  IconGitCompareArrows,
+  IconKeyRound,
+  IconLayoutDashboard,
+  IconLayoutTemplate,
+  IconRotateCw,
+  IconScanSearch,
+  IconShieldCheck,
+  IconTerminal,
+  IconToggleRight,
+  IconUpload,
+  type IconComponent,
+} from '../../ui/icons';
 import type { AIActivityState, AIStreamingStage, ChatMessage } from '../../types/index';
 import { formatClock } from './time';
 
@@ -45,7 +45,12 @@ interface ThreadProps {
   welcome?: boolean;
 }
 
-const STARTER_ICONS: LucideIcon[] = [LayoutTemplate, LayoutDashboard, ToggleRight, ScanSearch];
+const STARTER_ICONS: IconComponent[] = [
+  IconLayoutTemplate,
+  IconLayoutDashboard,
+  IconToggleRight,
+  IconScanSearch,
+];
 
 function trackSpotlight(event: React.PointerEvent<HTMLElement>) {
   const node = event.currentTarget;
@@ -87,6 +92,22 @@ function stepRank(stage: AIStreamingStage): number {
   return -1;
 }
 
+const StreamingElapsedTimer: React.FC = React.memo(() => {
+  const [elapsedSeconds, setElapsedSeconds] = useState(0);
+
+  useEffect(() => {
+    const startedAt = Date.now();
+    const timer = window.setInterval(() => {
+      setElapsedSeconds(Math.floor((Date.now() - startedAt) / 1000));
+    }, 1000);
+    return () => window.clearInterval(timer);
+  }, []);
+
+  return <span className="ws-stream-elapsed">{elapsedSeconds}s</span>;
+});
+
+StreamingElapsedTimer.displayName = 'StreamingElapsedTimer';
+
 export const Thread: React.FC<ThreadProps> = ({
   messages,
   activity,
@@ -111,7 +132,6 @@ export const Thread: React.FC<ThreadProps> = ({
 }) => {
   const scrollRef = useRef<HTMLDivElement>(null);
   const previewRef = useRef<HTMLPreElement>(null);
-  const [liveElapsedMs, setLiveElapsedMs] = useState(0);
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [expandedTools, setExpandedTools] = useState<Record<string, boolean>>({});
   const busy = activity === 'thinking' || activity === 'streaming';
@@ -131,18 +151,6 @@ export const Thread: React.FC<ThreadProps> = ({
       pre.scrollTop = pre.scrollHeight;
     }
   }, [streamingPreview]);
-
-  useEffect(() => {
-    if (!busy) {
-      setLiveElapsedMs(0);
-      return;
-    }
-    const startedAt = Date.now();
-    const timer = window.setInterval(() => {
-      setLiveElapsedMs(Date.now() - startedAt);
-    }, 100);
-    return () => window.clearInterval(timer);
-  }, [busy]);
 
   const handleCopyContent = async (id: string, text: string) => {
     try {
@@ -176,7 +184,7 @@ export const Thread: React.FC<ThreadProps> = ({
                 Dựng giao diện thật, <em>từ một câu mô tả.</em>
               </h2>
               <p className="ws-welcome-sub">
-                Khung Xem trực tiếp và Mã nguồn chỉ mở khi có tệp HTML, CSS hoặc JS thật được sinh ra hoặc nạp từ Kho mẫu.
+                Khung Live View và Mã nguồn tự động mở khi có tệp HTML, CSS hoặc JS được tạo ra hoặc nạp từ Kho mẫu.
               </p>
             </header>
 
@@ -186,12 +194,7 @@ export const Thread: React.FC<ThreadProps> = ({
                   const Icon = STARTER_ICONS[index % STARTER_ICONS.length];
                   return (
                     <li key={starter.label} className="ws-welcome-cell">
-                      <button
-                        type="button"
-                        className="ws-welcome-card"
-                        onPointerMove={trackSpotlight}
-                        onClick={() => onUseStarter(starter.prompt)}
-                      >
+                      <article className="ws-welcome-card" onPointerMove={trackSpotlight}>
                         <span className="ws-welcome-card-icon" aria-hidden="true">
                           <Icon size={18} />
                         </span>
@@ -199,32 +202,37 @@ export const Thread: React.FC<ThreadProps> = ({
                           <span className="ws-welcome-card-label">{starter.label}</span>
                           <span className="ws-welcome-card-note">{starter.note}</span>
                         </span>
-                        <span className="ws-welcome-card-prompt">{starter.prompt}</span>
-                      </button>
+                        <p className="ws-welcome-card-prompt">{starter.prompt}</p>
+                        <div className="ws-welcome-card-foot">
+                          <button
+                            type="button"
+                            className="ws-welcome-card-trigger"
+                            data-card-trigger
+                            aria-label={`Dùng mẫu ${starter.label}`}
+                            onClick={() => onUseStarter(starter.prompt)}
+                          >
+                            Dùng mẫu
+                          </button>
+                        </div>
+                      </article>
                     </li>
                   );
                 })}
               </ul>
             )}
 
-            {(onOpenByok || onOpenExplore || onOpenUpload) && (
+            {(onOpenExplore || onOpenUpload) && (
               <div className="ws-welcome-actions" role="group" aria-label="Nguồn bắt đầu khác">
                 {onOpenExplore && (
                   <button type="button" className="ws-welcome-action" onClick={onOpenExplore}>
-                    <Compass size={15} aria-hidden="true" />
-                    <span>Kho 7.750 mẫu</span>
+                    <IconCompass size={15} />
+                    <span>Kho mẫu</span>
                   </button>
                 )}
                 {onOpenUpload && (
                   <button type="button" className="ws-welcome-action" onClick={onOpenUpload}>
-                    <Upload size={15} aria-hidden="true" />
-                    <span>Nạp tệp HTML/CSS</span>
-                  </button>
-                )}
-                {onOpenByok && (
-                  <button type="button" className="ws-welcome-action" onClick={onOpenByok}>
-                    <KeyRound size={15} aria-hidden="true" />
-                    <span>Khóa riêng (BYOK)</span>
+                    <IconUpload size={15} />
+                    <span>Nạp tệp</span>
                   </button>
                 )}
               </div>
@@ -267,11 +275,11 @@ export const Thread: React.FC<ThreadProps> = ({
                     onClick={() => toggleToolGroup(message.id)}
                   >
                     {isToolExpanded ? (
-                      <ChevronDown size={13} aria-hidden="true" />
+                      <IconChevronDown size={13} />
                     ) : (
-                      <ChevronRight size={13} aria-hidden="true" />
+                      <IconChevronRight size={13} />
                     )}
-                    <Terminal size={13} aria-hidden="true" />
+                    <IconTerminal size={13} />
                     <span>
                       Đã cập nhật {message.changedFiles!.length} tệp{checksPassLabel ? ` · ${checksPassLabel}` : ''}
                     </span>
@@ -296,19 +304,19 @@ export const Thread: React.FC<ThreadProps> = ({
                         <div className="ws-artifact-jumps" role="group" aria-label="Mở nhanh bản dựng">
                           {onOpenPreview && (
                             <button type="button" className="ws-artifact-jump" onClick={onOpenPreview}>
-                              <Eye size={12} aria-hidden="true" />
-                              <span>Xem trực tiếp</span>
+                              <IconEye size={12} />
+                              <span>Live View</span>
                             </button>
                           )}
                           {onOpenDiff && (
                             <button type="button" className="ws-artifact-jump" onClick={onOpenDiff}>
-                              <GitCompareArrows size={12} aria-hidden="true" />
+                              <IconGitCompareArrows size={12} />
                               <span>Đối chiếu</span>
                             </button>
                           )}
                           {onOpenChecks && (
                             <button type="button" className="ws-artifact-jump" onClick={onOpenChecks}>
-                              <ShieldCheck size={12} aria-hidden="true" />
+                              <IconShieldCheck size={12} />
                               <span>Kiểm định</span>
                             </button>
                           )}
@@ -329,8 +337,8 @@ export const Thread: React.FC<ThreadProps> = ({
                       className="ws-arena-quick-pill ws-arena-quick-pill--sm"
                       onClick={onOpenByok}
                     >
-                      <KeyRound size={12} aria-hidden="true" />
-                      <span>Cài đặt → Khóa riêng (BYOK)</span>
+                      <IconKeyRound size={12} />
+                      <span>Khóa BYOK</span>
                     </button>
                   )}
                   {onOpenExplore && (
@@ -339,8 +347,8 @@ export const Thread: React.FC<ThreadProps> = ({
                       className="ws-arena-quick-pill ws-arena-quick-pill--sm"
                       onClick={onOpenExplore}
                     >
-                      <Compass size={12} aria-hidden="true" />
-                      <span>Mở Kho 7.750 mẫu</span>
+                      <IconCompass size={12} />
+                      <span>Kho mẫu</span>
                     </button>
                   )}
                 </div>
@@ -352,13 +360,13 @@ export const Thread: React.FC<ThreadProps> = ({
                     type="button"
                     className="ws-arena-ghost-icon"
                     aria-label="Chép nội dung"
-                    title={copiedId === message.id ? 'Đã chép' : 'Chép nội dung'}
+                    title={copiedId === message.id ? 'Đã chép' : 'Sao chép'}
                     onClick={() => void handleCopyContent(message.id, plainContent)}
                   >
                     {copiedId === message.id ? (
-                      <Check size={13} aria-hidden="true" />
+                      <IconCheck size={13} />
                     ) : (
-                      <Copy size={13} aria-hidden="true" />
+                      <IconCopy size={13} />
                     )}
                   </button>
 
@@ -371,7 +379,7 @@ export const Thread: React.FC<ThreadProps> = ({
                       onClick={onRegenerate}
                       disabled={!canRegenerate}
                     >
-                      <RotateCw size={13} aria-hidden="true" />
+                      <IconRotateCw size={13} />
                     </button>
                   )}
 
@@ -384,7 +392,7 @@ export const Thread: React.FC<ThreadProps> = ({
                       onClick={onRetry}
                       disabled={!canRetry}
                     >
-                      <RotateCw size={13} aria-hidden="true" />
+                      <IconRotateCw size={13} />
                     </button>
                   )}
                 </div>
@@ -402,9 +410,9 @@ export const Thread: React.FC<ThreadProps> = ({
           {busy && (
             <div className="ws-arena-assistant-turn ws-stream-card">
               <div className="ws-arena-tool-toggle">
-                <Terminal size={13} aria-hidden="true" />
+                <IconTerminal size={13} />
                 <span>
-                  Đang chạy {modelUsed ? `(${modelUsed})` : ''} · {(liveElapsedMs / 1000).toFixed(1)}s
+                  Đang chạy {modelUsed ? `(${modelUsed})` : ''} · <StreamingElapsedTimer />
                 </span>
                 <ol className="ws-stage-steps" aria-label="Tiến trình sinh mã">
                   {STREAM_STEPS.map((step, idx) => {

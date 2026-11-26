@@ -5,9 +5,7 @@
   display: grid;
   place-items: center;
   padding: var(--space-5);
-  background: rgba(12, 11, 10, 0.32);
-  backdrop-filter: blur(4px);
-  -webkit-backdrop-filter: blur(4px);
+  background: rgba(12, 11, 10, 0.36);
   pointer-events: none;
   animation: ff-loader-fade 160ms cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
 }
@@ -130,7 +128,6 @@ html[data-theme='light'] .ff-loader-overlay {
 @keyframes ff-loader-breath {
   50% {
     transform: scale(1.1);
-    box-shadow: 0 0 34px color-mix(in srgb, var(--red) 78%, transparent);
   }
 }
 
@@ -138,7 +135,6 @@ html[data-theme='light'] .ff-loader-overlay {
   .ff-loader-overlay,
   .ff-loader-spin,
   .ff-loader-core {
-    animation-duration: 0.001ms;
-    animation-iteration-count: 1;
+    animation: none;
   }
 }

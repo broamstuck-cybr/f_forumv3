@@ -230,17 +230,267 @@ export function sanitizeSnippetCode(raw: string | undefined): string {
     .trim();
 }
 
+interface HtmlAttr {
+  name: string;
+  value: string;
+  hasValue: boolean;
+}
+
+interface HtmlToken {
+  kind: 'doctype' | 'comment' | 'start' | 'end';
+  tagName: string;
+  start: number;
+  end: number;
+  selfClosing: boolean;
+  attrs: HtmlAttr[];
+}
+
+const RAW_OR_RCDATA_HTML_TAGS = new Set([
+  'script',
+  'style',
+  'title',
+  'textarea',
+  'xmp',
+  'noembed',
+  'noframes',
+  'noscript',
+  'iframe',
+  'plaintext',
+]);
+
+function tokenizeHtml(doc: string): HtmlToken[] {
+  const tokens: HtmlToken[] = [];
+  const len = doc.length;
+  let i = 0;
+
+  while (i < len) {
+    const lt = doc.indexOf('<', i);
+    if (lt === -1) break;
+
+    if (doc.startsWith('<!--', lt)) {
+      let end = len;
+      if (doc.startsWith('<!-->', lt)) {
+        end = lt + 5;
+      } else if (doc.startsWith('<!--->', lt)) {
+        end = lt + 6;
+      } else {
+        const closeIdx = doc.indexOf('-->', lt + 4);
+        const bangIdx = doc.indexOf('--!>', lt + 4);
+        const closeEnd = closeIdx === -1 ? len : closeIdx + 3;
+        const bangEnd = bangIdx === -1 ? len : bangIdx + 4;
+        end = Math.min(closeEnd, bangEnd);
+      }
+      tokens.push({
+        kind: 'comment',
+        tagName: '',
+        start: lt,
+        end,
+        selfClosing: false,
+        attrs: [],
+      });
+      i = end;
+      continue;
+    }
+
+    if (doc[lt + 1] === '!' || doc[lt + 1] === '?') {
+      const gt = doc.indexOf('>', lt + 2);
+      const end = gt === -1 ? len : gt + 1;
+      if (/^<!doctype(?:\s|>)/i.test(doc.slice(lt, Math.min(len, lt + 12)))) {
+        tokens.push({
+          kind: 'doctype',
+          tagName: 'doctype',
+          start: lt,
+          end,
+          selfClosing: false,
+          attrs: [],
+        });
+      }
+      i = end;
+      continue;
+    }
+
+    const isEnd = doc[lt + 1] === '/';
+    let p = lt + (isEnd ? 2 : 1);
+    if (p >= len || !/[a-zA-Z]/.test(doc[p])) {
+      i = lt + 1;
+      continue;
+    }
+
+    const nameStart = p;
+    while (p < len && /[a-zA-Z0-9:-]/.test(doc[p])) p += 1;
+    if (p < len && !/[\s/>]/.test(doc[p])) {
+      i = lt + 1;
+      continue;
+    }
+    const tagName = doc.slice(nameStart, p).toLowerCase();
+
+    const attrs: HtmlAttr[] = [];
+    let selfClosing = false;
+    let closed = false;
+
+    while (p < len) {
+      while (p < len && /\s/.test(doc[p])) p += 1;
+      if (p >= len) break;
+      const ch = doc[p];
+      if (ch === '>') {
+        p += 1;
+        closed = true;
+        break;
+      }
+      if (ch === '/') {
+        if (doc[p + 1] === '>') {
+          selfClosing = true;
+          p += 2;
+          closed = true;
+          break;
+        }
+        p += 1;
+        continue;
+      }
+      const attrNameStart = p;
+      while (p < len && !/[\s=/>]/.test(doc[p])) p += 1;
+      const attrName = doc.slice(attrNameStart, p).toLowerCase();
+      if (!attrName) {
+        p += 1;
+        continue;
+      }
+      while (p < len && /\s/.test(doc[p])) p += 1;
+      let attrValue = '';
+      let hasValue = false;
+      if (p < len && doc[p] === '=') {
+        hasValue = true;
+        p += 1;
+        while (p < len && /\s/.test(doc[p])) p += 1;
+        if (p < len && (doc[p] === '"' || doc[p] === "'")) {
+          const quote = doc[p];
+          p += 1;
+          const valStart = p;
+          while (p < len && doc[p] !== quote) p += 1;
+          attrValue = doc.slice(valStart, p);
+          if (p < len && doc[p] === quote) p += 1;
+        } else {
+          const valStart = p;
+          while (p < len && !/[\s>]/.test(doc[p])) p += 1;
+          attrValue = doc.slice(valStart, p);
+        }
+      }
+      attrs.push({ name: attrName, value: attrValue, hasValue });
+    }
+
+    if (!closed) {
+      break;
+    }
+
+    tokens.push({
+      kind: isEnd ? 'end' : 'start',
+      tagName,
+      start: lt,
+      end: p,
+      selfClosing: !isEnd && selfClosing,
+      attrs,
+    });
+    i = p;
+
+    if (!isEnd && RAW_OR_RCDATA_HTML_TAGS.has(tagName)) {
+      if (tagName === 'plaintext') {
+        i = len;
+        continue;
+      }
+      const closeRe = new RegExp(`<\\/${tagName}(?=[\\s/>]|$)`, 'gi');
+      closeRe.lastIndex = i;
+      const closeMatch = closeRe.exec(doc);
+      if (!closeMatch) {
+        i = len;
+      } else {
+        let cp = closeMatch.index + closeMatch[0].length;
+        while (cp < len && doc[cp] !== '>') cp += 1;
+        const closeEnd = cp < len ? cp + 1 : len;
+        tokens.push({
+          kind: 'end',
+          tagName,
+          start: closeMatch.index,
+          end: closeEnd,
+          selfClosing: false,
+          attrs: [],
+        });
+        i = closeEnd;
+      }
+    }
+  }
+
+  return tokens;
+}
+
+function getTokenAttr(token: HtmlToken, name: string): string | undefined {
+  for (let idx = token.attrs.length - 1; idx >= 0; idx -= 1) {
+    if (token.attrs[idx].name === name) return token.attrs[idx].value;
+  }
+  return undefined;
+}
+
+function stripHtmlTokens(
+  doc: string,
+  shouldStripStart: (token: HtmlToken) => boolean
+): string {
+  const tokens = tokenizeHtml(doc);
+  const ranges: Array<[number, number]> = [];
+  for (let idx = 0; idx < tokens.length; idx += 1) {
+    const token = tokens[idx];
+    if (token.kind !== 'start' || !shouldStripStart(token)) continue;
+    let end = token.end;
+    if (RAW_OR_RCDATA_HTML_TAGS.has(token.tagName)) {
+      const next = tokens[idx + 1];
+      if (next && next.kind === 'end' && next.tagName === token.tagName) {
+        end = next.end;
+        idx += 1;
+      }
+    }
+    ranges.push([token.start, end]);
+  }
+  if (ranges.length === 0) return doc;
+  let out = '';
+  let cursor = 0;
+  for (const [start, end] of ranges) {
+    out += doc.slice(cursor, start);
+    cursor = end;
+  }
+  out += doc.slice(cursor);
+  return out;
+}
+
+function serializeStartTag(tagName: string, attrs: HtmlAttr[], selfClosing: boolean): string {
+  const attrStr = attrs
+    .map((a) =>
+      a.hasValue ? `${a.name}="${a.value.replace(/&/g, '&amp;').replace(/"/g, '&quot;')}"` : a.name
+    )
+    .join(' ');
+  const suffix = selfClosing ? ' />' : '>';
+  return attrStr ? `<${tagName} ${attrStr}${suffix}` : `<${tagName}${suffix}`;
+}
+
 function sanitizeFullDocFonts(html: string): string {
   const reInterFamily = new RegExp("['\"]Inte" + "r(?:\\s+Tight)?['\"]", 'gi');
   const reGoogleInter = new RegExp(
     'https://fonts\\.googleapis\\.com/css2\\?[^"\']*family=Inte' + 'r[^"\']*',
     'gi'
   );
-  return html
-    .replace(RE_RELATIVE_FONT_FACE, '')
-    .replace(RE_WORDMARK_PATH, '')
-    .replace(/<script\b[^>]*\bsrc\s*=\s*["'][^"']+["'][^>]*>(?:\s*<\/script>)?/gi, '')
-    .replace(/<link\b[^>]*\bhref\s*=\s*["'](?!https?:|data:)[^"']+["'][^>]*>/gi, '')
+  const withoutExternalResources = stripHtmlTokens(
+    html
+      .replace(RE_RELATIVE_FONT_FACE, '')
+      .replace(RE_WORDMARK_PATH, ''),
+    (token) => {
+      if (token.tagName === 'script') {
+        const src = getTokenAttr(token, 'src');
+        return Boolean(src && src.trim());
+      }
+      if (token.tagName === 'link') {
+        const href = getTokenAttr(token, 'href');
+        return Boolean(href && !/^(?:https?:|data:)/i.test(href.trim()));
+      }
+      return false;
+    }
+  );
+  return withoutExternalResources
     .replace(reInterFamily, "'Be Vietnam Pro'")
     .replace(reGoogleInter, (url) =>
       url.replace(new RegExp('Inte' + 'r(?:%20|\\+)?(?:Tight)?(?::[^&]+)?&?', 'gi'), '')
@@ -249,6 +499,69 @@ function sanitizeFullDocFonts(html: string): string {
 
 const SANDBOX_CSP =
   '<meta http-equiv="Content-Security-Policy" content="default-src \'none\'; style-src \'unsafe-inline\' https:; script-src \'unsafe-inline\'; img-src data: https: blob:; media-src data: https: blob:; font-src data: https:; connect-src \'none\';" />';
+
+const STRIPPED_META_HTTP_EQUIV = new Set([
+  'content-security-policy',
+  'refresh',
+  'set-cookie',
+  'location',
+]);
+
+function decodeMetaAttrValue(value: string): string {
+  return value
+    .replace(/&#x([0-9a-f]+);?/gi, (_, hex: string) => {
+      const cp = Number.parseInt(hex, 16);
+      return Number.isFinite(cp) && cp >= 0 && cp <= 0x10ffff ? String.fromCodePoint(cp) : '';
+    })
+    .replace(/&#([0-9]+);?/g, (_, dec: string) => {
+      const cp = Number.parseInt(dec, 10);
+      return Number.isFinite(cp) && cp >= 0 && cp <= 0x10ffff ? String.fromCodePoint(cp) : '';
+    });
+}
+
+function isDisallowedMetaToken(token: HtmlToken): boolean {
+  if (token.tagName !== 'meta') return false;
+  return token.attrs.some(
+    (attr) =>
+      attr.name === 'http-equiv' &&
+      STRIPPED_META_HTTP_EQUIV.has(decodeMetaAttrValue(attr.value).trim().toLowerCase())
+  );
+}
+
+function findHtmlTagToken(
+  doc: string,
+  tagName: string,
+  kind: HtmlToken['kind'] = 'start',
+  pickLast = false
+): HtmlToken | null {
+  const tokens = tokenizeHtml(doc);
+  let chosen: HtmlToken | null = null;
+  for (const token of tokens) {
+    if (token.kind === kind && token.tagName === tagName) {
+      chosen = token;
+      if (!pickLast) return chosen;
+    }
+  }
+  return chosen;
+}
+
+function insertAfterHtmlTag(doc: string, tagName: string, addition: string): string | null {
+  const token = findHtmlTagToken(doc, tagName, 'start', false);
+  if (!token) return null;
+  return `${doc.slice(0, token.end)}${addition}${doc.slice(token.end)}`;
+}
+
+function insertBeforeHtmlTag(
+  doc: string,
+  tagName: string,
+  addition: string,
+  kind: HtmlToken['kind'] = 'end',
+  pickLast = false
+): string | null {
+  const token = findHtmlTagToken(doc, tagName, kind, pickLast);
+  if (!token) return null;
+  return `${doc.slice(0, token.start)}${addition}${doc.slice(token.start)}`;
+}
 
 export function compileSpecimenSrcDoc(
   rawHtml: string | undefined,
@@ -262,61 +575,78 @@ export function compileSpecimenSrcDoc(
 
   if (isFullDocument) {
     let doc = sanitizeFullDocFonts(source);
-    if (/<html(?:\s[^>]*)?data-theme=/i.test(doc)) {
-      doc = doc.replace(/(<html(?:\s[^>]*)?data-theme=)["'][^"']*["']/i, `$1"${theme}"`);
-    } else {
-      doc = doc.replace(/<html(\s|>)/i, `<html data-theme="${theme}"$1`);
+    doc = stripHtmlTokens(doc, isDisallowedMetaToken);
+    const htmlTokenForTheme = findHtmlTagToken(doc, 'html', 'start', false);
+    if (htmlTokenForTheme) {
+      const hasThemeAttr = htmlTokenForTheme.attrs.some((a) => a.name === 'data-theme');
+      const nextAttrs = hasThemeAttr
+        ? htmlTokenForTheme.attrs.map((a) =>
+            a.name === 'data-theme' ? { name: 'data-theme', value: theme, hasValue: true } : a
+          )
+        : [{ name: 'data-theme', value: theme, hasValue: true }, ...htmlTokenForTheme.attrs];
+      doc = `${doc.slice(0, htmlTokenForTheme.start)}${serializeStartTag('html', nextAttrs, htmlTokenForTheme.selfClosing)}${doc.slice(htmlTokenForTheme.end)}`;
     }
-    const hasHeadTag = /<head(?:\s[^>]*)?>/i.test(doc);
-    if (!/http-equiv=["']Content-Security-Policy["']/i.test(doc)) {
-      if (hasHeadTag) {
-        doc = doc.replace(/<head(?:\s[^>]*)?>/i, (match) => `${match}${SANDBOX_CSP}`);
-      } else if (/<html(?:\s[^>]*)?>/i.test(doc)) {
-        doc = doc.replace(/<html(?:\s[^>]*)?>/i, (match) => `${match}<head>${SANDBOX_CSP}</head>`);
-      } else {
-        doc = `<head>${SANDBOX_CSP}</head>${doc}`;
+    const tokens = tokenizeHtml(doc);
+    let earlyIdx = Number.POSITIVE_INFINITY;
+    let headToken: HtmlToken | null = null;
+    let htmlToken: HtmlToken | null = null;
+    let doctypeToken: HtmlToken | null = null;
+    for (const token of tokens) {
+      if (token.kind === 'doctype' && !doctypeToken) {
+        doctypeToken = token;
+      } else if (token.kind === 'start') {
+        if (token.tagName === 'head' && !headToken) headToken = token;
+        if (token.tagName === 'html' && !htmlToken) htmlToken = token;
+        if (token.tagName !== 'html' && token.tagName !== 'head') {
+          earlyIdx = Math.min(earlyIdx, token.start);
+        }
       }
+    }
+
+    if (headToken && headToken.start < earlyIdx) {
+      doc = `${doc.slice(0, headToken.end)}${SANDBOX_CSP}${doc.slice(headToken.end)}`;
+    } else if (htmlToken && htmlToken.start < earlyIdx) {
+      doc = `${doc.slice(0, htmlToken.end)}<head>${SANDBOX_CSP}</head>${doc.slice(htmlToken.end)}`;
+    } else if (doctypeToken && doctypeToken.start < earlyIdx) {
+      doc = `${doc.slice(0, doctypeToken.end)}<head>${SANDBOX_CSP}</head>${doc.slice(doctypeToken.end)}`;
+    } else {
+      doc = `<head>${SANDBOX_CSP}</head>${doc}`;
     }
     if (!/(?:html|body)[^{]*\{[^}]*(?:min-height|height)\s*:\s*100/i.test(doc)) {
       const fillStyle = '<style data-sandbox-fill="true">html{height:100%}html,body{min-height:100%;margin:0}</style>';
-      if (/<head(?:\s[^>]*)?>/i.test(doc)) {
-        doc = doc.replace(/<head(?:\s[^>]*)?>/i, (match) => `${match}${fillStyle}`);
-      } else {
-        doc = `${fillStyle}${doc}`;
-      }
+      doc =
+        insertAfterHtmlTag(doc, 'head', fillStyle) ||
+        `${fillStyle}${doc}`;
     }
-    const extraCss = (rawCss ?? '').replace(RE_RELATIVE_FONT_FACE, '').trim();
+    const extraCss = (rawCss ?? '')
+      .replace(RE_RELATIVE_FONT_FACE, '')
+      .replace(/<\/style/gi, '<\\/style')
+      .trim();
     if (extraCss) {
       const styleTag = `<style data-stage-override="true">${extraCss}</style>`;
-      if (/<\/head>/i.test(doc)) {
-        doc = doc.replace(/<\/head>/i, `${styleTag}</head>`);
-      } else if (/<head(?:\s[^>]*)?>/i.test(doc)) {
-        doc = doc.replace(/<head(?:\s[^>]*)?>/i, (match) => `${match}${styleTag}`);
-      } else if (/<\/body>/i.test(doc)) {
-        doc = doc.replace(/<\/body>/i, `${styleTag}</body>`);
-      } else {
-        doc += styleTag;
-      }
+      doc =
+        insertBeforeHtmlTag(doc, 'head', styleTag, 'end', false) ||
+        insertAfterHtmlTag(doc, 'head', styleTag) ||
+        insertBeforeHtmlTag(doc, 'body', styleTag, 'end', true) ||
+        `${doc}${styleTag}`;
     }
     if (safeInlineJs) {
       const scriptTag = `<script>${safeInlineJs}</script>`;
-      if (/<\/body>/i.test(doc)) {
-        doc = doc.replace(/<\/body>/i, `${scriptTag}</body>`);
-      } else {
-        doc += scriptTag;
-      }
+      doc =
+        insertBeforeHtmlTag(doc, 'body', scriptTag, 'end', true) ||
+        `${doc}${scriptTag}`;
     }
     return doc;
   }
 
-  const cleanHtml = sanitizeSnippetCode(rawHtml);
-  const cleanCss = sanitizeSnippetCode(rawCss);
+  const cleanHtml = stripHtmlTokens(sanitizeSnippetCode(rawHtml), isDisallowedMetaToken);
+  const cleanCss = sanitizeSnippetCode(rawCss).replace(/<\/style/gi, '<\\/style');
   const hasFullViewportWrapper = /min-height:\s*100(?:vh|svh|dvh|%)/i.test(cleanCss);
   const fallbackBg = theme === 'dark' ? '#121110' : '#f4f0e6';
   const fallbackFg = theme === 'dark' ? '#efe9dd' : '#17150f';
   const bodyPadding = hasFullViewportWrapper ? '0' : '24px';
   const baseCss = `html{height:100%;min-height:100%}html,body{margin:0;min-height:100%;box-sizing:border-box}body{min-height:100%;display:grid;place-items:center;padding:${bodyPadding};background:${fallbackBg};color:${fallbackFg};font-family:'Be Vietnam Pro',system-ui,-apple-system,sans-serif}`;
-  const syncThemeScript = `<script>(function(){var t="${theme}";var c=document.body.children;for(var i=0;i<c.length;i++){if(c[i].tagName!=="SCRIPT")c[i].setAttribute("data-theme",t);}})();</script>`;
+  const syncThemeScript = `<script>(function(){var t="${theme}";var c=document.body.children;for(var i=0;i<c.length;i++){if(c[i].tagName!=="SCRIPT")c[i].setAttribute("data-theme",t);}var s=document.currentScript;if(s&&s.parentNode)s.parentNode.removeChild(s);})();</script>`;
   const userScript = safeInlineJs ? `<script>${safeInlineJs}</script>` : '';
   return `<!DOCTYPE html><html lang="vi" data-theme="${theme}"><head><meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1.0" />${SANDBOX_CSP}<style>${baseCss}\n${cleanCss}</style></head><body data-theme="${theme}">${cleanHtml}${syncThemeScript}${userScript}</body></html>`;
 }

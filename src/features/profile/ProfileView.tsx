@@ -158,6 +158,7 @@ export const ProfileView: React.FC = () => {
     sourceCatalog,
     resourceLibrary,
     communityPosts,
+    refreshCommunity,
     quota,
     navigate,
     theme,
@@ -186,6 +187,10 @@ export const ProfileView: React.FC = () => {
   const isFollowing = Boolean(
     targetHandleClean && followingHandles.some((h) => h.toLowerCase() === targetHandleClean)
   );
+
+  useEffect(() => {
+    void refreshCommunity();
+  }, [refreshCommunity]);
 
   useEffect(() => {
     if (isOtherUser) {
@@ -366,7 +371,7 @@ export const ProfileView: React.FC = () => {
       .filter((post) => {
         if (post.hidden) return false;
         if (post.author.id === uid || post.author.handle === uname) return true;
-        if (post.upvotedBy?.includes(uid)) return true;
+        if (post.viewerUpvoted || post.upvotedBy?.includes(uid)) return true;
         if (post.acceptedAnswer?.author.id === uid || post.acceptedAnswer?.author.handle === uname) {
           return true;
         }

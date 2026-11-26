@@ -13,7 +13,7 @@ export type LunaProduct = LunaLink & {
     keywords?: string[];
 };
 export const LUNA_LINKS = {
-    home: "#",
+    home: "#luna-top",
     store: "#store",
     categories: "#categories",
     signIn: "#sign-in",

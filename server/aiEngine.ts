@@ -1,10 +1,31 @@
+import dns from 'node:dns/promises';
 import fs from 'node:fs';
 import type { IncomingHttpHeaders } from 'node:http';
+import net from 'node:net';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import type { AIChatRequest, AIProtocol, AttachedContextItem } from '../src/types/index';
 import { getInternalGatewayOverride } from './adminStore.js';
+import {
+  beginFailoverSim,
+  checkSharedPoolQuota,
+  endFailoverSim,
+  getKeyPoolSnapshot,
+  hasConfiguredPoolKeys,
+  isFailoverHttpStatus,
+  recordPoolAttempt,
+  recordPoolFailure,
+  recordPoolSuccess,
+  sanitizeErrorText,
+  selectPoolCandidates,
+  type AdminKeyPoolSnapshot,
+  type FailoverSimHandle,
+  type PoolCandidate,
+  type TokenCounter,
+} from './keyPool.js';
 import { ensureLocalEnvLoaded } from './quotaStore.js';
+
+export { sanitizeErrorText };
 
 ensureLocalEnvLoaded();
 
@@ -20,6 +41,8 @@ export interface AIGenerationOutput {
   upstreamError?: string;
   modelUsed: string;
   protocolUsed: AIProtocol;
+  tokens?: TokenCounter;
+  usedKeyMask?: string;
 }
 
 export interface AIStreamHooks {
@@ -30,6 +53,7 @@ export interface AIStreamHooks {
     detail?: string;
   }) => void;
   onDelta?: (chunk: string) => void;
+  signal?: AbortSignal;
 }
 
 interface EffectiveAIConfig {
@@ -38,13 +62,8 @@ interface EffectiveAIConfig {
   model: string;
   apiKey: string;
   systemPromptSuffix: string;
-}
-
-function sanitizeErrorText(raw: string): string {
-  return raw
-    .replace(/sk-[a-zA-Z0-9_-]{8,}/g, 'sk-[REDACTED]')
-    .replace(/AIza[a-zA-Z0-9_-]{10,}/g, 'AIza[REDACTED]')
-    .slice(0, 280);
+  usingByok: boolean;
+  usingAdminKey: boolean;
 }
 
 function normalizeProtocol(val: string | undefined): AIProtocol {
@@ -64,6 +83,8 @@ export function resolveAIConfig(
   let model = (process.env.AI_MODEL || 'studio-smart-route').trim();
   let apiKey = (process.env.AI_API_KEY || '').trim();
   let systemPromptSuffix = '';
+  let usingByok = false;
+  let usingAdminKey = false;
 
   if (adminOverride.enabled) {
     protocol = adminOverride.protocol;
@@ -71,6 +92,7 @@ export function resolveAIConfig(
     model = adminOverride.model || model;
     if (adminOverride.apiKey) {
       apiKey = adminOverride.apiKey;
+      usingAdminKey = true;
     }
     systemPromptSuffix = adminOverride.systemPromptSuffix || '';
   }
@@ -87,6 +109,8 @@ export function resolveAIConfig(
 
   if (byokKey) {
     apiKey = byokKey;
+    usingByok = true;
+    usingAdminKey = false;
     if (byokUrl) baseUrl = byokUrl;
     if (byokModel) model = byokModel;
     if (byokProto) protocol = normalizeProtocol(byokProto);
@@ -98,6 +122,8 @@ export function resolveAIConfig(
     model,
     apiKey,
     systemPromptSuffix,
+    usingByok,
+    usingAdminKey,
   };
 }
 
@@ -298,7 +324,8 @@ ${jsContent ? '  <script src="app.js"></script>\n' : ''}</body>
 function buildFallbackResponse(
   req: AIChatRequest,
   config: EffectiveAIConfig,
-  upstreamError: string
+  upstreamError: string,
+  tokens?: TokenCounter
 ): AIGenerationOutput {
   const matched = findStrongCatalogMatch(req.prompt || '');
   if (matched) {
@@ -310,10 +337,11 @@ function buildFallbackResponse(
       upstreamError,
       modelUsed: config.model,
       protocolUsed: config.protocol,
+      tokens,
     };
   }
 
-  const keyMissing = !config.apiKey;
+  const keyMissing = !config.apiKey && !hasConfiguredPoolKeys();
   const message = keyMissing
     ? 'Chưa kết nối khóa AI. Mở Cài đặt -> Khóa riêng (BYOK) để nhập API key thật (OpenAI / Gemini / OpenRouter / DeepSeek) giúp trợ lý sinh mã theo yêu cầu, hoặc bấm mở Kho 8.322 mẫu để nạp giao diện thật.'
     : `Kết nối AI tạm gián đoạn (${upstreamError}). Kiểm tra lại khóa tại Cài đặt -> Khóa riêng (BYOK) (OpenAI / Gemini / OpenRouter / DeepSeek) hoặc bấm mở Kho 8.322 mẫu để nạp mẫu thật.`;
@@ -326,7 +354,45 @@ function buildFallbackResponse(
     upstreamError,
     modelUsed: config.model,
     protocolUsed: config.protocol,
+    tokens,
   };
+}
+
+interface StreamParseResult {
+  text: string;
+  tokens: TokenCounter;
+}
+
+function emptyTokenCounter(): TokenCounter {
+  return { prompt: 0, completion: 0, total: 0 };
+}
+
+function finalizeTokens(tokens: TokenCounter): TokenCounter {
+  const prompt = Math.max(0, tokens.prompt);
+  const completion = Math.max(0, tokens.completion);
+  const total = Math.max(tokens.total, prompt + completion);
+  return { prompt, completion, total };
+}
+
+function mergeGeminiUsage(
+  target: TokenCounter,
+  usage?: {
+    promptTokenCount?: number;
+    candidatesTokenCount?: number;
+    thoughtsTokenCount?: number;
+    totalTokenCount?: number;
+  }
+): void {
+  if (!usage) return;
+  const prompt = typeof usage.promptTokenCount === 'number' ? usage.promptTokenCount : 0;
+  const candidates = typeof usage.candidatesTokenCount === 'number' ? usage.candidatesTokenCount : 0;
+  const thoughts = typeof usage.thoughtsTokenCount === 'number' ? usage.thoughtsTokenCount : 0;
+  const rawTotal = typeof usage.totalTokenCount === 'number' ? usage.totalTokenCount : 0;
+  const completion =
+    candidates + thoughts > 0 ? candidates + thoughts : Math.max(0, rawTotal - prompt);
+  if (prompt > target.prompt) target.prompt = prompt;
+  if (completion > target.completion) target.completion = completion;
+  if (rawTotal > target.total) target.total = rawTotal;
 }
 
 async function consumeResponseLines(
@@ -376,9 +442,10 @@ async function consumeResponseLines(
 async function readOpenAICompatibleStream(
   resp: Response,
   onDelta?: (chunk: string) => void
-): Promise<string> {
+): Promise<StreamParseResult> {
   let assembled = '';
   let sawSseData = false;
+  const tokens = emptyTokenCounter();
 
   const raw = await consumeResponseLines(resp, (line) => {
     const clean = line.trim();
@@ -389,7 +456,13 @@ async function readOpenAICompatibleStream(
     try {
       const chunk = JSON.parse(payload) as {
         choices?: Array<{ delta?: { content?: string }; message?: { content?: string } }>;
+        usage?: { prompt_tokens?: number; completion_tokens?: number; total_tokens?: number };
       };
+      if (chunk.usage) {
+        tokens.prompt = Math.max(tokens.prompt, chunk.usage.prompt_tokens || 0);
+        tokens.completion = Math.max(tokens.completion, chunk.usage.completion_tokens || 0);
+        tokens.total = Math.max(tokens.total, chunk.usage.total_tokens || 0);
+      }
       const delta = chunk.choices?.[0]?.delta?.content ?? chunk.choices?.[0]?.message?.content ?? '';
       if (delta) {
         assembled += delta;
@@ -400,24 +473,31 @@ async function readOpenAICompatibleStream(
     }
   });
 
-  if (sawSseData) return assembled;
+  if (sawSseData) return { text: assembled, tokens: finalizeTokens(tokens) };
 
   const trimmed = raw.trim();
-  if (!trimmed) return '';
+  if (!trimmed) return { text: '', tokens: finalizeTokens(tokens) };
   const data = JSON.parse(trimmed) as {
     choices?: Array<{ message?: { content?: string }; text?: string }>;
+    usage?: { prompt_tokens?: number; completion_tokens?: number; total_tokens?: number };
   };
+  if (data.usage) {
+    tokens.prompt = Math.max(tokens.prompt, data.usage.prompt_tokens || 0);
+    tokens.completion = Math.max(tokens.completion, data.usage.completion_tokens || 0);
+    tokens.total = Math.max(tokens.total, data.usage.total_tokens || 0);
+  }
   const text = data.choices?.[0]?.message?.content || data.choices?.[0]?.text || '';
   if (text) onDelta?.(text);
-  return text;
+  return { text, tokens: finalizeTokens(tokens) };
 }
 
 async function readAnthropicStream(
   resp: Response,
   onDelta?: (chunk: string) => void
-): Promise<string> {
+): Promise<StreamParseResult> {
   let assembled = '';
   let sawSseData = false;
+  const tokens = emptyTokenCounter();
 
   const raw = await consumeResponseLines(resp, (line) => {
     const clean = line.trim();
@@ -429,7 +509,15 @@ async function readAnthropicStream(
       const event = JSON.parse(payload) as {
         type?: string;
         delta?: { type?: string; text?: string };
+        message?: { usage?: { input_tokens?: number; output_tokens?: number } };
+        usage?: { input_tokens?: number; output_tokens?: number };
       };
+      if (event.type === 'message_start' && event.message?.usage) {
+        tokens.prompt = Math.max(tokens.prompt, event.message.usage.input_tokens || 0);
+      }
+      if (event.type === 'message_delta' && event.usage) {
+        tokens.completion = Math.max(tokens.completion, event.usage.output_tokens || 0);
+      }
       if (event.type === 'content_block_delta' && event.delta?.text) {
         assembled += event.delta.text;
         onDelta?.(event.delta.text);
@@ -439,22 +527,30 @@ async function readAnthropicStream(
     }
   });
 
-  if (sawSseData) return assembled;
+  if (sawSseData) return { text: assembled, tokens: finalizeTokens(tokens) };
 
   const trimmed = raw.trim();
-  if (!trimmed) return '';
-  const data = JSON.parse(trimmed) as { content?: Array<{ text?: string }> };
+  if (!trimmed) return { text: '', tokens: finalizeTokens(tokens) };
+  const data = JSON.parse(trimmed) as {
+    content?: Array<{ text?: string }>;
+    usage?: { input_tokens?: number; output_tokens?: number };
+  };
+  if (data.usage) {
+    tokens.prompt = Math.max(tokens.prompt, data.usage.input_tokens || 0);
+    tokens.completion = Math.max(tokens.completion, data.usage.output_tokens || 0);
+  }
   const text = data.content?.[0]?.text || '';
   if (text) onDelta?.(text);
-  return text;
+  return { text, tokens: finalizeTokens(tokens) };
 }
 
 async function readGeminiStream(
   resp: Response,
   onDelta?: (chunk: string) => void
-): Promise<string> {
+): Promise<StreamParseResult> {
   let assembled = '';
   let sawSseData = false;
+  const tokens = emptyTokenCounter();
 
   const raw = await consumeResponseLines(resp, (line) => {
     const clean = line.trim();
@@ -465,7 +561,14 @@ async function readGeminiStream(
     try {
       const chunk = JSON.parse(payload) as {
         candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }>;
+        usageMetadata?: {
+          promptTokenCount?: number;
+          candidatesTokenCount?: number;
+          thoughtsTokenCount?: number;
+          totalTokenCount?: number;
+        };
       };
+      mergeGeminiUsage(tokens, chunk.usageMetadata);
       const parts = chunk.candidates?.[0]?.content?.parts || [];
       const text = parts.map((p) => p.text || '').join('');
       if (text) {
@@ -477,22 +580,31 @@ async function readGeminiStream(
     }
   });
 
-  if (sawSseData) return assembled;
+  if (sawSseData) return { text: assembled, tokens: finalizeTokens(tokens) };
 
   const trimmed = raw.trim();
-  if (!trimmed) return '';
+  if (!trimmed) return { text: '', tokens: finalizeTokens(tokens) };
   const data = JSON.parse(trimmed) as {
     candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }>;
+    usageMetadata?: {
+      promptTokenCount?: number;
+      candidatesTokenCount?: number;
+      thoughtsTokenCount?: number;
+      totalTokenCount?: number;
+    };
   };
+  mergeGeminiUsage(tokens, data.usageMetadata);
   const parts = data.candidates?.[0]?.content?.parts || [];
   const text = parts.map((p) => p.text || '').join('');
   if (text) onDelta?.(text);
-  return text;
+  return { text, tokens: finalizeTokens(tokens) };
 }
 
 function parseStructuredLLMResponse(
   rawText: string,
-  config: EffectiveAIConfig
+  config: EffectiveAIConfig,
+  tokens?: TokenCounter,
+  usedKeyMask?: string
 ): AIGenerationOutput | null {
   const unfenced = rawText
     .replace(/```json\s*/gi, '')
@@ -527,14 +639,232 @@ function parseStructuredLLMResponse(
       fallback: false,
       modelUsed: config.model,
       protocolUsed: config.protocol,
+      tokens,
+      usedKeyMask,
     };
   } catch {
     return null;
   }
 }
 
+function isAllowLocalTestUpstream(): boolean {
+  if (process.env.FF_ALLOW_LOCAL_BYOK === '1') return true;
+  const isProd = process.env.NODE_ENV === 'production' || process.env.VERCEL === '1';
+  return !isProd;
+}
+
+function parseIpv4Parts(ip: string): number[] | null {
+  const parts = ip.split('.');
+  if (parts.length !== 4) return null;
+  const nums: number[] = [];
+  for (const part of parts) {
+    if (!/^(?:0|[1-9]\d{0,2})$/.test(part)) return null;
+    const n = Number(part);
+    if (!Number.isInteger(n) || n < 0 || n > 255) return null;
+    nums.push(n);
+  }
+  return nums;
+}
+
+function parseIpv6Hextets(ip: string): number[] | null {
+  const doubleColonParts = ip.split('::');
+  if (doubleColonParts.length > 2) return null;
+
+  const parseSide = (side: string): number[] | null => {
+    if (!side) return [];
+    const tokens = side.split(':');
+    const groups: number[] = [];
+    for (let i = 0; i < tokens.length; i += 1) {
+      const token = tokens[i];
+      if (token.includes('.')) {
+        if (i !== tokens.length - 1 || !net.isIPv4(token)) return null;
+        const octets = parseIpv4Parts(token);
+        if (!octets) return null;
+        groups.push((octets[0] << 8) | octets[1], (octets[2] << 8) | octets[3]);
+      } else {
+        if (!/^[0-9a-f]{1,4}$/i.test(token)) return null;
+        groups.push(Number.parseInt(token, 16));
+      }
+    }
+    return groups;
+  };
+
+  if (doubleColonParts.length === 1) {
+    const groups = parseSide(doubleColonParts[0]);
+    return groups && groups.length === 8 ? groups : null;
+  }
+
+  const left = parseSide(doubleColonParts[0]);
+  const right = parseSide(doubleColonParts[1]);
+  if (!left || !right) return null;
+  const missing = 8 - (left.length + right.length);
+  if (missing < 1) return null;
+  return [...left, ...new Array<number>(missing).fill(0), ...right];
+}
+
+function isBlockedIpAddress(rawIp: string, allowLoopback127001: boolean): boolean {
+  const ip = rawIp.trim().toLowerCase().replace(/^\[|\]$/g, '').split('%')[0];
+  if (!ip) return true;
+
+  if (net.isIPv4(ip)) {
+    if (allowLoopback127001 && ip === '127.0.0.1') return false;
+    const octets = parseIpv4Parts(ip);
+    if (!octets) return true;
+    const [a, b] = octets;
+    if (a === 0 || a === 10 || a === 127) return true;
+    if (a === 169 && b === 254) return true;
+    if (a === 172 && b >= 16 && b <= 31) return true;
+    if (a === 192 && b === 168) return true;
+    if (a === 100 && b >= 64 && b <= 127) return true;
+    if (a === 192 && b === 0) return true;
+    if (a === 198 && (b === 18 || b === 19 || b === 51)) return true;
+    if (a >= 224) return true;
+    return false;
+  }
+
+  if (net.isIPv6(ip)) {
+    const hextets = parseIpv6Hextets(ip);
+    if (!hextets) return true;
+    const [h0, h1, h2, h3, h4, h5, h6, h7] = hextets;
+    // ::/96 (unspecified ::, loopback ::1, deprecated IPv4-compatible ::7f00:1 / ::a.b.c.d)
+    if (h0 === 0 && h1 === 0 && h2 === 0 && h3 === 0 && h4 === 0 && h5 === 0) {
+      return true;
+    }
+    // ::ffff:0:0/96 (IPv4-mapped IPv6)
+    if (h0 === 0 && h1 === 0 && h2 === 0 && h3 === 0 && h4 === 0 && h5 === 0xffff) {
+      const v4 = `${(h6 >> 8) & 0xff}.${h6 & 0xff}.${(h7 >> 8) & 0xff}.${h7 & 0xff}`;
+      return isBlockedIpAddress(v4, false);
+    }
+    // 64:ff9b::/96 (NAT64 well-known) and 64:ff9b:1::/48 (NAT64 local-use)
+    if (h0 === 0x0064 && h1 === 0xff9b && h2 === 0 && h3 === 0 && h4 === 0 && h5 === 0) {
+      return true;
+    }
+    if (h0 === 0x0064 && h1 === 0xff9b && h2 === 0x0001) {
+      return true;
+    }
+    // fe80::/10 link-local, fc00::/7 unique local, ff00::/8 multicast
+    if ((h0 & 0xffc0) === 0xfe80) return true;
+    if ((h0 & 0xfe00) === 0xfc00) return true;
+    if ((h0 & 0xff00) === 0xff00) return true;
+    return false;
+  }
+
+  return true;
+}
+
+export function validateUpstreamBaseUrl(
+  rawUrl: string,
+  options?: { allowLocalTest?: boolean; requireHttpsInProd?: boolean }
+): { ok: true; url: string; hostname: string } | { ok: false; error: string } {
+  const clean = (rawUrl || '').trim();
+  if (!clean || clean.length > 512) {
+    return { ok: false, error: 'URL máy chủ AI không hợp lệ.' };
+  }
+
+  let parsed: URL;
+  try {
+    parsed = new URL(clean);
+  } catch {
+    return { ok: false, error: 'URL máy chủ AI không đúng định dạng.' };
+  }
+
+  if (parsed.username || parsed.password) {
+    return { ok: false, error: 'URL máy chủ AI không được chứa thông tin đăng nhập.' };
+  }
+
+  const allowLocalTest = options?.allowLocalTest ?? isAllowLocalTestUpstream();
+  const requireHttps =
+    options?.requireHttpsInProd !== false && !allowLocalTest;
+
+  if (requireHttps) {
+    if (parsed.protocol !== 'https:') {
+      return { ok: false, error: 'Môi trường production chỉ cho phép URL HTTPS.' };
+    }
+  } else if (parsed.protocol !== 'https:' && parsed.protocol !== 'http:') {
+    return { ok: false, error: 'Giao thức URL máy chủ AI không hợp lệ.' };
+  }
+
+  const rawHostname = parsed.hostname.toLowerCase();
+  const hostname = rawHostname.replace(/^\[|\]$/g, '').split('%')[0].replace(/\.+$/, '');
+  if (!hostname) {
+    return { ok: false, error: 'Thiếu hostname trong URL máy chủ AI.' };
+  }
+
+  if (
+    hostname === 'metadata' ||
+    hostname === 'metadata.google.internal' ||
+    hostname.endsWith('.local') ||
+    hostname.endsWith('.internal') ||
+    hostname.endsWith('.localhost')
+  ) {
+    return { ok: false, error: 'Hostname nội bộ không được phép.' };
+  }
+
+  if (hostname === 'localhost') {
+    if (!allowLocalTest) {
+      return { ok: false, error: 'Hostname localhost bị chặn.' };
+    }
+    return { ok: true, url: clean.replace(/\/+$/, ''), hostname };
+  }
+
+  if (/^(?:\d+|0x[0-9a-f]+|0[0-7]+)$/i.test(hostname)) {
+    return { ok: false, error: 'Định dạng địa chỉ IP số nguyên bị chặn.' };
+  }
+
+  if (net.isIP(hostname) !== 0) {
+    if (isBlockedIpAddress(hostname, allowLocalTest)) {
+      return { ok: false, error: 'Địa chỉ IP nội bộ hoặc dải riêng tư bị chặn.' };
+    }
+    return { ok: true, url: clean.replace(/\/+$/, ''), hostname };
+  }
+
+  // Reject non-standard dotted IPv4 notations like octal/hex octets (e.g. 0177.0.0.1)
+  if (/^(?:0x[0-9a-f]+|0[0-7]+|\d+)(?:\.(?:0x[0-9a-f]+|0[0-7]+|\d+)){1,3}$/i.test(hostname)) {
+    return { ok: false, error: 'Định dạng địa chỉ IP bị chặn.' };
+  }
+
+  if (!hostname.includes('.')) {
+    return { ok: false, error: 'Hostname nội bộ không hợp lệ.' };
+  }
+
+  return { ok: true, url: clean.replace(/\/+$/, ''), hostname };
+}
+
+async function verifyUpstreamHostDns(hostname: string, allowLocalTest: boolean): Promise<boolean> {
+  const normalizedHost = hostname
+    .trim()
+    .toLowerCase()
+    .replace(/^\[|\]$/g, '')
+    .split('%')[0]
+    .replace(/\.+$/, '');
+  if (!normalizedHost) {
+    return false;
+  }
+  if (net.isIP(normalizedHost) !== 0) {
+    return !isBlockedIpAddress(normalizedHost, allowLocalTest);
+  }
+  if (allowLocalTest && normalizedHost === 'localhost') {
+    return true;
+  }
+  try {
+    const records = await dns.lookup(normalizedHost, { all: true, verbatim: true });
+    if (!records || records.length === 0) return false;
+    return records.every((rec) => !isBlockedIpAddress(rec.address, false));
+  } catch {
+    return false;
+  }
+}
+
 function isLoopbackUrl(url: string): boolean {
   return /^https?:\/\/(127\.0\.0\.1|localhost|0\.0\.0\.0|\[::1\])(?::\d+)?(?:\/|$)/i.test(url.trim());
+}
+
+function formatUpstreamErrBody(raw: string): string {
+  const stripped = raw
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+  return sanitizeErrorText(stripped).slice(0, 160);
 }
 
 async function fetchWithRetry(url: string, init: RequestInit): Promise<Response> {
@@ -546,6 +876,122 @@ async function fetchWithRetry(url: string, init: RequestInit): Promise<Response>
   }
 }
 
+async function callUpstreamOnce(params: {
+  config: EffectiveAIConfig;
+  apiKey: string;
+  systemInstruction: string;
+  userContent: string;
+  temperature: number;
+  streamUpstream: boolean;
+  signal: AbortSignal;
+  maxOutputTokens?: number;
+  onDelta?: (chunk: string) => void;
+}): Promise<{ ok: true; result: StreamParseResult } | { ok: false; status: number; error: string }> {
+  const { config, apiKey, systemInstruction, userContent, temperature, streamUpstream, signal } = params;
+
+  if (config.protocol === 'anthropic') {
+    const url = config.baseUrl.endsWith('/messages')
+      ? config.baseUrl
+      : `${config.baseUrl}/v1/messages`;
+    const resp = await fetchWithRetry(url, {
+      method: 'POST',
+      redirect: 'manual',
+      headers: {
+        'content-type': 'application/json',
+        'x-api-key': apiKey,
+        'anthropic-version': '2023-06-01',
+      },
+      body: JSON.stringify({
+        model: config.model,
+        max_tokens: params.maxOutputTokens || 4096,
+        temperature,
+        stream: streamUpstream,
+        system: systemInstruction,
+        messages: [{ role: 'user', content: userContent }],
+      }),
+      signal,
+    });
+    if (resp.status >= 300 && resp.status < 400) {
+      return { ok: false, status: resp.status, error: 'Upstream redirect blocked' };
+    }
+    if (!resp.ok) {
+      const errBody = await resp.text();
+      return { ok: false, status: resp.status, error: `Anthropic HTTP ${resp.status}: ${formatUpstreamErrBody(errBody)}` };
+    }
+    return { ok: true, result: await readAnthropicStream(resp, params.onDelta) };
+  }
+
+  if (config.protocol === 'gemini') {
+    const method = streamUpstream ? 'streamGenerateContent?alt=sse' : 'generateContent';
+    const url = `${config.baseUrl}/models/${encodeURIComponent(config.model)}:${method}`;
+    const generationConfig: Record<string, unknown> = { temperature };
+    if (params.maxOutputTokens) generationConfig.maxOutputTokens = params.maxOutputTokens;
+    const resp = await fetchWithRetry(url, {
+      method: 'POST',
+      redirect: 'manual',
+      headers: {
+        'content-type': 'application/json',
+        'x-goog-api-key': apiKey,
+      },
+      body: JSON.stringify({
+        systemInstruction: { parts: [{ text: systemInstruction }] },
+        contents: [{ role: 'user', parts: [{ text: userContent }] }],
+        generationConfig,
+      }),
+      signal,
+    });
+    if (resp.status >= 300 && resp.status < 400) {
+      return { ok: false, status: resp.status, error: 'Upstream redirect blocked' };
+    }
+    if (!resp.ok) {
+      const errBody = await resp.text();
+      return { ok: false, status: resp.status, error: `Gemini HTTP ${resp.status}: ${formatUpstreamErrBody(errBody)}` };
+    }
+    return { ok: true, result: await readGeminiStream(resp, params.onDelta) };
+  }
+
+  const url = config.baseUrl.endsWith('/chat/completions')
+    ? config.baseUrl
+    : `${config.baseUrl}/chat/completions`;
+  const openAiHeaders: Record<string, string> = {
+    'content-type': 'application/json',
+    authorization: `Bearer ${apiKey}`,
+  };
+  if (config.baseUrl.includes('openrouter.ai')) {
+    openAiHeaders['HTTP-Referer'] = 'https://fforum3.vercel.app';
+    openAiHeaders['X-Title'] = 'F-Forum v3';
+  }
+  const resp = await fetchWithRetry(url, {
+    method: 'POST',
+    redirect: 'manual',
+    headers: openAiHeaders,
+    body: JSON.stringify({
+      model: config.model,
+      // WHY: Keep stream: true for OpenAI-compatible SSE endpoints expected by core tests
+      stream: true,
+      max_tokens: params.maxOutputTokens || 4096,
+      messages: [
+        { role: 'system', content: systemInstruction },
+        { role: 'user', content: userContent },
+      ],
+      temperature,
+    }),
+    signal,
+  });
+  if (resp.status >= 300 && resp.status < 400) {
+    return { ok: false, status: resp.status, error: 'Upstream redirect blocked' };
+  }
+  if (!resp.ok) {
+    const errBody = await resp.text();
+    return {
+      ok: false,
+      status: resp.status,
+      error: `OpenAI-Compatible HTTP ${resp.status}: ${formatUpstreamErrBody(errBody)}`,
+    };
+  }
+  return { ok: true, result: await readOpenAICompatibleStream(resp, params.onDelta) };
+}
+
 export async function runAIGenerationStream(
   req: AIChatRequest,
   headers: IncomingHttpHeaders,
@@ -554,7 +1000,20 @@ export async function runAIGenerationStream(
   const config = resolveAIConfig(headers, req.model);
   const runningOnCloud = Boolean(process.env.VERCEL);
   const unreachableLoopback = runningOnCloud && isLoopbackUrl(config.baseUrl);
-  const canCallUpstream = Boolean(config.apiKey) && !unreachableLoopback;
+  const allowLocalTest = isAllowLocalTestUpstream();
+  const urlCheck = validateUpstreamBaseUrl(config.baseUrl, { allowLocalTest });
+  const dnsSafe = urlCheck.ok ? await verifyUpstreamHostDns(urlCheck.hostname, allowLocalTest) : false;
+  const blockedUpstream = unreachableLoopback || !urlCheck.ok || !dnsSafe;
+  const useDirectKey = config.usingByok || config.usingAdminKey;
+  const poolQuota = useDirectKey ? { allowed: true as const } : checkSharedPoolQuota();
+  const candidates: PoolCandidate[] = useDirectKey
+    ? config.apiKey
+      ? [{ id: config.usingByok ? 'byok' : 'admin', mask: config.usingByok ? 'BYOK' : 'ADMIN', rawKey: config.apiKey }]
+      : []
+    : poolQuota.allowed
+      ? selectPoolCandidates()
+      : [];
+  const canCallUpstream = candidates.length > 0 && !blockedUpstream && poolQuota.allowed;
 
   hooks?.onStage?.({
     stage: 'routing',
@@ -570,9 +1029,15 @@ export async function runAIGenerationStream(
       protocol: config.protocol,
       detail: 'BYOK / Vault fallback',
     });
-    const reason = unreachableLoopback
-      ? 'AI_BASE_URL trên Vercel đang trỏ localhost/127.0.0.1; hãy đặt API công khai (OpenRouter/Gemini/OpenAI) hoặc bật Khóa riêng (BYOK) trong Cài đặt'
-      : 'Chưa cấu hình AI_API_KEY trên máy chủ hoặc khóa BYOK';
+    const reason = !urlCheck.ok
+      ? urlCheck.error
+      : !dnsSafe
+        ? 'Hostname máy chủ AI phân giải về dải địa chỉ nội bộ bị chặn'
+        : unreachableLoopback
+          ? 'AI_BASE_URL trên Vercel đang trỏ localhost/127.0.0.1; hãy đặt API công khai (OpenRouter/Gemini/OpenAI) hoặc bật Khóa riêng (BYOK) trong Cài đặt'
+          : !useDirectKey && !poolQuota.allowed
+            ? 'Đã đạt giới hạn quota tài khoản dùng chung (AI_ACCOUNT_DAILY_LIMIT / RPM)'
+            : 'Chưa cấu hình AI_API_KEY trên máy chủ hoặc khóa BYOK';
     const fallbackOut = buildFallbackResponse(req, config, reason);
     hooks?.onDelta?.(fallbackOut.message);
     hooks?.onStage?.({
@@ -587,6 +1052,14 @@ export async function runAIGenerationStream(
   const temperature = clampTemperature(req.temperature);
   const userContent = buildUserContextPrompt(req);
   const controller = new AbortController();
+  const onExternalAbort = () => controller.abort();
+  if (hooks?.signal) {
+    if (hooks.signal.aborted) {
+      controller.abort();
+    } else {
+      hooks.signal.addEventListener('abort', onExternalAbort, { once: true });
+    }
+  }
   const timeout = setTimeout(() => controller.abort(), 45000);
   const streamUpstream = Boolean(hooks?.onDelta);
 
@@ -597,84 +1070,69 @@ export async function runAIGenerationStream(
       protocol: config.protocol,
     });
 
-    let responseText = '';
+    let lastError = 'Upstream request failed';
+    let parsedResult: StreamParseResult | null = null;
+    let usedCandidate: PoolCandidate | null = null;
 
-    if (config.protocol === 'anthropic') {
-      const url = config.baseUrl.endsWith('/messages')
-        ? config.baseUrl
-        : `${config.baseUrl}/v1/messages`;
-      const resp = await fetchWithRetry(url, {
-        method: 'POST',
-        headers: {
-          'content-type': 'application/json',
-          'x-api-key': config.apiKey,
-          'anthropic-version': '2023-06-01',
-        },
-        body: JSON.stringify({
-          model: config.model,
-          max_tokens: 4096,
+    for (let i = 0; i < candidates.length; i += 1) {
+      if (controller.signal.aborted) {
+        lastError = 'Client disconnected or request aborted';
+        break;
+      }
+      const candidate = candidates[i];
+      if (!useDirectKey) {
+        const capCheck = checkSharedPoolQuota();
+        if (!capCheck.allowed) {
+          lastError = 'Đã đạt giới hạn quota tài khoản dùng chung (AI_ACCOUNT_DAILY_LIMIT / RPM)';
+          break;
+        }
+        recordPoolAttempt(candidate.id);
+      }
+
+      try {
+        const attempt = await callUpstreamOnce({
+          config,
+          apiKey: candidate.rawKey,
+          systemInstruction,
+          userContent,
           temperature,
-          stream: streamUpstream,
-          system: systemInstruction,
-          messages: [{ role: 'user', content: userContent }],
-        }),
-        signal: controller.signal,
-      });
-      if (!resp.ok) {
-        const errBody = await resp.text();
-        throw new Error(`Anthropic HTTP ${resp.status}: ${sanitizeErrorText(errBody)}`);
+          streamUpstream,
+          signal: controller.signal,
+          onDelta: hooks?.onDelta,
+        });
+
+        if (attempt.ok) {
+          parsedResult = attempt.result;
+          usedCandidate = candidate;
+          if (!useDirectKey) {
+            recordPoolSuccess(candidate.id, attempt.result.tokens);
+          }
+          break;
+        }
+
+        lastError = sanitizeErrorText(attempt.error);
+        if (!useDirectKey) {
+          recordPoolFailure(candidate.id, attempt.status, lastError);
+          if (isFailoverHttpStatus(attempt.status) && i < candidates.length - 1) {
+            continue;
+          }
+        }
+        break;
+      } catch (err) {
+        const msg = err instanceof Error ? sanitizeErrorText(err.message) : 'Upstream network error';
+        lastError = msg;
+        if (!useDirectKey) {
+          recordPoolFailure(candidate.id, 'network', msg);
+          if (!controller.signal.aborted && i < candidates.length - 1) {
+            continue;
+          }
+        }
+        break;
       }
-      responseText = await readAnthropicStream(resp, hooks?.onDelta);
-    } else if (config.protocol === 'gemini') {
-      const method = streamUpstream ? 'streamGenerateContent?alt=sse&' : 'generateContent?';
-      const url = `${config.baseUrl}/models/${encodeURIComponent(config.model)}:${method}key=${encodeURIComponent(config.apiKey)}`;
-      const resp = await fetchWithRetry(url, {
-        method: 'POST',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({
-          systemInstruction: { parts: [{ text: systemInstruction }] },
-          contents: [{ role: 'user', parts: [{ text: userContent }] }],
-          generationConfig: { temperature },
-        }),
-        signal: controller.signal,
-      });
-      if (!resp.ok) {
-        const errBody = await resp.text();
-        throw new Error(`Gemini HTTP ${resp.status}: ${sanitizeErrorText(errBody)}`);
-      }
-      responseText = await readGeminiStream(resp, hooks?.onDelta);
-    } else {
-      const url = config.baseUrl.endsWith('/chat/completions')
-        ? config.baseUrl
-        : `${config.baseUrl}/chat/completions`;
-      const openAiHeaders: Record<string, string> = {
-        'content-type': 'application/json',
-        authorization: `Bearer ${config.apiKey}`,
-      };
-      if (config.baseUrl.includes('openrouter.ai')) {
-        openAiHeaders['HTTP-Referer'] = 'https://fforum3.vercel.app';
-        openAiHeaders['X-Title'] = 'F-Forum v3';
-      }
-      const resp = await fetchWithRetry(url, {
-        method: 'POST',
-        headers: openAiHeaders,
-        body: JSON.stringify({
-          model: config.model,
-          stream: true,
-          max_tokens: 4096,
-          messages: [
-            { role: 'system', content: systemInstruction },
-            { role: 'user', content: userContent },
-          ],
-          temperature,
-        }),
-        signal: controller.signal,
-      });
-      if (!resp.ok) {
-        const errBody = await resp.text();
-        throw new Error(`OpenAI-Compatible HTTP ${resp.status}: ${sanitizeErrorText(errBody)}`);
-      }
-      responseText = await readOpenAICompatibleStream(resp, hooks?.onDelta);
+    }
+
+    if (!parsedResult || !usedCandidate) {
+      return buildFallbackResponse(req, config, lastError);
     }
 
     hooks?.onStage?.({
@@ -683,12 +1141,18 @@ export async function runAIGenerationStream(
       protocol: config.protocol,
     });
 
-    const structured = parseStructuredLLMResponse(responseText, config);
+    const structured = parseStructuredLLMResponse(
+      parsedResult.text,
+      config,
+      parsedResult.tokens,
+      useDirectKey ? undefined : usedCandidate.mask
+    );
     if (!structured) {
       return buildFallbackResponse(
         req,
         config,
-        'Upstream response was not in expected multi-file JSON schema'
+        'Upstream response was not in expected multi-file JSON schema',
+        parsedResult.tokens
       );
     }
     return structured;
@@ -697,6 +1161,7 @@ export async function runAIGenerationStream(
     return buildFallbackResponse(req, config, msg);
   } finally {
     clearTimeout(timeout);
+    hooks?.signal?.removeEventListener('abort', onExternalAbort);
   }
 }
 
@@ -705,4 +1170,201 @@ export async function runAIGeneration(
   headers: IncomingHttpHeaders
 ): Promise<AIGenerationOutput> {
   return runAIGenerationStream(req, headers);
+}
+
+export interface LivePoolProbeResult {
+  ok: boolean;
+  statusCode?: number;
+  mode: 'pool' | 'key1' | 'key2' | 'failover_sim';
+  keyId: string;
+  keyMask: string;
+  mask: string | null;
+  attemptedKeys: string[];
+  usedKeyMask: string | null;
+  model: string;
+  protocol: AIProtocol;
+  failoverTriggered: boolean;
+  latencyMs: number;
+  replyPreview: string;
+  preview: string;
+  tokens: TokenCounter;
+  error?: string;
+  simulatedPoolSnapshot?: AdminKeyPoolSnapshot;
+}
+
+export async function runLiveKeyPoolProbe(input: {
+  mode?: 'pool' | 'key1' | 'key2' | 'failover_sim';
+  prompt?: string;
+}): Promise<LivePoolProbeResult> {
+  const mode = input.mode || 'pool';
+  const config = resolveAIConfig({});
+  const startedAt = Date.now();
+  const attemptedKeys: string[] = [];
+
+  const initialQuota = checkSharedPoolQuota();
+  if (!initialQuota.allowed) {
+    return {
+      ok: false,
+      statusCode: 429,
+      mode,
+      keyId: '',
+      keyMask: '',
+      mask: null,
+      attemptedKeys,
+      usedKeyMask: null,
+      model: config.model,
+      protocol: config.protocol,
+      failoverTriggered: false,
+      latencyMs: Date.now() - startedAt,
+      replyPreview: '',
+      preview: '',
+      tokens: emptyTokenCounter(),
+      error:
+        initialQuota.reason === 'rpm_limit'
+          ? 'Đã đạt giới hạn tốc độ RPM tài khoản pool dùng chung.'
+          : 'Đã đạt giới hạn lượt gọi hàng ngày (AI_ACCOUNT_DAILY_LIMIT) tài khoản pool dùng chung.',
+    };
+  }
+
+  let failoverSimHandle: FailoverSimHandle | null = null;
+  if (mode === 'failover_sim') {
+    const sim = beginFailoverSim('key-1');
+    if (sim) {
+      attemptedKeys.push(sim.candidate.mask);
+      failoverSimHandle = sim.handle;
+    }
+  }
+
+  const preferredId = mode === 'key1' ? 'key-1' : mode === 'key2' ? 'key-2' : undefined;
+  const candidates = selectPoolCandidates(preferredId);
+  if (candidates.length === 0) {
+    const simulatedPoolSnapshot = failoverSimHandle
+      ? getKeyPoolSnapshot(config.model, config.protocol)
+      : undefined;
+    if (failoverSimHandle) {
+      endFailoverSim(failoverSimHandle);
+    }
+    return {
+      ok: false,
+      statusCode: 502,
+      mode,
+      keyId: '',
+      keyMask: '',
+      mask: null,
+      attemptedKeys,
+      usedKeyMask: null,
+      model: config.model,
+      protocol: config.protocol,
+      failoverTriggered: mode === 'failover_sim' || attemptedKeys.length > 1,
+      latencyMs: Date.now() - startedAt,
+      replyPreview: '',
+      preview: '',
+      tokens: emptyTokenCounter(),
+      error: hasConfiguredPoolKeys()
+        ? 'Tất cả key trong pool đang trong thời gian cooldown.'
+        : 'No API keys configured in server key pool.',
+      simulatedPoolSnapshot,
+    };
+  }
+
+  const probePrompt = (input.prompt || 'Reply with valid JSON: {"status":"ok","service":"f-forum-pool"}').trim().slice(0, 500);
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 30_000);
+  let lastError = 'Pool probe failed';
+  let lastStatusCode = 502;
+
+  try {
+    for (let i = 0; i < candidates.length; i += 1) {
+      const capCheck = checkSharedPoolQuota();
+      if (!capCheck.allowed) {
+        lastError =
+          capCheck.reason === 'rpm_limit'
+            ? 'Đã đạt giới hạn tốc độ RPM tài khoản pool dùng chung.'
+            : 'Đã đạt giới hạn lượt gọi hàng ngày (AI_ACCOUNT_DAILY_LIMIT) tài khoản pool dùng chung.';
+        lastStatusCode = 429;
+        break;
+      }
+      const candidate = candidates[i];
+      if (!attemptedKeys.includes(candidate.mask)) {
+        attemptedKeys.push(candidate.mask);
+      }
+      recordPoolAttempt(candidate.id);
+      try {
+        const attempt = await callUpstreamOnce({
+          config,
+          apiKey: candidate.rawKey,
+          systemInstruction: 'Respond concisely in valid JSON or plain text.',
+          userContent: probePrompt,
+          temperature: 0,
+          streamUpstream: false,
+          signal: controller.signal,
+          maxOutputTokens: 256,
+        });
+        if (attempt.ok) {
+          recordPoolSuccess(candidate.id, attempt.result.tokens);
+          const replyPreview = sanitizeErrorText(attempt.result.text.trim());
+          const simulatedPoolSnapshot = failoverSimHandle
+            ? getKeyPoolSnapshot(config.model, config.protocol)
+            : undefined;
+          return {
+            ok: true,
+            statusCode: 200,
+            mode,
+            keyId: candidate.id,
+            keyMask: candidate.mask,
+            mask: candidate.mask,
+            attemptedKeys,
+            usedKeyMask: candidate.mask,
+            model: config.model,
+            protocol: config.protocol,
+            failoverTriggered: mode === 'failover_sim' || attemptedKeys.length > 1,
+            latencyMs: Date.now() - startedAt,
+            replyPreview,
+            preview: replyPreview,
+            tokens: attempt.result.tokens,
+            simulatedPoolSnapshot,
+          };
+        }
+        lastError = sanitizeErrorText(attempt.error);
+        recordPoolFailure(candidate.id, attempt.status, lastError);
+        if (isFailoverHttpStatus(attempt.status) && i < candidates.length - 1) {
+          continue;
+        }
+        break;
+      } catch (err) {
+        lastError = err instanceof Error ? sanitizeErrorText(err.message) : 'Network failure';
+        recordPoolFailure(candidate.id, 'network', lastError);
+        if (i < candidates.length - 1) continue;
+        break;
+      }
+    }
+
+    const simulatedPoolSnapshot = failoverSimHandle
+      ? getKeyPoolSnapshot(config.model, config.protocol)
+      : undefined;
+    return {
+      ok: false,
+      statusCode: lastStatusCode,
+      mode,
+      keyId: '',
+      keyMask: '',
+      mask: null,
+      attemptedKeys,
+      usedKeyMask: null,
+      model: config.model,
+      protocol: config.protocol,
+      failoverTriggered: mode === 'failover_sim' || attemptedKeys.length > 1,
+      latencyMs: Date.now() - startedAt,
+      replyPreview: '',
+      preview: '',
+      tokens: emptyTokenCounter(),
+      error: lastError,
+      simulatedPoolSnapshot,
+    };
+  } finally {
+    clearTimeout(timeout);
+    if (failoverSimHandle) {
+      endFailoverSim(failoverSimHandle);
+    }
+  }
 }

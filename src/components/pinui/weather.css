@@ -194,23 +194,16 @@
   white-space: nowrap;
   
   opacity: 1;
-  filter: blur(0);
-  transition:
-    opacity 120ms var(--pwx-out),
-    filter 120ms var(--pwx-out);
+  transition: opacity 120ms var(--pwx-out);
 }
 .pwx__cityLabel[data-city="expanded"],
 .pwx[data-state="expanded"] .pwx__cityLabel[data-city="compact"] {
   opacity: 0;
-  filter: blur(4px);
 }
 .pwx[data-state="expanded"] .pwx__cityLabel[data-city="expanded"],
 .pwx[data-state="compact"] .pwx__cityLabel[data-city="compact"] {
   opacity: 1;
-  filter: blur(0);
-  transition:
-    opacity 200ms var(--pwx-out) 150ms,
-    filter 200ms var(--pwx-out) 150ms;
+  transition: opacity 200ms var(--pwx-out) 150ms;
 }
 
 .pwx__forecast {
@@ -328,11 +321,9 @@
   height: 26px;
   opacity: 0;
   transform: scale(0.9);
-  filter: blur(3px);
   transition:
     opacity 120ms var(--pwx-out),
-    transform 120ms var(--pwx-out),
-    filter 120ms var(--pwx-out);
+    transform 120ms var(--pwx-out);
 }
 .pwx__condText {
   font-size: 22px;
@@ -340,24 +331,19 @@
   letter-spacing: -0.02em;
   line-height: 1;
   white-space: nowrap;
-  transition:
-    opacity 120ms var(--pwx-out),
-    filter 120ms var(--pwx-out);
+  transition: opacity 120ms var(--pwx-out);
 }
 .pwx__condText[data-swapping="true"] {
   opacity: 0;
-  filter: blur(4px);
 }
 .pwx[data-condition="clear"] .pwx__condIcon[data-cond-icon="clear"],
 .pwx[data-condition="partly"] .pwx__condIcon[data-cond-icon="partly"],
 .pwx[data-condition="rain"] .pwx__condIcon[data-cond-icon="rain"] {
   opacity: 1;
   transform: scale(1);
-  filter: blur(0);
   transition:
     opacity 200ms var(--pwx-out) 130ms,
-    transform 240ms var(--pwx-drawer) 130ms,
-    filter 200ms var(--pwx-out) 130ms;
+    transform 240ms var(--pwx-drawer) 130ms;
 }
 
 .pwx[data-pressed="true"] {

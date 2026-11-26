@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { RotateCw } from 'lucide-react';
+import { IconAlertTriangle, IconRotateCw, IconTrash2 } from '../../ui/icons';
 import { TaskCard, type TaskCardItem, type TaskStatus } from '../../components/pinui/TaskCard';
 import type {
   CheckCategory,
@@ -8,6 +8,7 @@ import type {
   ProcessItem,
   ProcessStatus,
 } from '../../types/index';
+import type { PreviewRuntimeError } from './LivePreviewFrame';
 import { formatClock } from './time';
 
 export interface ChecksPanelProps {
@@ -15,6 +16,8 @@ export interface ChecksPanelProps {
   processes: ProcessItem[];
   onRunChecks: () => void;
   onSelectFile: (path: string) => void;
+  runtimeErrors?: PreviewRuntimeError[];
+  onClearRuntimeErrors?: () => void;
 }
 
 const PROCESS_WORDS: Record<ProcessStatus, string> = {
@@ -24,12 +27,12 @@ const PROCESS_WORDS: Record<ProcessStatus, string> = {
 };
 
 const CATEGORY_TITLES: Record<CheckCategory, string> = {
-  html_structure: '1. Cấu trúc tài liệu HTML5',
-  js_syntax: '2. Cú pháp CSS & JavaScript',
-  responsive_layout: '3. Khung nhìn đa thiết bị',
-  internal_links: '4. Liên kết tài nguyên & Neo DOM',
-  secret_scan: '5. Quét rò rỉ khóa API & Bí mật',
-  accessibility: '6. Truy cập & Ngữ nghĩa A11y',
+  html_structure: '1. Cấu trúc HTML5',
+  js_syntax: '2. Cú pháp CSS & JS',
+  responsive_layout: '3. Khung nhìn Responsive',
+  internal_links: '4. Liên kết & Neo DOM',
+  secret_scan: '5. Quét Bảo mật & Bí mật',
+  accessibility: '6. Truy cập A11y',
 };
 
 function mapCheckToTaskStatus(status: CheckStatus): TaskStatus {
@@ -43,6 +46,8 @@ export const ChecksPanel: React.FC<ChecksPanelProps> = ({
   processes,
   onRunChecks,
   onSelectFile,
+  runtimeErrors = [],
+  onClearRuntimeErrors,
 }) => {
   const taskItems = useMemo<TaskCardItem[]>(() => {
     if (!report) return [];
@@ -90,12 +95,47 @@ export const ChecksPanel: React.FC<ChecksPanelProps> = ({
           type="button"
           className="ws-icon-pill"
           aria-label={report ? 'Chạy lại kiểm định 6 lớp' : 'Chạy kiểm định 6 lớp'}
-          title={report ? 'Chạy lại kiểm định 6 lớp' : 'Chạy kiểm định 6 lớp'}
+          title={report ? 'Chạy lại' : 'Chạy kiểm định'}
           onClick={onRunChecks}
         >
-          <RotateCw size={15} aria-hidden="true" />
+          <IconRotateCw size={15} />
         </button>
       </div>
+
+      {runtimeErrors.length > 0 && (
+        <section className="ws-runtime-panel" aria-label="Lỗi Runtime Live View">
+          <div className="ws-runtime-head">
+            <span className="ws-runtime-title">
+              <IconAlertTriangle size={14} />
+              <span>Lỗi Runtime ({runtimeErrors.length})</span>
+            </span>
+            {onClearRuntimeErrors && (
+              <button
+                type="button"
+                className="btn btn-ghost btn-sm"
+                onClick={onClearRuntimeErrors}
+              >
+                <IconTrash2 size={13} />
+                <span>Xóa log</span>
+              </button>
+            )}
+          </div>
+          <ul className="ws-runtime-list">
+            {runtimeErrors.map((err) => (
+              <li key={err.id} className="ws-runtime-item">
+                <div className="ws-runtime-meta">
+                  <span className="ws-runtime-kind">{err.kind}</span>
+                  <span className="t-label">
+                    {err.line ? `Dòng ${err.line}${err.column ? `:${err.column}` : ''} · ` : ''}
+                    {formatClock(err.timestamp)}
+                  </span>
+                </div>
+                <p className="ws-runtime-msg">{err.message}</p>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
 
       {report ? (
         <div className="ws-checks-body">
@@ -133,8 +173,13 @@ export const ChecksPanel: React.FC<ChecksPanelProps> = ({
         </div>
       ) : (
         <div className="ws-checks-empty">
-          <button type="button" className="btn btn-line btn-sm" onClick={onRunChecks}>
-            Chạy kiểm định 6 lớp
+          <button
+            type="button"
+            className="btn btn-line btn-sm"
+            aria-label="Chạy kiểm định 6 lớp"
+            onClick={onRunChecks}
+          >
+            Chạy kiểm định
           </button>
         </div>
       )}

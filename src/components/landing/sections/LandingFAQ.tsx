@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { IconChevronDown } from '../../../ui/icons';
 import { FAQ_ITEMS } from '../landingContent';
 
 interface LandingFAQProps {
@@ -26,26 +27,33 @@ export const LandingFAQ: React.FC<LandingFAQProps> = ({ onEnterApp }) => {
                 const isOpen = openId === item.id;
                 return (
                   <div key={item.id} className="lp-faq-item">
-                    <h3>
+                    <div className="lp-faq-head">
+                      <h3
+                        id={`faq-question-${item.id}`}
+                        className="lp-faq-question"
+                        onClick={() => toggle(item.id)}
+                      >
+                        {item.question}
+                      </h3>
                       <button
                         type="button"
                         onClick={() => toggle(item.id)}
                         aria-expanded={isOpen}
                         aria-controls={`faq-panel-${item.id}`}
+                        aria-label={isOpen ? `Thu gọn: ${item.question}` : `Mở: ${item.question}`}
+                        title={isOpen ? 'Thu gọn' : 'Mở rộng'}
                         id={`faq-trigger-${item.id}`}
-                        className="lp-faq-trigger"
+                        className="icon-btn lp-faq-toggle"
+                        data-open={isOpen}
                       >
-                        <span>{item.question}</span>
-                        <span className="lp-faq-sign" aria-hidden="true">
-                          {isOpen ? '−' : '+'}
-                        </span>
+                        <IconChevronDown size={18} aria-hidden="true" />
                       </button>
-                    </h3>
+                    </div>
 
                     <div
                       id={`faq-panel-${item.id}`}
                       role="region"
-                      aria-labelledby={`faq-trigger-${item.id}`}
+                      aria-labelledby={`faq-question-${item.id}`}
                       className="lp-faq-panel"
                       data-open={isOpen}
                     >
@@ -81,7 +89,7 @@ export const LandingFAQ: React.FC<LandingFAQProps> = ({ onEnterApp }) => {
             Chọn khung mẫu chuẩn, <span className="t-italic">làm chủ quy trình cùng AI.</span>
           </h2>
           <button type="button" className="btn btn-solid btn-lg" onClick={onEnterApp}>
-            Mở Xưởng lắp ráp
+            Khởi tạo ngay
           </button>
         </div>
       </section>

@@ -1,25 +1,26 @@
-import React, { useEffect, useId, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
 import {
-  ArrowUpRight,
-  CheckCircle2,
-  ChevronDown,
-  ChevronsLeft,
-  ChevronsRight,
-  Compass,
-  KeyRound,
-  Layers,
-  PanelLeft,
-  PanelLeftClose,
-  Share2,
-  SlidersHorizontal,
-  Sparkles,
-  X,
-} from 'lucide-react';
+  IconArrowUpRight,
+  IconCheckCircle2,
+  IconChevronDown,
+  IconChevronsLeft,
+  IconChevronsRight,
+  IconLayers,
+  IconPanelLeft,
+  IconPanelLeftClose,
+  IconShare2,
+  IconSlidersHorizontal,
+  IconSparkles,
+  IconX,
+} from '../../ui/icons';
 import { DynamicDropZone } from '../../components/pinui/DynamicDropZone';
 import { PromptComposer } from '../../components/pinui/PromptComposer';
-import { apiClient } from '../../services/apiClient';
 import { formatUserDisplayName, useAppStore } from '../../store/appStore';
+import { runWorkspaceChecks } from '../../services/checksRunner';
+import { generateProjectSetupBundle } from '../../services/projectSetupGenerator';
+import { sanitizeFilesForZipExport } from '../../services/secretScanner';
 import type {
+  ChecksReport,
   CommunityPost,
   CommunityShowcaseSnippet,
   WorkspaceProject,
@@ -53,6 +54,7 @@ const MODEL_OPTIONS = [
 ];
 
 const COMMUNITY_POSTS_STORAGE_KEY = 'fforum_v3_community_posts_v7';
+const SPLIT_RATIO_STORAGE_KEY = 'fforum_ws_split_ratio';
 
 const STARTER_PROMPTS = [
   {
@@ -80,6 +82,91 @@ const STARTER_PROMPTS = [
 const DEFAULT_SYSTEM_PROMPT =
   'Ưu tiên HTML/CSS thuần, không thêm thư viện ngoài. Giữ bố cục hiện có nếu người dùng không yêu cầu đổi. Mọi trạng thái phải dùng được bằng bàn phím.';
 
+function readDeletedPaths(projectId: string): string[] {
+  if (typeof window === 'undefined') return [];
+  try {
+    const raw = window.localStorage.getItem(`fforum_v3_ws_deleted_files_${projectId}`);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed.filter((item): item is string => typeof item === 'string') : [];
+  } catch {
+    return [];
+  }
+}
+
+function writeDeletedPaths(projectId: string, paths: string[]): void {
+  if (typeof window === 'undefined') return;
+  try {
+    if (paths.length === 0) {
+      window.localStorage.removeItem(`fforum_v3_ws_deleted_files_${projectId}`);
+    } else {
+      window.localStorage.setItem(`fforum_v3_ws_deleted_files_${projectId}`, JSON.stringify(paths));
+    }
+  } catch {
+    return;
+  }
+}
+
+function readSnapshotDeletedMap(projectId: string): Record<string, string[]> {
+  if (typeof window === 'undefined') return {};
+  try {
+    const raw = window.localStorage.getItem(`fforum_v3_ws_snap_deleted_${projectId}`);
+    if (!raw) return {};
+    const parsed = JSON.parse(raw) as unknown;
+    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return {};
+    const out: Record<string, string[]> = {};
+    for (const [k, v] of Object.entries(parsed)) {
+      if (Array.isArray(v)) {
+        out[k] = v.filter((item): item is string => typeof item === 'string');
+      }
+    }
+    return out;
+  } catch {
+    return {};
+  }
+}
+
+function writeSnapshotDeletedMap(projectId: string, map: Record<string, string[]>): void {
+  if (typeof window === 'undefined') return;
+  try {
+    if (Object.keys(map).length === 0) {
+      window.localStorage.removeItem(`fforum_v3_ws_snap_deleted_${projectId}`);
+    } else {
+      window.localStorage.setItem(`fforum_v3_ws_snap_deleted_${projectId}`, JSON.stringify(map));
+    }
+  } catch {
+    return;
+  }
+}
+
+function extractAttributionLines(project: WorkspaceProject): string[] {
+  const lines: string[] = [];
+  if (typeof window !== 'undefined') {
+    try {
+      const raw = window.localStorage.getItem(`fforum_v3_ws_attribution_${project.id}`);
+      if (raw) {
+        const parsed = JSON.parse(raw) as { label?: string; author?: string };
+        if (parsed?.label) {
+          lines.push(`Dựa trên: ${parsed.label}${parsed.author ? ` (${parsed.author})` : ''}.`);
+        }
+      }
+    } catch {
+      void 0;
+    }
+  }
+  for (const item of project.attachedItems) {
+    if (item.id.startsWith('fork-')) {
+      const line = `Nguồn fork: ${item.title}.`;
+      if (!lines.includes(line)) lines.push(line);
+    } else if (item.kind === 'template' || item.kind === 'blueprint' || item.kind === 'resource') {
+      const sourceNote = item.sourceLibrary ? ` (${item.sourceLibrary})` : '';
+      const line = `Nguồn mẫu: ${item.title}${sourceNote}.`;
+      if (!lines.includes(line)) lines.push(line);
+    }
+  }
+  return lines;
+}
+
 function derivePublishTags(project: WorkspaceProject): string {
   const collected: string[] = [];
   for (const item of project.attachedItems) {
@@ -103,9 +190,11 @@ function buildPublishSummary(project: WorkspaceProject): string {
     : 'Chưa chạy kiểm định 6 lớp.';
   const fileNames = project.files.map((file) => file.path).join(', ');
   const baseDesc = project.description.trim();
+  const attribution = extractAttributionLines(project);
   return [
     baseDesc || `Bản dựng từ phiên ${project.name}.`,
     `Đóng gói ${project.files.length} tệp (${fileNames}). ${checkNote}`,
+    ...attribution,
   ].join(' ');
 }
 
@@ -126,8 +215,14 @@ function packageDemoSnippet(project: WorkspaceProject): CommunityShowcaseSnippet
     .replace(/<script[^>]+src=["'](?:\.\/)?app\.js["'][^>]*>\s*<\/script>/gi, '')
     .trim();
 
+  const safeName = project.name
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+
   return {
-    html: cleanHtml || `<main><h1>${project.name}</h1></main>`,
+    html: cleanHtml || `<main><h1>${safeName}</h1></main>`,
     css: (cssFile?.content || '').trim(),
     js: (jsFile?.content || '').trim() || undefined,
   };
@@ -181,6 +276,7 @@ export const WorkspaceView: React.FC = () => {
     toggleArchiveProject,
     setActiveFilePath,
     updateWorkspaceFile,
+    deleteWorkspaceFile,
     addWorkspaceFiles,
     attachItemToWorkspace,
     detachItemFromWorkspace,
@@ -190,6 +286,7 @@ export const WorkspaceView: React.FC = () => {
     createProjectSnapshot,
     restoreProjectSnapshot,
     exportActiveProjectZip,
+    createPost,
     aiActivity,
     aiStreamingStage,
     aiStreamingPreview,
@@ -218,6 +315,133 @@ export const WorkspaceView: React.FC = () => {
       : 'fit';
   });
 
+  const [deletedPaths, setDeletedPaths] = useState<string[]>(() =>
+    readDeletedPaths(activeProject.id)
+  );
+  const [snapDeletedMap, setSnapDeletedMap] = useState<Record<string, string[]>>(() =>
+    readSnapshotDeletedMap(activeProject.id)
+  );
+  const [localChecksByProject, setLocalChecksByProject] = useState<Record<string, ChecksReport>>({});
+  const pendingSnapshotRef = useRef<{
+    projectId: string;
+    prevTopId: string | null;
+    deleted: string[];
+  } | null>(null);
+
+  useEffect(() => {
+    setDeletedPaths(readDeletedPaths(activeProject.id));
+    setSnapDeletedMap(readSnapshotDeletedMap(activeProject.id));
+  }, [activeProject.id]);
+
+  useEffect(() => {
+    const pending = pendingSnapshotRef.current;
+    if (!pending || pending.projectId !== activeProject.id) return;
+    const topId = activeProject.snapshots[0]?.id ?? null;
+    if (!topId || topId === pending.prevTopId) return;
+    pendingSnapshotRef.current = null;
+    setSnapDeletedMap((prev) => {
+      const next = { ...prev, [topId]: pending.deleted };
+      writeSnapshotDeletedMap(activeProject.id, next);
+      return next;
+    });
+  }, [activeProject.id, activeProject.snapshots]);
+
+  const visibleFiles = useMemo(() => {
+    const filtered = activeProject.files.filter((file) => !deletedPaths.includes(file.path));
+    return filtered.length > 0 ? filtered : activeProject.files.slice(0, 1);
+  }, [activeProject.files, deletedPaths]);
+
+  const effectiveDeletedSet = useMemo(() => {
+    const visibleSet = new Set(visibleFiles.map((file) => file.path));
+    return new Set(deletedPaths.filter((path) => !visibleSet.has(path)));
+  }, [deletedPaths, visibleFiles]);
+
+  const effectiveDiffs = useMemo(() => {
+    if (effectiveDeletedSet.size === 0) return activeProject.diffs;
+    return activeProject.diffs.filter((entry) => !effectiveDeletedSet.has(entry.path));
+  }, [activeProject.diffs, effectiveDeletedSet]);
+
+  const effectiveChecksReport = useMemo<ChecksReport | null>(() => {
+    const localReport = localChecksByProject[activeProject.id] ?? null;
+    const storeReport = activeProject.checksReport;
+    const baseReport =
+      localReport && (!storeReport || localReport.ranAt >= storeReport.ranAt)
+        ? localReport
+        : storeReport;
+    if (effectiveDeletedSet.size === 0) return baseReport;
+    if (!baseReport) return null;
+    const recomputed = runWorkspaceChecks(visibleFiles);
+    return {
+      ...recomputed,
+      ranAt: baseReport.ranAt,
+    };
+  }, [localChecksByProject, activeProject.id, activeProject.checksReport, effectiveDeletedSet, visibleFiles]);
+
+  const effectiveSnapshots = useMemo(
+    () =>
+      activeProject.snapshots.map((snap) => {
+        const hidden = snapDeletedMap[snap.id];
+        if (!hidden || hidden.length === 0) return snap;
+        const hiddenSet = new Set(hidden);
+        const filteredSnapFiles = snap.files.filter((file) => !hiddenSet.has(file.path));
+        return {
+          ...snap,
+          files: filteredSnapFiles.length > 0 ? filteredSnapFiles : snap.files.slice(0, 1),
+        };
+      }),
+    [activeProject.snapshots, snapDeletedMap]
+  );
+
+  const effectiveProject = useMemo<WorkspaceProject>(() => {
+    const hasCurrent = visibleFiles.some((file) => file.path === activeProject.activeFilePath);
+    return {
+      ...activeProject,
+      files: visibleFiles,
+      diffs: effectiveDiffs,
+      checksReport: effectiveChecksReport,
+      snapshots: effectiveSnapshots,
+      activeFilePath: hasCurrent ? activeProject.activeFilePath : (visibleFiles[0]?.path || ''),
+    };
+  }, [activeProject, visibleFiles, effectiveDiffs, effectiveChecksReport, effectiveSnapshots]);
+
+  const handleUpdateWorkspaceFile = useCallback(
+    (path: string, content: string) => {
+      if (deletedPaths.includes(path)) {
+        const nextDeleted = deletedPaths.filter((item) => item !== path);
+        setDeletedPaths(nextDeleted);
+        writeDeletedPaths(activeProject.id, nextDeleted);
+      }
+      updateWorkspaceFile(path, content);
+    },
+    [deletedPaths, activeProject.id, updateWorkspaceFile]
+  );
+
+  const handleDeleteWorkspaceFile = useCallback(
+    (path: string) => {
+      if (visibleFiles.length <= 1) return;
+      deleteWorkspaceFile(path);
+      if (deletedPaths.includes(path)) {
+        const nextDeleted = deletedPaths.filter((item) => item !== path);
+        setDeletedPaths(nextDeleted);
+        writeDeletedPaths(activeProject.id, nextDeleted);
+      }
+      if (effectiveProject.activeFilePath === path) {
+        const nextFile = visibleFiles.find((file) => file.path !== path);
+        if (nextFile) {
+          setActiveFilePath(nextFile.path);
+        }
+      }
+    },
+    [
+      visibleFiles,
+      deletedPaths,
+      activeProject.id,
+      effectiveProject.activeFilePath,
+      deleteWorkspaceFile,
+      setActiveFilePath,
+    ]
+  );
+
   const [renaming, setRenaming] = useState(false);
   const [renameDraft, setRenameDraft] = useState('');
   const [confirmDelete, setConfirmDelete] = useState(false);
@@ -230,9 +454,18 @@ export const WorkspaceView: React.FC = () => {
   const [temperature, setTemperature] = useState(0.2);
 
   const hasGeneratedArtifact = useMemo(
-    () => hasRealWorkspaceContent(activeProject),
-    [activeProject]
+    () => hasRealWorkspaceContent(effectiveProject),
+    [effectiveProject]
   );
+
+  const isGenerating =
+    aiActivity === 'thinking' ||
+    aiActivity === 'streaming' ||
+    aiStreamingStage === 'routing' ||
+    aiStreamingStage === 'generating' ||
+    aiStreamingStage === 'checking';
+
+  const hasBuildError = aiActivity === 'error';
 
   const isWelcome = useMemo(
     () => !hasGeneratedArtifact && activeProject.messages.every((message) => message.role !== 'user'),
@@ -256,15 +489,20 @@ export const WorkspaceView: React.FC = () => {
       setRightMode(hasGeneratedArtifact ? 'split' : 'closed');
       return;
     }
+    if (isGenerating || (hasBuildError && !hasGeneratedArtifact)) {
+      setStageTab('preview');
+      setRightMode('split');
+      return;
+    }
     if (!hasGeneratedArtifact) {
       setRightMode('closed');
       return;
     }
-    if (artifactAppeared || (aiActivity === 'streaming' && hasGeneratedArtifact)) {
+    if (artifactAppeared) {
       setStageTab('preview');
       setRightMode('split');
     }
-  }, [activeProject.id, hasGeneratedArtifact, aiActivity]);
+  }, [activeProject.id, hasGeneratedArtifact, isGenerating, hasBuildError, aiActivity]);
 
   const [dropZoneOpen, setDropZoneOpen] = useState(false);
   const [setupDrawerOpen, setSetupDrawerOpen] = useState(false);
@@ -278,6 +516,8 @@ export const WorkspaceView: React.FC = () => {
 
   const dockRef = useRef<HTMLDivElement>(null);
   const wsContainerRef = useRef<HTMLDivElement>(null);
+  const resizerRef = useRef<HTMLDivElement>(null);
+  const resizerBadgeRef = useRef<HTMLDivElement>(null);
   const renameId = useId();
   const publishTitleId = useId();
   const publishBodyId = useId();
@@ -286,7 +526,7 @@ export const WorkspaceView: React.FC = () => {
   const [splitRatio, setSplitRatio] = useState<number>(() => {
     if (typeof window === 'undefined') return 40;
     try {
-      const saved = window.localStorage.getItem('fforum_ws_split_ratio');
+      const saved = window.localStorage.getItem(SPLIT_RATIO_STORAGE_KEY);
       if (saved) {
         const val = Number(saved);
         if (!Number.isNaN(val) && val >= 20 && val <= 80) return val;
@@ -296,81 +536,103 @@ export const WorkspaceView: React.FC = () => {
     }
     return 40;
   });
-  const [isResizing, setIsResizing] = useState(false);
+  const splitRatioRef = useRef(splitRatio);
+  splitRatioRef.current = splitRatio;
 
-  const startResizing = (downEvent: React.PointerEvent) => {
-    downEvent.preventDefault();
-    setIsResizing(true);
+  const syncSplitRatioVar = useCallback((ratio: number) => {
+    splitRatioRef.current = ratio;
+    wsContainerRef.current?.style.setProperty('--ws-split-ratio', String(ratio));
+    resizerRef.current?.setAttribute('aria-valuenow', String(ratio));
+    if (resizerBadgeRef.current) {
+      resizerBadgeRef.current.textContent = `${ratio}%`;
+    }
+  }, []);
 
-    const onPointerMove = (e: PointerEvent) => {
-      if (!wsContainerRef.current) return;
-      const rect = wsContainerRef.current.getBoundingClientRect();
-      const railOffset = railOpen && isDesktop ? 240 : 0;
-      const usableWidth = rect.width - railOffset - 10;
-      if (usableWidth <= 100) return;
-      const currentX = e.clientX - rect.left - railOffset;
-      const newRatio = Math.round(Math.min(80, Math.max(20, (currentX / usableWidth) * 100)));
-      setSplitRatio(newRatio);
+  const commitSplitRatio = useCallback(
+    (ratio: number) => {
+      const clamped = Math.round(Math.min(80, Math.max(20, ratio)));
+      syncSplitRatioVar(clamped);
+      setSplitRatio(clamped);
       try {
-        window.localStorage.setItem('fforum_ws_split_ratio', String(newRatio));
+        window.localStorage.setItem(SPLIT_RATIO_STORAGE_KEY, String(clamped));
       } catch {
         void 0;
       }
-    };
+    },
+    [syncSplitRatioVar]
+  );
 
-    const onPointerUp = () => {
-      setIsResizing(false);
-      window.removeEventListener('pointermove', onPointerMove);
-      window.removeEventListener('pointerup', onPointerUp);
-      window.removeEventListener('pointercancel', onPointerUp);
-    };
+  const handleResizerPointerDown = (event: React.PointerEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    event.currentTarget.setPointerCapture(event.pointerId);
+    if (wsContainerRef.current) {
+      wsContainerRef.current.dataset.resizing = 'true';
+    }
+    event.currentTarget.classList.add('is-dragging');
+  };
 
-    window.addEventListener('pointermove', onPointerMove);
-    window.addEventListener('pointerup', onPointerUp);
-    window.addEventListener('pointercancel', onPointerUp);
+  const handleResizerPointerMove = (event: React.PointerEvent<HTMLDivElement>) => {
+    if (!event.currentTarget.hasPointerCapture(event.pointerId)) return;
+    const container = wsContainerRef.current;
+    if (!container) return;
+    const rect = container.getBoundingClientRect();
+    const railOffset = railOpen && isDesktop ? 240 : 0;
+    const usableWidth = rect.width - railOffset - 10;
+    if (usableWidth <= 100) return;
+    const currentX = event.clientX - rect.left - railOffset;
+    const nextRatio = Math.round(Math.min(80, Math.max(20, (currentX / usableWidth) * 100)));
+    syncSplitRatioVar(nextRatio);
+  };
+
+  const finishResizerDrag = (event: React.PointerEvent<HTMLDivElement>) => {
+    if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+      event.currentTarget.releasePointerCapture(event.pointerId);
+    }
+    if (wsContainerRef.current) {
+      delete wsContainerRef.current.dataset.resizing;
+    }
+    event.currentTarget.classList.remove('is-dragging');
+    commitSplitRatio(splitRatioRef.current);
+  };
+
+  const handleResizerKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
+    const key = event.key;
+    if (!['ArrowLeft', 'ArrowRight', 'Home', 'End', 'Escape'].includes(key)) return;
+    event.preventDefault();
+    if (key === 'Escape') {
+      commitSplitRatio(40);
+      return;
+    }
+    if (key === 'Home') {
+      commitSplitRatio(20);
+      return;
+    }
+    if (key === 'End') {
+      commitSplitRatio(80);
+      return;
+    }
+    const delta = key === 'ArrowRight' ? 3 : -3;
+    commitSplitRatio(splitRatioRef.current + delta);
   };
 
   const cycleSplitPresets = () => {
     const presets = [35, 50, 65, 45];
-    setSplitRatio((prev) => {
-      const idx = presets.indexOf(prev);
-      const next = presets[(idx + 1) % presets.length];
-      try {
-        window.localStorage.setItem('fforum_ws_split_ratio', String(next));
-      } catch {
-        void 0;
-      }
-      return next;
-    });
-  };
-
-  const handleShareToKnowledge = () => {
-    setPublishTitle(activeProject.name);
-    setPublishBody(
-      `Mẫu giao diện đa tệp "${activeProject.name}" được xây dựng và kiểm định trực tiếp trong F-Forum Workspace.`
-    );
-    setPublishTags('workspace, demo, ui-design');
-    setPublishOpen(true);
+    const idx = presets.indexOf(splitRatioRef.current);
+    const next = presets[(idx + 1) % presets.length];
+    commitSplitRatio(next);
   };
 
   const diffTotals = useMemo(
     () =>
-      activeProject.diffs.reduce(
+      effectiveDiffs.reduce(
         (sum, entry) => ({
           added: sum.added + entry.additions,
           removed: sum.removed + entry.deletions,
         }),
         { added: 0, removed: 0 }
       ),
-    [activeProject.diffs]
+    [effectiveDiffs]
   );
-
-  const isGenerating =
-    aiActivity === 'thinking' ||
-    aiActivity === 'streaming' ||
-    aiStreamingStage === 'routing' ||
-    aiStreamingStage === 'generating' ||
-    aiStreamingStage === 'checking';
 
   const quotaBlocked = !quota.unlimited && quota.exhausted;
   const quotaLabel = quota.unlimited
@@ -380,28 +642,117 @@ export const WorkspaceView: React.FC = () => {
       : `${quota.used}/${quota.limit} lượt`;
 
   const railInline = isDesktop && railOpen;
-  const stageInline = isDesktop && rightOpen;
   const isSplitStage = isDesktop && rightMode === 'split';
   const stageDataAttr = !isDesktop ? 'open' : rightMode;
-  const threadHidden = !isDesktop && hasGeneratedArtifact && mobilePane !== 'chat';
+  const threadHidden = !isDesktop && (hasGeneratedArtifact || isGenerating) && mobilePane !== 'chat';
   const stageHidden = isDesktop
     ? rightMode === 'closed'
-    : !hasGeneratedArtifact || mobilePane !== 'stage';
-  const checksPassLabel = activeProject.checksReport
-    ? `${activeProject.checksReport.passCount}/${activeProject.checksReport.results.length} phép kiểm đạt`
+    : (!hasGeneratedArtifact && !isGenerating && !hasBuildError) || mobilePane !== 'stage';
+  const checksPassLabel = effectiveChecksReport
+    ? `${effectiveChecksReport.passCount}/${effectiveChecksReport.results.length} phép kiểm đạt`
     : 'Kiểm định 6 lớp';
 
-  const sendPrompt = async (text: string) => {
-    const raw = text.trim();
-    if (!raw || isGenerating) return;
-    await sendWorkspacePrompt(`[Mode: ${agentMode}] ${raw}`, {
-      model: selectedModel,
-      agentMode,
-      stream: true,
-      systemPrompt: systemPrompt.trim() || undefined,
-      temperature,
-    });
-  };
+  const sendPrompt = useCallback(
+    async (text: string) => {
+      const raw = text.trim();
+      if (!raw || isGenerating) return;
+      await sendWorkspacePrompt(`[Mode: ${agentMode}] ${raw}`, {
+        model: selectedModel,
+        agentMode,
+        stream: true,
+        systemPrompt: systemPrompt.trim() || undefined,
+        temperature,
+      });
+    },
+    [isGenerating, sendWorkspacePrompt, agentMode, selectedModel, systemPrompt, temperature]
+  );
+
+  const handleCreateSnapshot = useCallback(() => {
+    if (effectiveDeletedSet.size > 0) {
+      pendingSnapshotRef.current = {
+        projectId: activeProject.id,
+        prevTopId: activeProject.snapshots[0]?.id ?? null,
+        deleted: Array.from(effectiveDeletedSet),
+      };
+    } else {
+      pendingSnapshotRef.current = null;
+    }
+    createProjectSnapshot();
+  }, [effectiveDeletedSet, activeProject.id, activeProject.snapshots, createProjectSnapshot]);
+
+  const handleRestoreSnapshot = useCallback(
+    (snapshotId: string) => {
+      const hiddenForSnap = snapDeletedMap[snapshotId] || [];
+      setDeletedPaths(hiddenForSnap);
+      writeDeletedPaths(activeProject.id, hiddenForSnap);
+      setLocalChecksByProject((prev) => {
+        if (!(activeProject.id in prev)) return prev;
+        const next = { ...prev };
+        delete next[activeProject.id];
+        return next;
+      });
+      restoreProjectSnapshot(snapshotId);
+    },
+    [snapDeletedMap, activeProject.id, restoreProjectSnapshot]
+  );
+
+  useEffect(() => {
+    const handleShortcuts = (event: KeyboardEvent) => {
+      if (!(event.ctrlKey || event.metaKey)) return;
+      if (event.altKey) return;
+
+      if (event.key === 'Enter') {
+        const active = document.activeElement;
+        if (
+          active &&
+          dockRef.current?.contains(active) &&
+          !isGenerating &&
+          !quotaBlocked &&
+          composerValue.trim()
+        ) {
+          event.preventDefault();
+          const text = composerValue;
+          setComposerValue('');
+          void sendPrompt(text);
+        }
+        return;
+      }
+
+      if (event.shiftKey) return;
+
+      const lower = event.key.toLowerCase();
+      if (lower === '1' || lower === '2' || lower === '3') {
+        event.preventDefault();
+        const nextTab: StageTabId =
+          lower === '1' ? 'preview' : lower === '2' ? 'source' : 'review';
+        setStageTab(nextTab);
+        if (hasGeneratedArtifact) {
+          if (isDesktop) {
+            setRightMode('split');
+          } else {
+            setMobilePane('stage');
+          }
+        }
+        return;
+      }
+
+      if (lower === 's') {
+        event.preventDefault();
+        handleCreateSnapshot();
+      }
+    };
+
+    window.addEventListener('keydown', handleShortcuts);
+    return () => window.removeEventListener('keydown', handleShortcuts);
+  }, [
+    isGenerating,
+    quotaBlocked,
+    composerValue,
+    sendPrompt,
+    hasGeneratedArtifact,
+    isDesktop,
+    handleCreateSnapshot,
+  ]);
 
   const handleRetry = () => {
     const lastUserTurn = [...activeProject.messages].reverse().find((message) => message.role === 'user');
@@ -422,7 +773,39 @@ export const WorkspaceView: React.FC = () => {
     if (exporting) return;
     setExporting(true);
     try {
-      const result = await exportActiveProjectZip(true, settings.defaultExportTarget);
+      let result: { blob: Blob; filename: string; clean: boolean; findingsCount: number };
+      if (effectiveDeletedSet.size === 0) {
+        result = await exportActiveProjectZip(true, settings.defaultExportTarget);
+      } else {
+        const { default: JSZip } = await import('jszip');
+        const zip = new JSZip();
+        const { clean, findings, sanitizedFiles } = sanitizeFilesForZipExport(effectiveProject.files);
+        for (const file of sanitizedFiles) {
+          zip.file(file.path, file.content);
+        }
+        const bundle = generateProjectSetupBundle(
+          { ...effectiveProject, files: sanitizedFiles },
+          settings.defaultExportTarget
+        );
+        for (const docFile of bundle.files) {
+          if (!sanitizedFiles.some((file) => file.path === docFile.path)) {
+            zip.file(docFile.path, docFile.content);
+          }
+        }
+        const blob = await zip.generateAsync({ type: 'blob' });
+        const slug =
+          effectiveProject.name
+            .toLowerCase()
+            .replace(/[^a-z0-9]+/g, '-')
+            .replace(/^-|-$/g, '') || 'fforum-workspace';
+        result = {
+          blob,
+          filename: `${slug}-v3.zip`,
+          clean,
+          findingsCount: findings.length,
+        };
+      }
+
       const url = URL.createObjectURL(result.blob);
       const link = document.createElement('a');
       link.href = url;
@@ -452,6 +835,13 @@ export const WorkspaceView: React.FC = () => {
 
   const handleFilesDropped = (incoming: Array<{ name: string; content: string }>) => {
     if (!incoming.length) return;
+    const nextDeleted = deletedPaths.filter(
+      (path) => !incoming.some((file) => file.name === path)
+    );
+    if (nextDeleted.length !== deletedPaths.length) {
+      setDeletedPaths(nextDeleted);
+      writeDeletedPaths(activeProject.id, nextDeleted);
+    }
     addWorkspaceFiles(
       incoming.map((file) => ({
         path: file.name,
@@ -469,7 +859,23 @@ export const WorkspaceView: React.FC = () => {
   };
 
   const handleRunChecks = () => {
-    const report = runChecksOnActiveProject();
+    if (effectiveDeletedSet.size === 0) {
+      const report = runChecksOnActiveProject();
+      setLocalChecksByProject((prev) => {
+        if (!(activeProject.id in prev)) return prev;
+        const next = { ...prev };
+        delete next[activeProject.id];
+        return next;
+      });
+      addToast({
+        type: report.overallStatus === 'fail' ? 'warning' : 'success',
+        title: `Kiểm định 6 lớp: ${report.passCount}/${report.results.length} đạt`,
+      });
+      return;
+    }
+
+    const report = runWorkspaceChecks(visibleFiles);
+    setLocalChecksByProject((prev) => ({ ...prev, [activeProject.id]: report }));
     addToast({
       type: report.overallStatus === 'fail' ? 'warning' : 'success',
       title: `Kiểm định 6 lớp: ${report.passCount}/${report.results.length} đạt`,
@@ -512,9 +918,9 @@ export const WorkspaceView: React.FC = () => {
   };
 
   const openPublishModal = () => {
-    setPublishTitle(activeProject.name);
-    setPublishBody(buildPublishSummary(activeProject));
-    setPublishTags(derivePublishTags(activeProject));
+    setPublishTitle(effectiveProject.name);
+    setPublishBody(buildPublishSummary(effectiveProject));
+    setPublishTags(derivePublishTags(effectiveProject));
     setPublishedPostId(null);
     setPublishOpen(true);
   };
@@ -537,13 +943,13 @@ export const WorkspaceView: React.FC = () => {
     if (!cleanTitle || publishing) return;
 
     setPublishing(true);
-    const cleanBody = publishBody.trim() || buildPublishSummary(activeProject);
+    const cleanBody = publishBody.trim() || buildPublishSummary(effectiveProject);
     const parsedTags = publishTags
       .split(',')
       .map((tag) => tag.trim().toLowerCase())
       .filter(Boolean);
     const finalTags = parsedTags.length > 0 ? parsedTags : ['html', 'css', 'ui'];
-    const demoSnippet = packageDemoSnippet(activeProject);
+    const demoSnippet = packageDemoSnippet(effectiveProject);
     const now = new Date().toISOString();
 
     const fallbackPost: CommunityPost = {
@@ -560,7 +966,7 @@ export const WorkspaceView: React.FC = () => {
       views: 1,
       author: {
         id: currentUser?.id || 'guest-builder',
-        name: currentUser?.name || 'Builder Cộng đồng',
+        name: formatUserDisplayName(currentUser?.name, 'Builder Cộng đồng'),
         handle: currentUser?.username || 'builder_vn',
         role: currentUser?.role === 'admin' ? 'Điều hành' : 'Thành viên',
       },
@@ -571,7 +977,7 @@ export const WorkspaceView: React.FC = () => {
     try {
       let publishedPost = fallbackPost;
       try {
-        const res = await apiClient.createCommunityPost({
+        const created = await createPost({
           channel: 'showcase',
           title: cleanTitle,
           body: cleanBody,
@@ -580,20 +986,20 @@ export const WorkspaceView: React.FC = () => {
           demoSnippet,
         });
         publishedPost = {
-          ...res.post,
-          demoSnippet: res.post.demoSnippet || demoSnippet,
+          ...created,
+          demoSnippet: created.demoSnippet || demoSnippet,
         };
       } catch {
         publishedPost = fallbackPost;
+        prependCommunityPostToLocalStorage(publishedPost);
+        addToast({
+          type: 'success',
+          title: 'Đã lưu bản dựng cục bộ',
+          message: publishedPost.title,
+        });
       }
 
-      prependCommunityPostToLocalStorage(publishedPost);
       setPublishedPostId(publishedPost.id);
-      addToast({
-        type: 'success',
-        title: 'Đã đăng bản dựng lên Tri thức',
-        message: publishedPost.title,
-      });
     } finally {
       setPublishing(false);
     }
@@ -621,7 +1027,7 @@ export const WorkspaceView: React.FC = () => {
 
   const liveStageElement = (isExpandedView: boolean) => (
     <LiveStage
-      project={activeProject}
+      project={effectiveProject}
       totals={diffTotals}
       stageTab={stageTab}
       onStageTabChange={(nextTab) => {
@@ -633,13 +1039,14 @@ export const WorkspaceView: React.FC = () => {
       viewport={viewport}
       onViewportChange={setViewport}
       onSelectFile={setActiveFilePath}
-      onUpdateFile={updateWorkspaceFile}
+      onUpdateFile={handleUpdateWorkspaceFile}
+      onDeleteFile={handleDeleteWorkspaceFile}
       onRunChecks={handleRunChecks}
       onExportZip={() => void handleExportZip()}
       exporting={exporting}
       onOpenPublish={openPublishModal}
-      onCreateSnapshot={() => createProjectSnapshot()}
-      onRestoreSnapshot={restoreProjectSnapshot}
+      onCreateSnapshot={handleCreateSnapshot}
+      onRestoreSnapshot={handleRestoreSnapshot}
       expanded={isExpandedView}
       onToggleExpanded={() => setStageExpanded((value) => !value)}
       compact={!isExpandedView && isDesktop && rightMode === 'compact'}
@@ -651,6 +1058,10 @@ export const WorkspaceView: React.FC = () => {
       }}
       onExitSplit={() => setRightMode('compact')}
       hasArtifact={hasGeneratedArtifact}
+      isGenerating={isGenerating}
+      hasError={hasBuildError}
+      onRetry={handleRetry}
+      onNotify={addToast}
       hidden={!isExpandedView && stageHidden}
     />
   );
@@ -681,7 +1092,6 @@ export const WorkspaceView: React.FC = () => {
       data-stage={stageDataAttr}
       data-welcome={isWelcome ? 'true' : undefined}
       data-density={settings.compactDensity ? 'compact' : 'roomy'}
-      data-resizing={isResizing ? 'true' : undefined}
       style={{ '--ws-split-ratio': splitRatio } as React.CSSProperties}
     >
       {railInline && (
@@ -694,7 +1104,7 @@ export const WorkspaceView: React.FC = () => {
               title="Thu gọn"
               onClick={() => setRailOpen(false)}
             >
-              <PanelLeftClose size={16} aria-hidden="true" />
+              <IconPanelLeftClose size={16} />
             </button>
           )}
         </aside>
@@ -707,10 +1117,10 @@ export const WorkspaceView: React.FC = () => {
               type="button"
               className="ws-icon-pill"
               aria-label="Mở danh sách phiên"
-              title="Danh sách phiên"
+              title="Danh sách"
               onClick={() => (isDesktop ? setRailOpen(true) : setRailSheetOpen(true))}
             >
-              <PanelLeft size={16} aria-hidden="true" />
+              <IconPanelLeft size={16} />
             </button>
           )}
 
@@ -743,7 +1153,7 @@ export const WorkspaceView: React.FC = () => {
                   <h1 className="ws-head-title ws-title" title={activeProject.name}>
                     {activeProject.name}
                   </h1>
-                  <ChevronDown size={14} aria-hidden="true" />
+                  <IconChevronDown size={14} />
                 </>
               }
             >
@@ -763,7 +1173,7 @@ export const WorkspaceView: React.FC = () => {
                           setSetupDrawerOpen(true);
                         }}
                       >
-                        Cấu hình Model &amp; BYOK
+                        Model &amp; BYOK
                       </button>
                     </li>
                     <li>
@@ -788,7 +1198,7 @@ export const WorkspaceView: React.FC = () => {
                           close();
                         }}
                       >
-                        {activeProject.pinned ? 'Bỏ ghim phiên' : 'Ghim phiên'}
+                        {activeProject.pinned ? 'Bỏ ghim' : 'Ghim phiên'}
                       </button>
                     </li>
                     <li>
@@ -796,11 +1206,11 @@ export const WorkspaceView: React.FC = () => {
                         type="button"
                         className="ws-menu-item"
                         onClick={() => {
-                          createProjectSnapshot();
+                          handleCreateSnapshot();
                           close();
                         }}
                       >
-                        Lưu mốc phiên
+                        Lưu mốc
                       </button>
                     </li>
                     <li>
@@ -838,14 +1248,14 @@ export const WorkspaceView: React.FC = () => {
               <button
                 type="button"
                 className="ws-icon-pill ws-icon-pill--sm"
-                aria-label={rightOpen ? 'Thu gọn panel workspace phải' : 'Mở panel xem trước & mã nguồn'}
-                title={rightOpen ? 'Đóng Xem trước & Mã nguồn' : 'Mở Xem trước & Mã nguồn'}
+                aria-label={rightOpen ? 'Thu gọn khung xem trước' : 'Mở khung xem trước'}
+                title={rightOpen ? 'Đóng khung' : 'Mở khung'}
                 onClick={() => setRightMode(rightOpen ? 'closed' : 'split')}
               >
                 {rightOpen ? (
-                  <ChevronsRight size={15} aria-hidden="true" />
+                  <IconChevronsRight size={15} />
                 ) : (
-                  <ChevronsLeft size={15} aria-hidden="true" />
+                  <IconChevronsLeft size={15} />
                 )}
               </button>
             )}
@@ -897,7 +1307,7 @@ export const WorkspaceView: React.FC = () => {
                       title="Gỡ"
                       onClick={() => detachItemFromWorkspace(item.id)}
                     >
-                      <X size={13} aria-hidden="true" />
+                      <IconX size={13} />
                     </button>
                   </li>
                 ))}
@@ -926,7 +1336,7 @@ export const WorkspaceView: React.FC = () => {
                     title="Đóng"
                     onClick={() => setDropZoneOpen(false)}
                   >
-                    <X size={15} aria-hidden="true" />
+                    <IconX size={15} />
                   </button>
                 </div>
               </div>
@@ -963,7 +1373,7 @@ export const WorkspaceView: React.FC = () => {
                 <section className="ws-studio-panel" aria-label="Chỉ dẫn phiên AI">
                   <div className="ws-studio-head">
                     <div className="ws-studio-title">
-                      <Sparkles size={15} aria-hidden="true" />
+                      <IconSparkles size={15} />
                       <span>
                         <strong>Chỉ dẫn phiên</strong>
                         <small>Áp dụng cho lượt gửi tiếp theo</small>
@@ -973,9 +1383,10 @@ export const WorkspaceView: React.FC = () => {
                       type="button"
                       className="ws-icon-pill ws-icon-pill--xs"
                       aria-label="Đóng chỉ dẫn phiên"
+                      title="Đóng"
                       onClick={() => setStudioOpen(false)}
                     >
-                      <X size={13} aria-hidden="true" />
+                      <IconX size={13} />
                     </button>
                   </div>
 
@@ -1015,7 +1426,7 @@ export const WorkspaceView: React.FC = () => {
                         className="ws-studio-link"
                         onClick={() => setSetupDrawerOpen(true)}
                       >
-                        Đổi model / BYOK
+                        Đổi Model
                       </button>
                     </div>
                   </div>
@@ -1057,63 +1468,31 @@ export const WorkspaceView: React.FC = () => {
               {!isWelcome && (
                 <div className="ws-arena-repo-strip">
                   <div className="ws-arena-repo-pills">
-                    <span className="ws-arena-repo-name" title={`Dự án: ${activeProject.name}`}>
-                      <Layers size={12} aria-hidden="true" />
-                      <span>{activeProject.name}</span>
+                    <span className="ws-arena-repo-name" title={`Dự án: ${effectiveProject.name}`}>
+                      <IconLayers size={12} />
+                      <span>{effectiveProject.name}</span>
                     </span>
                     {hasGeneratedArtifact && (
                       <span className="ws-arena-branch-name" title="Số tệp mã nguồn trong phiên">
-                        {activeProject.files.length} tệp
+                        {effectiveProject.files.length} tệp
                       </span>
                     )}
                   </div>
 
-                  <div className="ws-arena-actions">
-                    {hasGeneratedArtifact ? (
-                      <>
-                        <button
-                          type="button"
-                          className="ws-arena-diff-pill"
-                          onClick={handleOpenDiffStage}
-                          title="Mở bảng đối chiếu Diff"
-                        >
-                          <span className="ws-add">+{diffTotals.added}</span>
-                          <span className="ws-del">−{diffTotals.removed}</span>
-                          <span aria-hidden="true">›</span>
-                        </button>
-                        <button
-                          type="button"
-                          className="ws-arena-action-btn ws-arena-action-btn--accent"
-                          onClick={handleShareToKnowledge}
-                          title="Chia sẻ mẫu giao diện này lên Tri thức cộng đồng"
-                        >
-                          <Share2 size={12} aria-hidden="true" />
-                          <span>Đăng Tri thức</span>
-                        </button>
-                      </>
-                    ) : (
-                      <>
-                        <button
-                          type="button"
-                          className="ws-arena-action-btn"
-                          onClick={() => setSetupDrawerOpen(true)}
-                          title="Mở Cài đặt -> Khóa riêng (BYOK)"
-                        >
-                          <KeyRound size={12} aria-hidden="true" />
-                          <span>BYOK</span>
-                        </button>
-                        <button
-                          type="button"
-                          className="ws-arena-action-btn ws-arena-action-btn--accent"
-                          onClick={() => navigate('explore')}
-                          title="Duyệt và nạp mẫu thật từ Kho 7.750 mẫu công khai"
-                        >
-                          <Compass size={12} aria-hidden="true" />
-                          <span>Kho 7.750 mẫu</span>
-                        </button>
-                      </>
-                    )}
-                  </div>
+                  {hasGeneratedArtifact && (
+                    <div className="ws-arena-actions">
+                      <button
+                        type="button"
+                        className="ws-arena-diff-pill"
+                        onClick={handleOpenDiffStage}
+                        title="Đối chiếu Diff"
+                      >
+                        <span className="ws-add">+{diffTotals.added}</span>
+                        <span className="ws-del">−{diffTotals.removed}</span>
+                        <span aria-hidden="true">›</span>
+                      </button>
+                    </div>
+                  )}
                 </div>
               )}
 
@@ -1146,20 +1525,20 @@ export const WorkspaceView: React.FC = () => {
                       type="button"
                       className="ws-arena-mini-icon"
                       aria-pressed={studioOpen}
-                      aria-label="Chỉ dẫn phiên và temperature"
-                      title="Chỉ dẫn phiên và temperature"
+                      aria-label="Chỉ dẫn phiên"
+                      title="Chỉ dẫn"
                       onClick={() => setStudioOpen((open) => !open)}
                     >
-                      <Sparkles size={13} aria-hidden="true" />
+                      <IconSparkles size={13} />
                     </button>
                     <button
                       type="button"
                       className="ws-arena-mini-icon"
                       aria-label="Cấu hình Model & BYOK"
-                      title="Cấu hình Model & BYOK"
+                      title="BYOK"
                       onClick={() => setSetupDrawerOpen(true)}
                     >
-                      <SlidersHorizontal size={13} aria-hidden="true" />
+                      <IconSlidersHorizontal size={13} />
                     </button>
                   </div>
                 }
@@ -1182,21 +1561,26 @@ export const WorkspaceView: React.FC = () => {
 
       {isSplitStage && layout === 'wide' && (
         <div
+          ref={resizerRef}
           role="separator"
           aria-orientation="vertical"
           aria-valuenow={splitRatio}
           aria-valuemin={20}
           aria-valuemax={80}
-          aria-label="Kéo để thay đổi kích thước chia màn hình"
+          aria-label="Thay đổi kích thước chia màn hình"
           tabIndex={0}
-          className={`ws-resizer ${isResizing ? 'is-dragging' : ''}`}
-          onPointerDown={startResizing}
+          className="ws-resizer"
+          onPointerDown={handleResizerPointerDown}
+          onPointerMove={handleResizerPointerMove}
+          onPointerUp={finishResizerDrag}
+          onPointerCancel={finishResizerDrag}
+          onKeyDown={handleResizerKeyDown}
           onDoubleClick={cycleSplitPresets}
-          title={`Kéo đổi tỷ lệ (${splitRatio}% / ${100 - splitRatio}%) · Nhấp đúp để đổi mốc (35%, 50%, 65%)`}
+          title="Kéo hoặc phím mũi tên đổi tỷ lệ"
         >
           <div className="ws-resizer-line" aria-hidden="true" />
           <div className="ws-resizer-handle" aria-hidden="true" />
-          <div className="ws-resizer-badge" aria-hidden="true">
+          <div ref={resizerBadgeRef} className="ws-resizer-badge" aria-hidden="true">
             {splitRatio}%
           </div>
         </div>
@@ -1265,7 +1649,7 @@ export const WorkspaceView: React.FC = () => {
               title="Đóng"
               onClick={() => setRailSheetOpen(false)}
             >
-              <X size={16} aria-hidden="true" />
+              <IconX size={16} />
             </button>
           )}
         </div>
@@ -1289,7 +1673,7 @@ export const WorkspaceView: React.FC = () => {
         <div className="ws-publish">
           <header className="ws-publish-head">
             <div className="ws-publish-title-wrap">
-              <Share2 size={16} aria-hidden="true" />
+              <IconShare2 size={16} />
               <h2>Đăng lên Tri thức</h2>
             </div>
             <button
@@ -1299,14 +1683,14 @@ export const WorkspaceView: React.FC = () => {
               title="Đóng"
               onClick={() => setPublishOpen(false)}
             >
-              <X size={15} aria-hidden="true" />
+              <IconX size={15} />
             </button>
           </header>
 
           {publishedPostId ? (
             <div className="ws-publish-done" role="status">
               <div className="ws-publish-done-row">
-                <CheckCircle2 size={20} aria-hidden="true" />
+                <IconCheckCircle2 size={20} />
                 <div>
                   <p className="ws-publish-done-title">Bản dựng đã lên bảng Tri thức</p>
                   <p className="ws-publish-done-sub">
@@ -1320,7 +1704,7 @@ export const WorkspaceView: React.FC = () => {
                   className="btn btn-line"
                   onClick={() => setPublishOpen(false)}
                 >
-                  Ở lại Workspace
+                  Ở lại
                 </button>
                 <button
                   type="button"
@@ -1328,7 +1712,7 @@ export const WorkspaceView: React.FC = () => {
                   onClick={handleGoToCommunity}
                 >
                   <span>Mở Tri thức</span>
-                  <ArrowUpRight size={15} aria-hidden="true" />
+                  <IconArrowUpRight size={15} />
                 </button>
               </div>
             </div>
@@ -1378,7 +1762,7 @@ export const WorkspaceView: React.FC = () => {
 
               <div className="ws-publish-meta">
                 <span>{checksPassLabel}</span>
-                <span>{activeProject.files.length} tệp đính kèm</span>
+                <span>{effectiveProject.files.length} tệp đính kèm</span>
               </div>
 
               <div className="ws-publish-actions">
@@ -1395,7 +1779,7 @@ export const WorkspaceView: React.FC = () => {
                   className="btn btn-red"
                   disabled={publishing || !publishTitle.trim()}
                 >
-                  {publishing ? 'Đang đăng...' : 'Đăng bản dựng'}
+                  {publishing ? 'Đang đăng...' : 'Đăng ngay'}
                 </button>
               </div>
             </form>
@@ -1433,9 +1817,16 @@ export const WorkspaceView: React.FC = () => {
       <AiProjectSetupDrawer
         open={setupDrawerOpen}
         onClose={() => setSetupDrawerOpen(false)}
-        project={activeProject}
+        project={effectiveProject}
         defaultTarget={settings.defaultExportTarget}
         onInjectFiles={(incoming) => {
+          const nextDeleted = deletedPaths.filter(
+            (path) => !incoming.some((file) => file.path === path)
+          );
+          if (nextDeleted.length !== deletedPaths.length) {
+            setDeletedPaths(nextDeleted);
+            writeDeletedPaths(activeProject.id, nextDeleted);
+          }
           addWorkspaceFiles(incoming);
           addToast({
             type: 'success',

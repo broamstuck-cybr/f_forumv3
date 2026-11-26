@@ -162,7 +162,6 @@
   user-select: none;
   transition:
     transform 0.4s var(--ease-out),
-    box-shadow 0.4s var(--ease-out),
     background-color 0.3s ease,
     color 0.35s ease;
 }
@@ -272,7 +271,7 @@
   background: transparent;
   box-shadow: inset 0 0 0 1px rgba(86, 43, 0, 0.28);
   cursor: pointer;
-  transition: background-color 0.3s ease, box-shadow 0.3s ease;
+  transition: background-color 0.3s ease;
 }
 
 .sbh__menuBtn:hover {
@@ -548,12 +547,10 @@
   from {
     opacity: 0;
     transform: translateY(14px);
-    filter: blur(6px);
   }
   to {
     opacity: 1;
     transform: none;
-    filter: blur(0);
   }
 }
 

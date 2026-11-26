@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom';
 import type { DimensionView } from '../../types/index';
 import { useAppStore } from '../../store/appStore';
+import { IconX } from '../../ui/icons';
 import {
   buildRandomInterleaved25,
   buildRoundedQuadClipPath,
@@ -10,12 +11,16 @@ import {
   type ShowcaseFilterMode,
   type ShowcaseLibraryKind,
 } from '../../data/reelmarkCarouselData';
-import { PinUIPlayground } from '../pinui';
-import { SandboxPreview } from '../../features/explore/SandboxPreview';
-import { buildMotionThemeOverrideCss } from '../../features/explore/catalog';
 import { VAULT_CACHE_VERSION } from '../../features/explore/vaultLoader';
-import { usePrefersReducedMotion } from './useLandingMotion';
+import { useInView, usePrefersReducedMotion } from './useLandingMotion';
 import './tidewell.css';
+
+const PinUIPlayground = React.lazy(() =>
+  import('../pinui').then((m) => ({ default: m.PinUIPlayground }))
+);
+const SandboxPreview = React.lazy(() =>
+  import('../../features/explore/SandboxPreview').then((m) => ({ default: m.SandboxPreview }))
+);
 
 export interface TidewellStageProps {
   onNavigate?: (view: DimensionView) => void;
@@ -79,34 +84,23 @@ function circularIndexDistance(i: number, active: number, total: number): number
   return Math.min(diff, total - diff);
 }
 
-class PinUIMiniBoundary extends React.Component<
-  { children: React.ReactNode; fallbackTitle: string },
-  { hasError: boolean }
-> {
-  constructor(props: { children: React.ReactNode; fallbackTitle: string }) {
-    super(props);
-    this.state = { hasError: false };
-  }
-
-  static getDerivedStateFromError(): { hasError: boolean } {
-    return { hasError: true };
-  }
-
-  render() {
-    if (this.state.hasError) {
-      return (
-        <div className="rm-card-pinui-fallback" aria-hidden="true">
-          <strong>{this.props.fallbackTitle}</strong>
-        </div>
-      );
-    }
-    return this.props.children;
-  }
+interface CardStyleSnapshot {
+  display: string;
+  width: string;
+  height: string;
+  transform: string;
+  clipPath: string;
+  zIndex: string;
 }
 
 export const TidewellStage: React.FC<TidewellStageProps> = () => {
   const { launchPromptToWorkspace, openExperience, theme } = useAppStore();
   const reduced = usePrefersReducedMotion();
+  const { ref: stageRef, inView: stageInView } = useInView<HTMLElement>({
+    once: false,
+    threshold: 0.02,
+    rootMargin: '0px',
+  });
 
   const [seed] = useState<number>(() => Math.floor(Math.random() * 1000000) + 1);
   const cards = useMemo(() => buildShowcase50(seed, 'all'), [seed]);
@@ -118,6 +112,7 @@ export const TidewellStage: React.FC<TidewellStageProps> = () => {
   const [pinuiModalTheme, setPinuiModalTheme] = useState<'dark' | 'light'>(theme);
   const [liveHtmlContent, setLiveHtmlContent] = useState<string | null>(null);
   const [liveCssContent, setLiveCssContent] = useState<string>('');
+  const [themeOverrideCss, setThemeOverrideCss] = useState<string>('');
   const [fullPromptContent, setFullPromptContent] = useState<string | null>(null);
   const [liveHtmlLoading, setLiveHtmlLoading] = useState(false);
   const [readyVideos, setReadyVideos] = useState<Record<string, boolean>>({});
@@ -125,7 +120,18 @@ export const TidewellStage: React.FC<TidewellStageProps> = () => {
   const frameRef = useRef<HTMLDivElement>(null);
   const trackLayerRef = useRef<HTMLDivElement>(null);
   const cardElsRef = useRef<Array<HTMLDivElement | null>>([]);
-  const lastPinuiScaleRef = useRef<string>('');
+  const cardStyleCacheRef = useRef<Array<CardStyleSnapshot | undefined>>([]);
+  const scheduleTickRef = useRef<(() => void) | null>(null);
+  const dimsRef = useRef({
+    vw: 1440,
+    isPhone: false,
+    frameW: 1440,
+    layerWidth: 1440,
+    layerHeight: 952,
+    u: 1,
+    baseW: 300,
+    baseH: 480,
+  });
 
   const offsetRef = useRef<number>(0);
   const velocityRef = useRef<number>(0);
@@ -146,6 +152,7 @@ export const TidewellStage: React.FC<TidewellStageProps> = () => {
   const stepCarousel = useCallback((direction: -1 | 1) => {
     targetStepDeltaRef.current += direction * PITCH;
     velocityRef.current = 0;
+    scheduleTickRef.current?.();
   }, []);
 
   useEffect(() => {
@@ -205,6 +212,22 @@ export const TidewellStage: React.FC<TidewellStageProps> = () => {
   }, [selectedCard]);
 
   useEffect(() => {
+    if (!liveHtmlContent) {
+      setThemeOverrideCss('');
+      return undefined;
+    }
+    let cancelled = false;
+    void import('../../features/explore/catalog').then((m) => {
+      if (!cancelled) {
+        setThemeOverrideCss(m.buildMotionThemeOverrideCss(liveHtmlContent, theme));
+      }
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [liveHtmlContent, theme]);
+
+  useEffect(() => {
     if (typeof window === 'undefined') return undefined;
 
     let rafId = 0;
@@ -215,8 +238,29 @@ export const TidewellStage: React.FC<TidewellStageProps> = () => {
         ? document.documentElement.animate([], { duration: 1e9 })
         : null;
 
-    const tick = (nowFallback: number) => {
-      rafId = requestAnimationFrame(tick);
+    const measureDims = () => {
+      const frameEl = frameRef.current;
+      const layerEl = trackLayerRef.current;
+      if (!frameEl || !layerEl) return;
+      const vw = window.innerWidth || 1440;
+      const isPhone = vw <= 820;
+      const frameW = frameEl.clientWidth || vw;
+      const u = isPhone ? Math.min(1.02, frameW / 520) : frameW / 1440;
+      const layerHeight = layerEl.clientHeight || (isPhone ? 320 : 952 * u);
+      const layerWidth = layerEl.clientWidth || vw;
+      dimsRef.current = {
+        vw,
+        isPhone,
+        frameW,
+        layerWidth,
+        layerHeight,
+        u,
+        baseW: Math.max(1, Math.round(300 * u)),
+        baseH: Math.max(1, Math.round(480 * u)),
+      };
+    };
+
+    const layoutCards = (nowFallback: number, advanceMotion: boolean) => {
       const clockNow =
         clockAnim && typeof clockAnim.currentTime === 'number'
           ? Number(clockAnim.currentTime)
@@ -224,22 +268,11 @@ export const TidewellStage: React.FC<TidewellStageProps> = () => {
       const dt = Math.min(0.06, Math.max(0.001, (clockNow - prevTime) / 1000));
       prevTime = clockNow;
 
-      const frameEl = frameRef.current;
-      const layerEl = trackLayerRef.current;
-      if (!frameEl || !layerEl) return;
+      const { isPhone, layerHeight, layerWidth, u, baseW, baseH } = dimsRef.current;
+      const baseWStr = `${baseW}px`;
+      const baseHStr = `${baseH}px`;
 
-      const vw = window.innerWidth || 1440;
-      const isPhone = vw <= 820;
-      const frameW = frameEl.clientWidth || vw;
-      const u = isPhone ? Math.min(1.02, frameW / 520) : frameW / 1440;
-
-      const pinuiScale = (u * 0.54).toFixed(3);
-      if (lastPinuiScaleRef.current !== pinuiScale) {
-        lastPinuiScaleRef.current = pinuiScale;
-        frameEl.style.setProperty('--rm-pinui-scale', pinuiScale);
-      }
-
-      if (!isDraggingRef.current) {
+      if (advanceMotion && !isDraggingRef.current) {
         if (Math.abs(targetStepDeltaRef.current) > 0.5) {
           const stepChunk = targetStepDeltaRef.current * Math.min(1, dt * 11);
           offsetRef.current += stepChunk;
@@ -276,11 +309,30 @@ export const TidewellStage: React.FC<TidewellStageProps> = () => {
           closestIdx = i;
         }
 
+        let cache = cardStyleCacheRef.current[i];
+        if (!cache) {
+          cache = {
+            display: '',
+            width: '',
+            height: '',
+            transform: '',
+            clipPath: '',
+            zIndex: '',
+          };
+          cardStyleCacheRef.current[i] = cache;
+        }
+
         if (absT > 1050) {
-          cardEl.style.display = 'none';
+          if (cache.display !== 'none') {
+            cache.display = 'none';
+            cardEl.style.display = 'none';
+          }
           continue;
         }
-        cardEl.style.display = 'block';
+        if (cache.display !== 'block') {
+          cache.display = 'block';
+          cardEl.style.display = 'block';
+        }
 
         const pushedX = 720 + t * (1 + 0.088 * Math.pow(t / 706, 2));
         const d = Math.abs(pushedX - 720) / 706;
@@ -293,7 +345,6 @@ export const TidewellStage: React.FC<TidewellStageProps> = () => {
 
         const hL = 356 + 116 * Math.pow(qL, 2.6);
         const hR = 356 + 116 * Math.pow(qR, 2.6);
-        const layerHeight = layerEl.clientHeight || (isPhone ? 320 : 952 * u);
         const phoneCenterU = (layerHeight / Math.max(0.2, u)) * 0.5;
         const cy = isPhone ? phoneCenterU - 6 * d * d : 495 - 14 * d * d;
 
@@ -302,7 +353,6 @@ export const TidewellStage: React.FC<TidewellStageProps> = () => {
         const topL = (cy - hL * 0.5 - boxTop) * u;
         const topR = (cy - hR * 0.5 - boxTop) * u;
 
-        const layerWidth = layerEl.clientWidth || vw;
         const pxLeft = isPhone ? layerWidth * 0.5 + (xL - 720) * u : xL * u;
         const pxTop = boxTop * u;
         const pxW = cardW * u;
@@ -311,22 +361,94 @@ export const TidewellStage: React.FC<TidewellStageProps> = () => {
         const pxHR = hR * u;
         const cornerR = 18 * u;
 
-        cardEl.style.width = `${pxW.toFixed(1)}px`;
-        cardEl.style.height = `${pxH.toFixed(1)}px`;
-        cardEl.style.transform = `translate3d(${pxLeft.toFixed(1)}px, ${pxTop.toFixed(1)}px, 0)`;
-        cardEl.style.clipPath = buildRoundedQuadClipPath(pxW, topL, pxHL, topR, pxHR, cornerR);
-        cardEl.style.zIndex = String(100 - Math.round(d * 40));
+        const sx = pxW / baseW;
+        const sy = pxH / baseH;
+        const trStr = `translate3d(${pxLeft.toFixed(1)}px, ${pxTop.toFixed(1)}px, 0) scale(${sx.toFixed(4)}, ${sy.toFixed(4)})`;
+        const cpStr = buildRoundedQuadClipPath(
+          baseW,
+          topL / sy,
+          pxHL / sy,
+          topR / sy,
+          pxHR / sy,
+          cornerR / Math.max(0.01, Math.min(sx, sy))
+        );
+        const zStr = String(100 - Math.round(d * 40));
+
+        if (cache.width !== baseWStr) {
+          cache.width = baseWStr;
+          cardEl.style.width = baseWStr;
+        }
+        if (cache.height !== baseHStr) {
+          cache.height = baseHStr;
+          cardEl.style.height = baseHStr;
+        }
+        if (cache.transform !== trStr) {
+          cache.transform = trStr;
+          cardEl.style.transform = trStr;
+        }
+        if (cache.clipPath !== cpStr) {
+          cache.clipPath = cpStr;
+          cardEl.style.clipPath = cpStr;
+        }
+        if (cache.zIndex !== zStr) {
+          cache.zIndex = zStr;
+          cardEl.style.zIndex = zStr;
+        }
       }
 
       setActiveIndex((prev) => (prev === closestIdx ? prev : closestIdx));
     };
 
-    rafId = requestAnimationFrame(tick);
+    const shouldContinue = () =>
+      stageInView &&
+      ((!reduced && !selectedCard) ||
+        isDraggingRef.current ||
+        Math.abs(targetStepDeltaRef.current) > 0.5 ||
+        Math.abs(velocityRef.current) > 1.5);
+
+    const tick = (nowFallback: number) => {
+      rafId = 0;
+      if (!stageInView) return;
+      layoutCards(nowFallback, true);
+      if (shouldContinue()) {
+        rafId = requestAnimationFrame(tick);
+      }
+    };
+
+    const scheduleTick = () => {
+      if (rafId !== 0 || !stageInView) return;
+      prevTime =
+        clockAnim && typeof clockAnim.currentTime === 'number'
+          ? Number(clockAnim.currentTime)
+          : performance.now();
+      rafId = requestAnimationFrame(tick);
+    };
+    scheduleTickRef.current = scheduleTick;
+
+    measureDims();
+    layoutCards(performance.now(), false);
+    if (shouldContinue()) {
+      scheduleTick();
+    }
+
+    const onResize = () => {
+      measureDims();
+      layoutCards(performance.now(), false);
+    };
+    const ro =
+      typeof ResizeObserver !== 'undefined' ? new ResizeObserver(onResize) : null;
+    if (ro && frameRef.current) ro.observe(frameRef.current);
+    if (ro && trackLayerRef.current) ro.observe(trackLayerRef.current);
+    window.addEventListener('resize', onResize, { passive: true });
+
     return () => {
+      scheduleTickRef.current = null;
+      ro?.disconnect();
+      window.removeEventListener('resize', onResize);
       if (rafId) cancelAnimationFrame(rafId);
       clockAnim?.cancel();
     };
-  }, [RING_SPAN, TOTAL_CARDS, reduced, selectedCard]);
+  }, [RING_SPAN, TOTAL_CARDS, reduced, selectedCard, stageInView]);
 
   const handlePointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
     if ((e.target as HTMLElement).closest('button')) return;
@@ -338,14 +460,12 @@ export const TidewellStage: React.FC<TidewellStageProps> = () => {
     pointerLastTimeRef.current = performance.now();
     dragDistanceRef.current = 0;
     e.currentTarget.setPointerCapture?.(e.pointerId);
+    scheduleTickRef.current?.();
   };
 
   const handlePointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
     if (!isDraggingRef.current) return;
-    const vw = window.innerWidth || 1440;
-    const isPhone = vw <= 820;
-    const frameW = frameRef.current?.clientWidth || vw;
-    const u = isPhone ? Math.min(1.02, frameW / 520) : frameW / 1440;
+    const { u } = dimsRef.current;
 
     const dxPx = e.clientX - pointerLastXRef.current;
     const dxUnits = dxPx / Math.max(0.25, u);
@@ -385,6 +505,7 @@ export const TidewellStage: React.FC<TidewellStageProps> = () => {
 
   return (
     <section
+      ref={stageRef}
       id="quy-trinh"
       aria-label="Băng chuyền template giao diện mẫu"
       className="rm-stage"
@@ -422,9 +543,8 @@ export const TidewellStage: React.FC<TidewellStageProps> = () => {
             {cards.map((card, idx) => {
               const dist = circularIndexDistance(idx, activeIndex, TOTAL_CARDS);
               const isPinUI = card.library === 'PinUI';
-              const shouldMountPinUI = isPinUI && !selectedCard && dist <= 3;
               const shouldPlayVideo =
-                !isPinUI && !reduced && !selectedCard && dist <= 4 && Boolean(card.videoUrl);
+                stageInView && !isPinUI && !reduced && !selectedCard && dist <= 1 && Boolean(card.videoUrl);
               const isVidReady = Boolean(readyVideos[card.id]);
 
               return (
@@ -442,17 +562,27 @@ export const TidewellStage: React.FC<TidewellStageProps> = () => {
                 >
                   {isPinUI ? (
                     <div className="rm-card-pinui-stage" aria-hidden="true">
-                      {shouldMountPinUI ? (
-                        <div className="rm-card-pinui-scale">
-                          <PinUIMiniBoundary fallbackTitle={card.title}>
-                            <PinUIPlayground itemId={card.sourceId} theme={theme} compact />
-                          </PinUIMiniBoundary>
+                      <div className="rm-card-pinui-preview">
+                        <div className="rm-pinui-prev-head">
+                          <span className="rm-pinui-prev-badge">PINUI</span>
+                          <span className="rm-pinui-prev-dots">
+                            <i />
+                            <i />
+                          </span>
                         </div>
-                      ) : (
-                        <div className="rm-card-pinui-fallback">
+                        <div className="rm-pinui-prev-canvas">
+                          <span className="rm-pinui-prev-line is-wide" />
+                          <span className="rm-pinui-prev-line is-mid" />
+                          <div className="rm-pinui-prev-row">
+                            <span className="rm-pinui-prev-pill" />
+                            <span className="rm-pinui-prev-chip" />
+                          </div>
+                        </div>
+                        <div className="rm-pinui-prev-foot">
                           <strong>{card.title}</strong>
+                          <span>{card.category}</span>
                         </div>
-                      )}
+                      </div>
                     </div>
                   ) : (
                     <>
@@ -517,7 +647,7 @@ export const TidewellStage: React.FC<TidewellStageProps> = () => {
               className="rm-cta-btn"
               onClick={() => activeCard && setSelectedCard(activeCard)}
             >
-              Mở dùng thử trực tiếp
+              Dùng thử ngay
             </button>
           </div>
         </div>
@@ -569,21 +699,23 @@ export const TidewellStage: React.FC<TidewellStageProps> = () => {
                     className="rm-modal-btn"
                     onClick={() => handleOpenInExperienceView(selectedCard)}
                   >
-                    Mở trong Khám phá
+                    Khám phá
                   </button>
                   <button
                     type="button"
                     className="rm-modal-btn rm-modal-btn--primary"
                     onClick={() => handleLaunchActiveInWorkspace(selectedCard)}
                   >
-                    Nạp vào Workspace
+                    Mở Workspace
                   </button>
                   <button
                     type="button"
                     className="rm-modal-btn"
+                    aria-label="Đóng"
+                    title="Đóng"
                     onClick={() => setSelectedCard(null)}
                   >
-                    Đóng
+                    <IconX size={16} aria-hidden="true" />
                   </button>
                 </div>
               </div>
@@ -638,23 +770,22 @@ export const TidewellStage: React.FC<TidewellStageProps> = () => {
                 <div className="rm-modal-stage">
                   {selectedCard.library === 'PinUI' ? (
                     <div className="rm-modal-pinui-wrap">
-                      <PinUIPlayground itemId={selectedCard.sourceId} theme={pinuiModalTheme} />
+                      <React.Suspense fallback={<div className="rm-modal-status">Đang nạp giao diện tương tác...</div>}>
+                        <PinUIPlayground itemId={selectedCard.sourceId} theme={pinuiModalTheme} />
+                      </React.Suspense>
                     </div>
                   ) : modalMode === 'interactive' && liveHtmlContent ? (
-                    <SandboxPreview
-                      title={selectedCard.title}
-                      html={liveHtmlContent}
-                      css={[
-                        liveCssContent,
-                        buildMotionThemeOverrideCss(liveHtmlContent, theme),
-                      ]
-                        .filter(Boolean)
-                        .join('\n\n')}
-                      theme={theme}
-                      viewport={1440}
-                      nonce={0}
-                      className="rm-modal-iframe"
-                    />
+                    <React.Suspense fallback={<div className="rm-modal-status">Đang nạp mã HTML tương tác...</div>}>
+                      <SandboxPreview
+                        title={selectedCard.title}
+                        html={liveHtmlContent}
+                        css={[liveCssContent, themeOverrideCss].filter(Boolean).join('\n\n')}
+                        theme={theme}
+                        viewport={1440}
+                        nonce={0}
+                        className="rm-modal-iframe"
+                      />
+                    </React.Suspense>
                   ) : modalMode === 'interactive' && liveHtmlLoading ? (
                     <div className="rm-modal-status">Đang nạp mã HTML tương tác...</div>
                   ) : (
@@ -666,7 +797,7 @@ export const TidewellStage: React.FC<TidewellStageProps> = () => {
                             src={selectedCard.videoUrl}
                             poster={selectedCard.imageUrl || selectedCard.fallbackUrl}
                             controls
-                            autoPlay
+                            autoPlay={!reduced}
                             loop
                             muted
                             playsInline

@@ -146,7 +146,7 @@ export const ExploreView: React.FC = () => {
               type="button"
               className="ex-vault-dock-btn"
               onClick={() => enterVaultExperience()}
-              title="Mở toàn bộ kho tài nguyên trong không gian trải nghiệm"
+              title="Mở trải nghiệm"
             >
               <span className="ex-vault-box-mini" aria-hidden="true">
                 <OriginalFileBox theme={theme} />

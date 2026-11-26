@@ -102,18 +102,15 @@ html[data-ui-mode='fabulous'] .ex-bench-dossier {
   background: linear-gradient(
     155deg,
     color-mix(in srgb, var(--accent, #38c99a) 7%, var(--bg-card-surface)) 0%,
-    color-mix(in srgb, var(--bg-card-surface) 84%, transparent) 100%
+    color-mix(in srgb, var(--bg-card-surface) 92%, transparent) 100%
   );
-  backdrop-filter: blur(22px) saturate(155%);
-  -webkit-backdrop-filter: blur(22px) saturate(155%);
   border: 1px solid color-mix(in srgb, var(--accent, #38c99a) 24%, var(--line));
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.26),
     0 20px 44px -26px rgba(0, 0, 0, 0.42);
   transition:
     transform 0.24s cubic-bezier(0.2, 0.8, 0.2, 1),
-    border-color 0.22s ease,
-    box-shadow 0.24s ease;
+    border-color 0.22s ease;
 }
 
 html[data-ui-mode='fabulous'] .cm-post-card:hover,
@@ -135,9 +132,7 @@ html[data-ui-mode='fabulous'] .ex-plate:hover .ex-plate-frame {
 html[data-ui-mode='fabulous'] .ex-search-dock {
   padding: 6px;
   border-radius: 20px;
-  background: color-mix(in srgb, var(--bg-card-surface) 82%, transparent);
-  backdrop-filter: blur(20px) saturate(155%);
-  -webkit-backdrop-filter: blur(20px) saturate(155%);
+  background: color-mix(in srgb, var(--bg-card-surface) 92%, transparent);
   border: 1px solid color-mix(in srgb, var(--accent, #38c99a) 26%, var(--line));
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.26),
@@ -148,9 +143,7 @@ html[data-ui-mode='fabulous'] .ex-modes {
   gap: 8px;
   padding: 5px;
   border-radius: 999px;
-  background: color-mix(in srgb, var(--bg-card-surface) 80%, transparent);
-  backdrop-filter: blur(18px) saturate(150%);
-  -webkit-backdrop-filter: blur(18px) saturate(150%);
+  background: color-mix(in srgb, var(--bg-card-surface) 92%, transparent);
   border: 1px solid color-mix(in srgb, var(--accent, #38c99a) 22%, var(--line));
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2);
 }
@@ -158,7 +151,7 @@ html[data-ui-mode='fabulous'] .ex-modes {
 html[data-ui-mode='fabulous'] .ex-mode {
   border-radius: 999px;
   padding-inline: 14px;
-  transition: background-color 0.18s ease, box-shadow 0.18s ease, color 0.18s ease;
+  transition: background-color 0.18s ease, color 0.18s ease;
 }
 
 html[data-ui-mode='fabulous'] .ex-mode[aria-selected='true'] {
@@ -177,7 +170,7 @@ html[data-ui-mode='fabulous'] .ex-pill,
 html[data-ui-mode='fabulous'] .btn {
   border-color: color-mix(in srgb, var(--accent, #38c99a) 30%, var(--line));
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.22);
-  transition: transform 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease;
+  transition: transform 0.18s ease, border-color 0.18s ease;
 }
 
 html[data-ui-mode='fabulous'] .ex-vault-dock-btn:hover,
@@ -233,7 +226,14 @@ html[data-ui-mode='fabulous'] .lp-nav-userBtn {
 
 /* --- CodeFronts: Frosted Search Bars, CommandPalette & PinUI SearchCard --- */
 html[data-ui-mode='fabulous'] .psearch-bar,
-html[data-ui-mode='fabulous'] .chat-search,
+html[data-ui-mode='fabulous'] .chat-search {
+  background: color-mix(in srgb, var(--bg-card-surface) 92%, transparent);
+  border: 1px solid color-mix(in srgb, var(--accent, #38c99a) 28%, var(--line));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.28),
+    0 12px 28px -18px rgba(0, 0, 0, 0.42);
+}
+
 html[data-ui-mode='fabulous'] .cmd-dialog {
   background: color-mix(in srgb, var(--bg-card-surface) 86%, transparent);
   backdrop-filter: blur(20px) saturate(150%);
@@ -284,41 +284,19 @@ html[data-ui-mode='fabulous'] .psearch-dropdown {
   border-color: color-mix(in srgb, var(--accent, #38c99a) 28%, transparent);
 }
 
-.psearch-fab-tile {
-  position: relative;
-  width: 34px;
-  height: 34px;
-  border-radius: 9px;
+.psearch-fab-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
   flex-shrink: 0;
-  overflow: hidden;
-  display: grid;
-  place-items: center;
-  border: 1px solid rgba(255, 255, 255, 0.32);
-  box-shadow:
-    inset 0 1px 1px rgba(255, 255, 255, 0.55),
-    0 6px 14px -6px rgba(16, 155, 114, 0.45);
-}
-
-.psearch-fab-tile--emerald {
-  background: linear-gradient(145deg, #38c99a 0%, #109b72 58%, #0b6e50 100%);
-  color: #ffffff;
-}
-
-.psearch-fab-tile--slate {
-  background: linear-gradient(145deg, #64748b 0%, #334155 60%, #1e293b 100%);
-  color: #f8fafc;
-}
-
-.psearch-fab-tile--amber {
-  background: linear-gradient(145deg, #f5c37e 0%, #c97d3b 58%, #8f4f1c 100%);
-  color: #ffffff;
+  color: var(--accent, #086348);
 }
 
 /* --- CodeFronts: Instagram DM / ChatGPT Glass Bubbles & Emerald Badges --- */
 html[data-ui-mode='fabulous'] .chat-bubble {
-  background: color-mix(in srgb, var(--bg-card-surface) 86%, transparent);
-  backdrop-filter: blur(18px) saturate(145%);
-  -webkit-backdrop-filter: blur(18px) saturate(145%);
+  background: color-mix(in srgb, var(--bg-card-surface) 92%, transparent);
   border: 1px solid color-mix(in srgb, var(--accent, #38c99a) 18%, var(--line));
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.2),
@@ -493,9 +471,7 @@ html[data-ui-mode='fabulous'] .ws-toolbar {
   padding: 0 14px;
   border-radius: 999px;
   border: 1px solid color-mix(in srgb, var(--accent, #38c99a) 55%, var(--line));
-  background: color-mix(in srgb, var(--bg-card-surface) 90%, transparent);
-  backdrop-filter: blur(18px) saturate(160%);
-  -webkit-backdrop-filter: blur(18px) saturate(160%);
+  background: color-mix(in srgb, var(--bg-card-surface) 94%, transparent);
   color: var(--fg);
   font-size: 12px;
   font-weight: 700;
@@ -541,8 +517,7 @@ html[data-ui-mode='fabulous'] .ws-toolbar {
   padding: 0 10px;
   border-radius: 999px;
   border: 1px solid color-mix(in srgb, var(--accent, #38c99a) 35%, var(--line));
-  background: color-mix(in srgb, var(--bg-card-surface) 88%, transparent);
-  backdrop-filter: blur(14px);
+  background: color-mix(in srgb, var(--bg-card-surface) 92%, transparent);
   color: var(--fg);
   font-size: 11px;
   font-weight: 600;
@@ -649,13 +624,22 @@ html[data-ui-mode='fabulous'] .ws-toolbar {
   color: var(--fg);
 }
 
+.fab-drawer-search:focus-within {
+  outline: 2px solid var(--accent-line, var(--accent));
+  outline-offset: 2px;
+}
+
 .fab-drawer-search input {
   width: 100%;
   border: 0;
-  outline: none;
   background: transparent;
   color: var(--fg);
   font-size: 12px;
+}
+
+.fab-drawer-search input:focus-visible {
+  outline: 2px solid var(--accent-line, var(--accent));
+  outline-offset: 2px;
 }
 
 .fab-interactive-deck {
@@ -779,8 +763,8 @@ html[data-ui-mode='fabulous'] .ws-toolbar {
   border-radius: 999px;
   display: grid;
   place-items: center;
-  background: color-mix(in srgb, var(--accent, #38c99a) 88%, #000);
-  color: #fff;
+  background: var(--accent-fill, #0d825f);
+  color: var(--on-accent, #ffffff);
 }
 
 .fab-asset-body {
@@ -836,9 +820,9 @@ html[data-ui-mode='fabulous'] .ws-toolbar {
 }
 
 .fab-asset-btn[data-active='true'] {
-  border-color: var(--accent, #38c99a);
-  background: var(--accent, #38c99a);
-  color: #06281e;
+  border-color: var(--accent-fill, #0d825f);
+  background: var(--accent-fill, #0d825f);
+  color: var(--on-accent, #ffffff);
 }
 
 .fab-drawer-empty {

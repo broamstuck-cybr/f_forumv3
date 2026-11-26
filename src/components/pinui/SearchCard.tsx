@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
-import { Compass, Layers, Search, Sparkles, X } from 'lucide-react';
+import { IconCompass, IconLayers, IconSearch, IconSparkles, IconX } from '../../ui/icons';
 import { useAppStore } from '../../store/appStore';
 
 export interface SearchCardProps {
@@ -52,7 +52,7 @@ export const SearchCard: React.FC<SearchCardProps> = ({
         style={{ minHeight: compact ? '38px' : '42px' }}
         onClick={() => inputRef.current?.focus()}
       >
-        <Search className="h-4 w-4 shrink-0" style={{ color: 'var(--ink-muted)' }} aria-hidden="true" />
+        <IconSearch className="h-4 w-4 shrink-0" style={{ color: 'var(--ink-muted)' }} aria-hidden="true" />
         <input
           ref={inputRef}
           type="search"
@@ -87,7 +87,7 @@ export const SearchCard: React.FC<SearchCardProps> = ({
             className="inline-grid place-items-center h-6 w-6 rounded-full cursor-pointer"
             style={{ color: 'var(--ink-muted)', background: 'var(--bg-panel)' }}
           >
-            <X className="h-3.5 w-3.5" aria-hidden="true" />
+            <IconX className="h-3.5 w-3.5" aria-hidden="true" />
           </button>
         )}
       </div>
@@ -106,13 +106,7 @@ export const SearchCard: React.FC<SearchCardProps> = ({
             </div>
             <ul className="m-0 p-0 list-none space-y-0.5">
               {filteredRecents.slice(0, 5).map((item, idx) => {
-                const tileTone =
-                  idx % 3 === 0
-                    ? 'psearch-fab-tile--emerald'
-                    : idx % 3 === 1
-                      ? 'psearch-fab-tile--slate'
-                      : 'psearch-fab-tile--amber';
-                const TileIcon = idx % 3 === 0 ? Sparkles : idx % 3 === 1 ? Layers : Compass;
+                const TileIcon = idx % 3 === 0 ? IconSparkles : idx % 3 === 1 ? IconLayers : IconCompass;
                 return (
                   <li key={item}>
                     <button
@@ -131,7 +125,7 @@ export const SearchCard: React.FC<SearchCardProps> = ({
                       }}
                     >
                       {isFabulous && (
-                        <span className={`psearch-fab-tile ${tileTone}`} aria-hidden="true">
+                        <span className="psearch-fab-icon" aria-hidden="true">
                           <TileIcon size={15} />
                         </span>
                       )}

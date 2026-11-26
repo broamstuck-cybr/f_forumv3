@@ -108,16 +108,16 @@
   inset: 0;
   pointer-events: none;
   background: linear-gradient(105deg, transparent 30%, var(--ppimg-shimmer) 50%, transparent 70%);
-  background-size: 250% 100%;
+  will-change: transform;
   animation: ppimg-shimmer 1.6s cubic-bezier(0.4, 0, 0.2, 1) infinite;
 }
 
 @keyframes ppimg-shimmer {
   from {
-    background-position: 120% 0;
+    transform: translate3d(-100%, 0, 0);
   }
   to {
-    background-position: -20% 0;
+    transform: translate3d(100%, 0, 0);
   }
 }
 

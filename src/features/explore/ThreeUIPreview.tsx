@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { Maximize2, Pause, Play, RotateCcw } from 'lucide-react';
+import { IconMaximize2, IconPause, IconPlay, IconRotateCcw } from '../../ui/icons';
 import './threeui-preview.css';
 
 type ThreeUIPreviewEntry = {
@@ -198,16 +198,16 @@ export const ThreeUIPreview: React.FC<{
               aria-label={playing ? 'Tạm dừng cảnh 3D' : 'Phát cảnh 3D'}
               title={playing ? 'Tạm dừng' : 'Phát'}
             >
-              {playing ? <Pause size={16} aria-hidden="true" /> : <Play size={16} aria-hidden="true" />}
+              {playing ? <IconPause size={16} aria-hidden="true" /> : <IconPlay size={16} aria-hidden="true" />}
             </button>
             <button
               type="button"
               className="ex-3ui-icon"
               onClick={restart}
               aria-label="Phát lại cảnh 3D từ đầu"
-              title="Phát lại từ đầu"
+              title="Phát lại"
             >
-              <RotateCcw size={15} aria-hidden="true" />
+              <IconRotateCcw size={15} aria-hidden="true" />
             </button>
             <input
               className="ex-3ui-range"
@@ -233,7 +233,7 @@ export const ThreeUIPreview: React.FC<{
             aria-label="Xem cảnh 3D toàn màn hình"
             title="Toàn màn hình"
           >
-            <Maximize2 size={15} aria-hidden="true" />
+            <IconMaximize2 size={15} aria-hidden="true" />
           </button>
         </div>
       </div>
