@@ -75,21 +75,21 @@
 
   .ws-rail {
     border-right: 1px solid var(--line);
-    background: var(--bg-glass-surface);
+    background: var(--bg-sunken);
   }
 
   .ws-thread {
-    background: var(--bg-glass-surface);
+    background: var(--bg-raised);
   }
 
   .ws-review {
     flex: 1;
-    background: transparent;
+    background: var(--bg-raised);
   }
 
   .ws-live {
     border-left: 1px solid var(--line);
-    background: var(--bg-glass-surface);
+    background: var(--bg-raised);
   }
 
   .ws[data-layout='compact'] .ws-live {
@@ -110,7 +110,7 @@
     min-height: var(--ws-head);
     padding: 8px var(--ws-pad);
     border-bottom: 1px solid var(--line);
-    background: color-mix(in srgb, var(--bg-raised) 94%, transparent);
+    background: var(--bg-raised);
     min-width: 0;
   }
 
