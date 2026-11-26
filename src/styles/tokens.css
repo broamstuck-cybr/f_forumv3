@@ -81,24 +81,24 @@ html[data-theme='dark'] .scene-ink,
 html[data-theme='dark'] .scene-paper,
 .scene-ink {
   color-scheme: dark;
-  --bg: #0f1414;
-  --bg-raised: #161d1d;
-  --bg-sunken: #090d0d;
-  --bg-high: #1f2928;
-  --bg-veil: rgba(15, 20, 20, 0.86);
-  --fg: #f4f7f5;
-  --fg-muted: #c9d4ce;
-  --fg-faint: #93a39b;
-  --fg-inverse: #0e1413;
-  --bg-inverse: #f4f7f5;
-  --line: rgba(244, 247, 245, 0.13);
-  --line-strong: rgba(244, 247, 245, 0.24);
+  --bg: #0b0e10;
+  --bg-raised: #121619;
+  --bg-sunken: #07090b;
+  --bg-high: #1a2024;
+  --bg-veil: rgba(11, 14, 16, 0.88);
+  --fg: #f3f5f6;
+  --fg-muted: #b7c0c7;
+  --fg-faint: #849099;
+  --fg-inverse: #0b0e10;
+  --bg-inverse: #f3f5f6;
+  --line: rgba(243, 245, 246, 0.11);
+  --line-strong: rgba(243, 245, 246, 0.22);
   --accent: #38c99a;
   --accent-fill: #0d825f;
   --on-accent: #ffffff;
-  --accent-soft: rgba(56, 201, 154, 0.15);
+  --accent-soft: rgba(56, 201, 154, 0.14);
   --accent-secondary: #e6b385;
-  --accent-secondary-soft: rgba(230, 179, 133, 0.15);
+  --accent-secondary-soft: rgba(230, 179, 133, 0.14);
   --red: var(--accent);
   --red-fill: var(--accent-fill);
   --on-red: var(--on-accent);
@@ -114,12 +114,14 @@ html[data-theme='dark'] .scene-paper,
   --shadow-1: 0 1px 2px rgba(0, 0, 0, 0.45);
   --shadow-2: 0 14px 34px -12px rgba(0, 0, 0, 0.68);
   --shadow-3: 0 40px 80px -28px rgba(0, 0, 0, 0.84);
-  --bg-glass-surface: rgba(22, 29, 29, 0.8);
-  --bg-card-surface: rgba(26, 35, 34, 0.86);
-  --grain-opacity: 0.04;
+  --bg-glass-surface: rgba(18, 22, 25, 0.84);
+  --bg-card-surface: rgba(21, 26, 30, 0.9);
+  --grain-opacity: 0.03;
+  --ux-shadow: rgba(0, 0, 0, 0.34);
+  --ux-shadow-strong: rgba(0, 0, 0, 0.56);
   --ff-mesh-bg:
-    radial-gradient(62% 52% at 14% 8%, rgba(56, 201, 154, 0.1), transparent 65%),
-    radial-gradient(54% 48% at 88% 82%, rgba(140, 188, 200, 0.09), transparent 68%);
+    radial-gradient(56% 46% at 14% 8%, rgba(56, 201, 154, 0.07), transparent 64%),
+    radial-gradient(50% 44% at 88% 82%, rgba(140, 188, 200, 0.06), transparent 68%);
 }
 
 html[data-theme='light'],
@@ -127,45 +129,47 @@ html[data-theme='light'] .scene-ink,
 html[data-theme='light'] .scene-paper,
 .scene-paper {
   color-scheme: light;
-  --bg: #f3f6f4;
-  --bg-raised: #fafcfa;
-  --bg-sunken: #e4ece8;
+  --bg: #f6f7f5;
+  --bg-raised: #ffffff;
+  --bg-sunken: #ecefe9;
   --bg-high: #ffffff;
-  --bg-veil: rgba(243, 246, 244, 0.88);
-  --fg: #111816;
-  --fg-muted: #35423e;
-  --fg-faint: #556660;
-  --fg-inverse: #f3f6f4;
-  --bg-inverse: #111816;
-  --line: rgba(17, 24, 22, 0.13);
-  --line-strong: rgba(17, 24, 22, 0.24);
-  --accent: #086348;
-  --accent-fill: #086348;
+  --bg-veil: rgba(246, 247, 245, 0.92);
+  --fg: #101514;
+  --fg-muted: #3a4542;
+  --fg-faint: #586662;
+  --fg-inverse: #f6f7f5;
+  --bg-inverse: #101514;
+  --line: rgba(16, 21, 20, 0.11);
+  --line-strong: rgba(16, 21, 20, 0.22);
+  --accent: #0a6e50;
+  --accent-fill: #0a6e50;
   --on-accent: #ffffff;
-  --accent-soft: rgba(8, 99, 72, 0.11);
-  --accent-secondary: #7a4a1e;
-  --accent-secondary-soft: rgba(122, 74, 30, 0.11);
+  --accent-soft: rgba(10, 110, 80, 0.1);
+  --accent-secondary: #824d1e;
+  --accent-secondary-soft: rgba(130, 77, 30, 0.1);
   --red: var(--accent);
   --red-fill: var(--accent-fill);
   --on-red: var(--on-accent);
   --red-soft: var(--accent-soft);
   --danger: #b42318;
-  --danger-soft: rgba(180, 35, 24, 0.11);
+  --danger-soft: rgba(180, 35, 24, 0.1);
   --harbour: #1f5568;
-  --harbour-soft: rgba(31, 85, 104, 0.12);
-  --green: #086348;
-  --green-soft: rgba(8, 99, 72, 0.11);
-  --amber: #7a4a1e;
-  --amber-soft: rgba(122, 74, 30, 0.11);
-  --shadow-1: 0 1px 2px rgba(17, 24, 22, 0.08);
-  --shadow-2: 0 14px 30px -14px rgba(17, 24, 22, 0.2);
-  --shadow-3: 0 40px 70px -30px rgba(17, 24, 22, 0.3);
-  --bg-glass-surface: rgba(250, 252, 250, 0.86);
-  --bg-card-surface: rgba(255, 255, 255, 0.94);
-  --grain-opacity: 0.05;
+  --harbour-soft: rgba(31, 85, 104, 0.11);
+  --green: #0a6e50;
+  --green-soft: rgba(10, 110, 80, 0.1);
+  --amber: #824d1e;
+  --amber-soft: rgba(130, 77, 30, 0.1);
+  --shadow-1: 0 1px 2px rgba(16, 21, 20, 0.06);
+  --shadow-2: 0 12px 30px -12px rgba(16, 21, 20, 0.12);
+  --shadow-3: 0 28px 60px -24px rgba(16, 21, 20, 0.16);
+  --bg-glass-surface: rgba(255, 255, 255, 0.88);
+  --bg-card-surface: rgba(255, 255, 255, 0.96);
+  --ux-shadow: rgba(16, 21, 20, 0.08);
+  --ux-shadow-strong: rgba(16, 21, 20, 0.15);
+  --grain-opacity: 0.03;
   --ff-mesh-bg:
-    radial-gradient(60% 48% at 12% 10%, rgba(56, 201, 154, 0.14), transparent 64%),
-    radial-gradient(56% 50% at 88% 85%, rgba(168, 214, 204, 0.24), transparent 68%);
+    radial-gradient(56% 46% at 14% 8%, rgba(10, 110, 80, 0.05), transparent 64%),
+    radial-gradient(50% 44% at 88% 82%, rgba(31, 85, 104, 0.05), transparent 68%);
 }
 
 .scene-red,
@@ -563,6 +567,9 @@ html[data-theme='light'],
 .scene-accent {
   --bg-canvas: var(--bg);
   --bg-surface: var(--bg-raised);
+  --surface: var(--bg-raised);
+  --border: var(--line);
+  --ink: var(--fg);
   --bg-panel: var(--bg-raised);
   --bg-elevated: var(--bg-high);
   --bg-glass: var(--bg-veil);
@@ -618,8 +625,6 @@ html[data-theme='light'],
   --ux-danger: var(--danger);
   --ux-glass: var(--bg-veil);
   --ux-glass-line: var(--line-strong);
-  --ux-shadow: rgba(0, 0, 0, 0.3);
-  --ux-shadow-strong: rgba(0, 0, 0, 0.5);
   --ux-grad: linear-gradient(var(--fg), var(--fg));
   --ux-ease: var(--ease-ux);
   --ux-spring: var(--ease-spring);

@@ -1,12 +1,12 @@
 .ambient-backdrop {
   --ambient-fallback-dark:
-    radial-gradient(1100px 680px at 14% 12%, rgba(56, 201, 154, 0.16), transparent 60%),
-    radial-gradient(900px 620px at 86% 24%, rgba(140, 188, 200, 0.14), transparent 64%),
-    linear-gradient(155deg, #0b1111 0%, #111818 52%, #080d0d 100%);
+    radial-gradient(1000px 640px at 14% 12%, rgba(56, 201, 154, 0.09), transparent 60%),
+    radial-gradient(860px 600px at 86% 24%, rgba(140, 188, 200, 0.08), transparent 64%),
+    linear-gradient(155deg, #090c0e 0%, #0d1114 52%, #070a0c 100%);
   --ambient-fallback-light:
-    radial-gradient(1100px 680px at 14% 12%, rgba(56, 201, 154, 0.14), transparent 60%),
-    radial-gradient(900px 620px at 86% 24%, rgba(168, 214, 204, 0.34), transparent 64%),
-    linear-gradient(155deg, #f3f6f4 0%, #eaf0ed 52%, #e2eae6 100%);
+    radial-gradient(1000px 640px at 14% 12%, rgba(10, 110, 80, 0.06), transparent 60%),
+    radial-gradient(860px 600px at 86% 24%, rgba(31, 85, 104, 0.06), transparent 64%),
+    linear-gradient(155deg, #f8f9f7 0%, #f3f5f2 52%, #edf0ec 100%);
   position: fixed;
   inset: 0;
   z-index: 0;
@@ -238,24 +238,24 @@ html[data-theme='light'] .ambient-backdrop[data-preset='sage'] .ambient-mesh-lay
 
 html[data-theme='dark'] .ambient-scrim[data-video='true'] {
   background:
-    radial-gradient(120% 90% at 50% 0%, rgba(18, 17, 16, 0.36) 0%, rgba(12, 11, 10, 0.62) 100%),
-    linear-gradient(180deg, rgba(16, 15, 14, 0.32) 0%, rgba(16, 15, 14, 0.56) 100%);
+    radial-gradient(120% 90% at 50% 0%, rgba(11, 14, 16, 0.44) 0%, rgba(7, 9, 11, 0.72) 100%),
+    linear-gradient(180deg, rgba(11, 14, 16, 0.36) 0%, rgba(11, 14, 16, 0.62) 100%);
 }
 
 html[data-theme='light'] .ambient-scrim[data-video='true'] {
   background:
-    radial-gradient(120% 90% at 50% 0%, rgba(244, 240, 230, 0.46) 0%, rgba(244, 240, 230, 0.68) 100%),
-    linear-gradient(180deg, rgba(247, 243, 234, 0.38) 0%, rgba(242, 237, 226, 0.6) 100%);
+    radial-gradient(120% 90% at 50% 0%, rgba(246, 247, 245, 0.64) 0%, rgba(240, 243, 240, 0.82) 100%),
+    linear-gradient(180deg, rgba(248, 249, 247, 0.56) 0%, rgba(242, 245, 242, 0.74) 100%);
 }
 
 html[data-theme='dark'] .ambient-scrim[data-video='false'] {
   background:
-    radial-gradient(120% 90% at 50% 0%, rgba(18, 17, 16, 0.14) 0%, rgba(12, 11, 10, 0.42) 100%);
+    radial-gradient(120% 90% at 50% 0%, rgba(11, 14, 16, 0.16) 0%, rgba(7, 9, 11, 0.44) 100%);
 }
 
 html[data-theme='light'] .ambient-scrim[data-video='false'] {
   background:
-    radial-gradient(120% 90% at 50% 0%, rgba(245, 241, 232, 0.14) 0%, rgba(245, 241, 232, 0.36) 100%);
+    radial-gradient(120% 90% at 50% 0%, rgba(246, 247, 245, 0.16) 0%, rgba(238, 241, 238, 0.36) 100%);
 }
 
 @media (prefers-reduced-motion: reduce) {
