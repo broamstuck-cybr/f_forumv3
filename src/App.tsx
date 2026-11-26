@@ -117,7 +117,7 @@ const ROUTE_LOAD_LABELS: Record<string, string> = {
   explore: 'Đang mở Bàn soi Khám phá...',
   experience: 'Đang nạp Trải nghiệm mẫu...',
   workspace: 'Đang khởi động Workspace F-Forum...',
-  community: 'Đang mở Tra cứu tri thức...',
+  community: 'Đang mở Bảng tin & Phòng chat...',
   profile: 'Đang mở Hồ sơ thành viên...',
   settings: 'Đang mở Cài đặt hệ thống...',
   honor: 'Đang mở Phòng trưng bày 3D Đội ngũ...',

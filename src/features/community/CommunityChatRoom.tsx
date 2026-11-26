@@ -97,6 +97,29 @@ const BASE_THREADS: ChatThread[] = [
   },
 ];
 
+const CHANNEL_STARTERS: Record<string, string[]> = {
+  chung: [
+    'Mọi người đang dựng dự án gì tuần này?',
+    'Cần góp ý bố cục landing page 1440px',
+    'Chia sẻ 1 trick CSS mượt 60fps bạn hay dùng',
+  ],
+  'vibe-coding': [
+    'Prompt nào sinh layout 3 cột chuẩn nhất?',
+    'So sánh luồng Diff & Check trên Workspace',
+    'Chia sẻ cách giữ token màu không bị AI slop',
+  ],
+  'ui-ux-critique': [
+    'Nhờ soi tương phản chữ trên nền tối giúp mình',
+    'Góp ý spacing & bo góc đồng tâm cho thẻ sản phẩm',
+    'Kiểm tra reflow mobile 390px giúp mình nhé',
+  ],
+  'hoi-dap-nhanh': [
+    'Lỗi CORS khi gọi API trên Vercel xử lý sao?',
+    'Cách tối ưu bundle Vite giảm chunk lớn',
+    'Hỏi cách bật RLS an toàn trên Supabase',
+  ],
+};
+
 const SEED: ChatMessage[] = [];
 const VOICE_SPEEDS = [1, 1.5, 2] as const;
 
@@ -857,24 +880,42 @@ export const CommunityChatRoom: React.FC<Props> = ({ currentHandle, currentName 
     );
   };
 
+  const roomSnippets = useMemo(
+    () => threadMessages.filter((m) => Boolean(m.snippet?.trim())).slice(-6).reverse(),
+    [threadMessages]
+  );
+
+  const quickStarters = CHANNEL_STARTERS[thread.id] ?? CHANNEL_STARTERS.chung;
+
   return (
-    <section className="chat" data-thread-open={mobileThread} aria-label="Phòng chat Tri thức">
+    <section
+      className="chat chat--lounge"
+      data-thread-open={mobileThread}
+      data-desk-open={showPin}
+      aria-label="Phòng chat Tri thức"
+    >
       <aside className="chat-list">
         <div className="chat-list-head">
           <div className="chat-title-group">
             <span className="chat-title-mark" aria-hidden="true">
               <IconMessageCircle size={15} />
             </span>
-            <h2 className="chat-title">Phòng chat</h2>
+            <div>
+              <h2 className="chat-title">Studio Lounge</h2>
+              <span className="chat-title-sub">
+                {channelThreads.length} kênh · đồng bộ thực
+              </span>
+            </div>
           </div>
           <button
             type="button"
             className="chat-new-btn"
             aria-expanded={newDmOpen}
+            aria-label="Tạo hội thoại mới"
+            title="Hội thoại mới"
             onClick={() => setNewDmOpen((v) => !v)}
           >
-            <IconPlus size={14} aria-hidden="true" />
-            <span>Nhắn mới</span>
+            <IconPlus size={15} aria-hidden="true" />
           </button>
         </div>
 
@@ -898,53 +939,16 @@ export const CommunityChatRoom: React.FC<Props> = ({ currentHandle, currentName 
           <SearchCard
             value={query}
             onChange={setQuery}
-            placeholder="Tìm kênh hoặc tin nhắn..."
+            placeholder="Lọc kênh hoặc tin nhắn..."
             compact
             className="chat-pinui-search"
           />
         </div>
 
-        <div className="chat-stories" aria-label="Truy cập nhanh kênh và hội thoại">
-          <button
-            type="button"
-            className="chat-story-btn"
-            onClick={() => setNewDmOpen(true)}
-            aria-label="Bắt đầu cuộc trò chuyện mới"
-          >
-            <span className="chat-story-ring" data-active-ring="true">
-              <span className="chat-story-inner">
-                <IconPlus size={17} aria-hidden="true" />
-              </span>
-            </span>
-            <span className="chat-story-label">{currentName.split(/\s+/)[0] || 'Bạn'}</span>
-          </button>
-
-          {threads.map((t) => {
-            const isUnread = unread(t.id) > 0;
-            const isActive = t.id === activeId;
-            return (
-              <button
-                key={`story-${t.id}`}
-                type="button"
-                className="chat-story-btn"
-                data-card-trigger
-                aria-pressed={isActive}
-                onClick={() => openThread(t.id)}
-                title={t.name}
-              >
-                <span className="chat-story-ring" data-active-ring={t.online || isUnread || isActive}>
-                  <span className="chat-story-inner">{threadInitial(t.name)}</span>
-                </span>
-                <span className="chat-story-label">{t.name.replace(/^#/, '')}</span>
-              </button>
-            );
-          })}
-        </div>
-
         <div className="chat-threads-scroll">
           {channelThreads.length > 0 && (
             <div className="chat-thread-section">
-              <span className="chat-section-label">Kênh thảo luận</span>
+              <span className="chat-section-label">Kênh Studio</span>
               <ul className="chat-threads">{channelThreads.map(renderThreadRow)}</ul>
             </div>
           )}
@@ -979,67 +983,27 @@ export const CommunityChatRoom: React.FC<Props> = ({ currentHandle, currentName 
               <strong>{thread.name}</strong>
               <span className="chat-sub">
                 <span className="chat-sub-dot" aria-hidden="true" />
-                {thread.kind === 'channel'
-                  ? 'Kênh trực tuyến · Đồng bộ tức thì'
-                  : thread.online
-                    ? 'Đang hoạt động'
-                    : 'Ngoại tuyến'}
+                {thread.rule ? thread.rule : thread.online ? 'Đang hoạt động' : 'Ngoại tuyến'}
               </span>
             </div>
           </div>
 
           <div className="chat-head-actions">
-            {thread.rule && (
-              <button
-                type="button"
-                className="chat-head-btn"
-                aria-pressed={showPin}
-                aria-label={showPin ? 'Ẩn quy tắc kênh' : 'Hiện quy tắc kênh'}
-                title="Quy tắc kênh"
-                onClick={() => setShowPin((v) => !v)}
-              >
-                <IconPin size={15} />
-              </button>
-            )}
-            <button
-              type="button"
-              className="chat-head-btn"
-              aria-pressed={showSnippet}
-              aria-label="Đính kèm đoạn mã"
-              title="Đính kèm mã"
-              onClick={() => setShowSnippet((v) => !v)}
-            >
-              <IconCode2 size={15} />
-            </button>
-            <button
-              type="button"
-              className="chat-head-btn"
-              aria-pressed={showVoice}
-              aria-label="Đính kèm tin nhắn thoại"
-              title="Tin nhắn thoại"
-              onClick={() => setShowVoice((v) => !v)}
-            >
-              <IconMic size={15} />
-            </button>
-          </div>
-        </header>
-
-        {thread.rule && showPin && (
-          <p className="chat-pin">
-            <span className="chat-pin-text">
-              <IconPin size={14} aria-hidden="true" />
-              <span>{thread.rule}</span>
+            <span className="chat-head-count" aria-label="Số tin nhắn trong kênh">
+              {threadMessages.length} tin
             </span>
             <button
               type="button"
-              className="chat-pin-close"
-              onClick={() => setShowPin(false)}
-              aria-label="Ẩn thông báo ghim"
+              className="chat-head-btn"
+              aria-pressed={showPin}
+              aria-label={showPin ? 'Ẩn bảng ngữ cảnh kênh' : 'Hiện bảng ngữ cảnh kênh'}
+              title={showPin ? 'Ẩn ngữ cảnh' : 'Hiện ngữ cảnh'}
+              onClick={() => setShowPin((v) => !v)}
             >
-              <IconX size={13} />
+              <IconPin size={15} />
             </button>
-          </p>
-        )}
+          </div>
+        </header>
 
         <div className="chat-stream" role="log" aria-live="polite">
           {threadMessages.length === 0 && (
@@ -1047,10 +1011,22 @@ export const CommunityChatRoom: React.FC<Props> = ({ currentHandle, currentName 
               <span className="chat-empty-glyph" aria-hidden="true">
                 {thread.kind === 'channel' ? <IconHash size={22} /> : <IconMessageCircle size={22} />}
               </span>
-              <h3>Bắt đầu hội thoại tại {thread.name}</h3>
-              <p>
-                Gửi tin nhắn, chia sẻ đoạn mã tô sáng cú pháp, đính kèm ảnh hoặc ghi âm thoại. Tin nhắn đồng bộ trực tiếp giữa các thẻ trình duyệt.
+              <h3>{thread.name}</h3>
+              <p className="chat-empty-desc">
+                {thread.rule || 'Chọn gợi ý bên dưới hoặc gửi đoạn mã đầu tiên để mở luồng trao đổi.'}
               </p>
+              <div className="chat-starter-grid">
+                {quickStarters.map((prompt) => (
+                  <button
+                    key={prompt}
+                    type="button"
+                    className="chat-starter-chip"
+                    onClick={() => setDraft(prompt)}
+                  >
+                    {prompt}
+                  </button>
+                ))}
+              </div>
             </div>
           )}
 
@@ -1407,6 +1383,60 @@ export const CommunityChatRoom: React.FC<Props> = ({ currentHandle, currentName 
           </div>
         </form>
       </div>
+
+      {showPin && (
+        <aside className="chat-desk" aria-label="Ngữ cảnh kênh">
+          <div className="chat-desk-block">
+            <span className="chat-desk-label">Tiêu điểm kênh</span>
+            <strong className="chat-desk-title">{thread.name}</strong>
+            <p className="chat-desk-rule">
+              {thread.rule || 'Trao đổi trực tiếp, giữ mạch ngắn gọn và có ví dụ minh họa.'}
+            </p>
+          </div>
+
+          <div className="chat-desk-stats">
+            <div className="chat-desk-stat">
+              <span>Tin nhắn</span>
+              <strong>{threadMessages.length}</strong>
+            </div>
+            <div className="chat-desk-stat">
+              <span>Đoạn mã</span>
+              <strong>{roomSnippets.length}</strong>
+            </div>
+          </div>
+
+          <div className="chat-desk-block chat-desk-block--grow">
+            <span className="chat-desk-label">Mã chia sẻ gần đây</span>
+            {roomSnippets.length === 0 ? (
+              <p className="chat-desk-empty">
+                Chưa có đoạn mã nào trong kênh. Bấm biểu tượng mã ở thanh nhập để chia sẻ.
+              </p>
+            ) : (
+              <ul className="chat-desk-snippets">
+                {roomSnippets.map((item) => (
+                  <li key={`desk-snip-${item.id}`} className="chat-desk-snippet">
+                    <div className="chat-desk-snippet-head">
+                      <span>{item.authorName}</span>
+                      <button
+                        type="button"
+                        className="chat-desk-copy"
+                        aria-label="Sao chép đoạn mã"
+                        title="Sao chép"
+                        onClick={() => copySnippet(item.id, item.snippet || '')}
+                      >
+                        {copiedId === item.id ? <IconCheck size={13} /> : <IconCopy size={13} />}
+                      </button>
+                    </div>
+                    <pre className="chat-desk-code">
+                      <code>{(item.snippet || '').slice(0, 140)}</code>
+                    </pre>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        </aside>
+      )}
 
       {isSafeChatImageUrl(lightboxUrl ?? undefined) && lightboxUrl && (
         <div

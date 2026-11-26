@@ -36,12 +36,6 @@ import {
   IconX,
 } from '../../ui/icons';
 import { apiClient } from '../../services/apiClient';
-import { KnowledgeView } from '../knowledge/KnowledgeView';
-import {
-  fetchVaultIndex,
-  getCachedVaultIndex,
-  type VaultLibraryKey,
-} from '../explore/vaultLoader';
 import { moderateFields } from './moderationFilter';
 import { CommunityChatRoom } from './CommunityChatRoom';
 import { PinHeartButton } from '../../components/pinui/PinHeartButton';
@@ -81,21 +75,12 @@ import {
 } from './CommunityNotificationsModal';
 import './community.css';
 
-type TriThucMode = 'knowledge' | 'feed' | 'chat';
+type TriThucMode = 'feed' | 'chat';
 type FeedTabId = 'all' | 'following' | 'newest' | 'trending' | 'demos';
 const FOLLOWING_STORAGE_KEY = 'fforum_v3_following_handles';
 type ChannelFilterId = 'all' | CommunityChannel | 'saved' | 'exams';
 type SortMode = 'newest' | 'top' | 'discussed';
 type CodeDisplayMode = 'collapsed' | 'live' | 'code';
-
-const VALID_VAULT_SOURCES = new Set<VaultLibraryKey>([
-  'codefronts',
-  'lucianlabs',
-  'pinui',
-  'threeui',
-  'motionsites',
-  'glacier',
-]);
 
 const VALID_CHANNELS = new Set<ChannelFilterId>([
   'all',
@@ -108,7 +93,6 @@ const VALID_CHANNELS = new Set<ChannelFilterId>([
 ]);
 
 const MODE_TABS: LiquidTabItem[] = [
-  { id: 'knowledge', label: 'Tra cứu', icon: <IconSearch size={14} aria-hidden="true" /> },
   { id: 'feed', label: 'Bảng tin', icon: <IconBookOpen size={14} aria-hidden="true" /> },
   { id: 'chat', label: 'Phòng chat', icon: <IconMessageSquare size={14} aria-hidden="true" /> },
 ];
@@ -125,18 +109,14 @@ const CHANNEL_ITEMS: Array<{ id: ChannelFilterId; label: string }> = [
 function parseTriThucUrlState(): {
   mode: TriThucMode;
   q: string;
-  source: VaultLibraryKey | 'all';
   channel: ChannelFilterId;
-  item: string | null;
   post: string | null;
 } {
   if (typeof window === 'undefined') {
     return {
-      mode: 'knowledge',
+      mode: 'feed',
       q: '',
-      source: 'all',
       channel: 'all',
-      item: null,
       post: null,
     };
   }
@@ -145,10 +125,6 @@ function parseTriThucUrlState(): {
   const post = params.get('post');
   const rawChannel = params.get('channel') as ChannelFilterId | null;
   const channel: ChannelFilterId = rawChannel && VALID_CHANNELS.has(rawChannel) ? rawChannel : 'all';
-  const rawSource = params.get('source') as VaultLibraryKey | null;
-  const source: VaultLibraryKey | 'all' =
-    rawSource && VALID_VAULT_SOURCES.has(rawSource) ? rawSource : 'all';
-  const item = params.get('item');
   const q = params.get('q') || '';
 
   let hasPendingFeedSession = false;
@@ -161,31 +137,26 @@ function parseTriThucUrlState(): {
     hasPendingFeedSession = false;
   }
 
-  let mode: TriThucMode = 'knowledge';
+  let mode: TriThucMode = 'feed';
   if (post || (rawChannel && VALID_CHANNELS.has(rawChannel)) || hasPendingFeedSession) {
     mode = 'feed';
-  } else if (rawMode === 'knowledge' || rawMode === 'feed' || rawMode === 'chat') {
-    mode = rawMode;
+  } else if (rawMode === 'chat') {
+    mode = 'chat';
   }
 
-  return { mode, q, source, channel, item, post };
+  return { mode, q, channel, post };
 }
 
 function buildTriThucUrl(opts: {
   mode: TriThucMode;
   q: string;
-  source: VaultLibraryKey | 'all';
   channel: ChannelFilterId;
-  item: string | null;
   post: string | null;
 }): string {
   const params = new URLSearchParams();
   params.set('mode', opts.mode);
   if (opts.q.trim()) params.set('q', opts.q.trim());
-  if (opts.mode === 'knowledge') {
-    if (opts.source !== 'all') params.set('source', opts.source);
-    if (opts.item) params.set('item', opts.item);
-  } else if (opts.mode === 'feed') {
+  if (opts.mode === 'feed') {
     if (opts.channel !== 'all') params.set('channel', opts.channel);
     if (opts.post) params.set('post', opts.post);
   }
@@ -513,13 +484,6 @@ export const CommunityView: React.FC = () => {
 
   const [initialUrl] = useState(() => parseTriThucUrlState());
   const [mode, setMode] = useState<TriThucMode>(initialUrl.mode);
-  const [knowledgeQuery, setKnowledgeQuery] = useState<string>(
-    initialUrl.mode === 'knowledge' ? initialUrl.q : ''
-  );
-  const [knowledgeSource, setKnowledgeSource] = useState<VaultLibraryKey | 'all'>(
-    initialUrl.source
-  );
-  const [knowledgeItemId, setKnowledgeItemId] = useState<string | null>(initialUrl.item);
 
   const [feedTab, setFeedTab] = useState<FeedTabId>('all');
   const [activeChannel, setActiveChannel] = useState<ChannelFilterId>(initialUrl.channel);
@@ -1569,17 +1533,15 @@ const VALID_POST_REACTION_IDS = new Set<PostReactionId>(['like', 'love', 'wow', 
       if (typeof window === 'undefined') return;
       const nextUrl = buildTriThucUrl({
         mode: nextMode,
-        q: nextMode === 'knowledge' ? knowledgeQuery : nextMode === 'feed' ? searchQuery : '',
-        source: knowledgeSource,
+        q: nextMode === 'feed' ? searchQuery : '',
         channel: activeChannel,
-        item: knowledgeItemId,
         post: selectedPostId,
       });
       if (window.location.pathname + window.location.search !== nextUrl) {
         window.history.pushState({}, '', nextUrl);
       }
     },
-    [knowledgeQuery, searchQuery, knowledgeSource, activeChannel, knowledgeItemId, selectedPostId]
+    [searchQuery, activeChannel, selectedPostId]
   );
 
   useEffect(() => {
@@ -1587,25 +1549,20 @@ const VALID_POST_REACTION_IDS = new Set<PostReactionId>(['like', 'love', 'wow', 
     if (window.location.pathname !== '/community') return;
     const nextUrl = buildTriThucUrl({
       mode,
-      q: mode === 'knowledge' ? knowledgeQuery : mode === 'feed' ? searchQuery : '',
-      source: knowledgeSource,
+      q: mode === 'feed' ? searchQuery : '',
       channel: activeChannel,
-      item: knowledgeItemId,
       post: selectedPostId,
     });
     if (window.location.pathname + window.location.search !== nextUrl) {
       window.history.replaceState({}, '', nextUrl);
     }
-  }, [mode, knowledgeQuery, searchQuery, knowledgeSource, activeChannel, knowledgeItemId, selectedPostId]);
+  }, [mode, searchQuery, activeChannel, selectedPostId]);
 
   useEffect(() => {
     const syncFromUrl = () => {
       if (window.location.pathname !== '/community') return;
       const parsed = parseTriThucUrlState();
       setMode(parsed.mode);
-      setKnowledgeQuery(parsed.mode === 'knowledge' ? parsed.q : '');
-      setKnowledgeSource(parsed.mode === 'knowledge' ? parsed.source : 'all');
-      setKnowledgeItemId(parsed.mode === 'knowledge' ? parsed.item : null);
       setSearchQuery(parsed.mode === 'feed' ? parsed.q : '');
       setActiveChannel(parsed.mode === 'feed' ? parsed.channel : 'all');
       setSelectedPostId(parsed.mode === 'feed' ? parsed.post : null);
@@ -1614,10 +1571,8 @@ const VALID_POST_REACTION_IDS = new Set<PostReactionId>(['like', 'love', 'wow', 
       if (window.location.pathname !== '/community') return;
       const nextUrl = buildTriThucUrl({
         mode,
-        q: mode === 'knowledge' ? knowledgeQuery : mode === 'feed' ? searchQuery : '',
-        source: knowledgeSource,
+        q: mode === 'feed' ? searchQuery : '',
         channel: activeChannel,
-        item: knowledgeItemId,
         post: selectedPostId,
       });
       if (window.location.pathname + window.location.search !== nextUrl) {
@@ -1630,7 +1585,7 @@ const VALID_POST_REACTION_IDS = new Set<PostReactionId>(['like', 'love', 'wow', 
       window.removeEventListener('popstate', syncFromUrl);
       window.removeEventListener('ff:community-sync-url', onNavbarSync);
     };
-  }, [mode, knowledgeQuery, searchQuery, knowledgeSource, activeChannel, knowledgeItemId, selectedPostId]);
+  }, [mode, searchQuery, activeChannel, selectedPostId]);
 
   useEffect(() => {
     const handleAction = (action: string | null) => {
@@ -2635,32 +2590,10 @@ const VALID_POST_REACTION_IDS = new Set<PostReactionId>(['like', 'love', 'wow', 
     [composeTagsInput]
   );
 
-  const [vaultTotal, setVaultTotal] = useState<number>(() => {
-    const cached = getCachedVaultIndex();
-    return cached ? cached.items.length || cached.total : 0;
-  });
-
-  useEffect(() => {
-    if (mode !== 'knowledge' || vaultTotal > 0) return;
-    let cancelled = false;
-    fetchVaultIndex()
-      .then((data) => {
-        if (!cancelled) setVaultTotal(data.items.length || data.total);
-      })
-      .catch(() => undefined);
-    return () => {
-      cancelled = true;
-    };
-  }, [mode, vaultTotal]);
-
   const modeCaption =
-    mode === 'knowledge'
-      ? vaultTotal > 0
-        ? `Tra cứu ${new Intl.NumberFormat('vi-VN').format(vaultTotal)} mẫu mã nguồn, đọc sâu đặc tả và mở thẳng trong Workspace.`
-        : 'Tra cứu kho mẫu mã nguồn, đọc sâu đặc tả và mở thẳng trong Workspace.'
-      : mode === 'chat'
-        ? 'Trao đổi trực tiếp, chia sẻ đoạn mã, ghi âm thoại và góp ý giao diện theo thời gian thực.'
-        : 'Không gian chia sẻ bài viết kỹ thuật, trưng bày bản dựng và hỏi đáp cộng đồng.';
+    mode === 'chat'
+      ? 'Trao đổi trực tiếp, chia sẻ đoạn mã, ghi âm thoại và góp ý giao diện theo thời gian thực.'
+      : 'Không gian chia sẻ bài viết kỹ thuật, trưng bày bản dựng và hỏi đáp cộng đồng.';
 
   return (
     <div className="cm cm--editorial">
@@ -2678,17 +2611,7 @@ const VALID_POST_REACTION_IDS = new Set<PostReactionId>(['like', 'love', 'wow', 
         </div>
       </div>
 
-      {mode === 'knowledge' ? (
-        <KnowledgeView
-          embedded
-          query={knowledgeQuery}
-          onQueryChange={setKnowledgeQuery}
-          source={knowledgeSource}
-          onSourceChange={setKnowledgeSource}
-          selectedItemId={knowledgeItemId}
-          onSelectItem={setKnowledgeItemId}
-        />
-      ) : mode === 'chat' ? (
+      {mode === 'chat' ? (
         <div className="wrap-wide">
           <CommunityChatRoom
             currentHandle={currentUser?.username || 'builder_vn'}

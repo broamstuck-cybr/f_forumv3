@@ -467,14 +467,14 @@ describe('Vault Hydration & Anti-Arena Regression Suite', () => {
     assert.ok(clip.startsWith("path('M ") && clip.endsWith("Z')"), 'buildRoundedQuadClipPath must return valid SVG path()');
   });
 
-  test('verifies M3 Landing Cards 07–09 StarterLiveStage, Team Honor dossier cleanup, and zero lucide-react / zoom regressions', () => {
+  test('verifies Landing Cards 07–09 authentic trailers, 3D ThreeUIPreview wiring, Chat Lounge & zero lucide-react / zoom regressions', () => {
     const landingProjectsTsx = fs.readFileSync(
       path.join(projectRoot, 'src', 'components', 'landing', 'sections', 'LandingProjects.tsx'),
       'utf8'
     );
     assert.ok(
-      landingProjectsTsx.includes('StarterLiveStage'),
-      'LandingProjects.tsx must render StarterLiveStage on Cards 07–09'
+      landingProjectsTsx.includes('item.gifUrl'),
+      'LandingProjects.tsx must showcase authentic resource trailer GIFs on Cards 07–09'
     );
     assert.equal(
       /hovered &&|<iframe/.test(landingProjectsTsx),
@@ -492,15 +492,32 @@ describe('Vault Hydration & Anti-Arena Regression Suite', () => {
       'LandingProjects.tsx must attach media onError fallbacks'
     );
 
-    const starterLiveStageTsx = fs.readFileSync(
-      path.join(projectRoot, 'src', 'components', 'landing', 'sections', 'StarterLiveStage.tsx'),
+    const specimenSheetTsx = fs.readFileSync(
+      path.join(projectRoot, 'src', 'features', 'explore', 'SpecimenSheet.tsx'),
       'utf8'
     );
     assert.ok(
-      starterLiveStageTsx.includes('starter-live-stage') &&
-        starterLiveStageTsx.includes('hms-space-voyage') &&
-        starterLiveStageTsx.includes('hms-codenest'),
-      'StarterLiveStage.tsx must implement all 3 interactive starter stages'
+      specimenSheetTsx.includes('<ThreeUIPreview'),
+      'SpecimenSheet.tsx must render ThreeUIPreview for 3D ThreeUI specimens'
+    );
+
+    const communityViewTsx = fs.readFileSync(
+      path.join(projectRoot, 'src', 'features', 'community', 'CommunityView.tsx'),
+      'utf8'
+    );
+    assert.equal(
+      communityViewTsx.includes("label: 'Tra cứu'"),
+      false,
+      'CommunityView.tsx must remove the duplicate Tra cứu tab'
+    );
+
+    const chatRoomTsx = fs.readFileSync(
+      path.join(projectRoot, 'src', 'features', 'community', 'CommunityChatRoom.tsx'),
+      'utf8'
+    );
+    assert.ok(
+      chatRoomTsx.includes('chat--lounge') && chatRoomTsx.includes('chat-desk'),
+      'CommunityChatRoom.tsx must render the redesigned 3-column Studio Lounge layout'
     );
 
     const landingCss = fs.readFileSync(

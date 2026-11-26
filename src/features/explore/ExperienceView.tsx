@@ -927,6 +927,14 @@ export const ExperienceView: React.FC = () => {
                       itemId={activeVaultItem.i}
                       theme={stageTheme}
                     />
+                  ) : isThreeUI ? (
+                    <ThreeUIPreview
+                      key={`${activeVaultItem.i}-3ui`}
+                      itemId={activeVaultItem.i}
+                      title={activeTitle}
+                      image={activeOriginalImage || undefined}
+                      videoUrl={activeOriginalVideo || undefined}
+                    />
                   ) : (Boolean(activeHtml && (/<(?:!doctype|html|section|main|header|body)[\s>]/i.test(activeHtml) || Boolean(snippetCssWithTheme?.trim()) || activeHtml.trim().length >= 220)) && (motionStageMode === 'html' || !activeOriginalVideo)) ? (
                     <SandboxPreview
                       title={activeTitle}
@@ -936,13 +944,6 @@ export const ExperienceView: React.FC = () => {
                       theme={stageTheme}
                       viewport={viewport}
                       nonce={nonce}
-                    />
-                  ) : isThreeUI ? (
-                    <ThreeUIPreview
-                      key={`${activeVaultItem.i}-3ui`}
-                      itemId={activeVaultItem.i}
-                      title={activeTitle}
-                      image={activeOriginalImage || undefined}
                     />
                   ) : isGlacier && activeOriginalVideo ? (
                     <BackgroundLab

@@ -8,7 +8,6 @@ import { Mark } from '../../../ui/Mark';
 import { DEFAULT_CLUB_COVER, handleImageError, handleVideoError } from '../../../utils/mediaFallback';
 import { PROJECT_SHOWCASE_THUMBS } from '../landingContent';
 import { useInView, usePrefersReducedMotion } from '../useLandingMotion';
-import { StarterLiveStage } from './StarterLiveStage';
 
 interface LandingProjectsProps {
   onNavigate: (view: DimensionView) => void;
@@ -52,10 +51,17 @@ const ProjectCard = React.memo<{
     <div className="lp-proj-media">
       <span className="lp-proj-index">{String(index + 1).padStart(2, '0')}</span>
       <div className="lp-plate-fallback lp-proj-fallback" aria-hidden="true">
-        <span>Starter Kit</span>
+        <span>MotionSites</span>
         <strong>{item.title}</strong>
       </div>
-      <StarterLiveStage item={item} />
+      <img
+        src={item.gifUrl}
+        alt={`Trailer xem trước ${item.title}`}
+        loading="lazy"
+        decoding="async"
+        className="lp-proj-img"
+        onError={(e) => handleImageError(e, item.fallbackUrl || DEFAULT_CLUB_COVER)}
+      />
     </div>
     <div className="lp-proj-body">
       <p className="t-label">{item.category}</p>

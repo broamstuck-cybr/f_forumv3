@@ -13,6 +13,7 @@ import {
 import { previewFor } from '../../ui/Media';
 import { useAppStore } from '../../store/appStore';
 import { PinHeartButton, PinUIPlayground } from '../../components/pinui';
+import { ThreeUIPreview } from './ThreeUIPreview';
 import {
   LIBRARY_LABEL,
   copyText,
@@ -363,6 +364,14 @@ export const SpecimenSheet: React.FC<SpecimenSheetProps> = ({
                   itemId={item.id}
                   theme={stageTheme}
                   compact
+                />
+              ) : isThreeUI ? (
+                <ThreeUIPreview
+                  key={`${item.id}-3ui-${nonce}`}
+                  itemId={item.id}
+                  title={safeTitle}
+                  image={originalImage || undefined}
+                  videoUrl={originalVideo || undefined}
                 />
               ) : safeHtml ? (
                 <SandboxPreview

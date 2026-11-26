@@ -49,8 +49,9 @@ export const ThreeUIPreview: React.FC<{
   itemId: string;
   title: string;
   image?: string;
+  videoUrl?: string;
   sourceUrl?: string;
-}> = ({ itemId, title, image }) => {
+}> = ({ itemId, title, image, videoUrl }) => {
   const stageRef = useRef<HTMLDivElement | null>(null);
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const [entry, setEntry] = useState<ThreeUIPreviewEntry | null>(null);
@@ -75,7 +76,7 @@ export const ThreeUIPreview: React.FC<{
     };
   }, [itemId]);
 
-  const videoSrc = entry?.v || '';
+  const videoSrc = videoUrl || entry?.v || '';
   const poster = entry?.t || image || '';
   const hasVideo = Boolean(videoSrc) && !failed;
 
@@ -148,10 +149,11 @@ export const ThreeUIPreview: React.FC<{
             className="ex-3ui-media"
             src={videoSrc}
             poster={poster || undefined}
+            autoPlay
             muted
             loop
             playsInline
-            preload="metadata"
+            preload="auto"
             aria-label={`Xem trước chuyển động 3D: ${title}`}
             onTimeUpdate={(event) => {
               const video = event.currentTarget;
