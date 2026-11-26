@@ -604,17 +604,17 @@ describe('F-FORUM v3 Security, RBAC & 2-Key Pool Suite (F4–F6)', () => {
     }
     assert.equal(got429, true, 'Burst /api/metrics/visit must trigger 429 sliding-window limit');
 
-    for (const rel of [
-      'api/admin/index.ts',
-      'api/community/index.ts',
-      'api/projects/index.ts',
-      'api/changelog.ts',
-      'api/admin/key-pool/test.ts',
-    ]) {
-      assert.ok(fs.existsSync(path.join(projectRoot, rel)), `Missing ${rel}`);
-    }
+    assert.ok(fs.existsSync(path.join(projectRoot, 'api/index.ts')), 'Missing consolidated api/index.ts');
+    const apiFiles = fs.readdirSync(path.join(projectRoot, 'api'), { recursive: true })
+      .filter((f) => String(f).endsWith('.ts'));
+    assert.ok(apiFiles.length <= 12, `Vercel Hobby plan allows <= 12 serverless functions, found ${apiFiles.length}`);
 
     const vercel = JSON.parse(fs.readFileSync(path.join(projectRoot, 'vercel.json'), 'utf8'));
+    assert.ok(
+      Array.isArray(vercel.rewrites) &&
+        vercel.rewrites.some((r) => r.source === '/api/(.*)' && r.destination === '/api/index'),
+      'vercel.json must rewrite /api/(.*) to consolidated /api/index'
+    );
     const allHeaders = vercel.headers.flatMap((h) => h.headers.map((x) => `${h.source}:${x.key}:${x.value}`));
     assert.ok(allHeaders.some((s) => s.includes('Content-Security-Policy')));
     assert.ok(allHeaders.some((s) => s.includes('Strict-Transport-Security')));
