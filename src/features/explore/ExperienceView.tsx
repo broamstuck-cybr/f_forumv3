@@ -726,11 +726,12 @@ export const ExperienceView: React.FC = () => {
             <div className="ex-xp-list-scroll ff-scrollbar">
               <ul className="ex-xp-compact-list">
                 {visibleItems.map((item) => {
-                  const selected = activeVaultItem?.i === item.i;
+                  const selected =
+                    activeVaultItem?.i === item.i && activeVaultItem?.l === item.l;
                   const saved = savedItemIds.includes(item.i);
                   return (
                     <li
-                      key={item.i}
+                      key={`${item.l}:${item.i}`}
                       className="ex-xp-vault-row"
                       data-active={selected ? 'true' : undefined}
                     >
@@ -929,7 +930,7 @@ export const ExperienceView: React.FC = () => {
                     />
                   ) : isThreeUI ? (
                     <ThreeUIPreview
-                      key={`${activeVaultItem.i}-3ui`}
+                      key={`${activeVaultItem.i}-3ui-${nonce}`}
                       itemId={activeVaultItem.i}
                       title={activeTitle}
                       image={activeOriginalImage || undefined}

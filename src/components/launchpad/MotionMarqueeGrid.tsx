@@ -63,18 +63,32 @@ function loadMotionSitesFull(): Promise<Record<string, MotionSiteFullRecord>> {
 
 function splitLiveHtmlCss(rawLiveHtml: string | undefined): { html: string; css: string } | null {
   if (!rawLiveHtml || rawLiveHtml.trim().length === 0) return null;
-  const isFullDoc = /^\s*(?:<!doctype\s+html|<html[\s>])/i.test(rawLiveHtml);
+  const trimmed = rawLiveHtml.trim();
+  const isFullDoc = /^\s*(?:<!doctype\s+html|<html[\s>])/i.test(trimmed);
+  const hasStyleRules = /<style[^>]*>[\s\S]*?\{[\s\S]*?\}[\s\S]*?<\/style>/i.test(trimmed);
+
   if (isFullDoc) {
-    return { html: rawLiveHtml.trim(), css: '' };
+    const hasCompleteStructure = /<\/html>/i.test(trimmed) && /<body[\s>]/i.test(trimmed);
+    const isEmptyReactShell = /<div\s+id=["']root["']\s*><\/div>/i.test(trimmed) && trimmed.length < 1200;
+    if (!hasCompleteStructure || !hasStyleRules || isEmptyReactShell) {
+      return null;
+    }
+    return { html: trimmed, css: '' };
   }
+
+  if (trimmed.length < 1500 || !hasStyleRules) return null;
+  if (/@import\s+["']tailwindcss["']/i.test(trimmed)) return null;
+
   const styleBlocks: string[] = [];
-  const html = rawLiveHtml
+  const html = trimmed
     .replace(/<style[^>]*>([\s\S]*?)<\/style>/gi, (_m, cssBody: string) => {
       if (cssBody && cssBody.trim()) styleBlocks.push(cssBody.trim());
       return '';
     })
     .trim();
-  if (!html) return null;
+
+  const htmlWithoutScripts = html.replace(/<script[\s\S]*?<\/script>/gi, '');
+  if (!html || html.length < 250 || /\bclassName=/.test(htmlWithoutScripts)) return null;
   return { html, css: styleBlocks.join('\n\n') };
 }
 

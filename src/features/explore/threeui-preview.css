@@ -25,12 +25,23 @@
   inset: 0;
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  object-fit: contain;
   background: #071016;
+  user-select: none;
+  -webkit-user-drag: none;
 }
 
 .ex-3ui-media--still {
   object-fit: contain;
+}
+
+.ex-3ui-stage[data-scrubbable='true'] {
+  cursor: grab;
+  touch-action: pan-y;
+}
+
+.ex-3ui-stage[data-scrubbing='true'] {
+  cursor: grabbing;
 }
 
 .ex-3ui-empty {
@@ -271,43 +282,35 @@
   }
 }
 
-.ex-3ui-canvas-host {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  cursor: grab;
-  touch-action: none;
-}
-
-.ex-3ui-canvas-host:active {
-  cursor: grabbing;
-}
-
-.ex-3ui-canvas {
-  display: block;
-  width: 100%;
-  height: 100%;
-}
-
-.ex-3ui-mode-btn {
+.ex-3ui-speed {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  justify-content: center;
+  min-width: 36px;
   height: 30px;
-  padding: 0 10px;
-  border-radius: 999px;
-  border: 1px solid rgba(255, 255, 255, 0.18);
-  background: rgba(255, 255, 255, 0.08);
-  color: #f4f8f6;
-  font-family: var(--font-ui);
-  font-size: 11.5px;
-  font-weight: 500;
+  padding: 0 7px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.055);
+  color: rgba(244, 248, 246, 0.88);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
   cursor: pointer;
-  transition: background 0.16s ease, border-color 0.16s ease;
+  transition:
+    background-color 160ms ease,
+    border-color 160ms ease,
+    color 160ms ease;
 }
 
-.ex-3ui-mode-btn:hover {
-  background: rgba(56, 201, 154, 0.22);
-  border-color: rgba(56, 201, 154, 0.55);
+.ex-3ui-speed:hover {
+  border-color: rgba(94, 234, 212, 0.48);
+  background: rgba(94, 234, 212, 0.12);
+  color: #f7fbf9;
+}
+
+.ex-3ui-speed:focus-visible {
+  outline: 2px solid #5eead4;
+  outline-offset: 2px;
 }

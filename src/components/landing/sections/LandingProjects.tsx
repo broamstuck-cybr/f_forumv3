@@ -6,22 +6,47 @@ import { useAppStore } from '../../../store/appStore';
 import { IconRefreshCw } from '../../../ui/icons';
 import { Mark } from '../../../ui/Mark';
 import { DEFAULT_CLUB_COVER, handleImageError, handleVideoError } from '../../../utils/mediaFallback';
-import { PROJECT_SHOWCASE_THUMBS } from '../landingContent';
+import { VAULT_CACHE_VERSION } from '../../../features/explore/vaultLoader';
 import { useInView, usePrefersReducedMotion } from '../useLandingMotion';
 
 interface LandingProjectsProps {
   onNavigate: (view: DimensionView) => void;
 }
 
-const STARTER_PROJECTS = HOME_MOTION_SHOWCASES.filter((item) => item.id in PROJECT_SHOWCASE_THUMBS);
-const ROTATE_INTERVAL_MS = 120_000;
+interface MotionSiteSourceRecord {
+  liveHtml?: string;
+  css?: string;
+  code?: string;
+  codeLang?: string;
+  promptText?: string;
+}
+
+const STARTER_PROJECTS = HOME_MOTION_SHOWCASES.slice(0, 3);
+const STARTER_ID_SET = new Set(STARTER_PROJECTS.map((item) => item.id));
+const MOTION_MARQUEE_POOL = MOTION_MARQUEE_ITEMS.filter((item) => !STARTER_ID_SET.has(item.id));
 const MOTION_SAMPLE_COUNT = 6;
 
-const EXPLORE_ID_MAP: Record<string, string> = {
-  'hms-space-voyage': 'space-voyage',
-  'hms-codenest': 'codenest-hero',
-  'hms-stellar-ai-v2': 'stellar-ai-hero',
-};
+let cachedMotionSources: Record<string, MotionSiteSourceRecord> | null = null;
+let motionSourcesPromise: Promise<Record<string, MotionSiteSourceRecord>> | null = null;
+
+function loadMotionSources(): Promise<Record<string, MotionSiteSourceRecord>> {
+  if (cachedMotionSources) return Promise.resolve(cachedMotionSources);
+  if (motionSourcesPromise) return motionSourcesPromise;
+  if (typeof window === 'undefined' || typeof fetch !== 'function') {
+    return Promise.resolve({});
+  }
+  motionSourcesPromise = fetch(`/data/motionsites-full.json?v=${VAULT_CACHE_VERSION}`)
+    .then((res) => (res.ok ? res.json() : { items: {} }))
+    .then((data: { items?: Record<string, MotionSiteSourceRecord> }) => {
+      cachedMotionSources = data.items ?? {};
+      return cachedMotionSources;
+    })
+    .catch(() => {
+      motionSourcesPromise = null;
+      return {};
+    });
+  return motionSourcesPromise;
+}
 
 function shuffleSample<T>(pool: T[], count: number): T[] {
   const copy = [...pool];
@@ -37,6 +62,7 @@ function isVideoAsset(url: string): boolean {
 }
 
 function languageSummary(item: HomeMotionShowcaseItem): string {
+  if (item.files.length === 0) return 'HTML · CSS · JS';
   const langs = Array.from(new Set(item.files.map((f) => f.language.toUpperCase().replace('JAVASCRIPT', 'JS'))));
   return langs.join(' · ');
 }
@@ -56,21 +82,22 @@ const ProjectCard = React.memo<{
       </div>
       <img
         src={item.gifUrl}
-        alt={`Trailer xem trước ${item.title}`}
+        alt={`Xem trước ${item.title}`}
         loading="lazy"
         decoding="async"
+        referrerPolicy="no-referrer"
         className="lp-proj-img"
         onError={(e) => handleImageError(e, item.fallbackUrl || DEFAULT_CLUB_COVER)}
       />
     </div>
     <div className="lp-proj-body">
-      <p className="t-label">{item.category}</p>
+      <p className="t-label">MotionSites.ai · {item.category}</p>
       <h3 className="lp-proj-title">{item.title}</h3>
       <p className="lp-proj-text">{item.summaryVi}</p>
       <dl className="lp-proj-specs">
         <div>
-          <dt className="t-label">tệp mã</dt>
-          <dd>{item.files.length} tệp</dd>
+          <dt className="t-label">mã nguồn</dt>
+          <dd>{item.files.length > 0 ? `${item.files.length} tệp` : 'HTML gốc'}</dd>
         </div>
         <div>
           <dt className="t-label">khung nhìn</dt>
@@ -78,7 +105,7 @@ const ProjectCard = React.memo<{
         </div>
         <div>
           <dt className="t-label">nguồn</dt>
-          <dd>Starter Kit</dd>
+          <dd>MotionSites</dd>
         </div>
       </dl>
       <div className="lp-proj-chips">
@@ -276,7 +303,7 @@ export const LandingProjects: React.FC<LandingProjectsProps> = ({ onNavigate }) 
   }, [activeProjectId, addWorkspaceFiles, navigate]);
 
   const handleLiveStarter = useCallback(
-    (item: HomeMotionShowcaseItem) => {
+    async (item: HomeMotionShowcaseItem) => {
       if (pendingStarterRef.current) return;
       const existing = projects.find(
         (p) => !p.archived && p.attachedItems.some((attached) => attached.id === item.id)
@@ -284,6 +311,41 @@ export const LandingProjects: React.FC<LandingProjectsProps> = ({ onNavigate }) 
       if (existing) {
         selectProject(existing.id);
         navigate('workspace');
+        return;
+      }
+
+      let workspaceFiles: Array<{ path: string; content: string; summary: string }> =
+        item.files.map((file) => ({
+          path: file.path,
+          content: file.content,
+          summary: `${item.title} (${file.path})`,
+        }));
+
+      let fallbackPrompt = '';
+      if (workspaceFiles.length === 0) {
+        const sources = await loadMotionSources();
+        const rec = sources[item.slug] || sources[item.id] || sources[`ms-${item.slug}`];
+        if (rec?.liveHtml && rec.liveHtml.trim().length > 0) {
+          workspaceFiles = [
+            {
+              path: 'index.html',
+              content: rec.liveHtml.trim(),
+              summary: `${item.title} (MotionSites.ai index.html)`,
+            },
+          ];
+          if (rec.css && rec.css.trim().length > 0) {
+            workspaceFiles.push({
+              path: 'styles.css',
+              content: rec.css.trim(),
+              summary: `${item.title} (MotionSites.ai styles.css)`,
+            });
+          }
+        }
+        fallbackPrompt = rec?.promptText?.trim() || '';
+      }
+
+      if (workspaceFiles.length === 0) {
+        void launchPromptToWorkspace(fallbackPrompt || item.title);
         return;
       }
 
@@ -299,22 +361,18 @@ export const LandingProjects: React.FC<LandingProjectsProps> = ({ onNavigate }) 
 
       pendingStarterRef.current = {
         projectId: created.id,
-        files: item.files.map((file) => ({
-          path: file.path,
-          content: file.content,
-          summary: `${item.title} (${file.path})`,
-        })),
+        files: workspaceFiles,
       };
     },
-    [createProject, navigate, projects, selectProject]
+    [createProject, launchPromptToWorkspace, navigate, projects, selectProject]
   );
 
   const [motionBatch, setMotionBatch] = useState<MotionMarqueeItem[]>(() =>
-    shuffleSample(MOTION_MARQUEE_ITEMS, MOTION_SAMPLE_COUNT)
+    shuffleSample(MOTION_MARQUEE_POOL, MOTION_SAMPLE_COUNT)
   );
 
   const rotateMotionBatch = useCallback(() => {
-    setMotionBatch(shuffleSample(MOTION_MARQUEE_ITEMS, MOTION_SAMPLE_COUNT));
+    setMotionBatch(shuffleSample(MOTION_MARQUEE_POOL, MOTION_SAMPLE_COUNT));
   }, []);
 
   useEffect(
@@ -340,13 +398,13 @@ export const LandingProjects: React.FC<LandingProjectsProps> = ({ onNavigate }) 
               onLaunchPrompt={() => void launchPromptToWorkspace(item.promptText || item.title)}
             />
           ))}
-          {STARTER_PROJECTS.slice(0, 3).map((item, idx) => (
+          {STARTER_PROJECTS.map((item, idx) => (
             <ProjectCard
               key={item.id}
               item={item}
               index={motionBatch.length + idx}
-              onOpen={() => openExperience(EXPLORE_ID_MAP[item.id] ?? item.id)}
-              onLive={() => handleLiveStarter(item)}
+              onOpen={() => openExperience(item.slug)}
+              onLive={() => void handleLiveStarter(item)}
             />
           ))}
         </div>

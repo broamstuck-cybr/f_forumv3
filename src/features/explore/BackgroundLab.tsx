@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { IconLayers, IconRotateCw } from '../../ui/icons';
 
 interface BackgroundLabProps {
@@ -13,44 +13,64 @@ export const BackgroundLab: React.FC<BackgroundLabProps> = ({
   poster,
 }) => {
   const [blur, setBlur] = useState(0);
-  const [overlay, setOverlay] = useState(42);
+  const [overlay, setOverlay] = useState(0);
+  const [showTextPreview, setShowTextPreview] = useState(false);
   const [align, setAlign] = useState<'left' | 'center'>('left');
+  const [videoFailed, setVideoFailed] = useState(false);
+
+  useEffect(() => {
+    setVideoFailed(false);
+  }, [videoSrc]);
 
   const reset = () => {
     setBlur(0);
-    setOverlay(42);
+    setOverlay(0);
+    setShowTextPreview(false);
     setAlign('left');
   };
 
   return (
     <div className="ex-bg-lab" data-align={align}>
-      <video
-        className="ex-bg-lab-video"
-        src={videoSrc}
-        poster={poster}
-        autoPlay
-        muted
-        loop
-        playsInline
-        style={{ filter: `blur(${blur}px) saturate(1.05)` }}
-        aria-label={`Nền động ${title}`}
-      />
-      <div
-        className="ex-bg-lab-scrim"
-        style={{ background: `rgba(5, 8, 10, ${overlay / 100})` }}
-        aria-hidden="true"
-      />
-      <div className="ex-bg-lab-content">
-        <span className="ex-bg-lab-kicker">
-          <IconLayers size={13} aria-hidden="true" />
-          GetLayers · nền động
-        </span>
-        <h2>{title}</h2>
-        <p>
-          Đây là trang mẫu chạy trên chính video nền. Kéo độ mờ và độ phủ để kiểm
-          tra tương phản chữ trước khi dùng.
-        </p>
-      </div>
+      {!videoFailed ? (
+        <video
+          className="ex-bg-lab-video"
+          src={videoSrc}
+          poster={poster}
+          autoPlay
+          muted
+          loop
+          playsInline
+          style={{ filter: blur > 0 ? `blur(${blur}px)` : undefined }}
+          aria-label={`Nền động ${title}`}
+          onError={() => setVideoFailed(true)}
+        />
+      ) : poster ? (
+        <img
+          className="ex-bg-lab-video"
+          src={poster}
+          alt={title}
+          referrerPolicy="no-referrer"
+          style={{ filter: blur > 0 ? `blur(${blur}px)` : undefined }}
+        />
+      ) : null}
+
+      {overlay > 0 && (
+        <div
+          className="ex-bg-lab-scrim"
+          style={{ background: `rgba(5, 8, 10, ${overlay / 100})` }}
+          aria-hidden="true"
+        />
+      )}
+
+      {showTextPreview && (
+        <div className="ex-bg-lab-content">
+          <span className="ex-bg-lab-kicker">
+            <IconLayers size={13} aria-hidden="true" />
+            GetLayers · {title}
+          </span>
+          <h2>{title}</h2>
+        </div>
+      )}
 
       <div className="ex-bg-lab-controls" aria-label="Điều khiển nền mẫu">
         <label>
@@ -69,7 +89,7 @@ export const BackgroundLab: React.FC<BackgroundLabProps> = ({
           <span>Độ phủ tối</span>
           <input
             type="range"
-            min={10}
+            min={0}
             max={78}
             step={1}
             value={overlay}
@@ -77,21 +97,38 @@ export const BackgroundLab: React.FC<BackgroundLabProps> = ({
           />
           <output>{overlay}%</output>
         </label>
-        <div className="ex-bg-lab-seg" role="group" aria-label="Căn nội dung">
+        <div className="ex-bg-lab-seg" role="group" aria-label="Kiểm tra chữ trên nền">
           <button
             type="button"
-            aria-pressed={align === 'left'}
-            onClick={() => setAlign('left')}
+            aria-pressed={showTextPreview}
+            onClick={() => {
+              setShowTextPreview((prev) => {
+                const next = !prev;
+                if (next && overlay === 0) setOverlay(36);
+                return next;
+              });
+            }}
           >
-            Trái
+            Thử chữ
           </button>
-          <button
-            type="button"
-            aria-pressed={align === 'center'}
-            onClick={() => setAlign('center')}
-          >
-            Giữa
-          </button>
+          {showTextPreview && (
+            <>
+              <button
+                type="button"
+                aria-pressed={align === 'left'}
+                onClick={() => setAlign('left')}
+              >
+                Trái
+              </button>
+              <button
+                type="button"
+                aria-pressed={align === 'center'}
+                onClick={() => setAlign('center')}
+              >
+                Giữa
+              </button>
+            </>
+          )}
         </div>
         <button
           type="button"

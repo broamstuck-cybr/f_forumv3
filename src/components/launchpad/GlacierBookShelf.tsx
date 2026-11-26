@@ -9,31 +9,26 @@ import React, {
   useState,
 } from 'react';
 import {
-  IconArrowUpRight,
   IconBookOpen,
   IconBookmark,
   IconCheck,
   IconChevronLeft,
   IconChevronRight,
-  IconCompass,
   IconCopy,
   IconHeart,
-  IconLayers,
   IconMoon,
   IconRotateCw,
-  IconSlidersHorizontal,
   IconSun,
   IconX,
 } from '../../ui/icons';
 import {
   GLACIER_BOOKS,
   type GlacierBookMotif,
-  type GlacierBookSettings,
   type GlacierBookSpec,
 } from '../../data/glacierBooksData';
 import { useAppStore } from '../../store/appStore';
 import type { AppRoute, SourceCatalogItem } from '../../types';
-import { PinUIPlayground, SelectionList, type SelectionListItem } from '../pinui';
+import { PinUIPlayground } from '../pinui';
 import { previewFor } from '../../ui/Media';
 import { SandboxPreview } from '../../features/explore/SandboxPreview';
 import { SpecimenMedia } from '../../features/explore/SpecimenMedia';
@@ -114,20 +109,6 @@ const EASE = 'cubic-bezier(.2,.8,.2,1)';
 const EASE_SHEET = 'cubic-bezier(.76,0,.18,1)';
 const START_INDEX = 5;
 
-const SLIDERS: ReadonlyArray<{
-  key: keyof GlacierBookSettings;
-  label: string;
-  min: number;
-  max: number;
-  step: number;
-}> = [
-  { key: 'blurPx', label: 'Blur px', min: 0, max: 40, step: 1 },
-  { key: 'opacityPct', label: 'Độ trong %', min: 20, max: 100, step: 1 },
-  { key: 'radiusPx', label: 'Bo góc px', min: 0, max: 40, step: 1 },
-  { key: 'motionMs', label: 'Chuyển động ms', min: 0, max: 1200, step: 20 },
-  { key: 'grainPct', label: 'Hạt nhiễu %', min: 0, max: 30, step: 1 },
-];
-
 const mod = (n: number, m: number): number => ((n % m) + m) % m;
 const relIndex = (v: number, s: number): number => ((((v - s) % TOTAL) + 54) % TOTAL) - 18;
 const smooth = (x: number): number => x * x * (3 - 2 * x);
@@ -143,15 +124,6 @@ const insetFor = (rect: RectPx): string => {
   const vw = document.documentElement.clientWidth;
   const vh = window.innerHeight;
   return `inset(${rect.t}px ${Math.max(0, vw - rect.l - rect.w)}px ${Math.max(0, vh - rect.t - rect.h)}px ${rect.l}px round 3px)`;
-};
-
-const buildCss = (book: GlacierBookSpec, v: GlacierBookSettings): string => {
-  const o = book.settings;
-  const body = book.cssSnippet
-    .replaceAll(`blur(${o.blurPx}px)`, `blur(${v.blurPx}px)`)
-    .replaceAll(`${o.motionMs}ms`, `${v.motionMs}ms`)
-    .replaceAll(`${o.radiusPx}px`, `${v.radiusPx}px`);
-  return `:root {\n  --glacier-live-blur: ${v.blurPx}px;\n  --glacier-live-opacity: ${(v.opacityPct / 100).toFixed(2)};\n  --glacier-live-radius: ${v.radiusPx}px;\n  --glacier-live-motion: ${v.motionMs}ms;\n  --glacier-live-grain: ${(v.grainPct / 100).toFixed(2)};\n}\n\n${body}`;
 };
 
 const copyText = async (text: string): Promise<boolean> => {
@@ -464,10 +436,8 @@ function BookDialog({
     addToast,
   } = useAppStore();
 
-  const [vals, setVals] = useState<GlacierBookSettings>(book.settings);
   const [copied, setCopied] = useState('');
   const [demoKey, setDemoKey] = useState(0);
-  const [stageMode, setStageMode] = useState<'resource' | 'glacier'>('resource');
   const [stageTheme, setStageTheme] = useState<PreviewTheme>(theme);
   const [codeTab, setCodeTab] = useState<'code' | 'css' | 'prompt'>('code');
   const [pinuiMap, setPinuiMap] = useState<Record<string, PinUISourceEntry> | null>(
@@ -489,7 +459,7 @@ function BookDialog({
         picked.push(found);
       }
     }
-    if (picked.length < 4) {
+    if (picked.length < 6) {
       for (const item of sourceCatalog) {
         if (item.sourceLibrary === book.catalogLibrary && !picked.some((p) => p.id === item.id)) {
           picked.push(item);
@@ -501,12 +471,12 @@ function BookDialog({
   }, [sourceCatalog, book]);
 
   const [selectedItemId, setSelectedItemId] = useState<string>(() => bookItems[0]?.id ?? '');
+  const listRowRefs = useRef<Array<HTMLButtonElement | null>>([]);
 
   useEffect(() => {
-    setVals(book.settings);
     setSelectedItemId(bookItems[0]?.id ?? '');
     setDemoKey((k) => k + 1);
-  }, [book.id, book.settings, bookItems]);
+  }, [book.id, bookItems]);
 
   useEffect(() => {
     setStageTheme(theme);
@@ -524,16 +494,6 @@ function BookDialog({
   const selectedItem = useMemo(
     () => bookItems.find((it) => it.id === selectedItemId) ?? bookItems[0] ?? null,
     [bookItems, selectedItemId]
-  );
-
-  const selectionItems: SelectionListItem[] = useMemo(
-    () =>
-      bookItems.map((item) => ({
-        id: item.id,
-        label: `${shortTitle(item)} · ${LIBRARY_LABEL[item.sourceLibrary]}`,
-        swatch: book.accent,
-      })),
-    [bookItems, book.accent]
   );
 
   const selectedLib = selectedItem?.sourceLibrary;
@@ -558,16 +518,18 @@ function BookDialog({
   const selectedHtml = useMemo(() => {
     if (!selectedItem) return '';
     if (isPinUI) return pinuiSource?.tsx ?? '';
-    if (isThreeUI || isMotion) return '';
+    if (isMotion) return motionEntry?.code ?? motionEntry?.liveHtml ?? '';
+    if (isThreeUI) return '';
     return sanitizeSnippetCode(selectedItem.previewHtml);
-  }, [selectedItem, isPinUI, isThreeUI, isMotion, pinuiSource]);
+  }, [selectedItem, isPinUI, isThreeUI, isMotion, pinuiSource, motionEntry]);
 
   const selectedCss = useMemo(() => {
     if (!selectedItem) return '';
     if (isPinUI) return pinuiSource?.css ?? '';
-    if (isThreeUI || isMotion) return '';
+    if (isMotion) return motionEntry?.css ?? '';
+    if (isThreeUI) return '';
     return sanitizeSnippetCode(selectedItem.previewCss);
-  }, [selectedItem, isPinUI, isThreeUI, isMotion, pinuiSource]);
+  }, [selectedItem, isPinUI, isThreeUI, isMotion, pinuiSource, motionEntry]);
 
   const selectedPrompt = useMemo(() => {
     if (!selectedItem) return book.promptTemplate;
@@ -585,16 +547,17 @@ function BookDialog({
   }, [selectedItem, isPinUI, isThreeUI, isMotion]);
 
   useEffect(() => {
-    if (isThreeUI || isMotion) {
-      setCodeTab('prompt');
-    } else {
+    if (selectedHtml) {
       setCodeTab('code');
+    } else if (selectedCss) {
+      setCodeTab('css');
+    } else {
+      setCodeTab('prompt');
     }
-  }, [selectedItem?.id, isThreeUI, isMotion]);
+  }, [selectedItem?.id, selectedHtml, selectedCss]);
 
   const sheetRef = useRef<HTMLDivElement | null>(null);
   const closeRef = useRef<HTMLButtonElement | null>(null);
-  const demoFrameRef = useRef<HTMLIFrameElement | null>(null);
   const closingRef = useRef(false);
   const uid = useId().replace(/[^a-zA-Z0-9]/g, '');
   const titleId = `gb-dlg-${uid}-t`;
@@ -602,18 +565,38 @@ function BookDialog({
   const bookLiked = isItemLiked(book.id);
   const bookSaved = savedItemIds.includes(book.id);
   const itemSaved = selectedItem ? savedItemIds.includes(selectedItem.id) : false;
-  const cssText = useMemo(() => buildCss(book, vals), [book, vals]);
 
-  const postSettingsToDemo = useCallback((settings: GlacierBookSettings) => {
-    demoFrameRef.current?.contentWindow?.postMessage(
-      { type: 'glacier:settings', settings },
-      '*'
-    );
+  const handleSelectResource = useCallback((id: string) => {
+    setSelectedItemId(id);
+    setDemoKey((k) => k + 1);
   }, []);
 
-  useEffect(() => {
-    postSettingsToDemo(vals);
-  }, [vals, postSettingsToDemo]);
+  const handleResourceKeyDown = useCallback(
+    (idx: number, ev: React.KeyboardEvent<HTMLButtonElement>) => {
+      if (!bookItems.length) return;
+      if (ev.key === 'ArrowDown') {
+        ev.preventDefault();
+        const next = (idx + 1) % bookItems.length;
+        listRowRefs.current[next]?.focus();
+        handleSelectResource(bookItems[next].id);
+      } else if (ev.key === 'ArrowUp') {
+        ev.preventDefault();
+        const prev = (idx - 1 + bookItems.length) % bookItems.length;
+        listRowRefs.current[prev]?.focus();
+        handleSelectResource(bookItems[prev].id);
+      } else if (ev.key === 'Home') {
+        ev.preventDefault();
+        listRowRefs.current[0]?.focus();
+        handleSelectResource(bookItems[0].id);
+      } else if (ev.key === 'End') {
+        ev.preventDefault();
+        const last = bookItems.length - 1;
+        listRowRefs.current[last]?.focus();
+        handleSelectResource(bookItems[last].id);
+      }
+    },
+    [bookItems, handleSelectResource]
+  );
 
   useLayoutEffect(() => {
     const sheet = sheetRef.current;
@@ -708,36 +691,28 @@ function BookDialog({
     return () => window.clearTimeout(id);
   }, [copied]);
 
-  const doCopyResource = async (kind: 'code' | 'prompt' | 'glacier') => {
+  const doCopyResource = async (kind: 'code' | 'prompt') => {
     const textToCopy =
-      kind === 'glacier'
-        ? cssText
-        : kind === 'prompt'
-          ? selectedPrompt
-          : codeTab === 'css'
-            ? selectedCss || selectedHtml || cssText
-            : selectedHtml || selectedCss || cssText;
+      kind === 'prompt'
+        ? selectedPrompt
+        : codeTab === 'css'
+          ? selectedCss || selectedHtml || selectedPrompt
+          : selectedHtml || selectedCss || selectedPrompt;
     const ok = await copyText(textToCopy);
-    const msg = ok
-      ? kind === 'glacier'
-        ? 'Đã chép CSS'
-        : kind === 'code'
-          ? 'Đã chép mã'
-          : 'Đã chép Prompt'
-      : 'Không chép được';
+    const msg = ok ? (kind === 'code' ? 'Đã chép mã' : 'Đã chép Prompt') : 'Không chép được';
     setCopied(msg);
     addToast({
       type: ok ? 'success' : 'error',
       title: msg,
-      message: kind === 'glacier' ? book.title : selectedTitle,
+      message: selectedTitle,
     });
   };
 
   const handleOpenWorkspace = () => {
-    if (stageMode === 'resource' && selectedItem) {
+    if (selectedItem) {
       openInWorkspace(templateContext(selectedItem, selectedPrompt || undefined));
     } else if (onLaunchPrompt) {
-      onLaunchPrompt(`${book.promptTemplate}\n\n/* Glacier Live Tokens */\n${cssText}`);
+      onLaunchPrompt(book.promptTemplate);
     } else {
       onNavigate?.('workspace');
     }
@@ -745,7 +720,7 @@ function BookDialog({
   };
 
   const handleOpenExplore = () => {
-    if (stageMode === 'resource' && selectedItem) {
+    if (selectedItem) {
       openExperience(selectedItem.id);
     } else {
       onNavigate?.('explore');
@@ -766,7 +741,7 @@ function BookDialog({
     codeTab === 'code'
       ? selectedHtml || selectedPrompt
       : codeTab === 'css'
-        ? selectedCss || cssText
+        ? selectedCss || selectedPrompt
         : selectedPrompt;
 
   const style = {
@@ -905,281 +880,59 @@ function BookDialog({
                 <span className="gb-lbl">{LIBRARY_LABEL[book.catalogLibrary]}</span>
               </div>
 
-              <SelectionList
-                items={selectionItems}
-                selectedId={selectedItem?.id ?? ''}
-                onSelect={(id) => {
-                  setSelectedItemId(id);
-                  setStageMode('resource');
-                  setDemoKey((k) => k + 1);
-                }}
-                ariaLabel={`Danh sách mục tài nguyên trong ${book.title}`}
-                className="gb-selection-list"
-              />
-
-              <div className="gb-mode-switch" role="tablist" aria-label="Chế độ sân khấu sách">
-                <button
-                  type="button"
-                  role="tab"
-                  aria-selected={stageMode === 'resource'}
-                  className={`gb-txt-btn gb-btn-icon-label${stageMode === 'resource' ? ' gb-solid' : ''}`}
-                  onClick={() => setStageMode('resource')}
-                >
-                  <IconLayers size={14} aria-hidden="true" />
-                  <span>Mẫu thực tế</span>
-                </button>
-                <button
-                  type="button"
-                  role="tab"
-                  aria-selected={stageMode === 'glacier'}
-                  className={`gb-txt-btn gb-btn-icon-label${stageMode === 'glacier' ? ' gb-solid' : ''}`}
-                  onClick={() => setStageMode('glacier')}
-                >
-                  <IconSlidersHorizontal size={14} aria-hidden="true" />
-                  <span>Glacier CSS</span>
-                </button>
+              <div
+                className="gb-res-list"
+                role="listbox"
+                aria-label={`Danh sách mục tài nguyên trong ${book.title}`}
+              >
+                {bookItems.map((item, idx) => {
+                  const active = item.id === selectedItem?.id;
+                  return (
+                    <button
+                      key={item.id}
+                      ref={(el) => {
+                        listRowRefs.current[idx] = el;
+                      }}
+                      type="button"
+                      role="option"
+                      aria-selected={active}
+                      className={`gb-res-item${active ? ' is-active' : ''}`}
+                      onClick={() => handleSelectResource(item.id)}
+                      onKeyDown={(ev) => handleResourceKeyDown(idx, ev)}
+                    >
+                      <span className="gb-res-item-idx" aria-hidden="true">
+                        {String(idx + 1).padStart(2, '0')}
+                      </span>
+                      <span className="gb-res-item-body">
+                        <span className="gb-res-item-title">{shortTitle(item)}</span>
+                        <span className="gb-res-item-meta">
+                          {LIBRARY_LABEL[item.sourceLibrary]} · {item.runtime}
+                        </span>
+                      </span>
+                      <span className="gb-res-item-dot" aria-hidden="true" />
+                    </button>
+                  );
+                })}
               </div>
             </div>
           </aside>
 
           <div className="gb-right">
-            {stageMode === 'resource' ? (
-              selectedItem ? (
-                <>
-                  <Rise>
-                    <div className="gb-res-hero">
-                      <div className="gb-res-hero-info">
-                        <span className="gb-lbl gb-d-meta">
-                          {LIBRARY_LABEL[selectedItem.sourceLibrary]} · {selectedItem.category} ·{' '}
-                          {selectedItem.runtime}
-                        </span>
-                        <h3 className="gb-res-hero-title">{selectedTitle}</h3>
-                        <p className="gb-res-hero-desc">{selectedDesc}</p>
-                      </div>
-                    </div>
-                  </Rise>
-
-                  <Rise>
-                    <div className="gb-actions">
-                      <button
-                        type="button"
-                        className="gb-txt-btn gb-solid"
-                        onClick={handleOpenWorkspace}
-                      >
-                        Mở Workspace
-                      </button>
-                      <button
-                        type="button"
-                        className="gb-txt-btn"
-                        onClick={handleOpenExplore}
-                      >
-                        Khám phá
-                      </button>
-                      <button
-                        type="button"
-                        className="gb-icon-btn"
-                        aria-label="Chép mã"
-                        title="Chép mã"
-                        onClick={() => void doCopyResource('code')}
-                      >
-                        {copied === 'Đã chép mã' ? (
-                          <IconCheck size={15} aria-hidden="true" />
-                        ) : (
-                          <IconCopy size={15} aria-hidden="true" />
-                        )}
-                      </button>
-                      <button
-                        type="button"
-                        className="gb-icon-btn"
-                        aria-label="Chép Prompt"
-                        title="Chép Prompt"
-                        onClick={() => void doCopyResource('prompt')}
-                      >
-                        {copied === 'Đã chép Prompt' ? (
-                          <IconCheck size={15} aria-hidden="true" />
-                        ) : (
-                          <IconCopy size={15} aria-hidden="true" />
-                        )}
-                      </button>
-                      <div className="gb-actions-utils">
-                        <button
-                          type="button"
-                          className="gb-icon-btn"
-                          aria-label={itemSaved ? 'Bỏ lưu mẫu tài nguyên này' : 'Lưu Bookmark mẫu tài nguyên này'}
-                          title={itemSaved ? 'Đã lưu' : 'Lưu mẫu'}
-                          aria-pressed={itemSaved}
-                          data-on={itemSaved ? 'true' : 'false'}
-                          onClick={() => toggleSavedItem(selectedItem.id)}
-                        >
-                          <IconBookmark size={16} aria-hidden="true" />
-                        </button>
-                        <button
-                          type="button"
-                          className="gb-icon-btn"
-                          aria-label={
-                            stageTheme === 'dark'
-                              ? 'Chuyển sân khấu sang nền sáng'
-                              : 'Chuyển sân khấu sang nền tối'
-                          }
-                          title={stageTheme === 'dark' ? 'Nền sáng' : 'Nền tối'}
-                          onClick={() => setStageTheme((prev) => (prev === 'dark' ? 'light' : 'dark'))}
-                        >
-                          {stageTheme === 'dark' ? (
-                            <IconMoon size={16} aria-hidden="true" />
-                          ) : (
-                            <IconSun size={16} aria-hidden="true" />
-                          )}
-                        </button>
-                        <button
-                          type="button"
-                          className="gb-icon-btn"
-                          aria-label="Tải lại"
-                          title="Tải lại"
-                          onClick={() => setDemoKey((k) => k + 1)}
-                        >
-                          <IconRotateCw size={16} aria-hidden="true" />
-                        </button>
-                      </div>
-                      <span className="gb-toast" role="status" aria-live="polite">
-                        {copied}
-                      </span>
-                    </div>
-                  </Rise>
-
-                  <Rise>
-                    <div className="gb-live">
-                      <div
-                        className="gb-live-stage"
-                        data-theme={stageTheme}
-                        data-playground={isPinUI ? 'true' : 'false'}
-                      >
-                        {isPinUI ? (
-                          <PinUIPlayground
-                            key={`${selectedItem.id}-${demoKey}`}
-                            itemId={selectedItem.id}
-                            theme={stageTheme}
-                            compact
-                          />
-                        ) : !isThreeUI && !isMotion && selectedItem.previewHtml ? (
-                          <SandboxPreview
-                            title={selectedTitle}
-                            html={selectedItem.previewHtml}
-                            css={selectedCssWithTheme}
-                            theme={stageTheme}
-                            viewport={1440}
-                            nonce={demoKey}
-                          />
-                        ) : selectedPreview ? (
-                          <SpecimenMedia
-                            key={selectedItem.id}
-                            preview={selectedPreview}
-                            title={selectedTitle}
-                            fallbackLabel={LIBRARY_LABEL[selectedItem.sourceLibrary]}
-                            fit="contain"
-                            activePlay
-                          />
-                        ) : selectedItem.previewImage ? (
-                          <img
-                            src={selectedItem.previewImage}
-                            alt={selectedTitle}
-                            referrerPolicy="no-referrer"
-                            style={{
-                              width: '100%',
-                              height: '100%',
-                              objectFit: 'contain',
-                              display: 'block',
-                            }}
-                          />
-                        ) : (
-                          <div className="gb-live-fallback">
-                            <span>{selectedTitle}</span>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  </Rise>
-
-                  <Rise>
-                    <div className="gb-bench">
-                      <div className="gb-bench-head">
-                        <div className="gb-code-tab-group" role="tablist" aria-label="Mã nguồn mẫu">
-                          {selectedHtml ? (
-                            <button
-                              type="button"
-                              role="tab"
-                              aria-selected={codeTab === 'code'}
-                              className={`gb-txt-btn${codeTab === 'code' ? ' gb-solid' : ''}`}
-                              onClick={() => setCodeTab('code')}
-                            >
-                              {isPinUI ? 'TSX' : 'HTML'}
-                            </button>
-                          ) : null}
-                          {selectedCss ? (
-                            <button
-                              type="button"
-                              role="tab"
-                              aria-selected={codeTab === 'css'}
-                              className={`gb-txt-btn${codeTab === 'css' ? ' gb-solid' : ''}`}
-                              onClick={() => setCodeTab('css')}
-                            >
-                              CSS
-                            </button>
-                          ) : null}
-                          <button
-                            type="button"
-                            role="tab"
-                            aria-selected={codeTab === 'prompt'}
-                            className={`gb-txt-btn${codeTab === 'prompt' ? ' gb-solid' : ''}`}
-                            onClick={() => setCodeTab('prompt')}
-                          >
-                            Prompt
-                          </button>
-                        </div>
-                        <button
-                          type="button"
-                          className="gb-icon-btn"
-                          aria-label={codeTab === 'prompt' ? 'Chép Prompt' : 'Chép mã'}
-                          title={codeTab === 'prompt' ? 'Chép Prompt' : 'Chép mã'}
-                          onClick={() =>
-                            void doCopyResource(codeTab === 'prompt' ? 'prompt' : 'code')
-                          }
-                        >
-                          <IconCopy size={15} aria-hidden="true" />
-                        </button>
-                      </div>
-                      <pre className="gb-code" tabIndex={0} aria-label="Mã nguồn và Prompt mẫu đang chọn">
-                        {shownResourceCode}
-                      </pre>
-                    </div>
-                  </Rise>
-                </>
-              ) : (
-                <div className="gb-empty-state">
-                  <span className="gb-lbl gb-d-meta">{book.editionTag} · {LIBRARY_LABEL[book.catalogLibrary]}</span>
-                  <h3 className="gb-res-hero-title">Chưa nạp mục tài nguyên cho tập này</h3>
-                  <p className="gb-res-hero-desc">
-                    Bạn có thể thử trực tiếp bộ thông số Glacier CSS của tập sách hoặc mở toàn bộ thư viện trong Khám phá.
-                  </p>
-                  <div className="gb-actions">
-                    <button
-                      type="button"
-                      className="gb-txt-btn gb-solid"
-                      onClick={() => setStageMode('glacier')}
-                    >
-                      Glacier CSS
-                    </button>
-                    <button
-                      type="button"
-                      className="gb-txt-btn"
-                      onClick={handleOpenExploreCatalog}
-                    >
-                      Khám phá
-                    </button>
-                  </div>
-                </div>
-              )
-            ) : (
+            {selectedItem ? (
               <>
+                <Rise>
+                  <div className="gb-res-hero">
+                    <div className="gb-res-hero-info">
+                      <span className="gb-lbl gb-d-meta">
+                        MẪU THỰC TẾ · {LIBRARY_LABEL[selectedItem.sourceLibrary]} ·{' '}
+                        {selectedItem.category} · {selectedItem.runtime}
+                      </span>
+                      <h3 className="gb-res-hero-title">{selectedTitle}</h3>
+                      <p className="gb-res-hero-desc">{selectedDesc}</p>
+                    </div>
+                  </div>
+                </Rise>
+
                 <Rise>
                   <div className="gb-actions">
                     <button
@@ -1192,32 +945,65 @@ function BookDialog({
                     <button
                       type="button"
                       className="gb-txt-btn"
-                      onClick={handleOpenExploreCatalog}
+                      onClick={handleOpenExplore}
                     >
                       Khám phá
                     </button>
                     <button
                       type="button"
                       className="gb-icon-btn"
-                      aria-label="Chép CSS"
-                      title="Chép CSS"
-                      onClick={() => void doCopyResource('glacier')}
+                      aria-label="Chép mã"
+                      title="Chép mã"
+                      onClick={() => void doCopyResource('code')}
                     >
-                      {copied === 'Đã chép CSS' ? (
+                      {copied === 'Đã chép mã' ? (
                         <IconCheck size={15} aria-hidden="true" />
                       ) : (
                         <IconCopy size={15} aria-hidden="true" />
                       )}
                     </button>
-                    <span className="gb-toast" role="status" aria-live="polite">
-                      {copied}
-                    </span>
-                  </div>
-                </Rise>
-                <Rise>
-                  <div className="gb-live">
-                    <div className="gb-live-head">
-                      <span className="gb-lbl">Phòng thử thông số Glacier · {book.editionTag}</span>
+                    <button
+                      type="button"
+                      className="gb-icon-btn"
+                      aria-label="Chép Prompt"
+                      title="Chép Prompt"
+                      onClick={() => void doCopyResource('prompt')}
+                    >
+                      {copied === 'Đã chép Prompt' ? (
+                        <IconCheck size={15} aria-hidden="true" />
+                      ) : (
+                        <IconCopy size={15} aria-hidden="true" />
+                      )}
+                    </button>
+                    <div className="gb-actions-utils">
+                      <button
+                        type="button"
+                        className="gb-icon-btn"
+                        aria-label={itemSaved ? 'Bỏ lưu mẫu tài nguyên này' : 'Lưu Bookmark mẫu tài nguyên này'}
+                        title={itemSaved ? 'Đã lưu' : 'Lưu mẫu'}
+                        aria-pressed={itemSaved}
+                        data-on={itemSaved ? 'true' : 'false'}
+                        onClick={() => toggleSavedItem(selectedItem.id)}
+                      >
+                        <IconBookmark size={16} aria-hidden="true" />
+                      </button>
+                      <button
+                        type="button"
+                        className="gb-icon-btn"
+                        aria-label={
+                          stageTheme === 'dark'
+                            ? 'Chuyển sân khấu sang nền sáng'
+                            : 'Chuyển sân khấu sang nền tối'
+                        }
+                        title={stageTheme === 'dark' ? 'Nền sáng' : 'Nền tối'}
+                        onClick={() => setStageTheme((prev) => (prev === 'dark' ? 'light' : 'dark'))}
+                      >
+                        {stageTheme === 'dark' ? (
+                          <IconMoon size={16} aria-hidden="true" />
+                        ) : (
+                          <IconSun size={16} aria-hidden="true" />
+                        )}
+                      </button>
                       <button
                         type="button"
                         className="gb-icon-btn"
@@ -1225,58 +1011,141 @@ function BookDialog({
                         title="Tải lại"
                         onClick={() => setDemoKey((k) => k + 1)}
                       >
-                        <IconRotateCw size={15} aria-hidden="true" />
+                        <IconRotateCw size={16} aria-hidden="true" />
                       </button>
                     </div>
-                    <div className="gb-live-stage">
-                      <iframe
-                        key={`${book.id}-${demoKey}`}
-                        ref={demoFrameRef}
-                        title={`Chạy thử ${book.title}`}
-                        srcDoc={book.liveDemoHtml}
-                        sandbox="allow-scripts"
-                        referrerPolicy="no-referrer"
-                        className="gb-live-iframe"
-                        onLoad={() => postSettingsToDemo(vals)}
-                      />
+                    <span className="gb-toast" role="status" aria-live="polite">
+                      {copied}
+                    </span>
+                  </div>
+                </Rise>
+
+                <Rise>
+                  <div className="gb-live">
+                    <div
+                      className="gb-live-stage"
+                      data-theme={stageTheme}
+                      data-playground={isPinUI ? 'true' : 'false'}
+                    >
+                      {isPinUI ? (
+                        <PinUIPlayground
+                          key={`${selectedItem.id}-${demoKey}`}
+                          itemId={selectedItem.id}
+                          theme={stageTheme}
+                          compact
+                        />
+                      ) : !isThreeUI && !isMotion && selectedItem.previewHtml ? (
+                        <SandboxPreview
+                          title={selectedTitle}
+                          html={selectedItem.previewHtml}
+                          css={selectedCssWithTheme}
+                          theme={stageTheme}
+                          viewport={1440}
+                          nonce={demoKey}
+                        />
+                      ) : selectedPreview ? (
+                        <SpecimenMedia
+                          key={selectedItem.id}
+                          preview={selectedPreview}
+                          title={selectedTitle}
+                          fallbackLabel={LIBRARY_LABEL[selectedItem.sourceLibrary]}
+                          fit="contain"
+                          activePlay
+                        />
+                      ) : selectedItem.previewImage ? (
+                        <img
+                          src={selectedItem.previewImage}
+                          alt={selectedTitle}
+                          referrerPolicy="no-referrer"
+                          style={{
+                            width: '100%',
+                            height: '100%',
+                            objectFit: 'contain',
+                            display: 'block',
+                          }}
+                        />
+                      ) : (
+                        <div className="gb-live-fallback">
+                          <span>{selectedTitle}</span>
+                        </div>
+                      )}
                     </div>
                   </div>
                 </Rise>
+
                 <Rise>
                   <div className="gb-bench">
                     <div className="gb-bench-head">
-                      <h3 className="gb-h3">Tùy chỉnh Glacier CSS</h3>
+                      <div className="gb-code-tab-group" role="tablist" aria-label="Mã nguồn mẫu">
+                        {selectedHtml ? (
+                          <button
+                            type="button"
+                            role="tab"
+                            aria-selected={codeTab === 'code'}
+                            className={`gb-txt-btn${codeTab === 'code' ? ' gb-solid' : ''}`}
+                            onClick={() => setCodeTab('code')}
+                          >
+                            {isPinUI ? 'TSX' : isMotion ? 'CODE' : 'HTML'}
+                          </button>
+                        ) : null}
+                        {selectedCss ? (
+                          <button
+                            type="button"
+                            role="tab"
+                            aria-selected={codeTab === 'css'}
+                            className={`gb-txt-btn${codeTab === 'css' ? ' gb-solid' : ''}`}
+                            onClick={() => setCodeTab('css')}
+                          >
+                            CSS
+                          </button>
+                        ) : null}
+                        <button
+                          type="button"
+                          role="tab"
+                          aria-selected={codeTab === 'prompt'}
+                          className={`gb-txt-btn${codeTab === 'prompt' ? ' gb-solid' : ''}`}
+                          onClick={() => setCodeTab('prompt')}
+                        >
+                          Prompt
+                        </button>
+                      </div>
                       <button
                         type="button"
-                        className="gb-txt-btn"
-                        onClick={() => setVals(book.settings)}
+                        className="gb-icon-btn"
+                        aria-label={codeTab === 'prompt' ? 'Chép Prompt' : 'Chép mã'}
+                        title={codeTab === 'prompt' ? 'Chép Prompt' : 'Chép mã'}
+                        onClick={() =>
+                          void doCopyResource(codeTab === 'prompt' ? 'prompt' : 'code')
+                        }
                       >
-                        Đặt lại
+                        <IconCopy size={15} aria-hidden="true" />
                       </button>
                     </div>
-                    {SLIDERS.map((sl) => (
-                      <label key={sl.key} className="gb-sl">
-                        <span className="gb-lbl">{sl.label}</span>
-                        <input
-                          type="range"
-                          min={sl.min}
-                          max={sl.max}
-                          step={sl.step}
-                          value={vals[sl.key]}
-                          onChange={(ev) => {
-                            const n = Number(ev.target.value);
-                            setVals((prev) => ({ ...prev, [sl.key]: n }));
-                          }}
-                        />
-                        <output>{vals[sl.key]}</output>
-                      </label>
-                    ))}
-                    <pre className="gb-code" tabIndex={0} aria-label="CSS Glacier đã tạo">
-                      {cssText}
+                    <pre className="gb-code" tabIndex={0} aria-label="Mã nguồn và Prompt mẫu đang chọn">
+                      {shownResourceCode}
                     </pre>
                   </div>
                 </Rise>
               </>
+            ) : (
+              <div className="gb-empty-state">
+                <span className="gb-lbl gb-d-meta">
+                  {book.editionTag} · {LIBRARY_LABEL[book.catalogLibrary]}
+                </span>
+                <h3 className="gb-res-hero-title">Chưa nạp mục tài nguyên cho tập này</h3>
+                <p className="gb-res-hero-desc">
+                  Mở thư viện Khám phá để xem toàn bộ tài nguyên gốc trong kho lưu trữ.
+                </p>
+                <div className="gb-actions">
+                  <button
+                    type="button"
+                    className="gb-txt-btn gb-solid"
+                    onClick={handleOpenExploreCatalog}
+                  >
+                    Khám phá
+                  </button>
+                </div>
+              </div>
             )}
           </div>
         </div>
