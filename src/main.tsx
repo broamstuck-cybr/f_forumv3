@@ -24,8 +24,10 @@ import '@fontsource/newsreader/400-italic.css';
 import './index.css';
 import { App } from './App';
 import { initConsoleSecurityWarning } from './utils/securityGuard';
+import { initGlobalLiquidGlassPointer } from './utils/liquidGlassPointer';
 
 initConsoleSecurityWarning();
+initGlobalLiquidGlassPointer();
 
 const rootEl = document.getElementById('root');
 if (rootEl) {

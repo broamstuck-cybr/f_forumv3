@@ -222,10 +222,11 @@ html[data-theme='light'] .onb__stars {
   min-height: 52px;
   padding: 0 20px;
   border-radius: var(--radius-pill);
-  border: 1px solid var(--line);
-  background: color-mix(in srgb, var(--bg-raised) 74%, transparent);
-  -webkit-backdrop-filter: blur(12px);
-  backdrop-filter: blur(12px);
+  border: 1px solid var(--lg-pill-border);
+  background: var(--lg-chrome-bg);
+  -webkit-backdrop-filter: blur(10px) saturate(140%);
+  backdrop-filter: blur(10px) saturate(140%);
+  box-shadow: var(--lg-pill-bevel);
   color: var(--fg);
   font-family: var(--font-ui);
   font-size: 0.95rem;
@@ -247,20 +248,20 @@ html[data-theme='light'] .onb__stars {
 
 @media (hover: hover) {
   .onb__pill:hover {
-    transform: scale(1.015);
-    border-color: var(--line-strong);
-    background: var(--bg-high);
+    transform: translateY(-1px);
+    border-color: var(--accent);
   }
 }
 
 .onb__pill:active {
-  transform: scale(0.99);
+  transform: scale(0.985);
 }
 
 .onb__pill.is-selected {
-  background: var(--bg-inverse);
-  color: var(--fg-inverse);
-  border-color: transparent;
+  background: var(--lg-pill-bg-active);
+  color: var(--accent);
+  border-color: var(--accent);
+  box-shadow: var(--lg-pill-bevel), 0 0 0 1px var(--accent);
 }
 
 .onb__pillLeft {

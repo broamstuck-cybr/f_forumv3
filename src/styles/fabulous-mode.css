@@ -34,16 +34,14 @@ html[data-ui-mode='eco'] *::after {
    WCAG >= 4.5:1 in both Light & Dark themes
    ========================================================================== */
 
-/* --- CodeFronts: Floating VisionOS Liquid-Glass Navbar (AppNavbar + LandingNav) --- */
+/* --- Adaptive Floating Liquid-Glass Navbar (AppNavbar + LandingNav, capped blur for 60fps) --- */
 html[data-ui-mode='fabulous'] .nav,
 html[data-ui-mode='fabulous'] .lp-nav {
-  background: color-mix(in srgb, var(--bg-veil) 82%, transparent);
-  backdrop-filter: blur(28px) saturate(165%) brightness(1.04);
-  -webkit-backdrop-filter: blur(28px) saturate(165%) brightness(1.04);
-  border: 1px solid color-mix(in srgb, var(--accent, #38c99a) 26%, var(--line));
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.28),
-    0 18px 42px -22px rgba(0, 0, 0, 0.52);
+  background: var(--lg-chrome-bg);
+  -webkit-backdrop-filter: blur(10px) saturate(145%);
+  backdrop-filter: blur(10px) saturate(145%);
+  border: 1px solid color-mix(in srgb, var(--accent, #38c99a) 26%, var(--lg-pill-border));
+  box-shadow: var(--lg-chrome-shadow);
 }
 
 @media (min-width: 768px) {
@@ -70,13 +68,11 @@ html[data-ui-mode='fabulous'] .nav__ink {
 }
 
 html[data-ui-mode='fabulous'] .mobile-bnav {
-  background: color-mix(in srgb, var(--bg-veil) 86%, transparent);
-  backdrop-filter: blur(24px) saturate(160%);
-  -webkit-backdrop-filter: blur(24px) saturate(160%);
-  border-top: 1px solid color-mix(in srgb, var(--accent, #38c99a) 26%, var(--line));
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.22),
-    0 -12px 32px -18px rgba(0, 0, 0, 0.45);
+  background: var(--lg-chrome-bg);
+  -webkit-backdrop-filter: blur(8px) saturate(135%);
+  backdrop-filter: blur(8px) saturate(135%);
+  border-top: 1px solid color-mix(in srgb, var(--accent, #38c99a) 26%, var(--lg-pill-border));
+  box-shadow: var(--lg-chrome-shadow);
 }
 
 /* --- CodeFronts: Specular Glassmorphic Cards & 3D Tilt Across Routes --- */
@@ -235,13 +231,11 @@ html[data-ui-mode='fabulous'] .chat-search {
 }
 
 html[data-ui-mode='fabulous'] .cmd-dialog {
-  background: color-mix(in srgb, var(--bg-card-surface) 86%, transparent);
-  backdrop-filter: blur(20px) saturate(150%);
-  -webkit-backdrop-filter: blur(20px) saturate(150%);
-  border: 1px solid color-mix(in srgb, var(--accent, #38c99a) 28%, var(--line));
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.28),
-    0 12px 28px -18px rgba(0, 0, 0, 0.42);
+  background: var(--lg-chrome-bg);
+  -webkit-backdrop-filter: blur(10px) saturate(145%);
+  backdrop-filter: blur(10px) saturate(145%);
+  border: 1px solid color-mix(in srgb, var(--accent, #38c99a) 28%, var(--lg-pill-border));
+  box-shadow: var(--lg-chrome-shadow);
 }
 
 html[data-ui-mode='fabulous'] .psearch-bar[data-open='true'],
@@ -538,10 +532,10 @@ html[data-ui-mode='fabulous'] .ws-toolbar {
   gap: 12px;
   padding: 16px;
   border-radius: 20px;
-  background: color-mix(in srgb, var(--bg-high) 94%, transparent);
-  backdrop-filter: blur(28px) saturate(165%);
-  -webkit-backdrop-filter: blur(28px) saturate(165%);
-  border: 1px solid color-mix(in srgb, var(--accent, #38c99a) 34%, var(--line));
+  background: var(--lg-chrome-bg);
+  -webkit-backdrop-filter: blur(10px) saturate(145%);
+  backdrop-filter: blur(10px) saturate(145%);
+  border: 1px solid color-mix(in srgb, var(--accent, #38c99a) 34%, var(--lg-pill-border));
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.24),
     0 28px 64px -20px rgba(0, 0, 0, 0.65);

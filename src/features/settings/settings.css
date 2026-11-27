@@ -62,11 +62,12 @@
     display: flex;
     align-items: center;
     gap: 8px;
-    height: 36px;
-    padding: 0 12px;
+    height: 40px;
+    padding: 0 14px;
     border-radius: var(--radius-pill);
-    border: 1px solid var(--line);
-    background: color-mix(in srgb, var(--bg-card-surface) 85%, transparent);
+    border: 1px solid var(--lg-pill-border);
+    background: var(--lg-panel-bg-sunken);
+    box-shadow: var(--lg-pill-bevel);
     color: var(--fg-muted);
   }
 
@@ -119,9 +120,10 @@
   }
 
   .st-nav-item[aria-current='page'] {
-    color: var(--fg);
-    border-color: var(--line-strong);
-    background: var(--bg-card-surface);
+    color: var(--accent);
+    border-color: var(--accent);
+    background: var(--lg-pill-bg-active);
+    box-shadow: var(--lg-pill-bevel);
     font-weight: 600;
   }
 
@@ -153,14 +155,17 @@
 
   .st-panel,
   .st-card {
-    border: 1px solid var(--line);
-    border-radius: 18px;
-    background: var(--bg-card-surface);
-    box-shadow: var(--shadow-1);
+    position: relative;
+    isolation: isolate;
+    border: 1px solid var(--lg-pill-border);
+    border-radius: 20px;
+    background: var(--lg-panel-bg);
+    box-shadow: var(--lg-inset-bevel), var(--lg-panel-shadow);
     padding: var(--space-5);
     display: flex;
     flex-direction: column;
     gap: var(--space-4);
+    overflow: hidden;
   }
 
   .st-panel-label {

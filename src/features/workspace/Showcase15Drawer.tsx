@@ -51,7 +51,7 @@ export const Showcase15Drawer: React.FC<Showcase15DrawerProps> = ({
   return (
     <div className="ws-drawerOverlay" onClick={onClose}>
       <aside
-        className="ws-drawer lg-glass lg-glass--matte"
+        className="ws-drawer lg-chrome"
         role="dialog"
         aria-modal="true"
         aria-label="15 sản phẩm mẫu Agent Mode"

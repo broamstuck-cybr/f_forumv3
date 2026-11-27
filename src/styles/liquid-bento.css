@@ -1,102 +1,152 @@
-/* Optical Liquid Glass (Smoked Matte-Black Dark / Crystal-Clear Light) & Bento Grid Primitives
- * Zero frosted/cloudy backdrop-filter blur: crisp Fresnel specular rim + micro-matte satin finish + concentric double-bezel.
+/* Emerald & Obsidian Liquid Glass + Adaptive Glassmorphism Design System
+ * Synthesized from:
+ *  1. rdev/liquid-glass-react    — dynamic-angle Fresnel dual specular rim & top-pole catchlight
+ *  2. AndrewPrifer/liquid-dom    — adaptive 8-12px blur budget (chrome only) & luminance-aware tinting
+ *  3. dashersw/liquid-glass-js   — concentric nested glass containers & tactile pill hierarchy
+ * Zero heavy WebGL/SVG displacement shaders; dense scrolling grids stay at backdrop-filter: none for 60fps.
  */
 
 :root,
 html[data-theme='dark'] {
-  --lg-floor: #06080a;
-  --lg-tray-bg: #080b0e;
-  --lg-tray-border: rgba(255, 255, 255, 0.065);
-  --lg-tray-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.045), 0 18px 42px -26px rgba(0, 0, 0, 0.86);
+  --lg-floor: #06090b;
+  --lg-tray-bg: #080d0f;
+  --lg-tray-border: rgba(164, 238, 214, 0.09);
+  --lg-tray-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06), 0 20px 44px -26px rgba(0, 0, 0, 0.88);
 
-  /* Smoked matte-black optical glass (kính đen nhám) */
+  /* Tier 1 — Floating Glassmorphism Chrome (capped 10px adaptive blur) */
+  --lg-chrome-bg:
+    radial-gradient(120% 90% at 14% 0%, rgba(56, 201, 154, 0.11) 0%, transparent 56%),
+    linear-gradient(162deg, rgba(20, 30, 31, 0.82) 0%, rgba(11, 17, 19, 0.88) 54%, rgba(8, 12, 14, 0.92) 100%);
+  --lg-chrome-blur: blur(10px) saturate(145%);
+  --lg-chrome-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.24),
+    inset 1px 0 0 rgba(164, 238, 214, 0.1),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.68),
+    0 18px 42px -22px rgba(0, 0, 0, 0.82),
+    0 2px 8px rgba(0, 0, 0, 0.42);
+
+  /* Tier 2 — Optical Emerald-Obsidian Liquid Glass (60fps, zero blur on scrolling grids) */
   --lg-panel-bg:
-    radial-gradient(120% 80% at 0% 0%, rgba(255, 255, 255, 0.045) 0%, transparent 52%),
-    linear-gradient(160deg, #161b20 0%, #0e1216 48%, #090c0f 100%);
+    radial-gradient(115% 75% at 0% 0%, rgba(56, 201, 154, 0.085) 0%, transparent 54%),
+    radial-gradient(90% 60% at 100% 100%, rgba(164, 238, 214, 0.04) 0%, transparent 58%),
+    linear-gradient(160deg, #162123 0%, #0e1517 48%, #090d0f 100%);
   --lg-panel-bg-elevated:
-    radial-gradient(120% 80% at 0% 0%, rgba(255, 255, 255, 0.06) 0%, transparent 50%),
-    linear-gradient(160deg, #1b2127 0%, #12171c 50%, #0c1014 100%);
-  --lg-panel-bg-sunken: linear-gradient(180deg, #090c0e 0%, #0d1115 100%);
+    radial-gradient(115% 75% at 0% 0%, rgba(56, 201, 154, 0.11) 0%, transparent 52%),
+    linear-gradient(160deg, #1b282a 0%, #11191c 52%, #0b1012 100%);
+  --lg-panel-bg-sunken: linear-gradient(180deg, #080c0e 0%, #0d1316 100%);
+
+  /* Dynamic-angle dual-layer Fresnel rim (adapted from rdev/liquid-glass-react) */
   --lg-rim-gradient: linear-gradient(
-    135deg,
-    rgba(255, 255, 255, 0.34) 0%,
-    rgba(255, 255, 255, 0.1) 24%,
-    rgba(255, 255, 255, 0.03) 56%,
-    rgba(56, 201, 154, 0.16) 84%,
-    rgba(255, 255, 255, 0.2) 100%
+    var(--lg-angle, 135deg),
+    rgba(255, 255, 255, 0.38) 0%,
+    rgba(255, 255, 255, 0.12) 24%,
+    rgba(255, 255, 255, 0.03) 54%,
+    rgba(56, 201, 154, 0.24) 82%,
+    rgba(255, 255, 255, 0.24) 100%
   );
   --lg-rim-gradient-hover: linear-gradient(
-    135deg,
-    rgba(255, 255, 255, 0.48) 0%,
-    rgba(56, 201, 154, 0.28) 32%,
-    rgba(255, 255, 255, 0.07) 64%,
-    rgba(56, 201, 154, 0.34) 100%
+    var(--lg-angle, 135deg),
+    rgba(255, 255, 255, 0.54) 0%,
+    rgba(56, 201, 154, 0.34) 30%,
+    rgba(255, 255, 255, 0.08) 62%,
+    rgba(56, 201, 154, 0.44) 100%
   );
   --lg-inset-bevel:
-    inset 0 1px 0 rgba(255, 255, 255, 0.2),
-    inset 1px 0 0 rgba(255, 255, 255, 0.08),
-    inset 0 -1px 0 rgba(0, 0, 0, 0.65);
-  --lg-panel-shadow: 0 12px 30px -20px rgba(0, 0, 0, 0.88), 0 2px 6px rgba(0, 0, 0, 0.42);
-  --lg-panel-shadow-hover: 0 20px 44px -22px rgba(0, 0, 0, 0.94), 0 0 0 1px rgba(56, 201, 154, 0.18);
+    inset 0 1px 0 rgba(255, 255, 255, 0.22),
+    inset 1px 0 0 rgba(164, 238, 214, 0.09),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.68);
+  --lg-panel-shadow: 0 14px 32px -20px rgba(0, 0, 0, 0.88), 0 2px 6px rgba(0, 0, 0, 0.44);
+  --lg-panel-shadow-hover: 0 22px 46px -22px rgba(0, 0, 0, 0.94), 0 0 0 1px rgba(56, 201, 154, 0.22);
   --lg-pointer-glow: radial-gradient(
     280px circle at var(--lg-x, 50%) var(--lg-y, 0%),
-    rgba(255, 255, 255, 0.095),
-    rgba(56, 201, 154, 0.055) 38%,
+    rgba(255, 255, 255, 0.11),
+    rgba(56, 201, 154, 0.075) 38%,
     transparent 72%
   );
-  --lg-pill-bg: linear-gradient(180deg, #181e24 0%, #101418 100%);
-  --lg-pill-bg-active: linear-gradient(180deg, rgba(56, 201, 154, 0.2) 0%, rgba(13, 130, 95, 0.14) 100%);
-  --lg-pill-border: rgba(255, 255, 255, 0.12);
-  --lg-pill-bevel: inset 0 1px 0 rgba(255, 255, 255, 0.18), inset 0 -1px 0 rgba(0, 0, 0, 0.55);
-  --lg-grain-opacity: 0.042;
+
+  /* Tier 3 — Nested Tactile Glass Pills & Controls */
+  --lg-pill-bg: linear-gradient(180deg, rgba(28, 40, 42, 0.96) 0%, rgba(15, 22, 24, 0.98) 100%);
+  --lg-pill-bg-active: linear-gradient(180deg, rgba(56, 201, 154, 0.24) 0%, rgba(13, 130, 95, 0.16) 100%);
+  --lg-pill-border: rgba(190, 242, 225, 0.14);
+  --lg-pill-bevel: inset 0 1px 0 rgba(255, 255, 255, 0.2), inset 0 -1px 0 rgba(0, 0, 0, 0.58);
+  --lg-cta-bevel: inset 0 1px 0 rgba(255, 255, 255, 0.34), inset 0 -1px 0 rgba(0, 0, 0, 0.24), 0 10px 24px -12px rgba(13, 130, 95, 0.65);
+  --lg-scrim: rgba(4, 8, 9, 0.72);
+  --lg-grain-opacity: 0.04;
 }
 
 html[data-theme='light'] {
-  --lg-floor: #edf2ef;
-  --lg-tray-bg: #e7edea;
-  --lg-tray-border: rgba(16, 21, 20, 0.085);
-  --lg-tray-shadow: inset 0 1px 2px rgba(16, 21, 20, 0.055), 0 12px 32px -24px rgba(16, 21, 20, 0.16);
+  --lg-floor: #eef4f0;
+  --lg-tray-bg: #e7f0eb;
+  --lg-tray-border: rgba(14, 54, 42, 0.09);
+  --lg-tray-shadow: inset 0 1px 2px rgba(16, 21, 20, 0.055), 0 14px 34px -24px rgba(12, 42, 33, 0.16);
 
-  /* Crisp crystal-clear optical liquid glass (kính trong sáng sắc nét, không đục) */
+  /* Tier 1 — Crystal Ivory-Mint Floating Chrome (capped 10px adaptive blur) */
+  --lg-chrome-bg:
+    radial-gradient(115% 85% at 10% 0%, rgba(255, 255, 255, 0.98) 0%, transparent 56%),
+    radial-gradient(85% 70% at 92% 100%, rgba(16, 152, 112, 0.075) 0%, transparent 62%),
+    linear-gradient(164deg, rgba(255, 255, 255, 0.84) 0%, rgba(250, 253, 251, 0.86) 56%, rgba(241, 249, 245, 0.88) 100%);
+  --lg-chrome-blur: blur(10px) saturate(145%);
+  --lg-chrome-shadow:
+    inset 0 1.5px 0 rgba(255, 255, 255, 1),
+    inset 1px 0 0 rgba(255, 255, 255, 0.9),
+    inset 0 -1px 0 rgba(12, 46, 36, 0.075),
+    0 16px 38px -22px rgba(12, 46, 36, 0.18),
+    0 2px 6px rgba(16, 21, 20, 0.05);
+
+  /* Tier 2 — Crystal Ivory-Mint Optical Liquid Glass (60fps, bright & crisp) */
   --lg-panel-bg:
-    radial-gradient(110% 70% at 0% 0%, rgba(255, 255, 255, 1) 0%, transparent 56%),
-    linear-gradient(162deg, #ffffff 0%, #fcfefd 56%, #f3f8f5 100%);
+    radial-gradient(110% 72% at 0% 0%, rgba(255, 255, 255, 1) 0%, transparent 56%),
+    radial-gradient(85% 65% at 100% 100%, rgba(10, 110, 80, 0.05) 0%, transparent 60%),
+    linear-gradient(162deg, #ffffff 0%, #fcfefb 56%, #f1f8f4 100%);
   --lg-panel-bg-elevated:
     radial-gradient(110% 70% at 0% 0%, #ffffff 0%, transparent 52%),
-    linear-gradient(162deg, #ffffff 0%, #ffffff 60%, #f5faf7 100%);
-  --lg-panel-bg-sunken: linear-gradient(180deg, #f1f6f3 0%, #f8fbf9 100%);
+    linear-gradient(162deg, #ffffff 0%, #ffffff 60%, #f4faf7 100%);
+  --lg-panel-bg-sunken: linear-gradient(180deg, #eff6f2 0%, #f7fbf9 100%);
+
   --lg-rim-gradient: linear-gradient(
-    135deg,
+    var(--lg-angle, 135deg),
     rgba(255, 255, 255, 1) 0%,
     rgba(16, 21, 20, 0.13) 26%,
-    rgba(16, 21, 20, 0.06) 62%,
-    rgba(10, 110, 80, 0.2) 88%,
-    rgba(255, 255, 255, 0.9) 100%
+    rgba(16, 21, 20, 0.06) 60%,
+    rgba(10, 110, 80, 0.24) 86%,
+    rgba(255, 255, 255, 0.94) 100%
   );
   --lg-rim-gradient-hover: linear-gradient(
-    135deg,
+    var(--lg-angle, 135deg),
     rgba(255, 255, 255, 1) 0%,
-    rgba(10, 110, 80, 0.34) 30%,
-    rgba(16, 21, 20, 0.1) 66%,
-    rgba(10, 110, 80, 0.38) 100%
+    rgba(10, 110, 80, 0.36) 30%,
+    rgba(16, 21, 20, 0.1) 64%,
+    rgba(10, 110, 80, 0.4) 100%
   );
   --lg-inset-bevel:
     inset 0 1.5px 0 rgba(255, 255, 255, 1),
-    inset 1px 0 0 rgba(255, 255, 255, 0.9),
-    inset 0 -1px 0 rgba(16, 21, 20, 0.075);
-  --lg-panel-shadow: 0 1px 2px rgba(16, 21, 20, 0.05), 0 14px 32px -22px rgba(16, 21, 20, 0.16);
-  --lg-panel-shadow-hover: 0 2px 4px rgba(16, 21, 20, 0.06), 0 20px 42px -22px rgba(10, 110, 80, 0.18);
+    inset 1px 0 0 rgba(255, 255, 255, 0.92),
+    inset 0 -1px 0 rgba(12, 46, 36, 0.08);
+  --lg-panel-shadow: 0 1px 2px rgba(16, 21, 20, 0.05), 0 16px 34px -22px rgba(12, 46, 36, 0.16);
+  --lg-panel-shadow-hover: 0 2px 6px rgba(16, 21, 20, 0.06), 0 22px 44px -22px rgba(10, 110, 80, 0.2);
   --lg-pointer-glow: radial-gradient(
     280px circle at var(--lg-x, 50%) var(--lg-y, 0%),
-    rgba(10, 110, 80, 0.075),
-    rgba(255, 255, 255, 0.65) 42%,
+    rgba(10, 110, 80, 0.085),
+    rgba(255, 255, 255, 0.72) 42%,
     transparent 74%
   );
-  --lg-pill-bg: linear-gradient(180deg, #ffffff 0%, #f4f8f6 100%);
-  --lg-pill-bg-active: linear-gradient(180deg, rgba(10, 110, 80, 0.13) 0%, rgba(10, 110, 80, 0.08) 100%);
-  --lg-pill-border: rgba(16, 21, 20, 0.12);
+
+  /* Tier 3 — Nested Tactile Crystal Pills & Controls */
+  --lg-pill-bg: linear-gradient(180deg, #ffffff 0%, #f3f8f5 100%);
+  --lg-pill-bg-active: linear-gradient(180deg, rgba(10, 110, 80, 0.14) 0%, rgba(10, 110, 80, 0.08) 100%);
+  --lg-pill-border: rgba(14, 54, 42, 0.13);
   --lg-pill-bevel: inset 0 1px 0 rgba(255, 255, 255, 1), inset 0 -1px 0 rgba(16, 21, 20, 0.06);
+  --lg-cta-bevel: inset 0 1px 0 rgba(255, 255, 255, 0.36), inset 0 -1px 0 rgba(0, 0, 0, 0.16), 0 10px 24px -12px rgba(10, 110, 80, 0.45);
+  --lg-scrim: rgba(14, 24, 21, 0.36);
   --lg-grain-opacity: 0;
+}
+
+@media (max-width: 767px) {
+  :root,
+  html[data-theme='dark'],
+  html[data-theme='light'] {
+    --lg-chrome-blur: blur(8px) saturate(135%);
+  }
 }
 
 @layer components {
@@ -111,18 +161,58 @@ html[data-theme='light'] {
     overflow: hidden;
   }
 
-  /* Optical Liquid Glass surface — zero backdrop-filter blur */
+  /* Tier 1 — Floating Liquid Glass Chrome (Navbar, Dock, Modals, Drawers, Popovers) */
+  .lg-chrome {
+    position: relative;
+    isolation: isolate;
+    background: var(--lg-chrome-bg);
+    box-shadow: var(--lg-chrome-shadow);
+    -webkit-backdrop-filter: blur(10px) saturate(145%);
+    backdrop-filter: blur(10px) saturate(145%);
+  }
+
+  @media (max-width: 767px) {
+    .lg-chrome {
+      -webkit-backdrop-filter: blur(8px) saturate(135%);
+      backdrop-filter: blur(8px) saturate(135%);
+    }
+  }
+
+  .lg-chrome::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    padding: 1px;
+    background: var(--lg-rim-gradient);
+    -webkit-mask:
+      linear-gradient(#fff 0 0) content-box,
+      linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask:
+      linear-gradient(#fff 0 0) content-box,
+      linear-gradient(#fff 0 0);
+    mask-composite: exclude;
+    pointer-events: none;
+    z-index: 3;
+    transition: opacity 180ms var(--ease-ux);
+  }
+
+  .lg-chrome:hover::before {
+    background: var(--lg-rim-gradient-hover);
+  }
+
+  /* Tier 2 — Optical Liquid Glass Card / Panel (60fps, zero backdrop-filter blur) */
   .lg-glass {
     position: relative;
     isolation: isolate;
     background: var(--lg-panel-bg);
     box-shadow: var(--lg-inset-bevel), var(--lg-panel-shadow);
-    backdrop-filter: none !important;
-    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
     overflow: hidden;
   }
 
-  /* Fresnel specular 1px refraction rim */
   .lg-glass::before {
     content: '';
     position: absolute;
@@ -143,7 +233,6 @@ html[data-theme='light'] {
     transition: opacity 200ms var(--ease-ux);
   }
 
-  /* Pointer-tracked specular catchlight + micro-matte satin finish (dark) */
   .lg-glass::after {
     content: '';
     position: absolute;
@@ -165,12 +254,12 @@ html[data-theme='light'] {
     background: var(--lg-rim-gradient-hover);
   }
 
-  /* Fine matte-etched micro-texture for smoked dark glass only */
+  /* Smoked emerald-obsidian micro-matte finish on dark mode cards */
   html[data-theme='dark'] .lg-glass--matte {
     background-image:
-      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120' viewBox='0 0 120 120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.88' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='120' height='120' filter='url(%23n)' opacity='0.045'/%3E%3C/svg%3E"),
-      radial-gradient(120% 80% at 0% 0%, rgba(255, 255, 255, 0.045) 0%, transparent 52%),
-      linear-gradient(160deg, #161b20 0%, #0e1216 48%, #090c0f 100%);
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120' viewBox='0 0 120 120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.88' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='120' height='120' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E"),
+      radial-gradient(115% 75% at 0% 0%, rgba(56, 201, 154, 0.085) 0%, transparent 54%),
+      linear-gradient(160deg, #162123 0%, #0e1517 48%, #090d0f 100%);
     background-size: 120px 120px, 100% 100%, 100% 100%;
   }
 
@@ -179,7 +268,94 @@ html[data-theme='light'] {
     z-index: 1;
   }
 
-  /* Liquid Glass tactile pill control */
+  /* Product-wide dynamic Fresnel rim & pointer catchlight (60fps, zero heavy blur) */
+  :is(
+    .st-panel,
+    .st-card,
+    .pf-item-card,
+    .lp-hm-beat,
+    .lp-proj-card,
+    .ex-bench-dossier,
+    .hm-blueprint,
+    .adm-auth-card,
+    .adm-banner
+  )::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    padding: 1px;
+    background: var(--lg-rim-gradient);
+    -webkit-mask:
+      linear-gradient(#fff 0 0) content-box,
+      linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask:
+      linear-gradient(#fff 0 0) content-box,
+      linear-gradient(#fff 0 0);
+    mask-composite: exclude;
+    pointer-events: none;
+    z-index: 3;
+    transition: opacity 200ms var(--ease-ux);
+  }
+
+  :is(
+    .st-panel,
+    .st-card,
+    .pf-item-card,
+    .lp-hm-beat,
+    .lp-proj-card,
+    .ex-bench-dossier,
+    .hm-blueprint,
+    .adm-auth-card,
+    .adm-banner
+  )::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background: var(--lg-pointer-glow);
+    opacity: 0;
+    pointer-events: none;
+    z-index: 2;
+    transition: opacity 220ms var(--ease-ux);
+  }
+
+  :is(
+    .st-panel,
+    .st-card,
+    .pf-item-card,
+    .lp-hm-beat,
+    .lp-proj-card,
+    .ex-bench-dossier,
+    .hm-blueprint,
+    .adm-auth-card,
+    .adm-banner
+  ):is(:hover, [data-lg-hover='true'])::after {
+    opacity: 1;
+  }
+
+  :is(
+    .st-panel,
+    .st-card,
+    .pf-item-card,
+    .lp-hm-beat,
+    .lp-proj-card,
+    .ex-bench-dossier,
+    .hm-blueprint,
+    .adm-auth-card,
+    .adm-banner
+  ):is(:hover, [data-lg-hover='true'])::before {
+    background: var(--lg-rim-gradient-hover);
+  }
+
+  /* Active tab subtle emerald liquid lens */
+  .nav__tab[aria-current='page'],
+  .lp-nav-tab[aria-current='true'] {
+    color: var(--fg);
+  }
+
+  /* Tier 3 — Nested Liquid Glass tactile pill */
   .lg-pill {
     border: 1px solid var(--lg-pill-border);
     background: var(--lg-pill-bg);
@@ -192,10 +368,17 @@ html[data-theme='light'] {
   }
 
   .lg-pill:active:not(:disabled) {
-    transform: scale(0.98);
+    transform: scale(0.975);
   }
 
-  /* Override Fabulous mode frosted blur inside Liquid Bento scopes */
+  /* Eco mode completely removes blur across all Liquid Glass tiers */
+  html[data-ui-mode='eco'] .lg-chrome,
+  html[data-ui-mode='eco'] .lg-glass {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+  }
+
+  /* Keep dense Bento grids blur-free even in Fabulous mode */
   html[data-ui-mode='fabulous'] .ws-shell .lg-glass,
   html[data-ui-mode='fabulous'] .cm .lg-glass,
   html[data-ui-mode='fabulous'] .kn .lg-glass {
@@ -204,13 +387,25 @@ html[data-theme='light'] {
   }
 
   @media (prefers-reduced-motion: reduce) {
+    .lg-chrome::before,
     .lg-glass::before,
     .lg-glass::after,
     .lg-pill {
       transition: none;
     }
 
-    .lg-glass::after {
+    .lg-glass::after,
+    :is(
+      .st-panel,
+      .st-card,
+      .pf-item-card,
+      .lp-hm-beat,
+      .lp-proj-card,
+      .ex-bench-dossier,
+      .hm-blueprint,
+      .adm-auth-card,
+      .adm-banner
+    )::after {
       display: none;
     }
   }

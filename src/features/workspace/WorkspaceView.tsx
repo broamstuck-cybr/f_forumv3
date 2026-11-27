@@ -619,7 +619,7 @@ export const WorkspaceView: React.FC = () => {
   return (
     <div className="ws-shell">
       <header
-        className="ws-topbar lg-glass lg-glass--matte"
+        className="ws-topbar lg-chrome"
         onPointerMove={handleLiquidPointerMove}
         onPointerLeave={handleLiquidPointerLeave}
       >

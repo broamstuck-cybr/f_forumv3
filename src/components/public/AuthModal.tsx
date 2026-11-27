@@ -238,8 +238,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ open, onClose }) => {
           aria-label="Đăng nhập tài khoản F-Forum"
           className="fixed inset-0 z-[80] flex items-center justify-center p-4"
           style={{
-            backgroundColor: 'var(--bg-veil)',
-            backdropFilter: 'blur(10px)',
+            backgroundColor: 'var(--lg-scrim)',
           }}
         >
           <motion.div
@@ -249,12 +248,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ open, onClose }) => {
             exit={{ opacity: 0, scale: 0.97, y: 8 }}
             transition={{ duration: 0.26, ease: [0.16, 1, 0.3, 1] }}
             onClick={(event) => event.stopPropagation()}
-            className="relative w-full max-w-[440px] max-h-[92dvh] overflow-y-auto rounded-[16px] border"
-            style={{
-              backgroundColor: 'var(--bg-raised)',
-              borderColor: 'var(--line-strong)',
-              boxShadow: 'var(--shadow-3)',
-            }}
+            className="lg-chrome relative w-full max-w-[440px] max-h-[92dvh] overflow-y-auto rounded-[22px]"
           >
             <button
               type="button"

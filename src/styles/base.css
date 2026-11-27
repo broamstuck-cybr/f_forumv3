@@ -256,17 +256,20 @@
   .btn-solid {
     background: var(--bg-inverse);
     color: var(--fg-inverse);
+    box-shadow: var(--lg-pill-bevel), 0 8px 20px -12px rgba(0, 0, 0, 0.45);
   }
 
   .btn-solid:hover:not(:disabled) {
     background: var(--accent-fill);
     color: var(--on-accent);
+    box-shadow: var(--lg-cta-bevel);
   }
 
   .btn-red,
   .btn-accent {
     background: var(--accent-fill);
     color: var(--on-accent);
+    box-shadow: var(--lg-cta-bevel);
   }
 
   .btn-red:hover:not(:disabled),
@@ -276,13 +279,14 @@
   }
 
   .btn-line {
-    border-color: var(--line);
+    border-color: var(--lg-pill-border);
     color: var(--fg);
-    background: transparent;
+    background: var(--lg-pill-bg);
+    box-shadow: var(--lg-pill-bevel);
   }
 
   .btn-line:hover:not(:disabled) {
-    border-color: var(--line-strong);
+    border-color: var(--accent);
   }
 
   .btn-ghost {
@@ -358,9 +362,10 @@
     width: 100%;
     min-height: 44px;
     padding: 0 var(--space-4);
-    border: 1px solid var(--line);
+    border: 1px solid var(--lg-pill-border);
     border-radius: 14px;
-    background: var(--bg-raised);
+    background: var(--lg-panel-bg-sunken);
+    box-shadow: var(--lg-pill-bevel);
     color: var(--fg);
     font-size: var(--text-sm);
     transition: border-color var(--dur-2) var(--ease-ux);
@@ -391,8 +396,10 @@
     align-items: center;
     min-height: 24px;
     padding: 0 var(--space-3);
-    border: 1px solid var(--line);
+    border: 1px solid var(--lg-pill-border);
     border-radius: var(--radius-pill);
+    background: var(--lg-pill-bg);
+    box-shadow: var(--lg-pill-bevel);
     font-family: var(--font-mono);
     font-size: var(--text-2xs);
     line-height: 1;
@@ -472,9 +479,9 @@
 
   .ff-liquid-surface {
     position: relative;
-    background: var(--bg-raised);
-    border: 1px solid var(--line);
-    box-shadow: var(--shadow-2);
+    background: var(--lg-panel-bg);
+    border: 1px solid var(--lg-pill-border);
+    box-shadow: var(--lg-inset-bevel), var(--lg-panel-shadow);
   }
 
   .ff-clamped {

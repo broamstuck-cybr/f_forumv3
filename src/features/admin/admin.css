@@ -31,16 +31,18 @@
   }
 
   .adm-auth-card {
+    position: relative;
+    isolation: isolate;
     width: 100%;
     max-width: 460px;
-    border: 1px solid var(--line-strong);
-    border-radius: var(--radius-lg);
-    background: var(--bg-raised);
+    border: 1px solid var(--lg-pill-border);
+    border-radius: 22px;
+    background: var(--lg-panel-bg);
     padding: var(--space-6);
     display: flex;
     flex-direction: column;
     gap: var(--space-4);
-    box-shadow: var(--shadow-2);
+    box-shadow: var(--lg-inset-bevel), var(--lg-panel-shadow);
     overflow: hidden;
   }
 
@@ -92,9 +94,12 @@
   }
 
   .adm-banner {
-    border: 1px solid var(--line-strong);
-    border-radius: var(--radius-lg);
-    background: var(--bg-raised);
+    position: relative;
+    isolation: isolate;
+    border: 1px solid var(--lg-pill-border);
+    border-radius: 22px;
+    background: var(--lg-panel-bg);
+    box-shadow: var(--lg-inset-bevel), var(--lg-panel-shadow);
     padding: var(--space-5);
     display: flex;
     flex-direction: column;

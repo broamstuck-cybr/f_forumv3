@@ -104,10 +104,11 @@
     display: grid;
     gap: var(--space-4);
     padding: var(--space-4);
-    border: 1px solid var(--line-strong);
-    border-radius: 16px;
+    border: 1px solid var(--lg-pill-border);
+    border-radius: 20px;
     overflow: hidden;
-    background: var(--bg-card-surface);
+    background: var(--lg-panel-bg);
+    box-shadow: var(--lg-inset-bevel), var(--lg-panel-shadow);
   }
 
   .pf-edit-grid {
@@ -131,9 +132,10 @@
     margin: 0;
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    border: 1px solid var(--line);
-    border-radius: 16px;
-    background: var(--bg-card-surface);
+    border: 1px solid var(--lg-pill-border);
+    border-radius: 20px;
+    background: var(--lg-panel-bg);
+    box-shadow: var(--lg-inset-bevel), var(--lg-panel-shadow);
     overflow: hidden;
   }
 
@@ -199,15 +201,25 @@
   }
 
   .pf-item-card {
+    position: relative;
+    isolation: isolate;
     display: flex;
     flex-direction: column;
     gap: var(--space-3);
     padding: var(--space-4);
-    border: 1px solid var(--line);
-    border-radius: 16px;
+    border: 1px solid var(--lg-pill-border);
+    border-radius: 20px;
     overflow: hidden;
-    background: var(--bg-card-surface);
+    background: var(--lg-panel-bg);
+    box-shadow: var(--lg-inset-bevel), var(--lg-panel-shadow);
     min-width: 0;
+    transition: transform 180ms var(--ease-ux), border-color 180ms ease, box-shadow 200ms ease;
+  }
+
+  .pf-item-card:hover {
+    transform: translateY(-2px);
+    border-color: var(--accent);
+    box-shadow: var(--lg-inset-bevel), var(--lg-panel-shadow-hover);
   }
 
   .pf-item-card[data-active='true'] {

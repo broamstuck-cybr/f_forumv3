@@ -686,7 +686,7 @@ export const CommunityView: React.FC = () => {
             onClick={() => setPreviewEntry(null)}
           >
             <motion.div
-              className="cm-modal lg-glass lg-glass--matte"
+              className="cm-modal lg-chrome"
               initial={reduced ? { opacity: 0 } : { opacity: 0, scale: 0.97, y: 12 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={reduced ? { opacity: 0 } : { opacity: 0, scale: 0.98, y: 8 }}

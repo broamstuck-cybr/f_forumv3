@@ -68,8 +68,9 @@
     min-height: 44px;
     padding: 0 16px 0 6px;
     border-radius: var(--radius-pill);
-    border: 1px solid var(--line-strong);
-    background: var(--bg-raised);
+    border: 1px solid var(--lg-pill-border);
+    background: var(--lg-pill-bg);
+    box-shadow: var(--lg-pill-bevel);
     color: var(--fg);
     font-family: var(--font-ui);
     font-size: 13px;
@@ -78,7 +79,7 @@
     white-space: nowrap;
     cursor: pointer;
     flex-shrink: 0;
-    transition: border-color 160ms ease, background-color 160ms ease, transform 120ms ease;
+    transition: border-color 160ms ease, transform 120ms ease;
   }
 
   .ex-vault-dock-btn:hover {
@@ -96,8 +97,9 @@
     height: 44px;
     min-height: 44px;
     padding: 0 16px;
-    border: 1px solid var(--line-strong);
-    background: var(--bg-raised);
+    border: 1px solid var(--lg-pill-border);
+    background: var(--lg-pill-bg);
+    box-shadow: var(--lg-pill-bevel);
     color: var(--fg-muted);
     font-family: var(--font-ui);
     font-size: 13px;
@@ -108,8 +110,8 @@
 
   .ex-saved-pill[aria-pressed='true'] {
     border-color: var(--ex-accent);
-    background: var(--ex-accent-soft);
-    color: var(--fg);
+    background: var(--lg-pill-bg-active);
+    color: var(--accent);
   }
 
   @media (min-width: 640px) {
@@ -587,9 +589,10 @@
     display: flex;
     flex-direction: column;
     min-width: 0;
-    border: 1px solid var(--line-strong);
-    border-radius: 14px;
-    background: var(--bg-card-surface);
+    border: 1px solid var(--lg-pill-border);
+    border-radius: 20px;
+    background: var(--lg-panel-bg);
+    box-shadow: var(--lg-inset-bevel), var(--lg-panel-shadow);
     overflow: hidden;
   }
 
@@ -601,7 +604,7 @@
     gap: var(--space-2) var(--space-4);
     padding: var(--space-2) var(--space-3) var(--space-2) var(--space-4);
     border-bottom: 1px solid var(--line);
-    background: var(--bg-card-surface);
+    background: var(--lg-panel-bg-sunken);
   }
 
   .ex-bench-id {
@@ -753,10 +756,17 @@
   }
 
   .ex-bench-dossier {
+    position: relative;
+    isolation: isolate;
     display: grid;
     align-content: start;
     gap: var(--space-4);
     min-width: 0;
+    padding: var(--space-5);
+    border-radius: 20px;
+    border: 1px solid var(--lg-pill-border);
+    background: var(--lg-panel-bg);
+    box-shadow: var(--lg-inset-bevel), var(--lg-panel-shadow);
   }
 
   .ex-bench-head {
@@ -791,9 +801,9 @@
     display: grid;
     gap: var(--space-2);
     min-width: 0;
-    border: 1px solid var(--line);
-    border-radius: 12px;
-    background: var(--bg-card-surface);
+    border: 1px solid var(--lg-pill-border);
+    border-radius: 14px;
+    background: var(--lg-panel-bg-sunken);
     overflow: hidden;
   }
 
@@ -913,9 +923,21 @@
   }
 
   .ex-plate-frame {
+    position: relative;
     display: block;
     aspect-ratio: var(--ar);
+    border-radius: 16px;
+    border: 1px solid var(--lg-pill-border);
+    background: var(--lg-panel-bg);
+    box-shadow: var(--lg-inset-bevel), var(--lg-panel-shadow);
     overflow: hidden;
+    transition: transform 180ms var(--ease-ux), border-color 180ms ease, box-shadow 200ms ease;
+  }
+
+  .ex-plate:hover .ex-plate-frame {
+    transform: translateY(-2px);
+    border-color: var(--accent);
+    box-shadow: var(--lg-inset-bevel), var(--lg-panel-shadow-hover);
   }
 
   .ex-plate-shot {
@@ -1064,12 +1086,14 @@
     max-height: 92dvh;
     margin: 0;
     padding: 0;
-    border: 1px solid var(--line-strong);
+    border: 1px solid var(--lg-pill-border);
     border-width: 1px 0 0;
-    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
-    background: var(--bg-raised);
+    border-radius: 24px 24px 0 0;
+    background: var(--lg-chrome-bg);
+    -webkit-backdrop-filter: blur(10px) saturate(145%);
+    backdrop-filter: blur(10px) saturate(145%);
     color: var(--fg);
-    box-shadow: var(--shadow-3);
+    box-shadow: var(--lg-chrome-shadow);
     overflow-y: auto;
     overscroll-behavior: contain;
   }
@@ -1079,7 +1103,7 @@
   }
 
   .ex-spec::backdrop {
-    background: var(--bg-veil);
+    background: var(--lg-scrim);
   }
 
   .ex-spec-body {
