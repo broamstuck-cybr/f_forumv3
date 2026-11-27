@@ -276,12 +276,19 @@ export const IrisQrCornerSection: React.FC<IrisQrCornerSectionProps> = ({
   onNavigate,
   contextLabel = 'landing',
 }) => {
-  const { navigate } = useAppStore();
+  const { navigate, theme } = useAppStore();
   const heroRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
   const loaderRef = useRef<HTMLDivElement>(null);
   const fallbackRef = useRef<HTMLDivElement>(null);
+  const themeRef = useRef(theme);
+  const applySceneThemeRef = useRef<((mode: 'dark' | 'light') => void) | null>(null);
+
+  useEffect(() => {
+    themeRef.current = theme;
+    applySceneThemeRef.current?.(theme);
+  }, [theme]);
 
   const [loaderHidden, setLoaderHidden] = useState(false);
   const [webglFallback, setWebglFallback] = useState(false);
@@ -389,7 +396,7 @@ export const IrisQrCornerSection: React.FC<IrisQrCornerSectionProps> = ({
       renderer.outputColorSpace = THREE.SRGBColorSpace;
 
       const scene = new THREE.Scene();
-      scene.background = new THREE.Color('#0c1212');
+      scene.background = new THREE.Color(themeRef.current === 'light' ? '#eef4f1' : '#0c1212');
 
       const camera = new THREE.PerspectiveCamera(28, 1, 0.1, 100);
 
@@ -437,9 +444,20 @@ export const IrisQrCornerSection: React.FC<IrisQrCornerSectionProps> = ({
 
       const composer = new EffectComposer(renderer);
       composer.addPass(new RenderPass(scene, camera));
-      const bloomPass = new UnrealBloomPass(new THREE.Vector2(1, 1), 0.55, 0.4, 0.92);
+      const bloomPass = new UnrealBloomPass(
+        new THREE.Vector2(1, 1),
+        themeRef.current === 'light' ? 0.14 : 0.55,
+        0.4,
+        themeRef.current === 'light' ? 0.96 : 0.92
+      );
       composer.addPass(bloomPass);
       composer.addPass(new OutputPass());
+
+      applySceneThemeRef.current = (mode) => {
+        scene.background = new THREE.Color(mode === 'light' ? '#eef4f1' : '#0c1212');
+        bloomPass.strength = mode === 'light' ? 0.14 : 0.55;
+        bloomPass.threshold = mode === 'light' ? 0.96 : 0.92;
+      };
 
       const robot = new THREE.Group();
       const body = new THREE.Group();
@@ -1058,6 +1076,7 @@ export const IrisQrCornerSection: React.FC<IrisQrCornerSectionProps> = ({
       };
 
       cleanupScene = () => {
+        applySceneThemeRef.current = null;
         disposed = true;
         if (rafId) cancelAnimationFrame(rafId);
         ro.disconnect();

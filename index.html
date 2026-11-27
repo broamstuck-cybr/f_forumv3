@@ -146,6 +146,9 @@
             }
           } catch (err) {}
           var theme = saved === 'light' || saved === 'dark' ? saved : (pref === 'system' ? (systemDark ? 'dark' : 'light') : 'dark');
+          if (theme === 'light' && wallpaper === 'dark') {
+            wallpaper = 'light';
+          }
           var root = document.documentElement;
           root.dataset.theme = theme;
           root.dataset.ambient = ambient;
@@ -156,7 +159,7 @@
           root.style.colorScheme = theme;
           var meta = document.querySelector('meta[name="theme-color"]');
           if (meta) {
-            meta.setAttribute('content', theme === 'dark' ? '#121110' : '#f4f0e6');
+            meta.setAttribute('content', theme === 'dark' ? '#121110' : '#f8faf8');
           }
         } catch (e) {}
       })();
@@ -171,8 +174,8 @@
       }
       html[data-theme='light'],
       html[data-theme='light'] body {
-        background: #f4f0e6;
-        color: #14120e;
+        background: #f8faf8;
+        color: #101514;
       }
       .ff-boot {
         position: fixed;

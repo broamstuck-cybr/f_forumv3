@@ -4,9 +4,9 @@
     radial-gradient(860px 600px at 86% 24%, rgba(140, 188, 200, 0.08), transparent 64%),
     linear-gradient(155deg, #090c0e 0%, #0d1114 52%, #070a0c 100%);
   --ambient-fallback-light:
-    radial-gradient(1000px 640px at 14% 12%, rgba(10, 110, 80, 0.06), transparent 60%),
-    radial-gradient(860px 600px at 86% 24%, rgba(31, 85, 104, 0.06), transparent 64%),
-    linear-gradient(155deg, #f8f9f7 0%, #f3f5f2 52%, #edf0ec 100%);
+    radial-gradient(960px 600px at 14% 10%, rgba(16, 155, 114, 0.06), transparent 60%),
+    radial-gradient(840px 560px at 88% 18%, rgba(125, 195, 232, 0.07), transparent 64%),
+    linear-gradient(155deg, #ffffff 0%, #f9fbf9 52%, #f4f7f5 100%);
   position: fixed;
   inset: 0;
   z-index: 0;
@@ -56,14 +56,14 @@ html[data-theme='light'] .ambient-backdrop {
 }
 
 /* Original 8 wallpaper presets (auto, dark, light, ember, harbour, aurora, constellation, indigo) */
-.ambient-backdrop[data-preset='dark'] .ambient-mesh-layer {
+html[data-theme='dark'] .ambient-backdrop[data-preset='dark'] .ambient-mesh-layer {
   background:
     radial-gradient(circle at 50% -20%, rgba(255, 255, 255, 0.08) 0%, transparent 70%),
     linear-gradient(180deg, rgba(255, 255, 255, 0.025) 0%, transparent 42%),
     #111010;
 }
 
-.ambient-backdrop[data-preset='dark'] .ambient-godray-layer {
+html[data-theme='dark'] .ambient-backdrop[data-preset='dark'] .ambient-godray-layer {
   opacity: 0.45;
   background:
     radial-gradient(62% 54% at 18% 8%, color-mix(in srgb, var(--red) 14%, transparent) 0%, transparent 68%),
@@ -71,18 +71,27 @@ html[data-theme='light'] .ambient-backdrop {
     radial-gradient(48% 44% at 24% 32%, color-mix(in srgb, var(--amber) 9%, transparent) 0%, transparent 72%);
 }
 
+html[data-theme='light'] .ambient-backdrop .ambient-mesh-layer,
 .ambient-backdrop[data-preset='light'] .ambient-mesh-layer {
   background:
-    radial-gradient(circle at 12% 12%, rgba(245, 158, 11, 0.14) 0%, transparent 60%),
-    radial-gradient(circle at 88% 88%, rgba(180, 83, 9, 0.1) 0%, transparent 50%),
-    #f5f1e8;
+    radial-gradient(56% 48% at 14% 8%, rgba(16, 155, 114, 0.06) 0%, transparent 62%),
+    radial-gradient(52% 46% at 86% 12%, rgba(125, 195, 232, 0.07) 0%, transparent 60%),
+    linear-gradient(160deg, #ffffff 0%, #fafcfa 52%, #f4f7f5 100%);
 }
 
-.ambient-backdrop[data-preset='light'] .ambient-godray-layer {
-  opacity: 0.52;
+html[data-theme='light'] .ambient-backdrop[data-preset='light'] .ambient-mesh-layer {
   background:
-    radial-gradient(60% 52% at 20% 8%, rgba(235, 176, 120, 0.3) 0%, transparent 68%),
-    radial-gradient(54% 48% at 38% 18%, rgba(186, 217, 230, 0.24) 0%, transparent 72%);
+    radial-gradient(56% 48% at 12% 10%, rgba(245, 158, 11, 0.09) 0%, transparent 60%),
+    radial-gradient(52% 46% at 88% 88%, rgba(16, 155, 114, 0.06) 0%, transparent 56%),
+    linear-gradient(160deg, #fffefb 0%, #faf8f3 54%, #f5f3ec 100%);
+}
+
+html[data-theme='light'] .ambient-backdrop .ambient-godray-layer,
+.ambient-backdrop[data-preset='light'] .ambient-godray-layer {
+  opacity: 0.36;
+  background:
+    radial-gradient(56% 48% at 18% 6%, rgba(255, 224, 186, 0.24) 0%, transparent 66%),
+    radial-gradient(50% 44% at 82% 14%, rgba(208, 236, 245, 0.22) 0%, transparent 70%);
 }
 
 .ambient-backdrop[data-preset='ember'] .ambient-mesh-layer {
@@ -104,6 +113,13 @@ html[data-theme='light'] .ambient-backdrop {
     conic-gradient(from 225deg at 80% 10%, rgba(125, 195, 232, 0.34) 0deg, transparent 70deg, rgba(168, 224, 235, 0.26) 145deg, transparent 240deg),
     radial-gradient(60% 52% at 15% 86%, rgba(44, 118, 158, 0.22), transparent 68%),
     var(--bg);
+}
+
+html[data-theme='light'] .ambient-backdrop[data-preset='harbour'] .ambient-mesh-layer {
+  background:
+    radial-gradient(56% 48% at 18% 12%, rgba(154, 214, 242, 0.26), transparent 62%),
+    radial-gradient(52% 46% at 84% 84%, rgba(186, 232, 216, 0.24), transparent 64%),
+    linear-gradient(155deg, #f8fcfd 0%, #eff7fa 54%, #eaf3f7 100%);
 }
 
 .ambient-backdrop[data-preset='harbour'] .ambient-godray-layer {
@@ -225,8 +241,7 @@ html[data-theme='dark'] .ambient-scrim[data-video='true'] {
 
 html[data-theme='light'] .ambient-scrim[data-video='true'] {
   background:
-    radial-gradient(120% 90% at 50% 0%, rgba(246, 247, 245, 0.64) 0%, rgba(240, 243, 240, 0.82) 100%),
-    linear-gradient(180deg, rgba(248, 249, 247, 0.56) 0%, rgba(242, 245, 242, 0.74) 100%);
+    linear-gradient(180deg, rgba(255, 255, 255, 0.42) 0%, rgba(248, 250, 248, 0.54) 100%);
 }
 
 html[data-theme='dark'] .ambient-scrim[data-video='false'] {
@@ -235,8 +250,7 @@ html[data-theme='dark'] .ambient-scrim[data-video='false'] {
 }
 
 html[data-theme='light'] .ambient-scrim[data-video='false'] {
-  background:
-    radial-gradient(120% 90% at 50% 0%, rgba(246, 247, 245, 0.16) 0%, rgba(238, 241, 238, 0.36) 100%);
+  background: transparent;
 }
 
 @media (prefers-reduced-motion: reduce) {

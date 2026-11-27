@@ -20,6 +20,46 @@
   border-top: 1px solid var(--iris-line);
 }
 
+html[data-theme='light'] .iris-qr-section {
+  --iris-bg: #eef4f1;
+  --iris-surface: #ffffff;
+  --iris-surface-2: #f5f9f7;
+  --iris-line: rgba(16, 21, 20, 0.12);
+  --iris-text: #101514;
+  --iris-muted: #3a4542;
+  --iris-accent: #0a6e50;
+}
+
+html[data-theme='light'] .iris-hero::after {
+  background:
+    radial-gradient(120% 80% at 50% 0%, transparent 55%, rgba(16, 21, 20, 0.05) 100%);
+}
+
+html[data-theme='light'] .iris-qr-plate {
+  border-color: rgba(16, 21, 20, 0.12);
+  box-shadow:
+    0 18px 40px -16px rgba(16, 21, 20, 0.14),
+    0 0 0 1px rgba(16, 21, 20, 0.06);
+}
+
+html[data-theme='light'] .iris-honor-btn {
+  background: #ffffff;
+  color: #101514;
+  border-color: rgba(16, 21, 20, 0.14);
+  box-shadow: 0 12px 28px -14px rgba(16, 21, 20, 0.16);
+}
+
+html[data-theme='light'] .iris-honor-btn-icon {
+  background: rgba(10, 110, 80, 0.1);
+  border-color: rgba(10, 110, 80, 0.2);
+  color: #0a6e50;
+}
+
+html[data-theme='light'] .iris-honor-btn:hover {
+  border-color: rgba(10, 110, 80, 0.45);
+  box-shadow: 0 16px 34px -16px rgba(10, 110, 80, 0.22);
+}
+
 .iris-hero {
   position: relative;
   min-height: 620px;

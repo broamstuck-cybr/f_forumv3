@@ -129,18 +129,18 @@ html[data-theme='light'] .scene-ink,
 html[data-theme='light'] .scene-paper,
 .scene-paper {
   color-scheme: light;
-  --bg: #f6f7f5;
+  --bg: #f8faf8;
   --bg-raised: #ffffff;
-  --bg-sunken: #ecefe9;
+  --bg-sunken: #eef2ef;
   --bg-high: #ffffff;
-  --bg-veil: rgba(246, 247, 245, 0.92);
+  --bg-veil: rgba(255, 255, 255, 0.94);
   --fg: #101514;
   --fg-muted: #3a4542;
   --fg-faint: #586662;
-  --fg-inverse: #f6f7f5;
+  --fg-inverse: #f8faf8;
   --bg-inverse: #101514;
-  --line: rgba(16, 21, 20, 0.11);
-  --line-strong: rgba(16, 21, 20, 0.22);
+  --line: rgba(16, 21, 20, 0.1);
+  --line-strong: rgba(16, 21, 20, 0.2);
   --accent: #0a6e50;
   --accent-fill: #0a6e50;
   --on-accent: #ffffff;

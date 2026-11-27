@@ -132,6 +132,36 @@ const VALID_WALLPAPER_PRESETS: ReadonlySet<WallpaperPreset> = new Set([
   'sage',
 ]);
 
+const DARK_ONLY_WALLPAPERS = new Set<WallpaperPreset>([
+  'dark',
+  'ember',
+  'aurora',
+  'constellation',
+  'indigo',
+  'lagoon',
+  'sunset',
+]);
+
+const LIGHT_ONLY_WALLPAPERS = new Set<WallpaperPreset>([
+  'light',
+  'harbour',
+  'lilac',
+  'sage',
+]);
+
+function reconcileWallpaperForTheme(
+  current: WallpaperPreset | undefined,
+  theme: ThemeMode,
+  explicit?: WallpaperPreset
+): WallpaperPreset {
+  if (explicit) return explicit;
+  const preset = current || (theme === 'light' ? 'light' : 'dark');
+  if (preset === 'auto') return 'auto';
+  if (theme === 'light' && DARK_ONLY_WALLPAPERS.has(preset)) return 'light';
+  if (theme === 'dark' && LIGHT_ONLY_WALLPAPERS.has(preset)) return 'dark';
+  return preset;
+}
+
 function normalizeWallpaperPreset(raw: unknown): WallpaperPreset {
   if (typeof raw === 'string') {
     if (VALID_WALLPAPER_PRESETS.has(raw as WallpaperPreset)) {
@@ -728,7 +758,10 @@ export const AppStoreProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         parsed.themeEffect === 'none'
           ? parsed.themeEffect
           : 'droplet';
-      const resolvedWallpaper = normalizeWallpaperPreset(parsed.wallpaperPreset);
+      const resolvedWallpaper = reconcileWallpaperForTheme(
+        normalizeWallpaperPreset(parsed.wallpaperPreset),
+        resolvedTheme
+      );
       return {
         ...DEFAULT_SETTINGS,
         ...parsed,
@@ -2201,11 +2234,17 @@ function normalizeStoredProject(raw: unknown): WorkspaceProject | null {
         } else if (partial.themePreference === 'light' || partial.themePreference === 'dark') {
           nextTheme = partial.themePreference;
         }
+        const nextWallpaper = reconcileWallpaperForTheme(
+          prev.wallpaperPreset,
+          nextTheme,
+          partial.wallpaperPreset
+        );
         const next: SettingsState = {
           ...prev,
           ...partial,
           themePreference: nextPref,
           theme: nextTheme,
+          wallpaperPreset: nextWallpaper,
         };
         persistSettingsSync(next);
         return next;
@@ -2227,14 +2266,25 @@ function normalizeStoredProject(raw: unknown): WorkspaceProject | null {
   const setTheme = useCallback(
     (theme: ThemeMode) => {
       const prev = settingsRef.current;
-      if (prev.theme !== theme || prev.themePreference !== theme) {
-        persistSettingsSync({ ...prev, theme, themePreference: theme });
+      const prevWallpaper = reconcileWallpaperForTheme(prev.wallpaperPreset, theme);
+      if (prev.theme !== theme || prev.themePreference !== theme || prev.wallpaperPreset !== prevWallpaper) {
+        persistSettingsSync({ ...prev, theme, themePreference: theme, wallpaperPreset: prevWallpaper });
       }
       setSettings((current) => {
-        if (current.theme === theme && current.themePreference === theme) {
+        const nextWallpaper = reconcileWallpaperForTheme(current.wallpaperPreset, theme);
+        if (
+          current.theme === theme &&
+          current.themePreference === theme &&
+          current.wallpaperPreset === nextWallpaper
+        ) {
           return current;
         }
-        const next: SettingsState = { ...current, theme, themePreference: theme };
+        const next: SettingsState = {
+          ...current,
+          theme,
+          themePreference: theme,
+          wallpaperPreset: nextWallpaper,
+        };
         persistSettingsSync(next);
         return next;
       });
@@ -2249,6 +2299,7 @@ function normalizeStoredProject(raw: unknown): WorkspaceProject | null {
       ...prev,
       theme: nextTheme,
       themePreference: nextTheme,
+      wallpaperPreset: reconcileWallpaperForTheme(prev.wallpaperPreset, nextTheme),
     });
     setSettings((current) => {
       const resolvedTheme: ThemeMode = current.theme === 'dark' ? 'light' : 'dark';
@@ -2256,6 +2307,7 @@ function normalizeStoredProject(raw: unknown): WorkspaceProject | null {
         ...current,
         theme: resolvedTheme,
         themePreference: resolvedTheme,
+        wallpaperPreset: reconcileWallpaperForTheme(current.wallpaperPreset, resolvedTheme),
       };
       persistSettingsSync(next);
       return next;

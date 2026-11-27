@@ -10,19 +10,31 @@ import '../pinui/original/theme-switch/theme-switch.css';
 
 export const PINUI_THEME_EVENT = 'ff:pinui-theme-toggle';
 
-export function triggerPinuiThemeToggle(sourceEl?: HTMLElement | null): void {
+type ThemeToggleDetail = {
+  x?: number;
+  y?: number;
+  targetTheme?: ThemeName;
+  preference?: 'light' | 'dark' | 'system';
+};
+
+export function triggerPinuiThemeToggle(
+  sourceEl?: HTMLElement | null,
+  targetTheme?: ThemeName,
+  preference?: 'light' | 'dark' | 'system'
+): void {
   if (typeof window === 'undefined') return;
   const rect = sourceEl?.getBoundingClientRect();
-  window.dispatchEvent(
-    new CustomEvent(PINUI_THEME_EVENT, {
-      detail: rect
-        ? {
-            x: rect.left + rect.width / 2,
-            y: rect.top + rect.height / 2,
-          }
-        : null,
-    })
-  );
+  const detail: ThemeToggleDetail = {
+    ...(rect
+      ? {
+          x: rect.left + rect.width / 2,
+          y: rect.top + rect.height / 2,
+        }
+      : {}),
+    ...(targetTheme ? { targetTheme } : {}),
+    ...(preference ? { preference } : {}),
+  };
+  window.dispatchEvent(new CustomEvent<ThemeToggleDetail>(PINUI_THEME_EVENT, { detail }));
 }
 
 type OriginPoint = { x: number; y: number };
@@ -31,7 +43,7 @@ const PINUI_DRAWER_EASE = 'cubic-bezier(0.32, 0.72, 0, 1)';
 const PINUI_FLOOD_MS = 380;
 
 export const GlobalThemeAtmosphere: React.FC = () => {
-  const { theme, setTheme, reducedMotion, themeEffect } = useAppStore();
+  const { theme, setTheme, updateSettings, reducedMotion, themeEffect } = useAppStore();
 
   const rootRef = useRef<HTMLDivElement | null>(null);
   const buttonRef = useRef<HTMLButtonElement | null>(null);
@@ -40,6 +52,7 @@ export const GlobalThemeAtmosphere: React.FC = () => {
 
   const themeRef = useRef<ThemeName>(theme);
   const setThemeRef = useRef(setTheme);
+  const updateSettingsRef = useRef(updateSettings);
   const reducedRef = useRef(reducedMotion);
   const effectRef = useRef(themeEffect);
   const pointRef = useRef<OriginPoint>({ x: 0, y: 0 });
@@ -49,12 +62,13 @@ export const GlobalThemeAtmosphere: React.FC = () => {
   useEffect(() => {
     themeRef.current = theme;
     setThemeRef.current = setTheme;
+    updateSettingsRef.current = updateSettings;
     reducedRef.current = reducedMotion;
     effectRef.current = themeEffect;
     if (rootRef.current?.dataset) {
       rootRef.current.dataset.theme = theme;
     }
-  }, [theme, setTheme, reducedMotion, themeEffect]);
+  }, [theme, setTheme, updateSettings, reducedMotion, themeEffect]);
 
   useEffect(() => {
     const root = rootRef.current;
@@ -80,15 +94,17 @@ export const GlobalThemeAtmosphere: React.FC = () => {
     engineRef.current = engine;
 
     const onTrigger = (event: Event) => {
-      const custom = event as CustomEvent<OriginPoint | null>;
+      const custom = event as CustomEvent<ThemeToggleDetail | null>;
       const vw = window.innerWidth || 1280;
       const vh = window.innerHeight || 720;
-      const rawPt = custom.detail
-        ? {
-            x: Math.max(24, Math.min(vw - 24, custom.detail.x)),
-            y: Math.max(20, Math.min(vh - 20, custom.detail.y)),
-          }
-        : { x: Math.max(48, vw - 76), y: 28 };
+      const detail = custom.detail;
+      const rawPt =
+        detail && typeof detail.x === 'number' && typeof detail.y === 'number'
+          ? {
+              x: Math.max(24, Math.min(vw - 24, detail.x)),
+              y: Math.max(20, Math.min(vh - 20, detail.y)),
+            }
+          : { x: Math.max(48, vw - 76), y: 28 };
       const pt = {
         x: rawPt.x,
         y: rawPt.y < 120 ? Math.min(vh - 24, 140) : rawPt.y,
@@ -96,7 +112,9 @@ export const GlobalThemeAtmosphere: React.FC = () => {
 
       pointRef.current = pt;
 
-      const next: ThemeName = themeRef.current === 'dark' ? 'light' : 'dark';
+      const next: ThemeName =
+        detail?.targetTheme ?? (themeRef.current === 'dark' ? 'light' : 'dark');
+      const changed = next !== themeRef.current;
       themeRef.current = next;
       pendingTargetRef.current = next;
       transitionStartedRef.current = false;
@@ -109,10 +127,18 @@ export const GlobalThemeAtmosphere: React.FC = () => {
         docEl.style.colorScheme = mode;
       };
 
-      if (reducedRef.current || effectRef.current === 'none') {
+      const commitStoreTheme = (mode: ThemeName) => {
+        if (detail?.preference) {
+          updateSettingsRef.current({ themePreference: detail.preference, theme: mode });
+        } else {
+          setThemeRef.current(mode);
+        }
+      };
+
+      if (!changed || reducedRef.current || effectRef.current === 'none') {
         pendingTargetRef.current = null;
         applyThemeDomSync(next);
-        setThemeRef.current(next);
+        commitStoreTheme(next);
         return;
       }
 
@@ -126,7 +152,7 @@ export const GlobalThemeAtmosphere: React.FC = () => {
         const vt = docWithVt.startViewTransition(() => {
           applyThemeDomSync(next);
           flushSync(() => {
-            setThemeRef.current(next);
+            commitStoreTheme(next);
           });
         });
         vt.ready
@@ -144,7 +170,8 @@ export const GlobalThemeAtmosphere: React.FC = () => {
           })
           .catch(() => undefined);
       } else {
-        setThemeRef.current(next);
+        applyThemeDomSync(next);
+        commitStoreTheme(next);
       }
 
       if (!engine.busy()) {

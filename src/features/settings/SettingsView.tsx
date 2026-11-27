@@ -419,8 +419,7 @@ export const SettingsView: React.FC = () => {
         typeof document !== 'undefined' && document.activeElement instanceof HTMLElement
           ? document.activeElement
           : null;
-      updateSettings({ themePreference: pref });
-      triggerPinuiThemeToggle(originEl);
+      triggerPinuiThemeToggle(originEl, nextTheme, pref);
       return;
     }
     updateSettings({
@@ -439,12 +438,11 @@ export const SettingsView: React.FC = () => {
         : nextPref;
     updateSettings({
       wallpaperPreset: preset.id,
-      themePreference: nextPref,
       ambientVideo: preset.ambient,
-      ...(nextTheme === theme ? { theme: nextTheme } : {}),
+      ...(nextTheme === theme ? { themePreference: nextPref, theme: nextTheme } : {}),
     });
     if (nextTheme !== theme) {
-      triggerPinuiThemeToggle(sourceEl);
+      triggerPinuiThemeToggle(sourceEl, nextTheme, nextPref);
     }
   };
 
