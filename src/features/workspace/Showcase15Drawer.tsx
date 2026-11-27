@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { AGENT_SHOWCASE_15 } from '../../data/agentShowcase15';
+import { handleLiquidPointerLeave, handleLiquidPointerMove } from '../../utils/liquidGlassPointer';
 import type { AgentShowcaseProduct, PublishedPageCategory } from '../../types/workspaceV4';
 
 export interface Showcase15DrawerProps {
@@ -50,7 +51,7 @@ export const Showcase15Drawer: React.FC<Showcase15DrawerProps> = ({
   return (
     <div className="ws-drawerOverlay" onClick={onClose}>
       <aside
-        className="ws-drawer"
+        className="ws-drawer lg-glass lg-glass--matte"
         role="dialog"
         aria-modal="true"
         aria-label="15 sản phẩm mẫu Agent Mode"
@@ -92,13 +93,16 @@ export const Showcase15Drawer: React.FC<Showcase15DrawerProps> = ({
         </div>
 
         <div className="ws-drawer__list">
-          {items.map((prod) => {
+          {items.map((prod, idx) => {
             const isActive = activeId === prod.id;
+            const isFeatured = idx === 0 && items.length >= 3;
             return (
               <button
                 key={prod.id}
                 type="button"
-                className={`ws-showcaseCard${isActive ? ' is-active' : ''}`}
+                className={`ws-showcaseCard lg-glass lg-glass--matte${isActive ? ' is-active' : ''}${isFeatured ? ' ws-showcaseCard--featured' : ''}`}
+                onPointerMove={handleLiquidPointerMove}
+                onPointerLeave={handleLiquidPointerLeave}
                 onClick={() => {
                   onSelect(prod);
                   onClose();

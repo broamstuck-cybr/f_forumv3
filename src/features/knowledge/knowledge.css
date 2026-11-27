@@ -12,10 +12,8 @@
     align-items: center;
     justify-content: space-between;
     gap: var(--space-3);
-    padding: var(--space-3);
-    border: 1px solid var(--line);
-    border-radius: 16px;
-    background: var(--bg-raised);
+    padding: 12px 14px;
+    border-radius: 20px;
   }
 
   .kn-subtabs {
@@ -25,14 +23,15 @@
     gap: 4px;
     padding: 4px;
     border-radius: var(--radius-pill);
-    border: 1px solid var(--line);
-    background: var(--bg-sunken);
+    border: 1px solid var(--lg-tray-border);
+    background: var(--lg-tray-bg);
+    box-shadow: var(--lg-tray-shadow);
   }
 
   .kn-subtab {
     min-height: 36px;
-    padding: 0 14px;
-    border: 0;
+    padding: 0 15px;
+    border: 1px solid transparent;
     border-radius: var(--radius-pill);
     background: transparent;
     color: var(--fg-muted);
@@ -40,15 +39,21 @@
     font-size: var(--text-xs);
     font-weight: 600;
     cursor: pointer;
-    transition: background-color var(--dur-1) var(--ease-ux), color var(--dur-1) var(--ease-ux);
+    transition: transform 120ms var(--ease-ux), background-color var(--dur-1) var(--ease-ux), color var(--dur-1) var(--ease-ux), border-color var(--dur-1) var(--ease-ux);
   }
 
   .kn-subtab:hover {
     color: var(--fg);
   }
 
+  .kn-subtab:active {
+    transform: scale(0.97);
+  }
+
   .kn-subtab[aria-selected='true'] {
-    background: var(--accent-soft);
+    border-color: var(--accent);
+    background: var(--lg-pill-bg-active);
+    box-shadow: var(--lg-pill-bevel);
     color: var(--accent);
   }
 
@@ -70,9 +75,10 @@
     max-width: 360px;
     min-height: 44px;
     padding: 0 14px;
-    border: 1px solid var(--line);
+    border: 1px solid var(--lg-pill-border);
     border-radius: var(--radius-pill);
-    background: var(--bg-sunken);
+    background: var(--lg-panel-bg-sunken);
+    box-shadow: var(--lg-pill-bevel);
     color: var(--fg);
   }
 
@@ -121,26 +127,46 @@
     gap: 4px;
     padding: 4px;
     border-radius: var(--radius-pill);
-    border: 1px solid var(--line);
-    background: var(--bg-sunken);
+    border: 1px solid var(--lg-tray-border);
+    background: var(--lg-tray-bg);
   }
 
   .kn-cost-btn {
     min-height: 36px;
     padding: 0 12px;
-    border: 0;
+    border: 1px solid transparent;
     border-radius: var(--radius-pill);
     background: transparent;
     color: var(--fg-muted);
     font-size: var(--text-xs);
     font-weight: 600;
     cursor: pointer;
-    transition: background-color var(--dur-1) var(--ease-ux), color var(--dur-1) var(--ease-ux);
+    transition: transform 120ms var(--ease-ux), background-color var(--dur-1) var(--ease-ux), color var(--dur-1) var(--ease-ux);
   }
 
   .kn-cost-btn[aria-pressed='true'] {
-    background: var(--bg-raised);
+    border-color: var(--lg-pill-border);
+    background: var(--lg-pill-bg);
+    box-shadow: var(--lg-pill-bevel);
     color: var(--fg);
+  }
+
+  .kn-craft-meta {
+    display: inline-flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--fg-muted);
+  }
+
+  .kn-craft-meta span {
+    padding: 6px 11px;
+    border-radius: var(--radius-pill);
+    border: 1px solid var(--lg-pill-border);
+    background: var(--lg-pill-bg);
+    box-shadow: var(--lg-pill-bevel);
   }
 
   .kn-cats {
@@ -169,26 +195,31 @@
     gap: 6px;
     flex: none;
     min-height: 40px;
-    padding: 0 14px;
-    border: 1px solid var(--line);
+    padding: 0 15px;
+    border: 1px solid var(--lg-pill-border);
     border-radius: var(--radius-pill);
-    background: var(--bg-raised);
+    background: var(--lg-pill-bg);
+    box-shadow: var(--lg-pill-bevel);
     color: var(--fg-muted);
     font-size: var(--text-xs);
     font-weight: 600;
     white-space: nowrap;
     cursor: pointer;
-    transition: border-color var(--dur-1) var(--ease-ux), background-color var(--dur-1) var(--ease-ux), color var(--dur-1) var(--ease-ux);
+    transition: transform 120ms var(--ease-ux), border-color var(--dur-1) var(--ease-ux), color var(--dur-1) var(--ease-ux);
   }
 
   .kn-cat-pill:hover {
-    border-color: var(--line-strong);
+    border-color: var(--accent);
     color: var(--fg);
+  }
+
+  .kn-cat-pill:active {
+    transform: scale(0.97);
   }
 
   .kn-cat-pill[aria-pressed='true'] {
     border-color: var(--accent);
-    background: var(--accent-soft);
+    background: var(--lg-pill-bg-active);
     color: var(--accent);
   }
 
@@ -199,11 +230,37 @@
     font-variant-numeric: tabular-nums;
   }
 
+  /* Asymmetric 12-Column Liquid Glass Bento Grid */
   .kn-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(min(100%, 360px), 1fr));
-    gap: var(--space-4);
+    grid-template-columns: minmax(0, 1fr);
+    gap: 14px;
     min-width: 0;
+  }
+
+  @media (min-width: 768px) {
+    .kn-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .kn-card[data-bento-span='8'],
+    .kn-card[data-bento-span='12'] {
+      grid-column: 1 / -1;
+    }
+  }
+
+  @media (min-width: 1080px) {
+    .kn-grid {
+      grid-template-columns: repeat(12, minmax(0, 1fr));
+      gap: 16px;
+    }
+
+    .kn-card[data-bento-span='4'] { grid-column: span 4; }
+    .kn-card[data-bento-span='5'] { grid-column: span 5; }
+    .kn-card[data-bento-span='6'] { grid-column: span 6; }
+    .kn-card[data-bento-span='7'] { grid-column: span 7; }
+    .kn-card[data-bento-span='8'] { grid-column: span 8; }
+    .kn-card[data-bento-span='12'] { grid-column: span 12; }
   }
 
   .kn-card {
@@ -212,17 +269,32 @@
     justify-content: space-between;
     gap: var(--space-3);
     min-width: 0;
-    padding: var(--space-4);
-    border: 1px solid var(--line);
-    border-radius: 16px;
-    background: var(--bg-raised);
-    overflow: hidden;
-    transition: border-color var(--dur-2) var(--ease-ux), transform var(--dur-2) var(--ease-out);
+    padding: 20px;
+    border-radius: 20px;
+    transition: transform var(--dur-2) var(--ease-out), box-shadow var(--dur-2) var(--ease-ux);
+  }
+
+  .kn-card--lead {
+    padding: 24px 26px;
+  }
+
+  .kn-card--lead .kn-card-title {
+    font-family: var(--font-display);
+    font-size: clamp(1.35rem, 1.15rem + 0.7vw, 1.75rem);
+    font-weight: 500;
+    line-height: 1.16;
+    letter-spacing: -0.02em;
+  }
+
+  .kn-card--lead .kn-card-summary {
+    -webkit-line-clamp: 3;
+    font-size: 0.94rem;
+    max-width: 66ch;
   }
 
   .kn-card:hover {
-    border-color: var(--line-strong);
     transform: translateY(-2px);
+    box-shadow: var(--lg-inset-bevel), var(--lg-panel-shadow-hover);
   }
 
   .kn-card-top {
@@ -294,9 +366,9 @@
   /* Ported code block rhythm from CodeFronts documentation-code-block (cbk-06) */
   .kn-code {
     margin: 0;
-    border: 1px solid var(--line);
-    border-radius: 10px;
-    background: var(--bg-sunken);
+    border: 1px solid var(--lg-pill-border);
+    border-radius: 12px;
+    background: var(--lg-panel-bg-sunken);
     overflow: hidden;
   }
 
@@ -306,7 +378,7 @@
     gap: 8px;
     padding: 6px 8px 6px 10px;
     border-bottom: 1px solid var(--line);
-    background: var(--bg-high);
+    background: var(--lg-tray-bg);
   }
 
   .kn-code-badge {
@@ -382,38 +454,45 @@
     display: inline-flex;
     align-items: center;
     gap: 6px;
-    min-height: 44px;
-    padding: 0 12px;
-    border: 1px solid var(--line);
+    min-height: 42px;
+    padding: 0 14px;
+    border: 1px solid var(--lg-pill-border);
     border-radius: var(--radius-pill);
-    background: transparent;
+    background: var(--lg-pill-bg);
+    box-shadow: var(--lg-pill-bevel);
     color: var(--fg-muted);
     font-size: var(--text-xs);
     font-weight: 600;
     cursor: pointer;
-    transition: border-color var(--dur-1) var(--ease-ux), color var(--dur-1) var(--ease-ux);
+    transition: transform 120ms var(--ease-ux), border-color var(--dur-1) var(--ease-ux), color var(--dur-1) var(--ease-ux);
   }
 
   .kn-toggle-code:hover {
-    border-color: var(--line-strong);
+    border-color: var(--accent);
     color: var(--fg);
+  }
+
+  .kn-toggle-code:active,
+  .kn-apply-btn:active {
+    transform: scale(0.97);
   }
 
   .kn-apply-btn {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    min-height: 44px;
-    padding: 0 16px;
+    min-height: 42px;
+    padding: 0 18px;
     border: 1px solid var(--accent);
     border-radius: var(--radius-pill);
-    background: var(--accent-soft);
+    background: var(--lg-pill-bg-active);
+    box-shadow: var(--lg-pill-bevel);
     color: var(--accent);
     font-size: var(--text-xs);
     font-weight: 700;
     white-space: nowrap;
     cursor: pointer;
-    transition: background-color var(--dur-1) var(--ease-ux), color var(--dur-1) var(--ease-ux);
+    transition: transform 120ms var(--ease-ux), background-color var(--dur-1) var(--ease-ux), color var(--dur-1) var(--ease-ux);
   }
 
   .kn-apply-btn:hover {
@@ -424,18 +503,38 @@
 
   .kn-rules-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(min(100%, 340px), 1fr));
-    gap: var(--space-4);
+    grid-template-columns: minmax(0, 1fr);
+    gap: 14px;
+  }
+
+  @media (min-width: 768px) {
+    .kn-rules-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
+  @media (min-width: 1040px) {
+    .kn-rules-grid {
+      grid-template-columns: repeat(12, minmax(0, 1fr));
+      gap: 16px;
+    }
+
+    .kn-rule-card[data-bento-span='7'] { grid-column: span 7; }
+    .kn-rule-card[data-bento-span='5'] { grid-column: span 5; }
   }
 
   .kn-rule-card {
     display: flex;
     flex-direction: column;
     gap: var(--space-3);
-    padding: var(--space-5);
-    border: 1px solid var(--line);
-    border-radius: 16px;
-    background: var(--bg-raised);
+    padding: 24px;
+    border-radius: 20px;
+    transition: transform var(--dur-2) var(--ease-out), box-shadow var(--dur-2) var(--ease-ux);
+  }
+
+  .kn-rule-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--lg-inset-bevel), var(--lg-panel-shadow-hover);
   }
 
   .kn-rule-num {

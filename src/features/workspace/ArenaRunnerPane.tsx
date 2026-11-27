@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import JSZip from 'jszip';
+import { handleLiquidPointerLeave, handleLiquidPointerMove } from '../../utils/liquidGlassPointer';
 
 export interface ArenaRunnerPaneProps {
   html: string;
@@ -119,7 +120,7 @@ export const ArenaRunnerPane: React.FC<ArenaRunnerPaneProps> = ({
   };
 
   return (
-    <section className="ws-runner" aria-label="Khung xem trước và xuất bản">
+    <section className="ws-runner lg-glass lg-glass--matte" aria-label="Khung xem trước và xuất bản">
       <div className="ws-runner__bar">
         <div className="ws-runner__left">
           <div className="ws-seg" role="tablist" aria-label="Chế độ xem">
@@ -240,12 +241,18 @@ export const ArenaRunnerPane: React.FC<ArenaRunnerPaneProps> = ({
 
       <div className="ws-runner__body">
         {!html && !busy && (
-          <div className="ws-runner__empty">
-            <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-              <rect x="3" y="4" width="18" height="16" rx="2.5" />
-              <path d="M3 9h18" />
-              <path d="M8 14h4" />
-            </svg>
+          <div
+            className="ws-runner__empty lg-glass lg-glass--matte"
+            onPointerMove={handleLiquidPointerMove}
+            onPointerLeave={handleLiquidPointerLeave}
+          >
+            <div className="ws-runner__emptyGlyph" aria-hidden="true">
+              <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.65" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="3" y="4" width="18" height="16" rx="2.5" />
+                <path d="M3 9h18" />
+                <path d="M8 14h4" />
+              </svg>
+            </div>
             <h3>Chưa có trang nào được dựng</h3>
             <p>Nhập yêu cầu ở khung bên trái hoặc chọn ngay một trong 15 mẫu Agent có sẵn.</p>
             <button type="button" className="ws-ctaBtn ws-ctaBtn--primary" onClick={onOpenShowcase}>

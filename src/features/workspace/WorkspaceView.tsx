@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { KineticLogo } from '../../components/brand/KineticLogo';
 import { triggerPinuiThemeToggle } from '../../components/layout/GlobalThemeAtmosphere';
+import { handleLiquidPointerLeave, handleLiquidPointerMove } from '../../utils/liquidGlassPointer';
 import {
   AGENT_SHOWCASE_15,
   getShowcaseBlueprintById,
@@ -617,7 +618,11 @@ export const WorkspaceView: React.FC = () => {
 
   return (
     <div className="ws-shell">
-      <header className="ws-topbar">
+      <header
+        className="ws-topbar lg-glass lg-glass--matte"
+        onPointerMove={handleLiquidPointerMove}
+        onPointerLeave={handleLiquidPointerLeave}
+      >
         <div className="ws-topbar__left">
           <button
             type="button"
@@ -786,7 +791,7 @@ export const WorkspaceView: React.FC = () => {
 
       <div className="ws-split" ref={splitContainerRef}>
         <div
-          className={`ws-pane ws-pane--left${mobileTab === 'preview' ? ' is-mobileHidden' : ''}`}
+          className={`ws-pane ws-pane--left lg-bento-shell${mobileTab === 'preview' ? ' is-mobileHidden' : ''}`}
           style={{ width: `${splitRatio * 100}%` }}
         >
           <AgentChatPane
@@ -816,7 +821,7 @@ export const WorkspaceView: React.FC = () => {
         />
 
         <div
-          className={`ws-pane ws-pane--right${mobileTab === 'chat' ? ' is-mobileHidden' : ''}`}
+          className={`ws-pane ws-pane--right lg-bento-shell${mobileTab === 'chat' ? ' is-mobileHidden' : ''}`}
         >
           <ArenaRunnerPane
             html={html}

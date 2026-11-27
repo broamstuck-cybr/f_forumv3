@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { BRAND_PALETTES } from '../../engine/motionCraftPack';
+import { handleLiquidPointerLeave, handleLiquidPointerMove } from '../../utils/liquidGlassPointer';
 import type {
   AgentChatMessage,
   OnboardingProfile,
@@ -36,10 +37,19 @@ const QUICK_EDIT_CHIPS = [
   'Rút gọn chữ',
 ];
 
-const EMPTY_STARTERS = [
-  'Làm trang thuyết trình Dự án Năng lượng Xanh có số liệu và 2 câu trắc nghiệm',
-  'Tạo trang tuyển thành viên CLB Robotics THPT có lịch tập và form đăng ký',
-  'Dựng hồ sơ sinh viên Công nghệ Thông tin nền tối gọn sạch',
+const EMPTY_STARTERS: Array<{ tag: string; prompt: string }> = [
+  {
+    tag: 'Thuyết trình',
+    prompt: 'Làm trang thuyết trình Dự án Năng lượng Xanh có số liệu và 2 câu trắc nghiệm',
+  },
+  {
+    tag: 'CLB & Sự kiện',
+    prompt: 'Tạo trang tuyển thành viên CLB Robotics THPT có lịch tập và form đăng ký',
+  },
+  {
+    tag: 'Hồ sơ IT',
+    prompt: 'Dựng hồ sơ sinh viên Công nghệ Thông tin nền tối gọn sạch',
+  },
 ];
 
 export const AgentChatPane: React.FC<AgentChatPaneProps> = ({
@@ -83,14 +93,14 @@ export const AgentChatPane: React.FC<AgentChatPaneProps> = ({
     : 'Chế độ Chat nhanh · Chưa đặt hồ sơ 5 bước';
 
   return (
-    <section className="ws-chat" aria-label="Hội thoại với AI dựng trang">
+    <section className="ws-chat lg-glass lg-glass--matte" aria-label="Hội thoại với AI dựng trang">
       <div className="ws-chat__ctx">
         <span className="ws-chat__ctxText" title={contextSummary}>
           {contextSummary}
         </span>
         <button
           type="button"
-          className="ws-iconBtn ws-iconBtn--sm"
+          className="ws-iconBtn ws-iconBtn--sm lg-pill"
           onClick={onEditOnboarding}
           aria-label="Sửa thiết lập 5 bước"
           title="Sửa 5 bước"
@@ -110,14 +120,17 @@ export const AgentChatPane: React.FC<AgentChatPaneProps> = ({
               AI sẽ tra 5.994 mẫu giao diện miễn phí, chọn bố cục đúng chủ đề và xuất ra một tệp HTML chạy ngay ở khung bên phải.
             </p>
             <div className="ws-chat__starters">
-              {EMPTY_STARTERS.map((starter) => (
+              {EMPTY_STARTERS.map((starter, idx) => (
                 <button
-                  key={starter}
+                  key={starter.prompt}
                   type="button"
-                  className="ws-starterBtn"
-                  onClick={() => onSendPrompt(starter)}
+                  className={`ws-starterBtn lg-glass lg-glass--matte${idx === 0 ? ' ws-starterBtn--featured' : ''}`}
+                  onPointerMove={handleLiquidPointerMove}
+                  onPointerLeave={handleLiquidPointerLeave}
+                  onClick={() => onSendPrompt(starter.prompt)}
                 >
-                  {starter}
+                  <span className="ws-starterTag">{starter.tag}</span>
+                  <span className="ws-starterCopy">{starter.prompt}</span>
                 </button>
               ))}
             </div>
@@ -298,7 +311,11 @@ export const AgentChatPane: React.FC<AgentChatPaneProps> = ({
           </div>
         )}
 
-        <div className="ws-composer">
+        <div
+          className="ws-composer lg-glass lg-glass--matte"
+          onPointerMove={handleLiquidPointerMove}
+          onPointerLeave={handleLiquidPointerLeave}
+        >
           <button
             type="button"
             className="ws-iconBtn ws-iconBtn--sm"

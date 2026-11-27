@@ -4,6 +4,7 @@ import type { MotionRecipeItem } from '../../types/workspaceV4';
 import { useAppStore } from '../../store/appStore';
 import { copyText } from '../explore/catalog';
 import { fetchMotionRecipes, getCachedMotionRecipes } from '../explore/vaultLoader';
+import { handleLiquidPointerLeave, handleLiquidPointerMove } from '../../utils/liquidGlassPointer';
 import './knowledge.css';
 
 type KnowledgeTab = 'techniques' | 'craft';
@@ -113,6 +114,41 @@ function cleanRecipeSummary(raw: string): string {
     .trim();
 }
 
+function computeBentoSpans(total: number): number[] {
+  if (total <= 0) return [];
+  if (total === 1) return [12];
+  if (total === 2) return [7, 5];
+  if (total === 3) return [4, 4, 4];
+
+  const spans: number[] = [8, 4];
+  let remaining = total - 2;
+  let preferPair = false;
+
+  while (remaining > 0) {
+    if (remaining === 4) {
+      spans.push(6, 6, 6, 6);
+      break;
+    }
+    if (remaining === 2) {
+      spans.push(6, 6);
+      break;
+    }
+    if (remaining === 1) {
+      spans.push(12);
+      break;
+    }
+    if (preferPair && remaining >= 5 && remaining !== 6) {
+      spans.push(6, 6);
+      remaining -= 2;
+    } else {
+      spans.push(4, 4, 4);
+      remaining -= 3;
+    }
+    preferPair = !preferPair;
+  }
+  return spans;
+}
+
 export const KnowledgeView: React.FC = () => {
   const { openInWorkspace, recordSignal, addToast } = useAppStore();
   const [tab, setTab] = useState<KnowledgeTab>('techniques');
@@ -166,6 +202,8 @@ export const KnowledgeView: React.FC = () => {
     });
   }, [recipes, category, cost, search]);
 
+  const bentoSpans = useMemo(() => computeBentoSpans(filtered.length), [filtered.length]);
+
   const handleCopyCode = async (item: MotionRecipeItem) => {
     const ok = await copyText(item.code);
     if (ok) {
@@ -197,7 +235,11 @@ export const KnowledgeView: React.FC = () => {
 
   return (
     <section className="kn" aria-label="Sổ tay Tri thức và Kỹ thuật chuyển động">
-      <div className="kn-bar">
+      <div
+        className="kn-bar lg-glass lg-glass--matte"
+        onPointerMove={handleLiquidPointerMove}
+        onPointerLeave={handleLiquidPointerLeave}
+      >
         <div className="kn-subtabs" role="tablist" aria-label="Mục tri thức">
           <button
             type="button"
@@ -258,7 +300,12 @@ export const KnowledgeView: React.FC = () => {
               ))}
             </div>
           </div>
-        ) : null}
+        ) : (
+          <div className="kn-craft-meta">
+            <span>6 quy chuẩn cốt lõi</span>
+            <span>Bắt buộc trước khi xuất bản</span>
+          </div>
+        )}
       </div>
 
       {tab === 'techniques' ? (
@@ -317,13 +364,21 @@ export const KnowledgeView: React.FC = () => {
             </div>
           ) : (
             <div className="kn-grid">
-              {filtered.map((item) => {
+              {filtered.map((item, idx) => {
                 const showCode = Boolean(expandedIds[item.id]);
                 const copied = copiedId === item.id;
                 const summary = cleanRecipeSummary(item.summary);
+                const span = bentoSpans[idx] ?? 4;
+                const isLead = span >= 8;
 
                 return (
-                  <article key={item.id} className="kn-card">
+                  <article
+                    key={item.id}
+                    className={`kn-card lg-glass lg-glass--matte${isLead ? ' kn-card--lead' : ''}`}
+                    data-bento-span={span}
+                    onPointerMove={handleLiquidPointerMove}
+                    onPointerLeave={handleLiquidPointerLeave}
+                  >
                     <div className="flex flex-col gap-2.5 min-w-0">
                       <div className="kn-card-top">
                         <span className="kn-card-cat">{item.category}</span>
@@ -389,20 +444,29 @@ export const KnowledgeView: React.FC = () => {
         </>
       ) : (
         <div className="kn-rules-grid">
-          {CRAFT_RULES.map((rule) => (
-            <article key={rule.id} className="kn-rule-card">
-              <span className="kn-rule-num">{rule.num}</span>
-              <h3 className="kn-rule-title">{rule.title}</h3>
-              <ul className="kn-rule-list">
-                {rule.points.map((point) => (
-                  <li key={point}>{point}</li>
-                ))}
-              </ul>
-              <p className="kn-rule-avoid">
-                <strong>Cần tránh:</strong> {rule.avoid}
-              </p>
-            </article>
-          ))}
+          {CRAFT_RULES.map((rule, idx) => {
+            const ruleSpan = idx === 0 || idx === 3 || idx === 4 ? 7 : 5;
+            return (
+              <article
+                key={rule.id}
+                className="kn-rule-card lg-glass lg-glass--matte"
+                data-bento-span={ruleSpan}
+                onPointerMove={handleLiquidPointerMove}
+                onPointerLeave={handleLiquidPointerLeave}
+              >
+                <span className="kn-rule-num">{rule.num}</span>
+                <h3 className="kn-rule-title">{rule.title}</h3>
+                <ul className="kn-rule-list">
+                  {rule.points.map((point) => (
+                    <li key={point}>{point}</li>
+                  ))}
+                </ul>
+                <p className="kn-rule-avoid">
+                  <strong>Cần tránh:</strong> {rule.avoid}
+                </p>
+              </article>
+            );
+          })}
         </div>
       )}
     </section>

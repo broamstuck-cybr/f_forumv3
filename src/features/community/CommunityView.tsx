@@ -23,6 +23,7 @@ import { apiClient } from '../../services/apiClient';
 import { useAppStore } from '../../store/appStore';
 import { compileSpecimenSrcDoc, copyText, type PreviewViewport } from '../explore/catalog';
 import { KnowledgeView } from '../knowledge/KnowledgeView';
+import { handleLiquidPointerLeave, handleLiquidPointerMove } from '../../utils/liquidGlassPointer';
 import './community.css';
 
 type CommunityTopTab = 'remix' | 'knowledge';
@@ -79,6 +80,41 @@ function formatAuthorRole(raw?: string): string {
 }
 
 const PREVIEW_CANVAS_WIDTH = 1280;
+
+function computeCommunityBentoSpans(total: number): number[] {
+  if (total <= 0) return [];
+  if (total === 1) return [12];
+  if (total === 2) return [7, 5];
+  if (total === 3) return [4, 4, 4];
+
+  const spans: number[] = [8, 4];
+  let remaining = total - 2;
+  let preferPair = false;
+
+  while (remaining > 0) {
+    if (remaining === 4) {
+      spans.push(6, 6, 6, 6);
+      break;
+    }
+    if (remaining === 2) {
+      spans.push(6, 6);
+      break;
+    }
+    if (remaining === 1) {
+      spans.push(12);
+      break;
+    }
+    if (preferPair && remaining >= 5 && remaining !== 6) {
+      spans.push(6, 6);
+      remaining -= 2;
+    } else {
+      spans.push(4, 4, 4);
+      remaining -= 3;
+    }
+    preferPair = !preferPair;
+  }
+  return spans;
+}
 
 function initialsOf(name: string): string {
   return (
@@ -371,10 +407,18 @@ export const CommunityView: React.FC = () => {
   );
 
   const spring = reduced ? { duration: 0.01 } : { type: 'spring' as const, stiffness: 320, damping: 30 };
+  const communityBentoSpans = useMemo(
+    () => computeCommunityBentoSpans(filteredEntries.length),
+    [filteredEntries.length]
+  );
 
   return (
     <div className="wrap-wide cm">
-      <header className="cm-head">
+      <header
+        className="cm-head lg-glass lg-glass--matte"
+        onPointerMove={handleLiquidPointerMove}
+        onPointerLeave={handleLiquidPointerLeave}
+      >
         <div className="cm-head-copy">
           <h1 className="cm-title">Cộng đồng Remix</h1>
           <p className="cm-sub">
@@ -529,16 +573,24 @@ export const CommunityView: React.FC = () => {
             </div>
           ) : (
             <div className="cm-grid">
-              {filteredEntries.map((entry) => {
+              {filteredEntries.map((entry, idx) => {
                 const liked =
                   entry.source === 'published'
                     ? Boolean(likedPublishedSlugs[entry.slug])
                     : isItemLiked(entry.id);
                 const heartCount =
                   entry.source === 'published' ? entry.likes : getHeartCount(entry.id);
+                const bentoSpan = communityBentoSpans[idx] ?? 4;
+                const isFeatured = bentoSpan >= 8;
 
                 return (
-                  <article key={entry.id} className="cm-card">
+                  <article
+                    key={entry.id}
+                    className={`cm-card lg-glass lg-glass--matte${isFeatured ? ' cm-card--featured' : ''}`}
+                    data-bento-span={bentoSpan}
+                    onPointerMove={handleLiquidPointerMove}
+                    onPointerLeave={handleLiquidPointerLeave}
+                  >
                     <div className="cm-stage">
                       <MiniHtmlStage title={entry.title} html={entry.html} theme={theme} />
                       <span className="cm-stage-badge">{entry.categoryLabel}</span>
@@ -634,7 +686,7 @@ export const CommunityView: React.FC = () => {
             onClick={() => setPreviewEntry(null)}
           >
             <motion.div
-              className="cm-modal"
+              className="cm-modal lg-glass lg-glass--matte"
               initial={reduced ? { opacity: 0 } : { opacity: 0, scale: 0.97, y: 12 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={reduced ? { opacity: 0 } : { opacity: 0, scale: 0.98, y: 8 }}
