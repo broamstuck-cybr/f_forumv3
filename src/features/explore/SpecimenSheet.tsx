@@ -1,5 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
+  IconCheck,
+  IconCopy,
   IconMonitor,
   IconMoon,
   IconRotateCw,
@@ -105,9 +107,10 @@ export const SpecimenSheet: React.FC<SpecimenSheetProps> = ({
   const [stageZoomed, setStageZoomed] = useState(false);
   const [stageTheme, setStageTheme] = useState<PreviewTheme>(theme);
   const [nonce, setNonce] = useState(0);
-  const [codeOpen, setCodeOpen] = useState(false);
-  const [codeTab, setCodeTab] = useState<CodeTab>('html');
+  const [codeOpen, setCodeOpen] = useState(true);
+  const [codeTab, setCodeTab] = useState<CodeTab>('spec');
   const [copied, setCopied] = useState(false);
+  const [copiedPrompt, setCopiedPrompt] = useState(false);
   const [pinuiMap, setPinuiMap] = useState<Record<string, PinUISourceEntry> | null>(
     () => getCachedPinUISourceMap()
   );
@@ -134,8 +137,9 @@ export const SpecimenSheet: React.FC<SpecimenSheetProps> = ({
   useEffect(() => {
     if (!item) return;
     setNonce((n) => n + 1);
-    setCodeTab('html');
+    setCodeTab('spec');
     setCopied(false);
+    setCopiedPrompt(false);
   }, [item?.id]);
 
   useEffect(() => {
@@ -260,6 +264,20 @@ export const SpecimenSheet: React.FC<SpecimenSheetProps> = ({
           ? safeCode || safeSpec
           : safeSpec;
 
+  const handleCopyPromptDirect = async () => {
+    if (!safeSpec) return;
+    const ok = await copyText(safeSpec);
+    if (ok) {
+      setCopiedPrompt(true);
+      window.setTimeout(() => setCopiedPrompt(false), 1800);
+    }
+    addToast(
+      ok
+        ? { type: 'success', title: 'Đã chép Prompt', message: safeTitle }
+        : { type: 'error', title: 'Không chép được', message: safeTitle }
+    );
+  };
+
   const handleCopyCode = async () => {
     if (!activeCode) return;
     const ok = await copyText(activeCode);
@@ -269,7 +287,11 @@ export const SpecimenSheet: React.FC<SpecimenSheetProps> = ({
     }
     addToast(
       ok
-        ? { type: 'success', title: 'Đã chép mã', message: safeTitle }
+        ? {
+            type: 'success',
+            title: resolvedCodeTab === 'spec' ? 'Đã chép Prompt' : 'Đã chép mã',
+            message: safeTitle,
+          }
         : { type: 'error', title: 'Không chép được', message: safeTitle }
     );
   };
@@ -448,28 +470,40 @@ export const SpecimenSheet: React.FC<SpecimenSheetProps> = ({
             </dl>
             <div className="ex-spec-actions">
               <button type="button" className="btn btn-solid" onClick={() => onUse(item)}>
-                Dùng mẫu này
+                Dùng mẫu
               </button>
-              <button type="button" className="btn btn-line" onClick={() => onExperience(item)}>
-                Trải nghiệm
+              <button
+                type="button"
+                className="btn btn-line ex-copy-prompt-btn"
+                onClick={() => void handleCopyPromptDirect()}
+              >
+                {copiedPrompt ? <IconCheck size={14} aria-hidden="true" /> : <IconCopy size={14} aria-hidden="true" />}
+                <span>{copiedPrompt ? 'Đã chép' : 'Chép Prompt'}</span>
               </button>
-              <button type="button" className="btn btn-line" onClick={() => onAttach(item)}>
-                Đính kèm
-              </button>
-              <ReactionBar id={item.id} title={safeTitle} library={vaultLib} showLabel />
+              <ReactionBar id={item.id} title={safeTitle} library={vaultLib} />
               <button
                 type="button"
                 className="btn btn-ghost"
                 aria-expanded={codeOpen}
                 onClick={() => setCodeOpen((prev) => !prev)}
               >
-                {codeOpen ? 'Ẩn mã' : 'Xem mã'}
+                {codeOpen ? 'Ẩn mã' : 'Mã nguồn'}
               </button>
             </div>
             {codeOpen ? (
               <div className="ex-code-drawer">
                 <div className="ex-code-tabs">
                   <div className="ex-filter" role="tablist" aria-label="Loại mã">
+                    <button
+                      type="button"
+                      role="tab"
+                      aria-selected={resolvedCodeTab === 'spec'}
+                      className="ex-text"
+                      aria-pressed={resolvedCodeTab === 'spec'}
+                      onClick={() => setCodeTab('spec')}
+                    >
+                      Prompt
+                    </button>
                     {safeHtml ? (
                       <button
                         type="button"
@@ -506,23 +540,15 @@ export const SpecimenSheet: React.FC<SpecimenSheetProps> = ({
                         {safeCodeLabel}
                       </button>
                     ) : null}
-                    <button
-                      type="button"
-                      role="tab"
-                      aria-selected={resolvedCodeTab === 'spec'}
-                      className="ex-text"
-                      aria-pressed={resolvedCodeTab === 'spec'}
-                      onClick={() => setCodeTab('spec')}
-                    >
-                      Prompt
-                    </button>
                   </div>
                   <button
                     type="button"
-                    className="ex-text"
+                    className="ex-stage-icon-btn"
+                    aria-label={copied ? 'Đã chép' : 'Chép nội dung'}
+                    title={copied ? 'Đã chép' : 'Chép'}
                     onClick={() => void handleCopyCode()}
                   >
-                    {copied ? 'Đã chép' : 'Chép mã'}
+                    {copied ? <IconCheck size={15} aria-hidden="true" /> : <IconCopy size={15} aria-hidden="true" />}
                   </button>
                 </div>
                 <pre className="ex-code-pre">

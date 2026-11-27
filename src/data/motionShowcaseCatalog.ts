@@ -30,7 +30,7 @@ export const MOTION_MARQUEE_ITEMS: MotionMarqueeItem[] = [
     "videoUrl": "",
     "specs": {
       "layout": "Features",
-      "motion": "Live HTML + TSX + Full Prompt",
+      "motion": "TSX + Full Prompt",
       "responsive": "390px / 768px / 1440px",
       "durationMs": 420,
       "easing": "cubic-bezier(0.22, 1, 0.36, 1)"
@@ -70,7 +70,7 @@ export const MOTION_MARQUEE_ITEMS: MotionMarqueeItem[] = [
     "videoUrl": "https://pub-86dc5b5484314368ac5436a674b0d919.r2.dev/a/comparehumanvsdog.mp4",
     "specs": {
       "layout": "Healthcare",
-      "motion": "Live HTML + MP4 Trailer + Full Prompt",
+      "motion": "MP4 Trailer + Full Prompt",
       "responsive": "390px / 768px / 1440px",
       "durationMs": 420,
       "easing": "cubic-bezier(0.22, 1, 0.36, 1)"
@@ -90,7 +90,7 @@ export const MOTION_MARQUEE_ITEMS: MotionMarqueeItem[] = [
     "videoUrl": "https://pub-86dc5b5484314368ac5436a674b0d919.r2.dev/prompts%20(i've%20added%20them%20to%20the%20motionsites)/endless.mp4",
     "specs": {
       "layout": "Hero",
-      "motion": "Live HTML + MP4 Trailer + Full Prompt",
+      "motion": "MP4 Trailer + Full Prompt",
       "responsive": "390px / 768px / 1440px",
       "durationMs": 420,
       "easing": "cubic-bezier(0.22, 1, 0.36, 1)"
@@ -110,7 +110,7 @@ export const MOTION_MARQUEE_ITEMS: MotionMarqueeItem[] = [
     "videoUrl": "https://pub-86dc5b5484314368ac5436a674b0d919.r2.dev/aaaf/driftlab-hero.mp4",
     "specs": {
       "layout": "Interactive",
-      "motion": "Live HTML + MP4 Trailer + Full Prompt",
+      "motion": "MP4 Trailer + Full Prompt",
       "responsive": "390px / 768px / 1440px",
       "durationMs": 420,
       "easing": "cubic-bezier(0.22, 1, 0.36, 1)"
@@ -130,7 +130,7 @@ export const MOTION_MARQUEE_ITEMS: MotionMarqueeItem[] = [
     "videoUrl": "https://pub-86dc5b5484314368ac5436a674b0d919.r2.dev/aaaf/driftbar-footer.mp4",
     "specs": {
       "layout": "SaaS",
-      "motion": "Live HTML + MP4 Trailer + Full Prompt",
+      "motion": "MP4 Trailer + Full Prompt",
       "responsive": "390px / 768px / 1440px",
       "durationMs": 420,
       "easing": "cubic-bezier(0.22, 1, 0.36, 1)"
@@ -150,7 +150,7 @@ export const MOTION_MARQUEE_ITEMS: MotionMarqueeItem[] = [
     "videoUrl": "",
     "specs": {
       "layout": "Benefits",
-      "motion": "Live HTML + TSX + MP4 Trailer + Full Prompt",
+      "motion": "Live HTML + TSX + Full Prompt",
       "responsive": "390px / 768px / 1440px",
       "durationMs": 420,
       "easing": "cubic-bezier(0.22, 1, 0.36, 1)"
@@ -170,7 +170,7 @@ export const MOTION_MARQUEE_ITEMS: MotionMarqueeItem[] = [
     "videoUrl": "https://pub-86dc5b5484314368ac5436a674b0d919.r2.dev/designs/AurexFinance_Financial_Technology.mp4",
     "specs": {
       "layout": "Fintech",
-      "motion": "Live HTML + JSX + MP4 Trailer + Full Prompt",
+      "motion": "MP4 Trailer + Full Prompt",
       "responsive": "390px / 768px / 1440px",
       "durationMs": 420,
       "easing": "cubic-bezier(0.22, 1, 0.36, 1)"
@@ -190,7 +190,7 @@ export const MOTION_MARQUEE_ITEMS: MotionMarqueeItem[] = [
     "videoUrl": "https://pub-86dc5b5484314368ac5436a674b0d919.r2.dev/aaaf/soscale-recording.mp4",
     "specs": {
       "layout": "Portfolio",
-      "motion": "Live HTML + JS + MP4 Trailer + Full Prompt",
+      "motion": "Live HTML + MP4 Trailer + Full Prompt",
       "responsive": "390px / 768px / 1440px",
       "durationMs": 420,
       "easing": "cubic-bezier(0.22, 1, 0.36, 1)"
@@ -210,7 +210,7 @@ export const MOTION_MARQUEE_ITEMS: MotionMarqueeItem[] = [
     "videoUrl": "https://pub-86dc5b5484314368ac5436a674b0d919.r2.dev/aaaf/vante-ribbon-hero.mp4",
     "specs": {
       "layout": "Portfolio",
-      "motion": "Live HTML + JS + MP4 Trailer + Full Prompt",
+      "motion": "MP4 Trailer + Full Prompt",
       "responsive": "390px / 768px / 1440px",
       "durationMs": 420,
       "easing": "cubic-bezier(0.22, 1, 0.36, 1)"
@@ -230,7 +230,7 @@ export const MOTION_MARQUEE_ITEMS: MotionMarqueeItem[] = [
     "videoUrl": "https://pub-86dc5b5484314368ac5436a674b0d919.r2.dev/a/liquidbulbwebjl.mp4",
     "specs": {
       "layout": "Science",
-      "motion": "Live HTML + JS + MP4 Trailer + Full Prompt",
+      "motion": "MP4 Trailer + Full Prompt",
       "responsive": "390px / 768px / 1440px",
       "durationMs": 420,
       "easing": "cubic-bezier(0.22, 1, 0.36, 1)"
@@ -250,7 +250,7 @@ export const MOTION_MARQUEE_ITEMS: MotionMarqueeItem[] = [
     "videoUrl": "https://pub-86dc5b5484314368ac5436a674b0d919.r2.dev/falcinsignin.mp4",
     "specs": {
       "layout": "Sign in",
-      "motion": "Live HTML + JS + MP4 Trailer + Full Prompt",
+      "motion": "MP4 Trailer + Full Prompt",
       "responsive": "390px / 768px / 1440px",
       "durationMs": 420,
       "easing": "cubic-bezier(0.22, 1, 0.36, 1)"
@@ -270,7 +270,7 @@ export const MOTION_MARQUEE_ITEMS: MotionMarqueeItem[] = [
     "videoUrl": "https://pub-86dc5b5484314368ac5436a674b0d919.r2.dev/a/circlishdotsArea.mp4",
     "specs": {
       "layout": "AI",
-      "motion": "Live HTML + MP4 Trailer + Full Prompt",
+      "motion": "MP4 Trailer + Full Prompt",
       "responsive": "390px / 768px / 1440px",
       "durationMs": 420,
       "easing": "cubic-bezier(0.22, 1, 0.36, 1)"
@@ -290,7 +290,7 @@ export const MOTION_MARQUEE_ITEMS: MotionMarqueeItem[] = [
     "videoUrl": "https://pub-86dc5b5484314368ac5436a674b0d919.r2.dev/a/dataflower.mp4",
     "specs": {
       "layout": "Analytics",
-      "motion": "Live HTML + MP4 Trailer + Full Prompt",
+      "motion": "MP4 Trailer + Full Prompt",
       "responsive": "390px / 768px / 1440px",
       "durationMs": 420,
       "easing": "cubic-bezier(0.22, 1, 0.36, 1)"
@@ -310,7 +310,7 @@ export const MOTION_MARQUEE_ITEMS: MotionMarqueeItem[] = [
     "videoUrl": "https://pub-86dc5b5484314368ac5436a674b0d919.r2.dev/a/hackerredhero.mp4",
     "specs": {
       "layout": "Cybersecurity",
-      "motion": "Live HTML + MP4 Trailer + Full Prompt",
+      "motion": "MP4 Trailer + Full Prompt",
       "responsive": "390px / 768px / 1440px",
       "durationMs": 420,
       "easing": "cubic-bezier(0.22, 1, 0.36, 1)"
@@ -330,7 +330,7 @@ export const MOTION_MARQUEE_ITEMS: MotionMarqueeItem[] = [
     "videoUrl": "https://pub-86dc5b5484314368ac5436a674b0d919.r2.dev/aaaf/dw2kraenArea.mp4",
     "specs": {
       "layout": "3D",
-      "motion": "Live HTML + JS + Full Prompt",
+      "motion": "MP4 Trailer + Full Prompt",
       "responsive": "390px / 768px / 1440px",
       "durationMs": 420,
       "easing": "cubic-bezier(0.22, 1, 0.36, 1)"
@@ -350,7 +350,7 @@ export const MOTION_MARQUEE_ITEMS: MotionMarqueeItem[] = [
     "videoUrl": "https://pub-86dc5b5484314368ac5436a674b0d919.r2.dev/aaaf/redline-mars-hero.mp4",
     "specs": {
       "layout": "Travel",
-      "motion": "Live HTML + JS + Full Prompt",
+      "motion": "Live HTML + MP4 Trailer + Full Prompt",
       "responsive": "390px / 768px / 1440px",
       "durationMs": 420,
       "easing": "cubic-bezier(0.22, 1, 0.36, 1)"
@@ -370,7 +370,7 @@ export const MOTION_MARQUEE_ITEMS: MotionMarqueeItem[] = [
     "videoUrl": "https://pub-86dc5b5484314368ac5436a674b0d919.r2.dev/aaaf/halden-port-hero.mp4",
     "specs": {
       "layout": "AI",
-      "motion": "Live HTML + Full Prompt",
+      "motion": "MP4 Trailer + Full Prompt",
       "responsive": "390px / 768px / 1440px",
       "durationMs": 420,
       "easing": "cubic-bezier(0.22, 1, 0.36, 1)"
@@ -390,7 +390,7 @@ export const MOTION_MARQUEE_ITEMS: MotionMarqueeItem[] = [
     "videoUrl": "https://pub-86dc5b5484314368ac5436a674b0d919.r2.dev/Orbit%20Flora.mp4",
     "specs": {
       "layout": "AI",
-      "motion": "Live HTML + Full Prompt",
+      "motion": "MP4 Trailer + Full Prompt",
       "responsive": "390px / 768px / 1440px",
       "durationMs": 420,
       "easing": "cubic-bezier(0.22, 1, 0.36, 1)"
@@ -410,7 +410,7 @@ export const MOTION_MARQUEE_ITEMS: MotionMarqueeItem[] = [
     "videoUrl": "https://pub-86dc5b5484314368ac5436a674b0d919.r2.dev/aaaf/keylight-signin.mp4",
     "specs": {
       "layout": "Authentication",
-      "motion": "Live HTML + Full Prompt",
+      "motion": "MP4 Trailer + Full Prompt",
       "responsive": "390px / 768px / 1440px",
       "durationMs": 420,
       "easing": "cubic-bezier(0.22, 1, 0.36, 1)"
@@ -430,7 +430,7 @@ export const MOTION_MARQUEE_ITEMS: MotionMarqueeItem[] = [
     "videoUrl": "https://pub-86dc5b5484314368ac5436a674b0d919.r2.dev/aaaf/vell-lookbook.mp4",
     "specs": {
       "layout": "Interactive",
-      "motion": "Live HTML + Full Prompt",
+      "motion": "MP4 Trailer + Full Prompt",
       "responsive": "390px / 768px / 1440px",
       "durationMs": 420,
       "easing": "cubic-bezier(0.22, 1, 0.36, 1)"
@@ -450,7 +450,7 @@ export const MOTION_MARQUEE_ITEMS: MotionMarqueeItem[] = [
     "videoUrl": "https://pub-86dc5b5484314368ac5436a674b0d919.r2.dev/aaaf/lumen-roof-hero.mp4",
     "specs": {
       "layout": "Interactive",
-      "motion": "Live HTML + Full Prompt",
+      "motion": "MP4 Trailer + Full Prompt",
       "responsive": "390px / 768px / 1440px",
       "durationMs": 420,
       "easing": "cubic-bezier(0.22, 1, 0.36, 1)"
@@ -470,7 +470,7 @@ export const MOTION_MARQUEE_ITEMS: MotionMarqueeItem[] = [
     "videoUrl": "https://pub-86dc5b5484314368ac5436a674b0d919.r2.dev/aaaf/living-portrait-hero.mp4",
     "specs": {
       "layout": "Portfolio",
-      "motion": "Live HTML + Full Prompt",
+      "motion": "MP4 Trailer + Full Prompt",
       "responsive": "390px / 768px / 1440px",
       "durationMs": 420,
       "easing": "cubic-bezier(0.22, 1, 0.36, 1)"
@@ -490,7 +490,7 @@ export const MOTION_MARQUEE_ITEMS: MotionMarqueeItem[] = [
     "videoUrl": "",
     "specs": {
       "layout": "SaaS",
-      "motion": "Live HTML + Full Prompt",
+      "motion": "TSX + Full Prompt",
       "responsive": "390px / 768px / 1440px",
       "durationMs": 420,
       "easing": "cubic-bezier(0.22, 1, 0.36, 1)"
@@ -510,7 +510,7 @@ export const MOTION_MARQUEE_ITEMS: MotionMarqueeItem[] = [
     "videoUrl": "https://pub-86dc5b5484314368ac5436a674b0d919.r2.dev/aaaf/fernhollow.mp4",
     "specs": {
       "layout": "3D",
-      "motion": "Live HTML + JS + Full Prompt",
+      "motion": "MP4 Trailer + Full Prompt",
       "responsive": "390px / 768px / 1440px",
       "durationMs": 420,
       "easing": "cubic-bezier(0.22, 1, 0.36, 1)"
@@ -530,7 +530,7 @@ export const MOTION_MARQUEE_ITEMS: MotionMarqueeItem[] = [
     "videoUrl": "https://pub-86dc5b5484314368ac5436a674b0d919.r2.dev/aaaf/medusa-jellyfish-hero.mp4",
     "specs": {
       "layout": "3D",
-      "motion": "Live HTML + JS + Full Prompt",
+      "motion": "Live HTML + MP4 Trailer + Full Prompt",
       "responsive": "390px / 768px / 1440px",
       "durationMs": 420,
       "easing": "cubic-bezier(0.22, 1, 0.36, 1)"
@@ -551,7 +551,7 @@ export const MOTION_MARQUEE_ITEMS: MotionMarqueeItem[] = [
     "videoUrl": "https://pub-86dc5b5484314368ac5436a674b0d919.r2.dev/aaaf/lifeline-sun-hero.mp4",
     "specs": {
       "layout": "3D",
-      "motion": "Live HTML + JS + Full Prompt",
+      "motion": "MP4 Trailer + Full Prompt",
       "responsive": "390px / 768px / 1440px",
       "durationMs": 420,
       "easing": "cubic-bezier(0.22, 1, 0.36, 1)"
@@ -571,7 +571,7 @@ export const MOTION_MARQUEE_ITEMS: MotionMarqueeItem[] = [
     "videoUrl": "",
     "specs": {
       "layout": "Hero",
-      "motion": "Live HTML + Full Prompt",
+      "motion": "TSX + Full Prompt",
       "responsive": "390px / 768px / 1440px",
       "durationMs": 420,
       "easing": "cubic-bezier(0.22, 1, 0.36, 1)"
@@ -591,7 +591,7 @@ export const MOTION_MARQUEE_ITEMS: MotionMarqueeItem[] = [
     "videoUrl": "https://pub-86dc5b5484314368ac5436a674b0d919.r2.dev/aaaf/solace-faq.mp4",
     "specs": {
       "layout": "SaaS",
-      "motion": "Live HTML + Full Prompt",
+      "motion": "Live HTML + MP4 Trailer + Full Prompt",
       "responsive": "390px / 768px / 1440px",
       "durationMs": 420,
       "easing": "cubic-bezier(0.22, 1, 0.36, 1)"
@@ -611,7 +611,7 @@ export const MOTION_MARQUEE_ITEMS: MotionMarqueeItem[] = [
     "videoUrl": "",
     "specs": {
       "layout": "CTA",
-      "motion": "TSX + MP4 Trailer + Full Prompt",
+      "motion": "TSX + Full Prompt",
       "responsive": "390px / 768px / 1440px",
       "durationMs": 420,
       "easing": "cubic-bezier(0.22, 1, 0.36, 1)"
@@ -631,7 +631,7 @@ export const MOTION_MARQUEE_ITEMS: MotionMarqueeItem[] = [
     "videoUrl": "",
     "specs": {
       "layout": "Product",
-      "motion": "JSX + MP4 Trailer + Full Prompt",
+      "motion": "TSX + Full Prompt",
       "responsive": "390px / 768px / 1440px",
       "durationMs": 420,
       "easing": "cubic-bezier(0.22, 1, 0.36, 1)"
@@ -651,7 +651,7 @@ export const MOTION_MARQUEE_ITEMS: MotionMarqueeItem[] = [
     "videoUrl": "",
     "specs": {
       "layout": "About",
-      "motion": "JS + MP4 Trailer + Full Prompt",
+      "motion": "TSX + Full Prompt",
       "responsive": "390px / 768px / 1440px",
       "durationMs": 420,
       "easing": "cubic-bezier(0.22, 1, 0.36, 1)"
@@ -671,7 +671,7 @@ export const MOTION_MARQUEE_ITEMS: MotionMarqueeItem[] = [
     "videoUrl": "https://pub-86dc5b5484314368ac5436a674b0d919.r2.dev/aaaf/stopfollowupArea.mp4",
     "specs": {
       "layout": "Creative Agency",
-      "motion": "TSX + MP4 Trailer + Full Prompt",
+      "motion": "MP4 Trailer + Full Prompt",
       "responsive": "390px / 768px / 1440px",
       "durationMs": 420,
       "easing": "cubic-bezier(0.22, 1, 0.36, 1)"
@@ -691,7 +691,7 @@ export const MOTION_MARQUEE_ITEMS: MotionMarqueeItem[] = [
     "videoUrl": "https://pub-86dc5b5484314368ac5436a674b0d919.r2.dev/designs/QuantumCore_Data_Intelligence.mp4",
     "specs": {
       "layout": "Data Intelligence",
-      "motion": "TSX + MP4 Trailer + Full Prompt",
+      "motion": "MP4 Trailer + Full Prompt",
       "responsive": "390px / 768px / 1440px",
       "durationMs": 420,
       "easing": "cubic-bezier(0.22, 1, 0.36, 1)"
@@ -711,7 +711,7 @@ export const MOTION_MARQUEE_ITEMS: MotionMarqueeItem[] = [
     "videoUrl": "",
     "specs": {
       "layout": "Feature",
-      "motion": "TSX + MP4 Trailer + Full Prompt",
+      "motion": "TSX + Full Prompt",
       "responsive": "390px / 768px / 1440px",
       "durationMs": 420,
       "easing": "cubic-bezier(0.22, 1, 0.36, 1)"
@@ -731,7 +731,7 @@ export const MOTION_MARQUEE_ITEMS: MotionMarqueeItem[] = [
     "videoUrl": "",
     "specs": {
       "layout": "Hero",
-      "motion": "TSX + MP4 Trailer + Full Prompt",
+      "motion": "TSX + Full Prompt",
       "responsive": "390px / 768px / 1440px",
       "durationMs": 420,
       "easing": "cubic-bezier(0.22, 1, 0.36, 1)"
@@ -751,7 +751,7 @@ export const MOTION_MARQUEE_ITEMS: MotionMarqueeItem[] = [
     "videoUrl": "",
     "specs": {
       "layout": "Hero",
-      "motion": "JS + MP4 Trailer + Full Prompt",
+      "motion": "TSX + Full Prompt",
       "responsive": "390px / 768px / 1440px",
       "durationMs": 420,
       "easing": "cubic-bezier(0.22, 1, 0.36, 1)"
@@ -771,7 +771,7 @@ export const MOTION_MARQUEE_ITEMS: MotionMarqueeItem[] = [
     "videoUrl": "",
     "specs": {
       "layout": "Hero",
-      "motion": "JS + MP4 Trailer + Full Prompt",
+      "motion": "TSX + Full Prompt",
       "responsive": "390px / 768px / 1440px",
       "durationMs": 420,
       "easing": "cubic-bezier(0.22, 1, 0.36, 1)"
@@ -791,7 +791,7 @@ export const MOTION_MARQUEE_ITEMS: MotionMarqueeItem[] = [
     "videoUrl": "https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260511_080827_a9e5ad52-b6ee-4e79-b393-d936f179cfd7.mp4",
     "specs": {
       "layout": "Hero",
-      "motion": "JS + MP4 Trailer + Full Prompt",
+      "motion": "MP4 Trailer + Full Prompt",
       "responsive": "390px / 768px / 1440px",
       "durationMs": 420,
       "easing": "cubic-bezier(0.22, 1, 0.36, 1)"
@@ -811,7 +811,7 @@ export const MOTION_MARQUEE_ITEMS: MotionMarqueeItem[] = [
     "videoUrl": "",
     "specs": {
       "layout": "Landing Page",
-      "motion": "JS + MP4 Trailer + Full Prompt",
+      "motion": "TSX + Full Prompt",
       "responsive": "390px / 768px / 1440px",
       "durationMs": 420,
       "easing": "cubic-bezier(0.22, 1, 0.36, 1)"
@@ -831,7 +831,7 @@ export const MOTION_MARQUEE_ITEMS: MotionMarqueeItem[] = [
     "videoUrl": "",
     "specs": {
       "layout": "Stats",
-      "motion": "JS + MP4 Trailer + Full Prompt",
+      "motion": "TSX + Full Prompt",
       "responsive": "390px / 768px / 1440px",
       "durationMs": 420,
       "easing": "cubic-bezier(0.22, 1, 0.36, 1)"
@@ -851,7 +851,7 @@ export const MOTION_MARQUEE_ITEMS: MotionMarqueeItem[] = [
     "videoUrl": "https://pub-86dc5b5484314368ac5436a674b0d919.r2.dev/a/buttterflies%20purpleArea.mp4",
     "specs": {
       "layout": "Technology",
-      "motion": "JS + MP4 Trailer + Full Prompt",
+      "motion": "MP4 Trailer + Full Prompt",
       "responsive": "390px / 768px / 1440px",
       "durationMs": 420,
       "easing": "cubic-bezier(0.22, 1, 0.36, 1)"
@@ -871,7 +871,7 @@ export const MOTION_MARQUEE_ITEMS: MotionMarqueeItem[] = [
     "videoUrl": "",
     "specs": {
       "layout": "Use Case",
-      "motion": "TSX + MP4 Trailer + Full Prompt",
+      "motion": "TSX + Full Prompt",
       "responsive": "390px / 768px / 1440px",
       "durationMs": 420,
       "easing": "cubic-bezier(0.22, 1, 0.36, 1)"
@@ -891,7 +891,7 @@ export const MOTION_MARQUEE_ITEMS: MotionMarqueeItem[] = [
     "videoUrl": "",
     "specs": {
       "layout": "Landing Page",
-      "motion": "TS + CSS + Full Prompt",
+      "motion": "TSX + Full Prompt",
       "responsive": "390px / 768px / 1440px",
       "durationMs": 420,
       "easing": "cubic-bezier(0.22, 1, 0.36, 1)"
@@ -911,7 +911,7 @@ export const MOTION_MARQUEE_ITEMS: MotionMarqueeItem[] = [
     "videoUrl": "https://pub-86dc5b5484314368ac5436a674b0d919.r2.dev/a/teamcollectiveasian.mp4",
     "specs": {
       "layout": "Agency",
-      "motion": "JS + Full Prompt",
+      "motion": "MP4 Trailer + Full Prompt",
       "responsive": "390px / 768px / 1440px",
       "durationMs": 420,
       "easing": "cubic-bezier(0.22, 1, 0.36, 1)"
@@ -931,7 +931,7 @@ export const MOTION_MARQUEE_ITEMS: MotionMarqueeItem[] = [
     "videoUrl": "https://pub-86dc5b5484314368ac5436a674b0d919.r2.dev/aaaf/virtualfit-arc-hero.mp4",
     "specs": {
       "layout": "Ecommerce",
-      "motion": "JS + Full Prompt",
+      "motion": "MP4 Trailer + Full Prompt",
       "responsive": "390px / 768px / 1440px",
       "durationMs": 420,
       "easing": "cubic-bezier(0.22, 1, 0.36, 1)"
@@ -951,7 +951,7 @@ export const MOTION_MARQUEE_ITEMS: MotionMarqueeItem[] = [
     "videoUrl": "https://pub-86dc5b5484314368ac5436a674b0d919.r2.dev/aaaf/saltwake-pirate-hero.mp4",
     "specs": {
       "layout": "Travel",
-      "motion": "JS + CSS + Full Prompt",
+      "motion": "MP4 Trailer + Full Prompt",
       "responsive": "390px / 768px / 1440px",
       "durationMs": 420,
       "easing": "cubic-bezier(0.22, 1, 0.36, 1)"
@@ -971,7 +971,7 @@ export const MOTION_MARQUEE_ITEMS: MotionMarqueeItem[] = [
     "videoUrl": "",
     "specs": {
       "layout": "Features",
-      "motion": "TS + Full Prompt",
+      "motion": "TSX + Full Prompt",
       "responsive": "390px / 768px / 1440px",
       "durationMs": 420,
       "easing": "cubic-bezier(0.22, 1, 0.36, 1)"

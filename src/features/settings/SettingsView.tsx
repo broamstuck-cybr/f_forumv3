@@ -19,7 +19,7 @@ import type {
   UiMode,
   WallpaperPreset,
 } from '../../types/index';
-import { useAppStore } from '../../store/appStore';
+import { useAppStore, type AppLanguage } from '../../store/appStore';
 import {
   Chips,
   DynamicDropZone,
@@ -43,8 +43,9 @@ type SectionId = 'appearance' | 'workspace' | 'ai' | 'data';
 interface PresetDefinition {
   id: WallpaperPreset;
   name: string;
-  tone: 'dark' | 'light' | 'auto';
-  targetTheme?: ThemePreference;
+  nameEn: string;
+  tone: 'dark' | 'light';
+  targetTheme: 'dark' | 'light';
   swatches: [string, string, string];
   previewBg: string;
   previewCard: string;
@@ -52,165 +53,157 @@ interface PresetDefinition {
   ambient: boolean;
 }
 
-const PRESETS: PresetDefinition[] = [
-  {
-    id: 'auto',
-    name: 'Tự động',
-    tone: 'auto',
-    targetTheme: 'system',
-    swatches: ['#121110', '#e07a5f', '#f5f1e8'],
-    previewBg: 'radial-gradient(circle at 24% 22%, rgba(224,122,95,0.45), transparent 56%), radial-gradient(circle at 78% 76%, rgba(125,163,187,0.52), #121110 78%)',
-    previewCard: 'rgba(26, 24, 22, 0.82)',
-    previewAccent: '#e07a5f',
-    ambient: true,
-  },
-  {
-    id: 'dark',
-    name: 'Obsidian Godray',
-    tone: 'dark',
-    targetTheme: 'dark',
-    swatches: ['#111010', '#d14b34', '#7da3bb'],
-    previewBg: 'radial-gradient(circle at 20% 10%, rgba(209,75,52,0.44), transparent 58%), radial-gradient(circle at 80% 80%, rgba(125,163,187,0.34), #111010 78%)',
-    previewCard: 'rgba(28, 25, 22, 0.9)',
-    previewAccent: '#d14b34',
-    ambient: true,
-  },
+const LIGHT_PRESETS: PresetDefinition[] = [
   {
     id: 'light',
-    name: 'Paper Sunburst',
+    name: 'Nắng Sớm',
+    nameEn: 'Morning Sun',
     tone: 'light',
     targetTheme: 'light',
-    swatches: ['#f5f1e8', '#ffffff', '#c85a3a'],
-    previewBg: 'radial-gradient(circle at 18% 12%, rgba(235,176,120,0.52), transparent 58%), radial-gradient(circle at 84% 78%, rgba(186,217,230,0.48), #f5f1e8 78%)',
-    previewCard: 'rgba(255, 252, 246, 0.94)',
-    previewAccent: '#c85a3a',
-    ambient: true,
-  },
-  {
-    id: 'ember',
-    name: 'Ember Godray',
-    tone: 'dark',
-    targetTheme: 'dark',
-    swatches: ['#18100d', '#f16e3b', '#ffb266'],
-    previewBg: 'conic-gradient(from 200deg at 20% 15%, rgba(241,110,59,0.72), rgba(255,178,102,0.55) 75deg, rgba(24,16,13,0.95) 210deg)',
-    previewCard: 'rgba(34, 20, 15, 0.86)',
-    previewAccent: '#ff8a54',
-    ambient: true,
-  },
-  {
-    id: 'harbour',
-    name: 'Frost Prism',
-    tone: 'light',
-    targetTheme: 'light',
-    swatches: ['#eef6f9', '#d8eaf3', '#2c769e'],
-    previewBg: 'radial-gradient(circle at 22% 16%, rgba(154,214,242,0.75), transparent 56%), radial-gradient(circle at 82% 84%, rgba(186,232,216,0.68), #eef6f9 78%)',
+    swatches: ['#fffcf6', '#ffc086', '#0a6e50'],
+    previewBg:
+      'radial-gradient(circle at 18% 12%, rgba(255,192,134,0.68), transparent 58%), radial-gradient(circle at 86% 20%, rgba(255,224,166,0.62), transparent 56%), radial-gradient(circle at 78% 88%, rgba(196,232,236,0.52), transparent 62%), linear-gradient(155deg, #fffefb 0%, #f8f2e6 100%)',
     previewCard: 'rgba(255, 255, 255, 0.88)',
-    previewAccent: '#2c769e',
-    ambient: true,
-  },
-  {
-    id: 'aurora',
-    name: 'Aurora Mesh',
-    tone: 'dark',
-    targetTheme: 'dark',
-    swatches: ['#091318', '#34d399', '#38bdf8'],
-    previewBg: 'radial-gradient(circle at 20% 22%, rgba(52,211,153,0.55), transparent 55%), radial-gradient(circle at 82% 72%, rgba(56,189,248,0.52), #091318 78%)',
-    previewCard: 'rgba(13, 27, 34, 0.84)',
-    previewAccent: '#34d399',
-    ambient: true,
-  },
-  {
-    id: 'constellation',
-    name: 'Golden Nebula',
-    tone: 'dark',
-    targetTheme: 'dark',
-    swatches: ['#0f1218', '#f2c05e', '#7da3bb'],
-    previewBg: 'conic-gradient(from 195deg at 22% 8%, rgba(242,192,94,0.48), rgba(125,163,187,0.34) 110deg, #0f1218 240deg)',
-    previewCard: 'rgba(18, 22, 34, 0.84)',
-    previewAccent: '#f2c05e',
-    ambient: true,
-  },
-  {
-    id: 'indigo',
-    name: 'Midnight Sapphire',
-    tone: 'dark',
-    targetTheme: 'dark',
-    swatches: ['#0b1024', '#6366f1', '#38bdf8'],
-    previewBg: 'radial-gradient(circle at 22% 18%, rgba(99,102,241,0.58), transparent 56%), radial-gradient(circle at 84% 82%, rgba(56,189,248,0.44), #0b1024 78%)',
-    previewCard: 'rgba(16, 22, 48, 0.86)',
-    previewAccent: '#818cf8',
-    ambient: true,
-  },
-  {
-    id: 'lilac',
-    name: 'Lavender Frost',
-    tone: 'light',
-    targetTheme: 'light',
-    swatches: ['#fbf7ff', '#c4b5fd', '#5b3fd6'],
-    previewBg: 'radial-gradient(at 18% 18%, #fbcfe8 0px, transparent 52%), radial-gradient(at 82% 8%, #fde68a 0px, transparent 48%), radial-gradient(at 12% 86%, #c4b5fd 0px, transparent 52%), #fbf7ff',
-    previewCard: 'rgba(255, 252, 250, 0.9)',
-    previewAccent: '#5b3fd6',
-    ambient: true,
-  },
-  {
-    id: 'lagoon',
-    name: 'Abyssal Teal',
-    tone: 'dark',
-    targetTheme: 'dark',
-    swatches: ['#061a1c', '#22d3ee', '#5eead4'],
-    previewBg: 'radial-gradient(at 16% 14%, rgba(34,211,238,0.42) 0px, transparent 52%), radial-gradient(at 84% 18%, rgba(13,148,136,0.5) 0px, transparent 54%), radial-gradient(at 50% 92%, rgba(94,234,212,0.26) 0px, transparent 58%), #061a1c',
-    previewCard: 'rgba(8, 34, 36, 0.88)',
-    previewAccent: '#5eead4',
-    ambient: true,
-  },
-  {
-    id: 'sunset',
-    name: 'Sunset Current',
-    tone: 'dark',
-    targetTheme: 'dark',
-    swatches: ['#180d14', '#fb7185', '#f4d169'],
-    previewBg: 'conic-gradient(from 205deg at 18% 12%, rgba(251,113,133,0.56), rgba(244,209,105,0.34) 82deg, rgba(24,13,20,0.92) 220deg), radial-gradient(54% 46% at 86% 88%, rgba(154,42,88,0.5), transparent 68%)',
-    previewCard: 'rgba(38, 18, 27, 0.9)',
-    previewAccent: '#ffb07a',
+    previewAccent: '#0a6e50',
     ambient: true,
   },
   {
     id: 'sage',
-    name: 'Verdant Glass',
+    name: 'Pha Lê Ngọc',
+    nameEn: 'Crystal Jade',
     tone: 'light',
     targetTheme: 'light',
-    swatches: ['#f2f5ec', '#b7c9a8', '#335941'],
-    previewBg: 'radial-gradient(at 18% 20%, rgba(183,201,168,0.7) 0px, transparent 54%), radial-gradient(at 82% 12%, rgba(240,226,192,0.72) 0px, transparent 52%), radial-gradient(at 48% 90%, rgba(207,232,216,0.78) 0px, transparent 58%), #f2f5ec',
-    previewCard: 'rgba(255, 255, 252, 0.9)',
-    previewAccent: '#335941',
+    swatches: ['#f3fbf7', '#38c99a', '#0a6e50'],
+    previewBg:
+      'radial-gradient(circle at 18% 14%, rgba(56,201,154,0.44), transparent 58%), radial-gradient(circle at 84% 18%, rgba(126,231,204,0.56), transparent 56%), radial-gradient(circle at 50% 92%, rgba(186,240,220,0.68), transparent 64%), linear-gradient(152deg, #f9fefb 0%, #e8f6f0 100%)',
+    previewCard: 'rgba(255, 255, 255, 0.86)',
+    previewAccent: '#0d825f',
+    ambient: true,
+  },
+  {
+    id: 'harbour',
+    name: 'Mây Sáng',
+    nameEn: 'Daylight Sky',
+    tone: 'light',
+    targetTheme: 'light',
+    swatches: ['#f3f9fe', '#66c0f6', '#0f6870'],
+    previewBg:
+      'radial-gradient(circle at 18% 12%, rgba(102,192,246,0.56), transparent 58%), radial-gradient(circle at 84% 16%, rgba(176,224,252,0.66), transparent 56%), radial-gradient(circle at 76% 90%, rgba(142,228,218,0.48), transparent 64%), linear-gradient(156deg, #fafdff 0%, #e8f2fa 100%)',
+    previewCard: 'rgba(255, 255, 255, 0.88)',
+    previewAccent: '#0f6870',
+    ambient: true,
+  },
+  {
+    id: 'lilac',
+    name: 'Lụa Kem',
+    nameEn: 'Champagne Silk',
+    tone: 'light',
+    targetTheme: 'light',
+    swatches: ['#fcf9f4', '#f2d4ae', '#9c5c46'],
+    previewBg:
+      'radial-gradient(circle at 16% 14%, rgba(242,212,174,0.64), transparent 58%), radial-gradient(circle at 84% 14%, rgba(245,198,210,0.58), transparent 58%), radial-gradient(circle at 24% 92%, rgba(226,212,244,0.5), transparent 64%), linear-gradient(154deg, #fffdfa 0%, #f5eee6 100%)',
+    previewCard: 'rgba(255, 253, 250, 0.9)',
+    previewAccent: '#9c5c46',
     ambient: true,
   },
 ];
 
-const SECTIONS: Array<{ id: SectionId; label: string; icon: React.ReactNode; keywords: string }> = [
+const DARK_PRESETS: PresetDefinition[] = [
+  {
+    id: 'dark',
+    name: 'Đá Đen Ngọc',
+    nameEn: 'Obsidian Emerald',
+    tone: 'dark',
+    targetTheme: 'dark',
+    swatches: ['#070c0d', '#38c99a', '#78c2ce'],
+    previewBg:
+      'radial-gradient(circle at 18% 14%, rgba(56,201,154,0.48), transparent 56%), radial-gradient(circle at 84% 22%, rgba(20,168,128,0.34), transparent 56%), radial-gradient(circle at 72% 90%, rgba(120,194,206,0.28), transparent 62%), linear-gradient(158deg, #060a0b 0%, #0b1416 100%)',
+    previewCard: 'rgba(16, 26, 28, 0.86)',
+    previewAccent: '#38c99a',
+    ambient: true,
+  },
+  {
+    id: 'aurora',
+    name: 'Cực Quang Bắc',
+    nameEn: 'Northern Aurora',
+    tone: 'dark',
+    targetTheme: 'dark',
+    swatches: ['#060f17', '#2dd4bf', '#818cf8'],
+    previewBg:
+      'radial-gradient(circle at 16% 16%, rgba(45,212,191,0.52), transparent 54%), radial-gradient(circle at 84% 16%, rgba(56,189,248,0.48), transparent 54%), radial-gradient(circle at 52% 86%, rgba(129,140,248,0.42), transparent 62%), linear-gradient(156deg, #050c14 0%, #0a1624 100%)',
+    previewCard: 'rgba(13, 25, 38, 0.86)',
+    previewAccent: '#2dd4bf',
+    ambient: true,
+  },
+  {
+    id: 'ember',
+    name: 'Đêm Hổ Phách',
+    nameEn: 'Obsidian Amber',
+    tone: 'dark',
+    targetTheme: 'dark',
+    swatches: ['#100c09', '#ee9448', '#f8c472'],
+    previewBg:
+      'radial-gradient(circle at 20% 14%, rgba(238,148,72,0.54), transparent 56%), radial-gradient(circle at 84% 20%, rgba(248,196,114,0.36), transparent 56%), radial-gradient(circle at 80% 88%, rgba(188,88,56,0.4), transparent 62%), linear-gradient(156deg, #0d0907 0%, #17110d 100%)',
+    previewCard: 'rgba(28, 20, 15, 0.88)',
+    previewAccent: '#ee9448',
+    ambient: true,
+  },
+  {
+    id: 'lagoon',
+    name: 'Biển Sâu',
+    nameEn: 'Deep Sapphire',
+    tone: 'dark',
+    targetTheme: 'dark',
+    swatches: ['#051018', '#22d3ee', '#10b981'],
+    previewBg:
+      'radial-gradient(circle at 18% 16%, rgba(34,211,238,0.48), transparent 56%), radial-gradient(circle at 84% 22%, rgba(16,185,129,0.44), transparent 56%), radial-gradient(circle at 50% 92%, rgba(59,130,246,0.42), transparent 64%), linear-gradient(158deg, #040d14 0%, #081a24 100%)',
+    previewCard: 'rgba(10, 28, 38, 0.88)',
+    previewAccent: '#22d3ee',
+    ambient: true,
+  },
+];
+
+const PRESETS: PresetDefinition[] = [...LIGHT_PRESETS, ...DARK_PRESETS];
+
+const LANGUAGE_CHIPS = [
+  { id: 'vi', label: 'Tiếng Việt' },
+  { id: 'en', label: 'English' },
+];
+
+const SECTIONS: Array<{
+  id: SectionId;
+  label: string;
+  labelEn: string;
+  icon: React.ReactNode;
+  keywords: string;
+}> = [
   {
     id: 'appearance',
     label: 'Giao diện & Nền',
+    labelEn: 'Appearance & Wallpapers',
     icon: <IconPalette size={15} aria-hidden="true" />,
-    keywords: 'giao diện theme sáng tối hình nền preset aurora ember godray nebula sapphire cỡ chữ',
+    keywords: 'giao diện theme sáng tối hình nền ngôn ngữ language english tiếng việt preset nắng sớm pha lê ngọc mây sáng lụa kem đá đen ngọc cực quang biển sâu cỡ chữ',
   },
   {
     id: 'workspace',
     label: 'Workspace',
+    labelEn: 'Workspace',
     icon: <IconLayoutTemplate size={15} aria-hidden="true" />,
-    keywords: 'workspace khung nhìn kiểm định 6 lớp xuất mã phím tắt',
+    keywords: 'workspace khung nhìn kiểm định 6 lớp xuất mã phím tắt viewport',
   },
   {
     id: 'ai',
     label: 'AI & BYOK',
+    labelEn: 'AI & BYOK',
     icon: <IconCpu size={15} aria-hidden="true" />,
     keywords: 'ai model gateway byok api key hạn mức',
   },
   {
     id: 'data',
     label: 'Dữ liệu & Sao lưu',
+    labelEn: 'Data & Backup',
     icon: <IconDatabase size={15} aria-hidden="true" />,
-    keywords: 'dữ liệu sao lưu json khôi phục đặt lại',
+    keywords: 'dữ liệu sao lưu json khôi phục đặt lại backup export',
   },
 ];
 
@@ -353,6 +346,8 @@ export const SettingsView: React.FC = () => {
     settings,
     updateSettings,
     updateByok,
+    language,
+    setLanguage,
     theme,
     themeEffect,
     setThemeEffect,
@@ -364,6 +359,7 @@ export const SettingsView: React.FC = () => {
     addToast,
   } = useAppStore();
 
+  const isEn = language === 'en';
   const [activeSection, setActiveSection] = useState<SectionId>('appearance');
   const [searchQuery, setSearchQuery] = useState('');
   const [dataFolderPos, setDataFolderPos] = useState<number>(1);
@@ -393,16 +389,57 @@ export const SettingsView: React.FC = () => {
   const currentThemePref: ThemePreference = settings.themePreference || (theme === 'dark' ? 'dark' : 'light');
   const currentWallpaper: WallpaperPreset = PRESETS.some((p) => p.id === settings.wallpaperPreset)
     ? (settings.wallpaperPreset as WallpaperPreset)
-    : 'dark';
+    : theme === 'light'
+      ? 'light'
+      : 'dark';
   const ambientEnabled = settings.ambientVideo !== false;
   const autoRunChecks = settings.autoRunChecks !== false;
   const defaultViewport = String(settings.defaultViewport ?? 1440);
+
+  const themePrefChips = useMemo(
+    () =>
+      isEn
+        ? [
+            { id: 'system', label: 'System' },
+            { id: 'dark', label: 'Dark' },
+            { id: 'light', label: 'Light' },
+          ]
+        : THEME_PREF_CHIPS,
+    [isEn]
+  );
+
+  const themeEffectChips = useMemo(
+    () =>
+      isEn
+        ? [
+            { id: 'droplet', label: 'Droplet' },
+            { id: 'rain', label: 'Rain' },
+            { id: 'diwali', label: 'Spark' },
+            { id: 'none', label: 'Off' },
+          ]
+        : THEME_EFFECT_OPTIONS,
+    [isEn]
+  );
+
+  const densityChips = useMemo(
+    () =>
+      isEn
+        ? [
+            { id: 'roomy', label: 'Roomy' },
+            { id: 'compact', label: 'Compact' },
+          ]
+        : DENSITY_CHIPS,
+    [isEn]
+  );
 
   const filteredSections = useMemo(() => {
     const q = searchQuery.trim().toLowerCase();
     if (!q) return SECTIONS;
     const matches = SECTIONS.filter(
-      (s) => s.label.toLowerCase().includes(q) || s.keywords.includes(q)
+      (s) =>
+        s.label.toLowerCase().includes(q) ||
+        s.labelEn.toLowerCase().includes(q) ||
+        s.keywords.includes(q)
     );
     return matches.length > 0 ? matches : SECTIONS;
   }, [searchQuery]);
@@ -429,21 +466,56 @@ export const SettingsView: React.FC = () => {
   };
 
   const applyPreset = (preset: PresetDefinition, sourceEl?: HTMLElement | null) => {
-    const nextPref = preset.targetTheme || 'system';
-    const nextTheme =
-      nextPref === 'system'
-        ? typeof window !== 'undefined' && window.matchMedia?.('(prefers-color-scheme: dark)').matches
-          ? 'dark'
-          : 'light'
-        : nextPref;
+    const nextTheme = preset.targetTheme;
     updateSettings({
       wallpaperPreset: preset.id,
       ambientVideo: preset.ambient,
-      ...(nextTheme === theme ? { themePreference: nextPref, theme: nextTheme } : {}),
+      ...(nextTheme === theme ? { themePreference: nextTheme, theme: nextTheme } : {}),
     });
     if (nextTheme !== theme) {
-      triggerPinuiThemeToggle(sourceEl, nextTheme, nextPref);
+      triggerPinuiThemeToggle(sourceEl, nextTheme, nextTheme);
     }
+  };
+
+  const renderPresetTile = (preset: PresetDefinition) => {
+    const selected = preset.id === currentWallpaper;
+    const label = isEn ? preset.nameEn : preset.name;
+    return (
+      <button
+        key={preset.id}
+        type="button"
+        className="st-preset-item"
+        aria-pressed={selected}
+        onClick={(e) => applyPreset(preset, e.currentTarget)}
+      >
+        <div
+          className="st-preset-thumb"
+          style={{ background: preset.previewBg }}
+          aria-hidden="true"
+        >
+          <div className="st-mini-ui">
+            <div className="st-mini-rail">
+              <span style={{ background: preset.previewAccent }} />
+              <span />
+              <span />
+            </div>
+            <div className="st-mini-canvas" style={{ background: preset.previewCard }}>
+              <div className="st-mini-line st-mini-line--lg" />
+              <div className="st-mini-line st-mini-line--sm" />
+              <div className="st-mini-cta" style={{ background: preset.previewAccent }} />
+            </div>
+          </div>
+        </div>
+        <div className="st-preset-foot">
+          <span className="st-preset-name">{label}</span>
+          <span className="st-preset-dots" aria-hidden="true">
+            {preset.swatches.map((color) => (
+              <span key={color} style={{ background: color }} />
+            ))}
+          </span>
+        </div>
+      </button>
+    );
   };
 
   const handleExportDownload = useCallback(() => {
@@ -553,19 +625,19 @@ export const SettingsView: React.FC = () => {
   return (
     <div className="st" data-density={settings.compactDensity ? 'compact' : 'roomy'}>
       <div className="st-shell">
-        <aside className="st-sidebar" aria-label="Danh mục cài đặt">
+        <aside className="st-sidebar" aria-label={isEn ? 'Settings categories' : 'Danh mục cài đặt'}>
           <div className="st-sidebar-head">
-            <h1 className="st-sidebar-title">Cài đặt</h1>
+            <h1 className="st-sidebar-title">{isEn ? 'Settings' : 'Cài đặt'}</h1>
             <SearchCard
               value={searchQuery}
               onChange={setSearchQuery}
-              placeholder="Tìm cài đặt..."
+              placeholder={isEn ? 'Search settings...' : 'Tìm cài đặt...'}
               compact
               className="st-pinui-search"
             />
           </div>
 
-          <nav className="st-nav" aria-label="Nhóm cài đặt">
+          <nav className="st-nav" aria-label={isEn ? 'Settings sections' : 'Nhóm cài đặt'}>
             {filteredSections.map((sec) => (
               <button
                 key={sec.id}
@@ -575,7 +647,7 @@ export const SettingsView: React.FC = () => {
                 onClick={() => setActiveSection(sec.id)}
               >
                 {sec.icon}
-                <span>{sec.label}</span>
+                <span>{isEn ? sec.labelEn : sec.label}</span>
               </button>
             ))}
           </nav>
@@ -585,14 +657,16 @@ export const SettingsView: React.FC = () => {
           {activeSection === 'appearance' && (
             <div className="st-stack">
               <header className="st-section-head">
-                <h2 className="st-section-title">Giao diện &amp; Hình nền</h2>
+                <h2 className="st-section-title">
+                  {isEn ? 'Appearance & Wallpapers' : 'Giao diện & Hình nền'}
+                </h2>
               </header>
 
-              <section className="st-panel" aria-label="Chế độ giao diện">
+              <section className="st-panel" aria-label={isEn ? 'Interface mode' : 'Chế độ giao diện'}>
                 <div className="st-panel-label">
-                  <span>Chế độ giao diện</span>
+                  <span>{isEn ? 'Interface mode' : 'Chế độ giao diện'}</span>
                 </div>
-                <div className="st-uimode-grid" role="radiogroup" aria-label="Chọn chế độ giao diện">
+                <div className="st-uimode-grid" role="radiogroup" aria-label={isEn ? 'Choose interface mode' : 'Chọn chế độ giao diện'}>
                   {UI_MODE_OPTIONS.map((opt) => {
                     const selected = currentUiMode === opt.id;
                     return (
@@ -619,20 +693,20 @@ export const SettingsView: React.FC = () => {
                 </div>
               </section>
 
-              <section className="st-panel" aria-label="Kích thước giao diện">
+              <section className="st-panel" aria-label={isEn ? 'Interface scale' : 'Kích thước giao diện'}>
                 <div className="st-panel-label">
-                  <span>Kích thước giao diện</span>
+                  <span>{isEn ? 'Interface scale' : 'Kích thước giao diện'}</span>
                   {uiScale !== 100 && (
                     <button
                       type="button"
                       className="st-link-reset"
                       onClick={() => setUiScale(100)}
                     >
-                      Đặt lại 100%
+                      {isEn ? 'Reset 100%' : 'Đặt lại 100%'}
                     </button>
                   )}
                 </div>
-                <div className="st-size-seg" role="radiogroup" aria-label="Chọn tỷ lệ cỡ chữ">
+                <div className="st-size-seg" role="radiogroup" aria-label={isEn ? 'Choose text scale' : 'Chọn tỷ lệ cỡ chữ'}>
                   {SCALE_OPTIONS.map((size) => (
                     <button
                       key={size}
@@ -648,11 +722,36 @@ export const SettingsView: React.FC = () => {
                 </div>
               </section>
 
-              <section className="st-card" aria-label="Chủ đề Sáng Tối và hình nền">
+              <section className="st-card" aria-label={isEn ? 'Language, Theme and Wallpapers' : 'Ngôn ngữ, Sáng Tối và hình nền'}>
                 <div className="st-row st-row--first">
-                  <span className="st-label">Chế độ Sáng / Tối</span>
+                  <div className="st-effect-copy">
+                    <span className="st-label">{isEn ? 'Language' : 'Ngôn ngữ'}</span>
+                    <p className="st-effect-hint">
+                      {isEn
+                        ? 'Synced live with F-Forum navigation and iPhone 18 simulator.'
+                        : 'Đồng bộ trực tiếp giao diện web và trình mô phỏng iPhone 18.'}
+                    </p>
+                  </div>
                   <Chips
-                    items={THEME_PREF_CHIPS}
+                    items={LANGUAGE_CHIPS}
+                    selectedIds={[language]}
+                    multi={false}
+                    theme={theme}
+                    onToggle={(id) => {
+                      const nextLang: AppLanguage = id === 'en' ? 'en' : 'vi';
+                      setLanguage(nextLang);
+                      addToast({
+                        type: 'info',
+                        title: nextLang === 'en' ? 'Switched to English' : 'Đã chuyển sang Tiếng Việt',
+                      });
+                    }}
+                  />
+                </div>
+
+                <div className="st-row">
+                  <span className="st-label">{isEn ? 'Theme Mode' : 'Chế độ Sáng / Tối'}</span>
+                  <Chips
+                    items={themePrefChips}
                     selectedIds={[currentThemePref]}
                     multi={false}
                     theme={theme}
@@ -662,13 +761,15 @@ export const SettingsView: React.FC = () => {
 
                 <div className="st-row">
                   <div className="st-effect-copy">
-                    <span className="st-label">Hiệu ứng chuyển</span>
+                    <span className="st-label">{isEn ? 'Transition Effect' : 'Hiệu ứng chuyển'}</span>
                     <p className="st-effect-hint">
-                      Hiệu ứng PinUI áp dụng cho toàn trang khi đổi sáng / tối.
+                      {isEn
+                        ? 'Applied across the page when switching light and dark themes.'
+                        : 'Hiệu ứng áp dụng cho toàn trang khi đổi sáng / tối.'}
                     </p>
                   </div>
                   <Chips
-                    items={THEME_EFFECT_OPTIONS}
+                    items={themeEffectChips}
                     selectedIds={[themeEffect]}
                     multi={false}
                     theme={theme}
@@ -676,59 +777,36 @@ export const SettingsView: React.FC = () => {
                   />
                 </div>
 
-                <div className="st-presets-block" aria-label="Mẫu hình nền">
-                  <span className="st-label">Mẫu hình nền</span>
-                  <div className="st-presets-grid">
-                    {PRESETS.map((preset) => {
-                      const selected = preset.id === currentWallpaper;
-                      return (
-                        <button
-                          key={preset.id}
-                          type="button"
-                          className="st-preset-item"
-                          aria-pressed={selected}
-                          onClick={(e) => applyPreset(preset, e.currentTarget)}
-                        >
-                          <div
-                            className="st-preset-thumb"
-                            style={{ background: preset.previewBg }}
-                            aria-hidden="true"
-                          >
-                            {preset.id === 'auto' ? (
-                              <div className="st-mini-auto">
-                                <IconSun size={16} className="st-mini-auto-sun" />
-                                <IconMoon size={16} className="st-mini-auto-moon" />
-                              </div>
-                            ) : (
-                              <div className="st-mini-ui">
-                                <div className="st-mini-rail">
-                                  <span style={{ background: preset.previewAccent }} />
-                                  <span />
-                                  <span />
-                                </div>
-                                <div className="st-mini-canvas" style={{ background: preset.previewCard }}>
-                                  <div className="st-mini-line st-mini-line--lg" />
-                                  <div className="st-mini-line st-mini-line--sm" />
-                                  <div className="st-mini-cta" style={{ background: preset.previewAccent }} />
-                                </div>
-                              </div>
-                            )}
-                          </div>
-                          <span className="st-preset-name">{preset.name}</span>
-                        </button>
-                      );
-                    })}
+                <div className="st-presets-block" aria-label={isEn ? 'Curated wallpapers' : 'Mẫu hình nền'}>
+                  <div className="st-preset-group">
+                    <div className="st-preset-group-head">
+                      <IconSun size={14} aria-hidden="true" />
+                      <span className="st-label">{isEn ? 'Light Wallpapers' : 'Hình nền Sáng'}</span>
+                    </div>
+                    <div className="st-presets-grid">
+                      {LIGHT_PRESETS.map(renderPresetTile)}
+                    </div>
+                  </div>
+
+                  <div className="st-preset-group">
+                    <div className="st-preset-group-head">
+                      <IconMoon size={14} aria-hidden="true" />
+                      <span className="st-label">{isEn ? 'Dark Wallpapers' : 'Hình nền Tối'}</span>
+                    </div>
+                    <div className="st-presets-grid">
+                      {DARK_PRESETS.map(renderPresetTile)}
+                    </div>
                   </div>
                 </div>
 
                 <div className="st-grid-2">
                   <div className="st-toggleCard">
-                    <span className="st-label">Nền ảnh tĩnh</span>
+                    <span className="st-label">{isEn ? 'Ambient Layer' : 'Lớp nền màu'}</span>
                     <button
                       type="button"
                       role="switch"
                       aria-checked={ambientEnabled}
-                      aria-label="Nền ảnh tĩnh"
+                      aria-label={isEn ? 'Ambient Layer' : 'Lớp nền màu'}
                       className="st-switch"
                       onClick={() => updateSettings({ ambientVideo: !ambientEnabled })}
                     >
@@ -737,12 +815,12 @@ export const SettingsView: React.FC = () => {
                   </div>
 
                   <div className="st-toggleCard">
-                    <span className="st-label">Tiết kiệm chuyển động</span>
+                    <span className="st-label">{isEn ? 'Reduced Motion' : 'Tiết kiệm chuyển động'}</span>
                     <button
                       type="button"
                       role="switch"
                       aria-checked={reducedMotion}
-                      aria-label="Tiết kiệm chuyển động"
+                      aria-label={isEn ? 'Reduced Motion' : 'Tiết kiệm chuyển động'}
                       className="st-switch"
                       onClick={() => setReducedMotion(!reducedMotion)}
                     >
@@ -752,9 +830,9 @@ export const SettingsView: React.FC = () => {
                 </div>
 
                 <div className="st-row">
-                  <span className="st-label">Mật độ bố cục</span>
+                  <span className="st-label">{isEn ? 'Layout Density' : 'Mật độ bố cục'}</span>
                   <Chips
-                    items={DENSITY_CHIPS}
+                    items={densityChips}
                     selectedIds={[settings.compactDensity ? 'compact' : 'roomy']}
                     multi={false}
                     itemRole="button"

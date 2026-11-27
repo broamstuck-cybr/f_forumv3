@@ -1,7 +1,6 @@
 import { fetchVaultShard } from '../features/explore/vaultLoader';
 import { apiClient } from '../services/apiClient';
-import { bundleAiFilesToSingleHtml } from '../utils/hardenPreviewHtml';
-import type { BYOKConfig } from '../types/index';
+import type { BYOKConfig, WorkspaceFile } from '../types/index';
 import type {
   AgentTraceStep,
   BehaviorItemScore,
@@ -23,6 +22,15 @@ import {
   type SignatureMotionId,
 } from './motionCraftPack';
 import { recommendVaultResources } from './mitRecommender';
+import {
+  bundleProjectFiles,
+  computeProjectFileDiffs,
+  detectLanguageFromPath,
+  sanitizeVirtualPath,
+  sortProjectFiles,
+  splitHtmlToProjectFiles,
+  type FileDiffSummary,
+} from './workspaceBundler';
 
 export type VisualMotif =
   | 'solar'
@@ -120,6 +128,8 @@ export interface ComposerBlueprint {
 
 export interface ComposeResult {
   html: string;
+  files: WorkspaceFile[];
+  changedFiles: FileDiffSummary[];
   blueprint: ComposerBlueprint;
   matchedResources: MatchedVaultResource[];
   motionSignature: string;
@@ -1558,6 +1568,7 @@ export interface ComposeAgentOptions {
   prompt: string;
   profile: OnboardingProfile;
   previousHtml: string | null;
+  previousFiles?: WorkspaceFile[];
   previousBlueprint: ComposerBlueprint | null;
   behaviorScores?: Record<string, BehaviorItemScore>;
   excludeIds?: string[];
@@ -1565,6 +1576,515 @@ export interface ComposeAgentOptions {
   forceVariation?: boolean;
   isAuthenticated?: boolean;
   byok?: BYOKConfig;
+}
+
+function shouldUseReactTsxScaffold(
+  prompt: string,
+  previousFiles?: WorkspaceFile[]
+): boolean {
+  if (previousFiles && previousFiles.some((f) => /\.(tsx|jsx)$/i.test(f.path))) {
+    return true;
+  }
+  const folded = foldVi(prompt);
+  return /\b(react|tsx|jsx|component|components|dashboard|bang dieu khien|ung dung tuong tac|kanban|tracker)\b/.test(
+    folded
+  );
+}
+
+export function renderBlueprintToReactFiles(bp: ComposerBlueprint): {
+  files: WorkspaceFile[];
+  html: string;
+  audit: AestheticAuditReport;
+} {
+  const now = new Date().toISOString();
+  const palette = resolveCraftPalette(bp.profile.personality, bp.themeMode, bp.accentKey);
+  const baseCss = buildCraftStylesheet(
+    bp.profile.personality,
+    bp.themeMode,
+    bp.signature,
+    bp.accentKey
+  );
+  const siteTitle = bp.profile.siteName || bp.heroTitle;
+
+  const extraReactCss = `
+.rx-filterBar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+.rx-searchInput {
+  flex: 1 1 240px;
+  min-height: 42px;
+  padding: 0 14px;
+  border-radius: 999px;
+  border: 1px solid var(--line-strong);
+  background: var(--surface);
+  color: var(--fg);
+  font-family: inherit;
+  font-size: 0.9rem;
+}
+.rx-countTag {
+  font-size: 0.82rem;
+  color: var(--muted);
+  font-family: var(--font-mono, monospace);
+}
+.rx-cardActive {
+  border-color: var(--accent) !important;
+  box-shadow: 0 0 0 1px var(--accent);
+}
+`;
+
+  const indexHtml = `<!DOCTYPE html>
+<html lang="vi" data-page-theme="${bp.themeMode}">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>${escapeHtml(siteTitle)}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="${VIETNAMESE_GOOGLE_FONTS_LINK}" rel="stylesheet" />
+  <link rel="stylesheet" href="src/styles.css" />
+</head>
+<body id="top">
+  <div id="root"></div>
+  <script type="module" src="src/App.tsx"></script>
+</body>
+</html>
+`;
+
+  const dataTs = `export interface StatItem {
+  value: string;
+  label: string;
+}
+
+export interface FeatureCard {
+  tag: string;
+  title: string;
+  description: string;
+}
+
+export interface TimelineItem {
+  time: string;
+  title: string;
+  detail: string;
+}
+
+export const SITE_META = ${JSON.stringify(
+    {
+      siteName: siteTitle,
+      eyebrow: bp.eyebrow,
+      heroTitle: bp.heroTitle,
+      heroSubtitle: bp.heroSubtitle,
+      primaryCta: bp.primaryCta,
+      secondaryCta: bp.secondaryCta,
+      defaultTheme: bp.themeMode,
+      registerHeading: bp.registerHeading,
+      registerLead: bp.registerLead,
+      registerCta: bp.registerCta,
+      footerNote: bp.footerNote,
+    },
+    null,
+    2
+  )};
+
+export const STATS: StatItem[] = ${JSON.stringify(bp.stats, null, 2)};
+
+export const CARDS: FeatureCard[] = ${JSON.stringify(bp.cards, null, 2)};
+
+export const TIMELINE: TimelineItem[] = ${JSON.stringify(bp.timeline, null, 2)};
+`;
+
+  const headerTsx = `import React from 'react';
+
+export interface HeaderProps {
+  siteName: string;
+  primaryCta: string;
+  theme: 'dark' | 'light';
+  onToggleTheme: () => void;
+}
+
+export function Header({ siteName, primaryCta, theme, onToggleTheme }: HeaderProps) {
+  return (
+    <header className="site-nav">
+      <div className="wrap site-nav__inner">
+        <a className="brand-mark" href="#top">
+          <span className="brand-dot" aria-hidden="true" />
+          <span>{siteName}</span>
+        </a>
+        <nav className="nav-links" aria-label="Điều hướng trang">
+          <a href="#so-lieu">Số liệu</a>
+          <a href="#noi-bat">Nội dung</a>
+          <a href="#lich-trinh">Lịch trình</a>
+          <a href="#dang-ky">Liên hệ</a>
+        </nav>
+        <div className="nav-actions">
+          <button
+            type="button"
+            className="icon-toggle"
+            onClick={onToggleTheme}
+            aria-label={theme === 'dark' ? 'Chuyển nền sáng' : 'Chuyển nền tối'}
+            title="Đổi nền"
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <circle cx="12" cy="12" r="4" />
+              <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41" />
+            </svg>
+          </button>
+          <a className="btn btn--primary" href="#dang-ky">{primaryCta}</a>
+        </div>
+      </div>
+    </header>
+  );
+}
+`;
+
+  const appTsx = `import React, { useEffect, useMemo, useState } from 'react';
+import { Header } from './components/Header';
+import { CARDS, SITE_META, STATS, TIMELINE } from './data';
+import './styles.css';
+
+export default function App() {
+  const [theme, setTheme] = useState<'dark' | 'light'>(SITE_META.defaultTheme as 'dark' | 'light');
+  const [query, setQuery] = useState<string>('');
+  const [pickedCard, setPickedCard] = useState<string>(CARDS[0]?.title || '');
+  const [name, setName] = useState<string>('');
+  const [contact, setContact] = useState<string>('');
+  const [status, setStatus] = useState<string>('');
+
+  useEffect(() => {
+    document.documentElement.setAttribute('data-page-theme', theme);
+  }, [theme]);
+
+  const visibleCards = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    if (!q) return CARDS;
+    return CARDS.filter(
+      (c) =>
+        c.title.toLowerCase().includes(q) ||
+        c.description.toLowerCase().includes(q) ||
+        c.tag.toLowerCase().includes(q)
+    );
+  }, [query]);
+
+  const handleSubmit = (ev: any) => {
+    ev.preventDefault();
+    if (!name.trim() || !contact.trim()) {
+      setStatus('Vui lòng điền họ tên và email hoặc số điện thoại.');
+      return;
+    }
+    console.info('[App] Form submitted:', name.trim());
+    setStatus('Đã ghi nhận thông tin của ' + name.trim() + '. Cảm ơn bạn đã gửi.');
+    setName('');
+    setContact('');
+  };
+
+  return (
+    <>
+      <div className="craft-grain" aria-hidden="true" />
+      <Header
+        siteName={SITE_META.siteName}
+        primaryCta={SITE_META.primaryCta}
+        theme={theme}
+        onToggleTheme={() => setTheme((t) => (t === 'dark' ? 'light' : 'dark'))}
+      />
+
+      <main>
+        <section className="hero">
+          <div className="wrap">
+            <p className="eyebrow">{SITE_META.eyebrow}</p>
+            <h1>{SITE_META.heroTitle}</h1>
+            <p className="hero__sub">{SITE_META.heroSubtitle}</p>
+            <div className="hero__cta">
+              <a className="btn btn--primary" href="#noi-bat">{SITE_META.primaryCta}</a>
+              <a className="btn btn--ghost" href="#dang-ky">{SITE_META.secondaryCta}</a>
+            </div>
+          </div>
+        </section>
+
+        {STATS.length > 0 && (
+          <section className="section" id="so-lieu">
+            <div className="wrap">
+              <div className="section__head">
+                <div>
+                  <span className="section__num">01 / SỐ LIỆU CỐT LÕI</span>
+                  <h2>Những con số cụ thể</h2>
+                </div>
+              </div>
+              <div className="stats-grid">
+                {STATS.map((st, idx) => (
+                  <article key={idx} className="stat-card craft-surface">
+                    <div className="stat-card__val">{st.value}</div>
+                    <div className="stat-card__label">{st.label}</div>
+                  </article>
+                ))}
+              </div>
+            </div>
+          </section>
+        )}
+
+        <section className="section" id="noi-bat">
+          <div className="wrap">
+            <div className="section__head">
+              <div>
+                <span className="section__num">02 / TRỌNG TÂM</span>
+                <h2>Nội dung chính</h2>
+              </div>
+            </div>
+
+            <div className="rx-filterBar">
+              <input
+                type="search"
+                name="card-search"
+                className="rx-searchInput"
+                value={query}
+                onChange={(e: any) => setQuery(e.target.value)}
+                placeholder="Lọc nhanh theo từ khóa..."
+                aria-label="Lọc nội dung"
+              />
+              <span className="rx-countTag">
+                {visibleCards.length} / {CARDS.length} mục
+              </span>
+            </div>
+
+            <div className="cards-grid cards-grid--3">
+              {visibleCards.map((card) => (
+                <article
+                  key={card.title}
+                  className={
+                    pickedCard === card.title
+                      ? 'feature-card craft-surface rx-cardActive'
+                      : 'feature-card craft-surface'
+                  }
+                  onClick={() => setPickedCard(card.title)}
+                >
+                  <span className="feature-card__tag">{card.tag}</span>
+                  <h3>{card.title}</h3>
+                  <p>{card.description}</p>
+                </article>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {TIMELINE.length > 0 && (
+          <section className="section" id="lich-trinh">
+            <div className="wrap">
+              <div className="section__head">
+                <div>
+                  <span className="section__num">03 / LỊCH TRÌNH</span>
+                  <h2>Các mốc thực hiện</h2>
+                </div>
+              </div>
+              <div className="timeline">
+                {TIMELINE.map((step, idx) => (
+                  <article key={idx} className="timeline__item craft-surface">
+                    <div className="timeline__time">{step.time}</div>
+                    <div className="timeline__body">
+                      <h3>{step.title}</h3>
+                      <p>{step.detail}</p>
+                    </div>
+                  </article>
+                ))}
+              </div>
+            </div>
+          </section>
+        )}
+
+        <section className="section" id="dang-ky">
+          <div className="wrap">
+            <div className="section__head">
+              <div>
+                <span className="section__num">04 / KẾT NỐI</span>
+                <h2>{SITE_META.registerHeading}</h2>
+              </div>
+              <p className="section__lead">{SITE_META.registerLead}</p>
+            </div>
+            <form className="reg-form craft-surface" onSubmit={handleSubmit} noValidate>
+              <div className="reg-row">
+                <div className="field">
+                  <label htmlFor="rx-name">Họ và tên</label>
+                  <input
+                    id="rx-name"
+                    name="name"
+                    type="text"
+                    value={name}
+                    onChange={(e: any) => setName(e.target.value)}
+                    placeholder="Nguyễn Minh Anh"
+                  />
+                </div>
+                <div className="field">
+                  <label htmlFor="rx-contact">Email hoặc số điện thoại</label>
+                  <input
+                    id="rx-contact"
+                    name="contact"
+                    type="text"
+                    value={contact}
+                    onChange={(e: any) => setContact(e.target.value)}
+                    placeholder="minhanh@example.com"
+                  />
+                </div>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap' }}>
+                <button type="submit" className="btn btn--primary">{SITE_META.registerCta}</button>
+                {status && <p className="form-status" role="status">{status}</p>}
+              </div>
+            </form>
+          </div>
+        </section>
+      </main>
+
+      <footer className="site-footer">
+        <div className="wrap site-footer__row">
+          <span>{SITE_META.footerNote}</span>
+          <span>React TSX · F-Forum Studio</span>
+        </div>
+      </footer>
+    </>
+  );
+}
+`;
+
+  const metadata = {
+    name: siteTitle,
+    mode: 'react-tsx',
+    domain: bp.profile.domain,
+    personality: bp.profile.personality,
+    motionSignature: SIGNATURE_MOTIONS[bp.signature].label,
+    entry: 'src/App.tsx',
+    sources: bp.sourceRefs.map((r) => ({ id: r.id, title: r.title, library: r.library })),
+    updatedAt: now,
+  };
+
+  const files: WorkspaceFile[] = sortProjectFiles([
+    { path: 'index.html', content: indexHtml, language: 'html', summary: 'Điểm nạp HTML chính', updatedAt: now },
+    { path: 'src/App.tsx', content: appTsx, language: 'typescript', summary: 'Thành phần React chính', updatedAt: now },
+    { path: 'src/components/Header.tsx', content: headerTsx, language: 'typescript', summary: 'Thanh điều hướng & đổi nền', updatedAt: now },
+    { path: 'src/data.ts', content: dataTs, language: 'typescript', summary: 'Dữ liệu và kiểu TypeScript', updatedAt: now },
+    { path: 'src/styles.css', content: `${baseCss}\n${extraReactCss}`, language: 'css', summary: 'Hệ thống màu và bố cục', updatedAt: now },
+    { path: 'metadata.json', content: `${JSON.stringify(metadata, null, 2)}\n`, language: 'json', summary: 'Cấu hình dự án', updatedAt: now },
+    {
+      path: 'README.md',
+      content: `# ${siteTitle}\n\nDự án React/TSX đa tệp dựng từ F-Forum Workspace.\n\n- \`index.html\`: Trang khung chính\n- \`src/App.tsx\`: Giao diện tương tác React\n- \`src/components/Header.tsx\`: Thanh điều hướng\n- \`src/data.ts\`: Dữ liệu có kiểu TypeScript\n- \`src/styles.css\`: Bộ biến màu và layout responsive\n`,
+      language: 'markdown',
+      summary: 'Hướng dẫn dự án',
+      updatedAt: now,
+    },
+  ]);
+
+  const bundled = bundleProjectFiles(files, { enableConsoleBridge: false });
+  const audit = auditGeneratedPage(bundled.standaloneHtml, palette);
+  return { files, html: bundled.standaloneHtml, audit };
+}
+
+export function renderBlueprintToFiles(
+  bp: ComposerBlueprint,
+  preferReactTsx = false
+): {
+  files: WorkspaceFile[];
+  html: string;
+  audit: AestheticAuditReport;
+} {
+  if (preferReactTsx) {
+    return renderBlueprintToReactFiles(bp);
+  }
+  const { html, audit } = renderBlueprintToHtml(bp);
+  const files = splitHtmlToProjectFiles(html, {
+    title: bp.profile.siteName || bp.heroTitle,
+    domain: bp.profile.domain,
+    personality: bp.profile.personality,
+    motionSignature: SIGNATURE_MOTIONS[bp.signature].label,
+    sources: bp.sourceRefs,
+  });
+  return { files, html, audit };
+}
+
+function mergeAiReturnedFiles(
+  returnedFiles: Array<{ path: string; content: string; summary?: string }>,
+  baseFiles: WorkspaceFile[],
+  meta: {
+    title: string;
+    domain: string;
+    personality: string;
+    motionSignature: string;
+    sources: MatchedVaultResource[];
+  }
+): WorkspaceFile[] | null {
+  const now = new Date().toISOString();
+  const normalized: WorkspaceFile[] = [];
+
+  for (const rf of returnedFiles) {
+    const safePath = sanitizeVirtualPath(rf.path);
+    if (!safePath || typeof rf.content !== 'string') continue;
+    normalized.push({
+      path: safePath,
+      content: rf.content,
+      language: detectLanguageFromPath(safePath),
+      summary: rf.summary || 'Cập nhật bởi AI',
+      updatedAt: now,
+    });
+  }
+
+  if (normalized.length === 0) return null;
+
+  // If AI returned only a single monolithic index.html, organize it cleanly into multi-file layout
+  if (normalized.length === 1 && /\.html?$/i.test(normalized[0].path)) {
+    return splitHtmlToProjectFiles(normalized[0].content, meta);
+  }
+
+  const fileMap = new Map<string, WorkspaceFile>();
+  // Keep metadata/README from base if AI only returned code files
+  for (const bf of baseFiles) {
+    if (bf.path === 'metadata.json' || bf.path === 'README.md') {
+      fileMap.set(bf.path, bf);
+    }
+  }
+  for (const nf of normalized) {
+    fileMap.set(nf.path, nf);
+  }
+
+  if (!fileMap.has('index.html')) {
+    const fallbackIndex = baseFiles.find((f) => f.path === 'index.html');
+    if (fallbackIndex) fileMap.set('index.html', fallbackIndex);
+  }
+
+  const hasReact = Array.from(fileMap.keys()).some((p) => /\.(tsx|jsx)$/i.test(p));
+  const metadata = {
+    name: meta.title,
+    mode: hasReact ? 'react-tsx' : 'multi-file-web',
+    domain: meta.domain,
+    personality: meta.personality,
+    motionSignature: meta.motionSignature,
+    entry: hasReact
+      ? Array.from(fileMap.keys()).find((p) => /app\.(tsx|jsx)$/i.test(p)) || 'src/App.tsx'
+      : 'index.html',
+    sources: meta.sources.map((s) => ({ id: s.id, title: s.title, library: s.library })),
+    updatedAt: now,
+  };
+  fileMap.set('metadata.json', {
+    path: 'metadata.json',
+    content: `${JSON.stringify(metadata, null, 2)}\n`,
+    language: 'json',
+    summary: 'Thông tin dự án',
+    updatedAt: now,
+  });
+
+  if (!fileMap.has('README.md')) {
+    const listMd = Array.from(fileMap.keys())
+      .map((p) => `- \`${p}\``)
+      .join('\n');
+    fileMap.set('README.md', {
+      path: 'README.md',
+      content: `# ${meta.title}\n\nDự án đa tệp tạo bằng F-Forum Workspace.\n\n## Danh sách tệp\n\n${listMd}\n`,
+      language: 'markdown',
+      summary: 'Hướng dẫn dự án',
+      updatedAt: now,
+    });
+  }
+
+  return sortProjectFiles(Array.from(fileMap.values()));
 }
 
 export async function composeWithAgent(
@@ -1575,6 +2095,7 @@ export async function composeWithAgent(
     prompt,
     profile,
     previousHtml,
+    previousFiles = [],
     previousBlueprint,
     behaviorScores,
     excludeIds,
@@ -1584,7 +2105,7 @@ export async function composeWithAgent(
     byok,
   } = options;
 
-  const isEdit = Boolean(previousHtml && previousBlueprint);
+  const isEdit = Boolean((previousHtml || previousFiles.length > 0) && previousBlueprint);
 
   const rec = await recommendVaultResources({
     profile,
@@ -1621,7 +2142,7 @@ export async function composeWithAgent(
       forceVariation
     );
     blueprint = next;
-    summaryText = `Đã cập nhật trang theo yêu cầu: ${changeSummary.join('; ')}.`;
+    summaryText = `Đã cập nhật dự án theo yêu cầu: ${changeSummary.join('; ')}.`;
   } else {
     blueprint = createInitialBlueprint(
       profile,
@@ -1629,25 +2150,31 @@ export async function composeWithAgent(
       rec.matched,
       forceVariation ? 1 : 0
     );
-    summaryText = `Đã dựng hoàn chỉnh trang "${blueprint.heroTitle}" với phong cách ${BRAND_PALETTES[profile.personality].label.toLowerCase()} và hiệu ứng ${SIGNATURE_MOTIONS[blueprint.signature].label}.`;
+    summaryText = `Đã dựng dự án "${blueprint.heroTitle}" với phong cách ${BRAND_PALETTES[profile.personality].label.toLowerCase()} và hiệu ứng ${SIGNATURE_MOTIONS[blueprint.signature].label}.`;
   }
 
-  let { html, audit } = renderBlueprintToHtml(blueprint);
+  const preferReact = shouldUseReactTsxScaffold(prompt, previousFiles);
+  let { files, html, audit } = renderBlueprintToFiles(blueprint, preferReact);
   let usedLiveAi = false;
   let aiModelLabel = '';
   const hasByok = Boolean(byok?.enabled && byok.apiKey.trim());
 
   if (isAuthenticated || hasByok) {
     try {
-      const baseHtml = (isEdit && previousHtml ? previousHtml : html).slice(0, 14000);
+      const contextFiles = (isEdit && previousFiles.length > 0 ? previousFiles : files)
+        .filter((f) => f.path !== 'metadata.json' && f.path !== 'README.md')
+        .slice(0, 6)
+        .map((f) => ({ path: f.path, content: f.content.slice(0, 4500) }));
+
       const aiPrompt = isEdit
-        ? `Chỉnh sửa trang web hiện tại theo đúng yêu cầu người dùng: "${prompt}". Giữ tiếng Việt tự nhiên có dấu, không emoji, không văn khoa trương, bố cục responsive gọn gàng, liên kết nội bộ dùng dạng #anchor.`
-        : `Tạo trang web hoàn chỉnh tiếng Việt có dấu cho "${blueprint.profile.siteName || blueprint.heroTitle}" theo yêu cầu: "${prompt}". Phong cách: ${BRAND_PALETTES[profile.personality].label}. Tham khảo cấu trúc từ mẫu nền đã đính kèm nhưng viết nội dung mới thật sát yêu cầu, không emoji, tương phản chữ rõ nét và chạy mượt ngay trên trình duyệt.`;
+        ? `Chỉnh sửa dự án đa tệp hiện tại theo đúng yêu cầu người dùng: "${prompt}". Trả về mảng files đầy đủ cho các tệp bị thay đổi hoặc toàn bộ dự án (index.html, src/styles.css, src/app.js hoặc src/App.tsx). Giữ tiếng Việt có dấu tự nhiên, không emoji, không văn khoa trương, bố cục responsive, liên kết nội bộ dùng dạng #anchor.`
+        : `Tạo dự án web đa tệp hoàn chỉnh tiếng Việt có dấu cho "${blueprint.profile.siteName || blueprint.heroTitle}" theo yêu cầu: "${prompt}". Phong cách: ${BRAND_PALETTES[profile.personality].label}. Trả về đầy đủ các tệp gọn sạch (index.html, src/styles.css, src/app.js hoặc src/App.tsx + src/data.ts nếu phù hợp React), không emoji, tương phản rõ nét và chạy trực tiếp trên trình duyệt.`;
+
       const aiRes = await apiClient.sendAiChat(
         {
           prompt: aiPrompt,
           projectId: blueprint.profile.siteName || 'workspace-v4',
-          files: [{ path: 'index.html', content: baseHtml }],
+          files: contextFiles,
           attachedItems: rec.matched.slice(0, 3).map((m) => ({
             id: m.id,
             kind: 'resource' as const,
@@ -1657,17 +2184,35 @@ export async function composeWithAgent(
         },
         hasByok ? byok : undefined
       );
+
       if (aiRes && !aiRes.fallback && Array.isArray(aiRes.files) && aiRes.files.length > 0) {
-        const bundledHtml = bundleAiFilesToSingleHtml(aiRes.files);
-        if (bundledHtml) {
-          const pal = resolveCraftPalette(blueprint.profile.personality, blueprint.themeMode, blueprint.accentKey);
-          const reAudit = auditGeneratedPage(bundledHtml, pal);
-          html = reAudit.cleanHtml;
-          audit = reAudit;
-          usedLiveAi = true;
-          aiModelLabel = aiRes.modelUsed || (hasByok ? 'BYOK' : 'Gemini');
-          if (typeof aiRes.message === 'string' && aiRes.message.trim().length >= 8) {
-            summaryText = aiRes.message.trim();
+        const merged = mergeAiReturnedFiles(
+          aiRes.files,
+          isEdit && previousFiles.length > 0 ? previousFiles : files,
+          {
+            title: blueprint.profile.siteName || blueprint.heroTitle,
+            domain: blueprint.profile.domain,
+            personality: blueprint.profile.personality,
+            motionSignature: SIGNATURE_MOTIONS[blueprint.signature].label,
+            sources: rec.matched,
+          }
+        );
+        if (merged && merged.length > 0) {
+          const bundled = bundleProjectFiles(merged, { enableConsoleBridge: false });
+          if (bundled.standaloneHtml) {
+            const pal = resolveCraftPalette(
+              blueprint.profile.personality,
+              blueprint.themeMode,
+              blueprint.accentKey
+            );
+            audit = auditGeneratedPage(bundled.standaloneHtml, pal);
+            files = merged;
+            html = bundled.standaloneHtml;
+            usedLiveAi = true;
+            aiModelLabel = aiRes.modelUsed || (hasByok ? 'BYOK' : 'Gemini');
+            if (typeof aiRes.message === 'string' && aiRes.message.trim().length >= 8) {
+              summaryText = aiRes.message.trim();
+            }
           }
         }
       }
@@ -1676,20 +2221,42 @@ export async function composeWithAgent(
     }
   }
 
+  const changedFiles = computeProjectFileDiffs(previousFiles, files);
   const diff = computeHtmlLineDiff(previousHtml, html);
   const durationMs = Math.max(240, Math.round(performance.now() - startedAt));
   const motionSpec = SIGNATURE_MOTIONS[blueprint.signature];
+
+  const fileTraceSteps: AgentTraceStep[] = (
+    changedFiles.length > 0
+      ? changedFiles.filter((d) => d.path !== 'metadata.json')
+      : files
+          .filter((f) => f.path !== 'metadata.json')
+          .map((f) => ({
+            path: f.path,
+            action: (isEdit ? 'edit' : 'create') as 'create' | 'edit',
+            added: f.content.split('\n').length,
+            removed: 0,
+          }))
+  ).map((fDiff, idx) => ({
+    id: `tr-file-${Date.now()}-${idx}`,
+    kind: fDiff.action === 'edit' ? 'file_edit' : 'file_create',
+    label: fDiff.action === 'edit' ? `Edited ${fDiff.path}` : `Created ${fDiff.path}`,
+    detail: fDiff.path,
+    added: fDiff.added,
+    removed: fDiff.removed,
+    status: 'done',
+  }));
 
   const trace: AgentTraceStep[] = [
     {
       id: `tr-thought-${Date.now()}`,
       kind: 'thought',
       label: usedLiveAi
-        ? `AI (${aiModelLabel || 'Gemini'}) đã dựng trực tiếp theo yêu cầu`
+        ? `AI (${aiModelLabel || 'Gemini'}) đã dựng trực tiếp ${files.length} tệp`
         : isEdit
-          ? 'Phân tích chỉnh sửa trực tiếp trên bản hiện tại'
-          : `Lập cấu trúc cho "${blueprint.heroTitle}" (${BRAND_PALETTES[blueprint.profile.personality].label})`,
-      detail: shardLoadedNote || `Mục tiêu: ${blueprint.profile.goal} · ${blueprint.profile.sections.length} phần nội dung.`,
+          ? 'Phân tích chỉnh sửa trực tiếp trên cấu trúc tệp hiện tại'
+          : `Lập cấu trúc đa tệp cho "${blueprint.heroTitle}" (${BRAND_PALETTES[blueprint.profile.personality].label})`,
+      detail: shardLoadedNote || `Mục tiêu: ${blueprint.profile.goal} · ${files.length} tệp nguồn.`,
       status: 'done',
     },
     {
@@ -1699,14 +2266,7 @@ export async function composeWithAgent(
       detail: rec.matched.map((m) => `${m.title} (${m.library})`).join(' · '),
       status: 'done',
     },
-    {
-      id: `tr-file-${Date.now()}`,
-      kind: isEdit ? 'file_edit' : 'file_create',
-      label: isEdit ? 'Edited index.html' : 'Created index.html',
-      added: diff.added,
-      removed: diff.removed,
-      status: 'done',
-    },
+    ...fileTraceSteps,
     {
       id: `tr-check-${Date.now()}`,
       kind: 'check',
@@ -1714,13 +2274,15 @@ export async function composeWithAgent(
       detail:
         audit.fixesApplied.length > 0
           ? audit.fixesApplied.join(' · ')
-          : 'Đạt chuẩn tương phản AA, không tràn ngang 390px và hỗ trợ giảm chuyển động.',
+          : 'Tương phản chữ rõ, không tràn ngang 390px và hỗ trợ giảm chuyển động.',
       status: 'done',
     },
   ];
 
   return {
     html,
+    files,
+    changedFiles,
     blueprint,
     matchedResources: rec.matched,
     motionSignature: motionSpec.label,

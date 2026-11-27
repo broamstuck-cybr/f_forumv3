@@ -49,7 +49,7 @@ const ROUTE_META: Record<
   { title: string; description: string; path: string; noindex?: boolean }
 > = {
   landing: {
-    title: 'F-Forum — Làm web từ kho 5.994 mẫu mở',
+    title: 'F-Forum — Làm web từ kho 5.909 mẫu mở',
     description:
       'Chọn mẫu giao diện miễn phí, chỉnh sửa bằng chat trong Workspace và xuất bản trang web chạy ngay trên trình duyệt.',
     path: '/',
@@ -60,15 +60,15 @@ const ROUTE_META: Record<
     path: '/home',
   },
   explore: {
-    title: 'Khám phá 5.994 mẫu mở — F-Forum',
+    title: 'Khám phá 5.909 mẫu mở — F-Forum',
     description:
-      'Duyệt 5.994 mẫu giao diện miễn phí từ Pin UI, ThreeUI 3D, lucianLabs, MotionSites Free và CodeFronts.',
+      'Duyệt 5.909 mẫu giao diện miễn phí từ Pin UI, ThreeUI 3D, lucianLabs, MotionSites Free và CodeFronts.',
     path: '/explore',
   },
   experience: {
     title: 'Trải nghiệm kho tài nguyên — F-Forum',
     description:
-      'Xem trực tiếp 5.994 mẫu mở, 58 kỹ thuật chuyển động và 15 trang mẫu chạy thật, sao chép mã và đưa thẳng vào Workspace.',
+      'Xem trực tiếp 5.909 mẫu mở, 58 kỹ thuật chuyển động và 15 trang mẫu chạy thật, sao chép mã và đưa thẳng vào Workspace.',
     path: '/explore/experience',
   },
   workspace: {

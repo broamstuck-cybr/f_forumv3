@@ -95,6 +95,13 @@ import {
   recordSiteHeartbeat,
   recordSiteVisit,
 } from './metricsStore.js';
+import {
+  createFeedbackEntry,
+  isValidFeedbackStatus,
+  listFeedbackEntries,
+  updateFeedbackStatus,
+  validateFeedbackInput,
+} from './feedbackStore.js';
 import { deleteUserProject, listUserProjects, syncUserProject } from './projectStore.js';
 import {
   consumeQuotaTurn,
@@ -147,7 +154,7 @@ function getDefaultCspDirectives(): string {
   const connectSrc = isProd
     ? DEFAULT_CONNECT_SRC.join(' ')
     : `${DEFAULT_CONNECT_SRC.join(' ')} ws://localhost:* ws://127.0.0.1:*`;
-  return `default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'self'; form-action 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://accounts.google.com/gsi/client blob:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://accounts.google.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: blob: https:; media-src 'self' data: blob: https:; connect-src ${connectSrc}; frame-src 'self' blob: data: https://accounts.google.com https://f-forum.vercel.app; worker-src 'self' blob:`;
+  return `default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'self'; form-action 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://accounts.google.com/gsi/client https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://cdn.tailwindcss.com https://unpkg.com https://code.iconify.design https://esm.sh blob:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://accounts.google.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://unpkg.com https://db.onlinewebfonts.com; font-src 'self' data: https://fonts.gstatic.com https://cdn.jsdelivr.net https://db.onlinewebfonts.com; img-src 'self' data: blob: https:; media-src 'self' data: blob: https:; connect-src ${connectSrc}; frame-src 'self' blob: data: https://accounts.google.com https://f-forum.vercel.app; worker-src 'self' blob:`;
 }
 
 const SIMULATOR_CSP_DIRECTIVES =
@@ -1677,6 +1684,131 @@ export async function handleGetBehaviorScores(req: Request, res: Response): Prom
   res.status(200).json({ scores: getBehaviorScores() });
 }
 
+export async function handleSubmitFeedback(req: Request, res: Response): Promise<void> {
+  await ensureHydrated();
+  const user = getAuthenticatedUser(req);
+  const guestId = resolveGuestSessionId(req, res);
+  const ipHash = getClientIpHash(req);
+  const actorKey = user ? user.id : `guest:${guestId}`;
+
+  if (!enforceRateLimit(req, res, `feedback:post:${ipHash}:${actorKey}`, 10, 10 * 60_000, user?.username)) {
+    return;
+  }
+
+  const body = (req.body || {}) as Record<string, unknown>;
+  const validated = validateFeedbackInput({
+    category: body.category,
+    rating: body.rating,
+    message: body.message,
+    senderName:
+      typeof body.senderName === 'string' && body.senderName.trim()
+        ? body.senderName
+        : user?.name || user?.username || '',
+    senderEmail:
+      typeof body.senderEmail === 'string' && body.senderEmail.trim()
+        ? body.senderEmail
+        : user?.email || '',
+    pageUrl: body.pageUrl,
+    userId: user ? user.id : null,
+  });
+
+  if (!validated.ok) {
+    res.status(400).json({ error: validated.error });
+    return;
+  }
+
+  const { feedback, emailStatus } = await createFeedbackEntry(validated.data);
+  res.status(201).json({
+    ok: true,
+    feedback,
+    emailStatus,
+  });
+}
+
+async function requireAdminForFeedback(
+  req: Request,
+  res: Response
+): Promise<ReturnType<typeof getAuthenticatedUser>> {
+  const ipHash = getClientIpHash(req);
+  const user = getAuthenticatedUser(req);
+  if (!user) {
+    recordSecurityEvent({
+      type: 'unauthorized_admin',
+      status: 401,
+      route: req.path || '/api/admin/feedback',
+      ipHash,
+      detail: 'Unauthenticated request to Admin Feedback API',
+    });
+    await flushSupabaseWrites();
+    res.status(401).json({ error: 'Yêu cầu xác thực quản trị viên.' });
+    return null;
+  }
+  if (user.role !== 'admin') {
+    recordSecurityEvent({
+      type: 'forbidden_admin',
+      status: 403,
+      route: req.path || '/api/admin/feedback',
+      ipHash,
+      actor: user.username,
+      detail: 'Non-admin user attempted to access Admin Feedback API',
+    });
+    await flushSupabaseWrites();
+    res.status(403).json({
+      error: 'Truy cập bị từ chối. Chỉ tài khoản Admin mới có quyền xem phản hồi.',
+    });
+    return null;
+  }
+  return user;
+}
+
+export async function handleAdminListFeedback(req: Request, res: Response): Promise<void> {
+  await ensureHydrated();
+  const adminUser = await requireAdminForFeedback(req, res);
+  if (!adminUser) return;
+  const ipHash = getClientIpHash(req);
+  if (!enforceRateLimit(req, res, `admin:feedback:get:${ipHash}:${adminUser.id}`, 90, 60_000, adminUser.username)) {
+    return;
+  }
+  const { items, unreadCount } = await listFeedbackEntries();
+  res.status(200).json({ items, unreadCount });
+}
+
+export async function handleAdminUpdateFeedbackStatus(req: Request, res: Response): Promise<void> {
+  await ensureHydrated();
+  const adminUser = await requireAdminForFeedback(req, res);
+  if (!adminUser) return;
+  const ipHash = getClientIpHash(req);
+  if (!enforceRateLimit(req, res, `admin:feedback:post:${ipHash}:${adminUser.id}`, 60, 60_000, adminUser.username)) {
+    return;
+  }
+
+  const feedbackId = typeof req.params.id === 'string' ? req.params.id.trim() : '';
+  const body = (req.body || {}) as Record<string, unknown>;
+  if (!feedbackId || !isValidFeedbackStatus(body.status)) {
+    res.status(400).json({ error: 'Trạng thái phản hồi không hợp lệ (unread | read | resolved).' });
+    return;
+  }
+
+  const updated = await updateFeedbackStatus(feedbackId, body.status, adminUser.username);
+  if (!updated) {
+    res.status(404).json({ error: 'Không tìm thấy phản hồi.' });
+    return;
+  }
+
+  appendAuditLog(
+    adminUser.username,
+    'FEEDBACK_STATUS_UPDATE',
+    feedbackId,
+    `Cập nhật trạng thái phản hồi -> ${body.status}`
+  );
+  await flushSupabaseWrites();
+  res.status(200).json({
+    ok: true,
+    feedback: updated.feedback,
+    unreadCount: updated.unreadCount,
+  });
+}
+
 type AsyncRouteHandler = (req: Request, res: Response, next: NextFunction) => Promise<void> | void;
 
 function asyncRoute(handler: AsyncRouteHandler): RequestHandler {
@@ -1696,6 +1828,9 @@ app.all('/api/metrics/:action', asyncRoute((req, res) => handleMetricsAction(req
 app.get('/api/ai/quota', asyncRoute((req, res) => handleAiQuota(req, res)));
 app.post('/api/ai/chat', asyncRoute((req, res) => handleAiChat(req, res)));
 app.all('/api/auth/:action', asyncRoute((req, res) => handleAuthAction(req, res)));
+app.post('/api/feedback', asyncRoute((req, res) => handleSubmitFeedback(req, res)));
+app.get('/api/admin/feedback', asyncRoute((req, res) => handleAdminListFeedback(req, res)));
+app.post('/api/admin/feedback/:id/status', asyncRoute((req, res) => handleAdminUpdateFeedbackStatus(req, res)));
 app.all('/api/admin', asyncRoute((req, res) => handleAdminAction(req, res, 'state')));
 app.all('/api/admin/*', asyncRoute((req, res) => handleAdminAction(req, res)));
 app.all('/api/community/:action', asyncRoute((req, res) => handleCommunityAction(req, res)));

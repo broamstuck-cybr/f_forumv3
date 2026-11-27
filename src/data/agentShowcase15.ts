@@ -1372,7 +1372,7 @@ function buildShowcaseTrace(seed: ShowcaseSeed, lineCount: number, contrastBody:
     {
       id: `${seed.id}-t2`,
       kind: 'vault_search',
-      label: `Đã tra 5.994 mẫu kho tài nguyên (chọn ${seed.blueprint.sourceRefs.length} khối)`,
+      label: `Đã tra 5.909 mẫu kho tài nguyên (chọn ${seed.blueprint.sourceRefs.length} khối)`,
       detail: seed.blueprint.sourceRefs.map((r: MatchedVaultResource) => `${r.title} (${r.library})`).join(' · '),
       status: 'done',
     },

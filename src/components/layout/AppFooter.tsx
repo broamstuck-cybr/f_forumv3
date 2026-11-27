@@ -10,21 +10,22 @@ interface AppFooterProps {
   onOpenNotice: () => void;
 }
 
-const PRODUCT: Array<{ id: AppRoute; label: string }> = [
-  { id: 'home', label: 'Trang chủ' },
-  { id: 'explore', label: 'Khám phá' },
-  { id: 'workspace', label: 'Workspace' },
-  { id: 'community', label: 'Tri thức' },
+const PRODUCT: Array<{ id: AppRoute; label: string; labelEn: string }> = [
+  { id: 'home', label: 'Trang chủ', labelEn: 'Home' },
+  { id: 'explore', label: 'Khám phá', labelEn: 'Explore' },
+  { id: 'workspace', label: 'Workspace', labelEn: 'Workspace' },
+  { id: 'community', label: 'Cộng đồng', labelEn: 'Community' },
 ];
 
-const ACCOUNT: Array<{ id: AppRoute; label: string }> = [
-  { id: 'profile', label: 'Hồ sơ' },
-  { id: 'settings', label: 'Cài đặt' },
-  { id: 'landing', label: 'Giới thiệu' },
+const ACCOUNT: Array<{ id: AppRoute; label: string; labelEn: string }> = [
+  { id: 'profile', label: 'Hồ sơ', labelEn: 'Profile' },
+  { id: 'settings', label: 'Cài đặt', labelEn: 'Settings' },
+  { id: 'landing', label: 'Giới thiệu', labelEn: 'Overview' },
 ];
 
 export const AppFooter: React.FC<AppFooterProps> = ({ onNavigate, onOpenNotice }) => {
-  const { settings } = useAppStore();
+  const { settings, language } = useAppStore();
+  const isEn = language === 'en';
   const isFabulous = settings.uiMode === 'fabulous';
   const [footLiked, setFootLiked] = useState(false);
 
@@ -33,39 +34,47 @@ export const AppFooter: React.FC<AppFooterProps> = ({ onNavigate, onOpenNotice }
       <div className="wrap-wide">
         <div className="foot__grid">
           <p className="t-title" style={{ maxWidth: '16ch' }}>
-            Từ phác thảo <span className="t-note">đến sản phẩm.</span>
+            {isEn ? (
+              <>
+                From sketch <span className="t-note">to live site.</span>
+              </>
+            ) : (
+              <>
+                Từ phác thảo <span className="t-note">đến sản phẩm.</span>
+              </>
+            )}
           </p>
           <div className="foot__cols">
             <div className="foot__col" role="region" aria-labelledby="foot-col-product">
-              <h3 id="foot-col-product">sản phẩm</h3>
+              <h3 id="foot-col-product">{isEn ? 'product' : 'sản phẩm'}</h3>
               <ul>
                 {PRODUCT.map((item) => (
                   <li key={item.id}>
                     <button type="button" className="foot__link" onClick={() => onNavigate(item.id)}>
-                      {item.label}
+                      {isEn ? item.labelEn : item.label}
                     </button>
                   </li>
                 ))}
               </ul>
             </div>
             <div className="foot__col" role="region" aria-labelledby="foot-col-account">
-              <h3 id="foot-col-account">tài khoản</h3>
+              <h3 id="foot-col-account">{isEn ? 'account' : 'tài khoản'}</h3>
               <ul>
                 {ACCOUNT.map((item) => (
                   <li key={item.id}>
                     <button type="button" className="foot__link" onClick={() => onNavigate(item.id)}>
-                      {item.label}
+                      {isEn ? item.labelEn : item.label}
                     </button>
                   </li>
                 ))}
               </ul>
             </div>
             <div className="foot__col" role="region" aria-labelledby="foot-col-info">
-              <h3 id="foot-col-info">thông tin</h3>
+              <h3 id="foot-col-info">{isEn ? 'info' : 'thông tin'}</h3>
               <ul>
                 <li>
                   <button type="button" className="foot__link" onClick={onOpenNotice}>
-                    Ghi công
+                    {isEn ? 'Credits' : 'Ghi công'}
                   </button>
                 </li>
               </ul>

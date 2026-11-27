@@ -1,11 +1,20 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { IconMaximize2, IconPause, IconPlay, IconRotateCcw } from '../../ui/icons';
+import { SandboxPreview } from './SandboxPreview';
+import {
+  VAULT_CACHE_VERSION,
+  fetchVaultIndex,
+  fetchVaultShard,
+  getCachedVaultIndex,
+  getCachedVaultShard,
+} from './vaultLoader';
 import './threeui-preview.css';
 
 type ThreeUIPreviewEntry = {
   v?: string;
   t?: string;
   r?: boolean;
+  s?: string;
 };
 
 type ThreeUIPreviewIndex = {
@@ -21,7 +30,7 @@ let previewRequest: Promise<ThreeUIPreviewIndex> | null = null;
 function loadThreeUIPreviews(): Promise<ThreeUIPreviewIndex> {
   if (previewIndex) return Promise.resolve(previewIndex);
   if (!previewRequest) {
-    previewRequest = fetch('/data/threeui-previews.json?v=2026-11-24-free')
+    previewRequest = fetch(`/data/threeui-previews.json?v=${VAULT_CACHE_VERSION}`)
       .then((res) => {
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         return res.json() as Promise<ThreeUIPreviewIndex>;
@@ -53,7 +62,9 @@ export const ThreeUIPreview: React.FC<{
   image?: string;
   videoUrl?: string;
   sourceUrl?: string;
-}> = ({ itemId, title, image, videoUrl }) => {
+  html?: string;
+  css?: string;
+}> = ({ itemId, title, image, videoUrl, html, css }) => {
   const stageRef = useRef<HTMLDivElement | null>(null);
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const dragRef = useRef<{
@@ -70,6 +81,14 @@ export const ThreeUIPreview: React.FC<{
     wasPlaying: false,
   });
 
+  const cleanId = useMemo(() => itemId.replace(/^threeui\//, ''), [itemId]);
+
+  const [liveScene, setLiveScene] = useState<{ html: string; css: string } | null>(() =>
+    html?.trim() ? { html, css: css ?? '' } : null
+  );
+  const [loadingLive, setLoadingLive] = useState(() => !html?.trim());
+  const [reloadNonce, setReloadNonce] = useState(0);
+
   const [entry, setEntry] = useState<ThreeUIPreviewEntry | null>(null);
   const [playing, setPlaying] = useState(true);
   const [scrubbing, setScrubbing] = useState(false);
@@ -82,20 +101,74 @@ export const ThreeUIPreview: React.FC<{
     let cancelled = false;
     setEntry(null);
     setFailed(false);
-    loadThreeUIPreviews()
-      .then((data) => {
-        if (!cancelled) setEntry(data.items[itemId] ?? null);
-      })
-      .catch(() => {
-        if (!cancelled) setEntry(null);
-      });
+
+    if (html?.trim()) {
+      setLiveScene({ html, css: css ?? '' });
+      setLoadingLive(false);
+      return () => {
+        cancelled = true;
+      };
+    }
+
+    const resolveLiveScene = async () => {
+      try {
+        const cachedIndex = getCachedVaultIndex();
+        const indexData = cachedIndex ?? (await fetchVaultIndex());
+        const vaultItem = indexData.items.find(
+          (it) => it.l === 'threeui' && (it.i === cleanId || it.i === itemId)
+        );
+        if (vaultItem?.s) {
+          const cachedShard = getCachedVaultShard(vaultItem.s);
+          const shard = cachedShard ?? (await fetchVaultShard(vaultItem.s));
+          const payload = shard[vaultItem.i] ?? shard[cleanId] ?? shard[itemId];
+          if (!cancelled && payload?.h?.trim()) {
+            setLiveScene({ html: payload.h, css: payload.c ?? '' });
+            setLoadingLive(false);
+            return;
+          }
+        }
+      } catch {
+        // Fallback to preview index below
+      }
+
+      try {
+        const data = await loadThreeUIPreviews();
+        if (!cancelled) {
+          const matched = data.items[cleanId] ?? data.items[itemId] ?? null;
+          setEntry(matched);
+          if (matched?.s) {
+            const shard = await fetchVaultShard(matched.s);
+            const payload = shard[cleanId] ?? shard[itemId];
+            if (!cancelled && payload?.h?.trim()) {
+              setLiveScene({ html: payload.h, css: payload.c ?? '' });
+              setLoadingLive(false);
+              return;
+            }
+          }
+          setLiveScene(null);
+          setLoadingLive(false);
+        }
+      } catch {
+        if (!cancelled) {
+          setEntry(null);
+          setLiveScene(null);
+          setLoadingLive(false);
+        }
+      }
+    };
+
+    setLiveScene(null);
+    setLoadingLive(true);
+    void resolveLiveScene();
+
     return () => {
       cancelled = true;
     };
-  }, [itemId]);
+  }, [cleanId, itemId, html, css]);
 
-  const videoSrc = videoUrl || entry?.v || '';
-  const poster = entry?.t || image || '';
+  const hasLiveHtml = Boolean(liveScene?.html);
+  const videoSrc = !hasLiveHtml ? videoUrl || entry?.v || '' : '';
+  const poster = !hasLiveHtml ? entry?.t || image || '' : '';
   const hasVideo = Boolean(videoSrc) && !failed;
   const playbackRate = PLAYBACK_RATES[rateIndex];
 
@@ -134,6 +207,10 @@ export const ThreeUIPreview: React.FC<{
   };
 
   const restart = () => {
+    if (hasLiveHtml) {
+      setReloadNonce((n) => n + 1);
+      return;
+    }
     const video = videoRef.current;
     if (!video) return;
     video.currentTime = 0;
@@ -165,7 +242,7 @@ export const ThreeUIPreview: React.FC<{
   };
 
   const onStagePointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
-    if (!hasVideo || e.button !== 0) return;
+    if (hasLiveHtml || !hasVideo || e.button !== 0) return;
     const video = videoRef.current;
     if (!video || !Number.isFinite(video.duration) || video.duration <= 0) return;
     dragRef.current = {
@@ -225,17 +302,33 @@ export const ThreeUIPreview: React.FC<{
   );
 
   return (
-    <div className="ex-3ui" ref={stageRef} data-ready={hasVideo ? 'true' : 'false'}>
+    <div className="ex-3ui" ref={stageRef} data-ready={hasLiveHtml || hasVideo ? 'true' : 'false'}>
       <div
         className="ex-3ui-stage"
-        data-scrubbable={hasVideo ? 'true' : 'false'}
+        data-scrubbable={!hasLiveHtml && hasVideo ? 'true' : 'false'}
         data-scrubbing={scrubbing ? 'true' : 'false'}
         onPointerDown={onStagePointerDown}
         onPointerMove={onStagePointerMove}
         onPointerUp={endStageDrag}
         onPointerCancel={endStageDrag}
       >
-        {hasVideo ? (
+        {hasLiveHtml && liveScene ? (
+          <div style={{ position: 'absolute', inset: 0, width: '100%', height: '100%' }}>
+            <SandboxPreview
+              title={title}
+              html={liveScene.html}
+              css={liveScene.css}
+              theme="dark"
+              viewport={1440}
+              nonce={reloadNonce}
+            />
+          </div>
+        ) : loadingLive ? (
+          <div className="ex-3ui-empty" role="status">
+            <span className="t-label">Đang tải cảnh 3D trực tiếp...</span>
+            <strong>{title}</strong>
+          </div>
+        ) : hasVideo ? (
           <video
             ref={videoRef}
             className="ex-3ui-media"
@@ -271,18 +364,35 @@ export const ThreeUIPreview: React.FC<{
           </div>
         )}
 
-        <div className="ex-3ui-scrim" aria-hidden="true" />
-        <div className="ex-3ui-head">
-          <span className="ex-3ui-kicker">
-            <span className="ex-3ui-dot" aria-hidden="true" />
-            {hasVideo ? 'Cảnh 3D gốc · Kéo ngang để xoay góc nhìn' : 'Cảnh 3D gốc · Ảnh xem trước'}
-          </span>
-          <h2>{title}</h2>
-        </div>
+        {!hasLiveHtml ? (
+          <>
+            <div className="ex-3ui-scrim" aria-hidden="true" />
+            <div className="ex-3ui-head">
+              <span className="ex-3ui-kicker">
+                <span className="ex-3ui-dot" aria-hidden="true" />
+                {hasVideo ? 'Cảnh 3D gốc · Kéo ngang để xoay góc nhìn' : 'Cảnh 3D gốc · Ảnh xem trước'}
+              </span>
+              <h2>{title}</h2>
+            </div>
+          </>
+        ) : null}
       </div>
 
       <div className="ex-3ui-bar">
-        {hasVideo ? (
+        {hasLiveHtml ? (
+          <>
+            <button
+              type="button"
+              className="ex-3ui-icon"
+              onClick={restart}
+              aria-label="Chạy lại cảnh 3D"
+              title="Chạy lại"
+            >
+              <IconRotateCcw size={15} aria-hidden="true" />
+            </button>
+            <span className="ex-3ui-time">3D trực tiếp · Tương tác bằng chuột</span>
+          </>
+        ) : hasVideo ? (
           <>
             <button
               type="button"
@@ -319,7 +429,7 @@ export const ThreeUIPreview: React.FC<{
         )}
 
         <div className="ex-3ui-actions">
-          {hasVideo ? (
+          {!hasLiveHtml && hasVideo ? (
             <button
               type="button"
               className="ex-3ui-speed"

@@ -205,6 +205,37 @@ export function sanitizeBrandText(input: string | undefined): string {
 
 const RE_RELATIVE_FONT_FACE = /@font-face\s*\{[^}]*src\s*:\s*url\(\s*['"]?(?!https?:|data:)[^)]+\)[^}]*\}/gi;
 const RE_WORDMARK_PATH = /<path\b[^>]*\bd\s*=\s*["'][^"']*WORDMARK[^"']*["'][^>]*\/?>/gi;
+const TRUSTED_SANDBOX_SCRIPT_HOSTS = new Set([
+  'cdn.jsdelivr.net',
+  'cdnjs.cloudflare.com',
+  'cdn.tailwindcss.com',
+  'unpkg.com',
+  'code.iconify.design',
+  'esm.sh',
+]);
+
+function isTrustedSandboxScriptUrl(rawUrl: string | undefined): boolean {
+  if (!rawUrl) return false;
+  try {
+    const parsed = new URL(rawUrl.trim());
+    return parsed.protocol === 'https:' && TRUSTED_SANDBOX_SCRIPT_HOSTS.has(parsed.hostname.toLowerCase());
+  } catch {
+    return false;
+  }
+}
+
+function isNonBrowserModuleCode(code: string): boolean {
+  const src = code.trim();
+  if (!src) return false;
+  return (
+    /^\s*import\s+(?:type\s+)?[\w*{]/m.test(src) ||
+    /^\s*export\s+(?:default|const|let|var|function|class|interface|type)\b/m.test(src) ||
+    /^\s*(?:interface|type)\s+[A-Z]\w*\s*(?:=|\{)/m.test(src) ||
+    /\bReact\.(?:FC|ReactNode|CSSProperties|RefObject)\b/.test(src) ||
+    /^\s*(?:precision\s+(?:lowp|mediump|highp)\s+float|uniform\s+(?:float|vec[234]|mat[234]|sampler2D)|varying\s+(?:float|vec[234])|attribute\s+(?:float|vec[234])|void\s+main\s*\(\s*\))/m.test(src) ||
+    /\b(?:gl_FragColor|gl_Position)\s*=/.test(src)
+  );
+}
 
 export function sanitizeSnippetCode(raw: string | undefined): string {
   if (!raw) return '';
@@ -224,7 +255,9 @@ export function sanitizeSnippetCode(raw: string | undefined): string {
     .replace(RE_RELATIVE_FONT_FACE, '')
     .replace(RE_WORDMARK_PATH, '')
     .replace(/<link[^>]+rel=["']stylesheet["'][^>]*>/gi, '')
-    .replace(/<script[^>]+src=["'][^"']+["'][^>]*>\s*<\/script>/gi, '')
+    .replace(/<script[^>]+src=["']([^"']+)["'][^>]*>\s*<\/script>/gi, (match, src: string) =>
+      isTrustedSandboxScriptUrl(src) ? match : ''
+    )
     .replace(/PinUI|ThreeUI|MotionSites|LucianLabs|CodeFronts/gi, 'F-Forum')
     .replace(RE_INTER_TIGHT, 'Be Vietnam Pro')
     .replace(RE_INTER_FONT, "font-family:'Be Vietnam Pro'")
@@ -470,7 +503,7 @@ function serializeStartTag(tagName: string, attrs: HtmlAttr[], selfClosing: bool
 }
 
 function sanitizeFullDocFonts(html: string): string {
-  const reInterFamily = new RegExp("['\"]Inte" + "r(?:\\s+Tight)?['\"]", 'gi');
+  const reInterFamily = new RegExp("(['\"])Inte" + "r(?:\\s+Tight)?\\1", 'gi');
   const reGoogleInter = new RegExp(
     'https://fonts\\.googleapis\\.com/css2\\?[^"\']*family=Inte' + 'r[^"\']*',
     'gi'
@@ -482,7 +515,8 @@ function sanitizeFullDocFonts(html: string): string {
     (token) => {
       if (token.tagName === 'script') {
         const src = getTokenAttr(token, 'src');
-        return Boolean(src && src.trim());
+        if (!src || !src.trim()) return false;
+        return !isTrustedSandboxScriptUrl(src);
       }
       if (token.tagName === 'link') {
         const href = getTokenAttr(token, 'href');
@@ -492,14 +526,14 @@ function sanitizeFullDocFonts(html: string): string {
     }
   );
   return withoutExternalResources
-    .replace(reInterFamily, "'Be Vietnam Pro'")
+    .replace(reInterFamily, '$1Be Vietnam Pro$1')
     .replace(reGoogleInter, (url) =>
       url.replace(new RegExp('Inte' + 'r(?:%20|\\+)?(?:Tight)?(?::[^&]+)?&?', 'gi'), '')
     );
 }
 
 const SANDBOX_CSP =
-  '<meta http-equiv="Content-Security-Policy" content="default-src \'none\'; style-src \'unsafe-inline\' https:; script-src \'unsafe-inline\'; img-src data: https: blob:; media-src data: https: blob:; font-src data: https:; connect-src \'none\';" />';
+  '<meta http-equiv="Content-Security-Policy" content="default-src \'none\'; style-src \'unsafe-inline\' https:; script-src \'unsafe-inline\' \'unsafe-eval\' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://cdn.tailwindcss.com https://unpkg.com https://code.iconify.design https://esm.sh; img-src data: https: blob:; media-src data: https: blob:; font-src data: https:; connect-src \'none\';" />';
 
 const STRIPPED_META_HTTP_EQUIV = new Set([
   'content-security-policy',
@@ -572,7 +606,11 @@ export function compileSpecimenSrcDoc(
 ): string {
   const source = (rawHtml ?? '').trim();
   const isFullDocument = /^\s*(?:<!doctype\s+html|<html(?:\s|>))/i.test(source);
-  const safeInlineJs = (rawJs ?? '').trim().replace(/<\/script/gi, '<\\/script');
+  const trimmedJs = (rawJs ?? '').trim();
+  const safeInlineJs =
+    trimmedJs && !isNonBrowserModuleCode(trimmedJs)
+      ? trimmedJs.replace(/<\/script/gi, '<\\/script')
+      : '';
 
   if (isFullDocument) {
     let doc = sanitizeFullDocFonts(source);
@@ -631,7 +669,7 @@ export function compileSpecimenSrcDoc(
         insertBeforeHtmlTag(doc, 'body', styleTag, 'end', true) ||
         `${doc}${styleTag}`;
     }
-    if (safeInlineJs) {
+    if (safeInlineJs && !/<script(?:\s[^>]*)?>[\s\S]{40,}<\/script>/i.test(doc)) {
       const scriptTag = `<script>${safeInlineJs}</script>`;
       doc =
         insertBeforeHtmlTag(doc, 'body', scriptTag, 'end', true) ||
@@ -642,14 +680,23 @@ export function compileSpecimenSrcDoc(
 
   const cleanHtml = stripHtmlTokens(sanitizeSnippetCode(rawHtml), isDisallowedMetaToken);
   const cleanCss = sanitizeSnippetCode(rawCss).replace(/<\/style/gi, '<\\/style');
-  const hasFullViewportWrapper = /min-height:\s*100(?:vh|svh|dvh|%)/i.test(cleanCss);
+  const usesTailwindV4 = /@import\s+["']tailwindcss["']|@theme\s*\{/i.test(cleanCss);
+  const tailwindRuntimeTag = usesTailwindV4
+    ? '<script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>'
+    : '';
+  const hasFullViewportWrapper =
+    /min-height:\s*100(?:vh|svh|dvh|%)/i.test(cleanCss) ||
+    /\bmin-h-(?:screen|svh|dvh|full)\b/.test(cleanHtml);
   const fallbackBg = theme === 'dark' ? '#121110' : '#f4f0e6';
   const fallbackFg = theme === 'dark' ? '#efe9dd' : '#17150f';
   const bodyPadding = hasFullViewportWrapper ? '0' : '24px';
   const baseCss = `html{height:100%;min-height:100%}html,body{margin:0;min-height:100%;box-sizing:border-box}body{min-height:100%;display:grid;place-items:center;padding:${bodyPadding};background:${fallbackBg};color:${fallbackFg};font-family:'Be Vietnam Pro',system-ui,-apple-system,sans-serif}`;
+  const styleBlocks = usesTailwindV4
+    ? `<style>${baseCss}</style><style type="text/tailwindcss">${cleanCss}</style>`
+    : `<style>${baseCss}\n${cleanCss}</style>`;
   const syncThemeScript = `<script>(function(){var t="${theme}";var c=document.body.children;for(var i=0;i<c.length;i++){if(c[i].tagName!=="SCRIPT")c[i].setAttribute("data-theme",t);}var s=document.currentScript;if(s&&s.parentNode)s.parentNode.removeChild(s);})();</script>`;
   const userScript = safeInlineJs ? `<script>${safeInlineJs}</script>` : '';
-  return `<!DOCTYPE html><html lang="vi" data-theme="${theme}"><head><meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1.0" />${SANDBOX_CSP}<style>${baseCss}\n${cleanCss}</style></head><body data-theme="${theme}">${cleanHtml}${syncThemeScript}${userScript}</body></html>`;
+  return `<!DOCTYPE html><html lang="vi" data-theme="${theme}"><head><meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1.0" />${SANDBOX_CSP}${tailwindRuntimeTag}${styleBlocks}</head><body data-theme="${theme}">${cleanHtml}${syncThemeScript}${userScript}</body></html>`;
 }
 
 let pinuiSourceCache: Record<string, PinUISourceEntry> | null = null;

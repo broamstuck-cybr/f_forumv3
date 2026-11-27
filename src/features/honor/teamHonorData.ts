@@ -108,7 +108,7 @@ export const HONOR_EXHIBITS: HonorExhibit[] = [
     subtitle: 'Hạ Tầng Thử Nghiệm & Kiểm Chứng Thực Tế',
     track: 'Thành viên Phát triển · Cộng đồng F-Forum',
     kicker: 'ĐỘI NGŨ PHÁT TRIỂN · 02',
-    milestone: '8.322 Mẫu · 195 Khảo sát',
+    milestone: '5.909 Mẫu · 195 Khảo sát',
     motif: 'nodes',
     photo: {
       src: '/assets/team/member-2.jpg',
@@ -126,7 +126,7 @@ export const HONOR_EXHIBITS: HonorExhibit[] = [
       frameTint: '#d8d0be',
     },
     metrics: [
-      { label: 'Thành phần đã kiểm', value: '8.322 UI' },
+      { label: 'Thành phần đã kiểm', value: '5.909 UI' },
       { label: 'Công cụ & Repo', value: '60 / 122' },
       { label: 'Kiểm định tự động', value: '6 lớp' },
     ],
@@ -134,7 +134,7 @@ export const HONOR_EXHIBITS: HonorExhibit[] = [
       roleTitle: 'Kỹ sư Hệ thống & Phân tích Dữ liệu',
       focusArea: 'Kho tài nguyên & Khảo sát học đường',
       cycle: 'Thu thập → Chuẩn hóa shard',
-      bio: 'Nhóm kỹ sư bảo đảm tính xác thực của toàn bộ kho 8.322 mẫu giao diện, 60 công cụ và 122 kho mã nguồn cùng bộ dữ liệu khảo sát học đường.',
+      bio: 'Nhóm kỹ sư bảo đảm tính xác thực của toàn bộ kho 5.909 mẫu giao diện, 60 công cụ và 122 kho mã nguồn cùng bộ dữ liệu khảo sát học đường.',
       coreContribution:
         'Phụ trách tổng hợp, phân loại và xác minh tính khả thi của từng mẫu giao diện, bảo đảm mọi tài nguyên hiển thị đều có mã nguồn đối chiếu và câu lệnh sử dụng minh bạch.',
       architectureResults:
@@ -338,11 +338,11 @@ export const HONOR_EXHIBITS: HonorExhibit[] = [
   {
     id: 'ui-vault-7662',
     code: '08',
-    title: 'Kho 8.322 Mẫu Giao Diện',
-    subtitle: 'Bản Địa Hóa 6 Thư Viện UI/UX Mở Hàng Đầu',
+    title: 'Kho 5.909 Mẫu Giao Diện',
+    subtitle: 'Bản Địa Hóa 5 Thư Viện UI/UX Mở Hàng Đầu',
     track: 'Nhóm Thẩm mỹ & Biên soạn · Design Vault',
     kicker: 'TỦ SÁCH TÀI NGUYÊN · 08',
-    milestone: '8.322 UI · 60 Công cụ · 122 Repo',
+    milestone: '5.909 UI · 60 Công cụ · 122 Repo',
     motif: 'grid7662',
     palette: {
       bgTop: '#f1ede2',
@@ -354,17 +354,17 @@ export const HONOR_EXHIBITS: HonorExhibit[] = [
       frameTint: '#cfc6b0',
     },
     metrics: [
-      { label: 'Thành phần UI chuẩn', value: '8.322 mẫu' },
+      { label: 'Thành phần UI chuẩn', value: '5.909 mẫu' },
       { label: 'Công cụ & Kho mã', value: '60 tools · 122 repo' },
-      { label: 'Thư viện nguồn', value: '6 hệ sinh thái' },
+      { label: 'Thư viện nguồn', value: '5 hệ sinh thái' },
     ],
     dossier: {
       roleTitle: 'Biên soạn Tài nguyên & Chuẩn hóa Shard',
-      focusArea: 'PinUI · ThreeUI · MotionSites · CodeFronts',
+      focusArea: 'PinUI · ThreeUI · lucianLabs · MotionSites · CodeFronts',
       cycle: 'Phân loại → Nén mảnh → Đồng bộ Bàn soi',
-      bio: 'Nhóm biên soạn chịu trách nhiệm Việt hóa ngữ cảnh, kiểm chứng mã nguồn và đóng gói 8.322 thành phần từ 6 hệ sinh thái UI/UX mã nguồn mở.',
+      bio: 'Nhóm biên soạn chịu trách nhiệm Việt hóa ngữ cảnh, kiểm chứng mã nguồn và đóng gói 5.909 thành phần từ 5 hệ sinh thái UI/UX mã nguồn mở miễn phí.',
       coreContribution:
-        'Phân loại, kiểm tra tính khả thi và Việt hóa ngữ cảnh sử dụng cho 8.322 mẫu giao diện cùng 60 công cụ và 122 kho mã nguồn GitHub tuyển chọn.',
+        'Phân loại, kiểm tra tính khả thi và Việt hóa ngữ cảnh sử dụng cho 5.909 mẫu giao diện cùng 60 công cụ và 122 kho mã nguồn GitHub tuyển chọn.',
       architectureResults:
         'Đóng gói tài nguyên theo các mảnh dữ liệu nén (.jgz) tải theo nhu cầu, giúp trình duyệt tìm kiếm và xem trước hàng nghìn thành phần mượt mà không phụ thuộc máy chủ ngoài.',
       honors:

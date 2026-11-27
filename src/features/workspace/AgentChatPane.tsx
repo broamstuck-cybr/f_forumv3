@@ -22,7 +22,7 @@ export interface AgentChatPaneProps {
   onUndo: () => void;
   onFeedback: (messageId: string, value: 'yes' | 'no' | 'keep_working') => void;
   onEditOnboarding: () => void;
-  onInspectCode: () => void;
+  onInspectFile: (filePath?: string) => void;
 }
 
 const ROLE_LABELS: Record<OnboardingRole, string> = {
@@ -46,8 +46,8 @@ const EMPTY_STARTERS: Array<{ tag: string; prompt: string }> = [
     prompt: 'Làm trang thuyết trình Dự án Năng lượng Xanh có số liệu và 2 câu trắc nghiệm',
   },
   {
-    tag: 'CLB & Sự kiện',
-    prompt: 'Tạo trang tuyển thành viên CLB Robotics THPT có lịch tập và form đăng ký',
+    tag: 'React TSX',
+    prompt: 'Tạo ứng dụng dashboard React TSX cho CLB Robotics có lọc dự án trực tiếp và form đăng ký',
   },
   {
     tag: 'Hồ sơ IT',
@@ -70,7 +70,7 @@ export const AgentChatPane: React.FC<AgentChatPaneProps> = ({
   onUndo,
   onFeedback,
   onEditOnboarding,
-  onInspectCode,
+  onInspectFile,
 }) => {
   const [draft, setDraft] = useState('');
   const [openTraceIds, setOpenTraceIds] = useState<Record<string, boolean>>({});
@@ -123,7 +123,7 @@ export const AgentChatPane: React.FC<AgentChatPaneProps> = ({
           <div className="ws-chat__empty">
             <h2>Mô tả trang web bạn muốn dựng</h2>
             <p>
-              AI sẽ tra 5.994 mẫu giao diện miễn phí, chọn bố cục đúng chủ đề và xuất ra một tệp HTML chạy ngay ở khung bên phải.
+              AI tra kho mẫu giao diện miễn phí, tổ chức thành dự án nhiều tệp (HTML, CSS, JS hoặc React TSX) và chạy trực tiếp ở khung bên phải.
             </p>
             <div className="ws-chat__starters">
               {EMPTY_STARTERS.map((starter, idx) => (
@@ -212,30 +212,34 @@ export const AgentChatPane: React.FC<AgentChatPaneProps> = ({
 
               {fileSteps.length > 0 && (
                 <div className="ws-fileRows">
-                  {fileSteps.map((fs) => (
-                    <button
-                      key={fs.id}
-                      type="button"
-                      className="ws-fileRow"
-                      onClick={onInspectCode}
-                      title="Mở mã nguồn"
-                    >
-                      <span className="ws-fileRow__left">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                          <polyline points="20 6 9 17 4 12" />
-                        </svg>
-                        <span>{fs.label}</span>
-                      </span>
-                      <span className="ws-fileRow__diff">
-                        {typeof fs.added === 'number' && fs.added > 0 && (
-                          <span className="ws-diffAdd">+{fs.added}</span>
-                        )}
-                        {typeof fs.removed === 'number' && fs.removed > 0 && (
-                          <span className="ws-diffDel">-{fs.removed}</span>
-                        )}
-                      </span>
-                    </button>
-                  ))}
+                  {fileSteps.map((fs) => {
+                    const targetFile =
+                      fs.detail || fs.label.replace(/^(?:Created|Edited)\s+/i, '').trim() || undefined;
+                    return (
+                      <button
+                        key={fs.id}
+                        type="button"
+                        className="ws-fileRow"
+                        onClick={() => onInspectFile(targetFile)}
+                        title={targetFile ? `Mở ${targetFile} trong Code` : 'Mở mã nguồn'}
+                      >
+                        <span className="ws-fileRow__left">
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                            <polyline points="20 6 9 17 4 12" />
+                          </svg>
+                          <span>{fs.label}</span>
+                        </span>
+                        <span className="ws-fileRow__diff">
+                          {typeof fs.added === 'number' && fs.added > 0 && (
+                            <span className="ws-diffAdd">+{fs.added}</span>
+                          )}
+                          {typeof fs.removed === 'number' && fs.removed > 0 && (
+                            <span className="ws-diffDel">-{fs.removed}</span>
+                          )}
+                        </span>
+                      </button>
+                    );
+                  })}
                 </div>
               )}
 
@@ -252,7 +256,7 @@ export const AgentChatPane: React.FC<AgentChatPaneProps> = ({
         {busy && (
           <div className="ws-thinking" role="status" aria-live="polite">
             <span className="ws-thinking__dot" aria-hidden="true" />
-            <span>Đang tra 5.994 mẫu kho tài nguyên và dựng index.html...</span>
+            <span>Đang tra kho tài nguyên và dựng dự án đa tệp...</span>
           </div>
         )}
 

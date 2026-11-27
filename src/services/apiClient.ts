@@ -579,4 +579,72 @@ export const apiClient = {
   getBehaviorScores(): Promise<{ scores: Record<string, BehaviorItemScore> }> {
     return requestJson('/api/signals/scores', { method: 'GET' });
   },
+
+  submitFeedback(input: SubmitFeedbackInput): Promise<SubmitFeedbackResponse> {
+    return requestJson('/api/feedback', {
+      method: 'POST',
+      body: JSON.stringify(input),
+    });
+  },
+
+  fetchAdminFeedback(): Promise<AdminFeedbackListResponse> {
+    return requestJson('/api/admin/feedback', { method: 'GET' });
+  },
+
+  updateAdminFeedbackStatus(
+    id: string,
+    status: FeedbackStatus
+  ): Promise<AdminFeedbackStatusResponse> {
+    return requestJson(`/api/admin/feedback/${encodeURIComponent(id)}/status`, {
+      method: 'POST',
+      body: JSON.stringify({ status }),
+    });
+  },
 };
+
+export type FeedbackCategory = 'feature' | 'bug' | 'ui' | 'other';
+export type FeedbackStatus = 'unread' | 'read' | 'resolved';
+export type FeedbackEmailStatus = 'sent' | 'failed' | 'skipped' | 'pending';
+
+export interface FeedbackRecord {
+  id: string;
+  category: FeedbackCategory;
+  rating: number;
+  message: string;
+  senderName: string;
+  senderEmail: string;
+  pageUrl: string;
+  userId: string | null;
+  status: FeedbackStatus;
+  emailStatus: FeedbackEmailStatus;
+  emailProvider: string;
+  createdAt: string;
+  resolvedAt: string | null;
+  resolvedBy: string | null;
+}
+
+export interface SubmitFeedbackInput {
+  category: FeedbackCategory;
+  rating: number;
+  message: string;
+  senderName?: string;
+  senderEmail?: string;
+  pageUrl?: string;
+}
+
+export interface SubmitFeedbackResponse {
+  ok: boolean;
+  feedback: FeedbackRecord;
+  emailStatus: FeedbackEmailStatus;
+}
+
+export interface AdminFeedbackListResponse {
+  items: FeedbackRecord[];
+  unreadCount: number;
+}
+
+export interface AdminFeedbackStatusResponse {
+  ok: boolean;
+  feedback: FeedbackRecord;
+  unreadCount: number;
+}

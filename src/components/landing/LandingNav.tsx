@@ -6,7 +6,7 @@ import { KineticLogo } from '../brand/KineticLogo';
 import { NotificationBell } from '../layout/NotificationBell';
 import { triggerPinuiThemeToggle } from '../layout/GlobalThemeAtmosphere';
 import { useAppStore } from '../../store/appStore';
-import { LANDING_CHAPTERS } from './landingContent';
+import { LANDING_CHAPTERS, LANDING_CHAPTERS_EN } from './landingContent';
 import { scrollToSection, useActiveChapter, usePrefersReducedMotion } from './useLandingMotion';
 
 export interface LandingNavProps {
@@ -37,9 +37,17 @@ export const LandingNav: React.FC<LandingNavProps> = ({
   onOpenLogin,
   onEnterApp,
 }) => {
-  const { theme } = useAppStore();
+  const { theme, language } = useAppStore();
+  const isEn = language === 'en';
+  const chapters = isEn ? LANDING_CHAPTERS_EN : LANDING_CHAPTERS;
   const reduced = usePrefersReducedMotion();
-  const themeToggleLabel = theme === 'dark' ? 'Chuyển sang giao diện sáng' : 'Chuyển sang giao diện tối';
+  const themeToggleLabel = isEn
+    ? theme === 'dark'
+      ? 'Switch to light mode'
+      : 'Switch to dark mode'
+    : theme === 'dark'
+      ? 'Chuyển sang giao diện sáng'
+      : 'Chuyển sang giao diện tối';
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const fallbackSection = useActiveChapter(activeChapterId === undefined ? CHAPTER_IDS : EMPTY_CHAPTER_IDS);
@@ -116,8 +124,8 @@ export const LandingNav: React.FC<LandingNavProps> = ({
           </button>
         </div>
 
-        <nav aria-label="Điều hướng chương" className="lp-nav-tabs">
-          {LANDING_CHAPTERS.map((chapter) => (
+        <nav aria-label={isEn ? 'Section navigation' : 'Điều hướng chương'} className="lp-nav-tabs">
+          {chapters.map((chapter) => (
             <button
               key={chapter.id}
               type="button"
@@ -138,7 +146,7 @@ export const LandingNav: React.FC<LandingNavProps> = ({
             data-theme-state={theme}
             onClick={(event) => triggerPinuiThemeToggle(event.currentTarget)}
             aria-label={themeToggleLabel}
-            title={theme === 'dark' ? 'Giao diện sáng' : 'Giao diện tối'}
+            title={isEn ? (theme === 'dark' ? 'Light mode' : 'Dark mode') : (theme === 'dark' ? 'Giao diện sáng' : 'Giao diện tối')}
           >
             <svg className="nav__ptsIcon nav__ptsIcon--moon" width="19" height="19" viewBox="0 0 24 24" fill="none" aria-hidden="true">
               <path
@@ -161,22 +169,22 @@ export const LandingNav: React.FC<LandingNavProps> = ({
               type="button"
               className="lp-nav-userBtn"
               onClick={onEnterApp}
-              title={`Đang đăng nhập: ${currentUser.name} · Mở Workspace`}
+              title={isEn ? `Signed in: ${currentUser.name} · Open Workspace` : `Đang đăng nhập: ${currentUser.name} · Mở Workspace`}
             >
               <span className="lp-nav-avatar" aria-hidden="true">
                 {userInitials(currentUser.name)}
               </span>
               <span className="lp-nav-userName">
-                {currentUser.name === 'System Administrator' ? 'Quản trị viên' : currentUser.name}
+                {currentUser.name === 'System Administrator' ? (isEn ? 'Admin' : 'Quản trị viên') : currentUser.name}
               </span>
             </button>
           ) : (
             <button type="button" className="btn btn-ghost btn-sm" onClick={onOpenLogin}>
-              Đăng nhập
+              {isEn ? 'Sign in' : 'Đăng nhập'}
             </button>
           )}
           <button type="button" className="btn btn-red btn-sm" onClick={onEnterApp}>
-            Bắt đầu
+            {isEn ? 'Start' : 'Bắt đầu'}
           </button>
         </div>
 
@@ -245,7 +253,7 @@ export const LandingNav: React.FC<LandingNavProps> = ({
               </button>
             </div>
             <ul className="navsheet__list">
-              {LANDING_CHAPTERS.map((chapter) => (
+              {chapters.map((chapter) => (
                 <li key={chapter.id}>
                   <button
                     type="button"
@@ -267,7 +275,7 @@ export const LandingNav: React.FC<LandingNavProps> = ({
                   onEnterApp();
                 }}
               >
-                Bắt đầu
+                {isEn ? 'Start' : 'Bắt đầu'}
               </button>
               {!currentUser && (
                 <button
@@ -278,7 +286,7 @@ export const LandingNav: React.FC<LandingNavProps> = ({
                     onOpenLogin();
                   }}
                 >
-                  Đăng nhập
+                  {isEn ? 'Sign in' : 'Đăng nhập'}
                 </button>
               )}
             </div>

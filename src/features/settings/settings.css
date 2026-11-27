@@ -279,7 +279,45 @@
   .st-presets-block {
     display: flex;
     flex-direction: column;
-    gap: var(--space-4);
+    gap: var(--space-5);
+    padding-top: var(--space-4);
+    border-top: 1px solid var(--line);
+  }
+
+  .st-preset-group {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+  }
+
+  .st-preset-group-head {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--fg-muted);
+  }
+
+  .st-preset-foot {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    width: 100%;
+    padding-inline: 2px;
+  }
+
+  .st-preset-dots {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    flex: none;
+  }
+
+  .st-preset-dots span {
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    border: 1px solid color-mix(in srgb, var(--fg) 18%, transparent);
   }
 
   .st-presets-bar {

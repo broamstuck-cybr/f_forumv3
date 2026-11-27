@@ -3,19 +3,23 @@ import { useAppStore } from '../../store/appStore';
 import type { WallpaperPreset } from '../../types/index';
 import './ambient-video.css';
 
-const DARK_POSTER = '/assets/videos/Gradient_Lab_002_poster.jpg';
+const LIGHT_PRESETS = new Set<WallpaperPreset>(['light', 'sage', 'harbour', 'lilac']);
+const DARK_PRESETS = new Set<WallpaperPreset>(['dark', 'aurora', 'ember', 'lagoon']);
 
 export const AmbientVideoBackdrop: React.FC = () => {
   const { theme, settings } = useAppStore();
   const isEco = settings.uiMode === 'eco';
   const ambientEnabled = !isEco && settings.ambientVideo !== false;
-  const preset: WallpaperPreset = settings.wallpaperPreset || (theme === 'light' ? 'light' : 'dark');
 
   if (isEco) return null;
 
-  const isPosterPreset = preset === 'auto' || preset === 'dark' || preset === 'light';
-  // WHY: Light mode uses crisp pure-CSS light gradients instead of the dark-teal poster so light theme stays genuinely bright and lag-free.
-  const showDarkPoster = theme === 'dark' && isPosterPreset && ambientEnabled;
+  const rawPreset = settings.wallpaperPreset;
+  let preset: WallpaperPreset = theme === 'light' ? 'light' : 'dark';
+  if (theme === 'light' && rawPreset && LIGHT_PRESETS.has(rawPreset)) {
+    preset = rawPreset;
+  } else if (theme === 'dark' && rawPreset && DARK_PRESETS.has(rawPreset)) {
+    preset = rawPreset;
+  }
 
   return (
     <div
@@ -23,22 +27,16 @@ export const AmbientVideoBackdrop: React.FC = () => {
       aria-hidden="true"
       data-mode={theme}
       data-preset={preset}
-      data-animated="false"
+      data-ambient={ambientEnabled ? 'on' : 'off'}
     >
       <div className="ambient-mesh-layer" />
-      <div className="ambient-godray-layer" />
-
-      {showDarkPoster && (
-        <img
-          className="ambient-layer ambient-layer--poster"
-          data-active="true"
-          src={DARK_POSTER}
-          alt=""
-          decoding="async"
-        />
-      )}
-
-      <div className="ambient-scrim" data-video={showDarkPoster ? 'true' : 'false'} />
+      {ambientEnabled ? (
+        <>
+          <div className="ambient-godray-layer" />
+          <div className="ambient-horizon-layer" />
+        </>
+      ) : null}
+      <div className="ambient-scrim" />
     </div>
   );
 };

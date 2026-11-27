@@ -129,15 +129,16 @@ export function resolveAIConfig(
 
 function buildSystemInstruction(suffix: string, sessionInstructions = ''): string {
   const base = [
-    'You are the F-FORUM v3 Workspace Code Synthesis Engine.',
+    'You are the F-FORUM v3 AI Studio Multi-File Code Synthesis Engine.',
     'Respond ONLY with a valid JSON object matching this exact schema:',
-    '{"message":"Concise technical summary of changes","files":[{"path":"index.html","content":"...","summary":"..."},{"path":"styles.css","content":"...","summary":"..."},{"path":"app.js","content":"...","summary":"..."}],"checksHint":["Viewport meta verified","Accessible contrast and semantic tags"]}',
+    '{"message":"Concise technical summary of changes","files":[{"path":"index.html","content":"...","summary":"..."},{"path":"src/styles.css","content":"...","summary":"..."},{"path":"src/app.js","content":"...","summary":"..."}],"checksHint":["Viewport meta verified","Accessible contrast and semantic tags"]}',
     'Rules:',
-    '1. Always return full runnable contents for index.html, styles.css, and app.js.',
-    '2. Never include emojis or marketing hype.',
-    '3. Ensure index.html includes <meta name="viewport" content="width=device-width, initial-scale=1.0">, links styles.css, and loads app.js.',
-    '4. Use semantic HTML5, accessible aria attributes, and clean 8px spatial rhythm.',
-    '5. Keep code concise, modular, and free of comments so the JSON response completes quickly.',
+    '1. Always return a structured multi-file project (either HTML/CSS/JS with index.html + src/styles.css + src/app.js, OR React/TSX with index.html + src/App.tsx + src/styles.css + optional src/data.ts when the request asks for React, TSX, components, interactive dashboards, or multi-state apps).',
+    '2. If returning React/TSX, import only from "react" (useState, useEffect, useMemo, useCallback, useRef, Fragment) and local relative files (./data, ./styles.css, ./components/...); never import third-party npm packages or external CDN scripts.',
+    '3. Never include emojis or marketing hype.',
+    '4. Ensure index.html includes <meta name="viewport" content="width=device-width, initial-scale=1.0">, links local CSS, and uses #anchor for internal links.',
+    '5. Use semantic HTML5, accessible aria attributes, high contrast (>= 4.5:1), crisp Vietnamese diacritics when prompted in Vietnamese, and clean 8px spatial rhythm.',
+    '6. Keep code concise, modular, and clean so the JSON response completes reliably.',
   ].join('\n');
   const session = sessionInstructions.trim().slice(0, 2000);
   return [base, suffix, session ? `SESSION INSTRUCTIONS (do not override the JSON schema or safety rules):\n${session}` : '']
@@ -155,7 +156,8 @@ function buildUserContextPrompt(req: AIChatRequest): string {
     .map((item: AttachedContextItem) => `- [${item.kind}] ${item.title}: ${item.summary}`)
     .join('\n');
   const existingFiles = (req.files || [])
-    .map((f) => `FILE: ${f.path}\n${f.content.slice(0, 3000)}`)
+    .slice(0, 8)
+    .map((f) => `FILE: ${f.path}\n${f.content.slice(0, 4500)}`)
     .join('\n\n');
 
   return [
@@ -330,7 +332,7 @@ function buildFallbackResponse(
   const matched = findStrongCatalogMatch(req.prompt || '');
   if (matched) {
     return {
-      message: `Chưa kết nối khóa AI (${upstreamError}). Đã nạp mẫu thật khớp từ khóa: "${matched.title}" (${matched.sourceLibrary || 'Vault'}). Mở Cài đặt -> Khóa riêng (BYOK) để nhập API key thật (OpenAI / Gemini / OpenRouter / DeepSeek) hoặc mở Kho 8.322 mẫu để duyệt thêm.`,
+      message: `Chưa kết nối khóa AI (${upstreamError}). Đã nạp mẫu thật khớp từ khóa: "${matched.title}" (${matched.sourceLibrary || 'Vault'}). Mở Cài đặt -> Khóa riêng (BYOK) để nhập API key thật (OpenAI / Gemini / OpenRouter / DeepSeek) hoặc mở Kho 5.909 mẫu để duyệt thêm.`,
       files: buildFilesFromCatalogSample(matched),
       checksHint: [],
       fallback: true,
@@ -343,8 +345,8 @@ function buildFallbackResponse(
 
   const keyMissing = !config.apiKey && !hasConfiguredPoolKeys();
   const message = keyMissing
-    ? 'Chưa kết nối khóa AI. Mở Cài đặt -> Khóa riêng (BYOK) để nhập API key thật (OpenAI / Gemini / OpenRouter / DeepSeek) giúp trợ lý sinh mã theo yêu cầu, hoặc bấm mở Kho 8.322 mẫu để nạp giao diện thật.'
-    : `Kết nối AI tạm gián đoạn (${upstreamError}). Kiểm tra lại khóa tại Cài đặt -> Khóa riêng (BYOK) (OpenAI / Gemini / OpenRouter / DeepSeek) hoặc bấm mở Kho 8.322 mẫu để nạp mẫu thật.`;
+    ? 'Chưa kết nối khóa AI. Mở Cài đặt -> Khóa riêng (BYOK) để nhập API key thật (OpenAI / Gemini / OpenRouter / DeepSeek) giúp trợ lý sinh mã theo yêu cầu, hoặc bấm mở Kho 5.909 mẫu để nạp giao diện thật.'
+    : `Kết nối AI tạm gián đoạn (${upstreamError}). Kiểm tra lại khóa tại Cài đặt -> Khóa riêng (BYOK) (OpenAI / Gemini / OpenRouter / DeepSeek) hoặc bấm mở Kho 5.909 mẫu để nạp mẫu thật.`;
 
   return {
     message,
@@ -632,10 +634,11 @@ function parseStructuredLLMResponse(
     const validFiles = parsed.files
       .filter((f) => typeof f.path === 'string' && typeof f.content === 'string')
       .map((f) => ({
-        path: String(f.path).trim(),
+        path: String(f.path).trim().replace(/\\/g, '/').replace(/^\.\/+/, '').replace(/^\/+/, ''),
         content: String(f.content),
         summary: String(f.summary || 'Updated file'),
-      }));
+      }))
+      .filter((f) => Boolean(f.path) && !f.path.includes('..'));
     if (validFiles.length === 0) return null;
     return {
       message: String(parsed.message || 'Đã cập nhật mã nguồn Workspace.'),

@@ -3,8 +3,9 @@ import { motion, useScroll, useTransform } from 'motion/react';
 import type { DimensionView, User } from '../../../types/index';
 import { Mark } from '../../../ui/Mark';
 import { HardwareShowcase } from '../../HardwareShowcase';
+import { useAppStore } from '../../../store/appStore';
 import { usePrefersReducedMotion } from '../useLandingMotion';
-import { formatActiveDurationVi, useLiveMetrics } from '../useLiveMetrics';
+import { useLiveMetrics } from '../useLiveMetrics';
 
 interface LandingHeroProps {
   currentUser: User | null;
@@ -202,8 +203,11 @@ export const LandingHero: React.FC<LandingHeroProps> = ({
   onEnterApp,
   onNavigate,
 }) => {
+  const { language } = useAppStore();
+  const isEn = language === 'en';
   const reduced = usePrefersReducedMotion();
   const { visitors, activeSeconds } = useLiveMetrics();
+  const activeHours = Math.max(1, Math.floor(activeSeconds / 3600));
   const sectionRef = useRef<HTMLElement>(null);
   const flightSvgRef = useRef<SVGSVGElement>(null);
   const flightPathRef = useRef<SVGPathElement>(null);
@@ -374,52 +378,66 @@ export const LandingHero: React.FC<LandingHeroProps> = ({
             </div>
 
             <h1 className="lp-hero-title">
-              <span className="lp-hero-line" data-visible={activeCount >= 1}>
-                <span className="t-script lp-cap">T</span>ừ ý tưởng đến{' '}
-                <em className="t-italic lp-hero-em">sản phẩm thật</em>,
-              </span>{' '}
-              <span className="lp-hero-line" data-visible={activeCount >= 3}>
-                <Mark kind="underline" active>
-                  làm chủ AI
-                </Mark>{' '}
-                không rập khuôn.
-              </span>
+              {isEn ? (
+                <>
+                  <span className="lp-hero-line" data-visible={activeCount >= 1}>
+                    <span className="t-script lp-cap">F</span>rom idea to{' '}
+                    <em className="t-italic lp-hero-em">real product</em>,
+                  </span>{' '}
+                  <span className="lp-hero-line" data-visible={activeCount >= 3}>
+                    <Mark kind="underline" active>
+                      own your AI
+                    </Mark>{' '}
+                    without templates.
+                  </span>
+                </>
+              ) : (
+                <>
+                  <span className="lp-hero-line" data-visible={activeCount >= 1}>
+                    <span className="t-script lp-cap">T</span>ừ ý tưởng đến{' '}
+                    <em className="t-italic lp-hero-em">sản phẩm thật</em>,
+                  </span>{' '}
+                  <span className="lp-hero-line" data-visible={activeCount >= 3}>
+                    <Mark kind="underline" active>
+                      làm chủ AI
+                    </Mark>{' '}
+                    không rập khuôn.
+                  </span>
+                </>
+              )}
             </h1>
 
             <p className="lp-hero-lead">
-              Xưởng dựng web tiếng Việt quy tụ 5.994 mẫu giao diện miễn phí, 58 kỹ thuật chuyển động và 122 repo — giúp bạn biến ý tưởng thành sản phẩm chạy thật, không rập khuôn.
+              {isEn
+                ? 'Browser-based web studio with curated open UI components, 58 motion techniques, and 122 repos. Edit multi-file code live and publish in minutes.'
+                : 'Xưởng dựng web tiếng Việt gom sẵn mẫu UI miễn phí, 58 kỹ thuật chuyển động và 122 repo chọn lọc. Mở trình duyệt là sửa mã trực tiếp và xuất bản ngay.'}
             </p>
 
             <div className="lp-actions">
               <button type="button" className="btn btn-red btn-lg" onClick={onEnterApp}>
-                Mở Workspace
+                {isEn ? 'Open Workspace' : 'Mở Workspace'}
               </button>
               <button type="button" className="btn btn-line btn-lg" onClick={() => onNavigate('explore')}>
-                Kho mẫu
+                {isEn ? 'Templates' : 'Kho mẫu'}
               </button>
             </div>
 
-            <dl className="lp-colophon" aria-label="Số liệu thực của F-Forum">
-              <div>
-                <dt className="t-label">Kho tài nguyên mở</dt>
-                <dd className="lp-colophon-value">5.994 mẫu miễn phí</dd>
-                <dd className="lp-colophon-sub">58 kỹ thuật · 60 công cụ · 122 repo</dd>
+            <div className="lp-colophon" aria-label={isEn ? 'F-Forum live stats' : 'Số liệu F-Forum'}>
+              <div className="lp-colophon-pill">
+                <span className="lp-colophon-value lp-colophon-num">
+                  {isEn
+                    ? `Visits: ${visitors.toLocaleString('en-US')}`
+                    : `Ghé thăm: ${visitors.toLocaleString('vi-VN')} người`}
+                </span>
               </div>
-              <div>
-                <dt className="t-label">Tổng người truy cập</dt>
-                <dd className="lp-colophon-value lp-colophon-num">
-                  {visitors.toLocaleString('vi-VN')}
-                </dd>
-                <dd className="lp-colophon-sub">Ghi nhận thực theo trình duyệt</dd>
+              <div className="lp-colophon-pill">
+                <span className="lp-colophon-value lp-colophon-accent lp-colophon-num">
+                  {isEn
+                    ? `Active time: ${activeHours.toLocaleString('en-US')} hrs`
+                    : `Vận hành được: ${activeHours.toLocaleString('vi-VN')} giờ`}
+                </span>
               </div>
-              <div>
-                <dt className="t-label">Tổng thời gian truy cập thực</dt>
-                <dd className="lp-colophon-value lp-colophon-accent lp-colophon-num">
-                  {formatActiveDurationVi(activeSeconds)}
-                </dd>
-                <dd className="lp-colophon-sub">Chỉ tính khi tab đang mở</dd>
-              </div>
-            </dl>
+            </div>
           </motion.div>
 
           <motion.div

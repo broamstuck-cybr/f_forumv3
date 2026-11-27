@@ -1605,7 +1605,7 @@ export const TeamHonorGallery: React.FC<TeamHonorGalleryProps> = ({ onBack, onNa
           <span>F-Forum · Vinh Danh</span>
         </div>
 
-        <nav className="thg-nav" aria-label="Điều hướng Sổ Vinh Danh">
+        <nav className="thg-nav" aria-label="Điều hướng Gặp gỡ đội ngũ">
           <button
             ref={nav3dBtnRef}
             type="button"

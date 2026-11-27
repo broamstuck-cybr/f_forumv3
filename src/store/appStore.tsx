@@ -107,46 +107,48 @@ function detectSystemTheme(): ThemeMode {
   return 'dark';
 }
 
+export type AppLanguage = 'vi' | 'en';
+export type AppSettingsState = SettingsState & {
+  language: AppLanguage;
+};
+
 const LEGACY_WALLPAPER_ALIAS: Record<string, WallpaperPreset> = {
   video: 'dark',
+  auto: 'dark',
+  constellation: 'ember',
+  indigo: 'aurora',
+  sunset: 'ember',
   'godray-amber': 'ember',
   'godray-prism': 'harbour',
   'mesh-aurora': 'aurora',
-  'silk-twilight': 'indigo',
+  'silk-twilight': 'aurora',
   'obsidian-glass': 'dark',
   'paper-warm': 'light',
 };
 
 const VALID_WALLPAPER_PRESETS: ReadonlySet<WallpaperPreset> = new Set([
-  'auto',
   'dark',
-  'light',
-  'ember',
-  'harbour',
   'aurora',
-  'constellation',
-  'indigo',
-  'lilac',
+  'ember',
   'lagoon',
-  'sunset',
+  'light',
   'sage',
+  'harbour',
+  'lilac',
 ]);
 
 const DARK_ONLY_WALLPAPERS = new Set<WallpaperPreset>([
   'dark',
-  'ember',
   'aurora',
-  'constellation',
-  'indigo',
+  'ember',
   'lagoon',
-  'sunset',
 ]);
 
 const LIGHT_ONLY_WALLPAPERS = new Set<WallpaperPreset>([
   'light',
+  'sage',
   'harbour',
   'lilac',
-  'sage',
 ]);
 
 function reconcileWallpaperForTheme(
@@ -154,16 +156,21 @@ function reconcileWallpaperForTheme(
   theme: ThemeMode,
   explicit?: WallpaperPreset
 ): WallpaperPreset {
-  if (explicit) return explicit;
-  const preset = current || (theme === 'light' ? 'light' : 'dark');
-  if (preset === 'auto') return 'auto';
+  if (explicit) {
+    const normalized = normalizeWallpaperPreset(explicit, theme);
+    if (theme === 'light' && DARK_ONLY_WALLPAPERS.has(normalized)) return 'light';
+    if (theme === 'dark' && LIGHT_ONLY_WALLPAPERS.has(normalized)) return 'dark';
+    return normalized;
+  }
+  const preset = normalizeWallpaperPreset(current, theme);
   if (theme === 'light' && DARK_ONLY_WALLPAPERS.has(preset)) return 'light';
   if (theme === 'dark' && LIGHT_ONLY_WALLPAPERS.has(preset)) return 'dark';
   return preset;
 }
 
-function normalizeWallpaperPreset(raw: unknown): WallpaperPreset {
+function normalizeWallpaperPreset(raw: unknown, fallbackTheme: ThemeMode = 'dark'): WallpaperPreset {
   if (typeof raw === 'string') {
+    if (raw === 'auto') return fallbackTheme === 'light' ? 'light' : 'dark';
     if (VALID_WALLPAPER_PRESETS.has(raw as WallpaperPreset)) {
       return raw as WallpaperPreset;
     }
@@ -171,12 +178,13 @@ function normalizeWallpaperPreset(raw: unknown): WallpaperPreset {
       return LEGACY_WALLPAPER_ALIAS[raw];
     }
   }
-  return 'dark';
+  return fallbackTheme === 'light' ? 'light' : 'dark';
 }
 
-const DEFAULT_SETTINGS: SettingsState = {
+const DEFAULT_SETTINGS: AppSettingsState = {
   theme: 'dark',
   themePreference: 'dark',
+  language: 'vi',
   uiMode: 'balanced',
   ambientVideo: true,
   wallpaperPreset: 'dark',
@@ -195,6 +203,30 @@ const DEFAULT_SETTINGS: SettingsState = {
   },
 };
 
+function syncLanguageDomAndPhone(lang: AppLanguage): void {
+  if (typeof window !== 'undefined') {
+    try {
+      window.localStorage.setItem('iphone18-lang', lang);
+    } catch {
+      // Ignore storage quota or privacy-mode errors.
+    }
+  }
+  if (typeof document !== 'undefined') {
+    document.documentElement.lang = lang;
+    document.documentElement.setAttribute('data-lang', lang);
+    const frames = document.querySelectorAll<HTMLIFrameElement>(
+      'iframe[src*="iphone18-simulator.html"]'
+    );
+    frames.forEach((frame) => {
+      try {
+        frame.contentWindow?.postMessage({ type: 'ff-set-lang', lang }, window.location.origin);
+      } catch {
+        return;
+      }
+    });
+  }
+}
+
 function syncThemeDom(
   theme: ThemeMode,
   reducedMotion?: boolean,
@@ -209,7 +241,7 @@ function syncThemeDom(
     root.setAttribute('data-theme', theme);
     root.dataset.uiMode = uiMode || 'balanced';
     root.setAttribute('data-ambient', ambientVideo === false ? 'off' : 'on');
-    root.setAttribute('data-wallpaper', wallpaperPreset || 'dark');
+    root.setAttribute('data-wallpaper', wallpaperPreset || (theme === 'light' ? 'light' : 'dark'));
     root.setAttribute('data-effect', themeEffect || 'droplet');
     root.setAttribute('data-density', compactDensity ? 'compact' : 'roomy');
     root.classList.toggle('dark', theme === 'dark');
@@ -220,7 +252,7 @@ function syncThemeDom(
     }
     const meta = document.querySelector('meta[name="theme-color"]');
     if (meta) {
-      meta.setAttribute('content', theme === 'dark' ? '#121110' : '#f4f0e6');
+      meta.setAttribute('content', theme === 'dark' ? '#0b0e10' : '#f8faf8');
     }
   }
   if (typeof window !== 'undefined') {
@@ -581,9 +613,11 @@ export interface AppStoreContextValue {
   forkPostToWorkspace: (post: CommunityPost) => void;
   updateDossier: (clubId: string, dossier: ClubHandoverDossier) => Promise<void>;
   reportPost: (targetId: string, reason: string) => Promise<void>;
-  settings: SettingsState;
-  updateSettings: (partial: Partial<SettingsState>) => void;
+  settings: AppSettingsState;
+  updateSettings: (partial: Partial<AppSettingsState>) => void;
   updateByok: (partial: Partial<BYOKConfig>) => void;
+  language: AppLanguage;
+  setLanguage: (lang: AppLanguage) => void;
   theme: ThemeMode;
   setTheme: (theme: ThemeMode) => void;
   toggleTheme: () => void;
@@ -701,7 +735,7 @@ export const AppStoreProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     setPendingWorkspaceSeed(null);
   }, []);
 
-  const [settings, setSettings] = useState<SettingsState>(() => {
+  const [settings, setSettings] = useState<AppSettingsState>(() => {
     const sysTheme = detectSystemTheme();
     if (typeof window === 'undefined') return { ...DEFAULT_SETTINGS, theme: sysTheme };
     let legacyTheme: ThemeMode | null = null;
@@ -716,21 +750,27 @@ export const AppStoreProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     try {
       const raw = window.localStorage.getItem(STORAGE_SETTINGS_KEY);
       if (!raw) {
+        const initTheme = legacyTheme ?? 'dark';
         return {
           ...DEFAULT_SETTINGS,
-          theme: legacyTheme ?? 'dark',
-          themePreference: legacyTheme ?? 'dark',
+          theme: initTheme,
+          themePreference: initTheme,
+          wallpaperPreset: initTheme === 'light' ? 'light' : 'dark',
+          language: 'vi',
         };
       }
       const parsedRaw: unknown = JSON.parse(raw);
       if (!parsedRaw || typeof parsedRaw !== 'object' || Array.isArray(parsedRaw)) {
+        const initTheme = legacyTheme ?? 'dark';
         return {
           ...DEFAULT_SETTINGS,
-          theme: legacyTheme ?? 'dark',
-          themePreference: legacyTheme ?? 'dark',
+          theme: initTheme,
+          themePreference: initTheme,
+          wallpaperPreset: initTheme === 'light' ? 'light' : 'dark',
+          language: 'vi',
         };
       }
-      const parsed = parsedRaw as Partial<SettingsState>;
+      const parsed = parsedRaw as Partial<AppSettingsState>;
       const safeByok =
         parsed.byok && typeof parsed.byok === 'object' && !Array.isArray(parsed.byok)
           ? parsed.byok
@@ -759,9 +799,10 @@ export const AppStoreProvider: React.FC<{ children: React.ReactNode }> = ({ chil
           ? parsed.themeEffect
           : 'droplet';
       const resolvedWallpaper = reconcileWallpaperForTheme(
-        normalizeWallpaperPreset(parsed.wallpaperPreset),
+        normalizeWallpaperPreset(parsed.wallpaperPreset, resolvedTheme),
         resolvedTheme
       );
+      const resolvedLanguage: AppLanguage = parsed.language === 'en' ? 'en' : 'vi';
       return {
         ...DEFAULT_SETTINGS,
         ...parsed,
@@ -769,16 +810,20 @@ export const AppStoreProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         themePreference: resolvedPref,
         themeEffect: resolvedEffect,
         wallpaperPreset: resolvedWallpaper,
+        language: resolvedLanguage,
         byok: {
           ...DEFAULT_SETTINGS.byok,
           ...safeByok,
         },
       };
     } catch {
+      const initTheme = legacyTheme ?? sysTheme;
       return {
         ...DEFAULT_SETTINGS,
-        theme: legacyTheme ?? sysTheme,
+        theme: initTheme,
         themePreference: legacyTheme ?? 'system',
+        wallpaperPreset: initTheme === 'light' ? 'light' : 'dark',
+        language: 'vi',
       };
     }
   });
@@ -954,6 +999,11 @@ function normalizeStoredProject(raw: unknown): WorkspaceProject | null {
   const syncedProjectsRef = useRef<Map<string, WorkspaceProject>>(new Map());
   const hydratedUserIdRef = useRef<string | null>(null);
   const streamAbortRef = useRef<AbortController | null>(null);
+  const pendingWallpaperRef = useRef<{
+    theme: ThemeMode;
+    preset: WallpaperPreset;
+    ts: number;
+  } | null>(null);
 
   const activeProject = useMemo(() => {
     const found = projects.find((p) => p.id === activeProjectId);
@@ -1012,12 +1062,45 @@ function normalizeStoredProject(raw: unknown): WorkspaceProject | null {
   ]);
 
   useEffect(() => {
+    syncLanguageDomAndPhone(settings.language);
+  }, [settings.language]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return undefined;
+    const handlePhoneLangMessage = (event: MessageEvent) => {
+      if (event.origin !== window.location.origin) return;
+      const payload = event.data as { type?: string; lang?: unknown } | null;
+      if (payload?.type !== 'ff-set-lang') return;
+      const nextLang: AppLanguage | null =
+        payload.lang === 'vi' || payload.lang === 'en' ? payload.lang : null;
+      if (!nextLang) return;
+      setSettings((prev) => {
+        if (prev.language === nextLang) return prev;
+        const next: AppSettingsState = { ...prev, language: nextLang };
+        settingsRef.current = next;
+        try {
+          window.localStorage.setItem(STORAGE_SETTINGS_KEY, JSON.stringify(next));
+        } catch {
+          return next;
+        }
+        return next;
+      });
+    };
+    window.addEventListener('message', handlePhoneLangMessage);
+    return () => window.removeEventListener('message', handlePhoneLangMessage);
+  }, []);
+
+  useEffect(() => {
     if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') return undefined;
     if ((settings.themePreference ?? 'system') !== 'system') return undefined;
     const mq = window.matchMedia('(prefers-color-scheme: dark)');
     const syncSystem = () => {
       const next: ThemeMode = mq.matches ? 'dark' : 'light';
-      setSettings((prev) => (prev.theme === next ? prev : { ...prev, theme: next }));
+      setSettings((prev) => {
+        const nextWallpaper = reconcileWallpaperForTheme(prev.wallpaperPreset, next);
+        if (prev.theme === next && prev.wallpaperPreset === nextWallpaper) return prev;
+        return { ...prev, theme: next, wallpaperPreset: nextWallpaper };
+      });
     };
     mq.addEventListener('change', syncSystem);
     return () => mq.removeEventListener('change', syncSystem);
@@ -2213,8 +2296,17 @@ function normalizeStoredProject(raw: unknown): WorkspaceProject | null {
     [addToast]
   );
 
-  const persistSettingsSync = useCallback((next: SettingsState) => {
+  const persistSettingsSync = useCallback((next: AppSettingsState) => {
     settingsRef.current = next;
+    if (typeof document !== 'undefined') {
+      const root = document.documentElement;
+      root.setAttribute('data-theme', next.theme);
+      root.setAttribute(
+        'data-wallpaper',
+        next.wallpaperPreset || (next.theme === 'light' ? 'light' : 'dark')
+      );
+      root.setAttribute('data-ambient', next.ambientVideo === false ? 'off' : 'on');
+    }
     if (typeof window === 'undefined') return;
     try {
       window.localStorage.setItem(STORAGE_SETTINGS_KEY, JSON.stringify(next));
@@ -2225,7 +2317,46 @@ function normalizeStoredProject(raw: unknown): WorkspaceProject | null {
   }, []);
 
   const updateSettings = useCallback(
-    (partial: Partial<SettingsState>) => {
+    (partial: Partial<AppSettingsState>) => {
+      const currentTheme = settingsRef.current.theme;
+      let plannedTheme = partial.theme ?? currentTheme;
+      if (partial.themePreference === 'system' && !partial.theme) {
+        plannedTheme = detectSystemTheme();
+      } else if (partial.themePreference === 'light' || partial.themePreference === 'dark') {
+        plannedTheme = partial.themePreference;
+      }
+
+      let explicitWallpaper = partial.wallpaperPreset;
+      if (explicitWallpaper) {
+        const rawPreset = VALID_WALLPAPER_PRESETS.has(explicitWallpaper)
+          ? explicitWallpaper
+          : LEGACY_WALLPAPER_ALIAS[explicitWallpaper];
+        if (rawPreset) {
+          const wantsLight = LIGHT_ONLY_WALLPAPERS.has(rawPreset);
+          const wantsDark = DARK_ONLY_WALLPAPERS.has(rawPreset);
+          if (
+            (plannedTheme === 'dark' && wantsLight) ||
+            (plannedTheme === 'light' && wantsDark)
+          ) {
+            // Stash cross-theme wallpaper until the accompanying theme transition commits.
+            pendingWallpaperRef.current = {
+              theme: wantsLight ? 'light' : 'dark',
+              preset: rawPreset,
+              ts: Date.now(),
+            };
+            explicitWallpaper = undefined;
+          } else {
+            pendingWallpaperRef.current = null;
+          }
+        }
+      } else if (plannedTheme !== currentTheme) {
+        const pending = pendingWallpaperRef.current;
+        if (pending && pending.theme === plannedTheme && Date.now() - pending.ts < 2000) {
+          explicitWallpaper = pending.preset;
+        }
+        pendingWallpaperRef.current = null;
+      }
+
       setSettings((prev) => {
         const nextPref = partial.themePreference ?? prev.themePreference ?? 'system';
         let nextTheme = partial.theme ?? prev.theme;
@@ -2237,20 +2368,33 @@ function normalizeStoredProject(raw: unknown): WorkspaceProject | null {
         const nextWallpaper = reconcileWallpaperForTheme(
           prev.wallpaperPreset,
           nextTheme,
-          partial.wallpaperPreset
+          explicitWallpaper
         );
-        const next: SettingsState = {
+        const nextLang: AppLanguage =
+          partial.language === 'en' || partial.language === 'vi'
+            ? partial.language
+            : prev.language;
+        const next: AppSettingsState = {
           ...prev,
           ...partial,
           themePreference: nextPref,
           theme: nextTheme,
           wallpaperPreset: nextWallpaper,
+          language: nextLang,
         };
         persistSettingsSync(next);
         return next;
       });
     },
     [persistSettingsSync]
+  );
+
+  const setLanguage = useCallback(
+    (lang: AppLanguage) => {
+      updateSettings({ language: lang });
+      syncLanguageDomAndPhone(lang);
+    },
+    [updateSettings]
   );
 
   const updateByok = useCallback((partial: Partial<BYOKConfig>) => {
@@ -2265,13 +2409,23 @@ function normalizeStoredProject(raw: unknown): WorkspaceProject | null {
 
   const setTheme = useCallback(
     (theme: ThemeMode) => {
+      const pending = pendingWallpaperRef.current;
+      const pendingPreset =
+        pending && pending.theme === theme && Date.now() - pending.ts < 2000
+          ? pending.preset
+          : undefined;
+      pendingWallpaperRef.current = null;
       const prev = settingsRef.current;
-      const prevWallpaper = reconcileWallpaperForTheme(prev.wallpaperPreset, theme);
+      const prevWallpaper = reconcileWallpaperForTheme(prev.wallpaperPreset, theme, pendingPreset);
       if (prev.theme !== theme || prev.themePreference !== theme || prev.wallpaperPreset !== prevWallpaper) {
         persistSettingsSync({ ...prev, theme, themePreference: theme, wallpaperPreset: prevWallpaper });
       }
       setSettings((current) => {
-        const nextWallpaper = reconcileWallpaperForTheme(current.wallpaperPreset, theme);
+        const nextWallpaper = reconcileWallpaperForTheme(
+          current.wallpaperPreset,
+          theme,
+          pendingPreset
+        );
         if (
           current.theme === theme &&
           current.themePreference === theme &&
@@ -2279,7 +2433,7 @@ function normalizeStoredProject(raw: unknown): WorkspaceProject | null {
         ) {
           return current;
         }
-        const next: SettingsState = {
+        const next: AppSettingsState = {
           ...current,
           theme,
           themePreference: theme,
@@ -2293,6 +2447,7 @@ function normalizeStoredProject(raw: unknown): WorkspaceProject | null {
   );
 
   const toggleTheme = useCallback(() => {
+    pendingWallpaperRef.current = null;
     const prev = settingsRef.current;
     const nextTheme: ThemeMode = prev.theme === 'dark' ? 'light' : 'dark';
     persistSettingsSync({
@@ -2303,7 +2458,7 @@ function normalizeStoredProject(raw: unknown): WorkspaceProject | null {
     });
     setSettings((current) => {
       const resolvedTheme: ThemeMode = current.theme === 'dark' ? 'light' : 'dark';
-      const next: SettingsState = {
+      const next: AppSettingsState = {
         ...current,
         theme: resolvedTheme,
         themePreference: resolvedTheme,
@@ -2392,6 +2547,8 @@ function normalizeStoredProject(raw: unknown): WorkspaceProject | null {
       settings,
       updateSettings,
       updateByok,
+      language: settings.language,
+      setLanguage,
       theme: settings.theme,
       setTheme,
       toggleTheme,
@@ -2472,6 +2629,7 @@ function normalizeStoredProject(raw: unknown): WorkspaceProject | null {
       settings,
       updateSettings,
       updateByok,
+      setLanguage,
       setTheme,
       toggleTheme,
       setThemeEffect,

@@ -33,17 +33,31 @@ function readShardJson(shardPath) {
 }
 
 describe('Vault Hydration & Anti-Arena Regression Suite', () => {
-  test('hydrates all 5,994 purified free/usable vault items across 5 libraries + 58 motion recipes with 0 GetLayers/paid items (<15MB total)', () => {
+  test('hydrates all 5,909 audited free/working vault items across 5 libraries + 58 motion recipes with 0 GetLayers/paid items (<15MB total)', () => {
     const indexPath = path.join(projectRoot, 'public', 'data', 'studio-vault.json');
     assert.ok(fs.existsSync(indexPath), 'studio-vault.json must exist');
     const data = JSON.parse(fs.readFileSync(indexPath, 'utf8'));
 
-    assert.equal(data.total, 5994, `Expected 5994 purified free usable vault items, got ${data.total}`);
-    assert.equal(data.items.length, 5994);
+    assert.equal(data.total, 5909, `Expected 5909 audited free working vault items, got ${data.total}`);
+    assert.equal(data.items.length, 5909);
+    const pinuiCount = data.items.filter((item) => item.l === 'pinui').length;
     const threeuiCount = data.items.filter((item) => item.l === 'threeui').length;
-    assert.equal(threeuiCount, 43, `Expected 43 Free Community ThreeUI items with real source, got ${threeuiCount}`);
+    const lucianCount = data.items.filter((item) => item.l === 'lucianlabs').length;
+    const motionCount = data.items.filter((item) => item.l === 'motionsites').length;
+    const codefrontsCount = data.items.filter((item) => item.l === 'codefronts').length;
+    assert.equal(pinuiCount, 42, `Expected 42 Pin UI items, got ${pinuiCount}`);
+    assert.equal(threeuiCount, 21, `Expected 21 Playwright-verified MIT ThreeUI 3D items, got ${threeuiCount}`);
+    assert.equal(lucianCount, 480, `Expected 480 lucianLabs items, got ${lucianCount}`);
+    assert.equal(motionCount, 320, `Expected 320 verified free MotionSites items, got ${motionCount}`);
+    assert.equal(codefrontsCount, 5046, `Expected 5046 verified CodeFronts items, got ${codefrontsCount}`);
     const glacierCount = data.items.filter((item) => item.l === 'glacier').length;
     assert.equal(glacierCount, 0, 'Paid GetLayers (glacier) items must be purged');
+    const fabManifest = JSON.parse(
+      fs.readFileSync(path.join(projectRoot, 'src', 'data', 'fabulousManifest.json'), 'utf8')
+    );
+    assert.equal(fabManifest.glacierCount, 0, 'fabulousManifest.json must have 0 GetLayers paid items');
+    assert.equal(fabManifest.glacier50.length, 0, 'fabulousManifest.json glacier50 must be empty');
+    assert.equal(fabManifest.threeui50.length, 21, 'fabulousManifest.json threeui50 must match 21 verified ThreeUI items');
     const ext = data.shardExt || 'jgz';
 
     const libs = new Set(data.items.map((item) => item.l));
@@ -152,7 +166,7 @@ describe('Vault Hydration & Anti-Arena Regression Suite', () => {
     assert.equal(/ms-stage|Khối 01/.test(rawMs), false, 'Synthetic ms-stage boilerplate must not exist in motionsites-full.json');
 
     const ms = JSON.parse(rawMs);
-    assert.ok(ms.total >= 321, `Expected >= 321 motionsites items, got ${ms.total}`);
+    assert.equal(ms.total, 320, `Expected 320 audited free motionsites items, got ${ms.total}`);
     assert.equal(Object.keys(ms.items).length, ms.total, 'motionsites-full.json must not duplicate entries under both bare and ms- keys');
 
     const aiWorkflow = ms.items['ai-workflow'];
@@ -373,13 +387,13 @@ describe('Vault Hydration & Anti-Arena Regression Suite', () => {
       'IrisQrCornerSection.tsx must handle webglcontextlost and dispose scene geometries/materials on unmount'
     );
     assert.ok(
-      irisSectionTsx.includes('Sổ Vinh Danh'),
-      'IrisQrCornerSection.tsx must include the concise Dev Team Honor CTA button'
+      irisSectionTsx.includes('Gặp gỡ đội ngũ :3'),
+      'IrisQrCornerSection.tsx must include the requested Gặp gỡ đội ngũ :3 Dev Team Honor CTA button'
     );
     assert.equal(
-      /:\)|Gặp gỡ đội ngũ/.test(irisSectionTsx),
+      /:\)/.test(irisSectionTsx),
       false,
-      'IrisQrCornerSection.tsx must not contain ASCII emoticon :) or verbose Honor CTA'
+      'IrisQrCornerSection.tsx must not contain legacy :) emoticon'
     );
     assert.equal(
       irisSectionTsx.includes('Get Iris') || irisSectionTsx.includes('Introducing a Smart AI Assistant'),

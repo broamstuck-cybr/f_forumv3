@@ -21,11 +21,11 @@ export interface AppNavbarProps {
   onOpenNotice?: () => void;
 }
 
-const PRIMARY_TABS: Array<{ id: AppRoute; label: string }> = [
-  { id: 'home', label: 'Trang chủ' },
-  { id: 'explore', label: 'Khám phá' },
-  { id: 'workspace', label: 'Workspace' },
-  { id: 'community', label: 'Cộng đồng' },
+const PRIMARY_TABS: Array<{ id: AppRoute; label: string; labelEn: string }> = [
+  { id: 'home', label: 'Trang chủ', labelEn: 'Home' },
+  { id: 'explore', label: 'Khám phá', labelEn: 'Explore' },
+  { id: 'workspace', label: 'Workspace', labelEn: 'Workspace' },
+  { id: 'community', label: 'Cộng đồng', labelEn: 'Community' },
 ];
 
 function userInitials(name: string): string {
@@ -49,8 +49,10 @@ export const AppNavbar: React.FC<AppNavbarProps> = () => {
     setAuthModalOpen,
     logout,
     theme,
+    language,
     clearViewingProfileUser,
   } = useAppStore();
+  const isEn = language === 'en';
   const reduced = Boolean(useReducedMotion());
   const [menuOpen, setMenuOpen] = useState(false);
   const [sheetOpen, setSheetOpen] = useState(false);
@@ -97,17 +99,33 @@ export const AppNavbar: React.FC<AppNavbarProps> = () => {
   const remaining = limit === null ? null : Math.max(0, quota.remaining ?? limit - quota.used);
   const lowQuota = !unlimited && remaining !== null && remaining <= 3;
   const quotaLabel = unlimited
-    ? 'Không giới hạn'
+    ? isEn
+      ? 'Unlimited'
+      : 'Không giới hạn'
     : limit === null
-      ? `Đã dùng ${quota.used} lượt`
-      : `${remaining}/${limit} lượt`;
+      ? isEn
+        ? `${quota.used} used`
+        : `Đã dùng ${quota.used} lượt`
+      : isEn
+        ? `${remaining}/${limit} left`
+        : `${remaining}/${limit} lượt`;
   const displayName = currentUser
     ? currentUser.name === 'System Administrator'
-      ? 'Quản trị viên'
+      ? isEn
+        ? 'Admin'
+        : 'Quản trị viên'
       : currentUser.name
-    : 'Khách';
-  const avatarText = currentUser ? userInitials(displayName) : 'K';
-  const themeToggleLabel = theme === 'dark' ? 'Chuyển sang chế độ sáng' : 'Chuyển sang chế độ tối';
+    : isEn
+      ? 'Guest'
+      : 'Khách';
+  const avatarText = currentUser ? userInitials(displayName) : isEn ? 'G' : 'K';
+  const themeToggleLabel = isEn
+    ? theme === 'dark'
+      ? 'Switch to light mode'
+      : 'Switch to dark mode'
+    : theme === 'dark'
+      ? 'Chuyển sang chế độ sáng'
+      : 'Chuyển sang chế độ tối';
 
   const go = (route: AppRoute) => {
     setMenuOpen(false);
@@ -156,7 +174,7 @@ export const AppNavbar: React.FC<AppNavbarProps> = () => {
                     onClick={() => go(tab.id)}
                     aria-current={active ? 'page' : undefined}
                   >
-                    {tab.label}
+                    {isEn ? tab.labelEn : tab.label}
                     {active && (
                       <motion.span layoutId="nav-ink" className="nav__ink" transition={spring} aria-hidden="true">
                         <svg viewBox="0 0 100 6" preserveAspectRatio="none" fill="none">
@@ -232,7 +250,17 @@ export const AppNavbar: React.FC<AppNavbarProps> = () => {
                       <div className="nav__menuIdentity">
                         <p className="nav__menuName">{displayName}</p>
                         <p className="t-label">
-                          {currentUser ? (isAdmin ? 'quản trị' : 'thành viên') : 'phiên khách'}
+                          {currentUser
+                            ? isAdmin
+                              ? isEn
+                                ? 'admin'
+                                : 'quản trị'
+                              : isEn
+                                ? 'member'
+                                : 'thành viên'
+                            : isEn
+                              ? 'guest'
+                              : 'phiên khách'}
                         </p>
                       </div>
                       <span className="nav__menuQuota" data-low={lowQuota}>
@@ -249,18 +277,18 @@ export const AppNavbar: React.FC<AppNavbarProps> = () => {
                           go('profile');
                         }}
                       >
-                        Hồ sơ
+                        {isEn ? 'Profile' : 'Hồ sơ'}
                       </button>
                       <button type="button" className="nav__menuItem" onClick={() => go('settings')}>
-                        Cài đặt
+                        {isEn ? 'Settings' : 'Cài đặt'}
                       </button>
                       {currentUser ? (
                         <button type="button" className="nav__menuItem" data-tone="red" onClick={signOut}>
-                          Đăng xuất
+                          {isEn ? 'Sign out' : 'Đăng xuất'}
                         </button>
                       ) : (
                         <button type="button" className="nav__menuItem" data-tone="red" onClick={openAuth}>
-                          Đăng nhập
+                          {isEn ? 'Sign in' : 'Đăng nhập'}
                         </button>
                       )}
                     </div>
@@ -334,7 +362,7 @@ export const AppNavbar: React.FC<AppNavbarProps> = () => {
                           : undefined
                       }
                     >
-                      {tab.label}
+                      {isEn ? tab.labelEn : tab.label}
                     </button>
                   </motion.li>
                 ))}
@@ -348,7 +376,17 @@ export const AppNavbar: React.FC<AppNavbarProps> = () => {
                     <div className="min-w-0">
                       <p className="nav__menuName">{displayName}</p>
                       <p className="t-label">
-                        {currentUser ? (isAdmin ? 'quản trị' : 'thành viên') : 'phiên khách'}
+                        {currentUser
+                          ? isAdmin
+                            ? isEn
+                              ? 'admin'
+                              : 'quản trị'
+                            : isEn
+                              ? 'member'
+                              : 'thành viên'
+                          : isEn
+                            ? 'guest'
+                            : 'phiên khách'}
                       </p>
                     </div>
                   </div>
@@ -362,7 +400,7 @@ export const AppNavbar: React.FC<AppNavbarProps> = () => {
                       data-theme-state={theme}
                       onClick={(event) => triggerPinuiThemeToggle(event.currentTarget)}
                       aria-label={themeToggleLabel}
-                      title={theme === 'dark' ? 'Giao diện sáng' : 'Giao diện tối'}
+                      title={isEn ? (theme === 'dark' ? 'Light mode' : 'Dark mode') : (theme === 'dark' ? 'Giao diện sáng' : 'Giao diện tối')}
                     >
                       <svg className="nav__ptsIcon nav__ptsIcon--moon" width="19" height="19" viewBox="0 0 24 24" fill="none" aria-hidden="true">
                         <path
@@ -391,18 +429,18 @@ export const AppNavbar: React.FC<AppNavbarProps> = () => {
                       go('profile');
                     }}
                   >
-                    Hồ sơ
+                    {isEn ? 'Profile' : 'Hồ sơ'}
                   </button>
                   <button type="button" className="btn btn-line" onClick={() => go('settings')}>
-                    Cài đặt
+                    {isEn ? 'Settings' : 'Cài đặt'}
                   </button>
                   {currentUser ? (
                     <button type="button" className="btn btn-ghost" onClick={signOut}>
-                      Đăng xuất
+                      {isEn ? 'Sign out' : 'Đăng xuất'}
                     </button>
                   ) : (
                     <button type="button" className="btn btn-solid" onClick={openAuth}>
-                      Đăng nhập
+                      {isEn ? 'Sign in' : 'Đăng nhập'}
                     </button>
                   )}
                 </div>
@@ -412,7 +450,7 @@ export const AppNavbar: React.FC<AppNavbarProps> = () => {
         </AnimatePresence>
       </header>
 
-      <nav className="mobile-bnav" aria-label="Điều hướng di động">
+      <nav className="mobile-bnav" aria-label={isEn ? 'Mobile navigation' : 'Điều hướng di động'}>
         <button
           type="button"
           className="mobile-bnav__btn"
@@ -420,7 +458,7 @@ export const AppNavbar: React.FC<AppNavbarProps> = () => {
           onClick={() => go('home')}
         >
           <IconHome size={18} strokeWidth={1.85} aria-hidden="true" />
-          <span>Trang chủ</span>
+          <span>{isEn ? 'Home' : 'Trang chủ'}</span>
         </button>
 
         <button
@@ -430,7 +468,7 @@ export const AppNavbar: React.FC<AppNavbarProps> = () => {
           onClick={() => go('explore')}
         >
           <IconCompass size={18} strokeWidth={1.85} aria-hidden="true" />
-          <span>Khám phá</span>
+          <span>{isEn ? 'Explore' : 'Khám phá'}</span>
         </button>
 
         <button
@@ -452,7 +490,7 @@ export const AppNavbar: React.FC<AppNavbarProps> = () => {
           onClick={() => go('community')}
         >
           <IconLayers size={18} strokeWidth={1.85} aria-hidden="true" />
-          <span>Cộng đồng</span>
+          <span>{isEn ? 'Community' : 'Cộng đồng'}</span>
         </button>
 
         <button
@@ -465,7 +503,7 @@ export const AppNavbar: React.FC<AppNavbarProps> = () => {
           }}
         >
           <IconUser size={18} strokeWidth={1.85} aria-hidden="true" />
-          <span>Hồ sơ</span>
+          <span>{isEn ? 'Profile' : 'Hồ sơ'}</span>
         </button>
       </nav>
       <BackToTopButton offsetForMobileNav />

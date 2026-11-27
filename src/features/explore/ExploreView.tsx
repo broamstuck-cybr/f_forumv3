@@ -49,7 +49,8 @@ function resolveIncomingMode(value: string | undefined | null): ExploreMode | nu
 }
 
 export const ExploreView: React.FC = () => {
-  const { sourceCatalog, resourceLibrary, savedItemIds, openExperience, theme, settings } = useAppStore();
+  const { sourceCatalog, resourceLibrary, savedItemIds, openExperience, theme, settings, language } = useAppStore();
+  const isEn = language === 'en';
   const isFabulous = settings.uiMode === 'fabulous';
   const calm = useCalm();
   const tabRefs = useRef<Array<HTMLButtonElement | null>>([]);
@@ -136,7 +137,11 @@ export const ExploreView: React.FC = () => {
             <SearchCard
               value={search}
               onChange={setSearch}
-              placeholder="Tìm 5.994 mẫu mở, hiệu ứng, cảnh 3D, repo..."
+              placeholder={
+                isEn
+                  ? `Search ${formatCount(totalPlatesCount)} templates, effects, 3D, repos...`
+                  : `Tìm ${formatCount(totalPlatesCount)} mẫu mở, hiệu ứng, cảnh 3D, repo...`
+              }
               recentSearches={RECENT_SEARCHES}
               onSelectRecent={(value) => setSearch(value)}
               compact
@@ -146,12 +151,14 @@ export const ExploreView: React.FC = () => {
               type="button"
               className="ex-vault-dock-btn"
               onClick={() => enterVaultExperience()}
-              title="Mở kho trải nghiệm"
+              title={isEn ? 'Open resource playground' : 'Mở kho tài nguyên'}
             >
               <span className="ex-vault-box-mini" aria-hidden="true">
                 <OriginalFileBox theme={theme} />
               </span>
-              <span className="ex-vault-dock-label">Kho trải nghiệm</span>
+              <span className="ex-vault-dock-label">
+                {isEn ? 'Resources' : 'Kho tài nguyên'}
+              </span>
             </button>
             <button
               type="button"

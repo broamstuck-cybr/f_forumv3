@@ -15,10 +15,18 @@ export interface KineticStageCard {
 
 export const LANDING_CHAPTERS: LandingChapter[] = [
   { id: 'top', code: 'I', label: 'Khởi đầu' },
-  { id: 'quy-trinh', code: 'II', label: 'Template' },
-  { id: 'tuyen-ngon', code: 'III', label: 'Nghiên cứu' },
+  { id: 'quy-trinh', code: 'II', label: 'Mẫu mở' },
+  { id: 'tuyen-ngon', code: 'III', label: 'Cách làm' },
   { id: 'du-an', code: 'IV', label: 'Hệ thống' },
   { id: 'faq', code: 'V', label: 'Hỏi đáp' },
+];
+
+export const LANDING_CHAPTERS_EN: LandingChapter[] = [
+  { id: 'top', code: 'I', label: 'Start' },
+  { id: 'quy-trinh', code: 'II', label: 'Templates' },
+  { id: 'tuyen-ngon', code: 'III', label: 'Approach' },
+  { id: 'du-an', code: 'IV', label: 'System' },
+  { id: 'faq', code: 'V', label: 'FAQ' },
 ];
 
 const FALLBACK_COURSE_CARD =
@@ -138,60 +146,60 @@ export interface ManifestoBeat {
 export const MANIFESTO_BEATS: ManifestoBeat[] = [
   {
     id: 'beat-reality',
-    headline: '3 điểm nghẽn khi dùng AI: thiếu lộ trình, phụ thuộc và thiếu mẫu chuẩn.',
-    body: 'OECD PISA 2025 ghi nhận 95,9% học sinh dùng AI nhưng vướng 3 điểm nghẽn: thiếu bước khởi đầu, khó biến câu trả lời thành sản phẩm thật và thiếu kho mẫu kiểm chứng.',
+    headline: 'Ai cũng mở AI, nhưng ít người đi hết tới sản phẩm chạy được.',
+    body: 'Khảo sát OECD PISA 2025 chỉ ra 95,9% học sinh đã dùng AI. Vướng mắc nằm ở chỗ: nhiều bạn không biết bắt đầu từ bố cục nào, dễ chép nguyên mã sinh sẵn rồi kẹt khi cần sửa lỗi hoặc ghép thành trang hoàn chỉnh.',
     stickers: [
       { label: 'PISA 2025 · 95,9%', bg: '#BFE9D9', tilt: -2.5 },
-      { label: '3 điểm nghẽn 01–03', bg: '#C6E0E4', tilt: 2 },
+      { label: 'Thiếu điểm xuất phát', bg: '#C6E0E4', tilt: 2 },
     ],
     badge: 'prism',
   },
   {
     id: 'beat-solution',
-    headline: 'Khung mẫu UI/UX và Starter Kits đã lọc sạch, dùng được ngay.',
-    body: 'Mọi mẫu giao diện, hiệu ứng và cảnh 3D miễn phí đều qua bước lọc mã chạy thật, giúp người mới có điểm xuất phát rõ ràng thay vì vẽ lại từ trang trắng.',
+    headline: 'Mẫu chạy thật đã lọc sạch, mở lên là bấm thử được ngay.',
+    body: 'Tất cả thành phần UI, hiệu ứng chuyển động và cảnh 3D miễn phí trong kho đều kèm mã nguồn gốc cùng prompt chuẩn; bạn không phải ngồi mò từng repo rời rạc hay vẽ lại từ trang trắng.',
     stickers: [
-      { label: 'Starter Kits kiểm định', bg: '#E9D5BE', tilt: -2 },
-      { label: 'Gợi ý theo nhu cầu', bg: '#BFE9D9', tilt: 2.5 },
+      { label: 'Mã nguồn thật', bg: '#E9D5BE', tilt: -2 },
+      { label: 'Chép Prompt 1 chạm', bg: '#BFE9D9', tilt: 2.5 },
     ],
     badge: 'viewport',
   },
   {
     id: 'beat-antislop',
-    headline: 'Chống rập khuôn: tự lắp ghép, chỉnh sửa và làm chủ sản phẩm.',
-    body: 'Thay vì nhận một trang web giống nhau từ AI, bạn chọn cấu trúc mẫu phù hợp, xem từng bước thay đổi mã nguồn và tinh chỉnh trực tiếp theo đúng ý mình.',
+    headline: 'Tự ghép, tự sửa, giữ quyền kiểm soát đầu ra.',
+    body: 'Giao AI gõ từ đầu thường ra một kiểu trang giống hệt nhau. Ở đây bạn chọn đúng khung mình thích, mở cây tệp trong Workspace, sửa thẳng từng dòng HTML/CSS/JS và thấy kết quả đổi theo ngay bên cạnh.',
     stickers: [
-      { label: 'Chống "AI Slop"', bg: '#D2E2DE', tilt: 2 },
-      { label: 'Tư duy phản biện', bg: '#E9D5BE', tilt: -2.5 },
+      { label: 'Chống rập khuôn', bg: '#D2E2DE', tilt: 2 },
+      { label: 'Chỉnh mã trực tiếp', bg: '#E9D5BE', tilt: -2.5 },
     ],
     badge: 'code',
   },
   {
     id: 'beat-survey',
-    headline: 'Khảo sát 195 người dùng: 91,2% chọn học qua mẫu trực quan.',
-    body: 'Phần lớn học sinh và người mới hoàn thiện sản phẩm nhanh hơn khi được xem trực tiếp bố cục và mã nguồn mở thay vì tự tìm kiếm rời rạc trên GitHub.',
+    headline: '91,2% trong 195 người dùng khảo sát thích học qua mẫu trực quan.',
+    body: 'Nhìn một nút kính hay bố cục Bento đang chạy thật rồi mở mã của nó ra xem dễ hiểu hơn rất nhiều so với đọc tài liệu khô. Bạn thấy ngay thứ gì làm nên hiệu ứng đó.',
     stickers: [
-      { label: '195 người tham gia', bg: '#C6E0E4', tilt: -2 },
-      { label: '91,2% đánh giá cao', bg: '#BFE9D9', tilt: 2.5 },
+      { label: '195 người khảo sát', bg: '#C6E0E4', tilt: -2 },
+      { label: '91,2% đồng thuận', bg: '#BFE9D9', tilt: 2.5 },
     ],
     badge: 'matrix',
   },
   {
     id: 'beat-open-workshop',
-    headline: 'Bản địa hóa tiếng Việt và Xưởng lắp ráp mở miễn phí.',
-    body: 'Kho tài nguyên, 58 kỹ thuật chuyển động và 15 trang mẫu Agent đều tổ chức bằng tiếng Việt gọn rõ, mở dùng ngay trên trình duyệt mà không cần cài đặt.',
+    headline: 'Xưởng dựng web tiếng Việt, mở trình duyệt là chạy.',
+    body: 'Kho mẫu, 58 kỹ thuật chuyển động và 15 trang khởi đầu đều sắp xếp bằng tiếng Việt dễ tra. Máy cấu hình thấp vẫn chạy ổn vì không cần cài môi trường cục bộ.',
     stickers: [
-      { label: 'Xưởng lắp ráp mở', bg: '#BFE9D9', tilt: -2 },
+      { label: 'Không cần cài đặt', bg: '#BFE9D9', tilt: -2 },
       { label: 'Cộng đồng F-Forum', bg: '#C6E0E4', tilt: 2.5 },
     ],
     badge: 'prism',
   },
   {
     id: 'beat-architecture',
-    headline: 'Hộp cát an toàn, xuất bản nhanh và tải mã nguồn độc lập.',
-    body: 'Mọi trang tạo ra chạy trong khung xem cô lập an toàn, có thể xuất bản thành liên kết chia sẻ công khai, Remix trong cộng đồng hoặc tải gói ZIP HTML.',
+    headline: 'Chạy cô lập, chia sẻ link nhanh và tải gói ZIP sạch.',
+    body: 'Làm xong trang nào, bạn bấm xuất bản để lấy link công khai gửi bạn bè hoặc tải trọn bộ thư mục mã nguồn về máy dùng tiếp trên editor quen thuộc.',
     stickers: [
-      { label: 'Khung xem cô lập', bg: '#E9D5BE', tilt: 2 },
+      { label: 'Xem đa màn hình', bg: '#E9D5BE', tilt: 2 },
       { label: 'Xuất bản & ZIP', bg: '#D2E2DE', tilt: -2 },
     ],
     badge: 'code',
@@ -208,35 +216,35 @@ export const PROJECT_SHOWCASE_THUMBS: Record<string, string> = {
 };
 
 export const OPEN_ACCESS_FEATURES: string[] = [
-  '5.994 mẫu giao diện miễn phí đã lọc sạch & dùng được ngay (42 PinUI · 382 MotionSites · 43 ThreeUI miễn phí · 480 LucianLabs · 5.047 CodeFronts) cùng 58 kỹ thuật chuyển động, 60 công cụ và 122 repo',
-  'Bản địa hóa tiếng Việt theo bài toán học tập của học sinh & sinh viên yêu công nghệ — Chống "AI Slop", rèn tư duy phản biện',
-  'Đăng ký bằng tài khoản hoặc dùng ngay không cần đăng nhập, xuất bản liên kết chia sẻ /p/ và tải trọn bộ mã nguồn HTML/ZIP',
-  'Không gian Cộng đồng Remix, Sổ tay 58 kỹ thuật chuyển động, Workspace kéo khung trực tiếp và 15 trang mẫu Agent chạy thật',
+  '5.909 mẫu giao diện miễn phí đã lọc sạch lỗi (42 Pin UI, 320 MotionSites, 21 ThreeUI 3D, 480 lucianLabs, 5.046 CodeFronts) kèm 58 kỹ thuật chuyển động, 60 công cụ và 122 repo chọn lọc.',
+  'Sắp xếp hoàn toàn bằng tiếng Việt cho học sinh, sinh viên và người tự học dựng web thực chiến.',
+  'Mở dùng ngay trên trình duyệt không cần cài đặt; đăng nhập để đồng bộ dự án, tạo link công khai /p/ hoặc tải gói mã nguồn ZIP.',
+  'Workspace đa tệp kèm xem trực tiếp Desktop/Tablet/Mobile, Cộng đồng Remix và 15 mẫu khởi đầu sẵn mã.',
 ];
 
 export const FAQ_ITEMS: Array<{ id: string; question: string; answer: string }> = [
   {
     id: 'f1',
-    question: 'F-Forum giải quyết 3 thực trạng nào khi học sinh dùng AI?',
+    question: 'F-Forum giải quyết vấn đề gì khi học sinh dùng AI làm web?',
     answer:
-      'Theo báo cáo OECD PISA 2025 (9/2026), 95,9% học sinh sử dụng AI trong sáng tạo nhưng vướng 3 điểm nghẽn: (01) người mới "vibe code" thiếu lộ trình bắt đầu; (02) dễ phụ thuộc câu trả lời AI có sẵn mà chưa biến được ý tưởng thành sản phẩm hoàn chỉnh; (03) thiếu nguồn mẫu chuẩn để tham khảo. F-Forum tập trung học liệu kiểm chứng và kinh nghiệm thực tế vào một không gian chung.',
+      'Dữ liệu OECD PISA 2025 cho thấy 95,9% học sinh dùng AI, nhưng phần lớn vướng ở hai khâu: khó chọn bố cục khởi đầu và khó sửa mã AI sinh ra thành sản phẩm hoàn chỉnh. F-Forum gom sẵn mẫu UI chạy thật, prompt gốc và trình sửa mã ngay trên trình duyệt để bạn tự ráp và hiểu rõ từng phần.',
   },
   {
     id: 'f2',
-    question: 'F-Forum chống "AI Slop" và khác gì các công cụ AI làm thay toàn bộ?',
+    question: 'Khác gì so với mấy trang gõ 1 câu lệnh rồi AI tự sinh hết?',
     answer:
-      'Thay vì tạo ra sản phẩm rập khuôn từ một câu lệnh ("AI Slop"), F-Forum vận hành như một Xưởng lắp ráp mở miễn phí cho cộng đồng F-Forum: học sinh tự chọn chủ đề, ghép các thành phần UI/UX trực quan (tương tự chọn template trên Canva) để tự kiểm chứng, còn người làm vibe coding có sẵn Skills và Starter Kits chuẩn để kiểm soát đầu ra của AI.',
+      'Gõ một câu lệnh cho AI làm thay rất dễ ra giao diện giống nhau và khó chỉnh theo ý riêng. F-Forum hoạt động giống một xưởng lắp ráp mở: bạn tự chọn mẫu đã chạy thật, chép prompt chuẩn hoặc mở thẳng cây mã nguồn trong Workspace để sửa từng tệp theo nhu cầu của mình.',
   },
   {
     id: 'f3',
-    question: 'Kết quả khảo sát trên 195 người dùng cho thấy điều gì?',
+    question: 'Khảo sát 195 người dùng cho thấy điều gì?',
     answer:
-      'Khảo sát trên 195 học sinh và người dùng ghi nhận 91,2% đánh giá cao việc tiếp cận trực tiếp các mẫu thiết kế web và thành phần UI/UX trực quan thay vì tự thiết kế từ con số không. Việc hệ thống hóa 5.994 mẫu giao diện miễn phí đã kiểm lọc, 58 kỹ thuật chuyển động, 60 công cụ và 122 repo từ GitHub giúp rút ngắn thời gian tra cứu và nâng tỷ lệ hoàn thiện sản phẩm thực tế.',
+      'Trong 195 học sinh và người dùng thử nghiệm, 91,2% chọn xem mẫu tương tác kèm mã mở thay vì tự mò từng kho GitHub rời rạc. Có sẵn khung mẫu kiểm lọc, 58 kỹ thuật chuyển động, 60 công cụ và 122 repo giúp rút ngắn thời gian thử nghiệm đáng kể.',
   },
   {
     id: 'f4',
-    question: 'Cơ chế xác minh, lưu trữ JSON, Bộ lọc AI và WebSocket hoạt động ra sao?',
+    question: 'Dự án tạo trong Workspace được lưu và bảo vệ như thế nào?',
     answer:
-      'Trình duyệt gửi yêu cầu API đăng nhập để máy chủ và AI xác minh thông tin người dùng; dữ liệu được mã hóa trong hệ thống tệp JSON kèm API mã bảo mật riêng. Bộ lọc AI tự động ghi nhận hành vi spam hoặc ngôn từ thô tục để cảnh cáo và vô hiệu hóa bài viết vi phạm. WebSocket đồng bộ hai chiều theo thời gian thực trên toàn hệ thống Hỏi đáp, Threads, Kho đề thi và Hồ sơ.',
+      'Khách có thể sửa mã và xuất gói ZIP ngay trên máy. Khi đăng nhập, dự án tự đồng bộ lên tài khoản và kiểm tra rò rỉ khóa API trước khi đóng gói; các bài đăng Cộng đồng cũng có bộ lọc chống spam và đồng bộ tức thời.',
   },
 ];

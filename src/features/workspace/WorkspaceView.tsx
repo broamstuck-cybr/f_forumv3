@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { KineticLogo } from '../../components/brand/KineticLogo';
 import { triggerPinuiThemeToggle } from '../../components/layout/GlobalThemeAtmosphere';
 import { handleLiquidPointerLeave, handleLiquidPointerMove } from '../../utils/liquidGlassPointer';
@@ -11,12 +11,21 @@ import {
   createInitialBlueprint,
   type ComposerBlueprint,
 } from '../../engine/repoWebComposer';
+import {
+  bundleProjectFiles,
+  createStarterFileContent,
+  detectLanguageFromPath,
+  sanitizeVirtualPath,
+  sortProjectFiles,
+  splitHtmlToProjectFiles,
+} from '../../engine/workspaceBundler';
 import { apiClient } from '../../services/apiClient';
 import { useAppStore } from '../../store/appStore';
-import type { AppRoute } from '../../types/index';
+import type { AppRoute, WorkspaceFile } from '../../types/index';
 import type {
   AgentChatMessage,
   AgentShowcaseProduct,
+  AgentTraceStep,
   MatchedVaultResource,
   OnboardingDomain,
   OnboardingProfile,
@@ -37,8 +46,9 @@ const NAV_ITEMS: Array<{ id: AppRoute; label: string }> = [
 ];
 
 interface HistorySnapshot {
-  html: string;
+  files: WorkspaceFile[];
   blueprint: ComposerBlueprint | null;
+  activeFilePath: string;
 }
 
 function mapDomainToCategory(domain: OnboardingDomain): PublishedPageCategory {
@@ -102,6 +112,42 @@ function readUrlSeedParams(): { remixSlug: string | null; showcaseId: string | n
   }
 }
 
+function pickInitialOpenTabs(projectFiles: WorkspaceFile[]): {
+  activePath: string;
+  tabs: string[];
+} {
+  const paths = projectFiles.map((f) => f.path);
+  const preferred = [
+    paths.find((p) => /^(src\/)?app\.(tsx|jsx)$/i.test(p)),
+    paths.find((p) => p.toLowerCase() === 'index.html'),
+    paths.find((p) => /^(src\/)?styles\.css$/i.test(p)),
+    paths.find((p) => /^(src\/)?(app\.js|data\.ts)$/i.test(p)),
+  ].filter((p): p is string => Boolean(p));
+
+  const tabs = Array.from(new Set(preferred)).slice(0, 4);
+  if (tabs.length === 0 && paths[0]) {
+    tabs.push(paths[0]);
+  }
+  return {
+    activePath: tabs[0] || '',
+    tabs,
+  };
+}
+
+function buildFileTraceRows(projectFiles: WorkspaceFile[], action: 'create' | 'edit' = 'create'): AgentTraceStep[] {
+  return projectFiles
+    .filter((f) => f.path !== 'metadata.json')
+    .map((f, idx) => ({
+      id: `tr-f-${Date.now()}-${idx}`,
+      kind: action === 'edit' ? 'file_edit' : 'file_create',
+      label: `${action === 'edit' ? 'Edited' : 'Created'} ${f.path}`,
+      detail: f.path,
+      added: f.content.split('\n').length,
+      removed: 0,
+      status: 'done' as const,
+    }));
+}
+
 export const WorkspaceView: React.FC = () => {
   const {
     currentUser,
@@ -131,12 +177,17 @@ export const WorkspaceView: React.FC = () => {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [mobileTab, setMobileTab] = useState<'chat' | 'preview'>('chat');
-  const [splitRatio, setSplitRatio] = useState(0.41);
+  const [splitRatio, setSplitRatio] = useState(0.39);
   const [draggingSplit, setDraggingSplit] = useState(false);
   const [viewMode, setViewMode] = useState<'preview' | 'code'>('preview');
 
   const [messages, setMessages] = useState<AgentChatMessage[]>([]);
-  const [html, setHtml] = useState<string>('');
+  const [files, setFiles] = useState<WorkspaceFile[]>([]);
+  const [debouncedFiles, setDebouncedFiles] = useState<WorkspaceFile[]>([]);
+  const [activeFilePath, setActiveFilePath] = useState<string>('');
+  const [openTabs, setOpenTabs] = useState<string[]>([]);
+  const [modifiedPaths, setModifiedPaths] = useState<Set<string>>(() => new Set());
+
   const [blueprint, setBlueprint] = useState<ComposerBlueprint | null>(null);
   const [history, setHistory] = useState<HistorySnapshot[]>([]);
   const [matchedResources, setMatchedResources] = useState<MatchedVaultResource[]>([]);
@@ -150,6 +201,40 @@ export const WorkspaceView: React.FC = () => {
 
   const splitContainerRef = useRef<HTMLDivElement | null>(null);
   const urlSeedHandledRef = useRef(false);
+  const debounceTimerRef = useRef<number | null>(null);
+
+  const commitProjectFilesImmediate = useCallback((nextFiles: WorkspaceFile[], focusPath?: string) => {
+    if (debounceTimerRef.current !== null) {
+      window.clearTimeout(debounceTimerRef.current);
+      debounceTimerRef.current = null;
+    }
+    const sorted = sortProjectFiles(nextFiles);
+    setFiles(sorted);
+    setDebouncedFiles(sorted);
+    setModifiedPaths(new Set());
+    const initTabs = pickInitialOpenTabs(sorted);
+    const chosen = focusPath && sorted.some((f) => f.path === focusPath) ? focusPath : initTabs.activePath;
+    setActiveFilePath(chosen);
+    setOpenTabs(
+      chosen && !initTabs.tabs.includes(chosen)
+        ? [chosen, ...initTabs.tabs].slice(0, 5)
+        : initTabs.tabs
+    );
+  }, []);
+
+  // Cleanup debounce timer on unmount
+  useEffect(() => {
+    return () => {
+      if (debounceTimerRef.current !== null) {
+        window.clearTimeout(debounceTimerRef.current);
+      }
+    };
+  }, []);
+
+  const bundleResult = useMemo(
+    () => bundleProjectFiles(debouncedFiles, { enableConsoleBridge: true, previewId: activeShowcaseId || 'ws' }),
+    [debouncedFiles, activeShowcaseId]
+  );
 
   const loadShowcaseProduct = useCallback(
     (product: AgentShowcaseProduct) => {
@@ -160,11 +245,34 @@ export const WorkspaceView: React.FC = () => {
       setOnboardingProfile(product.profile);
 
       const bp = getShowcaseBlueprintById(product.id);
+      const projectFiles = splitHtmlToProjectFiles(product.html, {
+        title: product.title,
+        domain: product.profile.domain,
+        personality: product.profile.personality,
+        motionSignature: product.motionSignature,
+        sources: product.sourceRefs,
+      });
+
       setBlueprint(bp);
-      setHtml(product.html);
-      setHistory([{ html: product.html, blueprint: bp }]);
+      commitProjectFilesImmediate(projectFiles);
+      setHistory([
+        {
+          files: projectFiles,
+          blueprint: bp,
+          activeFilePath: projectFiles[0]?.path || 'index.html',
+        },
+      ]);
       setMatchedResources(product.sourceRefs);
       setLastPrompt(product.userPrompt);
+
+      const nonFileTrace = product.trace.filter(
+        (step) => step.kind !== 'file_create' && step.kind !== 'file_edit'
+      );
+      const multiFileTrace: AgentTraceStep[] = [
+        ...nonFileTrace.filter((s) => s.kind !== 'check'),
+        ...buildFileTraceRows(projectFiles, 'create'),
+        ...nonFileTrace.filter((s) => s.kind === 'check'),
+      ];
 
       const now = new Date().toISOString();
       setMessages([
@@ -177,9 +285,9 @@ export const WorkspaceView: React.FC = () => {
         {
           id: `a-${Date.now() + 1}`,
           role: 'assistant',
-          text: `Đã mở mẫu "${product.title}" (${product.categoryLabel}). Nhắn bên dưới để đổi nền, màu nhấn hoặc thêm bớt mục.`,
+          text: `Đã mở mẫu "${product.title}" (${product.categoryLabel}) gồm ${projectFiles.length} tệp. Chuyển sang Code để chỉnh trực tiếp từng tệp hoặc nhắn bên dưới để đổi giao diện.`,
           createdAt: now,
-          trace: product.trace,
+          trace: multiFileTrace,
           matchedResources: product.sourceRefs,
           motionSignature: product.motionSignature,
           fileCreated: 'index.html',
@@ -190,7 +298,7 @@ export const WorkspaceView: React.FC = () => {
       product.sourceRefs.forEach((ref) => recordSignal(ref.id, 'use', ref.library));
       setMobileTab('preview');
     },
-    [recordSignal, setOnboardingProfile]
+    [commitProjectFilesImmediate, recordSignal, setOnboardingProfile]
   );
 
   const canUseAi = Boolean(currentUser) || Boolean(settings.byok?.enabled && settings.byok.apiKey.trim());
@@ -214,7 +322,8 @@ export const WorkspaceView: React.FC = () => {
         addToast({
           type: 'info',
           title: 'Cần đăng nhập để dùng AI',
-          message: 'Tính năng AI tạo và chỉnh sửa web chỉ mở cho tài khoản đã đăng nhập. Bạn vẫn có thể xem trước 15 mẫu có sẵn.',
+          message:
+            'Tính năng AI tạo và chỉnh sửa dự án chỉ mở cho tài khoản đã đăng nhập. Bạn vẫn có thể xem trước 15 mẫu và sửa mã trong mục Code.',
         });
         setAuthModalOpen(true);
         return;
@@ -243,7 +352,8 @@ export const WorkspaceView: React.FC = () => {
         const result = await composeWithAgent({
           prompt: cleanPrompt,
           profile: activeProfile,
-          previousHtml: opts?.resetCurrent ? null : html || null,
+          previousHtml: opts?.resetCurrent ? null : bundleResult.standaloneHtml || null,
+          previousFiles: opts?.resetCurrent ? [] : files,
           previousBlueprint: opts?.resetCurrent ? null : blueprint,
           behaviorScores,
           excludeIds: opts?.excludeIds,
@@ -253,13 +363,21 @@ export const WorkspaceView: React.FC = () => {
           byok: settings.byok,
         });
 
-        setHtml(result.html);
+        const preferredFocus =
+          result.changedFiles.find((d) => /\.(tsx|jsx|html|css|js)$/i.test(d.path))?.path ||
+          result.files[0]?.path;
+
+        commitProjectFilesImmediate(result.files, preferredFocus);
         setBlueprint(result.blueprint);
         setMatchedResources(result.matchedResources);
         setPublishedSlug(null);
         setHistory((prev) => [
           ...(opts?.resetCurrent ? [] : prev.slice(-14)),
-          { html: result.html, blueprint: result.blueprint },
+          {
+            files: result.files,
+            blueprint: result.blueprint,
+            activeFilePath: preferredFocus || 'index.html',
+          },
         ]);
 
         setMessages((prev) => [
@@ -272,7 +390,7 @@ export const WorkspaceView: React.FC = () => {
             trace: result.trace,
             matchedResources: result.matchedResources,
             motionSignature: result.motionSignature,
-            fileCreated: 'index.html',
+            fileCreated: preferredFocus || 'index.html',
             durationMs: result.durationMs,
           },
         ]);
@@ -283,7 +401,7 @@ export const WorkspaceView: React.FC = () => {
         const msg =
           err instanceof Error && err.message
             ? err.message
-            : 'Không dựng được trang. Vui lòng thử lại.';
+            : 'Không dựng được dự án. Vui lòng thử lại.';
         setErrorMessage(msg);
       } finally {
         setBusy(false);
@@ -293,9 +411,11 @@ export const WorkspaceView: React.FC = () => {
       addToast,
       behaviorScores,
       blueprint,
+      bundleResult.standaloneHtml,
       canUseAi,
+      commitProjectFilesImmediate,
       currentUser,
-      html,
+      files,
       onboardingProfile,
       recordSignal,
       setAuthModalOpen,
@@ -356,10 +476,21 @@ export const WorkspaceView: React.FC = () => {
           }
           if (remixHtml) {
             const bp = createInitialBlueprint(remixProfile, seed.prompt || remixTitle, []);
+            const projectFiles = splitHtmlToProjectFiles(remixHtml, {
+              title: remixTitle,
+              domain: remixProfile.domain,
+              personality: remixProfile.personality,
+            });
             setOnboardingProfile(remixProfile);
-            setHtml(remixHtml);
+            commitProjectFilesImmediate(projectFiles);
             setBlueprint(bp);
-            setHistory([{ html: remixHtml, blueprint: bp }]);
+            setHistory([
+              {
+                files: projectFiles,
+                blueprint: bp,
+                activeFilePath: projectFiles[0]?.path || 'index.html',
+              },
+            ]);
             setPublishedSlug(null);
             const now = new Date().toISOString();
             setMessages([
@@ -372,18 +503,9 @@ export const WorkspaceView: React.FC = () => {
               {
                 id: `a-${Date.now() + 1}`,
                 role: 'assistant',
-                text: `Đã nạp bản gốc "${remixTitle}" vào khung xem trước. Hãy nhắn yêu cầu chỉnh sửa bạn muốn thay đổi.`,
+                text: `Đã tách bản gốc "${remixTitle}" thành ${projectFiles.length} tệp trong Workspace. Bạn có thể sửa mã trực tiếp hoặc nhắn yêu cầu mới.`,
                 createdAt: now,
-                trace: [
-                  {
-                    id: `tr-remix-${Date.now()}`,
-                    kind: 'file_create',
-                    label: 'Created index.html',
-                    added: remixHtml.split('\n').length,
-                    removed: 0,
-                    status: 'done',
-                  },
-                ],
+                trace: buildFileTraceRows(projectFiles, 'create'),
                 fileCreated: 'index.html',
                 durationMs: 300,
               },
@@ -422,6 +544,7 @@ export const WorkspaceView: React.FC = () => {
     );
   }, [
     clearWorkspaceSeed,
+    commitProjectFilesImmediate,
     loadShowcaseProduct,
     onboardingProfile,
     pendingWorkspaceSeed,
@@ -460,10 +583,21 @@ export const WorkspaceView: React.FC = () => {
               personality: res.page.personality,
             });
             const bp = createInitialBlueprint(prof, res.page.summary || res.page.title, []);
+            const projectFiles = splitHtmlToProjectFiles(res.page.html, {
+              title: res.page.title,
+              domain: prof.domain,
+              personality: prof.personality,
+            });
             setOnboardingProfile(prof);
-            setHtml(res.page.html);
+            commitProjectFilesImmediate(projectFiles);
             setBlueprint(bp);
-            setHistory([{ html: res.page.html, blueprint: bp }]);
+            setHistory([
+              {
+                files: projectFiles,
+                blueprint: bp,
+                activeFilePath: projectFiles[0]?.path || 'index.html',
+              },
+            ]);
             setMessages([
               {
                 id: `u-${Date.now()}`,
@@ -474,18 +608,9 @@ export const WorkspaceView: React.FC = () => {
               {
                 id: `a-${Date.now() + 1}`,
                 role: 'assistant',
-                text: `Đã mở bản sao từ "${res.page.title}". Bạn có thể nhắn bên dưới để chỉnh màu, đổi nội dung hoặc xuất bản thành trang riêng.`,
+                text: `Đã nạp bản sao "${res.page.title}" gồm ${projectFiles.length} tệp. Bạn có thể sửa mã trực tiếp hoặc nhắn bên dưới để tùy biến.`,
                 createdAt: new Date().toISOString(),
-                trace: [
-                  {
-                    id: `tr-rmx-${Date.now()}`,
-                    kind: 'file_create',
-                    label: 'Created index.html',
-                    added: res.page.html.split('\n').length,
-                    removed: 0,
-                    status: 'done',
-                  },
-                ],
+                trace: buildFileTraceRows(projectFiles, 'create'),
                 fileCreated: 'index.html',
                 durationMs: 320,
               },
@@ -511,7 +636,7 @@ export const WorkspaceView: React.FC = () => {
       };
       void loadFromSlug();
     }
-  }, [addToast, loadShowcaseProduct, pendingWorkspaceSeed, setOnboardingProfile]);
+  }, [addToast, commitProjectFilesImmediate, loadShowcaseProduct, pendingWorkspaceSeed, setOnboardingProfile]);
 
   const handleCompleteOnboarding = (profile: OnboardingProfile) => {
     setOnboardingProfile(profile);
@@ -528,12 +653,126 @@ export const WorkspaceView: React.FC = () => {
     setShowOnboarding(false);
   };
 
+  const handleSelectFile = useCallback((filePath: string) => {
+    setActiveFilePath(filePath);
+    setOpenTabs((prev) => (prev.includes(filePath) ? prev : [...prev, filePath]));
+  }, []);
+
+  const handleCloseTab = useCallback(
+    (filePath: string) => {
+      setOpenTabs((prev) => {
+        const next = prev.filter((p) => p !== filePath);
+        if (next.length === 0) return prev;
+        if (activeFilePath === filePath) {
+          setActiveFilePath(next[next.length - 1]);
+        }
+        return next;
+      });
+    },
+    [activeFilePath]
+  );
+
+  const handleChangeFileContent = useCallback((filePath: string, nextContent: string) => {
+    const now = new Date().toISOString();
+    setFiles((prev) => {
+      const updated = prev.map((f) =>
+        f.path === filePath ? { ...f, content: nextContent, updatedAt: now } : f
+      );
+      if (debounceTimerRef.current !== null) {
+        window.clearTimeout(debounceTimerRef.current);
+      }
+      debounceTimerRef.current = window.setTimeout(() => {
+        setDebouncedFiles(updated);
+        debounceTimerRef.current = null;
+      }, 280);
+      return updated;
+    });
+    setModifiedPaths((prev) => {
+      const next = new Set(prev);
+      next.add(filePath);
+      return next;
+    });
+    setPublishedSlug(null);
+  }, []);
+
+  const handleCreateFile = useCallback(
+    (rawPath: string) => {
+      const safePath = sanitizeVirtualPath(rawPath);
+      if (!safePath) return;
+      if (files.some((f) => f.path.toLowerCase() === safePath.toLowerCase())) {
+        addToast({ type: 'warning', title: 'Tệp đã tồn tại', message: safePath });
+        return;
+      }
+      const newFile: WorkspaceFile = {
+        path: safePath,
+        content: createStarterFileContent(safePath),
+        language: detectLanguageFromPath(safePath),
+        summary: 'Tạo thủ công trong Workspace',
+        updatedAt: new Date().toISOString(),
+      };
+      const nextFiles = sortProjectFiles([...files, newFile]);
+      setFiles(nextFiles);
+      setDebouncedFiles(nextFiles);
+      setActiveFilePath(safePath);
+      setOpenTabs((prev) => (prev.includes(safePath) ? prev : [...prev, safePath]));
+      setHistory((prev) => [
+        ...prev.slice(-14),
+        { files: nextFiles, blueprint, activeFilePath: safePath },
+      ]);
+      addToast({ type: 'success', title: `Đã tạo tệp ${safePath}` });
+    },
+    [addToast, blueprint, files]
+  );
+
+  const handleDeleteFile = useCallback(
+    (filePath: string) => {
+      if (files.length <= 1 || filePath.toLowerCase() === 'index.html') return;
+      const nextFiles = files.filter((f) => f.path !== filePath);
+      setFiles(nextFiles);
+      setDebouncedFiles(nextFiles);
+      setOpenTabs((prev) => {
+        const nextTabs = prev.filter((p) => p !== filePath);
+        return nextTabs.length > 0 ? nextTabs : [nextFiles[0].path];
+      });
+      if (activeFilePath === filePath) {
+        setActiveFilePath(nextFiles[0]?.path || '');
+      }
+      setModifiedPaths((prev) => {
+        const next = new Set(prev);
+        next.delete(filePath);
+        return next;
+      });
+      setHistory((prev) => [
+        ...prev.slice(-14),
+        { files: nextFiles, blueprint, activeFilePath: nextFiles[0]?.path || '' },
+      ]);
+      addToast({ type: 'info', title: `Đã xóa ${filePath}` });
+    },
+    [activeFilePath, addToast, blueprint, files]
+  );
+
+  const handleInspectFile = useCallback(
+    (targetPath?: string) => {
+      if (targetPath) {
+        const matched = files.find(
+          (f) => f.path === targetPath || f.path.endsWith(`/${targetPath}`)
+        );
+        if (matched) {
+          handleSelectFile(matched.path);
+        }
+      }
+      setViewMode('code');
+      setMobileTab('preview');
+    },
+    [files, handleSelectFile]
+  );
+
   const handleUndo = () => {
     if (history.length <= 1) return;
     const trimmed = history.slice(0, -1);
     const prevSnap = trimmed[trimmed.length - 1];
     setHistory(trimmed);
-    setHtml(prevSnap.html);
+    commitProjectFilesImmediate(prevSnap.files, prevSnap.activeFilePath);
     setBlueprint(prevSnap.blueprint);
     setPublishedSlug(null);
     addToast({ type: 'info', title: 'Đã quay lại bản trước' });
@@ -563,13 +802,14 @@ export const WorkspaceView: React.FC = () => {
   };
 
   const handlePublish = async () => {
-    if (!html || publishing) return;
+    const htmlToPublish = bundleResult.standaloneHtml;
+    if (!htmlToPublish || publishing) return;
     setPublishing(true);
     const activeProfile = blueprint?.profile ?? onboardingProfile ?? buildDefaultProfile();
     const title = blueprint?.heroTitle || activeProfile.siteName || 'Trang Web F-Forum';
     const summary =
       blueprint?.heroSubtitle ||
-      `Trang web dựng trên F-Forum Workspace (${activeProfile.domain}).`;
+      `Dự án dựng trên F-Forum Workspace (${activeProfile.domain}).`;
 
     try {
       const res = await apiClient.publishPage({
@@ -577,7 +817,7 @@ export const WorkspaceView: React.FC = () => {
         summary,
         category: mapDomainToCategory(activeProfile.domain),
         personality: activeProfile.personality,
-        html,
+        html: htmlToPublish,
         sourceIds: matchedResources.map((m) => m.id),
         authorName: currentUser?.name || 'Thành viên F-Forum',
         authorRole: activeProfile.role,
@@ -616,7 +856,7 @@ export const WorkspaceView: React.FC = () => {
       addToast({
         type: 'warning',
         title: 'Máy chủ xuất bản tạm bận',
-        message: `Bạn vẫn có thể tải ngay gói ${fallbackSlug}.zip về máy để dùng liền.`,
+        message: `Bạn vẫn có thể bấm Xuất ZIP để tải gói ${fallbackSlug}.zip về máy.`,
       });
     } finally {
       setPublishing(false);
@@ -813,7 +1053,7 @@ export const WorkspaceView: React.FC = () => {
           className={`ws-mobileTab${mobileTab === 'preview' ? ' is-active' : ''}`}
           onClick={() => setMobileTab('preview')}
         >
-          Xem trang
+          Preview / Code
         </button>
       </div>
 
@@ -828,19 +1068,16 @@ export const WorkspaceView: React.FC = () => {
             busy={busy}
             errorMessage={errorMessage}
             canUndo={history.length > 1}
-            hasGeneratedHtml={Boolean(html)}
+            hasGeneratedHtml={files.length > 0}
             canUseAi={canUseAi}
             onRequireAuth={() => setAuthModalOpen(true)}
             onOpenShowcase={() => setDrawerOpen(true)}
             onSendPrompt={(text) => void runCompose(text)}
-            onRetryLast={() => void runCompose(lastPrompt || 'Tạo lại trang web')}
+            onRetryLast={() => void runCompose(lastPrompt || 'Tạo lại dự án web')}
             onUndo={handleUndo}
             onFeedback={handleFeedback}
             onEditOnboarding={() => setShowOnboarding(true)}
-            onInspectCode={() => {
-              setViewMode('code');
-              setMobileTab('preview');
-            }}
+            onInspectFile={handleInspectFile}
           />
         </div>
 
@@ -855,14 +1092,26 @@ export const WorkspaceView: React.FC = () => {
           className={`ws-pane ws-pane--right lg-bento-shell${mobileTab === 'chat' ? ' is-mobileHidden' : ''}`}
         >
           <ArenaRunnerPane
-            html={html}
-            pageTitle={blueprint?.heroTitle || onboardingProfile?.siteName || 'Trang web mới'}
+            files={files}
+            activeFilePath={activeFilePath}
+            openTabs={openTabs}
+            modifiedPaths={modifiedPaths}
+            previewHtml={bundleResult.previewHtml}
+            standaloneHtml={bundleResult.standaloneHtml}
+            projectMode={bundleResult.mode}
+            bundleDiagnostics={bundleResult.diagnostics}
+            pageTitle={blueprint?.heroTitle || onboardingProfile?.siteName || 'Dự án mới'}
             publishedSlug={publishedSlug}
             publishing={publishing}
             busy={busy}
             viewMode={viewMode}
             pointerShield={draggingSplit}
             onChangeViewMode={setViewMode}
+            onSelectFile={handleSelectFile}
+            onCloseTab={handleCloseTab}
+            onCreateFile={handleCreateFile}
+            onDeleteFile={handleDeleteFile}
+            onChangeFileContent={handleChangeFileContent}
             onPublish={() => void handlePublish()}
             onOpenShowcase={() => setDrawerOpen(true)}
             onNotify={(title, message) => addToast({ type: 'info', title, message })}

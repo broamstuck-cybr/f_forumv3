@@ -3084,6 +3084,96 @@
     }
   }
 
+  .ex-copy-prompt-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .ex-live-featured {
+    display: flex;
+    flex-direction: column;
+    border-radius: 20px;
+    border: 1px solid var(--lg-pill-border);
+    background: var(--lg-panel-bg);
+    box-shadow: var(--lg-inset-bevel), var(--lg-panel-shadow);
+    overflow: hidden;
+  }
+
+  .ex-live-featured-top {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--line);
+    background: var(--lg-panel-bg-sunken);
+  }
+
+  .ex-live-featured-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    min-height: 440px;
+  }
+
+  @media (min-width: 1024px) {
+    .ex-live-featured-grid {
+      grid-template-columns: minmax(0, 1.38fr) minmax(320px, 0.92fr);
+    }
+  }
+
+  .ex-live-featured-canvas {
+    display: flex;
+    align-items: stretch;
+    justify-content: center;
+    padding: 14px;
+    min-height: 400px;
+    background: var(--bg-sunken);
+    border-bottom: 1px solid var(--line);
+    overflow: auto;
+  }
+
+  @media (min-width: 1024px) {
+    .ex-live-featured-canvas {
+      border-bottom: 0;
+      border-right: 1px solid var(--line);
+    }
+  }
+
+  .ex-live-featured-side {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    min-height: 360px;
+    max-height: 520px;
+    background: var(--bg-raised);
+  }
+
+  .ex-live-featured-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .ex-live-featured-code {
+    flex: 1;
+    margin: 0;
+    padding: 14px 16px;
+    overflow: auto;
+    background: #0b1113;
+    color: #e6f2ee;
+    font-family: var(--font-mono);
+    font-size: 12px;
+    line-height: 1.62;
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+
   @media (prefers-reduced-motion: reduce) {
     .ex-bg-lab-video,
     .ex-bg-lab-scrim {

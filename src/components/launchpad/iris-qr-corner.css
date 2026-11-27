@@ -9,6 +9,7 @@
   --iris-amber: #e6b385;
   --iris-sage: #6fd4aa;
   --iris-steel: #8cbcc8;
+  --iris-rose: #f49bb4;
   position: relative;
   width: 100%;
   background: var(--iris-bg);
@@ -28,6 +29,7 @@ html[data-theme='light'] .iris-qr-section {
   --iris-text: #101514;
   --iris-muted: #3a4542;
   --iris-accent: #0a6e50;
+  --iris-rose: #c94c72;
 }
 
 html[data-theme='light'] .iris-hero::after {
@@ -38,15 +40,22 @@ html[data-theme='light'] .iris-hero::after {
 html[data-theme='light'] .iris-qr-plate {
   border-color: rgba(16, 21, 20, 0.12);
   box-shadow:
-    0 18px 40px -16px rgba(16, 21, 20, 0.14),
+    0 20px 46px -16px rgba(16, 21, 20, 0.16),
     0 0 0 1px rgba(16, 21, 20, 0.06);
 }
 
-html[data-theme='light'] .iris-honor-btn {
+html[data-theme='light'] .iris-honor-btn,
+html[data-theme='light'] .iris-feedback-btn {
   background: #ffffff;
   color: #101514;
   border-color: rgba(16, 21, 20, 0.14);
   box-shadow: 0 12px 28px -14px rgba(16, 21, 20, 0.16);
+}
+
+html[data-theme='light'] .iris-feedback-btn {
+  background: linear-gradient(180deg, #ffffff 0%, #f1f8f4 100%);
+  border-color: rgba(10, 110, 80, 0.24);
+  color: #0a6e50;
 }
 
 html[data-theme='light'] .iris-honor-btn-icon {
@@ -55,14 +64,34 @@ html[data-theme='light'] .iris-honor-btn-icon {
   color: #0a6e50;
 }
 
-html[data-theme='light'] .iris-honor-btn:hover {
-  border-color: rgba(10, 110, 80, 0.45);
-  box-shadow: 0 16px 34px -16px rgba(10, 110, 80, 0.22);
+html[data-theme='light'] .iris-honor-btn:hover,
+html[data-theme='light'] .iris-feedback-btn:hover {
+  border-color: rgba(10, 110, 80, 0.48);
+  box-shadow: 0 16px 34px -16px rgba(10, 110, 80, 0.24);
+}
+
+html[data-theme='light'] .iris-mood-emblem {
+  background: rgba(255, 255, 255, 0.88);
+  border-color: rgba(10, 110, 80, 0.22);
+  color: #0a6e50;
+  box-shadow:
+    0 12px 28px -10px rgba(16, 21, 20, 0.18),
+    inset 0 1px 0 rgba(255, 255, 255, 0.96);
+}
+
+html[data-theme='light'] .iris-mood-emblem[data-tone='rose'] {
+  color: #c94c72;
+  border-color: rgba(201, 76, 114, 0.28);
+}
+
+html[data-theme='light'] .iris-mood-emblem[data-tone='amber'] {
+  color: #9e5d19;
+  border-color: rgba(158, 93, 25, 0.28);
 }
 
 .iris-hero {
   position: relative;
-  min-height: 620px;
+  min-height: 640px;
   overflow: hidden;
   isolation: isolate;
 }
@@ -75,6 +104,10 @@ html[data-theme='light'] .iris-honor-btn:hover {
   display: block;
   z-index: 0;
   touch-action: pan-y;
+}
+
+.iris-stage-canvas.is-robot-hover {
+  cursor: pointer;
 }
 
 .iris-hero::after {
@@ -112,13 +145,67 @@ html[data-theme='light'] .iris-honor-btn:hover {
   }
 }
 
+.iris-mood-anchor {
+  position: absolute;
+  left: 72%;
+  top: 26%;
+  z-index: 3;
+  pointer-events: none;
+  transform: translate(-50%, -50%);
+}
+
+.iris-mood-emblem {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 46px;
+  height: 46px;
+  padding: 0 12px;
+  border-radius: 999px;
+  border: 1px solid rgba(164, 238, 214, 0.28);
+  background: rgba(16, 26, 25, 0.78);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  color: var(--iris-accent);
+  box-shadow:
+    0 14px 32px rgba(0, 0, 0, 0.42),
+    inset 0 1px 0 rgba(255, 255, 255, 0.22);
+  animation: iris-emblem-pop 420ms cubic-bezier(0.34, 1.45, 0.64, 1) both;
+}
+
+.iris-mood-emblem[data-tone='rose'] {
+  color: var(--iris-rose);
+  border-color: rgba(244, 155, 180, 0.36);
+}
+
+.iris-mood-emblem[data-tone='amber'] {
+  color: var(--iris-amber);
+  border-color: rgba(230, 179, 133, 0.36);
+}
+
+.iris-mood-emblem[data-tone='steel'] {
+  color: var(--iris-steel);
+  border-color: rgba(140, 188, 200, 0.36);
+}
+
+@keyframes iris-emblem-pop {
+  0% {
+    opacity: 0;
+    transform: translate3d(0, 10px, 0) scale(0.76);
+  }
+  100% {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+}
+
 .iris-hero-inner {
   position: relative;
   z-index: 2;
   pointer-events: none;
   max-width: 1280px;
   margin: 0 auto;
-  min-height: 620px;
+  min-height: 640px;
   padding: 56px 64px;
   display: flex;
   align-items: center;
@@ -133,12 +220,13 @@ html[data-theme='light'] .iris-honor-btn:hover {
   gap: 24px;
 }
 
+/* +30% enlarged QR plate (196px -> 256px desktop, 164px -> 214px mobile) */
 .iris-qr-plate {
   position: relative;
-  width: 196px;
-  height: 196px;
-  padding: 14px;
-  border-radius: 26px;
+  width: 256px;
+  height: 256px;
+  padding: 18px;
+  border-radius: 30px;
   background: #ffffff;
   border: 1px solid rgba(244, 247, 245, 0.2);
   box-shadow:
@@ -172,14 +260,22 @@ html[data-theme='light'] .iris-honor-btn:hover {
   border-radius: 12px;
 }
 
-.iris-honor-btn {
+.iris-dock-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.iris-honor-btn,
+.iris-feedback-btn {
   position: relative;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 10px;
   min-height: 48px;
-  padding: 12px 26px;
+  padding: 12px 24px;
   border-radius: 999px;
   border: 1px solid var(--iris-line);
   background: linear-gradient(
@@ -200,6 +296,16 @@ html[data-theme='light'] .iris-honor-btn:hover {
   transition:
     transform 240ms cubic-bezier(0.22, 1, 0.36, 1),
     border-color 220ms ease;
+}
+
+.iris-feedback-btn {
+  border-color: rgba(56, 201, 154, 0.32);
+  background: linear-gradient(
+    180deg,
+    rgba(18, 42, 36, 0.94) 0%,
+    rgba(11, 26, 23, 0.96) 100%
+  );
+  color: #dff8ee;
 }
 
 .iris-honor-btn-glow {
@@ -236,9 +342,10 @@ html[data-theme='light'] .iris-honor-btn:hover {
   z-index: 1;
 }
 
-.iris-honor-btn:hover {
+.iris-honor-btn:hover,
+.iris-feedback-btn:hover {
   transform: translateY(-2px);
-  border-color: rgba(56, 201, 154, 0.46);
+  border-color: rgba(56, 201, 154, 0.52);
   box-shadow:
     0 22px 46px rgba(0, 0, 0, 0.56),
     0 0 24px rgba(56, 201, 154, 0.22),
@@ -249,11 +356,13 @@ html[data-theme='light'] .iris-honor-btn:hover {
   opacity: 1;
 }
 
-.iris-honor-btn:active {
+.iris-honor-btn:active,
+.iris-feedback-btn:active {
   transform: translateY(0) scale(0.985);
 }
 
-.iris-honor-btn:focus-visible {
+.iris-honor-btn:focus-visible,
+.iris-feedback-btn:focus-visible {
   outline: 2px solid var(--iris-accent);
   outline-offset: 4px;
 }
@@ -264,10 +373,14 @@ html[data-theme='light'] .iris-honor-btn:hover {
   width: 240px;
   height: 240px;
   transform: translate(-50%, -50%);
-  pointer-events: none;
+  pointer-events: auto;
+  cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
+  background: transparent;
+  border: 0;
+  padding: 0;
 }
 
 .iris-qr-modal-backdrop,
@@ -297,7 +410,7 @@ html[data-theme='light'] .iris-honor-btn:hover {
 
 .iris-qr-modal {
   width: 100%;
-  max-width: 360px;
+  max-width: 380px;
   padding: 24px;
   border-radius: 28px;
   background: var(--iris-surface);
@@ -310,10 +423,10 @@ html[data-theme='light'] .iris-honor-btn:hover {
 }
 
 .iris-qr-modal-frame {
-  width: 268px;
-  height: 268px;
-  padding: 14px;
-  border-radius: 20px;
+  width: min(300px, calc(100vw - 80px));
+  height: min(300px, calc(100vw - 80px));
+  padding: 16px;
+  border-radius: 22px;
   background: #ffffff;
 }
 
@@ -366,220 +479,6 @@ html[data-theme='light'] .iris-honor-btn:hover {
   color: #ffffff;
 }
 
-.iris-honor-modal {
-  width: 100%;
-  max-width: 920px;
-  max-height: min(88dvh, 820px);
-  border-radius: 24px;
-  background: linear-gradient(165deg, #141d1c 0%, #0d1414 100%);
-  border: 1px solid var(--iris-line);
-  box-shadow:
-    0 32px 96px rgba(0, 0, 0, 0.72),
-    inset 0 1px 0 rgba(255, 255, 255, 0.08);
-  color: var(--iris-text);
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-  margin: auto;
-}
-
-.iris-honor-head {
-  padding: 22px 26px 18px;
-  border-bottom: 1px solid var(--iris-line);
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 16px;
-}
-
-.iris-honor-kicker {
-  margin: 0 0 6px;
-  font-size: 11.5px;
-  font-weight: 700;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--iris-accent);
-}
-
-.iris-honor-title {
-  margin: 0;
-  font-family: var(--font-display, 'Be Vietnam Pro', sans-serif);
-  font-size: clamp(22px, 2.8vw, 30px);
-  font-weight: 700;
-  letter-spacing: -0.02em;
-  color: #ffffff;
-}
-
-.iris-honor-close {
-  width: 40px;
-  height: 40px;
-  border-radius: 999px;
-  border: 1px solid var(--iris-line);
-  background: rgba(255, 255, 255, 0.05);
-  color: #e6e4f0;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  flex-shrink: 0;
-  transition: background-color 180ms ease, border-color 180ms ease;
-}
-
-.iris-honor-close:hover {
-  background: rgba(255, 255, 255, 0.12);
-  border-color: rgba(255, 255, 255, 0.26);
-}
-
-.iris-honor-metrics {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 12px;
-  padding: 16px 26px;
-  background: rgba(255, 255, 255, 0.02);
-  border-bottom: 1px solid var(--iris-line);
-}
-
-.iris-honor-metric {
-  padding: 12px 14px;
-  border-radius: 14px;
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.07);
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.iris-honor-metric strong {
-  font-family: var(--font-display, 'Be Vietnam Pro', sans-serif);
-  font-size: 20px;
-  font-weight: 700;
-  color: var(--iris-accent);
-}
-
-.iris-honor-metric span {
-  font-size: 12.5px;
-  line-height: 1.4;
-  color: var(--iris-muted);
-}
-
-.iris-honor-grid {
-  padding: 20px 26px;
-  overflow-y: auto;
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 14px;
-}
-
-.iris-honor-card {
-  padding: 18px;
-  border-radius: 18px;
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid var(--iris-line);
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.iris-honor-card-top {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.iris-honor-card-icon {
-  width: 36px;
-  height: 36px;
-  border-radius: 10px;
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid var(--iris-line);
-  color: var(--iris-accent);
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.iris-honor-card[data-accent='amber'] .iris-honor-card-icon {
-  color: var(--iris-amber);
-}
-.iris-honor-card[data-accent='sage'] .iris-honor-card-icon {
-  color: var(--iris-sage);
-}
-.iris-honor-card[data-accent='steel'] .iris-honor-card-icon {
-  color: var(--iris-steel);
-}
-
-.iris-honor-card-code {
-  font-family: var(--font-mono, monospace);
-  font-size: 12px;
-  color: var(--iris-muted);
-}
-
-.iris-honor-card-track {
-  margin: 0;
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--iris-accent);
-}
-
-.iris-honor-card-title {
-  margin: 0;
-  font-size: 16.5px;
-  font-weight: 700;
-  line-height: 1.3;
-  color: #ffffff;
-}
-
-.iris-honor-card-body {
-  margin: 0;
-  font-size: 13.5px;
-  line-height: 1.55;
-  color: var(--iris-muted);
-}
-
-.iris-honor-tags {
-  margin-top: auto;
-  padding-top: 6px;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-}
-
-.iris-honor-tag {
-  padding: 4px 10px;
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.06);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  color: #e2e0ec;
-  font-size: 11.5px;
-  font-weight: 500;
-}
-
-.iris-honor-foot {
-  padding: 16px 26px 20px;
-  border-top: 1px solid var(--iris-line);
-  background: rgba(0, 0, 0, 0.22);
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  gap: 14px;
-}
-
-.iris-honor-note {
-  margin: 0;
-  flex: 1 1 380px;
-  font-size: 13px;
-  line-height: 1.5;
-  color: var(--iris-muted);
-}
-
-.iris-honor-foot-actions {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  flex-wrap: wrap;
-}
-
 html[data-theme='light'] .iris-qr-btn--ghost {
   background: #ffffff;
   border-color: rgba(16, 21, 20, 0.16);
@@ -591,47 +490,14 @@ html[data-theme='light'] .iris-qr-btn--ghost:hover {
   color: #0a6e50;
 }
 
-html[data-theme='light'] .iris-honor-modal {
-  background: linear-gradient(165deg, #ffffff 0%, #f3f8f5 100%);
-  border-color: rgba(16, 21, 20, 0.14);
-  box-shadow: 0 28px 72px rgba(16, 21, 20, 0.22);
-  color: #101514;
-}
-
-html[data-theme='light'] .iris-honor-title,
-html[data-theme='light'] .iris-honor-card-title {
-  color: #101514;
-}
-
-html[data-theme='light'] .iris-honor-close {
-  background: #f1f6f3;
-  border-color: rgba(16, 21, 20, 0.14);
-  color: #101514;
-}
-
-html[data-theme='light'] .iris-honor-close:hover {
-  background: #e4eee9;
-  border-color: rgba(10, 110, 80, 0.35);
-}
-
-html[data-theme='light'] .iris-honor-tag {
-  background: rgba(10, 110, 80, 0.08);
-  border-color: rgba(10, 110, 80, 0.2);
-  color: #101514;
-}
-
-html[data-theme='light'] .iris-honor-foot {
-  background: #f2f7f4;
-}
-
 @media (max-width: 860px) {
   .iris-hero {
-    min-height: 660px;
+    min-height: 740px;
   }
 
   .iris-hero-inner {
-    min-height: 660px;
-    padding: 310px 20px 44px;
+    min-height: 740px;
+    padding: 330px 20px 44px;
     align-items: flex-end;
     justify-content: center;
   }
@@ -640,52 +506,54 @@ html[data-theme='light'] .iris-honor-foot {
     align-items: center;
   }
 
-  .iris-qr-plate {
-    width: 164px;
-    height: 164px;
-    padding: 12px;
+  .iris-dock-actions {
+    justify-content: center;
   }
 
-  .iris-honor-metrics,
-  .iris-honor-grid {
-    grid-template-columns: minmax(0, 1fr);
+  .iris-qr-plate {
+    width: 214px;
+    height: 214px;
+    padding: 14px;
+    border-radius: 26px;
   }
 }
 
 @media (max-width: 480px) {
-  .iris-honor-btn {
+  .iris-dock-actions {
     width: 100%;
     justify-content: center;
-    padding: 10px 18px 10px 12px;
-    font-size: 14px;
   }
 
-  .iris-honor-head,
-  .iris-honor-metrics,
-  .iris-honor-grid,
-  .iris-honor-foot {
-    padding-left: 16px;
-    padding-right: 16px;
+  .iris-honor-btn,
+  .iris-feedback-btn {
+    flex: 1 1 160px;
+    justify-content: center;
+    padding: 10px 18px;
+    font-size: 14px;
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .iris-loader {
+  .iris-loader,
+  .iris-mood-emblem {
     animation: none;
   }
   .iris-qr-plate,
   .iris-honor-btn,
+  .iris-feedback-btn,
   .iris-honor-btn-glow {
     transition: none;
   }
 }
 
-html.reduce-motion .iris-loader {
+html.reduce-motion .iris-loader,
+html.reduce-motion .iris-mood-emblem {
   animation: none;
 }
 
 html.reduce-motion .iris-qr-plate,
 html.reduce-motion .iris-honor-btn,
+html.reduce-motion .iris-feedback-btn,
 html.reduce-motion .iris-honor-btn-glow {
   transition: none;
 }

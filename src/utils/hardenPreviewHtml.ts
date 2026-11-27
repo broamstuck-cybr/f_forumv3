@@ -1,9 +1,100 @@
 const LOOP_GUARD_MARKER = 'data-ff-preview-guard';
+const CONSOLE_BRIDGE_MARKER = 'data-ff-console-bridge';
 
-const PREVIEW_GUARD_SCRIPT = `<script ${LOOP_GUARD_MARKER}="1">
+export interface HardenPreviewOptions {
+  enableConsoleBridge?: boolean;
+  previewId?: string;
+}
+
+function buildConsoleBridgeScript(previewId: string): string {
+  const safeId = JSON.stringify(previewId || 'default');
+  return `<script ${CONSOLE_BRIDGE_MARKER}="1">
+(function(){
+  if (window.__ffConsoleBridgeInstalled) return;
+  window.__ffConsoleBridgeInstalled = true;
+  var PID = ${safeId};
+  var emit = function(level, text, stack, file, line){
+    try {
+      window.parent.postMessage({
+        source: 'ff-preview-console',
+        previewId: PID,
+        level: level,
+        message: String(text || '').slice(0, 1200),
+        stack: stack ? String(stack).slice(0, 800) : '',
+        file: file ? String(file) : '',
+        line: typeof line === 'number' ? line : undefined,
+        timestamp: Date.now()
+      }, '*');
+    } catch (_) {}
+  };
+  var serializeArg = function(val){
+    if (val === null) return 'null';
+    if (val === undefined) return 'undefined';
+    if (typeof val === 'string') return val;
+    if (typeof val === 'number' || typeof val === 'boolean') return String(val);
+    if (val instanceof Error) return val.name + ': ' + val.message;
+    if (typeof Element !== 'undefined' && val instanceof Element) {
+      return '<' + val.tagName.toLowerCase() + (val.id ? '#' + val.id : '') + '>';
+    }
+    try {
+      var seen = [];
+      return JSON.stringify(val, function(_, v){
+        if (typeof v === 'object' && v !== null) {
+          if (seen.indexOf(v) !== -1) return '[Circular]';
+          seen.push(v);
+        }
+        return v;
+      });
+    } catch (_) {
+      return String(val);
+    }
+  };
+  ['log', 'info', 'warn', 'error'].forEach(function(lvl){
+    var orig = console[lvl];
+    console[lvl] = function(){
+      var parts = [];
+      for (var i = 0; i < arguments.length; i += 1) {
+        parts.push(serializeArg(arguments[i]));
+      }
+      emit(lvl === 'log' ? 'info' : lvl, parts.join(' '));
+      if (typeof orig === 'function') {
+        try { orig.apply(console, arguments); } catch (_) {}
+      }
+    };
+  });
+  window.addEventListener('error', function(ev){
+    var msg = (ev && ev.message) || 'Runtime error';
+    var stack = ev && ev.error && ev.error.stack ? ev.error.stack : '';
+    var file = (ev && ev.filename) || '';
+    var line = ev && typeof ev.lineno === 'number' ? ev.lineno : undefined;
+    emit('error', msg, stack, file, line);
+  });
+  window.addEventListener('unhandledrejection', function(ev){
+    var reason = ev && ev.reason;
+    var msg = reason instanceof Error ? reason.message : serializeArg(reason);
+    var stack = reason instanceof Error && reason.stack ? reason.stack : '';
+    emit('error', 'Unhandled Promise rejection: ' + msg, stack);
+  });
+})();
+</script>`;
+}
+
+function buildPreviewGuardScript(previewId: string): string {
+  const safeId = JSON.stringify(previewId || 'default');
+  return `<script ${LOOP_GUARD_MARKER}="1">
 (function(){
   if (window.__ffPreviewGuardInstalled) return;
   window.__ffPreviewGuardInstalled = true;
+  var PID = ${safeId};
+  var emitNav = function(pathStr){
+    try {
+      window.parent.postMessage({
+        source: 'ff-preview-nav',
+        previewId: PID,
+        path: String(pathStr || '/')
+      }, '*');
+    } catch (_) {}
+  };
   document.addEventListener('click', function(ev){
     var target = ev.target;
     if (!target || !target.closest) return;
@@ -13,6 +104,7 @@ const PREVIEW_GUARD_SCRIPT = `<script ${LOOP_GUARD_MARKER}="1">
     if (!raw || raw === '#') {
       ev.preventDefault();
       window.scrollTo({ top: 0, behavior: 'smooth' });
+      emitNav('/');
       return;
     }
     if (raw.charAt(0) === '#') {
@@ -24,6 +116,7 @@ const PREVIEW_GUARD_SCRIPT = `<script ${LOOP_GUARD_MARKER}="1">
       } else {
         window.scrollTo({ top: 0, behavior: 'smooth' });
       }
+      emitNav('/' + raw);
       return;
     }
     if (/^https?:\\/\\//i.test(raw)) {
@@ -42,6 +135,7 @@ const PREVIEW_GUARD_SCRIPT = `<script ${LOOP_GUARD_MARKER}="1">
     }
     // WHY: Relative URLs inside srcdoc resolve against parent /workspace and cause recursive iframe loops.
     ev.preventDefault();
+    emitNav(raw.charAt(0) === '/' ? raw : '/' + raw);
   }, true);
 
   document.addEventListener('submit', function(ev){
@@ -50,24 +144,46 @@ const PREVIEW_GUARD_SCRIPT = `<script ${LOOP_GUARD_MARKER}="1">
   }, false);
 })();
 </script>`;
+}
 
-export function hardenPreviewHtml(rawHtml: string): string {
+export function stripPreviewGuardScripts(rawHtml: string): string {
+  return (rawHtml || '')
+    .replace(/<script\b[^>]*data-ff-preview-guard[^>]*>[\s\S]*?<\/script>\s*/gi, '')
+    .replace(/<script\b[^>]*data-ff-console-bridge[^>]*>[\s\S]*?<\/script>\s*/gi, '');
+}
+
+export function hardenPreviewHtml(rawHtml: string, options?: HardenPreviewOptions): string {
   const input = (rawHtml || '').trim();
   if (!input) return '';
-  const cleaned = input
+  let cleaned = input
     .replace(/<base\b[^>]*>/gi, '')
     .replace(/<meta\b[^>]*http-equiv\s*=\s*["']?\s*refresh\b[^>]*>/gi, '');
+
+  const previewId = options?.previewId || 'default';
+
+  if (options?.enableConsoleBridge && !cleaned.includes(CONSOLE_BRIDGE_MARKER)) {
+    const bridgeTag = buildConsoleBridgeScript(previewId);
+    if (/<head\b[^>]*>/i.test(cleaned)) {
+      cleaned = cleaned.replace(/<head\b[^>]*>/i, (m) => `${m}\n${bridgeTag}`);
+    } else if (/<html\b[^>]*>/i.test(cleaned)) {
+      cleaned = cleaned.replace(/<html\b[^>]*>/i, (m) => `${m}\n<head>${bridgeTag}</head>`);
+    } else {
+      cleaned = `${bridgeTag}\n${cleaned}`;
+    }
+  }
 
   if (cleaned.includes(LOOP_GUARD_MARKER)) {
     return cleaned;
   }
+
+  const guardTag = buildPreviewGuardScript(previewId);
   if (/<\/body>/i.test(cleaned)) {
-    return cleaned.replace(/<\/body>/i, `${PREVIEW_GUARD_SCRIPT}\n</body>`);
+    return cleaned.replace(/<\/body>/i, `${guardTag}\n</body>`);
   }
   if (/<\/html>/i.test(cleaned)) {
-    return cleaned.replace(/<\/html>/i, `${PREVIEW_GUARD_SCRIPT}\n</html>`);
+    return cleaned.replace(/<\/html>/i, `${guardTag}\n</html>`);
   }
-  return `${cleaned}\n${PREVIEW_GUARD_SCRIPT}`;
+  return `${cleaned}\n${guardTag}`;
 }
 
 export function bundleAiFilesToSingleHtml(

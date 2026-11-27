@@ -164,8 +164,8 @@
     "compatibility": "Git, Trình đọc Markdown",
     "lastVerified": "2026-11-19",
     "status": "verified_tested",
-    "description": "Kho tổng hợp 8.322 thành phần giao diện từ 6 thư viện (CodeFronts 5.047, ThreeUI 961, GetLayers 966, LucianLabs 480, MotionSites 826, PinUI 42), tuân thủ NOTICE.md từng nguồn.",
-    "snippet": "total: 8322 | codefronts: 5047 | threeui: 961 | getlayers: 966 | lucianlabs: 480 | motionsites: 826 | pinui: 42"
+    "description": "Kho tổng hợp 5.909 thành phần giao diện miễn phí từ 5 thư viện (CodeFronts 5.046, ThreeUI 3D 21, lucianLabs 480, MotionSites Free 320, Pin UI 42), tuân thủ NOTICE.md từng nguồn.",
+    "snippet": "total: 5909 | codefronts: 5046 | threeui: 21 | lucianlabs: 480 | motionsites: 320 | pinui: 42"
   },
   {
     "id": "res-nextjs-repo",

@@ -1,5 +1,4 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
 import {
   IconArrowLeft,
   IconBookmark,
@@ -67,7 +66,7 @@ type ExperienceCategory =
   | 'saved';
 
 type SortOption = 'recommended' | 'newest' | 'popular';
-type CodeTab = 'html' | 'css' | 'js' | 'prompt';
+type CodeTab = 'prompt' | 'html' | 'css' | 'js';
 
 const PAGE_SIZE = 24;
 
@@ -181,7 +180,6 @@ export const ExperienceView: React.FC = () => {
     isItemLiked,
     getHeartCount,
     experienceItemId,
-    setExperienceItemId,
     navigate,
     openInWorkspace,
     recordSignal,
@@ -189,9 +187,11 @@ export const ExperienceView: React.FC = () => {
     onboardingProfile,
     addToast,
     theme,
+    language,
   } = useAppStore();
 
-  const reduced = Boolean(useReducedMotion());
+  const isEn = language === 'en';
+  const stageRef = useRef<HTMLElement>(null);
 
   const [category, setCategory] = useState<ExperienceCategory>('all');
   const [sortBy, setSortBy] = useState<SortOption>('recommended');
@@ -224,7 +224,7 @@ export const ExperienceView: React.FC = () => {
   const [viewport, setViewport] = useState<PreviewViewport>(1440);
   const [stageTheme, setStageTheme] = useState<PreviewTheme>(theme);
   const [nonce, setNonce] = useState(0);
-  const [codeTab, setCodeTab] = useState<CodeTab>('html');
+  const [codeTab, setCodeTab] = useState<CodeTab>('prompt');
   const [copiedTarget, setCopiedTarget] = useState<'code' | 'prompt' | null>(null);
 
   const [shardPayload, setShardPayload] = useState<VaultShardPayload | null>(null);
@@ -284,41 +284,6 @@ export const ExperienceView: React.FC = () => {
     return sourceCatalog.map(catalogToVaultEntry);
   }, [vaultItems, sourceCatalog]);
 
-  useEffect(() => {
-    if (!experienceItemId || experienceItemId === 'vault') return;
-    const stripped = experienceItemId.replace(/^ms-/, '');
-    const foundVault = allVaultItems.find(
-      (item) => item.i === experienceItemId || item.i === stripped
-    );
-    if (foundVault) {
-      setSelected({ kind: 'vault', item: foundVault });
-      return;
-    }
-    const foundRecipe = recipes.find((item) => item.id === experienceItemId);
-    if (foundRecipe) {
-      setSelected({ kind: 'recipe', item: foundRecipe });
-      return;
-    }
-    const foundShowcase = AGENT_SHOWCASE_15.find(
-      (item) => item.id === experienceItemId || item.slug === experienceItemId
-    );
-    if (foundShowcase) {
-      setSelected({ kind: 'showcase', item: foundShowcase });
-    }
-  }, [experienceItemId, allVaultItems, recipes]);
-
-  useEffect(() => {
-    if (!selected) return;
-    const onKey = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
-        setSelected(null);
-        setExperienceItemId(null);
-      }
-    };
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  }, [selected, setExperienceItemId]);
-
   const counts = useMemo(() => {
     const savedSet = new Set(savedItemIds);
     const map: Record<ExperienceCategory, number> = {
@@ -341,16 +306,16 @@ export const ExperienceView: React.FC = () => {
 
   const libraryPills: Array<{ id: ExperienceCategory; label: string; count: number }> = useMemo(
     () => [
-      { id: 'all', label: 'Tất cả', count: counts.all },
+      { id: 'all', label: isEn ? 'All' : 'Tất cả', count: counts.all },
       { id: 'pinui', label: 'Pin UI', count: counts.pinui },
       { id: 'threeui', label: 'ThreeUI 3D', count: counts.threeui },
       { id: 'lucianlabs', label: 'lucianLabs', count: counts.lucianlabs },
-      { id: 'motionsites', label: 'MotionSites Free', count: counts.motionsites },
+      { id: 'motionsites', label: 'MotionSites', count: counts.motionsites },
       { id: 'codefronts', label: 'CodeFronts', count: counts.codefronts },
-      { id: 'motion-recipes', label: 'Kỹ thuật động', count: counts['motion-recipes'] },
-      { id: 'showcase-15', label: 'Mẫu Agent', count: counts['showcase-15'] },
+      { id: 'motion-recipes', label: isEn ? 'Motion' : 'Kỹ thuật động', count: counts['motion-recipes'] },
+      { id: 'showcase-15', label: isEn ? 'Starters' : 'Mẫu khởi đầu', count: counts['showcase-15'] },
     ],
-    [counts]
+    [counts, isEn]
   );
 
   const vaultCategoryPool = useMemo(() => {
@@ -375,7 +340,7 @@ export const ExperienceView: React.FC = () => {
     }
     return [...freq.entries()]
       .sort((a, b) => b[1] - a[1])
-      .slice(0, 12)
+      .slice(0, 10)
       .map(([tag]) => tag);
   }, [vaultCategoryPool]);
 
@@ -409,11 +374,13 @@ export const ExperienceView: React.FC = () => {
       const bonusA =
         (recA?.score ?? 0) * 6 +
         (savedSet.has(a.i) ? 5 : 0) +
+        (a.l === 'pinui' ? 3 : 0) +
         (a.d ? 2 : 0) +
         (profileDomain && `${a.t} ${a.c} ${a.tg.join(' ')}`.toLowerCase().includes(profileDomain) ? 8 : 0);
       const bonusB =
         (recB?.score ?? 0) * 6 +
         (savedSet.has(b.i) ? 5 : 0) +
+        (b.l === 'pinui' ? 3 : 0) +
         (b.d ? 2 : 0) +
         (profileDomain && `${b.t} ${b.c} ${b.tg.join(' ')}`.toLowerCase().includes(profileDomain) ? 8 : 0);
       return bonusB - bonusA;
@@ -442,6 +409,47 @@ export const ExperienceView: React.FC = () => {
     });
   }, [category, query]);
 
+  // Honor deep-link (?item=...) if supplied
+  useEffect(() => {
+    if (!experienceItemId || experienceItemId === 'vault') return;
+    const stripped = experienceItemId.replace(/^ms-/, '');
+    const foundVault = allVaultItems.find(
+      (item) => item.i === experienceItemId || item.i === stripped
+    );
+    if (foundVault) {
+      setSelected({ kind: 'vault', item: foundVault });
+      return;
+    }
+    const foundRecipe = recipes.find((item) => item.id === experienceItemId);
+    if (foundRecipe) {
+      setSelected({ kind: 'recipe', item: foundRecipe });
+      return;
+    }
+    const foundShowcase = AGENT_SHOWCASE_15.find(
+      (item) => item.id === experienceItemId || item.slug === experienceItemId
+    );
+    if (foundShowcase) {
+      setSelected({ kind: 'showcase', item: foundShowcase });
+    }
+  }, [experienceItemId, allVaultItems, recipes]);
+
+  // WHY: Keep 1 live featured specimen running immediately at the top whenever entering or switching categories.
+  const featuredTarget: SelectedTarget | null = useMemo(() => {
+    if (selected) return selected;
+    if (category === 'showcase-15' && filteredShowcase[0]) {
+      return { kind: 'showcase', item: filteredShowcase[0] };
+    }
+    if (category === 'motion-recipes' && filteredRecipes[0]) {
+      return { kind: 'recipe', item: filteredRecipes[0] };
+    }
+    const pinuiPick = filteredVaultItems.find((item) => item.l === 'pinui');
+    if (pinuiPick) return { kind: 'vault', item: pinuiPick };
+    const livePick = filteredVaultItems.find((item) => item.d === 1);
+    if (livePick) return { kind: 'vault', item: livePick };
+    if (filteredVaultItems[0]) return { kind: 'vault', item: filteredVaultItems[0] };
+    return null;
+  }, [selected, category, filteredShowcase, filteredRecipes, filteredVaultItems]);
+
   useEffect(() => {
     setVisibleCount(PAGE_SIZE);
   }, [category, activeTag, query, sortBy]);
@@ -456,7 +464,7 @@ export const ExperienceView: React.FC = () => {
     [filteredRecipes, visibleCount]
   );
 
-  const activeVaultItem = selected?.kind === 'vault' ? selected.item : null;
+  const activeVaultItem = featuredTarget?.kind === 'vault' ? featuredTarget.item : null;
 
   useEffect(() => {
     let cancelled = false;
@@ -513,10 +521,10 @@ export const ExperienceView: React.FC = () => {
   );
 
   const activeHtml = useMemo(() => {
-    if (!selected) return '';
-    if (selected.kind === 'showcase') return selected.item.html;
-    if (selected.kind === 'recipe') {
-      return selected.item.lang === 'html' ? selected.item.code : '';
+    if (!featuredTarget) return '';
+    if (featuredTarget.kind === 'showcase') return featuredTarget.item.html;
+    if (featuredTarget.kind === 'recipe') {
+      return featuredTarget.item.lang === 'html' ? featuredTarget.item.code : '';
     }
     if (!activeVaultItem) return '';
     if (isPinUI) return pinuiSource?.tsx ?? '';
@@ -524,12 +532,12 @@ export const ExperienceView: React.FC = () => {
     if (isMotion && motionEntry?.liveHtml) return sanitizeSnippetCode(motionEntry.liveHtml);
     if (activeCatalogItem?.previewHtml) return sanitizeSnippetCode(activeCatalogItem.previewHtml);
     return '';
-  }, [selected, activeVaultItem, isPinUI, isMotion, pinuiSource, shardPayload, motionEntry, activeCatalogItem]);
+  }, [featuredTarget, activeVaultItem, isPinUI, isMotion, pinuiSource, shardPayload, motionEntry, activeCatalogItem]);
 
   const activeCss = useMemo(() => {
-    if (!selected) return '';
-    if (selected.kind === 'recipe') {
-      return selected.item.lang === 'css' ? selected.item.code : '';
+    if (!featuredTarget) return '';
+    if (featuredTarget.kind === 'recipe') {
+      return featuredTarget.item.lang === 'css' ? featuredTarget.item.code : '';
     }
     if (!activeVaultItem) return '';
     if (isPinUI) return pinuiSource?.css ?? '';
@@ -537,24 +545,24 @@ export const ExperienceView: React.FC = () => {
     if (isMotion && motionEntry?.css) return sanitizeSnippetCode(motionEntry.css);
     if (activeCatalogItem?.previewCss) return sanitizeSnippetCode(activeCatalogItem.previewCss);
     return '';
-  }, [selected, activeVaultItem, isPinUI, isMotion, pinuiSource, shardPayload, motionEntry, activeCatalogItem]);
+  }, [featuredTarget, activeVaultItem, isPinUI, isMotion, pinuiSource, shardPayload, motionEntry, activeCatalogItem]);
 
   const activeJs = useMemo(() => {
-    if (!selected) return '';
-    if (selected.kind === 'recipe') {
-      return selected.item.lang !== 'html' && selected.item.lang !== 'css' ? selected.item.code : '';
+    if (!featuredTarget) return '';
+    if (featuredTarget.kind === 'recipe') {
+      return featuredTarget.item.lang !== 'html' && featuredTarget.item.lang !== 'css' ? featuredTarget.item.code : '';
     }
     if (!activeVaultItem || isPinUI) return '';
     if (shardPayload?.j) return sanitizeSnippetCode(shardPayload.j);
     if (isMotion && motionEntry?.code) return sanitizeSnippetCode(motionEntry.code);
     return '';
-  }, [selected, activeVaultItem, isPinUI, isMotion, shardPayload, motionEntry]);
+  }, [featuredTarget, activeVaultItem, isPinUI, isMotion, shardPayload, motionEntry]);
 
   const activeJsLang = useMemo(() => {
-    if (selected?.kind === 'recipe') return (selected.item.lang || 'js').toLowerCase();
+    if (featuredTarget?.kind === 'recipe') return (featuredTarget.item.lang || 'js').toLowerCase();
     if (!activeVaultItem || isPinUI) return 'js';
     return (shardPayload?.cl || (isMotion ? motionEntry?.codeLang : '') || 'js').toLowerCase();
-  }, [selected, activeVaultItem, isPinUI, isMotion, shardPayload, motionEntry]);
+  }, [featuredTarget, activeVaultItem, isPinUI, isMotion, shardPayload, motionEntry]);
 
   const executableSandboxJs = useMemo(() => {
     if (!activeJs) return undefined;
@@ -563,10 +571,10 @@ export const ExperienceView: React.FC = () => {
   }, [activeJs, activeJsLang]);
 
   const activePrompt = useMemo(() => {
-    if (!selected) return '';
-    if (selected.kind === 'showcase') return selected.item.userPrompt;
-    if (selected.kind === 'recipe') {
-      return `Áp dụng kỹ thuật "${selected.item.title}" (${selected.item.category}) vào trang web hiện tại. Khi dùng: ${selected.item.useWhen}.`;
+    if (!featuredTarget) return '';
+    if (featuredTarget.kind === 'showcase') return featuredTarget.item.userPrompt;
+    if (featuredTarget.kind === 'recipe') {
+      return `Áp dụng kỹ thuật "${featuredTarget.item.title}" (${featuredTarget.item.category}) vào trang web hiện tại. Khi dùng: ${featuredTarget.item.useWhen}.`;
     }
     if (!activeVaultItem) return '';
     if (isPinUI && pinuiSource?.prompt) return sanitizeBrandText(pinuiSource.prompt);
@@ -574,85 +582,91 @@ export const ExperienceView: React.FC = () => {
     if (isMotion && motionEntry?.promptText) return sanitizeBrandText(motionEntry.promptText);
     if (activeCatalogItem?.promptSpec) return sanitizeBrandText(activeCatalogItem.promptSpec);
     return `Dựng trang dựa trên mẫu "${sanitizeBrandText(activeVaultItem.t)}" (${VAULT_LIBRARY_LABELS[activeVaultItem.l]} · ${activeVaultItem.c}).`;
-  }, [selected, activeVaultItem, isPinUI, isMotion, pinuiSource, shardPayload, motionEntry, activeCatalogItem]);
+  }, [featuredTarget, activeVaultItem, isPinUI, isMotion, pinuiSource, shardPayload, motionEntry, activeCatalogItem]);
 
   const availableTabs = useMemo(() => {
-    const tabs: Array<{ id: CodeTab; label: string }> = [];
+    const tabs: Array<{ id: CodeTab; label: string }> = [{ id: 'prompt', label: 'Prompt' }];
     if (activeHtml) tabs.push({ id: 'html', label: isPinUI ? 'TSX' : 'HTML' });
     if (activeCss) tabs.push({ id: 'css', label: 'CSS' });
     if (activeJs) tabs.push({ id: 'js', label: activeJsLang.toUpperCase() });
-    tabs.push({ id: 'prompt', label: 'Prompt' });
     return tabs;
   }, [activeHtml, activeCss, activeJs, activeJsLang, isPinUI]);
 
   const resolvedCodeTab: CodeTab = useMemo(() => {
     if (availableTabs.some((t) => t.id === codeTab)) return codeTab;
-    return availableTabs[0]?.id ?? 'prompt';
+    return 'prompt';
   }, [availableTabs, codeTab]);
 
   const activeCode =
-    resolvedCodeTab === 'html'
-      ? activeHtml
-      : resolvedCodeTab === 'css'
-        ? activeCss
-        : resolvedCodeTab === 'js'
-          ? activeJs
-          : activePrompt;
+    resolvedCodeTab === 'prompt'
+      ? activePrompt
+      : resolvedCodeTab === 'html'
+        ? activeHtml
+        : resolvedCodeTab === 'css'
+          ? activeCss
+          : activeJs;
 
   const selectedId =
-    selected?.kind === 'vault'
-      ? selected.item.i
-      : selected?.kind === 'recipe'
-        ? selected.item.id
-        : selected?.kind === 'showcase'
-          ? selected.item.id
+    featuredTarget?.kind === 'vault'
+      ? featuredTarget.item.i
+      : featuredTarget?.kind === 'recipe'
+        ? featuredTarget.item.id
+        : featuredTarget?.kind === 'showcase'
+          ? featuredTarget.item.id
           : '';
 
   const selectedTitle =
-    selected?.kind === 'vault'
-      ? sanitizeBrandText(selected.item.t)
-      : selected?.kind === 'recipe'
-        ? selected.item.title
-        : selected?.kind === 'showcase'
-          ? selected.item.title
+    featuredTarget?.kind === 'vault'
+      ? sanitizeBrandText(featuredTarget.item.t)
+      : featuredTarget?.kind === 'recipe'
+        ? featuredTarget.item.title
+        : featuredTarget?.kind === 'showcase'
+          ? featuredTarget.item.title
           : '';
 
   const selectedLibrary =
-    selected?.kind === 'vault'
-      ? VAULT_LIBRARY_LABELS[selected.item.l]
-      : selected?.kind === 'recipe'
-        ? selected.item.category
-        : selected?.kind === 'showcase'
-          ? selected.item.categoryLabel
+    featuredTarget?.kind === 'vault'
+      ? VAULT_LIBRARY_LABELS[featuredTarget.item.l]
+      : featuredTarget?.kind === 'recipe'
+        ? featuredTarget.item.category
+        : featuredTarget?.kind === 'showcase'
+          ? featuredTarget.item.categoryLabel
           : '';
 
-  const openVaultInspector = (item: VaultIndexItem) => {
+  const scrollToStage = () => {
+    const el = stageRef.current;
+    if (!el) return;
+    const rect = el.getBoundingClientRect();
+    if (rect.top < 48) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  };
+
+  const selectVaultItem = (item: VaultIndexItem) => {
     setSelected({ kind: 'vault', item });
     setViewport(1440);
     setNonce((n) => n + 1);
     setCopiedTarget(null);
     recordSignal(item.i, 'view', item.l);
+    scrollToStage();
   };
 
-  const openRecipeInspector = (item: MotionRecipeItem) => {
+  const selectRecipeItem = (item: MotionRecipeItem) => {
     setSelected({ kind: 'recipe', item });
     setViewport(1440);
     setNonce((n) => n + 1);
     setCopiedTarget(null);
     recordSignal(item.id, 'view', 'motionsites');
+    scrollToStage();
   };
 
-  const openShowcaseInspector = (item: AgentShowcaseProduct) => {
+  const selectShowcaseItem = (item: AgentShowcaseProduct) => {
     setSelected({ kind: 'showcase', item });
     setViewport(1440);
     setNonce((n) => n + 1);
     setCopiedTarget(null);
     recordSignal(item.id, 'view', 'showcase');
-  };
-
-  const closeInspector = () => {
-    setSelected(null);
-    setExperienceItemId(null);
+    scrollToStage();
   };
 
   const handleUseVaultItem = (item: VaultIndexItem, overridePayload?: VaultShardPayload | null) => {
@@ -674,33 +688,33 @@ export const ExperienceView: React.FC = () => {
     );
   };
 
-  const handleUseSelectedInWorkspace = () => {
-    if (!selected) return;
-    if (selected.kind === 'vault') {
-      handleUseVaultItem(selected.item, shardPayload);
+  const handleUseFeaturedInWorkspace = () => {
+    if (!featuredTarget) return;
+    if (featuredTarget.kind === 'vault') {
+      handleUseVaultItem(featuredTarget.item, shardPayload);
       return;
     }
-    if (selected.kind === 'recipe') {
-      recordSignal(selected.item.id, 'use', 'motionsites');
+    if (featuredTarget.kind === 'recipe') {
+      recordSignal(featuredTarget.item.id, 'use', 'motionsites');
       openInWorkspace({
         kind: 'motion-recipe',
-        id: selected.item.id,
-        title: selected.item.title,
-        sourceLibrary: selected.item.category,
+        id: featuredTarget.item.id,
+        title: featuredTarget.item.title,
+        sourceLibrary: featuredTarget.item.category,
         prompt: activePrompt,
-        sourceCode: selected.item.code,
+        sourceCode: featuredTarget.item.code,
       });
       return;
     }
-    recordSignal(selected.item.id, 'use', 'showcase');
+    recordSignal(featuredTarget.item.id, 'use', 'showcase');
     openInWorkspace({
       kind: 'showcase-15',
-      id: selected.item.id,
-      title: selected.item.title,
-      sourceLibrary: selected.item.categoryLabel,
-      prompt: selected.item.userPrompt,
-      html: selected.item.html,
-      profile: selected.item.profile,
+      id: featuredTarget.item.id,
+      title: featuredTarget.item.title,
+      sourceLibrary: featuredTarget.item.categoryLabel,
+      prompt: featuredTarget.item.userPrompt,
+      html: featuredTarget.item.html,
+      profile: featuredTarget.item.profile,
     });
   };
 
@@ -716,19 +730,20 @@ export const ExperienceView: React.FC = () => {
     }
   };
 
-  const stepVault = (delta: 1 | -1) => {
-    if (selected?.kind === 'vault') {
-      const idx = filteredVaultItems.findIndex((it) => it.i === selected.item.i);
+  const stepFeatured = (delta: 1 | -1) => {
+    if (!featuredTarget) return;
+    if (featuredTarget.kind === 'vault') {
+      const idx = filteredVaultItems.findIndex((it) => it.i === featuredTarget.item.i);
       const next = filteredVaultItems[idx + delta];
-      if (next) openVaultInspector(next);
-    } else if (selected?.kind === 'recipe') {
-      const idx = filteredRecipes.findIndex((it) => it.id === selected.item.id);
+      if (next) selectVaultItem(next);
+    } else if (featuredTarget.kind === 'recipe') {
+      const idx = filteredRecipes.findIndex((it) => it.id === featuredTarget.item.id);
       const next = filteredRecipes[idx + delta];
-      if (next) openRecipeInspector(next);
-    } else if (selected?.kind === 'showcase') {
-      const idx = filteredShowcase.findIndex((it) => it.id === selected.item.id);
+      if (next) selectRecipeItem(next);
+    } else if (featuredTarget.kind === 'showcase') {
+      const idx = filteredShowcase.findIndex((it) => it.id === featuredTarget.item.id);
       const next = filteredShowcase[idx + delta];
-      if (next) openShowcaseInspector(next);
+      if (next) selectShowcaseItem(next);
     }
   };
 
@@ -766,8 +781,8 @@ export const ExperienceView: React.FC = () => {
             <button
               type="button"
               onClick={() => navigate('explore')}
-              aria-label="Quay lại Khám phá"
-              title="Quay lại Khám phá"
+              aria-label={isEn ? 'Back to Explore' : 'Quay lại Khám phá'}
+              title={isEn ? 'Back' : 'Quay lại'}
               className="inline-grid place-items-center w-11 h-11 rounded-full border shrink-0 cursor-pointer"
               style={{
                 background: 'var(--bg-raised)',
@@ -782,17 +797,19 @@ export const ExperienceView: React.FC = () => {
                 className="text-2xl sm:text-3xl font-semibold tracking-tight m-0"
                 style={{ color: 'var(--fg)', fontFamily: 'var(--font-display)' }}
               >
-                Kho Trải nghiệm Tài nguyên
+                {isEn ? 'Resource Playground' : 'Kho Tài nguyên'}
               </h1>
               <p className="text-xs sm:text-sm mt-1 m-0" style={{ color: 'var(--fg-muted)' }}>
-                {formatCount(counts.all)} mẫu mở · {counts['motion-recipes']} kỹ thuật · {counts['showcase-15']}&nbsp;mẫu Agent
+                {formatCount(counts.all)} {isEn ? 'templates' : 'mẫu mở'} · {counts['motion-recipes']}{' '}
+                {isEn ? 'motion' : 'kỹ thuật'} · {counts['showcase-15']}{' '}
+                {isEn ? 'starters' : 'mẫu khởi đầu'}
               </p>
             </div>
           </div>
 
           <div className="flex flex-wrap items-center gap-2 w-full lg:w-auto">
             <label
-              className="flex items-center gap-2 w-full sm:flex-1 lg:w-[300px] min-w-[220px] min-h-[44px] px-3.5 rounded-full border"
+              className="flex items-center gap-2 w-full sm:flex-1 lg:w-[290px] min-w-[210px] min-h-[44px] px-3.5 rounded-full border"
               style={{
                 background: 'var(--bg-raised)',
                 borderColor: 'var(--line-strong)',
@@ -804,8 +821,8 @@ export const ExperienceView: React.FC = () => {
                 type="search"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                placeholder="Tìm mẫu, thẻ, hiệu ứng, cảnh 3D..."
-                aria-label="Tìm trong kho tài nguyên"
+                placeholder={isEn ? 'Search templates, 3D, tags...' : 'Tìm mẫu, thẻ, cảnh 3D...'}
+                aria-label={isEn ? 'Search vault' : 'Tìm trong kho tài nguyên'}
                 className="w-full min-w-0 bg-transparent border-0 outline-none text-sm"
                 style={{ color: 'var(--fg)' }}
               />
@@ -827,13 +844,13 @@ export const ExperienceView: React.FC = () => {
               className="inline-flex items-center gap-1 p-1 rounded-full border"
               style={{ background: 'var(--bg-sunken)', borderColor: 'var(--line)' }}
               role="group"
-              aria-label="Sắp xếp tài nguyên"
+              aria-label="Sắp xếp"
             >
               {(
                 [
-                  { id: 'recommended', label: 'Hợp gu bạn' },
-                  { id: 'newest', label: 'Mới nhất' },
-                  { id: 'popular', label: 'Phổ biến' },
+                  { id: 'recommended', label: isEn ? 'Featured' : 'Nổi bật' },
+                  { id: 'newest', label: isEn ? 'Newest' : 'Mới nhất' },
+                  { id: 'popular', label: isEn ? 'Popular' : 'Phổ biến' },
                 ] as Array<{ id: SortOption; label: string }>
               ).map((opt) => (
                 <button
@@ -855,8 +872,10 @@ export const ExperienceView: React.FC = () => {
             <button
               type="button"
               aria-pressed={category === 'saved'}
+              aria-label={`Đã lưu (${counts.saved})`}
+              title={`Đã lưu (${counts.saved})`}
               onClick={() => setCategory((prev) => (prev === 'saved' ? 'all' : 'saved'))}
-              className="inline-flex items-center gap-2 min-h-[44px] px-4 rounded-full border text-xs font-semibold cursor-pointer whitespace-nowrap"
+              className="inline-flex items-center gap-1.5 min-h-[44px] px-3.5 rounded-full border text-xs font-semibold cursor-pointer whitespace-nowrap"
               style={{
                 background: category === 'saved' ? 'var(--accent-soft)' : 'var(--bg-raised)',
                 borderColor: category === 'saved' ? 'var(--accent)' : 'var(--line)',
@@ -864,7 +883,7 @@ export const ExperienceView: React.FC = () => {
               }}
             >
               <IconBookmark size={14} filled={category === 'saved'} aria-hidden="true" />
-              <span>Đã lưu ({counts.saved})</span>
+              <span className="font-mono">{counts.saved}</span>
             </button>
           </div>
         </div>
@@ -872,7 +891,7 @@ export const ExperienceView: React.FC = () => {
         <div
           className="flex flex-nowrap lg:flex-wrap items-center gap-2 overflow-x-auto pb-1 no-scrollbar"
           role="tablist"
-          aria-label="Kho thư viện miễn phí"
+          aria-label="Thư viện"
         >
           {libraryPills.map((pill) => {
             const active = category === pill.id;
@@ -885,8 +904,9 @@ export const ExperienceView: React.FC = () => {
                 onClick={() => {
                   setCategory(pill.id);
                   setActiveTag('');
+                  setSelected(null);
                 }}
-                className="inline-flex items-center gap-1.5 flex-none min-h-[40px] px-3.5 rounded-full border text-xs font-semibold whitespace-nowrap cursor-pointer"
+                className="inline-flex items-center gap-1.5 flex-none min-h-[38px] px-3.5 rounded-full border text-xs font-semibold whitespace-nowrap cursor-pointer"
                 style={{
                   background: active ? 'var(--accent-soft)' : 'var(--bg-raised)',
                   borderColor: active ? 'var(--accent)' : 'var(--line)',
@@ -896,7 +916,7 @@ export const ExperienceView: React.FC = () => {
               >
                 <span>{pill.label}</span>
                 <span className="font-mono text-[11px] opacity-80">
-                  ({formatCount(pill.count)})
+                  {formatCount(pill.count)}
                 </span>
               </button>
             );
@@ -909,7 +929,7 @@ export const ExperienceView: React.FC = () => {
               type="button"
               aria-pressed={activeTag === ''}
               onClick={() => setActiveTag('')}
-              className="flex-none min-h-[32px] px-3 rounded-full border font-mono text-[11.5px] cursor-pointer"
+              className="flex-none min-h-[30px] px-3 rounded-full border font-mono text-[11px] cursor-pointer"
               style={{
                 background: activeTag === '' ? 'var(--accent-soft)' : 'var(--bg-sunken)',
                 borderColor: activeTag === '' ? 'var(--accent)' : 'var(--line)',
@@ -924,7 +944,7 @@ export const ExperienceView: React.FC = () => {
                 type="button"
                 aria-pressed={activeTag === tag}
                 onClick={() => setActiveTag((prev) => (prev === tag ? '' : tag))}
-                className="flex-none min-h-[32px] px-3 rounded-full border font-mono text-[11.5px] cursor-pointer"
+                className="flex-none min-h-[30px] px-3 rounded-full border font-mono text-[11px] cursor-pointer"
                 style={{
                   background: activeTag === tag ? 'var(--accent-soft)' : 'var(--bg-sunken)',
                   borderColor: activeTag === tag ? 'var(--accent)' : 'var(--line)',
@@ -938,9 +958,355 @@ export const ExperienceView: React.FC = () => {
         ) : null}
       </header>
 
+      {/* LIVE FEATURED STAGE: runs immediately on entry, click any card below to swap */}
+      {featuredTarget ? (
+        <section
+          ref={stageRef}
+          aria-label={`Trình xem trực tiếp ${selectedTitle}`}
+          className="ex-live-featured"
+        >
+          <div className="ex-live-featured-top">
+            <div className="flex items-center gap-2.5 min-w-0">
+              <span
+                className="px-2.5 py-1 rounded-full font-mono text-[11px] font-semibold shrink-0"
+                style={{ background: 'var(--accent-soft)', color: 'var(--accent)' }}
+              >
+                {selectedLibrary}
+              </span>
+              <h2
+                className="text-base sm:text-lg font-bold m-0 truncate"
+                style={{ color: 'var(--fg)', fontFamily: 'var(--font-ui)' }}
+              >
+                {selectedTitle}
+              </h2>
+            </div>
+
+            <div className="flex items-center gap-1.5">
+              <button
+                type="button"
+                aria-label="Mẫu trước"
+                title="Mẫu trước"
+                onClick={() => stepFeatured(-1)}
+                className="ex-stage-icon-btn"
+              >
+                <IconChevronLeft size={16} aria-hidden="true" />
+              </button>
+              <button
+                type="button"
+                aria-label="Mẫu tiếp theo"
+                title="Mẫu sau"
+                onClick={() => stepFeatured(1)}
+                className="ex-stage-icon-btn"
+              >
+                <IconChevronRight size={16} aria-hidden="true" />
+              </button>
+              <button
+                type="button"
+                aria-label={`Đổi khung nhìn (${viewport}px)`}
+                title={`${viewport}px`}
+                onClick={() => setViewport((prev) => (prev === 1440 ? 768 : prev === 768 ? 390 : 1440))}
+                className="ex-stage-icon-btn"
+              >
+                {viewport === 1440 ? (
+                  <IconMonitor size={16} aria-hidden="true" />
+                ) : viewport === 768 ? (
+                  <IconTablet size={16} aria-hidden="true" />
+                ) : (
+                  <IconSmartphone size={16} aria-hidden="true" />
+                )}
+              </button>
+              <button
+                type="button"
+                aria-label={stageTheme === 'dark' ? 'Nền sân khấu sáng' : 'Nền sân khấu tối'}
+                title={stageTheme === 'dark' ? 'Nền sáng' : 'Nền tối'}
+                onClick={() => setStageTheme((prev) => (prev === 'dark' ? 'light' : 'dark'))}
+                className="ex-stage-icon-btn"
+              >
+                {stageTheme === 'dark' ? (
+                  <IconSun size={16} aria-hidden="true" />
+                ) : (
+                  <IconMoon size={16} aria-hidden="true" />
+                )}
+              </button>
+              <button
+                type="button"
+                aria-label="Chạy lại"
+                title="Chạy lại"
+                onClick={() => setNonce((n) => n + 1)}
+                className="ex-stage-icon-btn"
+              >
+                <IconRotateCw size={16} aria-hidden="true" />
+              </button>
+            </div>
+          </div>
+
+          <div className="ex-live-featured-grid">
+            <div
+              className={`ex-live-featured-canvas${stageTheme === 'light' ? ' ex-stage-paper' : ''}`}
+            >
+              <div
+                className="w-full h-full min-h-[380px] rounded-[12px] overflow-hidden border"
+                style={{
+                  maxWidth: viewport === 1440 ? '100%' : `${viewport}px`,
+                  borderColor: 'var(--line)',
+                  background: stageTheme === 'light' ? '#f8faf8' : '#0b0e10',
+                }}
+              >
+                {featuredTarget.kind === 'showcase' ? (
+                  <SandboxPreview
+                    title={featuredTarget.item.title}
+                    html={featuredTarget.item.html}
+                    css=""
+                    theme={stageTheme}
+                    viewport={viewport}
+                    nonce={nonce}
+                  />
+                ) : featuredTarget.kind === 'recipe' ? (
+                  <div className="flex flex-col gap-3 p-5 h-full overflow-y-auto" style={{ color: 'var(--fg)' }}>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span
+                        className="px-2.5 py-1 rounded-full font-mono text-xs"
+                        style={{ background: 'var(--accent-soft)', color: 'var(--accent)' }}
+                      >
+                        {featuredTarget.item.category}
+                      </span>
+                      <span
+                        className="px-2.5 py-1 rounded-full font-mono text-xs"
+                        style={{ background: 'var(--bg-raised)', color: 'var(--fg-muted)' }}
+                      >
+                        {COST_LABELS[featuredTarget.item.cost]}
+                      </span>
+                    </div>
+                    <h3 className="text-xl font-semibold m-0" style={{ fontFamily: 'var(--font-display)' }}>
+                      {featuredTarget.item.title}
+                    </h3>
+                    <p className="text-sm m-0" style={{ color: 'var(--accent-secondary)' }}>
+                      {featuredTarget.item.useWhen}
+                    </p>
+                    <p className="text-sm leading-relaxed m-0" style={{ color: 'var(--fg-muted)' }}>
+                      {cleanRecipeSummary(featuredTarget.item.summary)}
+                    </p>
+                  </div>
+                ) : shardLoading ? (
+                  <div className="grid place-items-center h-full min-h-[380px] p-6 text-center" role="status">
+                    <span className="t-label">Đang tải mẫu...</span>
+                  </div>
+                ) : shardError ? (
+                  <div className="grid place-items-center gap-3 h-full min-h-[380px] p-6 text-center" role="alert">
+                    <span className="text-sm" style={{ color: 'var(--fg-muted)' }}>
+                      {shardError}
+                    </span>
+                    <button
+                      type="button"
+                      className="btn btn-line btn-sm"
+                      onClick={() => setShardRetryTick((t) => t + 1)}
+                    >
+                      Thử lại
+                    </button>
+                  </div>
+                ) : isPinUI && activeVaultItem ? (
+                  <PinUIPlayground
+                    key={`${activeVaultItem.i}-${nonce}`}
+                    itemId={activeVaultItem.i}
+                    theme={stageTheme}
+                  />
+                ) : isThreeUI && activeVaultItem ? (
+                  <ThreeUIPreview
+                    key={`${activeVaultItem.i}-3ui-${nonce}`}
+                    itemId={activeVaultItem.i}
+                    title={selectedTitle}
+                    image={activeOriginalImage || undefined}
+                    videoUrl={activeOriginalVideo || undefined}
+                  />
+                ) : activeHtml ? (
+                  <SandboxPreview
+                    title={selectedTitle}
+                    html={shardPayload?.h || activeCatalogItem?.previewHtml || activeHtml}
+                    css={activeCss}
+                    js={executableSandboxJs}
+                    theme={stageTheme}
+                    viewport={viewport}
+                    nonce={nonce}
+                  />
+                ) : activeOriginalVideo ? (
+                  <SpecimenMedia
+                    key={`${selectedId}-vid`}
+                    preview={{
+                      kind: 'video',
+                      src: activeOriginalVideo,
+                      poster: activeOriginalImage || undefined,
+                      credit: 'motionsites.ai',
+                    }}
+                    title={selectedTitle}
+                    fallbackLabel={selectedLibrary}
+                    fit="contain"
+                    activePlay
+                  />
+                ) : activeOriginalImage ? (
+                  <SpecimenMedia
+                    key={`${selectedId}-img`}
+                    preview={{
+                      kind: 'image',
+                      src: activeOriginalImage,
+                      credit: selectedLibrary,
+                    }}
+                    title={selectedTitle}
+                    fallbackLabel={selectedLibrary}
+                    fit="contain"
+                  />
+                ) : activePreview ? (
+                  <SpecimenMedia
+                    key={selectedId}
+                    preview={activePreview}
+                    title={selectedTitle}
+                    fallbackLabel={selectedLibrary}
+                    fit="contain"
+                    activePlay
+                  />
+                ) : (
+                  <div className="grid place-items-center h-full min-h-[380px] p-6 text-center">
+                    <div>
+                      <p className="t-label m-0">{selectedLibrary}</p>
+                      <p className="text-xl font-semibold mt-2 m-0" style={{ fontFamily: 'var(--font-display)' }}>
+                        {selectedTitle}
+                      </p>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <aside className="ex-live-featured-side">
+              <div className="ex-live-featured-actions">
+                <div className="flex items-center gap-1.5">
+                  <button
+                    type="button"
+                    aria-pressed={isItemLiked(selectedId)}
+                    aria-label={`${isItemLiked(selectedId) ? 'Bỏ tim' : 'Thả tim'} ${selectedTitle}`}
+                    onClick={() =>
+                      toggleLikedItem(
+                        selectedId,
+                        featuredTarget.kind === 'vault'
+                          ? featuredTarget.item.l
+                          : featuredTarget.kind === 'recipe'
+                            ? 'motionsites'
+                            : 'showcase'
+                      )
+                    }
+                    className="inline-flex items-center gap-1.5 min-h-[38px] px-3 rounded-full border font-mono text-xs cursor-pointer"
+                    style={{
+                      background: isItemLiked(selectedId) ? 'var(--danger-soft)' : 'var(--bg-sunken)',
+                      borderColor: isItemLiked(selectedId) ? 'var(--danger)' : 'var(--line)',
+                      color: isItemLiked(selectedId) ? 'var(--danger)' : 'var(--fg)',
+                    }}
+                  >
+                    <IconHeart size={14} filled={isItemLiked(selectedId)} aria-hidden="true" />
+                    <span>{getHeartCount(selectedId)}</span>
+                  </button>
+
+                  {featuredTarget.kind === 'vault' ? (
+                    <button
+                      type="button"
+                      aria-pressed={savedItemIds.includes(selectedId)}
+                      aria-label={savedItemIds.includes(selectedId) ? 'Bỏ lưu mẫu' : 'Lưu mẫu'}
+                      title={savedItemIds.includes(selectedId) ? 'Đã lưu' : 'Lưu mẫu'}
+                      onClick={() => toggleSavedItem(selectedId)}
+                      className="ex-stage-icon-btn"
+                    >
+                      <IconBookmark size={15} filled={savedItemIds.includes(selectedId)} aria-hidden="true" />
+                    </button>
+                  ) : null}
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => void handleCopy(activePrompt, 'prompt', 'Đã chép Prompt')}
+                    className="inline-flex items-center gap-1.5 min-h-[38px] px-3.5 rounded-full border text-xs font-semibold cursor-pointer"
+                    style={{
+                      background: 'var(--bg-sunken)',
+                      borderColor: copiedTarget === 'prompt' ? 'var(--green)' : 'var(--line-strong)',
+                      color: copiedTarget === 'prompt' ? 'var(--green)' : 'var(--fg)',
+                    }}
+                  >
+                    {copiedTarget === 'prompt' ? (
+                      <IconCheck size={14} aria-hidden="true" />
+                    ) : (
+                      <IconCopy size={14} aria-hidden="true" />
+                    )}
+                    <span>{copiedTarget === 'prompt' ? (isEn ? 'Copied' : 'Đã chép') : (isEn ? 'Copy Prompt' : 'Chép Prompt')}</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleUseFeaturedInWorkspace}
+                    className="inline-flex items-center justify-center min-h-[38px] px-4 rounded-full border-0 text-xs font-semibold cursor-pointer"
+                    style={{ background: 'var(--accent-fill)', color: 'var(--on-accent)' }}
+                  >
+                    {isEn ? 'Use template' : 'Dùng mẫu'}
+                  </button>
+                </div>
+              </div>
+
+              <div
+                className="flex items-center justify-between gap-2 px-3.5 py-2 border-b"
+                style={{ borderColor: 'var(--line)' }}
+              >
+                <div
+                  className="inline-flex items-center gap-1 p-0.5 rounded-full border"
+                  style={{ borderColor: 'var(--line)', background: 'var(--bg-sunken)' }}
+                  role="tablist"
+                  aria-label="Prompt và mã nguồn"
+                >
+                  {availableTabs.map((tab) => (
+                    <button
+                      key={tab.id}
+                      type="button"
+                      role="tab"
+                      aria-selected={resolvedCodeTab === tab.id}
+                      onClick={() => setCodeTab(tab.id)}
+                      className="min-h-[30px] px-3 rounded-full border-0 font-mono text-[11px] font-semibold cursor-pointer"
+                      style={{
+                        background: resolvedCodeTab === tab.id ? 'var(--accent-soft)' : 'transparent',
+                        color: resolvedCodeTab === tab.id ? 'var(--accent)' : 'var(--fg-muted)',
+                      }}
+                    >
+                      {tab.label}
+                    </button>
+                  ))}
+                </div>
+
+                <button
+                  type="button"
+                  aria-label={resolvedCodeTab === 'prompt' ? 'Chép Prompt' : 'Chép mã nguồn'}
+                  title={copiedTarget === 'code' ? 'Đã chép' : 'Chép'}
+                  onClick={() =>
+                    void handleCopy(
+                      activeCode,
+                      resolvedCodeTab === 'prompt' ? 'prompt' : 'code',
+                      resolvedCodeTab === 'prompt' ? 'Đã chép Prompt' : 'Đã chép mã'
+                    )
+                  }
+                  className="ex-stage-icon-btn"
+                >
+                  {copiedTarget ? <IconCheck size={14} aria-hidden="true" /> : <IconCopy size={14} aria-hidden="true" />}
+                </button>
+              </div>
+
+              <pre className="ex-live-featured-code ff-scrollbar">
+                <code>
+                  {shardLoading
+                    ? 'Đang tải...'
+                    : activeCode || 'Chưa có nội dung cho mục này.'}
+                </code>
+              </pre>
+            </aside>
+          </div>
+        </section>
+      ) : null}
+
       <div className="flex flex-wrap items-center justify-between gap-2">
         <span className="t-label">
-          Đang hiển thị {formatCount(category === 'motion-recipes' ? visibleRecipes.length : category === 'showcase-15' ? filteredShowcase.length : visibleVaultItems.length)} / {formatCount(totalShownList)} mục
+          {formatCount(category === 'motion-recipes' ? visibleRecipes.length : category === 'showcase-15' ? filteredShowcase.length : visibleVaultItems.length)} / {formatCount(totalShownList)} {isEn ? 'items' : 'mẫu'}
         </span>
         {(search || activeTag || category !== 'all') ? (
           <button
@@ -950,24 +1316,25 @@ export const ExperienceView: React.FC = () => {
               setSearch('');
               setActiveTag('');
               setCategory('all');
+              setSelected(null);
             }}
           >
-            Đặt lại
+            {isEn ? 'Reset' : 'Đặt lại'}
           </button>
         ) : null}
       </div>
 
       {vaultLoading ? (
         <div
-          className="grid gap-4"
-          style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 300px), 1fr))' }}
+          className="grid gap-3.5"
+          style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 260px), 1fr))' }}
           aria-busy="true"
           aria-label="Đang tải kho tài nguyên"
         >
           {Array.from({ length: 12 }, (_, idx) => (
             <div
               key={idx}
-              className="h-[168px] rounded-[14px] border opacity-65"
+              className="h-[118px] rounded-[14px] border opacity-65"
               style={{ background: 'var(--bg-raised)', borderColor: 'var(--line)' }}
             />
           ))}
@@ -992,8 +1359,8 @@ export const ExperienceView: React.FC = () => {
         >
           <p className="text-sm m-0" style={{ color: 'var(--fg-muted)' }}>
             {category === 'saved'
-              ? 'Bạn chưa lưu mẫu nào. Bấm biểu tượng đánh dấu trên thẻ mẫu để lưu lại.'
-              : 'Không tìm thấy tài nguyên nào khớp bộ lọc hiện tại.'}
+              ? 'Bạn chưa lưu mẫu nào.'
+              : 'Không tìm thấy mẫu khớp bộ lọc.'}
           </p>
           <button
             type="button"
@@ -1002,6 +1369,7 @@ export const ExperienceView: React.FC = () => {
               setSearch('');
               setActiveTag('');
               setCategory('all');
+              setSelected(null);
             }}
           >
             Xem tất cả
@@ -1009,104 +1377,54 @@ export const ExperienceView: React.FC = () => {
         </div>
       ) : category === 'showcase-15' ? (
         <div
-          className="grid gap-5"
-          style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 340px), 1fr))' }}
+          className="grid gap-4"
+          style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 300px), 1fr))' }}
         >
           {filteredShowcase.map((item) => {
             const liked = isItemLiked(item.id);
+            const active = selectedId === item.id;
             return (
               <article
                 key={item.id}
-                className="flex flex-col rounded-[16px] border overflow-hidden min-w-0"
+                onClick={() => selectShowcaseItem(item)}
+                className="flex flex-col rounded-[16px] border overflow-hidden min-w-0 cursor-pointer"
                 style={{
                   background: 'var(--bg-raised)',
-                  borderColor: 'var(--line)',
-                  boxShadow: 'var(--shadow-1)',
+                  borderColor: active ? 'var(--accent)' : 'var(--line)',
+                  boxShadow: active ? '0 0 0 1px var(--accent)' : 'var(--shadow-1)',
                 }}
               >
-                <button
-                  type="button"
-                  onClick={() => openShowcaseInspector(item)}
-                  className="text-left p-0 border-0 bg-transparent cursor-pointer"
-                  aria-label={`Xem thử ${item.title}`}
-                >
-                  <ShowcaseMiniCardPreview title={item.title} html={item.html} theme={stageTheme} />
-                </button>
-                <div className="flex flex-col gap-2 p-4 flex-1 min-w-0">
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="font-mono text-[11px]" style={{ color: 'var(--accent)' }}>
+                <ShowcaseMiniCardPreview title={item.title} html={item.html} theme={stageTheme} />
+                <div className="flex items-center justify-between gap-2 p-3.5 min-w-0">
+                  <div className="min-w-0">
+                    <span className="font-mono text-[11px] block truncate" style={{ color: 'var(--accent)' }}>
                       {item.categoryLabel}
                     </span>
-                    <span className="font-mono text-[11px]" style={{ color: 'var(--fg-faint)' }}>
-                      {item.authorLabel}
-                    </span>
+                    <h3
+                      className="text-sm font-bold m-0 truncate"
+                      style={{ color: 'var(--fg)', fontFamily: 'var(--font-ui)' }}
+                    >
+                      {item.title}
+                    </h3>
                   </div>
-                  <h2
-                    className="text-base font-bold m-0 truncate"
-                    style={{ color: 'var(--fg)', fontFamily: 'var(--font-ui)' }}
-                  >
-                    {item.title}
-                  </h2>
-                  <p className="text-xs m-0 line-clamp-2" style={{ color: 'var(--fg-muted)' }}>
-                    {item.subtitle}
-                  </p>
-                </div>
-                <div
-                  className="flex items-center justify-between gap-2 px-4 py-3 border-t"
-                  style={{ borderColor: 'var(--line)', background: 'var(--bg-sunken)' }}
-                >
                   <button
                     type="button"
                     aria-pressed={liked}
-                    aria-label={`${liked ? 'Bỏ thích' : 'Thích'} ${item.title}`}
-                    onClick={() => toggleLikedItem(item.id, 'showcase')}
-                    className="inline-flex items-center gap-1.5 min-h-[40px] px-3 rounded-full border font-mono text-xs cursor-pointer"
+                    aria-label={`${liked ? 'Bỏ tim' : 'Thả tim'} ${item.title}`}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      toggleLikedItem(item.id, 'showcase');
+                    }}
+                    className="inline-flex items-center gap-1.5 min-h-[34px] px-2.5 rounded-full border font-mono text-xs shrink-0 cursor-pointer"
                     style={{
-                      background: liked ? 'var(--danger-soft)' : 'var(--bg-raised)',
+                      background: liked ? 'var(--danger-soft)' : 'var(--bg-sunken)',
                       borderColor: liked ? 'var(--danger)' : 'var(--line)',
                       color: liked ? 'var(--danger)' : 'var(--fg-muted)',
                     }}
                   >
-                    <IconHeart size={14} filled={liked} aria-hidden="true" />
+                    <IconHeart size={13} filled={liked} aria-hidden="true" />
                     <span>{getHeartCount(item.id)}</span>
                   </button>
-                  <div className="flex items-center gap-2">
-                    <button
-                      type="button"
-                      onClick={() => openShowcaseInspector(item)}
-                      className="min-h-[40px] px-3.5 rounded-full border text-xs font-semibold cursor-pointer"
-                      style={{
-                        background: 'transparent',
-                        borderColor: 'var(--line-strong)',
-                        color: 'var(--fg)',
-                      }}
-                    >
-                      Xem thử
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        recordSignal(item.id, 'use', 'showcase');
-                        openInWorkspace({
-                          kind: 'showcase-15',
-                          id: item.id,
-                          title: item.title,
-                          sourceLibrary: item.categoryLabel,
-                          prompt: item.userPrompt,
-                          html: item.html,
-                          profile: item.profile,
-                        });
-                      }}
-                      className="min-h-[40px] px-3.5 rounded-full border text-xs font-bold cursor-pointer"
-                      style={{
-                        background: 'var(--accent-soft)',
-                        borderColor: 'var(--accent)',
-                        color: 'var(--accent)',
-                      }}
-                    >
-                      Dùng mẫu
-                    </button>
-                  </div>
                 </div>
               </article>
             );
@@ -1114,206 +1432,122 @@ export const ExperienceView: React.FC = () => {
         </div>
       ) : category === 'motion-recipes' ? (
         <div
-          className="grid gap-4"
-          style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 320px), 1fr))' }}
+          className="grid gap-3.5"
+          style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 280px), 1fr))' }}
         >
           {visibleRecipes.map((item) => {
             const liked = isItemLiked(item.id);
-            const costTone =
-              item.cost === 'light'
-                ? { bg: 'var(--green-soft)', fg: 'var(--green)' }
-                : item.cost === 'medium'
-                  ? { bg: 'var(--amber-soft)', fg: 'var(--amber)' }
-                  : { bg: 'var(--danger-soft)', fg: 'var(--danger)' };
+            const active = selectedId === item.id;
             return (
               <article
                 key={item.id}
-                className="flex flex-col justify-between gap-3 p-4 rounded-[14px] border min-w-0"
-                style={{ background: 'var(--bg-raised)', borderColor: 'var(--line)' }}
+                onClick={() => selectRecipeItem(item)}
+                className="flex flex-col justify-between gap-2.5 p-3.5 rounded-[14px] border min-w-0 cursor-pointer"
+                style={{
+                  background: 'var(--bg-raised)',
+                  borderColor: active ? 'var(--accent)' : 'var(--line)',
+                  boxShadow: active ? '0 0 0 1px var(--accent)' : 'none',
+                }}
               >
-                <button
-                  type="button"
-                  onClick={() => openRecipeInspector(item)}
-                  className="flex flex-col gap-2 text-left p-0 border-0 bg-transparent cursor-pointer min-w-0"
-                >
-                  <div className="flex items-center justify-between gap-2 w-full">
-                    <span className="font-mono text-[11px] truncate" style={{ color: 'var(--fg-faint)' }}>
+                <div className="flex items-start justify-between gap-2">
+                  <div className="min-w-0">
+                    <span className="font-mono text-[11px] block truncate" style={{ color: 'var(--fg-faint)' }}>
                       {item.category}
                     </span>
-                    <span
-                      className="px-2 py-0.5 rounded-full font-mono text-[11px] font-semibold shrink-0"
-                      style={{ background: costTone.bg, color: costTone.fg }}
+                    <h3
+                      className="text-sm font-bold m-0 mt-0.5 leading-snug line-clamp-2"
+                      style={{ color: 'var(--fg)', fontFamily: 'var(--font-ui)' }}
                     >
-                      {COST_LABELS[item.cost]}
-                    </span>
+                      {item.title}
+                    </h3>
                   </div>
-                  <h2
-                    className="text-sm font-bold m-0 leading-snug"
-                    style={{ color: 'var(--fg)', fontFamily: 'var(--font-ui)' }}
-                  >
-                    {item.title}
-                  </h2>
-                  <p className="text-xs m-0 line-clamp-2" style={{ color: 'var(--fg-muted)' }}>
-                    {item.useWhen || cleanRecipeSummary(item.summary)}
-                  </p>
-                </button>
-                <div
-                  className="flex items-center justify-between gap-2 pt-3 border-t"
-                  style={{ borderColor: 'var(--line)' }}
-                >
                   <button
                     type="button"
                     aria-pressed={liked}
-                    aria-label={`${liked ? 'Bỏ thích' : 'Thích'} ${item.title}`}
-                    onClick={() => toggleLikedItem(item.id, 'motionsites')}
-                    className="inline-flex items-center gap-1.5 min-h-[38px] px-3 rounded-full border font-mono text-xs cursor-pointer"
+                    aria-label={`${liked ? 'Bỏ tim' : 'Thả tim'} ${item.title}`}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      toggleLikedItem(item.id, 'motionsites');
+                    }}
+                    className="inline-flex items-center gap-1.5 min-h-[32px] px-2.5 rounded-full border font-mono text-xs shrink-0 cursor-pointer"
                     style={{
                       background: liked ? 'var(--danger-soft)' : 'var(--bg-sunken)',
                       borderColor: liked ? 'var(--danger)' : 'var(--line)',
                       color: liked ? 'var(--danger)' : 'var(--fg-muted)',
                     }}
                   >
-                    <IconHeart size={14} filled={liked} aria-hidden="true" />
+                    <IconHeart size={13} filled={liked} aria-hidden="true" />
                     <span>{getHeartCount(item.id)}</span>
                   </button>
-                  <button
-                    type="button"
-                    onClick={() => openRecipeInspector(item)}
-                    className="min-h-[38px] px-3.5 rounded-full border text-xs font-semibold cursor-pointer"
-                    style={{
-                      background: 'var(--accent-soft)',
-                      borderColor: 'var(--accent)',
-                      color: 'var(--accent)',
-                    }}
-                  >
-                    Xem mã
-                  </button>
                 </div>
+                <p className="text-xs m-0 line-clamp-2" style={{ color: 'var(--fg-muted)' }}>
+                  {item.useWhen || cleanRecipeSummary(item.summary)}
+                </p>
               </article>
             );
           })}
         </div>
       ) : (
         <div
-          className="grid gap-4"
-          style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 300px), 1fr))' }}
+          className="grid gap-3.5"
+          style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 260px), 1fr))' }}
         >
           {visibleVaultItems.map((item) => {
             const title = sanitizeBrandText(item.t);
             const liked = isItemLiked(item.i);
-            const saved = savedItemIds.includes(item.i);
+            const active = selectedId === item.i;
             const libLabel = VAULT_LIBRARY_LABELS[item.l];
             return (
               <article
                 key={`${item.l}:${item.i}`}
-                className="flex flex-col justify-between gap-3 p-4 rounded-[14px] border min-w-0"
+                onClick={() => selectVaultItem(item)}
+                className="flex items-center justify-between gap-3 p-3.5 rounded-[14px] border min-w-0 cursor-pointer"
                 style={{
-                  background: 'var(--bg-raised)',
-                  borderColor: 'var(--line)',
-                  transition: 'border-color 160ms ease',
+                  background: active ? 'var(--accent-soft)' : 'var(--bg-raised)',
+                  borderColor: active ? 'var(--accent)' : 'var(--line)',
+                  transition: 'border-color 140ms ease, background-color 140ms ease',
                 }}
               >
                 <button
                   type="button"
-                  onClick={() => openVaultInspector(item)}
-                  className="flex flex-col gap-2 text-left p-0 border-0 bg-transparent cursor-pointer min-w-0"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    selectVaultItem(item);
+                  }}
+                  className="flex flex-col gap-1 text-left p-0 border-0 bg-transparent cursor-pointer min-w-0 flex-1"
                 >
-                  <div className="flex items-center justify-between gap-2 w-full">
-                    <span
-                      className="px-2.5 py-0.5 rounded-full font-mono text-[11px] font-semibold"
-                      style={{ background: 'var(--accent-soft)', color: 'var(--accent)' }}
-                    >
-                      {libLabel}
-                    </span>
-                    <span className="font-mono text-[11px] truncate" style={{ color: 'var(--fg-faint)' }}>
-                      {item.c}
-                    </span>
-                  </div>
-                  <h2
-                    className="text-sm font-bold m-0 leading-snug line-clamp-2"
+                  <span
+                    className="font-mono text-[10.5px] font-semibold truncate"
+                    style={{ color: 'var(--accent)' }}
+                  >
+                    {libLabel} · {item.c}
+                  </span>
+                  <h3
+                    className="text-sm font-semibold m-0 leading-snug line-clamp-2"
                     style={{ color: 'var(--fg)', fontFamily: 'var(--font-ui)' }}
                   >
                     {title}
-                  </h2>
-                  {item.tg.length > 0 ? (
-                    <div className="flex flex-wrap gap-1.5 pt-1">
-                      {item.tg.slice(0, 3).map((tag) => (
-                        <span
-                          key={tag}
-                          className="px-2 py-0.5 rounded-md font-mono text-[10.5px]"
-                          style={{ background: 'var(--bg-sunken)', color: 'var(--fg-muted)' }}
-                        >
-                          #{tag}
-                        </span>
-                      ))}
-                    </div>
-                  ) : null}
+                  </h3>
                 </button>
 
-                <div
-                  className="flex items-center justify-between gap-2 pt-3 border-t"
-                  style={{ borderColor: 'var(--line)' }}
+                <button
+                  type="button"
+                  aria-pressed={liked}
+                  aria-label={`${liked ? 'Bỏ tim' : 'Thả tim'} ${title}`}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    toggleLikedItem(item.i, item.l);
+                  }}
+                  className="inline-flex items-center gap-1.5 min-h-[34px] px-2.5 rounded-full border font-mono text-xs shrink-0 cursor-pointer"
+                  style={{
+                    background: liked ? 'var(--danger-soft)' : 'var(--bg-sunken)',
+                    borderColor: liked ? 'var(--danger)' : 'var(--line)',
+                    color: liked ? 'var(--danger)' : 'var(--fg-muted)',
+                  }}
                 >
-                  <div className="flex items-center gap-1.5">
-                    <button
-                      type="button"
-                      aria-pressed={liked}
-                      aria-label={`${liked ? 'Bỏ thích' : 'Thích'} ${title}`}
-                      onClick={() => toggleLikedItem(item.i, item.l)}
-                      className="inline-flex items-center gap-1.5 min-h-[38px] px-2.5 rounded-full border font-mono text-xs cursor-pointer"
-                      style={{
-                        background: liked ? 'var(--danger-soft)' : 'var(--bg-sunken)',
-                        borderColor: liked ? 'var(--danger)' : 'var(--line)',
-                        color: liked ? 'var(--danger)' : 'var(--fg-muted)',
-                      }}
-                    >
-                      <IconHeart size={14} filled={liked} aria-hidden="true" />
-                      <span>{getHeartCount(item.i)}</span>
-                    </button>
-                    <button
-                      type="button"
-                      aria-pressed={saved}
-                      aria-label={`${saved ? 'Bỏ lưu' : 'Lưu'} ${title}`}
-                      title={saved ? 'Bỏ lưu' : 'Lưu mẫu'}
-                      onClick={() => toggleSavedItem(item.i)}
-                      className="inline-grid place-items-center w-[38px] h-[38px] rounded-full border cursor-pointer"
-                      style={{
-                        background: saved ? 'var(--accent-soft)' : 'var(--bg-sunken)',
-                        borderColor: saved ? 'var(--accent)' : 'var(--line)',
-                        color: saved ? 'var(--accent)' : 'var(--fg-muted)',
-                      }}
-                    >
-                      <IconBookmark size={14} filled={saved} aria-hidden="true" />
-                    </button>
-                  </div>
-
-                  <div className="flex items-center gap-1.5">
-                    <button
-                      type="button"
-                      onClick={() => openVaultInspector(item)}
-                      className="min-h-[38px] px-3 rounded-full border text-xs font-semibold cursor-pointer"
-                      style={{
-                        background: 'transparent',
-                        borderColor: 'var(--line-strong)',
-                        color: 'var(--fg)',
-                      }}
-                    >
-                      Chạy thử
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => handleUseVaultItem(item)}
-                      className="min-h-[38px] px-3 rounded-full border text-xs font-bold cursor-pointer"
-                      style={{
-                        background: 'var(--accent-soft)',
-                        borderColor: 'var(--accent)',
-                        color: 'var(--accent)',
-                      }}
-                    >
-                      Dùng
-                    </button>
-                  </div>
-                </div>
+                  <IconHeart size={13} filled={liked} aria-hidden="true" />
+                  <span>{getHeartCount(item.i)}</span>
+                </button>
               </article>
             );
           })}
@@ -1327,406 +1561,12 @@ export const ExperienceView: React.FC = () => {
             className="btn btn-line"
             onClick={() => setVisibleCount((prev) => prev + PAGE_SIZE)}
           >
-            Xem thêm {Math.min(PAGE_SIZE, remainingCount)} mẫu ({formatCount(remainingCount)} còn lại)
+            {isEn
+              ? `Load ${Math.min(PAGE_SIZE, remainingCount)} more (${formatCount(remainingCount)} left)`
+              : `Xem thêm ${Math.min(PAGE_SIZE, remainingCount)} mẫu (${formatCount(remainingCount)} còn lại)`}
           </button>
         </div>
       ) : null}
-
-      <AnimatePresence>
-        {selected ? (
-          <motion.div
-            key="xp-inspector-backdrop"
-            role="dialog"
-            aria-modal="true"
-            aria-label={`Trình xem mẫu ${selectedTitle}`}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.18 }}
-            onClick={closeInspector}
-            className="fixed inset-0 z-[80] flex items-center justify-center p-2 sm:p-4"
-            style={{ background: 'var(--bg-veil)', backdropFilter: 'blur(10px)' }}
-          >
-            <motion.div
-              initial={reduced ? { opacity: 0 } : { opacity: 0, scale: 0.97, y: 12 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={reduced ? { opacity: 0 } : { opacity: 0, scale: 0.98, y: 8 }}
-              transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
-              onClick={(event) => event.stopPropagation()}
-              className="grid grid-rows-[auto_minmax(0,1fr)_auto] w-full max-w-[1320px] h-[94dvh] sm:h-[90dvh] rounded-[16px] border overflow-hidden"
-              style={{
-                background: 'var(--bg-raised)',
-                borderColor: 'var(--line-strong)',
-                boxShadow: 'var(--shadow-3)',
-              }}
-            >
-              <div
-                className="flex flex-wrap items-center justify-between gap-2 px-4 py-3 border-b"
-                style={{ borderColor: 'var(--line)', background: 'var(--bg-raised)' }}
-              >
-                <div className="flex items-center gap-2.5 min-w-0">
-                  <span
-                    className="px-2.5 py-1 rounded-full font-mono text-[11px] font-semibold shrink-0"
-                    style={{ background: 'var(--accent-soft)', color: 'var(--accent)' }}
-                  >
-                    {selectedLibrary}
-                  </span>
-                  <h2
-                    className="text-sm sm:text-base font-bold m-0 truncate"
-                    style={{ color: 'var(--fg)', fontFamily: 'var(--font-ui)' }}
-                  >
-                    {selectedTitle}
-                  </h2>
-                </div>
-
-                <div className="flex items-center gap-1.5">
-                  <button
-                    type="button"
-                    aria-label="Mẫu trước"
-                    title="Mẫu trước"
-                    onClick={() => stepVault(-1)}
-                    className="inline-grid place-items-center w-10 h-10 rounded-full border cursor-pointer"
-                    style={{ background: 'var(--bg-sunken)', borderColor: 'var(--line)', color: 'var(--fg)' }}
-                  >
-                    <IconChevronLeft size={16} aria-hidden="true" />
-                  </button>
-                  <button
-                    type="button"
-                    aria-label="Mẫu tiếp theo"
-                    title="Mẫu sau"
-                    onClick={() => stepVault(1)}
-                    className="inline-grid place-items-center w-10 h-10 rounded-full border cursor-pointer"
-                    style={{ background: 'var(--bg-sunken)', borderColor: 'var(--line)', color: 'var(--fg)' }}
-                  >
-                    <IconChevronRight size={16} aria-hidden="true" />
-                  </button>
-                  <button
-                    type="button"
-                    aria-label={`Đổi khung nhìn (${viewport}px)`}
-                    title={`Khung ${viewport}px`}
-                    onClick={() => setViewport((prev) => (prev === 1440 ? 768 : prev === 768 ? 390 : 1440))}
-                    className="inline-grid place-items-center w-10 h-10 rounded-full border cursor-pointer"
-                    style={{ background: 'var(--bg-sunken)', borderColor: 'var(--line)', color: 'var(--fg)' }}
-                  >
-                    {viewport === 1440 ? (
-                      <IconMonitor size={16} aria-hidden="true" />
-                    ) : viewport === 768 ? (
-                      <IconTablet size={16} aria-hidden="true" />
-                    ) : (
-                      <IconSmartphone size={16} aria-hidden="true" />
-                    )}
-                  </button>
-                  <button
-                    type="button"
-                    aria-label={stageTheme === 'dark' ? 'Nền sân khấu sáng' : 'Nền sân khấu tối'}
-                    title={stageTheme === 'dark' ? 'Nền sáng' : 'Nền tối'}
-                    onClick={() => setStageTheme((prev) => (prev === 'dark' ? 'light' : 'dark'))}
-                    className="inline-grid place-items-center w-10 h-10 rounded-full border cursor-pointer"
-                    style={{ background: 'var(--bg-sunken)', borderColor: 'var(--line)', color: 'var(--fg)' }}
-                  >
-                    {stageTheme === 'dark' ? (
-                      <IconSun size={16} aria-hidden="true" />
-                    ) : (
-                      <IconMoon size={16} aria-hidden="true" />
-                    )}
-                  </button>
-                  <button
-                    type="button"
-                    aria-label="Chạy lại sân khấu"
-                    title="Chạy lại"
-                    onClick={() => setNonce((n) => n + 1)}
-                    className="inline-grid place-items-center w-10 h-10 rounded-full border cursor-pointer"
-                    style={{ background: 'var(--bg-sunken)', borderColor: 'var(--line)', color: 'var(--fg)' }}
-                  >
-                    <IconRotateCw size={16} aria-hidden="true" />
-                  </button>
-                  <button
-                    type="button"
-                    aria-label="Đóng"
-                    title="Đóng"
-                    onClick={closeInspector}
-                    className="inline-grid place-items-center w-10 h-10 rounded-full border cursor-pointer"
-                    style={{ background: 'var(--bg-sunken)', borderColor: 'var(--line)', color: 'var(--fg)' }}
-                  >
-                    <IconX size={18} aria-hidden="true" />
-                  </button>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1.35fr)_minmax(320px,0.9fr)] min-h-0 overflow-y-auto lg:overflow-hidden">
-                <div
-                  className="flex items-stretch justify-center p-3 sm:p-4 min-h-[340px] lg:min-h-0 overflow-auto border-b lg:border-b-0 lg:border-r"
-                  style={{ background: 'var(--bg-sunken)', borderColor: 'var(--line)' }}
-                >
-                  <div
-                    className="w-full h-full min-h-[320px] rounded-[12px] overflow-hidden border"
-                    style={{
-                      maxWidth: viewport === 1440 ? '100%' : `${viewport}px`,
-                      borderColor: 'var(--line)',
-                      background: 'var(--bg)',
-                    }}
-                  >
-                    {selected.kind === 'showcase' ? (
-                      <SandboxPreview
-                        title={selected.item.title}
-                        html={selected.item.html}
-                        css=""
-                        theme={stageTheme}
-                        viewport={viewport}
-                        nonce={nonce}
-                      />
-                    ) : selected.kind === 'recipe' ? (
-                      <div className="flex flex-col gap-4 p-5 h-full overflow-y-auto" style={{ color: 'var(--fg)' }}>
-                        <div className="flex flex-wrap items-center gap-2">
-                          <span
-                            className="px-2.5 py-1 rounded-full font-mono text-xs"
-                            style={{ background: 'var(--accent-soft)', color: 'var(--accent)' }}
-                          >
-                            {selected.item.category}
-                          </span>
-                          <span
-                            className="px-2.5 py-1 rounded-full font-mono text-xs"
-                            style={{ background: 'var(--bg-raised)', color: 'var(--fg-muted)' }}
-                          >
-                            Mức tải: {COST_LABELS[selected.item.cost]}
-                          </span>
-                          <span className="font-mono text-xs" style={{ color: 'var(--fg-faint)' }}>
-                            {selected.item.file}
-                          </span>
-                        </div>
-                        <h3 className="text-xl font-semibold m-0" style={{ fontFamily: 'var(--font-display)' }}>
-                          {selected.item.title}
-                        </h3>
-                        <p className="text-sm m-0" style={{ color: 'var(--accent-secondary)' }}>
-                          Khi dùng: {selected.item.useWhen}
-                        </p>
-                        <p className="text-sm leading-relaxed m-0" style={{ color: 'var(--fg-muted)' }}>
-                          {cleanRecipeSummary(selected.item.summary)}
-                        </p>
-                      </div>
-                    ) : shardLoading ? (
-                      <div className="grid place-items-center h-full min-h-[320px] p-6 text-center" role="status">
-                        <span className="t-label">Đang tải sân khấu chạy thử...</span>
-                      </div>
-                    ) : shardError ? (
-                      <div className="grid place-items-center gap-3 h-full min-h-[320px] p-6 text-center" role="alert">
-                        <span className="text-sm" style={{ color: 'var(--fg-muted)' }}>
-                          {shardError}
-                        </span>
-                        <button
-                          type="button"
-                          className="btn btn-line btn-sm"
-                          onClick={() => setShardRetryTick((t) => t + 1)}
-                        >
-                          Thử lại
-                        </button>
-                      </div>
-                    ) : isPinUI && activeVaultItem ? (
-                      <PinUIPlayground
-                        key={`${activeVaultItem.i}-${nonce}`}
-                        itemId={activeVaultItem.i}
-                        theme={stageTheme}
-                      />
-                    ) : isThreeUI && activeVaultItem ? (
-                      <ThreeUIPreview
-                        key={`${activeVaultItem.i}-3ui-${nonce}`}
-                        itemId={activeVaultItem.i}
-                        title={selectedTitle}
-                        image={activeOriginalImage || undefined}
-                        videoUrl={activeOriginalVideo || undefined}
-                      />
-                    ) : activeHtml ? (
-                      <SandboxPreview
-                        title={selectedTitle}
-                        html={shardPayload?.h || activeCatalogItem?.previewHtml || activeHtml}
-                        css={activeCss}
-                        js={executableSandboxJs}
-                        theme={stageTheme}
-                        viewport={viewport}
-                        nonce={nonce}
-                      />
-                    ) : activeOriginalVideo ? (
-                      <SpecimenMedia
-                        key={`${selectedId}-vid`}
-                        preview={{
-                          kind: 'video',
-                          src: activeOriginalVideo,
-                          poster: activeOriginalImage || undefined,
-                          credit: 'motionsites.ai',
-                        }}
-                        title={selectedTitle}
-                        fallbackLabel={selectedLibrary}
-                        fit="contain"
-                        activePlay
-                      />
-                    ) : activeOriginalImage ? (
-                      <SpecimenMedia
-                        key={`${selectedId}-img`}
-                        preview={{
-                          kind: 'image',
-                          src: activeOriginalImage,
-                          credit: selectedLibrary,
-                        }}
-                        title={selectedTitle}
-                        fallbackLabel={selectedLibrary}
-                        fit="contain"
-                      />
-                    ) : activePreview ? (
-                      <SpecimenMedia
-                        key={selectedId}
-                        preview={activePreview}
-                        title={selectedTitle}
-                        fallbackLabel={selectedLibrary}
-                        fit="contain"
-                        activePlay
-                      />
-                    ) : (
-                      <div className="grid place-items-center h-full min-h-[320px] p-6 text-center">
-                        <div>
-                          <p className="t-label m-0">{selectedLibrary}</p>
-                          <p className="text-xl font-semibold mt-2 m-0" style={{ fontFamily: 'var(--font-display)' }}>
-                            {selectedTitle}
-                          </p>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                <div className="flex flex-col min-h-0 bg-[var(--bg-raised)]">
-                  <div
-                    className="flex flex-wrap items-center justify-between gap-2 px-4 py-2.5 border-b"
-                    style={{ borderColor: 'var(--line)' }}
-                  >
-                    <div className="inline-flex items-center gap-1 p-1 rounded-full border" style={{ borderColor: 'var(--line)', background: 'var(--bg-sunken)' }} role="tablist" aria-label="Ngăn mã nguồn">
-                      {availableTabs.map((tab) => (
-                        <button
-                          key={tab.id}
-                          type="button"
-                          role="tab"
-                          aria-selected={resolvedCodeTab === tab.id}
-                          onClick={() => setCodeTab(tab.id)}
-                          className="min-h-[32px] px-3 rounded-full border-0 font-mono text-[11.5px] font-semibold cursor-pointer"
-                          style={{
-                            background: resolvedCodeTab === tab.id ? 'var(--accent-soft)' : 'transparent',
-                            color: resolvedCodeTab === tab.id ? 'var(--accent)' : 'var(--fg-muted)',
-                          }}
-                        >
-                          {tab.label}
-                        </button>
-                      ))}
-                    </div>
-
-                    <div className="flex items-center gap-1.5">
-                      <button
-                        type="button"
-                        aria-label="Chép đoạn mã đang xem"
-                        title={copiedTarget === 'code' ? 'Đã chép mã' : 'Chép mã'}
-                        onClick={() => void handleCopy(activeCode, 'code', 'Đã chép mã')}
-                        className="inline-flex items-center gap-1.5 min-h-[36px] px-3 rounded-full border text-xs font-semibold cursor-pointer"
-                        style={{
-                          background: 'var(--bg-sunken)',
-                          borderColor: copiedTarget === 'code' ? 'var(--green)' : 'var(--line)',
-                          color: copiedTarget === 'code' ? 'var(--green)' : 'var(--fg)',
-                        }}
-                      >
-                        {copiedTarget === 'code' ? (
-                          <IconCheck size={14} aria-hidden="true" />
-                        ) : (
-                          <IconCopy size={14} aria-hidden="true" />
-                        )}
-                        <span>{copiedTarget === 'code' ? 'Đã chép' : 'Chép mã'}</span>
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => void handleCopy(activePrompt, 'prompt', 'Đã chép Prompt')}
-                        className="min-h-[36px] px-3 rounded-full border text-xs font-semibold cursor-pointer"
-                        style={{
-                          background: 'transparent',
-                          borderColor: copiedTarget === 'prompt' ? 'var(--green)' : 'var(--line)',
-                          color: copiedTarget === 'prompt' ? 'var(--green)' : 'var(--fg-muted)',
-                        }}
-                      >
-                        {copiedTarget === 'prompt' ? 'Đã chép' : 'Chép Prompt'}
-                      </button>
-                    </div>
-                  </div>
-
-                  <pre
-                    className="flex-1 m-0 p-4 overflow-auto font-mono text-xs leading-relaxed"
-                    style={{ background: 'var(--bg-sunken)', color: 'var(--fg)' }}
-                  >
-                    <code>
-                      {shardLoading
-                        ? 'Đang tải mã nguồn...'
-                        : activeCode || 'Chưa có đoạn mã cho ngăn này.'}
-                    </code>
-                  </pre>
-                </div>
-              </div>
-
-              <div
-                className="flex flex-wrap items-center justify-between gap-3 px-4 py-3 border-t"
-                style={{ borderColor: 'var(--line)', background: 'var(--bg-raised)' }}
-              >
-                <div className="flex items-center gap-2">
-                  <button
-                    type="button"
-                    aria-pressed={isItemLiked(selectedId)}
-                    aria-label={`${isItemLiked(selectedId) ? 'Bỏ thích' : 'Thích'} ${selectedTitle}`}
-                    onClick={() =>
-                      toggleLikedItem(
-                        selectedId,
-                        selected.kind === 'vault'
-                          ? selected.item.l
-                          : selected.kind === 'recipe'
-                            ? 'motionsites'
-                            : 'showcase'
-                      )
-                    }
-                    className="inline-flex items-center gap-1.5 min-h-[44px] px-4 rounded-full border font-mono text-xs cursor-pointer"
-                    style={{
-                      background: isItemLiked(selectedId) ? 'var(--danger-soft)' : 'var(--bg-sunken)',
-                      borderColor: isItemLiked(selectedId) ? 'var(--danger)' : 'var(--line)',
-                      color: isItemLiked(selectedId) ? 'var(--danger)' : 'var(--fg)',
-                    }}
-                  >
-                    <IconHeart size={15} filled={isItemLiked(selectedId)} aria-hidden="true" />
-                    <span>{getHeartCount(selectedId)}</span>
-                  </button>
-
-                  {selected.kind === 'vault' ? (
-                    <button
-                      type="button"
-                      aria-pressed={savedItemIds.includes(selectedId)}
-                      aria-label={savedItemIds.includes(selectedId) ? 'Bỏ lưu mẫu' : 'Lưu mẫu'}
-                      title={savedItemIds.includes(selectedId) ? 'Bỏ lưu' : 'Lưu mẫu'}
-                      onClick={() => toggleSavedItem(selectedId)}
-                      className="inline-grid place-items-center w-11 h-11 rounded-full border cursor-pointer"
-                      style={{
-                        background: savedItemIds.includes(selectedId) ? 'var(--accent-soft)' : 'var(--bg-sunken)',
-                        borderColor: savedItemIds.includes(selectedId) ? 'var(--accent)' : 'var(--line)',
-                        color: savedItemIds.includes(selectedId) ? 'var(--accent)' : 'var(--fg)',
-                      }}
-                    >
-                      <IconBookmark size={16} filled={savedItemIds.includes(selectedId)} aria-hidden="true" />
-                    </button>
-                  ) : null}
-                </div>
-
-                <button
-                  type="button"
-                  onClick={handleUseSelectedInWorkspace}
-                  className="inline-flex items-center justify-center min-h-[44px] px-5 rounded-full border-0 text-sm font-semibold cursor-pointer"
-                  style={{ background: 'var(--accent-fill)', color: 'var(--on-accent)' }}
-                >
-                  Dùng trong Workspace
-                </button>
-              </div>
-            </motion.div>
-          </motion.div>
-        ) : null}
-      </AnimatePresence>
     </div>
   );
 };

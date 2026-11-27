@@ -293,19 +293,19 @@
     text-overflow: ellipsis;
   }
 
-  .mmq-heart-btn {
+  .ff-like-btn {
     flex: none;
     display: inline-flex;
     align-items: center;
-    gap: 6px;
-    min-height: 34px;
+    gap: 5px;
+    min-height: 32px;
     padding: 0 10px;
     border-radius: var(--radius-pill);
     border: 1px solid var(--line-strong);
     background: var(--bg);
     color: var(--fg-muted);
     font-family: var(--font-mono);
-    font-size: 12px;
+    font-size: 11.5px;
     font-weight: 600;
     cursor: pointer;
     transition:
@@ -315,44 +315,135 @@
       transform var(--dur-1) var(--ease-spring);
   }
 
-  .mmq-heart-btn:hover {
-    border-color: var(--red);
+  .ff-like-btn--lg {
+    min-height: 36px;
+    padding: 0 12px;
+    font-size: 12px;
+  }
+
+  .ff-like-btn:hover {
+    border-color: var(--danger);
     color: var(--fg);
   }
 
-  .mmq-heart-btn[aria-pressed='true'] {
-    background: var(--red-soft);
-    border-color: var(--red);
-    color: var(--red);
+  .ff-like-btn[aria-pressed='true'] {
+    background: var(--danger-soft);
+    border-color: var(--danger);
+    color: var(--danger);
   }
 
-  .mmq-heart-btn:active {
+  .ff-like-btn:active {
     transform: scale(0.94);
   }
 
-  .mmq-heart-icon {
-    display: inline-block;
-    width: 14px;
-    height: 13px;
-    background: currentColor;
-    clip-path: polygon(
-      50% 92%,
-      12% 55%,
-      4% 36%,
-      10% 16%,
-      28% 8%,
-      44% 16%,
-      50% 26%,
-      56% 16%,
-      72% 8%,
-      90% 16%,
-      96% 36%,
-      88% 55%
-    );
+  .ff-like-count {
+    font-variant-numeric: tabular-nums;
   }
 
-  .mmq-heart-count {
-    font-variant-numeric: tabular-nums;
+  .mmq-icon-btn {
+    display: inline-grid;
+    place-items: center;
+    width: 36px;
+    height: 36px;
+    padding: 0;
+    border-radius: var(--radius-pill);
+    border: 1px solid var(--line-strong);
+    background: var(--bg);
+    color: var(--fg-muted);
+    cursor: pointer;
+    flex: none;
+    transition:
+      background-color var(--dur-1) var(--ease-ux),
+      border-color var(--dur-1) var(--ease-ux),
+      color var(--dur-1) var(--ease-ux);
+  }
+
+  .mmq-icon-btn:hover {
+    color: var(--fg);
+    border-color: var(--fg-muted);
+  }
+
+  .mmq-icon-btn[aria-pressed='true'] {
+    background: var(--accent-soft);
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+
+  .mmq-copy-prompt-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .mmq-video-trial-stage {
+    flex: 1;
+    min-height: 360px;
+    display: grid;
+    place-items: center;
+    border: 1px solid var(--line);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    background: #0a0e10;
+  }
+
+  .mmq-trial-video {
+    width: 100%;
+    height: 100%;
+    max-height: 520px;
+    object-fit: contain;
+    display: block;
+  }
+
+  .mmq-prompt-dock {
+    margin-top: var(--space-3);
+    padding: 12px 14px;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--line-strong);
+    background: var(--bg);
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-3);
+  }
+
+  .mmq-prompt-dock-text {
+    flex: 1 1 280px;
+    min-width: 0;
+    display: grid;
+    gap: 3px;
+  }
+
+  .mmq-prompt-dock-preview {
+    margin: 0;
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--fg-muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .mmq-prompt-dock-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex: none;
+  }
+
+  .mmq-thumb-video {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    opacity: 0;
+    transition: opacity 220ms ease;
+    pointer-events: none;
+  }
+
+  .mmq-thumb-video[data-ready='true'] {
+    opacity: 1;
   }
 
   .mmq-static-grid {
@@ -704,7 +795,8 @@
 
     .mmq-card,
     .mmq-thumb-img,
-    .mmq-heart-btn {
+    .ff-like-btn,
+    .mmq-icon-btn {
       transition: none;
     }
   }

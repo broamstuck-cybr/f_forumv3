@@ -1,5 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
+  IconCheck,
+  IconCopy,
   IconMonitor,
   IconMoon,
   IconRotateCw,
@@ -48,6 +50,7 @@ import {
 import { PlateRibbon } from './PlateRibbon';
 import { SandboxPreview } from './SandboxPreview';
 import { SpecimenMedia } from './SpecimenMedia';
+import { ThreeUIPreview } from './ThreeUIPreview';
 import { ReactionBar, SpecimenSheet } from './SpecimenSheet';
 import { useCalm } from './useCalm';
 
@@ -132,8 +135,9 @@ export const PlateTable: React.FC<PlateTableProps> = ({
   const [stageTheme, setStageTheme] = useState<PreviewTheme>(theme);
   const [nonce, setNonce] = useState(0);
   const [benchCodeOpen, setBenchCodeOpen] = useState(true);
-  const [benchTab, setBenchTab] = useState<BenchTab>('html');
+  const [benchTab, setBenchTab] = useState<BenchTab>('spec');
   const [copiedCode, setCopiedCode] = useState(false);
+  const [copiedPrompt, setCopiedPrompt] = useState(false);
   const [motionStageMode, setMotionStageMode] = useState<'html' | 'video'>('html');
   const [shardVersion, setShardVersion] = useState(0);
   const [pinuiMap, setPinuiMap] = useState<Record<string, PinUISourceEntry> | null>(
@@ -371,8 +375,9 @@ export const PlateTable: React.FC<PlateTableProps> = ({
   useEffect(() => {
     if (!activeItem) return;
     setNonce((n) => n + 1);
-    setBenchTab('html');
+    setBenchTab('spec');
     setCopiedCode(false);
+    setCopiedPrompt(false);
     setMotionStageMode('video');
   }, [activeItem?.id]);
 
@@ -512,7 +517,13 @@ export const PlateTable: React.FC<PlateTableProps> = ({
   };
 
   const fileBoxTabs: FileBoxTab[] = useMemo(() => {
-    const list: FileBoxTab[] = [];
+    const list: FileBoxTab[] = [
+      {
+        id: 'spec',
+        label: 'Prompt',
+        meta: 'Đặc tả & Prompt',
+      },
+    ];
     if (activeHtml) {
       list.push({
         id: 'html',
@@ -534,17 +545,12 @@ export const PlateTable: React.FC<PlateTableProps> = ({
         meta: `Mã nguồn ${activeScriptLabel}`,
       });
     }
-    list.push({
-      id: 'spec',
-      label: 'Prompt',
-      meta: 'Đặc tả & Prompt',
-    });
     return list;
   }, [activeHtml, activeCss, activeJs, activeScriptLabel, isPinUI]);
 
   const resolvedBenchTab: BenchTab = useMemo(() => {
     if (fileBoxTabs.some((tab) => tab.id === benchTab)) return benchTab;
-    return (fileBoxTabs[0]?.id as BenchTab | undefined) ?? 'spec';
+    return 'spec';
   }, [fileBoxTabs, benchTab]);
 
   const shownCode =
@@ -556,6 +562,20 @@ export const PlateTable: React.FC<PlateTableProps> = ({
           ? activeJs || activePrompt
           : activePrompt;
 
+  const handleCopyPromptDirect = async () => {
+    if (!activePrompt) return;
+    const ok = await copyText(activePrompt);
+    if (ok) {
+      setCopiedPrompt(true);
+      window.setTimeout(() => setCopiedPrompt(false), 1800);
+    }
+    addToast(
+      ok
+        ? { type: 'success', title: 'Đã chép Prompt', message: activeTitle }
+        : { type: 'error', title: 'Không chép được', message: activeTitle }
+    );
+  };
+
   const handleCopyCode = async () => {
     if (!shownCode) return;
     const ok = await copyText(shownCode);
@@ -565,7 +585,11 @@ export const PlateTable: React.FC<PlateTableProps> = ({
     }
     addToast(
       ok
-        ? { type: 'success', title: 'Đã chép mã', message: activeTitle }
+        ? {
+            type: 'success',
+            title: resolvedBenchTab === 'spec' ? 'Đã chép Prompt' : 'Đã chép mã',
+            message: activeTitle,
+          }
         : { type: 'error', title: 'Không chép được', message: activeTitle }
     );
   };
@@ -780,12 +804,25 @@ export const PlateTable: React.FC<PlateTableProps> = ({
                     itemId={activeItem.id}
                     theme={stageTheme}
                   />
+                ) : isThreeUI ? (
+                  <ThreeUIPreview
+                    key={`${activeItem.id}-3ui-${nonce}`}
+                    itemId={activeItem.id}
+                    title={activeTitle}
+                    image={activeImage || undefined}
+                    videoUrl={activeVideo || undefined}
+                  />
                 ) : hasCompleteDemoHtml && (motionStageMode === 'html' || !activeVideo) ? (
                   <SandboxPreview
                     title={activeTitle}
                     html={activeHtml}
                     css={snippetCssWithTheme}
-                    js={activeShard?.j || undefined}
+                    js={
+                      activeShard?.j &&
+                      !['tsx', 'jsx', 'ts', 'glsl'].includes((activeShard.cl || '').toLowerCase())
+                        ? activeShard.j
+                        : undefined
+                    }
                     theme={stageTheme}
                     viewport={viewport}
                     nonce={nonce}
@@ -859,30 +896,24 @@ export const PlateTable: React.FC<PlateTableProps> = ({
                 className="btn btn-solid"
                 onClick={() => handleUseInWorkspace(activeItem, activePrompt || undefined)}
               >
-                Dùng mẫu này
+                Dùng mẫu
               </button>
               <button
                 type="button"
-                className="btn btn-line"
-                onClick={() => openExperience(activeItem.id)}
+                className="btn btn-line ex-copy-prompt-btn"
+                onClick={() => void handleCopyPromptDirect()}
               >
-                Trải nghiệm
+                {copiedPrompt ? <IconCheck size={14} aria-hidden="true" /> : <IconCopy size={14} aria-hidden="true" />}
+                <span>{copiedPrompt ? 'Đã chép' : 'Chép Prompt'}</span>
               </button>
-              <button
-                type="button"
-                className="btn btn-line"
-                onClick={() => handleAttach(activeItem)}
-              >
-                Đính kèm
-              </button>
-              <ReactionBar id={activeItem.id} title={activeTitle} library={vaultLib} showLabel />
+              <ReactionBar id={activeItem.id} title={activeTitle} library={vaultLib} />
               <button
                 type="button"
                 className="btn btn-ghost"
                 aria-expanded={benchCodeOpen}
                 onClick={() => setBenchCodeOpen((prev) => !prev)}
               >
-                {benchCodeOpen ? 'Ẩn mã' : 'Xem mã'}
+                {benchCodeOpen ? 'Ẩn mã' : 'Mã nguồn'}
               </button>
             </div>
 
