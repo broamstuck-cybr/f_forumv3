@@ -228,7 +228,7 @@ export const HomeView: React.FC<HomeViewProps> = () => {
         <div className="wrap-wide hm-desk-inner">
           <header className="hm-masthead">
             <div className="hm-masthead-copy">
-              <p className="t-label hm-greeting">{greeting} · chọn mẫu hoặc mô tả trực tiếp</p>
+              <p className="t-label hm-greeting">{greeting} · chọn mẫu hoặc nhập mô tả</p>
               <h1 className="hm-title">
                 <span className="hm-title-ink">
                   Hôm nay bạn muốn{' '}
@@ -239,7 +239,7 @@ export const HomeView: React.FC<HomeViewProps> = () => {
                 </span>
               </h1>
               <p className="hm-lead">
-                Gõ yêu cầu hoặc chọn thẻ cấu trúc bên dưới. Mọi bản phác mở thẳng sang Workspace để chạy thử trực tiếp và kiểm tra chất lượng.
+                Chọn thẻ mẫu bên dưới hoặc gõ mô tả để mở thẳng trong Workspace và xem trực tiếp.
               </p>
             </div>
           </header>

@@ -114,8 +114,8 @@ export const HaloSignIn: React.FC<HaloSignInProps> = ({
           </h2>
           <p className="mt-1 text-[13px]" style={{ color: 'var(--fg-muted)' }}>
             {mode === 'login'
-              ? 'Lưu dự án Workspace, mẫu yêu thích và đồng bộ trên trình duyệt.'
-              : 'Đăng ký nhanh bằng tên đăng nhập, email và mật khẩu.'}
+              ? 'Lưu dự án Workspace và mẫu yêu thích của bạn.'
+              : 'Đăng ký nhanh bằng tài khoản, email và mật khẩu.'}
           </p>
         </header>
 
@@ -310,7 +310,7 @@ export const HaloSignIn: React.FC<HaloSignInProps> = ({
                 transition: 'border-color 160ms ease, color 160ms ease',
               }}
             >
-              Tiếp tục dùng ngay không cần đăng nhập
+              Dùng chế độ khách
             </button>
           )}
         </form>

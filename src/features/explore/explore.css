@@ -550,7 +550,8 @@
 
   .ex-meta > div {
     display: flex;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
+    align-items: baseline;
     gap: 0 var(--space-2);
     min-width: 0;
   }

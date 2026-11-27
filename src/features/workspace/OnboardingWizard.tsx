@@ -23,9 +23,9 @@ export interface OnboardingWizardProps {
 
 const ROLE_OPTIONS: Array<{ id: OnboardingRole; label: string }> = [
   { id: 'student', label: 'Học sinh / Sinh viên' },
-  { id: 'beginner', label: 'Người mới (cần thật nhanh)' },
-  { id: 'business', label: 'Chủ shop / Kinh doanh' },
-  { id: 'tech', label: 'Dân công nghệ (cần mã sạch)' },
+  { id: 'beginner', label: 'Người mới bắt đầu' },
+  { id: 'business', label: 'Kinh doanh / Chủ shop' },
+  { id: 'tech', label: 'Lập trình / Công nghệ' },
 ];
 
 const DOMAIN_OPTIONS: Array<{ id: OnboardingDomain; label: string }> = [
@@ -68,24 +68,24 @@ const SECTION_OPTIONS: Array<{ id: PageSectionKey; label: string }> = [
 
 const STEP_COPY: Array<{ title: string; sub: string }> = [
   {
-    title: 'Bạn là ai & mức độ quen làm web?',
-    sub: 'Chọn một nhóm gần nhất để AI điều chỉnh cách gợi ý và cấu trúc trang.',
+    title: 'Bạn thuộc nhóm nào?',
+    sub: 'Chọn nhóm gần nhất để AI gợi ý đúng bố cục trang.',
   },
   {
-    title: 'Tên trang & Lĩnh vực của bạn?',
-    sub: 'Nhập tên dự án hoặc CLB, rồi chọn lĩnh vực chính để kho mẫu khớp đúng chủ đề.',
+    title: 'Tên trang và lĩnh vực?',
+    sub: 'Nhập tên dự án rồi chọn lĩnh vực để khớp đúng kho mẫu.',
   },
   {
-    title: 'Khách vào trang sẽ làm gì chính?',
-    sub: 'Một hành động rõ ràng giúp nút bấm và bố cục tập trung ngay từ màn đầu.',
+    title: 'Mục tiêu chính của trang?',
+    sub: 'Chọn hành động chính để nút bấm rõ ngay từ màn đầu.',
   },
   {
-    title: 'Cá tính thương hiệu của bạn?',
-    sub: 'Mỗi lựa chọn đi kèm hệ chữ, bảng màu tương phản chuẩn và nhịp chuyển động riêng.',
+    title: 'Phong cách bạn muốn?',
+    sub: 'Mỗi lựa chọn đi kèm bộ chữ, bảng màu và chuyển động riêng.',
   },
   {
-    title: 'Chọn các mục muốn có sẵn trên trang',
-    sub: 'Bạn có thể thêm hoặc bỏ bất kỳ phần nào sau khi vào khung Chat.',
+    title: 'Chọn các mục cần có',
+    sub: 'Có thể thêm hoặc bỏ bất kỳ phần nào sau khi vào Workspace.',
   },
 ];
 
@@ -375,7 +375,7 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
                 className="onb__textBtn"
                 onClick={onSkip}
               >
-                Bỏ qua, vào Chat luôn
+                Bỏ qua
               </button>
             </div>
 

@@ -176,7 +176,7 @@ export const WorkspaceView: React.FC = () => {
         {
           id: `a-${Date.now() + 1}`,
           role: 'assistant',
-          text: `Đã mở mẫu "${product.title}" (${product.categoryLabel}). Bạn có thể nhắn trực tiếp bên dưới để đổi nền sáng/tối, màu nhấn hoặc thêm bớt các phần nội dung.`,
+          text: `Đã mở mẫu "${product.title}" (${product.categoryLabel}). Nhắn bên dưới để đổi nền, màu nhấn hoặc thêm bớt mục.`,
           createdAt: now,
           trace: product.trace,
           matchedResources: product.sourceRefs,

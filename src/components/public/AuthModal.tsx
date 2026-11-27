@@ -313,7 +313,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ open, onClose }) => {
                 color: 'var(--fg-muted)',
               }}
             >
-              <span>Đăng nhập để giữ dự án lâu dài, hoặc dùng ngay không cần tài khoản.</span>
+              <span>Lưu dự án theo tài khoản hoặc dùng chế độ khách ngay.</span>
             </div>
           </motion.div>
         </motion.div>

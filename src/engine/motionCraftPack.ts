@@ -786,7 +786,8 @@ ${signatureCss}
   letter-spacing: ${CRAFT_NUMERIC_RULES.h1Tracking};
   font-weight: 600;
   margin: 0 0 20px;
-  max-width: 16ch;
+  max-width: 18ch;
+  text-wrap: balance;
 }
 .hero h1 em {
   font-style: italic;

@@ -347,8 +347,8 @@ export const ExperienceView: React.FC = () => {
       { id: 'lucianlabs', label: 'lucianLabs', count: counts.lucianlabs },
       { id: 'motionsites', label: 'MotionSites Free', count: counts.motionsites },
       { id: 'codefronts', label: 'CodeFronts', count: counts.codefronts },
-      { id: 'motion-recipes', label: '58 Kỹ thuật chuyển động', count: counts['motion-recipes'] },
-      { id: 'showcase-15', label: '15 Trang mẫu Agent', count: counts['showcase-15'] },
+      { id: 'motion-recipes', label: 'Kỹ thuật động', count: counts['motion-recipes'] },
+      { id: 'showcase-15', label: 'Mẫu Agent', count: counts['showcase-15'] },
     ],
     [counts]
   );
@@ -785,7 +785,7 @@ export const ExperienceView: React.FC = () => {
                 Kho Trải nghiệm Tài nguyên
               </h1>
               <p className="text-xs sm:text-sm mt-1 m-0" style={{ color: 'var(--fg-muted)' }}>
-                {formatCount(counts.all)} mẫu miễn phí · {counts['motion-recipes']} kỹ thuật chuyển động · {counts['showcase-15']} trang mẫu Agent
+                {formatCount(counts.all)} mẫu mở · {counts['motion-recipes']} kỹ thuật · {counts['showcase-15']}&nbsp;mẫu Agent
               </p>
             </div>
           </div>

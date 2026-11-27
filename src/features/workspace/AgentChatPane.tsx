@@ -29,10 +29,10 @@ const ROLE_LABELS: Record<OnboardingRole, string> = {
 };
 
 const QUICK_EDIT_CHIPS = [
-  'Đổi sang nền sáng',
-  'Thêm phần trắc nghiệm',
-  'Thêm đồng hồ đếm ngược',
-  'Đổi màu nhấn cam đào',
+  'Nền sáng',
+  'Thêm câu hỏi',
+  'Đếm ngược',
+  'Màu cam đào',
   'Rút gọn chữ',
 ];
 
@@ -327,7 +327,7 @@ export const AgentChatPane: React.FC<AgentChatPaneProps> = ({
             }}
             placeholder={
               hasGeneratedHtml
-                ? 'Yêu cầu chỉnh sửa: đổi nền sáng, thêm lịch trình, đổi tiêu đề...'
+                ? 'Nhắn yêu cầu chỉnh sửa...'
                 : 'Mô tả trang web bạn muốn tạo...'
             }
             aria-label="Nhập yêu cầu cho AI"

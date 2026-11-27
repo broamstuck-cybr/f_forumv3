@@ -291,12 +291,12 @@ export const LandingManifesto: React.FC<LandingManifestoProps> = ({ onNavigate }
           <div ref={trackRef} className="lp-hm-track">
             <div className="lp-hm-intro">
               <h2 className="lp-hm-title">
-                Từ thực trạng PISA 2025
+                Từ thực trạng AI
                 <br />
                 đến <span className="t-note">Xưởng lắp ráp mở.</span>
               </h2>
               <p className="lp-hm-lead">
-                6 trụ cột nghiên cứu của F-Forum: giải quyết 3 điểm nghẽn khi dùng AI (95,9% học sinh theo OECD PISA 2025), chống AI Slop, khảo sát 195 người dùng (91,2%) và kiến trúc JSON, Bộ lọc AI và WebSocket.
+                6 trụ cột của F-Forum: tháo 3 điểm nghẽn khi học sinh dùng AI (PISA 2025), chống rập khuôn và đưa sản phẩm ra chạy thật.
               </p>
             </div>
 
@@ -324,7 +324,7 @@ export const LandingManifesto: React.FC<LandingManifestoProps> = ({ onNavigate }
               Chọn bộ khung mẫu <Mark kind="underline">ngay tại đây</Mark>
             </h2>
             <p className="t-lead">
-              Nhập bài toán học tập hoặc dự án phổ thông của bạn — F-Forum đối chiếu kho 5.994 mẫu giao diện miễn phí, 58 kỹ thuật chuyển động và 122 repo để mở thẳng Workspace kèm xem trước trực tiếp.
+              Nhập ý tưởng của bạn — F-Forum chọn khớp từ 5.994 mẫu miễn phí và mở thẳng trong Workspace.
             </p>
           </div>
 

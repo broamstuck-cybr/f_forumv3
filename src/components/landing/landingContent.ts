@@ -138,8 +138,8 @@ export interface ManifestoBeat {
 export const MANIFESTO_BEATS: ManifestoBeat[] = [
   {
     id: 'beat-reality',
-    headline: '3 điểm nghẽn khi học sinh dùng AI: thiếu lộ trình, phụ thuộc và thiếu mẫu chuẩn.',
-    body: 'OECD PISA 2025 (9/2026) ghi nhận 95,9% học sinh dùng AI sáng tạo, nhưng vướng 3 điểm nghẽn: (01) người mới "vibe code" thiếu lộ trình bắt đầu; (02) dễ phụ thuộc câu trả lời có sẵn thay vì biến ý tưởng thành sản phẩm; (03) thiếu kho mẫu chuẩn và không gian tập trung để lưu trữ, chia sẻ kinh nghiệm thực tế.',
+    headline: '3 điểm nghẽn khi dùng AI: thiếu lộ trình, phụ thuộc và thiếu mẫu chuẩn.',
+    body: 'OECD PISA 2025 ghi nhận 95,9% học sinh dùng AI nhưng vướng 3 điểm nghẽn: thiếu bước khởi đầu, khó biến câu trả lời thành sản phẩm thật và thiếu kho mẫu kiểm chứng.',
     stickers: [
       { label: 'PISA 2025 · 95,9%', bg: '#BFE9D9', tilt: -2.5 },
       { label: '3 điểm nghẽn 01–03', bg: '#C6E0E4', tilt: 2 },
@@ -148,8 +148,8 @@ export const MANIFESTO_BEATS: ManifestoBeat[] = [
   },
   {
     id: 'beat-solution',
-    headline: 'Bộ khung UI/UX & Starter Kits kiểm định khả thi trước khi vào thư viện.',
-    body: 'F-Forum cung cấp các bộ khung UI/UX, mã nguồn mở và cấu trúc dự án mẫu cho web, ứng dụng và sản phẩm AI đã được phân loại, kiểm tra tính khả thi. Hệ thống đối chiếu nhu cầu để gợi ý Kit phù hợp tương tự chọn template trên Canva, giúp người mới có nền tảng chuẩn.',
+    headline: 'Khung mẫu UI/UX và Starter Kits đã lọc sạch, dùng được ngay.',
+    body: 'Mọi mẫu giao diện, hiệu ứng và cảnh 3D miễn phí đều qua bước lọc mã chạy thật, giúp người mới có điểm xuất phát rõ ràng thay vì vẽ lại từ trang trắng.',
     stickers: [
       { label: 'Starter Kits kiểm định', bg: '#E9D5BE', tilt: -2 },
       { label: 'Gợi ý theo nhu cầu', bg: '#BFE9D9', tilt: 2.5 },
@@ -158,8 +158,8 @@ export const MANIFESTO_BEATS: ManifestoBeat[] = [
   },
   {
     id: 'beat-antislop',
-    headline: 'Chống "AI Slop": tự lắp ghép, phản biện và làm chủ quy trình.',
-    body: 'Nghiên cứu đánh giá khả năng tìm học liệu chuẩn, tư duy phản biện ý tưởng và tỷ lệ hoàn thiện sản phẩm thực tế của học sinh. Thay vì sao chép hàng loạt sản phẩm rập khuôn từ AI (AI Slop), người học dùng cấu trúc mẫu chọn lọc để tự lắp ghép, kiểm chứng và làm chủ quy trình sáng tạo.',
+    headline: 'Chống rập khuôn: tự lắp ghép, chỉnh sửa và làm chủ sản phẩm.',
+    body: 'Thay vì nhận một trang web giống nhau từ AI, bạn chọn cấu trúc mẫu phù hợp, xem từng bước thay đổi mã nguồn và tinh chỉnh trực tiếp theo đúng ý mình.',
     stickers: [
       { label: 'Chống "AI Slop"', bg: '#D2E2DE', tilt: 2 },
       { label: 'Tư duy phản biện', bg: '#E9D5BE', tilt: -2.5 },
@@ -168,8 +168,8 @@ export const MANIFESTO_BEATS: ManifestoBeat[] = [
   },
   {
     id: 'beat-survey',
-    headline: 'Khảo sát 195 người dùng: 91,2% đánh giá cao mẫu UI/UX trực quan.',
-    body: 'Khảo sát thực tế trên 195 học sinh và người dùng cho thấy 91,2% đánh giá cao việc tiếp cận mẫu thiết kế web và thành phần UI/UX trực quan thay vì làm từ con số không. Các Starter Kits tích hợp prompt và mã mẫu giúp hệ thống hóa lại tài nguyên kỹ thuật vốn phân tán trên GitHub.',
+    headline: 'Khảo sát 195 người dùng: 91,2% chọn học qua mẫu trực quan.',
+    body: 'Phần lớn học sinh và người mới hoàn thiện sản phẩm nhanh hơn khi được xem trực tiếp bố cục và mã nguồn mở thay vì tự tìm kiếm rời rạc trên GitHub.',
     stickers: [
       { label: '195 người tham gia', bg: '#C6E0E4', tilt: -2 },
       { label: '91,2% đánh giá cao', bg: '#BFE9D9', tilt: 2.5 },
@@ -178,8 +178,8 @@ export const MANIFESTO_BEATS: ManifestoBeat[] = [
   },
   {
     id: 'beat-open-workshop',
-    headline: 'Bản địa hóa học đường Việt Nam & Xưởng lắp ráp mở miễn phí.',
-    body: 'Toàn bộ Tủ sách tài nguyên và thư viện prompt được phân loại bằng tiếng Việt bám sát bài toán học tập của học sinh & sinh viên yêu công nghệ. Khác công cụ AI thương mại làm thay hoàn toàn, F-Forum là xưởng lắp ráp mở: học sinh tự chọn thành phần thiết kế, còn người làm vibe coding có sẵn Skills chuẩn để kiểm soát AI.',
+    headline: 'Bản địa hóa tiếng Việt và Xưởng lắp ráp mở miễn phí.',
+    body: 'Kho tài nguyên, 58 kỹ thuật chuyển động và 15 trang mẫu Agent đều tổ chức bằng tiếng Việt gọn rõ, mở dùng ngay trên trình duyệt mà không cần cài đặt.',
     stickers: [
       { label: 'Xưởng lắp ráp mở', bg: '#BFE9D9', tilt: -2 },
       { label: 'Cộng đồng F-Forum', bg: '#C6E0E4', tilt: 2.5 },
@@ -188,11 +188,11 @@ export const MANIFESTO_BEATS: ManifestoBeat[] = [
   },
   {
     id: 'beat-architecture',
-    headline: 'Xác minh API, dữ liệu JSON mã hóa, Bộ lọc AI & WebSocket.',
-    body: 'Trình duyệt gửi yêu cầu API đăng nhập để máy chủ và AI xác minh; dữ liệu được mã hóa trong hệ thống tệp JSON kèm mã bảo mật riêng. Bộ lọc AI phát hiện spam và ngôn từ thô tục để cảnh cáo, vô hiệu hóa bài vi phạm, đồng bộ thời gian thực qua WebSocket cho Hỏi đáp, Threads và Kho đề thi.',
+    headline: 'Hộp cát an toàn, xuất bản nhanh và tải mã nguồn độc lập.',
+    body: 'Mọi trang tạo ra chạy trong khung xem cô lập an toàn, có thể xuất bản thành liên kết chia sẻ công khai, Remix trong cộng đồng hoặc tải gói ZIP HTML.',
     stickers: [
-      { label: 'JSON + Bộ lọc AI', bg: '#E9D5BE', tilt: 2 },
-      { label: 'WebSocket Real-time', bg: '#D2E2DE', tilt: -2 },
+      { label: 'Khung xem cô lập', bg: '#E9D5BE', tilt: 2 },
+      { label: 'Xuất bản & ZIP', bg: '#D2E2DE', tilt: -2 },
     ],
     badge: 'code',
   },

@@ -51,8 +51,8 @@ const FILTER_PILLS: Array<{ id: RemixFilterKey; label: string }> = [
   { id: 'featured', label: 'Nổi bật' },
   { id: 'presentation', label: 'Thuyết trình' },
   { id: 'event', label: 'Sự kiện CLB' },
-  { id: 'portfolio', label: 'Hồ sơ cá nhân' },
-  { id: 'business-tech', label: 'Kinh doanh & Công nghệ' },
+  { id: 'portfolio', label: 'Hồ sơ' },
+  { id: 'business-tech', label: 'Sản phẩm & Tech' },
 ];
 
 const CATEGORY_LABELS: Record<PublishedPageCategory, string> = {
@@ -376,9 +376,9 @@ export const CommunityView: React.FC = () => {
     <div className="wrap-wide cm">
       <header className="cm-head">
         <div className="cm-head-copy">
-          <h1 className="cm-title">Cộng đồng Chia sẻ &amp; Remix</h1>
+          <h1 className="cm-title">Cộng đồng Remix</h1>
           <p className="cm-sub">
-            Xem trực tiếp các trang web đã xuất bản, mở lại trong Workspace để chỉnh sửa thành bản của bạn, hoặc tra cứu 58 kỹ thuật chuyển động đã kiểm chứng.
+            Xem các trang đã xuất bản, mở lại trong Workspace để chỉnh theo ý bạn, hoặc tra 58 kỹ thuật chuyển động.
           </p>
         </div>
 
@@ -417,7 +417,7 @@ export const CommunityView: React.FC = () => {
             {topTab === 'knowledge' ? (
               <motion.span layoutId="cm-tab-pill" className="cm-tab-bg" transition={spring} aria-hidden="true" />
             ) : null}
-            <span>Sổ tay Tri thức<span className="cm-tab-suffix"> (58 kỹ thuật)</span></span>
+            <span>Sổ tay<span className="cm-tab-suffix"> (58 kỹ thuật)</span></span>
           </button>
         </div>
 

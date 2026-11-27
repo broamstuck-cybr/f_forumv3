@@ -15,6 +15,16 @@ const COST_LABELS: Record<MotionRecipeItem['cost'], string> = {
   heavy: 'Nặng',
 };
 
+const SHORT_CATEGORY_LABELS: Record<string, string> = {
+  'Video & Nền chuyển động': 'Video & Nền',
+  'Bề mặt & Nút tương tác': 'Bề mặt & Nút',
+  'Chữ & Chuyển động chữ': 'Chữ động',
+  'Chiều sâu & Tương tác chuột': 'Chiều sâu',
+  'Cuộn trang kể chuyện': 'Cuộn trang',
+  'Bố cục & Điều hướng': 'Bố cục',
+  '3D & WebGL': '3D & WebGL',
+};
+
 interface CraftRuleGroup {
   id: string;
   num: string;
@@ -196,7 +206,7 @@ export const KnowledgeView: React.FC = () => {
             aria-selected={tab === 'techniques'}
             onClick={() => setTab('techniques')}
           >
-            58 Kỹ thuật chuyển động
+            58 kỹ thuật
           </button>
           <button
             type="button"
@@ -205,7 +215,7 @@ export const KnowledgeView: React.FC = () => {
             aria-selected={tab === 'craft'}
             onClick={() => setTab('craft')}
           >
-            Quy tắc Chống AI Slop
+            Quy chuẩn UI
           </button>
         </div>
 
@@ -271,7 +281,7 @@ export const KnowledgeView: React.FC = () => {
                 aria-pressed={category === cat.name}
                 onClick={() => setCategory(cat.name)}
               >
-                <span>{cat.name}</span>
+                <span>{SHORT_CATEGORY_LABELS[cat.name] ?? cat.name}</span>
                 <span className="kn-cat-count">{cat.count}</span>
               </button>
             ))}
