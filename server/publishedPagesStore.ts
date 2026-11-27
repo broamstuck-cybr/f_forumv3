@@ -73,11 +73,35 @@ export interface PublishPageInput {
   summary?: string;
   category: PublishedPageCategory;
   personality: BrandPersonality;
-  html: string;
+  html?: string;
+  liveUrl?: string;
   sourceIds?: string[];
   authorName?: string;
   authorRole?: string;
   slug?: string;
+}
+
+function normalizeLiveUrl(raw: unknown): string | undefined {
+  if (typeof raw !== 'string') return undefined;
+  const trimmed = raw.trim();
+  if (!trimmed || trimmed.length > 512) return undefined;
+  try {
+    const parsed = new URL(trimmed);
+    if (parsed.protocol !== 'https:') return undefined;
+    const host = parsed.hostname.toLowerCase();
+    if (
+      !host ||
+      host === 'localhost' ||
+      host.endsWith('.local') ||
+      host.endsWith('.internal') ||
+      /^(127\.|10\.|192\.168\.|169\.254\.|0\.)/.test(host)
+    ) {
+      return undefined;
+    }
+    return parsed.toString();
+  } catch {
+    return undefined;
+  }
 }
 
 let loadedDataDirKey: string | null = null;
@@ -100,7 +124,8 @@ function normalizeStoredPage(raw: unknown): StoredPublishedPage | null {
   const slug = typeof obj.slug === 'string' ? obj.slug.trim().toLowerCase() : '';
   const title = typeof obj.title === 'string' ? obj.title.trim() : '';
   const html = typeof obj.html === 'string' ? obj.html : '';
-  if (!isValidSlugFormat(slug) || !title || !html) return null;
+  const liveUrl = normalizeLiveUrl(obj.liveUrl ?? obj.live_url);
+  if (!isValidSlugFormat(slug) || !title || (!html && !liveUrl)) return null;
 
   const category = VALID_CATEGORIES.has(obj.category as PublishedPageCategory)
     ? (obj.category as PublishedPageCategory)
@@ -117,6 +142,7 @@ function normalizeStoredPage(raw: unknown): StoredPublishedPage | null {
           .filter((id): id is string => typeof id === 'string' && id.trim().length > 0)
           .slice(-MAX_LIKED_BY)
       : [];
+  const rawViews = typeof obj.views === 'number' && Number.isFinite(obj.views) ? Math.max(0, Math.floor(obj.views)) : 0;
   const rawLikes = typeof obj.likes === 'number' && Number.isFinite(obj.likes) ? Math.max(0, Math.floor(obj.likes)) : 0;
   const rawRemixes = typeof obj.remixes === 'number' && Number.isFinite(obj.remixes) ? Math.max(0, Math.floor(obj.remixes)) : 0;
   const rawSources = Array.isArray(obj.sourceIds)
@@ -163,7 +189,9 @@ function normalizeStoredPage(raw: unknown): StoredPublishedPage | null {
     category,
     personality,
     html,
+    ...(liveUrl ? { liveUrl } : {}),
     sourceIds,
+    views: rawViews,
     likes: Math.max(rawLikes, likedBy.length),
     remixes: rawRemixes,
     createdAt,
@@ -182,7 +210,9 @@ function toSupabaseRow(rec: StoredPublishedPage): Record<string, unknown> {
     category: rec.category,
     personality: rec.personality,
     html: rec.html,
+    live_url: rec.liveUrl || null,
     source_ids: rec.sourceIds,
+    views: typeof rec.views === 'number' ? rec.views : 0,
     likes: rec.likes,
     remixes: rec.remixes,
     liked_by: rec.likedBy,
@@ -326,8 +356,9 @@ export function publishUserPage(
   }
 
   const rawHtml = typeof input.html === 'string' ? input.html.trim() : '';
-  if (rawHtml.length < 10) {
-    return { ok: false, error: 'Nội dung HTML không được để trống.', status: 400 };
+  const liveUrl = normalizeLiveUrl(input.liveUrl);
+  if (rawHtml.length < 10 && !liveUrl) {
+    return { ok: false, error: 'Nội dung HTML hoặc đường dẫn trang không được để trống.', status: 400 };
   }
   if (Buffer.byteLength(rawHtml, 'utf8') > MAX_HTML_BYTES) {
     return {
@@ -337,7 +368,7 @@ export function publishUserPage(
     };
   }
 
-  const sanitizedHtml = sanitizePublishedHtml(rawHtml);
+  const sanitizedHtml = rawHtml ? sanitizePublishedHtml(rawHtml) : '';
   const sourceIds = Array.isArray(input.sourceIds)
     ? input.sourceIds
         .filter((s): s is string => typeof s === 'string' && s.trim().length > 0)
@@ -373,7 +404,9 @@ export function publishUserPage(
     category: input.category,
     personality: input.personality,
     html: sanitizedHtml,
+    ...(liveUrl ? { liveUrl } : {}),
     sourceIds,
+    views: 0,
     likes: 0,
     remixes: 0,
     createdAt: now,
@@ -415,6 +448,19 @@ export function toggleLikePublishedPage(
   target.updatedAt = new Date().toISOString();
   persistPageRecord(target);
   return { slug: target.slug, likes: target.likes, liked };
+}
+
+export function incrementViewPublishedPage(
+  slug: string
+): { slug: string; views: number } | null {
+  const cleanSlug = typeof slug === 'string' ? slug.trim().toLowerCase() : '';
+  if (!isValidSlugFormat(cleanSlug)) return null;
+  const pages = getPagesMap();
+  const target = Object.hasOwn(pages, cleanSlug) ? pages[cleanSlug] : undefined;
+  if (!target) return null;
+  target.views = (typeof target.views === 'number' ? target.views : 0) + 1;
+  persistPageRecord(target);
+  return { slug: target.slug, views: target.views };
 }
 
 export function incrementRemixPublishedPage(

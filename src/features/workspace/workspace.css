@@ -884,6 +884,11 @@
   container-type: inline-size;
 }
 
+/* WHY: Keep preview iframe and dark code editor completely free of glass glare overlays. */
+.ws-runner::after {
+  display: none;
+}
+
 .ws-runner__bar {
   display: flex;
   align-items: center;
@@ -1159,14 +1164,52 @@
   color: var(--fg-faint);
 }
 
+.ws-authGate {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid var(--accent-line, rgba(45, 200, 150, 0.32));
+  background: var(--accent-soft, rgba(16, 134, 98, 0.12));
+  color: var(--fg);
+  font-size: 0.8rem;
+  line-height: 1.4;
+}
+
+.ws-authGate__text {
+  flex: 1 1 180px;
+  color: var(--fg);
+}
+
+.ws-authGate__actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.ws-miniBtn--primary {
+  background: var(--accent-fill, #0d825f);
+  border-color: var(--accent, #2dc896);
+  color: #ffffff;
+}
+
+.ws-miniBtn--primary:hover {
+  filter: brightness(1.06);
+}
+
 .ws-codeView {
   flex: 1;
   min-height: 0;
   display: flex;
   flex-direction: column;
   border-radius: 12px;
-  border: 1px solid var(--lg-tray-border);
-  background: var(--lg-panel-bg-sunken);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: #0b1113;
+  color: #e6f2ee;
   overflow: hidden;
 }
 
@@ -1175,14 +1218,20 @@
   align-items: center;
   justify-content: space-between;
   padding: 8px 14px;
-  border-bottom: 1px solid var(--line);
-  background: var(--lg-panel-bg);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  background: #111a1d;
 }
 
 .ws-codeView__meta {
   font-family: var(--font-mono);
   font-size: 0.76rem;
-  color: var(--fg-muted);
+  color: #9cb3ab;
+}
+
+.ws-codeView__bar .ws-iconBtn {
+  color: #e6f2ee;
+  border-color: rgba(255, 255, 255, 0.16);
+  background: rgba(255, 255, 255, 0.06);
 }
 
 .ws-codePre {
@@ -1193,7 +1242,8 @@
   font-family: var(--font-mono);
   font-size: 0.8rem;
   line-height: 1.6;
-  color: var(--fg);
+  background: #0b1113;
+  color: #e6f2ee;
   tab-size: 2;
 }
 

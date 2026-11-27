@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import JSZip from 'jszip';
 import { handleLiquidPointerLeave, handleLiquidPointerMove } from '../../utils/liquidGlassPointer';
+import { hardenPreviewHtml } from '../../utils/hardenPreviewHtml';
 
 export interface ArenaRunnerPaneProps {
   html: string;
@@ -45,6 +46,7 @@ export const ArenaRunnerPane: React.FC<ArenaRunnerPaneProps> = ({
     ? `fforum3.vercel.app/p/${publishedSlug}`
     : 'Xem trước cục bộ';
 
+  const safePreviewHtml = useMemo(() => (html ? hardenPreviewHtml(html) : ''), [html]);
   const lineCount = useMemo(() => (html ? html.split('\n').length : 0), [html]);
   const kbSize = useMemo(
     () => (html ? (new Blob([html]).size / 1024).toFixed(1) : '0.0'),
@@ -68,8 +70,8 @@ export const ArenaRunnerPane: React.FC<ArenaRunnerPaneProps> = ({
       window.open(publicUrl, '_blank', 'noopener,noreferrer');
       return;
     }
-    if (!html) return;
-    const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
+    if (!safePreviewHtml) return;
+    const blob = new Blob([safePreviewHtml], { type: 'text/html;charset=utf-8' });
     const url = URL.createObjectURL(blob);
     window.open(url, '_blank', 'noopener,noreferrer');
     window.setTimeout(() => URL.revokeObjectURL(url), 15000);
@@ -280,7 +282,7 @@ export const ArenaRunnerPane: React.FC<ArenaRunnerPaneProps> = ({
               key={`${reloadNonce}-${publishedSlug || 'local'}`}
               className="ws-iframe"
               title={`Xem trước: ${pageTitle || 'Trang web'}`}
-              srcDoc={html}
+              srcDoc={safePreviewHtml}
               sandbox="allow-scripts allow-forms allow-modals allow-popups"
               referrerPolicy="no-referrer"
             />

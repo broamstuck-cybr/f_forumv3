@@ -526,7 +526,8 @@ export const apiClient = {
     summary: string;
     category: PublishedPageCategory;
     personality: BrandPersonality;
-    html: string;
+    html?: string;
+    liveUrl?: string;
     sourceIds: string[];
     authorName?: string;
     authorRole?: string;
@@ -540,6 +541,13 @@ export const apiClient = {
 
   getPublishedPage(slug: string): Promise<{ page: PublishedPageRecord }> {
     return requestJson(`/api/pages/${encodeURIComponent(slug)}`, { method: 'GET' });
+  },
+
+  viewPublishedPage(slug: string): Promise<{ slug: string; views: number }> {
+    return requestJson(`/api/pages/${encodeURIComponent(slug)}/view`, {
+      method: 'POST',
+      body: JSON.stringify({}),
+    });
   },
 
   likePublishedPage(slug: string): Promise<{ slug: string; likes: number; liked: boolean }> {

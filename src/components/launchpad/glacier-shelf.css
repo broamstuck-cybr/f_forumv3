@@ -66,18 +66,20 @@
 }
 
 html[data-theme='light'] .gb-shelf-root,
-.scene-paper .gb-shelf-root {
-  --paper: var(--bg, #f2efe8);
-  --sheet: var(--bg-raised, #f8f5ef);
-  --surface-card: #ebe6dc;
-  --surface-elevated: #fbf9f4;
-  --ink: var(--fg, #171c1a);
-  --muted: var(--fg-muted, #555f5a);
-  --cobalt: var(--accent, #0b7a59);
-  --cobalt-fill: var(--accent-fill, #0b7a59);
+html[data-theme='light'] .gb-modal-host,
+.scene-paper .gb-shelf-root,
+.scene-paper .gb-modal-host {
+  --paper: #f3f7f5;
+  --sheet: #f8fbf9;
+  --surface-card: #ffffff;
+  --surface-elevated: #f1f6f3;
+  --ink: #101514;
+  --muted: #42504b;
+  --cobalt: #0a6e50;
+  --cobalt-fill: #0a6e50;
   --on-cobalt: #ffffff;
-  --rule: rgba(23, 28, 26, 0.24);
-  --rule-soft: rgba(23, 28, 26, 0.12);
+  --rule: rgba(16, 21, 20, 0.22);
+  --rule-soft: rgba(16, 21, 20, 0.11);
 
   --book-cloth: color-mix(in srgb, var(--ac) 8%, #ece6da);
   --book-cloth-edge: color-mix(in srgb, var(--ac) 12%, #d8d0c0);
@@ -1579,10 +1581,10 @@ html[data-theme='light'] .gb-shelf-root,
 .gb-code {
   margin: 4px 0 0;
   padding: 14px;
-  border: 1px solid var(--rule-soft);
-  border-radius: 8px;
-  background-color: var(--sheet);
-  color: var(--ink);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 10px;
+  background-color: #0b1113;
+  color: #e6f2ee;
   font-family: var(--font-mono);
   font-size: 11.5px;
   line-height: 1.55;

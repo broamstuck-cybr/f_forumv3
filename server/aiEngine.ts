@@ -560,7 +560,7 @@ async function readGeminiStream(
     if (!payload || payload === '[DONE]') return;
     try {
       const chunk = JSON.parse(payload) as {
-        candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }>;
+        candidates?: Array<{ content?: { parts?: Array<{ text?: string; thought?: boolean }> } }>;
         usageMetadata?: {
           promptTokenCount?: number;
           candidatesTokenCount?: number;
@@ -570,7 +570,11 @@ async function readGeminiStream(
       };
       mergeGeminiUsage(tokens, chunk.usageMetadata);
       const parts = chunk.candidates?.[0]?.content?.parts || [];
-      const text = parts.map((p) => p.text || '').join('');
+      // WHY: Skip Gemini thinking parts so internal reasoning never corrupts JSON code output.
+      const text = parts
+        .filter((p) => !p.thought)
+        .map((p) => p.text || '')
+        .join('');
       if (text) {
         assembled += text;
         onDelta?.(text);
@@ -585,7 +589,7 @@ async function readGeminiStream(
   const trimmed = raw.trim();
   if (!trimmed) return { text: '', tokens: finalizeTokens(tokens) };
   const data = JSON.parse(trimmed) as {
-    candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }>;
+    candidates?: Array<{ content?: { parts?: Array<{ text?: string; thought?: boolean }> } }>;
     usageMetadata?: {
       promptTokenCount?: number;
       candidatesTokenCount?: number;
@@ -595,7 +599,10 @@ async function readGeminiStream(
   };
   mergeGeminiUsage(tokens, data.usageMetadata);
   const parts = data.candidates?.[0]?.content?.parts || [];
-  const text = parts.map((p) => p.text || '').join('');
+  const text = parts
+    .filter((p) => !p.thought)
+    .map((p) => p.text || '')
+    .join('');
   if (text) onDelta?.(text);
   return { text, tokens: finalizeTokens(tokens) };
 }
@@ -924,8 +931,19 @@ async function callUpstreamOnce(params: {
   if (config.protocol === 'gemini') {
     const method = streamUpstream ? 'streamGenerateContent?alt=sse' : 'generateContent';
     const url = `${config.baseUrl}/models/${encodeURIComponent(config.model)}:${method}`;
-    const generationConfig: Record<string, unknown> = { temperature };
-    if (params.maxOutputTokens) generationConfig.maxOutputTokens = params.maxOutputTokens;
+    const generationConfig: Record<string, unknown> = {
+      temperature,
+      maxOutputTokens: params.maxOutputTokens || 8192,
+    };
+    const modelLower = config.model.toLowerCase();
+    if (modelLower.startsWith('gemini-3')) {
+      generationConfig.thinkingConfig = { thinkingLevel: 'minimal' };
+    } else if (modelLower.startsWith('gemini-2.5')) {
+      generationConfig.thinkingConfig = { thinkingBudget: 0 };
+    }
+    if (!streamUpstream) {
+      generationConfig.responseMimeType = 'application/json';
+    }
     const resp = await fetchWithRetry(url, {
       method: 'POST',
       redirect: 'manual',

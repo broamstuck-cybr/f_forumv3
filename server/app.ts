@@ -25,6 +25,7 @@ import {
 import {
   getPublishedPageBySlug,
   incrementRemixPublishedPage,
+  incrementViewPublishedPage,
   listPublishedPages,
   publishUserPage,
   renderNotFoundPageHtml,
@@ -135,6 +136,7 @@ function buildAllowedOrigins(): Set<string> {
 
 const DEFAULT_CONNECT_SRC = [
   "'self'",
+  'blob:',
   'https://accounts.google.com',
   'https://oauth2.googleapis.com',
   'https://d8j0ntlcm91z4.cloudfront.net',
@@ -145,7 +147,7 @@ function getDefaultCspDirectives(): string {
   const connectSrc = isProd
     ? DEFAULT_CONNECT_SRC.join(' ')
     : `${DEFAULT_CONNECT_SRC.join(' ')} ws://localhost:* ws://127.0.0.1:*`;
-  return `default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'self'; form-action 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://accounts.google.com/gsi/client blob:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://accounts.google.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: blob: https:; media-src 'self' data: blob: https:; connect-src ${connectSrc}; frame-src 'self' blob: data: https://accounts.google.com; worker-src 'self' blob:`;
+  return `default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'self'; form-action 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://accounts.google.com/gsi/client blob:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://accounts.google.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: blob: https:; media-src 'self' data: blob: https:; connect-src ${connectSrc}; frame-src 'self' blob: data: https://accounts.google.com https://f-forum.vercel.app; worker-src 'self' blob:`;
 }
 
 const SIMULATOR_CSP_DIRECTIVES =
@@ -483,12 +485,13 @@ export async function handleAiChat(req: Request, res: Response): Promise<void> {
       turnResult.reason === 'blocked'
         ? 'Phiên hoặc địa chỉ IP của bạn đang bị tạm khóa sử dụng AI.'
         : turnResult.reason === 'sandbox_disabled'
-          ? 'Chế độ AI Sandbox cho khách đang tạm đóng. Vui lòng đăng nhập để tiếp tục.'
+          ? 'Tính năng AI chỉ mở cho tài khoản đã đăng nhập. Vui lòng đăng nhập để tiếp tục.'
           : turnResult.reason === 'ip_limit'
             ? 'Địa chỉ IP đã đạt giới hạn lượt sử dụng AI trong ngày.'
             : 'Đã đạt giới hạn lượt sử dụng AI trong ngày cho phiên tiêu chuẩn.';
     res.status(status).json({
       error: errorMsg,
+      ...(turnResult.reason === 'sandbox_disabled' ? { requiresAuth: true } : {}),
       quota: turnResult.quota,
     });
     return;
@@ -1519,6 +1522,7 @@ export async function handlePublishPage(req: Request, res: Response): Promise<vo
     category: body.category as PublishedPageCategory,
     personality: body.personality as BrandPersonality,
     html: typeof body.html === 'string' ? body.html : '',
+    liveUrl: typeof body.liveUrl === 'string' ? body.liveUrl : undefined,
     sourceIds: Array.isArray(body.sourceIds) ? (body.sourceIds as string[]) : [],
     authorName,
     authorRole,
@@ -1571,6 +1575,22 @@ export async function handleLikePublishedPage(req: Request, res: Response): Prom
   res.status(200).json(result);
 }
 
+export async function handleViewPublishedPage(req: Request, res: Response): Promise<void> {
+  await ensureHydrated();
+  const ipHash = getClientIpHash(req);
+  if (!enforceRateLimit(req, res, `pages:view:${ipHash}`, 90, 60_000)) {
+    return;
+  }
+  const slug = typeof req.params.slug === 'string' ? req.params.slug : '';
+  const result = incrementViewPublishedPage(slug);
+  if (!result) {
+    res.status(404).json({ error: 'Không tìm thấy trang đã xuất bản.' });
+    return;
+  }
+  await flushSupabaseWrites();
+  res.status(200).json(result);
+}
+
 export async function handleRemixPublishedPage(req: Request, res: Response): Promise<void> {
   await ensureHydrated();
   const user = getAuthenticatedUser(req);
@@ -1604,6 +1624,10 @@ export async function handlePublicPublishedPage(req: Request, res: Response): Pr
   if (!page) {
     res.setHeader('Cache-Control', 'no-store');
     res.status(404).send(renderNotFoundPageHtml(slug));
+    return;
+  }
+  if (page.liveUrl && !page.html) {
+    res.redirect(302, page.liveUrl);
     return;
   }
   res.setHeader('Cache-Control', 'public, max-age=60, stale-while-revalidate=300');
@@ -1681,6 +1705,7 @@ app.get('/api/projects', asyncRoute((req, res) => handleProjectsAction(req, res,
 app.get('/api/pages', asyncRoute((req, res) => handleListPublishedPages(req, res)));
 app.post('/api/pages', asyncRoute((req, res) => handlePublishPage(req, res)));
 app.get('/api/pages/:slug', asyncRoute((req, res) => handleGetPublishedPage(req, res)));
+app.post('/api/pages/:slug/view', asyncRoute((req, res) => handleViewPublishedPage(req, res)));
 app.post('/api/pages/:slug/like', asyncRoute((req, res) => handleLikePublishedPage(req, res)));
 app.post('/api/pages/:slug/remix', asyncRoute((req, res) => handleRemixPublishedPage(req, res)));
 app.post('/api/signals', asyncRoute((req, res) => handleRecordBehaviorSignal(req, res)));

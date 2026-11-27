@@ -51,10 +51,11 @@
 
 .pinui-stage[data-kind='block'] .pinui-stage__body {
   display: block;
-  height: var(--pinui-vh);
+  min-height: var(--pinui-vh);
+  height: auto;
   padding: 0;
-  overflow: hidden;
-  contain: layout paint;
+  overflow-x: auto;
+  overflow-y: visible;
 }
 
 .pinui-stage[data-kind='block'] .pinui-stage__body > * {

@@ -286,9 +286,13 @@ describe('Vault Hydration & Anti-Arena Regression Suite', () => {
       path.join(projectRoot, 'src', 'features', 'community', 'CommunityView.tsx'),
       'utf8'
     );
-    assert.ok(communityTsx.includes('Remix ngay'), 'CommunityView must render Remix ngay action');
+    assert.ok(communityTsx.includes('Remix ngay'), 'CommunityView must support Remix ngay for published Workspace pages');
     assert.ok(communityTsx.includes('KnowledgeView'), 'CommunityView must integrate Sổ tay Tri thức');
-    assert.ok(communityTsx.includes('AGENT_SHOWCASE_15'), 'CommunityView must include 15 Agent Showcase items');
+    assert.equal(
+      communityTsx.includes('AGENT_SHOWCASE_15'),
+      false,
+      'CommunityView must show real published pages only, without built-in showcase templates'
+    );
 
     const navbarTsx = fs.readFileSync(
       path.join(projectRoot, 'src', 'components', 'layout', 'AppNavbar.tsx'),

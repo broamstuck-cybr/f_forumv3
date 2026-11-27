@@ -193,6 +193,8 @@ export const WorkspaceView: React.FC = () => {
     [recordSignal, setOnboardingProfile]
   );
 
+  const canUseAi = Boolean(currentUser) || Boolean(settings.byok?.enabled && settings.byok.apiKey.trim());
+
   const runCompose = useCallback(
     async (
       promptText: string,
@@ -202,10 +204,21 @@ export const WorkspaceView: React.FC = () => {
         forceVariation?: boolean;
         excludeIds?: string[];
         seedItemId?: string;
+        allowGuestPreview?: boolean;
       }
     ) => {
       const cleanPrompt = promptText.trim();
       if (!cleanPrompt) return;
+
+      if (!canUseAi && !opts?.allowGuestPreview) {
+        addToast({
+          type: 'info',
+          title: 'Cần đăng nhập để dùng AI',
+          message: 'Tính năng AI tạo và chỉnh sửa web chỉ mở cho tài khoản đã đăng nhập. Bạn vẫn có thể xem trước 15 mẫu có sẵn.',
+        });
+        setAuthModalOpen(true);
+        return;
+      }
 
       const activeProfile = opts?.profileOverride ?? onboardingProfile ?? buildDefaultProfile();
       const now = new Date().toISOString();
@@ -236,6 +249,7 @@ export const WorkspaceView: React.FC = () => {
           excludeIds: opts?.excludeIds,
           seedItemId: opts?.seedItemId,
           forceVariation: opts?.forceVariation,
+          isAuthenticated: Boolean(currentUser),
           byok: settings.byok,
         });
 
@@ -275,7 +289,18 @@ export const WorkspaceView: React.FC = () => {
         setBusy(false);
       }
     },
-    [behaviorScores, blueprint, html, onboardingProfile, recordSignal, settings.byok]
+    [
+      addToast,
+      behaviorScores,
+      blueprint,
+      canUseAi,
+      currentUser,
+      html,
+      onboardingProfile,
+      recordSignal,
+      setAuthModalOpen,
+      settings.byok,
+    ]
   );
 
   // Consume pendingWorkspaceSeed pushed by Explore / Community / Showcase cards
@@ -369,6 +394,7 @@ export const WorkspaceView: React.FC = () => {
             await runCompose(seed.prompt || `Tạo trang "${seed.title}"`, {
               profileOverride: remixProfile,
               resetCurrent: true,
+              allowGuestPreview: true,
             });
           }
         } finally {
@@ -391,6 +417,7 @@ export const WorkspaceView: React.FC = () => {
         profileOverride: mergedProfile,
         resetCurrent: true,
         seedItemId: seed.id,
+        allowGuestPreview: true,
       }
     );
   }, [
@@ -493,6 +520,7 @@ export const WorkspaceView: React.FC = () => {
     void runCompose(buildAutoPromptFromProfile(profile), {
       profileOverride: profile,
       resetCurrent: true,
+      allowGuestPreview: true,
     });
   };
 
@@ -801,6 +829,9 @@ export const WorkspaceView: React.FC = () => {
             errorMessage={errorMessage}
             canUndo={history.length > 1}
             hasGeneratedHtml={Boolean(html)}
+            canUseAi={canUseAi}
+            onRequireAuth={() => setAuthModalOpen(true)}
+            onOpenShowcase={() => setDrawerOpen(true)}
             onSendPrompt={(text) => void runCompose(text)}
             onRetryLast={() => void runCompose(lastPrompt || 'Tạo lại trang web')}
             onUndo={handleUndo}

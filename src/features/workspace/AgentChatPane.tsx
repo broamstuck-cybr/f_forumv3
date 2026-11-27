@@ -14,6 +14,9 @@ export interface AgentChatPaneProps {
   errorMessage: string | null;
   canUndo: boolean;
   hasGeneratedHtml: boolean;
+  canUseAi: boolean;
+  onRequireAuth: () => void;
+  onOpenShowcase: () => void;
   onSendPrompt: (text: string) => void;
   onRetryLast: () => void;
   onUndo: () => void;
@@ -59,6 +62,9 @@ export const AgentChatPane: React.FC<AgentChatPaneProps> = ({
   errorMessage,
   canUndo,
   hasGeneratedHtml,
+  canUseAi,
+  onRequireAuth,
+  onOpenShowcase,
   onSendPrompt,
   onRetryLast,
   onUndo,
@@ -295,7 +301,23 @@ export const AgentChatPane: React.FC<AgentChatPaneProps> = ({
       )}
 
       <div className="ws-composerWrap">
-        {hasGeneratedHtml && (
+        {!canUseAi && (
+          <div className="ws-authGate" role="status">
+            <span className="ws-authGate__text">
+              AI chỉ bật cho tài khoản đã đăng nhập. Khách có thể xem trước 15 mẫu có sẵn.
+            </span>
+            <div className="ws-authGate__actions">
+              <button type="button" className="ws-miniBtn ws-miniBtn--primary" onClick={onRequireAuth}>
+                Đăng nhập
+              </button>
+              <button type="button" className="ws-miniBtn" onClick={onOpenShowcase}>
+                Xem mẫu
+              </button>
+            </div>
+          </div>
+        )}
+
+        {hasGeneratedHtml && canUseAi && (
           <div className="ws-quickChips" aria-label="Gợi ý chỉnh nhanh">
             {QUICK_EDIT_CHIPS.map((chip) => (
               <button

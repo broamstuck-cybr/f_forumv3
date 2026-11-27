@@ -3,6 +3,9 @@ import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
 import {
   IconCheck,
   IconCopy,
+  IconExternalLink,
+  IconEye,
+  IconGlobe,
   IconHeart,
   IconMaximize2,
   IconMonitor,
@@ -12,7 +15,6 @@ import {
   IconTablet,
   IconX,
 } from '../../ui/icons';
-import { AGENT_SHOWCASE_15 } from '../../data/agentShowcase15';
 import type {
   BrandPersonality,
   OnboardingProfile,
@@ -23,6 +25,7 @@ import { apiClient } from '../../services/apiClient';
 import { useAppStore } from '../../store/appStore';
 import { compileSpecimenSrcDoc, copyText, type PreviewViewport } from '../explore/catalog';
 import { KnowledgeView } from '../knowledge/KnowledgeView';
+import { hardenPreviewHtml } from '../../utils/hardenPreviewHtml';
 import { handleLiquidPointerLeave, handleLiquidPointerMove } from '../../utils/liquidGlassPointer';
 import './community.css';
 
@@ -39,9 +42,10 @@ interface GalleryEntry {
   category: PublishedPageCategory;
   categoryLabel: string;
   html: string;
+  liveUrl?: string;
+  views: number;
   likes: number;
   remixes: number;
-  source: 'published' | 'showcase';
   createdAt: string;
   personality: BrandPersonality;
   prompt: string;
@@ -49,15 +53,15 @@ interface GalleryEntry {
 }
 
 const FILTER_PILLS: Array<{ id: RemixFilterKey; label: string }> = [
-  { id: 'featured', label: 'Nổi bật' },
-  { id: 'presentation', label: 'Thuyết trình' },
+  { id: 'featured', label: 'Tất cả' },
+  { id: 'presentation', label: 'Học tập & Diễn đàn' },
   { id: 'event', label: 'Sự kiện CLB' },
   { id: 'portfolio', label: 'Hồ sơ' },
   { id: 'business-tech', label: 'Sản phẩm & Tech' },
 ];
 
 const CATEGORY_LABELS: Record<PublishedPageCategory, string> = {
-  presentation: 'Thuyết trình',
+  presentation: 'Học tập & Diễn đàn',
   event: 'Sự kiện CLB',
   portfolio: 'Hồ sơ cá nhân',
   business: 'Kinh doanh',
@@ -70,13 +74,22 @@ const AUTHOR_ROLE_LABELS: Record<string, string> = {
   business: 'Kinh doanh',
   tech: 'Công nghệ',
   member: 'Thành viên',
-  guest: 'Khách trải nghiệm',
+  guest: 'Thành viên',
 };
 
 function formatAuthorRole(raw?: string): string {
   const clean = (raw || '').trim();
   if (!clean) return 'Đã xuất bản';
   return AUTHOR_ROLE_LABELS[clean.toLowerCase()] || clean;
+}
+
+function hostOf(url?: string): string {
+  if (!url) return '';
+  try {
+    return new URL(url).hostname;
+  } catch {
+    return '';
+  }
 }
 
 const PREVIEW_CANVAS_WIDTH = 1280;
@@ -127,13 +140,14 @@ function initialsOf(name: string): string {
   );
 }
 
-interface MiniHtmlStageProps {
+interface MiniPageStageProps {
   title: string;
   html: string;
+  liveUrl?: string;
   theme: 'dark' | 'light';
 }
 
-const MiniHtmlStage: React.FC<MiniHtmlStageProps> = ({ title, html, theme }) => {
+const MiniPageStage: React.FC<MiniPageStageProps> = ({ title, html, liveUrl, theme }) => {
   const hostRef = useRef<HTMLDivElement>(null);
   const [visible, setVisible] = useState(false);
   const [box, setBox] = useState({ scale: 0, height: 800 });
@@ -166,8 +180,8 @@ const MiniHtmlStage: React.FC<MiniHtmlStageProps> = ({ title, html, theme }) => 
   }, []);
 
   const srcDoc = useMemo(
-    () => (visible ? compileSpecimenSrcDoc(html, '', theme) : ''),
-    [visible, html, theme]
+    () => (visible && !liveUrl && html ? hardenPreviewHtml(compileSpecimenSrcDoc(html, '', theme)) : ''),
+    [visible, liveUrl, html, theme]
   );
 
   return (
@@ -181,14 +195,25 @@ const MiniHtmlStage: React.FC<MiniHtmlStageProps> = ({ title, html, theme }) => 
             transform: `scale(${box.scale})`,
           }}
         >
-          <iframe
-            className="cm-stage-iframe"
-            title={`Xem trước ${title}`}
-            srcDoc={srcDoc}
-            sandbox="allow-scripts"
-            loading="lazy"
-            tabIndex={-1}
-          />
+          {liveUrl ? (
+            <iframe
+              className="cm-stage-iframe"
+              title={`Xem trực tiếp ${title}`}
+              src={liveUrl}
+              loading="lazy"
+              referrerPolicy="no-referrer"
+              tabIndex={-1}
+            />
+          ) : (
+            <iframe
+              className="cm-stage-iframe"
+              title={`Xem trước ${title}`}
+              srcDoc={srcDoc}
+              sandbox="allow-scripts"
+              loading="lazy"
+              tabIndex={-1}
+            />
+          )}
         </div>
       ) : null}
     </div>
@@ -196,16 +221,7 @@ const MiniHtmlStage: React.FC<MiniHtmlStageProps> = ({ title, html, theme }) => 
 };
 
 export const CommunityView: React.FC = () => {
-  const {
-    navigate,
-    openInWorkspace,
-    recordSignal,
-    isItemLiked,
-    toggleLikedItem,
-    getHeartCount,
-    theme,
-    addToast,
-  } = useAppStore();
+  const { navigate, openInWorkspace, recordSignal, theme, addToast } = useAppStore();
   const reduced = Boolean(useReducedMotion());
 
   const [topTab, setTopTab] = useState<CommunityTopTab>('remix');
@@ -230,7 +246,7 @@ export const CommunityView: React.FC = () => {
         setLoading(false);
       })
       .catch(() => {
-        setError('Chưa kết nối được danh sách trang xuất bản từ máy chủ. Bạn vẫn có thể chạy thử và Remix 15 trang mẫu bên dưới.');
+        setError('Chưa kết nối được danh sách sản phẩm thật từ máy chủ. Bấm Thử lại sau vài giây.');
         setLoading(false);
       });
   }, []);
@@ -248,20 +264,22 @@ export const CommunityView: React.FC = () => {
     return () => window.removeEventListener('keydown', onKey);
   }, [previewEntry]);
 
+  // WHY: Community displays strictly authentic published products with real server metrics (zero built-in placeholder showcases).
   const allEntries = useMemo<GalleryEntry[]>(() => {
-    const publishedEntries: GalleryEntry[] = publishedPages.map((page) => ({
+    return publishedPages.map((page) => ({
       id: `pub:${page.slug}`,
       slug: page.slug,
       title: page.title,
-      summary: page.summary || 'Trang web được xuất bản trực tiếp từ Workspace.',
+      summary: page.summary || 'Sản phẩm web đã xuất bản bởi thành viên F-Forum.',
       authorName: page.authorName || 'Thành viên F-Forum',
       authorRole: formatAuthorRole(page.authorRole),
       category: page.category,
       categoryLabel: CATEGORY_LABELS[page.category] || 'Trang web',
-      html: page.html,
+      html: page.html || '',
+      liveUrl: page.liveUrl,
+      views: typeof page.views === 'number' && page.views >= 0 ? page.views : 0,
       likes: typeof page.likes === 'number' && page.likes >= 0 ? page.likes : 0,
       remixes: typeof page.remixes === 'number' && page.remixes >= 0 ? page.remixes : 0,
-      source: 'published',
       createdAt: page.updatedAt || page.createdAt,
       personality: page.personality,
       prompt: `Remix từ trang "${page.title}": giữ cấu trúc tổng thể và điều chỉnh nội dung theo yêu cầu của tôi.`,
@@ -270,32 +288,7 @@ export const CommunityView: React.FC = () => {
         personality: page.personality,
       },
     }));
-
-    const seenSlugs = new Set(publishedEntries.map((entry) => entry.slug));
-
-    const showcaseEntries: GalleryEntry[] = AGENT_SHOWCASE_15.filter(
-      (item) => !seenSlugs.has(item.slug)
-    ).map((item) => ({
-      id: item.id,
-      slug: item.slug,
-      title: item.title,
-      summary: item.subtitle,
-      authorName: item.authorLabel,
-      authorRole: 'Mẫu Agent',
-      category: item.category,
-      categoryLabel: item.categoryLabel || CATEGORY_LABELS[item.category],
-      html: item.html,
-      likes: getHeartCount(item.id),
-      remixes: 0,
-      source: 'showcase',
-      createdAt: '',
-      personality: item.profile.personality,
-      prompt: item.userPrompt,
-      profile: item.profile,
-    }));
-
-    return [...publishedEntries, ...showcaseEntries];
-  }, [publishedPages, getHeartCount]);
+  }, [publishedPages]);
 
   const filteredEntries = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -307,104 +300,123 @@ export const CommunityView: React.FC = () => {
         return false;
       }
       if (!q) return true;
-      const hay = `${entry.title} ${entry.summary} ${entry.authorName} ${entry.categoryLabel}`.toLowerCase();
+      const hay = `${entry.title} ${entry.summary} ${entry.authorName} ${entry.categoryLabel} ${entry.liveUrl || ''}`.toLowerCase();
       return hay.includes(q);
     });
 
     if (filter === 'featured') {
       return [...matched].sort((a, b) => {
-        const scoreA = a.likes * 3 + a.remixes * 5 + (a.source === 'published' ? 2 : 0);
-        const scoreB = b.likes * 3 + b.remixes * 5 + (b.source === 'published' ? 2 : 0);
+        const scoreA = a.likes * 3 + a.remixes * 5 + a.views;
+        const scoreB = b.likes * 3 + b.remixes * 5 + b.views;
         return scoreB - scoreA;
       });
     }
     return matched;
   }, [allEntries, filter, search]);
 
-  const handleToggleHeart = async (entry: GalleryEntry) => {
-    if (entry.source === 'published') {
-      const nextLiked = !likedPublishedSlugs[entry.slug];
-      setLikedPublishedSlugs((prev) => ({ ...prev, [entry.slug]: nextLiked }));
+  const trackRealView = useCallback(
+    (entry: GalleryEntry) => {
+      recordSignal(entry.slug, 'view', 'community');
       setPublishedPages((prev) =>
         prev.map((page) =>
-          page.slug === entry.slug
-            ? { ...page, likes: Math.max(0, (page.likes || 0) + (nextLiked ? 1 : -1)) }
-            : page
+          page.slug === entry.slug ? { ...page, views: (page.views || 0) + 1 } : page
         )
       );
-      if (nextLiked) recordSignal(entry.slug, 'like', 'community');
-      try {
-        const res = await apiClient.likePublishedPage(entry.slug);
-        setLikedPublishedSlugs((prev) => ({ ...prev, [entry.slug]: Boolean(res.liked) }));
-        setPublishedPages((prev) =>
-          prev.map((page) =>
-            page.slug === entry.slug ? { ...page, likes: Math.max(0, res.likes) } : page
-          )
-        );
-      } catch {
-        return;
-      }
-      return;
-    }
-
-    toggleLikedItem(entry.id, 'showcase');
-  };
-
-  const handleRemix = (entry: GalleryEntry) => {
-    setPreviewEntry(null);
-    if (entry.source === 'published') {
-      recordSignal(entry.slug, 'use', 'community');
       void apiClient
-        .remixPublishedPage(entry.slug)
+        .viewPublishedPage(entry.slug)
         .then((res) => {
           setPublishedPages((prev) =>
             prev.map((page) =>
-              page.slug === entry.slug ? { ...page, remixes: res.remixes } : page
+              page.slug === entry.slug ? { ...page, views: Math.max(0, res.views) } : page
             )
           );
         })
         .catch(() => undefined);
+    },
+    [recordSignal]
+  );
 
-      openInWorkspace({
-        kind: 'remix-page',
-        id: entry.slug,
-        title: entry.title,
-        sourceLibrary: 'Cộng đồng Remix',
-        prompt: entry.prompt,
-        html: entry.html,
-        profile: entry.profile,
-      });
+  const handleOpenPreview = useCallback(
+    (entry: GalleryEntry) => {
+      setModalViewport(1440);
+      setPreviewEntry(entry);
+      trackRealView(entry);
+    },
+    [trackRealView]
+  );
+
+  const handleToggleHeart = async (entry: GalleryEntry) => {
+    const nextLiked = !likedPublishedSlugs[entry.slug];
+    setLikedPublishedSlugs((prev) => ({ ...prev, [entry.slug]: nextLiked }));
+    setPublishedPages((prev) =>
+      prev.map((page) =>
+        page.slug === entry.slug
+          ? { ...page, likes: Math.max(0, (page.likes || 0) + (nextLiked ? 1 : -1)) }
+          : page
+      )
+    );
+    if (nextLiked) recordSignal(entry.slug, 'like', 'community');
+    try {
+      const res = await apiClient.likePublishedPage(entry.slug);
+      setLikedPublishedSlugs((prev) => ({ ...prev, [entry.slug]: Boolean(res.liked) }));
+      setPublishedPages((prev) =>
+        prev.map((page) =>
+          page.slug === entry.slug ? { ...page, likes: Math.max(0, res.likes) } : page
+        )
+      );
+    } catch {
       return;
     }
+  };
 
-    recordSignal(entry.id, 'use', 'showcase');
+  const handleRemix = (entry: GalleryEntry) => {
+    setPreviewEntry(null);
+    recordSignal(entry.slug, 'use', 'community');
+    void apiClient
+      .remixPublishedPage(entry.slug)
+      .then((res) => {
+        setPublishedPages((prev) =>
+          prev.map((page) =>
+            page.slug === entry.slug ? { ...page, remixes: res.remixes } : page
+          )
+        );
+      })
+      .catch(() => undefined);
+
     openInWorkspace({
-      kind: 'showcase-15',
-      id: entry.id,
+      kind: 'remix-page',
+      id: entry.slug,
       title: entry.title,
-      sourceLibrary: entry.categoryLabel,
+      sourceLibrary: 'Cộng đồng F-Forum',
       prompt: entry.prompt,
       html: entry.html,
       profile: entry.profile,
     });
   };
 
-  const handleCopyRemixUrl = async (entry: GalleryEntry) => {
-    const url = `${window.location.origin}/?remix=${encodeURIComponent(entry.slug)}`;
+  const handleCopyShareUrl = async (entry: GalleryEntry) => {
+    const url = entry.liveUrl || `${window.location.origin}/p/${encodeURIComponent(entry.slug)}`;
     const ok = await copyText(url);
     if (ok) {
       setCopiedSlug(entry.slug);
       window.setTimeout(() => {
         setCopiedSlug((prev) => (prev === entry.slug ? null : prev));
       }, 1800);
-      addToast({ type: 'success', title: 'Đã chép liên kết Remix', message: entry.title });
+      addToast({ type: 'success', title: 'Đã chép liên kết trang', message: url });
     }
   };
 
   const modalSrcDoc = useMemo(
-    () => (previewEntry ? compileSpecimenSrcDoc(previewEntry.html, '', theme) : ''),
+    () =>
+      previewEntry && !previewEntry.liveUrl && previewEntry.html
+        ? hardenPreviewHtml(compileSpecimenSrcDoc(previewEntry.html, '', theme))
+        : '',
     [previewEntry, theme]
   );
+
+  const liveModalPage = previewEntry
+    ? publishedPages.find((p) => p.slug === previewEntry.slug)
+    : undefined;
 
   const spring = reduced ? { duration: 0.01 } : { type: 'spring' as const, stiffness: 320, damping: 30 };
   const communityBentoSpans = useMemo(
@@ -420,9 +432,9 @@ export const CommunityView: React.FC = () => {
         onPointerLeave={handleLiquidPointerLeave}
       >
         <div className="cm-head-copy">
-          <h1 className="cm-title">Cộng đồng Remix</h1>
+          <h1 className="cm-title">Cộng đồng F-Forum</h1>
           <p className="cm-sub">
-            Xem các trang đã xuất bản, mở lại trong Workspace để chỉnh theo ý bạn, hoặc tra 58 kỹ thuật chuyển động.
+            Nơi trưng bày các trang web chạy thật từ thành viên với lượt xem và lượt thích thực tế, cùng sổ tay 58 kỹ thuật giao diện.
           </p>
         </div>
 
@@ -432,7 +444,7 @@ export const CommunityView: React.FC = () => {
             className="cm-share-btn"
             onClick={() => navigate('workspace')}
           >
-            Chia sẻ trang
+            Đăng trang từ Workspace
           </button>
         </div>
       </header>
@@ -449,7 +461,7 @@ export const CommunityView: React.FC = () => {
             {topTab === 'remix' ? (
               <motion.span layoutId="cm-tab-pill" className="cm-tab-bg" transition={spring} aria-hidden="true" />
             ) : null}
-            <span>Cộng đồng Remix</span>
+            <span>Sản phẩm thật</span>
           </button>
           <button
             type="button"
@@ -467,7 +479,7 @@ export const CommunityView: React.FC = () => {
 
         {topTab === 'remix' ? (
           <span className="t-label">
-            {filteredEntries.length} trang chạy thật
+            {filteredEntries.length} sản phẩm thực tế
           </span>
         ) : null}
       </div>
@@ -537,9 +549,9 @@ export const CommunityView: React.FC = () => {
           ) : null}
 
           {loading && allEntries.length === 0 ? (
-            <div className="cm-grid" aria-busy="true" aria-label="Đang tải danh sách trang">
-              {Array.from({ length: 6 }, (_, idx) => (
-                <div key={idx} className="cm-skeleton">
+            <div className="cm-grid" aria-busy="true" aria-label="Đang tải danh sách sản phẩm">
+              {Array.from({ length: 2 }, (_, idx) => (
+                <div key={idx} className="cm-skeleton" data-bento-span={idx === 0 ? 7 : 5}>
                   <div className="cm-skeleton-media" />
                   <div className="cm-skeleton-lines">
                     <div className="cm-skeleton-bar" style={{ width: '68%' }} />
@@ -550,118 +562,160 @@ export const CommunityView: React.FC = () => {
             </div>
           ) : filteredEntries.length === 0 ? (
             <div className="cm-state">
-              <p className="t-lead">Chưa có trang nào khớp bộ lọc hiện tại.</p>
+              <p className="t-lead">
+                {allEntries.length === 0
+                  ? 'Cộng đồng chưa có sản phẩm nào được xuất bản.'
+                  : 'Chưa có sản phẩm nào trong nhóm lọc hiện tại.'}
+              </p>
               <div className="flex flex-wrap justify-center gap-3">
-                <button
-                  type="button"
-                  className="btn btn-line"
-                  onClick={() => {
-                    setFilter('featured');
-                    setSearch('');
-                  }}
-                >
-                  Xem tất cả
-                </button>
+                {allEntries.length > 0 ? (
+                  <button
+                    type="button"
+                    className="btn btn-line"
+                    onClick={() => {
+                      setFilter('featured');
+                      setSearch('');
+                    }}
+                  >
+                    Xem tất cả
+                  </button>
+                ) : null}
                 <button
                   type="button"
                   className="btn btn-solid"
                   onClick={() => navigate('workspace')}
                 >
-                  Tạo trang mới
+                  Xuất bản trang đầu tiên
                 </button>
               </div>
             </div>
           ) : (
             <div className="cm-grid">
               {filteredEntries.map((entry, idx) => {
-                const liked =
-                  entry.source === 'published'
-                    ? Boolean(likedPublishedSlugs[entry.slug])
-                    : isItemLiked(entry.id);
-                const heartCount =
-                  entry.source === 'published' ? entry.likes : getHeartCount(entry.id);
+                const liked = Boolean(likedPublishedSlugs[entry.slug]);
                 const bentoSpan = communityBentoSpans[idx] ?? 4;
                 const isFeatured = bentoSpan >= 8;
+                const isSingleHero = bentoSpan === 12;
+                const domainLabel = hostOf(entry.liveUrl);
 
                 return (
                   <article
                     key={entry.id}
-                    className={`cm-card lg-glass lg-glass--matte${isFeatured ? ' cm-card--featured' : ''}`}
+                    className={`cm-card lg-glass lg-glass--matte${isFeatured ? ' cm-card--featured' : ''}${isSingleHero ? ' cm-card--flagship' : ''}`}
                     data-bento-span={bentoSpan}
                     onPointerMove={handleLiquidPointerMove}
                     onPointerLeave={handleLiquidPointerLeave}
                   >
                     <div className="cm-stage">
-                      <MiniHtmlStage title={entry.title} html={entry.html} theme={theme} />
-                      <span className="cm-stage-badge">{entry.categoryLabel}</span>
+                      <MiniPageStage
+                        title={entry.title}
+                        html={entry.html}
+                        liveUrl={entry.liveUrl}
+                        theme={theme}
+                      />
+                      <span className="cm-stage-badge">
+                        {domainLabel ? (
+                          <span className="cm-stage-badge__live">
+                            <IconGlobe size={12} aria-hidden="true" />
+                            <span>{domainLabel}</span>
+                          </span>
+                        ) : (
+                          entry.categoryLabel
+                        )}
+                      </span>
                       <button
                         type="button"
                         className="cm-stage-trigger"
-                        aria-label={`Xem thử trực tiếp ${entry.title}`}
-                        onClick={() => {
-                          setModalViewport(1440);
-                          setPreviewEntry(entry);
-                          recordSignal(
-                            entry.source === 'published' ? entry.slug : entry.id,
-                            'view',
-                            entry.source === 'published' ? 'community' : 'showcase'
-                          );
-                        }}
+                        aria-label={`Xem trực tiếp ${entry.title}`}
+                        onClick={() => handleOpenPreview(entry)}
                       />
                       <button
                         type="button"
                         className="cm-stage-expand"
                         aria-label={`Mở lớn ${entry.title}`}
-                        title="Xem thử"
-                        onClick={() => {
-                          setModalViewport(1440);
-                          setPreviewEntry(entry);
-                        }}
+                        title="Xem lớn"
+                        onClick={() => handleOpenPreview(entry)}
                       >
                         <IconMaximize2 size={15} aria-hidden="true" />
                       </button>
                     </div>
 
-                    <div className="cm-card-body">
-                      <h2 className="cm-card-title" title={entry.title}>
-                        {entry.title}
-                      </h2>
-                      <p className="cm-card-summary">{entry.summary}</p>
-                      <div className="cm-author-row">
-                        <span className="cm-author">
-                          <span className="cm-author-avatar" aria-hidden="true">
-                            {initialsOf(entry.authorName)}
+                    <div className="cm-card-content">
+                      <div className="cm-card-body">
+                        <div className="cm-card-eyebrow">
+                          <span className="cm-origin-tag">{entry.categoryLabel}</span>
+                          {entry.liveUrl ? (
+                            <span className="cm-live-pill">Web chạy thật</span>
+                          ) : null}
+                        </div>
+                        <h2 className="cm-card-title" title={entry.title}>
+                          {entry.title}
+                        </h2>
+                        <p className="cm-card-summary">{entry.summary}</p>
+                        <div className="cm-author-row">
+                          <span className="cm-author">
+                            <span className="cm-author-avatar" aria-hidden="true">
+                              {initialsOf(entry.authorName)}
+                            </span>
+                            <span className="cm-author-name">{entry.authorName}</span>
                           </span>
-                          <span className="cm-author-name">{entry.authorName}</span>
-                        </span>
-                        <span className="cm-origin-tag">{entry.authorRole}</span>
-                      </div>
-                    </div>
-
-                    <div className="cm-card-foot">
-                      <div className="cm-card-metrics">
-                        <button
-                          type="button"
-                          className="cm-heart-btn"
-                          aria-pressed={liked}
-                          aria-label={`${liked ? 'Bỏ thích' : 'Thích'} ${entry.title}`}
-                          onClick={() => void handleToggleHeart(entry)}
-                        >
-                          <IconHeart size={15} filled={liked} aria-hidden="true" />
-                          <span>{heartCount}</span>
-                        </button>
-                        {entry.remixes > 0 ? (
-                          <span className="cm-remix-stat">{entry.remixes} remix</span>
-                        ) : null}
+                          <span className="cm-origin-tag">{entry.authorRole}</span>
+                        </div>
                       </div>
 
-                      <button
-                        type="button"
-                        className="cm-remix-btn"
-                        onClick={() => handleRemix(entry)}
-                      >
-                        Remix ngay
-                      </button>
+                      <div className="cm-card-foot">
+                        <div className="cm-card-metrics">
+                          <button
+                            type="button"
+                            className="cm-heart-btn"
+                            aria-pressed={liked}
+                            aria-label={`${liked ? 'Bỏ thích' : 'Thích'} ${entry.title}`}
+                            onClick={() => void handleToggleHeart(entry)}
+                          >
+                            <IconHeart size={15} filled={liked} aria-hidden="true" />
+                            <span>{entry.likes}</span>
+                          </button>
+                          <span className="cm-stat-pill" title="Lượt xem thực tế">
+                            <IconEye size={14} aria-hidden="true" />
+                            <span>{entry.views}</span>
+                          </span>
+                          {entry.remixes > 0 ? (
+                            <span className="cm-remix-stat">{entry.remixes} remix</span>
+                          ) : null}
+                        </div>
+
+                        <div className="cm-card-actions">
+                          {entry.liveUrl ? (
+                            <>
+                              <button
+                                type="button"
+                                className="cm-ghost-btn"
+                                onClick={() => handleOpenPreview(entry)}
+                              >
+                                Xem trực tiếp
+                              </button>
+                              <a
+                                href={entry.liveUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="cm-remix-btn"
+                                onClick={() => trackRealView(entry)}
+                              >
+                                <span>Mở trang thật</span>
+                                <IconExternalLink size={14} aria-hidden="true" />
+                              </a>
+                            </>
+                          ) : (
+                            <button
+                              type="button"
+                              className="cm-remix-btn"
+                              onClick={() => handleRemix(entry)}
+                            >
+                              Remix ngay
+                            </button>
+                          )}
+                        </div>
+                      </div>
                     </div>
                   </article>
                 );
@@ -678,7 +732,7 @@ export const CommunityView: React.FC = () => {
             className="cm-modal-backdrop"
             role="dialog"
             aria-modal="true"
-            aria-label={`Xem thử ${previewEntry.title}`}
+            aria-label={`Xem trực tiếp ${previewEntry.title}`}
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -698,6 +752,7 @@ export const CommunityView: React.FC = () => {
                   <h2 className="cm-modal-title">{previewEntry.title}</h2>
                   <span className="t-label">
                     {previewEntry.authorName} · {previewEntry.categoryLabel}
+                    {previewEntry.liveUrl ? ` · ${hostOf(previewEntry.liveUrl)}` : ''}
                   </span>
                 </div>
 
@@ -735,9 +790,9 @@ export const CommunityView: React.FC = () => {
                   <button
                     type="button"
                     className="cm-icon-btn"
-                    aria-label="Chép liên kết Remix"
-                    title={copiedSlug === previewEntry.slug ? 'Đã chép liên kết' : 'Chép liên kết Remix'}
-                    onClick={() => void handleCopyRemixUrl(previewEntry)}
+                    aria-label="Chép liên kết"
+                    title={copiedSlug === previewEntry.slug ? 'Đã chép liên kết' : 'Chép liên kết'}
+                    onClick={() => void handleCopyShareUrl(previewEntry)}
                   >
                     {copiedSlug === previewEntry.slug ? (
                       <IconCheck size={16} aria-hidden="true" />
@@ -759,48 +814,62 @@ export const CommunityView: React.FC = () => {
 
               <div className="cm-modal-stage">
                 <div className="cm-modal-frame" data-viewport={modalViewport}>
-                  <iframe
-                    title={`Bản chạy thử ${previewEntry.title}`}
-                    srcDoc={modalSrcDoc}
-                    sandbox="allow-scripts"
-                  />
+                  {previewEntry.liveUrl ? (
+                    <iframe
+                      title={`Bản chạy trực tiếp ${previewEntry.title}`}
+                      src={previewEntry.liveUrl}
+                      referrerPolicy="no-referrer"
+                    />
+                  ) : (
+                    <iframe
+                      title={`Bản chạy thử ${previewEntry.title}`}
+                      srcDoc={modalSrcDoc}
+                      sandbox="allow-scripts"
+                    />
+                  )}
                 </div>
               </div>
 
               <div className="cm-modal-foot">
-                <button
-                  type="button"
-                  className="cm-heart-btn"
-                  aria-pressed={
-                    previewEntry.source === 'published'
-                      ? Boolean(likedPublishedSlugs[previewEntry.slug])
-                      : isItemLiked(previewEntry.id)
-                  }
-                  onClick={() => void handleToggleHeart(previewEntry)}
-                >
-                  <IconHeart
-                    size={16}
-                    filled={
-                      previewEntry.source === 'published'
-                        ? Boolean(likedPublishedSlugs[previewEntry.slug])
-                        : isItemLiked(previewEntry.id)
-                    }
-                    aria-hidden="true"
-                  />
-                  <span>
-                    {previewEntry.source === 'published'
-                      ? publishedPages.find((p) => p.slug === previewEntry.slug)?.likes ?? previewEntry.likes
-                      : getHeartCount(previewEntry.id)}
+                <div className="cm-card-metrics">
+                  <button
+                    type="button"
+                    className="cm-heart-btn"
+                    aria-pressed={Boolean(likedPublishedSlugs[previewEntry.slug])}
+                    onClick={() => void handleToggleHeart(previewEntry)}
+                  >
+                    <IconHeart
+                      size={16}
+                      filled={Boolean(likedPublishedSlugs[previewEntry.slug])}
+                      aria-hidden="true"
+                    />
+                    <span>{liveModalPage?.likes ?? previewEntry.likes}</span>
+                  </button>
+                  <span className="cm-stat-pill">
+                    <IconEye size={15} aria-hidden="true" />
+                    <span>{liveModalPage?.views ?? previewEntry.views} lượt xem</span>
                   </span>
-                </button>
+                </div>
 
-                <button
-                  type="button"
-                  className="cm-share-btn"
-                  onClick={() => handleRemix(previewEntry)}
-                >
-                  Remix ngay
-                </button>
+                {previewEntry.liveUrl ? (
+                  <a
+                    href={previewEntry.liveUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="cm-share-btn"
+                  >
+                    <span>Mở trang thật</span>
+                    <IconExternalLink size={15} aria-hidden="true" />
+                  </a>
+                ) : (
+                  <button
+                    type="button"
+                    className="cm-share-btn"
+                    onClick={() => handleRemix(previewEntry)}
+                  >
+                    Remix ngay
+                  </button>
+                )}
               </div>
             </motion.div>
           </motion.div>

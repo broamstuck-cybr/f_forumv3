@@ -170,9 +170,21 @@ function savePersistedState(): void {
   }
 }
 
+let runtimeStoredKeys: string[] = [];
+
 registerHydrator('keyPool', async () => {
-  const rows = await sbSelect<Record<string, unknown>>('ff_admin_config', 'select=*&key=eq.keyPool');
-  const row = rows[0];
+  const [poolRows, secretRows] = await Promise.all([
+    sbSelect<Record<string, unknown>>('ff_admin_config', 'select=*&key=eq.keyPool'),
+    sbSelect<Record<string, unknown>>('ff_admin_config', 'select=*&key=eq.gatewayPool'),
+  ]);
+  const secretRow = secretRows[0];
+  if (secretRow && secretRow.value && typeof secretRow.value === 'object') {
+    const rawKeys = (secretRow.value as { keys?: unknown }).keys;
+    runtimeStoredKeys = Array.isArray(rawKeys)
+      ? rawKeys.filter((k): k is string => typeof k === 'string' && k.trim().length >= 8).map((k) => k.trim())
+      : [];
+  }
+  const row = poolRows[0];
   if (row && row.value && typeof row.value === 'object') {
     const raw = row.value as Partial<PersistedKeyPoolData>;
     const today = getUtcDayKey();
@@ -181,9 +193,9 @@ registerHydrator('keyPool', async () => {
       dailyUsed: raw.dateKey === today && typeof raw.dailyUsed === 'number' ? Math.max(0, raw.dailyUsed) : 0,
       slots: raw.slots && typeof raw.slots === 'object' ? raw.slots : {},
     };
-    lastEnvSignature = '';
-    syncPoolKeysFromEnv();
   }
+  lastEnvSignature = '';
+  syncPoolKeysFromEnv();
 });
 
 function collectEnvKeys(): string[] {
@@ -206,6 +218,12 @@ function collectEnvKeys(): string[] {
   }
   if (ordered.length === 0) {
     add(process.env.AI_API_KEY);
+  }
+  // WHY: Fall back to RLS-locked server-only Supabase gatewayPool keys when Vercel env vars are not yet provisioned.
+  if (ordered.length === 0 && runtimeStoredKeys.length > 0) {
+    for (const key of runtimeStoredKeys) {
+      add(key);
+    }
   }
   return ordered;
 }

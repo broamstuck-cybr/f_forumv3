@@ -580,6 +580,50 @@ html[data-theme='light'] .iris-honor-btn:hover {
   flex-wrap: wrap;
 }
 
+html[data-theme='light'] .iris-qr-btn--ghost {
+  background: #ffffff;
+  border-color: rgba(16, 21, 20, 0.16);
+  color: #101514;
+}
+
+html[data-theme='light'] .iris-qr-btn--ghost:hover {
+  background: #eef4f1;
+  color: #0a6e50;
+}
+
+html[data-theme='light'] .iris-honor-modal {
+  background: linear-gradient(165deg, #ffffff 0%, #f3f8f5 100%);
+  border-color: rgba(16, 21, 20, 0.14);
+  box-shadow: 0 28px 72px rgba(16, 21, 20, 0.22);
+  color: #101514;
+}
+
+html[data-theme='light'] .iris-honor-title,
+html[data-theme='light'] .iris-honor-card-title {
+  color: #101514;
+}
+
+html[data-theme='light'] .iris-honor-close {
+  background: #f1f6f3;
+  border-color: rgba(16, 21, 20, 0.14);
+  color: #101514;
+}
+
+html[data-theme='light'] .iris-honor-close:hover {
+  background: #e4eee9;
+  border-color: rgba(10, 110, 80, 0.35);
+}
+
+html[data-theme='light'] .iris-honor-tag {
+  background: rgba(10, 110, 80, 0.08);
+  border-color: rgba(10, 110, 80, 0.2);
+  color: #101514;
+}
+
+html[data-theme='light'] .iris-honor-foot {
+  background: #f2f7f4;
+}
+
 @media (max-width: 860px) {
   .iris-hero {
     min-height: 660px;

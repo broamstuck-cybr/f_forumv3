@@ -248,6 +248,51 @@ const AppShell: React.FC = () => {
 };
 
 export const App: React.FC = () => {
+  // WHY: Prevent recursive self-embedding when a sandboxed preview iframe ever resolves to the app origin.
+  const isSelfEmbedded =
+    typeof window !== 'undefined' &&
+    window.self !== window.top &&
+    window.location.pathname.startsWith('/workspace');
+
+  if (isSelfEmbedded) {
+    return (
+      <div
+        style={{
+          minHeight: '100vh',
+          display: 'grid',
+          placeItems: 'center',
+          padding: 24,
+          background: '#0b110f',
+          color: '#edf4f0',
+          fontFamily: 'system-ui, sans-serif',
+          textAlign: 'center',
+        }}
+      >
+        <div>
+          <p style={{ margin: '0 0 12px', fontSize: 15 }}>
+            Trang này không hỗ trợ hiển thị lồng trong khung xem trước.
+          </p>
+          <a
+            href={typeof window !== 'undefined' ? window.location.href : '/workspace'}
+            target="_top"
+            style={{
+              display: 'inline-block',
+              padding: '8px 16px',
+              borderRadius: 999,
+              background: '#0e7c5a',
+              color: '#ffffff',
+              textDecoration: 'none',
+              fontWeight: 600,
+              fontSize: 13,
+            }}
+          >
+            Mở ở cửa sổ chính
+          </a>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <ErrorBoundary>
       <AppProvider>

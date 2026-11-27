@@ -801,9 +801,10 @@
     display: grid;
     gap: var(--space-2);
     min-width: 0;
-    border: 1px solid var(--lg-pill-border);
+    border: 1px solid rgba(255, 255, 255, 0.12);
     border-radius: 14px;
-    background: var(--lg-panel-bg-sunken);
+    background: #0b1113;
+    color: #e6f2ee;
     overflow: hidden;
   }
 
@@ -820,8 +821,13 @@
     justify-content: space-between;
     gap: var(--space-2);
     padding: 0 var(--space-3);
-    border-bottom: 1px solid var(--line);
-    background: var(--bg-card-surface);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    background: #111a1d;
+    color: #cde0da;
+  }
+
+  .ex-code-tabs button {
+    color: #cde0da;
   }
 
   .ex-code-pre {
@@ -832,7 +838,8 @@
     font-family: var(--font-mono);
     font-size: var(--text-xs);
     line-height: 1.55;
-    color: var(--fg);
+    background: #0b1113;
+    color: #e6f2ee;
     white-space: pre-wrap;
     word-break: break-word;
   }
@@ -2204,9 +2211,10 @@
 
   .ex-xp-pre {
     max-height: 420px;
-    border: 1px solid var(--line);
+    border: 1px solid rgba(255, 255, 255, 0.12);
     border-radius: var(--radius-sm);
-    background: var(--bg-sunken);
+    background: #0b1113;
+    color: #e6f2ee;
   }
 
   .ex-xp-card-foot {
@@ -2783,9 +2791,10 @@
     gap: var(--space-2);
     margin-top: var(--space-2);
     padding: 10px 12px;
-    border: 1px solid var(--line);
+    border: 1px solid rgba(255, 255, 255, 0.12);
     border-radius: 10px;
-    background: var(--bg-sunken);
+    background: #0b1113;
+    color: #e6f2ee;
   }
 
   .ex-explainer-cmd pre {
@@ -2795,7 +2804,7 @@
     overflow-x: auto;
     font-family: var(--font-mono);
     font-size: var(--text-xs);
-    color: var(--fg);
+    color: #e6f2ee;
     white-space: pre-wrap;
     word-break: break-word;
   }

@@ -366,9 +366,10 @@
   /* Ported code block rhythm from CodeFronts documentation-code-block (cbk-06) */
   .kn-code {
     margin: 0;
-    border: 1px solid var(--lg-pill-border);
+    border: 1px solid rgba(255, 255, 255, 0.12);
     border-radius: 12px;
-    background: var(--lg-panel-bg-sunken);
+    background: #0b1113;
+    color: #e6f2ee;
     overflow: hidden;
   }
 
@@ -377,16 +378,16 @@
     align-items: center;
     gap: 8px;
     padding: 6px 8px 6px 10px;
-    border-bottom: 1px solid var(--line);
-    background: var(--lg-tray-bg);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    background: #111a1d;
   }
 
   .kn-code-badge {
     padding: 2px 7px;
-    border: 1px solid var(--line-strong);
+    border: 1px solid rgba(56, 201, 154, 0.35);
     border-radius: 5px;
-    background: var(--accent-soft);
-    color: var(--accent);
+    background: rgba(56, 201, 154, 0.14);
+    color: #5ee3b6;
     font-family: var(--font-mono);
     font-size: 10.5px;
     font-weight: 600;
@@ -400,7 +401,7 @@
     white-space: nowrap;
     font-family: var(--font-mono);
     font-size: 11px;
-    color: var(--fg-faint);
+    color: #9bb1aa;
   }
 
   .kn-code-copy {
@@ -409,23 +410,23 @@
     place-items: center;
     width: 32px;
     height: 32px;
-    border: 1px solid var(--line);
+    border: 1px solid rgba(255, 255, 255, 0.14);
     border-radius: 7px;
-    background: var(--bg-raised);
-    color: var(--fg-muted);
+    background: rgba(255, 255, 255, 0.06);
+    color: #cde0da;
     cursor: pointer;
     flex: none;
     transition: border-color var(--dur-1) var(--ease-ux), color var(--dur-1) var(--ease-ux);
   }
 
   .kn-code-copy:hover {
-    border-color: var(--accent);
-    color: var(--fg);
+    border-color: #38c99a;
+    color: #ffffff;
   }
 
   .kn-code-copy[data-copied='true'] {
-    border-color: var(--green);
-    color: var(--green);
+    border-color: #38c99a;
+    color: #5ee3b6;
   }
 
   .kn-code-pre {
@@ -436,7 +437,8 @@
     font-family: var(--font-mono);
     font-size: 12px;
     line-height: 1.65;
-    color: var(--fg);
+    background: #0b1113;
+    color: #e6f2ee;
     white-space: pre;
     tab-size: 2;
   }

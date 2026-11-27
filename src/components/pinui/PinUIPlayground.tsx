@@ -38,7 +38,7 @@ const Weather = lazy(() => import('./original/weather/Weather'));
 
 const SynaisFooter = lazy(() => import('./SynaisFooter').then((m) => ({ default: m.SynaisFooter })));
 const SlingSlider = lazy(() => import('./SlingSlider').then((m) => ({ default: m.SlingSlider })));
-const HaloSignIn = lazy(() => import('./HaloSignIn').then((m) => ({ default: m.HaloSignIn })));
+const HaloSignInOriginal = lazy(() => import('./original/halo-sign-in/HaloSignInOriginal'));
 const CopyPastePad = lazy(() => import('./CopyPastePad'));
 const ThermalDial = lazy(() => import('./ThermalDial'));
 const Joystick = lazy(() => import('./Joystick'));
@@ -65,12 +65,6 @@ const PixelkitSignIn = lazy(() => import('./PixelkitSignIn'));
 const CaremetricFooter = lazy(() => import('./CaremetricFooter'));
 
 const noop = () => undefined;
-const noopAsync = async () => undefined;
-
-const HaloSignInLive: React.FC = () => {
-  const [mode, setMode] = useState<'login' | 'register'>('login');
-  return <HaloSignIn mode={mode} onModeChange={setMode} onSubmit={noopAsync} />;
-};
 
 const REGISTRY: Record<string, DemoEntry> = {
   'presence-cards': {
@@ -211,7 +205,7 @@ const REGISTRY: Record<string, DemoEntry> = {
   },
   'halo-sign-in': {
     kind: 'block',
-    render: () => <HaloSignInLive />,
+    render: ({ theme }) => <HaloSignInOriginal theme={theme} onProvider={noop} />,
   },
   'pixelkit-sign-in': { kind: 'block', render: () => <PixelkitSignIn onSubmit={noop} onProvider={noop} /> },
   'sling-slider': {

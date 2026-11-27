@@ -1,5 +1,6 @@
 import { fetchVaultShard } from '../features/explore/vaultLoader';
 import { apiClient } from '../services/apiClient';
+import { bundleAiFilesToSingleHtml } from '../utils/hardenPreviewHtml';
 import type { BYOKConfig } from '../types/index';
 import type {
   AgentTraceStep,
@@ -1562,6 +1563,7 @@ export interface ComposeAgentOptions {
   excludeIds?: string[];
   seedItemId?: string;
   forceVariation?: boolean;
+  isAuthenticated?: boolean;
   byok?: BYOKConfig;
 }
 
@@ -1578,6 +1580,7 @@ export async function composeWithAgent(
     excludeIds,
     seedItemId,
     forceVariation = false,
+    isAuthenticated = false,
     byok,
   } = options;
 
@@ -1631,24 +1634,42 @@ export async function composeWithAgent(
 
   let { html, audit } = renderBlueprintToHtml(blueprint);
   let usedLiveAi = false;
+  let aiModelLabel = '';
+  const hasByok = Boolean(byok?.enabled && byok.apiKey.trim());
 
-  if (byok?.enabled && byok.apiKey.trim()) {
+  if (isAuthenticated || hasByok) {
     try {
+      const baseHtml = (isEdit && previousHtml ? previousHtml : html).slice(0, 14000);
+      const aiPrompt = isEdit
+        ? `Chỉnh sửa trang web hiện tại theo đúng yêu cầu người dùng: "${prompt}". Giữ tiếng Việt tự nhiên có dấu, không emoji, không văn khoa trương, bố cục responsive gọn gàng, liên kết nội bộ dùng dạng #anchor.`
+        : `Tạo trang web hoàn chỉnh tiếng Việt có dấu cho "${blueprint.profile.siteName || blueprint.heroTitle}" theo yêu cầu: "${prompt}". Phong cách: ${BRAND_PALETTES[profile.personality].label}. Tham khảo cấu trúc từ mẫu nền đã đính kèm nhưng viết nội dung mới thật sát yêu cầu, không emoji, tương phản chữ rõ nét và chạy mượt ngay trên trình duyệt.`;
       const aiRes = await apiClient.sendAiChat(
         {
-          prompt: `Tinh chỉnh câu chữ tiếng Việt tự nhiên cho tệp HTML sau theo yêu cầu "${prompt}". Trả về JSON files hoặc giữ nguyên cấu trúc sạch.`,
+          prompt: aiPrompt,
           projectId: blueprint.profile.siteName || 'workspace-v4',
-          files: [{ path: 'index.html', content: html.slice(0, 12000) }],
+          files: [{ path: 'index.html', content: baseHtml }],
+          attachedItems: rec.matched.slice(0, 3).map((m) => ({
+            id: m.id,
+            kind: 'resource' as const,
+            title: m.title,
+            summary: `${m.library} — ${m.reason}`,
+          })),
         },
-        byok
+        hasByok ? byok : undefined
       );
-      const htmlFile = aiRes?.files?.find((f) => f.path.endsWith('.html') && f.content.includes('<html'));
-      if (htmlFile) {
-        const pal = resolveCraftPalette(blueprint.profile.personality, blueprint.themeMode, blueprint.accentKey);
-        const reAudit = auditGeneratedPage(htmlFile.content, pal);
-        html = reAudit.cleanHtml;
-        audit = reAudit;
-        usedLiveAi = true;
+      if (aiRes && !aiRes.fallback && Array.isArray(aiRes.files) && aiRes.files.length > 0) {
+        const bundledHtml = bundleAiFilesToSingleHtml(aiRes.files);
+        if (bundledHtml) {
+          const pal = resolveCraftPalette(blueprint.profile.personality, blueprint.themeMode, blueprint.accentKey);
+          const reAudit = auditGeneratedPage(bundledHtml, pal);
+          html = reAudit.cleanHtml;
+          audit = reAudit;
+          usedLiveAi = true;
+          aiModelLabel = aiRes.modelUsed || (hasByok ? 'BYOK' : 'Gemini');
+          if (typeof aiRes.message === 'string' && aiRes.message.trim().length >= 8) {
+            summaryText = aiRes.message.trim();
+          }
+        }
       }
     } catch {
       usedLiveAi = false;
@@ -1663,9 +1684,11 @@ export async function composeWithAgent(
     {
       id: `tr-thought-${Date.now()}`,
       kind: 'thought',
-      label: isEdit
-        ? 'Phân tích chỉnh sửa trực tiếp trên bản hiện tại'
-        : `Lập cấu trúc cho "${blueprint.heroTitle}" (${BRAND_PALETTES[blueprint.profile.personality].label})`,
+      label: usedLiveAi
+        ? `AI (${aiModelLabel || 'Gemini'}) đã dựng trực tiếp theo yêu cầu`
+        : isEdit
+          ? 'Phân tích chỉnh sửa trực tiếp trên bản hiện tại'
+          : `Lập cấu trúc cho "${blueprint.heroTitle}" (${BRAND_PALETTES[blueprint.profile.personality].label})`,
       detail: shardLoadedNote || `Mục tiêu: ${blueprint.profile.goal} · ${blueprint.profile.sections.length} phần nội dung.`,
       status: 'done',
     },

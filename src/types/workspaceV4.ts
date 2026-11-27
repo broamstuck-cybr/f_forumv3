@@ -76,7 +76,9 @@ export interface PublishedPageRecord {
   category: PublishedPageCategory;
   personality: BrandPersonality;
   html: string;
+  liveUrl?: string;
   sourceIds: string[];
+  views?: number;
   likes: number;
   remixes: number;
   createdAt: string;

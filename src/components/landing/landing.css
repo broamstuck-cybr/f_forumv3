@@ -1232,6 +1232,92 @@
     opacity: 0.45;
   }
 
+  html[data-theme='light'] .lp-starter {
+    color: #101514;
+  }
+
+  html[data-theme='light'] .lp-starter-sv {
+    background: radial-gradient(circle at 80% 20%, rgba(16, 152, 112, 0.14), transparent 60%), #f4f8f6;
+  }
+
+  html[data-theme='light'] .lp-starter-kicker {
+    color: #0a6e50;
+  }
+
+  html[data-theme='light'] .lp-starter-heading {
+    color: #101514;
+  }
+
+  html[data-theme='light'] .lp-starter-pill-btn {
+    border-color: rgba(10, 110, 80, 0.36);
+    background: rgba(255, 255, 255, 0.9);
+    color: #101514;
+  }
+
+  html[data-theme='light'] .lp-starter-pill-btn[data-active='true'] {
+    background: #0a6e50;
+    color: #ffffff;
+  }
+
+  html[data-theme='light'] .lp-starter-cn {
+    background: #f5f9f7;
+  }
+
+  html[data-theme='light'] .lp-starter-tag {
+    color: #1f5568;
+  }
+
+  html[data-theme='light'] .lp-starter-run-btn {
+    border-color: rgba(10, 110, 80, 0.38);
+    background: rgba(10, 110, 80, 0.12);
+    color: #0a6e50;
+  }
+
+  html[data-theme='light'] .lp-starter-run-btn[data-active='true'] {
+    background: #0a6e50;
+    color: #ffffff;
+  }
+
+  html[data-theme='light'] .lp-starter-tab {
+    border-color: rgba(16, 21, 20, 0.14);
+    color: #42504b;
+  }
+
+  html[data-theme='light'] .lp-starter-tab[data-active='true'] {
+    background: #101514;
+    color: #ffffff;
+    border-color: #101514;
+  }
+
+  html[data-theme='light'] .lp-starter-st {
+    background: #f4f8f6;
+  }
+
+  html[data-theme='light'] .lp-starter-st-title {
+    color: #101514;
+  }
+
+  html[data-theme='light'] .lp-starter-step {
+    border-color: rgba(16, 21, 20, 0.12);
+    background: #ffffff;
+    color: #42504b;
+  }
+
+  html[data-theme='light'] .lp-starter-step[data-done='true'] {
+    border-color: #0a6e50;
+    color: #101514;
+  }
+
+  html[data-theme='light'] .lp-starter-step-dot {
+    color: #0a6e50;
+  }
+
+  html[data-theme='light'] .lp-proj-index {
+    background: rgba(255, 255, 255, 0.9);
+    color: #101514;
+    border: 1px solid rgba(16, 21, 20, 0.12);
+  }
+
   .lp-proj-img[data-failed='true'] {
     display: none;
   }
