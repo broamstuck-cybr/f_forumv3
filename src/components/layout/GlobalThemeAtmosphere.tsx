@@ -28,7 +28,7 @@ export function triggerPinuiThemeToggle(sourceEl?: HTMLElement | null): void {
 type OriginPoint = { x: number; y: number };
 
 const PINUI_DRAWER_EASE = 'cubic-bezier(0.32, 0.72, 0, 1)';
-const PINUI_FLOOD_MS = 800;
+const PINUI_FLOOD_MS = 380;
 
 export const GlobalThemeAtmosphere: React.FC = () => {
   const { theme, setTheme, reducedMotion, themeEffect } = useAppStore();

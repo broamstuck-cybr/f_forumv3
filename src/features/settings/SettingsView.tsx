@@ -725,12 +725,12 @@ export const SettingsView: React.FC = () => {
 
                 <div className="st-grid-2">
                   <div className="st-toggleCard">
-                    <span className="st-label">Nền động mượt</span>
+                    <span className="st-label">Nền ảnh tĩnh</span>
                     <button
                       type="button"
                       role="switch"
                       aria-checked={ambientEnabled}
-                      aria-label="Nền động mượt"
+                      aria-label="Nền ảnh tĩnh"
                       className="st-switch"
                       onClick={() => updateSettings({ ambientVideo: !ambientEnabled })}
                     >

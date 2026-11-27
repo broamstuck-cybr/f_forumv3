@@ -504,8 +504,8 @@
   }
 
   html[data-ambient='on'] .nav {
-    backdrop-filter: blur(18px);
-    -webkit-backdrop-filter: blur(18px);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
   }
 
   html[data-ambient='on'] .nav__menu {

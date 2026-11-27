@@ -270,7 +270,7 @@ export function getTier2Tests() {
       async run(ctx) {
         await withPage(ctx.browser, {}, async (page) => {
           await gotoRoute(page, ctx.baseUrl, '/settings', 450);
-          const ambientSwitch = page.getByRole('switch', { name: /Nền động mượt/i }).first();
+          const ambientSwitch = page.getByRole('switch', { name: /Nền ảnh tĩnh|Nền động mượt/i }).first();
           await ambientSwitch.waitFor({ state: 'visible', timeout: 5000 });
           await ambientSwitch.click();
           await page.waitForTimeout(200);
