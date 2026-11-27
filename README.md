@@ -11,7 +11,7 @@
 [![Live Production](https://img.shields.io/badge/live-fforum3.vercel.app-0d825f?style=flat-square)](https://fforum3.vercel.app)
 [![React 19](https://img.shields.io/badge/React-19-111816?style=flat-square&logo=react&logoColor=38c99a)](https://react.dev)
 [![TypeScript 5](https://img.shields.io/badge/TypeScript-5-111816?style=flat-square&logo=typescript&logoColor=38bdf8)](https://www.typescriptlang.org)
-[![Tests](https://img.shields.io/badge/tests-28%2F28%20passing-1f4d35?style=flat-square)](./tests)
+[![Tests](https://img.shields.io/badge/tests-51%2F51%20passing-1f4d35?style=flat-square)](./tests)
 [![License: MIT](https://img.shields.io/badge/license-MIT-263345?style=flat-square)](./LICENSE)
 
 </div>
@@ -20,9 +20,9 @@
 
 ## Overview
 
-**F-Forum v3** is a full-stack web workbench, curated public UI/3D archive, and technical community built for Vietnamese learners and frontend builders. Instead of leaving users to prompt blank pages from scratch, the app pairs **7,750 free, directly viewable UI and 3D specimens** with a sandboxed AI build workspace, an editorial feed, and a real-time messenger.
+**F-Forum** is a full-stack Vietnamese web studio, purified free UI/3D vault, and Community Remix platform built for students, makers, and frontend builders. Instead of generating generic pages from a blank prompt, it combines **5,994 verified free usable specimens**, **58 tested motion techniques**, and **15 runnable Agent Mode showcase sites** with a 5-step onboarding flow, a split live-preview Workspace, instant `/p/:slug` publishing, and standalone ZIP downloads.
 
-Every specimen in the vault comes from six public sources—CodeFronts (`5,047`), GetLayers (`966`), MotionSites (`826`), LucianLabs (`480`), ThreeUI public free (`389`, with all 548 Pro-only routes removed), and PinUI (`42`)—compressed into gzipped shards under `./public/data/vault/` so pages load fast without external vendor redirects.
+Every specimen in the vault comes from five free public libraries—CodeFronts (`5,047`), LucianLabs (`480`), MotionSites Free (`382`), ThreeUI Free (`43`, hydrated with real code; all paid routes removed), and PinUI (`42`)—compressed into gzipped shards under `./public/data/vault/` alongside `public/data/motion-recipes.json` (`58` recipes). All paid GetLayers (`966`) and paid ThreeUI (`346`) items have been purged.
 
 ## Live Product Gallery
 
@@ -79,11 +79,11 @@ flowchart LR
 
 ## Key Capabilities
 
-- **Curated Public Vault (`src/features/explore`):** 7,750 verified free resources across 6 libraries, plus 60 developer tools and 122 GitHub repositories. All Pro-only ThreeUI items and outbound redirect buttons are excluded so users stay inside the sandbox.
-- **Spatial AI Workspace (`src/features/workspace`):** Keeps the preview pane hidden on blank sessions, opens a split `Live View / Source / Audit & Diff` workbench as soon as HTML/CSS/JS exists, checks 6 quality rules, and exports secret-scanned ZIP bundles.
-- **Editorial Feed & Messenger (`src/features/community`):** Two focused tabs (`Bảng tin` and `Phòng chat`) with layered editorial cards, live code embeds, polls, grouped chat bubbles, 28-bar voice recording/playback, syntax-highlighted snippets, and cross-tab typing indicators.
-- **Collector Bookshelf (`src/components/launchpad/GlacierBookShelf.tsx`):** 12-volume 3D tactile library with linen spine textures, physical shelf lighting, and a quick-jump reader dialog.
-- **Security, Google OAuth & Isolated Admin (`server/authEngine.ts`, `src/features/admin`):** Real Google Identity Services ID-token verification via `oauth2.googleapis.com/tokeninfo`, strict separation between user and admin controls/notifications, live traffic & usage-hour analytics, and role management.
+- **Purified Free Vault (`src/features/explore`):** 5,994 verified free usable specimens across 5 libraries (`PinUI`, `ThreeUI Free`, `LucianLabs`, `MotionSites Free`, `CodeFronts`), 58 tested motion techniques, 15 Agent Showcase sites, 60 tools, and 122 GitHub repositories—with paginated browsing and real behavior-driven `"Hợp gu bạn"` ranking.
+- **5-Step Onboarding & Arena Workspace (`src/features/workspace`):** Borderless 5-step setup followed by a razor-thin `1px` draggable split workbench, step-by-step AI build trace (`Created/Edited index.html`), isolated live preview + source code inspector, instant `/p/:slug` public publishing with sandbox CSP, and standalone `index.html` ZIP export.
+- **Community Remix & Knowledge Book (`src/features/community`, `src/features/knowledge`):** Live iframe gallery of published community sites and 15 runnable Agent products with real likes and 1-click `Remix ngay`, paired with a searchable catalog of 58 motion techniques and Anti-AI-Slop rules.
+- **Flexible Auth Without Google Lock-In (`server/authEngine.ts`, `src/components/public/AuthModal.tsx`):** Register/sign in via username/email + password, continue instantly as a guest, and auto-hide Google Sign-In when `GOOGLE_CLIENT_ID` is not configured.
+- **Honest Metrics & Hardened API (`server/metricsStore.ts`, `server/publishedPagesStore.ts`, `server/behaviorStore.ts`):** Zero synthetic visitor/heart baselines, strict CSP sandboxing, SSRF guards, secret scanning, and single-function Vercel routing (`api/index.ts`).
 
 ## Prerequisites
 

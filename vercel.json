@@ -11,7 +11,11 @@
       "destination": "/api/index"
     },
     {
-      "source": "/((?!api/|assets/|data/|robots\\.txt|sitemap\\.xml|llms\\.txt|og-cover\\.png|iphone18-simulator\\.html).*)",
+      "source": "/p/(.*)",
+      "destination": "/api/index"
+    },
+    {
+      "source": "/((?!api/|p/|assets/|data/|robots\\.txt|sitemap\\.xml|llms\\.txt|og-cover\\.png|iphone18-simulator\\.html).*)",
       "destination": "/index.html"
     }
   ],
@@ -146,6 +150,15 @@
         {
           "key": "Content-Security-Policy",
           "value": "default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'self'; form-action 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' blob:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: blob: https:; media-src 'self' data: blob: https:; connect-src 'self' https://api.open-meteo.com https://nominatim.openstreetmap.org https://api.mymemory.translated.net; frame-src 'self' blob: data: https://www.openstreetmap.org https://en.m.wikipedia.org https://www.bing.com https://open-meteo.com https://www.apple.com https://www.macrumors.com https://www.theverge.com https://github.com; worker-src 'self' blob:"
+        }
+      ]
+    },
+    {
+      "source": "/p/(.*)",
+      "headers": [
+        {
+          "key": "Content-Security-Policy",
+          "value": "sandbox allow-scripts allow-forms allow-popups allow-popups-to-escape-sandbox allow-modals allow-downloads allow-top-navigation-by-user-activation; default-src 'self' https: data: blob:; base-uri 'none'; object-src 'none'; frame-ancestors 'self'; script-src 'unsafe-inline' 'unsafe-eval' https: blob:; style-src 'unsafe-inline' https: data:; font-src data: https:; img-src data: blob: https:; media-src data: blob: https:; connect-src 'none'; form-action 'none'"
         }
       ]
     }

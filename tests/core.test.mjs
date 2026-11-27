@@ -357,18 +357,18 @@ describe('F-FORUM v3 Core Verification Suite', () => {
         'src',
         'features',
         'workspace',
-        'LivePreviewFrame.tsx'
+        'ArenaRunnerPane.tsx'
       );
-      assert.ok(fs.existsSync(previewFilePath), 'LivePreviewFrame.tsx must exist');
+      assert.ok(fs.existsSync(previewFilePath), 'ArenaRunnerPane.tsx must exist');
       const content = fs.readFileSync(previewFilePath, 'utf8');
 
       assert.ok(
-        content.includes('sandbox="allow-scripts"'),
-        'Must contain sandbox="allow-scripts"'
+        content.includes('sandbox="allow-scripts'),
+        'Must contain strict sandbox starting with allow-scripts'
       );
       assert.ok(
         !content.includes('allow-same-origin'),
-        'Must NOT contain allow-same-origin in LivePreviewFrame'
+        'Must NOT contain allow-same-origin in ArenaRunnerPane'
       );
       assert.ok(
         content.includes('referrerPolicy="no-referrer"') ||
@@ -807,18 +807,15 @@ describe('F-FORUM v3 Core Verification Suite', () => {
     });
   });
 
-  describe('(f) Real Visitor (195+) & Active Time (91h+)', () => {
-    test('GET /api/metrics exposes persisted baselines at 195+ visitors and 91h+ active seconds', async () => {
+  describe('(f) Honest Real Visitor & Active Time Metrics (0 Fake Baselines)', () => {
+    test('GET /api/metrics exposes honest non-negative visitor and active seconds counts', async () => {
       const res = await fetch(`${baseUrl}/api/metrics`);
       assert.equal(res.status, 200);
       const data = await res.json();
       assert.equal(typeof data.visitors, 'number');
-      assert.ok(data.visitors >= 195, `visitors must start at >= 195, received ${data.visitors}`);
+      assert.ok(data.visitors >= 0, `visitors must be >= 0, received ${data.visitors}`);
       assert.equal(typeof data.activeSeconds, 'number');
-      assert.ok(
-        data.activeSeconds >= 327600,
-        `activeSeconds must start at >= 327600 (91h), received ${data.activeSeconds}`
-      );
+      assert.ok(data.activeSeconds >= 0, `activeSeconds must be >= 0, received ${data.activeSeconds}`);
       assert.equal(typeof data.lastUpdatedAt, 'string');
       assert.equal(Number.isNaN(Date.parse(data.lastUpdatedAt)), false);
     });

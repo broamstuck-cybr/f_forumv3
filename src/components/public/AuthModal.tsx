@@ -29,6 +29,22 @@ interface AuthModalProps {
   onClose?: () => void;
 }
 
+function formatAuthError(err: unknown, mode: 'login' | 'register'): string {
+  if (err instanceof Error && err.message) {
+    const raw = err.message.trim();
+    if (/^HTTP 401/i.test(raw)) return 'Tên đăng nhập hoặc mật khẩu chưa đúng.';
+    if (/^HTTP 409/i.test(raw)) return 'Tên đăng nhập hoặc email này đã được đăng ký.';
+    if (/^HTTP 400/i.test(raw)) return 'Thông tin chưa hợp lệ. Kiểm tra lại email và mật khẩu.';
+    if (/Failed to fetch|NetworkError/i.test(raw)) {
+      return 'Không kết nối được máy chủ. Bạn vẫn có thể tiếp tục dùng ngay ở chế độ khách.';
+    }
+    return raw;
+  }
+  return mode === 'login'
+    ? 'Đăng nhập chưa thành công. Vui lòng kiểm tra lại thông tin.'
+    : 'Chưa tạo được tài khoản. Vui lòng thử lại.';
+}
+
 export const AuthModal: React.FC<AuthModalProps> = ({ open, onClose }) => {
   const {
     authModalOpen,
@@ -64,8 +80,12 @@ export const AuthModal: React.FC<AuthModalProps> = ({ open, onClose }) => {
     void apiClient
       .getGoogleAuthConfig()
       .then((cfg) => {
-        if (!cancelled && cfg.enabled && cfg.clientId) {
-          setGoogleClientId(cfg.clientId);
+        if (cancelled) return;
+        const nextId = cfg.enabled && typeof cfg.clientId === 'string' ? cfg.clientId.trim() : '';
+        if (nextId) {
+          setGoogleClientId(nextId);
+        } else {
+          setGoogleClientId('');
         }
       })
       .catch(() => undefined);
@@ -75,7 +95,10 @@ export const AuthModal: React.FC<AuthModalProps> = ({ open, onClose }) => {
   }, [isOpen]);
 
   useEffect(() => {
-    if (!isOpen || !googleClientId) return;
+    if (!isOpen || !googleClientId) {
+      setGoogleReady(false);
+      return;
+    }
     let cancelled = false;
 
     const initGoogleButton = () => {
@@ -94,12 +117,12 @@ export const AuthModal: React.FC<AuthModalProps> = ({ open, onClose }) => {
             .loginWithGoogle(credential)
             .then(async (res) => {
               await refreshAuthAndQuota();
-              addToast({ title: `Đã đăng nhập Google: ${res.user.name}`, type: 'success' });
+              addToast({ title: `Đã đăng nhập: ${res.user.name}`, type: 'success' });
               handleClose();
             })
             .catch((err) => {
               setError(
-                err instanceof Error ? err.message : 'Xác minh tài khoản Google thất bại.'
+                err instanceof Error ? err.message : 'Xác minh tài khoản Google chưa thành công.'
               );
             })
             .finally(() => {
@@ -115,7 +138,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ open, onClose }) => {
         shape: 'pill',
         text: 'continue_with',
         locale: 'vi',
-        width: 360,
+        width: 340,
       });
       setGoogleReady(true);
     };
@@ -183,11 +206,22 @@ export const AuthModal: React.FC<AuthModalProps> = ({ open, onClose }) => {
       }
       handleClose();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Không thể xác thực phiên làm việc.');
+      setError(formatAuthError(err, mode));
     } finally {
       setLoading(false);
     }
   };
+
+  const handleGuestContinue = () => {
+    handleClose();
+    addToast({
+      type: 'info',
+      title: 'Đang dùng chế độ khách',
+      message: 'Bạn có thể tạo trang, xuất bản và tải file .zip ngay mà không cần tài khoản.',
+    });
+  };
+
+  const hasGoogleAuth = Boolean(googleClientId.trim());
 
   return (
     <AnimatePresence>
@@ -201,7 +235,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ open, onClose }) => {
           onClick={handleClose}
           role="dialog"
           aria-modal="true"
-          aria-label="Xác thực tài khoản F-FORUM"
+          aria-label="Đăng nhập tài khoản F-Forum"
           className="fixed inset-0 z-[80] flex items-center justify-center p-4"
           style={{
             backgroundColor: 'var(--bg-veil)',
@@ -213,9 +247,9 @@ export const AuthModal: React.FC<AuthModalProps> = ({ open, onClose }) => {
             initial={{ opacity: 0, scale: 0.96, y: 12 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.97, y: 8 }}
-            transition={{ duration: 0.28, ease: [0.16, 1, 0.3, 1] }}
+            transition={{ duration: 0.26, ease: [0.16, 1, 0.3, 1] }}
             onClick={(event) => event.stopPropagation()}
-            className="relative w-full max-w-[440px] overflow-hidden rounded-[8px] border"
+            className="relative w-full max-w-[440px] max-h-[92dvh] overflow-y-auto rounded-[16px] border"
             style={{
               backgroundColor: 'var(--bg-raised)',
               borderColor: 'var(--line-strong)',
@@ -225,94 +259,61 @@ export const AuthModal: React.FC<AuthModalProps> = ({ open, onClose }) => {
             <button
               type="button"
               onClick={handleClose}
-              aria-label="Đóng cửa sổ đăng nhập"
+              aria-label="Đóng"
               title="Đóng"
-              className="absolute top-4 right-4 z-10 inline-flex h-9 w-9 items-center justify-center rounded-full border focus-visible:outline-2 focus-visible:outline-offset-2"
+              className="absolute top-3.5 right-3.5 z-10 inline-flex h-11 w-11 items-center justify-center rounded-full border cursor-pointer"
               style={{
-                backgroundColor: 'var(--bg-panel)',
-                borderColor: 'var(--border-subtle)',
-                color: 'var(--ink-secondary)',
+                backgroundColor: 'var(--bg-sunken)',
+                borderColor: 'var(--line)',
+                color: 'var(--fg-muted)',
                 transition: 'transform 160ms cubic-bezier(0.2, 0.8, 0.2, 1), color 160ms ease',
               }}
             >
               <IconX className="h-4 w-4" aria-hidden="true" />
             </button>
 
-            <div className="p-2 sm:p-3">
+            <div className="pt-2 px-1 pb-1">
               <HaloSignIn
+                embedded
                 mode={mode}
                 onModeChange={(nextMode) => {
                   setError(null);
                   setMode(nextMode);
                 }}
                 onSubmit={handleSubmit}
+                onGuestContinue={handleGuestContinue}
                 error={error}
                 loading={loading}
               />
 
-              <div className="px-4 pb-3 pt-1">
-                <div className="flex items-center gap-3 my-2 text-[11px]" style={{ color: 'var(--ink-muted)' }}>
-                  <span className="h-px flex-1" style={{ backgroundColor: 'var(--border-subtle)' }} />
-                  <span>hoặc xác thực qua Google</span>
-                  <span className="h-px flex-1" style={{ backgroundColor: 'var(--border-subtle)' }} />
-                </div>
+              {hasGoogleAuth ? (
+                <div className="px-4 pb-3 pt-1">
+                  <div className="flex items-center gap-3 my-2 text-[11px]" style={{ color: 'var(--fg-faint)' }}>
+                    <span className="h-px flex-1" style={{ backgroundColor: 'var(--line)' }} />
+                    <span>hoặc đăng nhập qua Google</span>
+                    <span className="h-px flex-1" style={{ backgroundColor: 'var(--line)' }} />
+                  </div>
 
-                {googleClientId ? (
                   <div className="flex justify-center min-h-[44px]" ref={googleBtnRef}>
                     {!googleReady && (
-                      <span className="text-xs self-center" style={{ color: 'var(--ink-muted)' }}>
-                        Đang tải nút Google Sign-In...
+                      <span className="text-xs self-center" style={{ color: 'var(--fg-faint)' }}>
+                        Đang tải nút Google...
                       </span>
                     )}
                   </div>
-                ) : (
-                  <button
-                    type="button"
-                    onClick={() =>
-                      setError(
-                        'Chưa cấu hình GOOGLE_CLIENT_ID trên máy chủ. Thêm OAuth 2.0 Web Client ID từ Google Cloud Console vào biến môi trường GOOGLE_CLIENT_ID (và VITE_GOOGLE_CLIENT_ID) trên Vercel để bật đăng nhập Google thật.'
-                      )
-                    }
-                    className="w-full inline-flex items-center justify-center gap-2.5 h-11 rounded-full border px-4 text-sm font-medium cursor-pointer"
-                    style={{
-                      backgroundColor: 'var(--bg-panel)',
-                      borderColor: 'var(--line-strong)',
-                      color: 'var(--ink-primary)',
-                    }}
-                  >
-                    <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true">
-                      <path
-                        fill="#4285F4"
-                        d="M23.49 12.27c0-.79-.07-1.54-.2-2.27H12v4.3h6.45a5.52 5.52 0 0 1-2.39 3.62v3h3.87c2.26-2.08 3.56-5.15 3.56-8.65z"
-                      />
-                      <path
-                        fill="#34A853"
-                        d="M12 24c3.24 0 5.95-1.07 7.93-2.9l-3.87-3c-1.07.72-2.45 1.15-4.06 1.15-3.12 0-5.77-2.11-6.71-4.95H1.29v3.1A12 12 0 0 0 12 24z"
-                      />
-                      <path
-                        fill="#FBBC05"
-                        d="M5.29 14.3a7.2 7.2 0 0 1 0-4.6V6.6H1.29a12 12 0 0 0 0 10.8l4-3.1z"
-                      />
-                      <path
-                        fill="#EA4335"
-                        d="M12 4.75c1.76 0 3.34.61 4.59 1.8l3.44-3.44C17.95 1.19 15.24 0 12 0A12 12 0 0 0 1.29 6.6l4 3.1c.94-2.84 3.59-4.95 6.71-4.95z"
-                      />
-                    </svg>
-                    <span>Tiếp tục với Google</span>
-                  </button>
-                )}
-              </div>
+                </div>
+              ) : null}
             </div>
 
             <div
-              className="flex items-center justify-center gap-3 border-t px-6 py-3.5 text-xs"
+              className="flex items-center justify-center border-t px-5 py-3 text-xs text-center"
               style={{
-                backgroundColor: 'var(--bg-panel)',
-                borderColor: 'var(--border-subtle)',
-                color: 'var(--ink-muted)',
+                backgroundColor: 'var(--bg-sunken)',
+                borderColor: 'var(--line)',
+                color: 'var(--fg-muted)',
               }}
             >
-              <span>Tài khoản thành viên nhận 15 lượt dựng AI miễn phí mỗi phiên</span>
+              <span>Đăng nhập để giữ dự án lâu dài, hoặc dùng ngay không cần tài khoản.</span>
             </div>
           </motion.div>
         </motion.div>

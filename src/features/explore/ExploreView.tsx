@@ -25,7 +25,7 @@ import { useCalm } from './useCalm';
 import './explore.css';
 
 const MODES: Array<{ id: ExploreMode; label: string }> = [
-  { id: 'plates', label: 'Mẫu' },
+  { id: 'plates', label: 'Mẫu mở' },
   { id: 'tools', label: 'Công cụ' },
   { id: 'repos', label: 'Repo' },
 ];
@@ -84,7 +84,7 @@ export const ExploreView: React.FC = () => {
     if (typeof window !== 'undefined' && q) {
       window.sessionStorage.setItem('ff_experience_query', q);
     }
-    openExperience(sourceCatalog[0]?.id ?? 'vault');
+    openExperience('vault');
   };
 
   useEffect(() => {
@@ -136,7 +136,7 @@ export const ExploreView: React.FC = () => {
             <SearchCard
               value={search}
               onChange={setSearch}
-              placeholder="Tìm mẫu, thành phần, hiệu ứng, kho lưu trữ..."
+              placeholder="Tìm 5.994 mẫu mở, hiệu ứng, cảnh 3D, repo..."
               recentSearches={RECENT_SEARCHES}
               onSelectRecent={(value) => setSearch(value)}
               compact
@@ -146,7 +146,7 @@ export const ExploreView: React.FC = () => {
               type="button"
               className="ex-vault-dock-btn"
               onClick={() => enterVaultExperience()}
-              title="Mở trải nghiệm"
+              title="Mở kho trải nghiệm"
             >
               <span className="ex-vault-box-mini" aria-hidden="true">
                 <OriginalFileBox theme={theme} />

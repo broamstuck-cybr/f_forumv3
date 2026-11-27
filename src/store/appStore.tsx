@@ -37,6 +37,12 @@ import type {
   WorkspaceFile,
   WorkspaceProject,
 } from '../types/index';
+import type {
+  BehaviorItemScore,
+  BehaviorSignalType,
+  OnboardingProfile,
+  WorkspaceLaunchSeed,
+} from '../types/workspaceV4';
 import { apiClient, normalizeCommunityChannels } from '../services/apiClient';
 import { runWorkspaceChecks } from '../services/checksRunner';
 import { computeWorkspaceDiffs } from '../services/diffEngine';
@@ -48,14 +54,50 @@ const STORAGE_ACTIVE_PROJECT_KEY = 'fforum_v3_active_project_id';
 const STORAGE_SETTINGS_KEY = 'fforum_v3_settings';
 const STORAGE_SAVED_ITEMS_KEY = 'fforum_v3_saved_items';
 const STORAGE_LIKED_ITEMS_KEY = 'fforum_v3_liked_items';
+const STORAGE_ONBOARDING_KEY = 'ff_onboarding_profile_v4';
+const STORAGE_BEHAVIOR_SCORES_KEY = 'ff_behavior_scores_v4';
 
-function baseHeartCount(id: string): number {
-  let h = 2166136261;
-  for (let i = 0; i < id.length; i += 1) {
-    h ^= id.charCodeAt(i);
-    h = Math.imul(h, 16777619);
+const SIGNAL_WEIGHTS: Record<BehaviorSignalType, number> = {
+  view: 1,
+  like: 3,
+  use: 5,
+  publish: 8,
+  satisfied: 4,
+  unsatisfied: -3,
+};
+
+function mergeBehaviorScores(
+  local: Record<string, BehaviorItemScore>,
+  remote: Record<string, BehaviorItemScore>
+): Record<string, BehaviorItemScore> {
+  const merged: Record<string, BehaviorItemScore> = { ...local };
+  for (const [key, entry] of Object.entries(remote)) {
+    if (!entry || typeof entry !== 'object') continue;
+    const prev = merged[key];
+    if (!prev) {
+      merged[key] = entry;
+      continue;
+    }
+    merged[key] = {
+      score: Math.max(prev.score || 0, entry.score || 0),
+      likes: Math.max(prev.likes || 0, entry.likes || 0),
+      uses: Math.max(prev.uses || 0, entry.uses || 0),
+      publishes: Math.max(prev.publishes || 0, entry.publishes || 0),
+      updatedAt: entry.updatedAt || prev.updatedAt,
+    };
   }
-  return 10 + ((h >>> 0) % 91);
+  return merged;
+}
+
+function isWorkspaceLaunchSeed(
+  input: WorkspaceLaunchSeed | AttachedContextItem
+): input is WorkspaceLaunchSeed {
+  return (
+    input.kind === 'vault-item' ||
+    input.kind === 'remix-page' ||
+    input.kind === 'showcase-15' ||
+    input.kind === 'motion-recipe'
+  );
 }
 
 function detectSystemTheme(): ThemeMode {
@@ -420,12 +462,18 @@ export interface AppStoreContextValue {
   savedItemIds: string[];
   toggleSavedItem: (id: string) => void;
   likedItemIds: string[];
-  toggleLikedItem: (id: string) => void;
+  toggleLikedItem: (id: string, library?: string) => void;
   isItemLiked: (id: string) => boolean;
   getHeartCount: (id: string) => number;
   experienceItemId: string | null;
   setExperienceItemId: (id: string | null) => void;
   openExperience: (itemId: string) => void;
+  pendingWorkspaceSeed: WorkspaceLaunchSeed | null;
+  clearWorkspaceSeed: () => void;
+  onboardingProfile: OnboardingProfile | null;
+  setOnboardingProfile: (profile: OnboardingProfile | null) => void;
+  behaviorScores: Record<string, BehaviorItemScore>;
+  recordSignal: (itemId: string, signal: BehaviorSignalType, library?: string) => void;
   projects: WorkspaceProject[];
   activeProjectId: string;
   activeProject: WorkspaceProject;
@@ -444,7 +492,7 @@ export interface AppStoreContextValue {
   deleteWorkspaceFile: (filePath: string) => void;
   addWorkspaceFiles: (files: Array<{ path: string; content: string; summary?: string }>) => void;
   attachItemToWorkspace: (item: AttachedContextItem, navigateToWorkspace?: boolean) => void;
-  openInWorkspace: (item: AttachedContextItem) => void;
+  openInWorkspace: (item: WorkspaceLaunchSeed | AttachedContextItem) => void;
   detachItemFromWorkspace: (itemId: string) => void;
   launchPromptToWorkspace: (
     prompt: string,
@@ -569,6 +617,59 @@ export const AppStoreProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const [experienceItemId, setExperienceItemId] = useState<string | null>(() =>
     typeof window !== 'undefined' ? parseExperienceItemFromSearch(window.location.search) : null
   );
+
+  const [pendingWorkspaceSeed, setPendingWorkspaceSeed] = useState<WorkspaceLaunchSeed | null>(null);
+
+  const [onboardingProfile, setOnboardingProfileState] = useState<OnboardingProfile | null>(() => {
+    if (typeof window === 'undefined') return null;
+    try {
+      const raw = window.localStorage.getItem(STORAGE_ONBOARDING_KEY);
+      if (!raw) return null;
+      const parsed: unknown = JSON.parse(raw);
+      return parsed && typeof parsed === 'object' && !Array.isArray(parsed)
+        ? (parsed as OnboardingProfile)
+        : null;
+    } catch {
+      return null;
+    }
+  });
+
+  const [behaviorScores, setBehaviorScores] = useState<Record<string, BehaviorItemScore>>(() => {
+    if (typeof window === 'undefined') return {};
+    try {
+      const raw = window.localStorage.getItem(STORAGE_BEHAVIOR_SCORES_KEY);
+      if (!raw) return {};
+      const parsed: unknown = JSON.parse(raw);
+      return parsed && typeof parsed === 'object' && !Array.isArray(parsed)
+        ? (parsed as Record<string, BehaviorItemScore>)
+        : {};
+    } catch {
+      return {};
+    }
+  });
+
+  const onboardingProfileRef = useRef(onboardingProfile);
+  onboardingProfileRef.current = onboardingProfile;
+  const likedItemIdsRef = useRef(likedItemIds);
+  likedItemIdsRef.current = likedItemIds;
+
+  const setOnboardingProfile = useCallback((profile: OnboardingProfile | null) => {
+    setOnboardingProfileState(profile);
+    if (typeof window === 'undefined') return;
+    try {
+      if (profile) {
+        window.localStorage.setItem(STORAGE_ONBOARDING_KEY, JSON.stringify(profile));
+      } else {
+        window.localStorage.removeItem(STORAGE_ONBOARDING_KEY);
+      }
+    } catch {
+      return;
+    }
+  }, []);
+
+  const clearWorkspaceSeed = useCallback(() => {
+    setPendingWorkspaceSeed(null);
+  }, []);
 
   const [settings, setSettings] = useState<SettingsState>(() => {
     const sysTheme = detectSystemTheme();
@@ -1031,6 +1132,29 @@ function normalizeStoredProject(raw: unknown): WorkspaceProject | null {
     void refreshAuthAndQuota();
   }, [refreshAuthAndQuota]);
 
+  useEffect(() => {
+    let cancelled = false;
+    apiClient
+      .getBehaviorScores()
+      .then((res) => {
+        if (cancelled || !res?.scores || typeof res.scores !== 'object') return;
+        setBehaviorScores((prev) => mergeBehaviorScores(prev, res.scores));
+      })
+      .catch(() => undefined);
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    try {
+      window.localStorage.setItem(STORAGE_BEHAVIOR_SCORES_KEY, JSON.stringify(behaviorScores));
+    } catch {
+      return;
+    }
+  }, [behaviorScores]);
+
   const currentUserId = currentUser ? currentUser.id : null;
 
   useEffect(() => {
@@ -1073,19 +1197,76 @@ function normalizeStoredProject(raw: unknown): WorkspaceProject | null {
     return () => window.clearTimeout(timer);
   }, [projects, currentUserId]);
 
+  const recordSignal = useCallback(
+    (itemId: string, signal: BehaviorSignalType, library?: string) => {
+      const cleanId = itemId.trim();
+      if (!cleanId) return;
+      const now = new Date().toISOString();
+      const delta = SIGNAL_WEIGHTS[signal] ?? 1;
+      setBehaviorScores((prev) => {
+        const current = prev[cleanId] ?? { score: 0, likes: 0, uses: 0, publishes: 0 };
+        return {
+          ...prev,
+          [cleanId]: {
+            score: Math.max(0, (current.score || 0) + delta),
+            likes: (current.likes || 0) + (signal === 'like' ? 1 : 0),
+            uses: (current.uses || 0) + (signal === 'use' ? 1 : 0),
+            publishes: (current.publishes || 0) + (signal === 'publish' ? 1 : 0),
+            updatedAt: now,
+          },
+        };
+      });
+      void apiClient
+        .recordBehaviorSignal({
+          itemId: cleanId,
+          signal,
+          library,
+          profileTag: onboardingProfileRef.current?.domain,
+        })
+        .catch(() => undefined);
+    },
+    []
+  );
+
   const toggleSavedItem = useCallback((id: string) => {
     setSavedItemIds((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
   }, []);
 
-  const toggleLikedItem = useCallback((id: string) => {
-    setLikedItemIds((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
-  }, []);
+  const toggleLikedItem = useCallback(
+    (id: string, library?: string) => {
+      const alreadyLiked = likedItemIdsRef.current.includes(id);
+      setLikedItemIds((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
+      if (!alreadyLiked) {
+        recordSignal(id, 'like', library);
+      } else {
+        setBehaviorScores((prev) => {
+          const current = prev[id];
+          if (!current) return prev;
+          return {
+            ...prev,
+            [id]: {
+              ...current,
+              likes: Math.max(0, (current.likes || 0) - 1),
+              score: Math.max(0, (current.score || 0) - SIGNAL_WEIGHTS.like),
+            },
+          };
+        });
+      }
+    },
+    [recordSignal]
+  );
 
   const isItemLiked = useCallback((id: string) => likedItemIds.includes(id), [likedItemIds]);
 
   const getHeartCount = useCallback(
-    (id: string) => baseHeartCount(id) + (likedItemIds.includes(id) ? 1 : 0),
-    [likedItemIds]
+    (id: string) => {
+      const recorded = behaviorScores[id]?.likes;
+      if (typeof recorded === 'number' && Number.isFinite(recorded) && recorded >= 0) {
+        return recorded;
+      }
+      return likedItemIds.includes(id) ? 1 : 0;
+    },
+    [behaviorScores, likedItemIds]
   );
 
   const openExperience = useCallback((itemId: string) => {
@@ -1357,11 +1538,80 @@ function normalizeStoredProject(raw: unknown): WorkspaceProject | null {
   );
 
   const openInWorkspace = useCallback(
-    (item: AttachedContextItem) => {
+    (item: WorkspaceLaunchSeed | AttachedContextItem) => {
+      if (isWorkspaceLaunchSeed(item)) {
+        setPendingWorkspaceSeed(item);
+        navigate('workspace');
+        return;
+      }
+      setPendingWorkspaceSeed({
+        kind: 'vault-item',
+        id: item.id,
+        title: item.title,
+        prompt: item.payload || item.summary || `Dựng giao diện dựa trên ${item.title}`,
+        sourceLibrary: item.sourceLibrary,
+        sourceCode: item.payload,
+      });
       attachItemToWorkspace(item, true);
     },
-    [attachItemToWorkspace]
+    [attachItemToWorkspace, navigate]
   );
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const params = new URLSearchParams(window.location.search);
+    const remixSlug = params.get('remix')?.trim();
+    if (!remixSlug) return;
+    let cancelled = false;
+
+    const loadRemix = async () => {
+      try {
+        const res = await apiClient.getPublishedPage(remixSlug);
+        if (!cancelled && res?.page) {
+          openInWorkspace({
+            kind: 'remix-page',
+            id: res.page.slug,
+            title: res.page.title,
+            sourceLibrary: 'Cộng đồng Remix',
+            prompt: `Remix trang "${res.page.title}" (${res.page.summary || 'Bản xuất bản cộng đồng'}): giữ bố cục và nâng cấp theo yêu cầu của tôi.`,
+            html: res.page.html,
+            profile: {
+              siteName: res.page.title,
+              personality: res.page.personality,
+            },
+          });
+          return;
+        }
+      } catch {
+        void 0;
+      }
+
+      try {
+        const mod = await import('../data/agentShowcase15');
+        const matched = mod.AGENT_SHOWCASE_15.find(
+          (entry) => entry.slug === remixSlug || entry.id === remixSlug
+        );
+        if (!cancelled && matched) {
+          openInWorkspace({
+            kind: 'showcase-15',
+            id: matched.id,
+            title: matched.title,
+            sourceLibrary: matched.categoryLabel,
+            prompt: matched.userPrompt,
+            html: matched.html,
+            profile: matched.profile,
+          });
+        }
+      } catch {
+        return;
+      }
+    };
+
+    void loadRemix();
+    return () => {
+      cancelled = true;
+    };
+  }, [openInWorkspace]);
 
   const detachItemFromWorkspace = useCallback(
     (itemId: string) => {
@@ -2037,6 +2287,12 @@ function normalizeStoredProject(raw: unknown): WorkspaceProject | null {
       experienceItemId,
       setExperienceItemId,
       openExperience,
+      pendingWorkspaceSeed,
+      clearWorkspaceSeed,
+      onboardingProfile,
+      setOnboardingProfile,
+      behaviorScores,
+      recordSignal,
       projects,
       activeProjectId: activeProject.id,
       activeProject,
@@ -2113,6 +2369,12 @@ function normalizeStoredProject(raw: unknown): WorkspaceProject | null {
       experienceItemId,
       setExperienceItemId,
       openExperience,
+      pendingWorkspaceSeed,
+      clearWorkspaceSeed,
+      onboardingProfile,
+      setOnboardingProfile,
+      behaviorScores,
+      recordSignal,
       projects,
       activeProject,
       createProject,

@@ -33,21 +33,28 @@ function readShardJson(shardPath) {
 }
 
 describe('Vault Hydration & Anti-Arena Regression Suite', () => {
-  test('hydrates all 7,750 free/public vault items across 6 libraries with valid compact gzipped shard files (<15MB total)', () => {
+  test('hydrates all 5,994 purified free/usable vault items across 5 libraries + 58 motion recipes with 0 GetLayers/paid items (<15MB total)', () => {
     const indexPath = path.join(projectRoot, 'public', 'data', 'studio-vault.json');
     assert.ok(fs.existsSync(indexPath), 'studio-vault.json must exist');
     const data = JSON.parse(fs.readFileSync(indexPath, 'utf8'));
 
-    assert.equal(data.total, 7750, `Expected 7750 free/public vault items, got ${data.total}`);
-    assert.equal(data.items.length, 7750);
+    assert.equal(data.total, 5994, `Expected 5994 purified free usable vault items, got ${data.total}`);
+    assert.equal(data.items.length, 5994);
     const threeuiCount = data.items.filter((item) => item.l === 'threeui').length;
-    assert.equal(threeuiCount, 389, `Expected 389 Free/Public ThreeUI items, got ${threeuiCount}`);
+    assert.equal(threeuiCount, 43, `Expected 43 Free Community ThreeUI items with real source, got ${threeuiCount}`);
+    const glacierCount = data.items.filter((item) => item.l === 'glacier').length;
+    assert.equal(glacierCount, 0, 'Paid GetLayers (glacier) items must be purged');
     const ext = data.shardExt || 'jgz';
 
     const libs = new Set(data.items.map((item) => item.l));
-    for (const lib of ['pinui', 'codefronts', 'lucianlabs', 'motionsites', 'threeui', 'glacier']) {
+    for (const lib of ['pinui', 'codefronts', 'lucianlabs', 'motionsites', 'threeui']) {
       assert.ok(libs.has(lib), `Missing library ${lib} in studio-vault.json`);
     }
+
+    const recipesPath = path.join(projectRoot, 'public', 'data', 'motion-recipes.json');
+    assert.ok(fs.existsSync(recipesPath), 'motion-recipes.json must exist');
+    const recipesData = JSON.parse(fs.readFileSync(recipesPath, 'utf8'));
+    assert.equal(recipesData.total, 58, `Expected 58 MotionSites recipes, got ${recipesData.total}`);
 
     const shardsToSpotCheck = new Set();
     let aiWorkflowShard = '';
@@ -263,37 +270,33 @@ describe('Vault Hydration & Anti-Arena Regression Suite', () => {
     assert.ok(paletteTsx.includes('previousFocusRef'), 'CommandPalette must restore focus on close');
   });
 
-  test('verifies nv2 Community MVP (polls, multi-image, hide/mute/block, grouped notifications, 3-step onboarding, 390px bottom nav) and zero host path leaks', () => {
+  test('verifies v4 Community Remix, Knowledge 58 Recipes, Experience Vault, 390px bottom nav and zero host path leaks', () => {
     const xpTsx = fs.readFileSync(
       path.join(projectRoot, 'src', 'features', 'explore', 'ExperienceView.tsx'),
       'utf8'
     );
-    assert.ok(xpTsx.includes('shardRetryTick'), 'ExperienceView must wire shardRetryTick for shard retry');
+    assert.ok(xpTsx.includes('openInWorkspace'), 'ExperienceView must wire openInWorkspace');
     assert.equal(
-      xpTsx.includes('vaultError && allVaultItems.length === 0'),
+      xpTsx.includes("'glacier'"),
       false,
-      'ExperienceView must not gate vaultError alert on allVaultItems.length === 0'
+      'ExperienceView must not expose purged GetLayers (glacier) items'
     );
 
     const communityTsx = fs.readFileSync(
       path.join(projectRoot, 'src', 'features', 'community', 'CommunityView.tsx'),
       'utf8'
     );
-    assert.ok(communityTsx.includes('formatUserDisplayName'), 'CommunityView must normalize admin display name');
-    assert.ok(communityTsx.includes('CommunityPollCard'), 'CommunityView must render interactive polls');
-    assert.ok(communityTsx.includes('CommunityOnboardingCard'), 'CommunityView must render 3-step onboarding');
-    assert.ok(communityTsx.includes('CommunityNotificationsModal'), 'CommunityView must render grouped notifications');
-    assert.ok(communityTsx.includes('MAX_COMPOSE_IMAGES = 4'), 'CommunityView must support up to 4 images');
-    assert.ok(communityTsx.includes('Ẩn bài viết') && communityTsx.includes('Tắt tiếng') && communityTsx.includes('Chặn @'), 'CommunityView must include hide, mute, and block moderation actions');
+    assert.ok(communityTsx.includes('Remix ngay'), 'CommunityView must render Remix ngay action');
+    assert.ok(communityTsx.includes('KnowledgeView'), 'CommunityView must integrate Sổ tay Tri thức');
+    assert.ok(communityTsx.includes('AGENT_SHOWCASE_15'), 'CommunityView must include 15 Agent Showcase items');
 
     const navbarTsx = fs.readFileSync(
       path.join(projectRoot, 'src', 'components', 'layout', 'AppNavbar.tsx'),
       'utf8'
     );
-    for (const label of ['Trang chủ', 'Khám phá', 'Đăng bài', 'Thông báo', 'Hồ sơ']) {
-      assert.ok(navbarTsx.includes(label), `Mobile bottom nav must include ${label}`);
+    for (const label of ['Trang chủ', 'Khám phá', 'Workspace', 'Cộng đồng']) {
+      assert.ok(navbarTsx.includes(label), `Navbar must include ${label}`);
     }
-    assert.ok(navbarTsx.includes('mobile-bnav__dot'), 'Mobile bottom nav must include unread notification red dot');
 
     const repoTsx = fs.readFileSync(
       path.join(projectRoot, 'src', 'features', 'explore', 'RepoChart.tsx'),
@@ -511,13 +514,19 @@ describe('Vault Hydration & Anti-Arena Regression Suite', () => {
       'CommunityView.tsx must remove the duplicate Tra cứu tab'
     );
 
-    const chatRoomTsx = fs.readFileSync(
-      path.join(projectRoot, 'src', 'features', 'community', 'CommunityChatRoom.tsx'),
+    assert.equal(
+      fs.existsSync(path.join(projectRoot, 'src', 'features', 'community', 'CommunityChatRoom.tsx')),
+      false,
+      'Fake localStorage CommunityChatRoom.tsx must stay removed'
+    );
+
+    const wsViewTsx = fs.readFileSync(
+      path.join(projectRoot, 'src', 'features', 'workspace', 'WorkspaceView.tsx'),
       'utf8'
     );
     assert.ok(
-      chatRoomTsx.includes('chat--lounge') && chatRoomTsx.includes('chat-desk'),
-      'CommunityChatRoom.tsx must render the redesigned 3-column Studio Lounge layout'
+      wsViewTsx.includes('SplitDivider') && wsViewTsx.includes('OnboardingWizard') && wsViewTsx.includes('ArenaRunnerPane'),
+      'WorkspaceView.tsx must wire SplitDivider, OnboardingWizard, and ArenaRunnerPane'
     );
 
     const landingCss = fs.readFileSync(

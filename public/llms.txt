@@ -1,22 +1,19 @@
-# F-Forum v3
+# F-Forum
 
-> Bàn dựng và kiểm định giao diện web trực tiếp trên trình duyệt với Live View cô lập, 6 phép kiểm Diff & Check, 196 giao diện, 8.322 chi tiết UI/UX, 122 kho GitHub tiếng Việt, 61 công cụ AI và 83 mẫu chuyển động.
+> Nền tảng dựng website tiếng Việt trực tiếp trên trình duyệt: 5.994 mẫu giao diện miễn phí đã lọc sạch, 58 kỹ thuật chuyển động, 15 sản phẩm mẫu Agent, Workspace kéo khung xem trực tiếp, xuất bản liên kết /p/ và Cộng đồng Remix.
 
-## Main sections
+## Các không gian chính
 
-- [Trang giới thiệu](https://fforum3.vercel.app/): Câu chuyện sản phẩm theo từng chương, mô phỏng iPhone 18 Pro chạy ứng dụng F-Forum, 195 người truy cập đã ghi nhận, 12 thành phần quy trình tương tác và hỏi đáp minh bạch.
-- [Trang chủ](https://fforum3.vercel.app/home): Khởi tạo đặc tả 0 lượt với nền tay chấm LED Dot-Matrix, 83 mẫu chuyển động kèm prompt và Tủ sách tài nguyên Glacier 12 cuốn 3D.
-- [Bàn soi Khám phá](https://fforum3.vercel.app/explore): Kho tham chiếu 196 giao diện tương tác trực tiếp, 8.322 chi tiết UI/UX (Bố cục, Không gian 3D, Hiệu ứng, Chuyển động, Tương tác), 122 kho GitHub tiếng Việt và 61 công cụ AI đã kiểm chứng.
-- [Trải nghiệm tương tác](https://fforum3.vercel.app/explore/experience): Không gian chạy thử và đối chiếu trực tiếp các mẫu chuyển động, cảnh 3D cùng thành phần tương tác trước khi mở trong Workspace.
-- [Workspace](https://fforum3.vercel.app/workspace): Môi trường 3 vùng với AI SSE streaming, Live View cô lập (390px, 768px, 1440px), Diff & Check 6 phép kiểm và xuất tệp ZIP tự động che khóa bí mật.
-- [Tri thức (Source of Knowledge)](https://fforum3.vercel.app/community): Diễn đàn chia sẻ bản dựng từ Workspace, trình diễn hộp cát, học liệu chuẩn hóa và hồ sơ bàn giao câu lạc bộ.
+- [Trang giới thiệu](https://fforum3.vercel.app/): Tổng quan sản phẩm, mô phỏng trực tiếp, 5.994 mẫu miễn phí, số liệu truy cập thực và hỏi đáp minh bạch.
+- [Trang chủ](https://fforum3.vercel.app/home): Khởi tạo dự án nhanh từ câu lệnh ngắn hoặc chọn trực tiếp các mẫu chuyển động kèm đặc tả.
+- [Khám phá](https://fforum3.vercel.app/explore): Bàn soi tương tác gồm 5.994 mẫu miễn phí (42 PinUI, 43 ThreeUI miễn phí, 480 LucianLabs, 382 MotionSites, 5.047 CodeFronts), 60 công cụ và 122 kho GitHub.
+- [Kho Trải nghiệm](https://fforum3.vercel.app/explore/experience): Duyệt phân trang toàn bộ 5.994 mẫu miễn phí, 58 kỹ thuật chuyển động, 15 mẫu Agent, xếp hạng "Hợp gu bạn" theo tương tác thực và mở sang Workspace bằng 1 chạm.
+- [Workspace](https://fforum3.vercel.app/workspace): 5 bước thiết lập ban đầu, khung kéo trực tiếp siêu mảnh 1px, trợ lý AI hiển thị từng bước xử lý, xem trực tiếp hoặc xem mã nguồn, xuất bản liên kết /p/ và tải gói ZIP HTML độc lập.
+- [Cộng đồng & Sổ tay Tri thức](https://fforum3.vercel.app/community): Trưng bày các trang đã xuất bản và 15 mẫu Agent chạy thật, bấm thích, Remix về Workspace và tra cứu 58 kỹ thuật chuyển động + quy chuẩn chống AI slop.
 
-## Key verifiable facts
+## Thông tin kiểm chứng
 
-- Nhà phát triển: F-Forum (giấy phép MIT, cập nhật 2026-11-21)
 - Mã nguồn: https://github.com/broamstuck-cybr/f_forumv3
-- Kho tham chiếu hợp nhất: https://github.com/broamstuck-cybr/SOURCEOFKNOWLEDGFORAI (8.322 chi tiết UI/UX: Bố cục 5.047, Không gian 3D 961, Hiệu ứng 480, Chuyển động 826, Tương tác 42)
-- Hệ sinh thái Bàn soi: 196 giao diện, 83 mẫu chuyển động, 122 kho GitHub tiếng Việt, 61 công cụ AI
-- Giải phẫu kiến trúc cuộn: https://github.com/broamstuck-cybr/shoptify-winter-reverser-engine (12 chương, 199 cập nhật, 682 tài nguyên)
-- Bảo mật Live View & Diff & Check: iframe sandbox="allow-scripts" không dùng allow-same-origin, referrerPolicy="no-referrer", 6 phép kiểm tự động
-- Truy cập mở: 0 VND, 15 lượt miễn phí mỗi phiên, hỗ trợ khóa API riêng (BYOK) lưu cục bộ trình duyệt
+- Kho mẫu miễn phí đã lọc sạch: 5.994 mục (PinUI 42, ThreeUI miễn phí 43, LucianLabs 480, MotionSites 382, CodeFronts 5.047) + 58 kỹ thuật chuyển động
+- Bảo mật hộp cát: iframe sandbox cô lập không dùng allow-same-origin, referrerPolicy="no-referrer", xuất bản /p/:slug với CSP sandbox độc lập
+- Đăng nhập linh hoạt: Hỗ trợ đăng ký/đăng nhập bằng tên tài khoản, email và mật khẩu hoặc dùng ngay không cần tài khoản

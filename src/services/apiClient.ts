@@ -15,6 +15,13 @@ import type {
   User,
   WorkspaceProject,
 } from '../types/index';
+import type {
+  BehaviorItemScore,
+  BehaviorSignalType,
+  BrandPersonality,
+  PublishedPageCategory,
+  PublishedPageRecord,
+} from '../types/workspaceV4';
 
 function buildApiHeaders(
   extraHeaders?: Record<string, string>,
@@ -316,7 +323,7 @@ export const apiClient = {
 
   registerUser(input: {
     username: string;
-    email: string;
+    email?: string;
     password: string;
     name?: string;
   }): Promise<{ user: User; quota: QuotaState }> {
@@ -508,5 +515,60 @@ export const apiClient = {
       method: 'POST',
       body: JSON.stringify({ projectId }),
     });
+  },
+
+  listPublishedPages(): Promise<{ pages: PublishedPageRecord[] }> {
+    return requestJson('/api/pages', { method: 'GET' });
+  },
+
+  publishPage(input: {
+    title: string;
+    summary: string;
+    category: PublishedPageCategory;
+    personality: BrandPersonality;
+    html: string;
+    sourceIds: string[];
+    authorName?: string;
+    authorRole?: string;
+    slug?: string;
+  }): Promise<{ page: PublishedPageRecord; url: string }> {
+    return requestJson('/api/pages', {
+      method: 'POST',
+      body: JSON.stringify(input),
+    });
+  },
+
+  getPublishedPage(slug: string): Promise<{ page: PublishedPageRecord }> {
+    return requestJson(`/api/pages/${encodeURIComponent(slug)}`, { method: 'GET' });
+  },
+
+  likePublishedPage(slug: string): Promise<{ slug: string; likes: number; liked: boolean }> {
+    return requestJson(`/api/pages/${encodeURIComponent(slug)}/like`, {
+      method: 'POST',
+      body: JSON.stringify({}),
+    });
+  },
+
+  remixPublishedPage(slug: string): Promise<{ slug: string; remixes: number }> {
+    return requestJson(`/api/pages/${encodeURIComponent(slug)}/remix`, {
+      method: 'POST',
+      body: JSON.stringify({}),
+    });
+  },
+
+  recordBehaviorSignal(input: {
+    itemId: string;
+    library?: string;
+    signal: BehaviorSignalType;
+    profileTag?: string;
+  }): Promise<{ ok: boolean; score: number }> {
+    return requestJson('/api/signals', {
+      method: 'POST',
+      body: JSON.stringify(input),
+    });
+  },
+
+  getBehaviorScores(): Promise<{ scores: Record<string, BehaviorItemScore> }> {
+    return requestJson('/api/signals/scores', { method: 'GET' });
   },
 };

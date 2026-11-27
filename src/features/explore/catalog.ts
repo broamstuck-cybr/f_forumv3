@@ -11,7 +11,8 @@ import type {
   SourceCatalogItem,
   SourceLibraryName,
 } from '../../types/index';
-import { VAULT_CACHE_VERSION, type VaultLibraryKey } from './vaultLoader';
+import type { WorkspaceLaunchSeed } from '../../types/workspaceV4';
+import { VAULT_CACHE_VERSION, VAULT_LIBRARY_LABELS, type VaultLibraryKey } from './vaultLoader';
 
 export interface ExplorePlateItem extends Omit<SourceCatalogItem, 'sourceLibrary'> {
   sourceLibrary: SourceLibraryName;
@@ -783,8 +784,8 @@ export function templateContext(
   customPayload?: string
 ): AttachedContextItem {
   const libLabel =
-    'vaultLibrary' in item && item.vaultLibrary === 'glacier'
-      ? 'Nền & Lớp'
+    'vaultLibrary' in item
+      ? VAULT_LIBRARY_LABELS[item.vaultLibrary]
       : LIBRARY_LABEL[item.sourceLibrary];
   return {
     id: item.id,
@@ -797,6 +798,37 @@ export function templateContext(
       sanitizeBrandText(item.promptSpec) ||
       `${whiteLabelArchivePath(item)}\nRuntime: ${item.runtime}\nStyle: ${item.style}`,
     tags: item.tags,
+  };
+}
+
+export function buildVaultWorkspaceSeed(input: {
+  id: string;
+  title: string;
+  library: VaultLibraryKey;
+  prompt?: string;
+  html?: string;
+  css?: string;
+  js?: string;
+}): WorkspaceLaunchSeed {
+  const cleanTitle = sanitizeBrandText(input.title) || 'Mẫu giao diện';
+  const libLabel = VAULT_LIBRARY_LABELS[input.library];
+  const codeParts = [
+    input.html ? `<!-- HTML -->\n${input.html}` : '',
+    input.css ? `/* CSS */\n${input.css}` : '',
+    input.js ? `// JS\n${input.js}` : '',
+  ].filter(Boolean);
+  const sourceCode = codeParts.length > 0 ? codeParts.join('\n\n') : undefined;
+  const prompt =
+    input.prompt?.trim() ||
+    `Dựng trang web dựa trên mẫu "${cleanTitle}" (${libLabel}), giữ đúng nhịp bố cục và nâng cấp nội dung tiếng Việt rõ ràng.`;
+
+  return {
+    kind: 'vault-item',
+    id: input.id,
+    title: cleanTitle,
+    prompt,
+    sourceLibrary: libLabel,
+    sourceCode,
   };
 }
 

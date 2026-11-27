@@ -49,50 +49,53 @@ const ROUTE_META: Record<
   { title: string; description: string; path: string; noindex?: boolean }
 > = {
   landing: {
-    title: 'F-Forum — Kho giao diện & Workspace web',
+    title: 'F-Forum — Làm web từ kho 5.994 mẫu mở',
     description:
-      'Kho thành phần UI, trình sửa mã HTML/CSS/JS và cộng đồng web trên trình duyệt.',
+      'Chọn mẫu giao diện miễn phí, chỉnh sửa bằng chat trong Workspace và xuất bản trang web chạy ngay trên trình duyệt.',
     path: '/',
   },
   home: {
     title: 'Trang chủ — F-Forum',
-    description: 'Khởi tạo đặc tả giao diện, khám phá mẫu chuyển động và kệ sách tài nguyên kỹ thuật.',
+    description: 'Bắt đầu tạo trang mới theo mục tiêu của bạn hoặc mở ngay mẫu có sẵn.',
     path: '/home',
   },
   explore: {
-    title: 'Bàn soi Khám phá — F-Forum',
-    description: 'Khám phá kho mẫu tương tác, không gian 3D, hiệu ứng, chuyển động, bố cục cùng công cụ AI và kho GitHub tuyển chọn.',
+    title: 'Khám phá 5.994 mẫu mở — F-Forum',
+    description:
+      'Duyệt 5.994 mẫu giao diện miễn phí từ Pin UI, ThreeUI 3D, lucianLabs, MotionSites Free và CodeFronts.',
     path: '/explore',
   },
   experience: {
-    title: 'Trải nghiệm thành phần — F-Forum',
-    description: 'Trải nghiệm trực tiếp toàn bộ kho thành phần giao diện, đọc mã nguồn sạch và lưu bookmark.',
+    title: 'Trải nghiệm kho tài nguyên — F-Forum',
+    description:
+      'Xem trực tiếp 5.994 mẫu mở, 58 kỹ thuật chuyển động và 15 trang mẫu chạy thật, sao chép mã và đưa thẳng vào Workspace.',
     path: '/explore/experience',
   },
   workspace: {
     title: 'Workspace — F-Forum',
-    description: 'Không gian dựng thử web với khung xem trực tiếp đa màn hình, đối chiếu mã nguồn, kiểm định 6 lớp và xuất gói ZIP an toàn.',
+    description:
+      'Tạo và sửa trang web qua khung chat, xem bản chạy trực tiếp theo từng kích thước màn hình và tải gói .zip.',
     path: '/workspace',
   },
   community: {
-    title: 'Tri thức & Cộng đồng — F-Forum',
+    title: 'Cộng đồng Remix & Sổ tay Tri thức — F-Forum',
     description:
-      'Bảng tin kỹ thuật và phòng chat trực tiếp của cộng đồng F-Forum — chia sẻ bản dựng, thảo luận thiết kế và giải đáp thời gian thực.',
+      'Xem các trang web đã xuất bản, bấm Remix để sửa lại thành bản của bạn và tra cứu 58 kỹ thuật chuyển động.',
     path: '/community',
   },
   profile: {
     title: 'Hồ sơ — F-Forum',
-    description: 'Trang bìa hồ sơ thành viên, số liệu thực của phiên và tập bản in đã lưu.',
+    description: 'Xem danh sách dự án Workspace và các mẫu bạn đã lưu.',
     path: '/profile',
   },
   settings: {
     title: 'Cài đặt — F-Forum',
-    description: 'Chuyển đổi Mực và Giấy, giảm chuyển động, cấu hình khóa API riêng BYOK và sao lưu dữ liệu cục bộ.',
+    description: 'Chỉnh giao diện sáng tối, giảm chuyển động, cấu hình API cá nhân và sao lưu dữ liệu.',
     path: '/settings',
   },
   honor: {
     title: 'Đội ngũ phát triển — F-Forum',
-    description: 'Phòng trưng bày 3D tôn vinh đội ngũ phát triển và kiến trúc sư F-Forum.',
+    description: 'Danh sách thành viên xây dựng dự án F-Forum.',
     path: '/honor',
   },
   'not-found': {
@@ -114,13 +117,13 @@ function setMetaContent(selector: string, value: string): void {
 const ROUTE_LOAD_LABELS: Record<string, string> = {
   landing: 'Đang mở trang giới thiệu...',
   home: 'Đang mở Trang chủ...',
-  explore: 'Đang mở Bàn soi Khám phá...',
-  experience: 'Đang nạp Trải nghiệm mẫu...',
-  workspace: 'Đang khởi động Workspace F-Forum...',
-  community: 'Đang mở Bảng tin & Phòng chat...',
-  profile: 'Đang mở Hồ sơ thành viên...',
-  settings: 'Đang mở Cài đặt hệ thống...',
-  honor: 'Đang mở Phòng trưng bày 3D Đội ngũ...',
+  explore: 'Đang mở Khám phá...',
+  experience: 'Đang mở kho trải nghiệm...',
+  workspace: 'Đang mở Workspace...',
+  community: 'Đang mở Cộng đồng Remix...',
+  profile: 'Đang mở Hồ sơ...',
+  settings: 'Đang mở Cài đặt...',
+  honor: 'Đang mở trang Đội ngũ...',
 };
 
 const AppShell: React.FC = () => {
@@ -187,7 +190,7 @@ const AppShell: React.FC = () => {
           <GlobalThemeAtmosphere />
           <GlobalRouteLoader
             visible={routeTransitioning}
-            label={ROUTE_LOAD_LABELS[currentRoute] || 'Đang nạp trang...'}
+            label={ROUTE_LOAD_LABELS[currentRoute] || 'Đang tải trang...'}
           />
           <a className="skip-link" href="#noi-dung">
             Tới nội dung
@@ -200,7 +203,7 @@ const AppShell: React.FC = () => {
                 fallback={
                   <GlobalRouteLoader
                     visible
-                    label={ROUTE_LOAD_LABELS[currentRoute] || 'Đang nạp trang...'}
+                    label={ROUTE_LOAD_LABELS[currentRoute] || 'Đang tải trang...'}
                   />
                 }
               >

@@ -383,7 +383,7 @@ export const PlateRibbon: React.FC<PlateRibbonProps> = ({
                           kind: 'video',
                           src: videoSrc,
                           poster: imgSrc,
-                          credit: item.vaultLibrary === 'glacier' ? 'getlayers.ai' : 'motionsites.ai',
+                          credit: 'motionsites.ai',
                         }}
                         title={title}
                         fallbackLabel={libLabel}
@@ -427,9 +427,7 @@ export const PlateRibbon: React.FC<PlateRibbonProps> = ({
                           credit:
                             item.vaultLibrary === 'threeui'
                               ? '3D WebGL'
-                              : item.vaultLibrary === 'glacier'
-                                ? 'getlayers.ai'
-                                : 'motionsites.ai',
+                              : 'motionsites.ai',
                         }}
                         title={title}
                         fallbackLabel={libLabel}
@@ -463,7 +461,7 @@ export const PlateRibbon: React.FC<PlateRibbonProps> = ({
                 </span>
               </button>
               <div className="ex-plate-foot">
-                <ReactionBar id={item.id} title={title} className="ex-plate-react" />
+                <ReactionBar id={item.id} title={title} library={item.vaultLibrary} className="ex-plate-react" />
                 <button
                   type="button"
                   className="ex-plate-xp"

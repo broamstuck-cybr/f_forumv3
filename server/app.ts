@@ -13,6 +13,24 @@ import type {
   ModerationReportStatus,
   WorkspaceProject,
 } from '../src/types/index';
+import type {
+  BrandPersonality,
+  PublishedPageCategory,
+} from '../src/types/workspaceV4';
+import {
+  getBehaviorScores,
+  isValidBehaviorSignal,
+  recordBehaviorSignal,
+} from './behaviorStore.js';
+import {
+  getPublishedPageBySlug,
+  incrementRemixPublishedPage,
+  listPublishedPages,
+  publishUserPage,
+  renderNotFoundPageHtml,
+  renderPublicPageHtml,
+  toggleLikePublishedPage,
+} from './publishedPagesStore.js';
 import {
   adminAddChangelog,
   adminModerateReport,
@@ -133,11 +151,29 @@ function getDefaultCspDirectives(): string {
 const SIMULATOR_CSP_DIRECTIVES =
   "default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'self'; form-action 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' blob:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: blob: https:; media-src 'self' data: blob: https:; connect-src 'self' https://api.open-meteo.com https://nominatim.openstreetmap.org https://api.mymemory.translated.net; frame-src 'self' blob: data: https://www.openstreetmap.org https://en.m.wikipedia.org https://www.bing.com https://open-meteo.com https://www.apple.com https://www.macrumors.com https://www.theverge.com https://github.com; worker-src 'self' blob:";
 
+// WHY: CSP sandbox without allow-same-origin isolates user-published /p/:slug pages from main-origin localStorage/API while enabling standalone inline HTML/CSS/JS.
+const PUBLISHED_PAGE_CSP_DIRECTIVES =
+  "sandbox allow-scripts allow-forms allow-popups allow-popups-to-escape-sandbox allow-modals allow-downloads allow-top-navigation-by-user-activation; default-src 'self' https: data: blob:; base-uri 'none'; object-src 'none'; frame-ancestors 'self'; script-src 'unsafe-inline' 'unsafe-eval' https: blob:; style-src 'unsafe-inline' https: data:; font-src data: https:; img-src data: blob: https:; media-src data: blob: https:; connect-src 'none'; form-action 'none'";
+
+const CRAFT_SYSTEM_GUIDANCE = [
+  'Quy tắc thiết kế F-FORUM (Anti-Slop & MotionSites):',
+  '- Tiếng Việt tự nhiên đủ dấu, không văn mẫu sáo rỗng, không chữ giả Latinh, không emoji làm icon UI.',
+  '- Dùng SVG mảnh, 1 màu chủ đạo + tương phản >= 4.5:1, tránh gradient tím-xanh đại trà.',
+  '- Nhịp lưới 8px, bo góc đồng tâm, responsive mượt trên 390px / 768px / 1440px.',
+  '- Chuyển động tinh tế (reveal, hover spring, tiến độ mượt) và luôn tôn trọng prefers-reduced-motion.',
+  '- Nút hành động ngắn gọn (<= 3 từ), mã tự chạy sạch không lỗi console.',
+].join('\n');
+
 app.use((req, res, next) => {
   const isSimulatorPath = /^\/iphone18-simulator\.html$/i.test(req.path);
+  const isPublishedPagePath = req.path.startsWith('/p/');
   res.setHeader(
     'Content-Security-Policy',
-    isSimulatorPath ? SIMULATOR_CSP_DIRECTIVES : getDefaultCspDirectives()
+    isPublishedPagePath
+      ? PUBLISHED_PAGE_CSP_DIRECTIVES
+      : isSimulatorPath
+        ? SIMULATOR_CSP_DIRECTIVES
+        : getDefaultCspDirectives()
   );
   res.setHeader('X-Content-Type-Options', 'nosniff');
   res.setHeader('X-Frame-Options', 'SAMEORIGIN');
@@ -458,13 +494,19 @@ export async function handleAiChat(req: Request, res: Response): Promise<void> {
     return;
   }
 
+  const clientSystemPrompt =
+    typeof body.systemPrompt === 'string' ? body.systemPrompt.trim().slice(0, 1350) : '';
+  const enrichedSystemPrompt = clientSystemPrompt
+    ? `${clientSystemPrompt}\n\n${CRAFT_SYSTEM_GUIDANCE}`
+    : CRAFT_SYSTEM_GUIDANCE;
+
   const chatReq: AIChatRequest = {
     projectId: typeof body.projectId === 'string' ? body.projectId : 'default-project',
     prompt,
     model: typeof body.model === 'string' ? body.model.trim() : undefined,
     agentMode: typeof body.agentMode === 'string' ? body.agentMode.trim() : undefined,
     stream: body.stream === true,
-    systemPrompt: typeof body.systemPrompt === 'string' ? body.systemPrompt.slice(0, 2000) : undefined,
+    systemPrompt: enrichedSystemPrompt.slice(0, 2000),
     temperature: typeof body.temperature === 'number' ? body.temperature : undefined,
     files: Array.isArray(body.files) ? body.files : [],
     attachedItems: Array.isArray(body.attachedItems) ? body.attachedItems : [],
@@ -584,7 +626,7 @@ export async function handleAuthAction(
 
   if (action === 'logout') {
     revokeSessionFromRequest(req);
-    clearAuthCookies(res);
+    clearAuthCookies(res, req);
     await flushSupabaseWrites();
     const quota = getQuotaState(null, guestId, ipHash);
     res.status(200).json({ ok: true, user: null, quota });
@@ -601,7 +643,7 @@ export async function handleAuthAction(
   if (action === 'register') {
     const result = registerStandardUser({
       username: String(body.username || ''),
-      email: String(body.email || ''),
+      email: typeof body.email === 'string' ? body.email : undefined,
       password: String(body.password || ''),
       name: typeof body.name === 'string' ? body.name : undefined,
     });
@@ -609,7 +651,7 @@ export async function handleAuthAction(
       res.status(400).json({ error: result.error });
       return;
     }
-    setAuthCookies(res, result.user);
+    setAuthCookies(res, result.user, req);
     appendAuditLog(result.user.username, 'USER_REGISTER', result.user.id, 'Dang ky tai khoan moi');
     await flushSupabaseWrites();
     const quota = getQuotaState(result.user, guestId, ipHash);
@@ -656,7 +698,7 @@ export async function handleAuthAction(
     }
 
     clearLoginFailures('user', ipHash, identifier);
-    setAuthCookies(res, stdAttempt.user);
+    setAuthCookies(res, stdAttempt.user, req);
     appendAuditLog(stdAttempt.user.username, 'USER_LOGIN', stdAttempt.user.id, 'Dang nhap thanh cong');
     await flushSupabaseWrites();
     const quota = getQuotaState(stdAttempt.user, guestId, ipHash);
@@ -692,7 +734,7 @@ export async function handleAuthAction(
       res.status(401).json({ error: authRes.error });
       return;
     }
-    setAuthCookies(res, authRes.user);
+    setAuthCookies(res, authRes.user, req);
     appendAuditLog(
       authRes.user.username,
       authRes.isNew ? 'GOOGLE_REGISTER' : 'GOOGLE_LOGIN',
@@ -743,7 +785,7 @@ export async function handleAuthAction(
       return;
     }
     clearLoginFailures('admin', ipHash, username);
-    setAuthCookies(res, result.user);
+    setAuthCookies(res, result.user, req);
     appendAuditLog(result.user.username, 'ADMIN_LOGIN', result.user.id, 'Dang nhap Admin Console');
     await flushSupabaseWrites();
     const quota = getQuotaState(result.user, guestId, ipHash);
@@ -1437,6 +1479,180 @@ export async function handleProjectsAction(
   res.status(404).json({ error: `Unknown projects action: ${action}` });
 }
 
+export async function handleListPublishedPages(req: Request, res: Response): Promise<void> {
+  const ipHash = getClientIpHash(req);
+  if (!enforceRateLimit(req, res, `pages:get:${ipHash}`, 120, 60_000)) return;
+  await ensureHydrated();
+  res.status(200).json({ pages: listPublishedPages() });
+}
+
+export async function handlePublishPage(req: Request, res: Response): Promise<void> {
+  await ensureHydrated();
+  const user = getAuthenticatedUser(req);
+  const guestId = resolveGuestSessionId(req, res);
+  const ipHash = getClientIpHash(req);
+  const actorId = user ? user.id : `guest:${guestId}`;
+
+  if (!enforceRateLimit(req, res, `pages:publish:${ipHash}:${actorId}`, 15, 60_000, user?.username)) {
+    return;
+  }
+
+  const body = (req.body || {}) as Record<string, unknown>;
+  const authorName =
+    typeof body.authorName === 'string' && body.authorName.trim()
+      ? body.authorName.trim()
+      : user
+        ? user.name || user.username
+        : 'Thành viên F-FORUM';
+  const authorRole =
+    typeof body.authorRole === 'string' && body.authorRole.trim()
+      ? body.authorRole.trim()
+      : user
+        ? user.role === 'admin'
+          ? 'Quản trị viên'
+          : 'Thành viên'
+        : 'Khách';
+
+  const result = publishUserPage({
+    title: typeof body.title === 'string' ? body.title : '',
+    summary: typeof body.summary === 'string' ? body.summary : '',
+    category: body.category as PublishedPageCategory,
+    personality: body.personality as BrandPersonality,
+    html: typeof body.html === 'string' ? body.html : '',
+    sourceIds: Array.isArray(body.sourceIds) ? (body.sourceIds as string[]) : [],
+    authorName,
+    authorRole,
+    slug: typeof body.slug === 'string' ? body.slug : undefined,
+  });
+
+  if (!result.ok) {
+    res.status(result.status || 400).json({ error: result.error });
+    return;
+  }
+
+  await flushSupabaseWrites();
+  res.status(201).json({
+    page: result.page,
+    url: `/p/${result.page.slug}`,
+  });
+}
+
+export async function handleGetPublishedPage(req: Request, res: Response): Promise<void> {
+  const ipHash = getClientIpHash(req);
+  if (!enforceRateLimit(req, res, `pages:get:${ipHash}`, 120, 60_000)) return;
+  await ensureHydrated();
+  const slug = typeof req.params.slug === 'string' ? req.params.slug : '';
+  const page = getPublishedPageBySlug(slug);
+  if (!page) {
+    res.status(404).json({ error: 'Không tìm thấy trang đã xuất bản.' });
+    return;
+  }
+  res.status(200).json({ page });
+}
+
+export async function handleLikePublishedPage(req: Request, res: Response): Promise<void> {
+  await ensureHydrated();
+  const user = getAuthenticatedUser(req);
+  const guestId = resolveGuestSessionId(req, res);
+  const ipHash = getClientIpHash(req);
+  const actorId = user ? user.id : `guest:${guestId}`;
+
+  if (!enforceRateLimit(req, res, `pages:like:${ipHash}:${actorId}`, 40, 60_000, user?.username)) {
+    return;
+  }
+
+  const slug = typeof req.params.slug === 'string' ? req.params.slug : '';
+  const result = toggleLikePublishedPage(slug, actorId);
+  if (!result) {
+    res.status(404).json({ error: 'Không tìm thấy trang đã xuất bản.' });
+    return;
+  }
+  await flushSupabaseWrites();
+  res.status(200).json(result);
+}
+
+export async function handleRemixPublishedPage(req: Request, res: Response): Promise<void> {
+  await ensureHydrated();
+  const user = getAuthenticatedUser(req);
+  const guestId = resolveGuestSessionId(req, res);
+  const ipHash = getClientIpHash(req);
+  const actorId = user ? user.id : `guest:${guestId}`;
+
+  if (!enforceRateLimit(req, res, `pages:remix:${ipHash}:${actorId}`, 30, 60_000, user?.username)) {
+    return;
+  }
+
+  const slug = typeof req.params.slug === 'string' ? req.params.slug : '';
+  const result = incrementRemixPublishedPage(slug);
+  if (!result) {
+    res.status(404).json({ error: 'Không tìm thấy trang đã xuất bản.' });
+    return;
+  }
+  await flushSupabaseWrites();
+  res.status(200).json(result);
+}
+
+export async function handlePublicPublishedPage(req: Request, res: Response): Promise<void> {
+  const ipHash = getClientIpHash(req);
+  if (!enforceRateLimit(req, res, `public-page:get:${ipHash}`, 120, 60_000)) return;
+  await ensureHydrated();
+
+  const slug = typeof req.params.slug === 'string' ? req.params.slug : '';
+  const page = getPublishedPageBySlug(slug);
+  res.setHeader('Content-Type', 'text/html; charset=utf-8');
+  res.setHeader('Content-Security-Policy', PUBLISHED_PAGE_CSP_DIRECTIVES);
+  if (!page) {
+    res.setHeader('Cache-Control', 'no-store');
+    res.status(404).send(renderNotFoundPageHtml(slug));
+    return;
+  }
+  res.setHeader('Cache-Control', 'public, max-age=60, stale-while-revalidate=300');
+  res.status(200).send(renderPublicPageHtml(page));
+}
+
+export async function handleRecordBehaviorSignal(req: Request, res: Response): Promise<void> {
+  await ensureHydrated();
+  const user = getAuthenticatedUser(req);
+  const guestId = resolveGuestSessionId(req, res);
+  const ipHash = getClientIpHash(req);
+  const actorId = user ? user.id : `guest:${guestId}`;
+
+  if (!enforceRateLimit(req, res, `signals:post:${ipHash}:${actorId}`, 60, 60_000, user?.username)) {
+    return;
+  }
+
+  const body = (req.body || {}) as Record<string, unknown>;
+  if (!isValidBehaviorSignal(body.signal)) {
+    res.status(400).json({ error: 'Loại tín hiệu hành vi không hợp lệ.' });
+    return;
+  }
+
+  const result = recordBehaviorSignal(
+    {
+      itemId: typeof body.itemId === 'string' ? body.itemId : '',
+      library: typeof body.library === 'string' ? body.library : undefined,
+      signal: body.signal,
+      profileTag: typeof body.profileTag === 'string' ? body.profileTag : undefined,
+    },
+    actorId
+  );
+
+  if (!result.ok) {
+    res.status(400).json({ error: result.error });
+    return;
+  }
+
+  await flushSupabaseWrites();
+  res.status(200).json({ ok: true, score: result.score });
+}
+
+export async function handleGetBehaviorScores(req: Request, res: Response): Promise<void> {
+  const ipHash = getClientIpHash(req);
+  if (!enforceRateLimit(req, res, `signals:get:${ipHash}`, 120, 60_000)) return;
+  await ensureHydrated();
+  res.status(200).json({ scores: getBehaviorScores() });
+}
+
 type AsyncRouteHandler = (req: Request, res: Response, next: NextFunction) => Promise<void> | void;
 
 function asyncRoute(handler: AsyncRouteHandler): RequestHandler {
@@ -1462,6 +1678,14 @@ app.all('/api/community/:action', asyncRoute((req, res) => handleCommunityAction
 app.get('/api/community', asyncRoute((req, res) => handleCommunityAction(req, res, 'list')));
 app.all('/api/projects/:action', asyncRoute((req, res) => handleProjectsAction(req, res)));
 app.get('/api/projects', asyncRoute((req, res) => handleProjectsAction(req, res, 'list')));
+app.get('/api/pages', asyncRoute((req, res) => handleListPublishedPages(req, res)));
+app.post('/api/pages', asyncRoute((req, res) => handlePublishPage(req, res)));
+app.get('/api/pages/:slug', asyncRoute((req, res) => handleGetPublishedPage(req, res)));
+app.post('/api/pages/:slug/like', asyncRoute((req, res) => handleLikePublishedPage(req, res)));
+app.post('/api/pages/:slug/remix', asyncRoute((req, res) => handleRemixPublishedPage(req, res)));
+app.post('/api/signals', asyncRoute((req, res) => handleRecordBehaviorSignal(req, res)));
+app.get('/api/signals/scores', asyncRoute((req, res) => handleGetBehaviorScores(req, res)));
+app.get('/p/:slug', asyncRoute((req, res) => handlePublicPublishedPage(req, res)));
 
 app.use('/api', (_req, res) => {
   res.status(404).json({ error: 'API endpoint not found.' });

@@ -178,15 +178,12 @@ const MotionSiteCard = React.memo<{
         ) : (
           <img
             className="lp-proj-img"
-            src={mediaUrl}
+            src={mediaUrl || DEFAULT_CLUB_COVER}
             alt={`Mẫu MotionSites.ai ${item.title}`}
             loading="eager"
             decoding="async"
-            onLoad={(e) => {
-              delete e.currentTarget.dataset.failed;
-            }}
+            referrerPolicy="no-referrer"
             onError={(e) => {
-              e.currentTarget.dataset.failed = 'true';
               handleImageError(e, DEFAULT_CLUB_COVER);
             }}
           />

@@ -21,8 +21,8 @@ export interface SiteHeartbeatResult {
   metrics: SiteMetrics;
 }
 
-const VISITORS_BASELINE = 195;
-const ACTIVE_SECONDS_BASELINE = 91 * 3600;
+const VISITORS_BASELINE = 0;
+const ACTIVE_SECONDS_BASELINE = 0;
 const MAX_TRACKED_VISITORS = 5000;
 const MAX_TRACKED_SESSIONS = 2000;
 const SESSION_WINDOW_MS = 60_000;

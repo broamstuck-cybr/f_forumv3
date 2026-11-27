@@ -1,10 +1,11 @@
+import type { MotionRecipeItem } from '../../types/workspaceV4';
+
 export type VaultLibraryKey =
   | 'pinui'
   | 'codefronts'
   | 'lucianlabs'
   | 'motionsites'
-  | 'threeui'
-  | 'glacier';
+  | 'threeui';
 
 export interface VaultIndexItem {
   i: string;
@@ -49,17 +50,17 @@ export const VAULT_LIBRARY_ORDER: VaultLibraryKey[] = [
   'lucianlabs',
   'motionsites',
   'codefronts',
-  'glacier',
 ];
 
 export const VAULT_LIBRARY_LABELS: Record<VaultLibraryKey, string> = {
-  pinui: 'Tương tác',
-  lucianlabs: 'Hiệu ứng',
-  threeui: 'Không gian 3D',
-  motionsites: 'Chuyển động',
-  codefronts: 'Bố cục',
-  glacier: 'Nền & Lớp',
+  pinui: 'Pin UI',
+  threeui: 'ThreeUI 3D',
+  lucianlabs: 'lucianLabs',
+  motionsites: 'MotionSites Free',
+  codefronts: 'CodeFronts',
 };
+
+const VALID_LIBRARIES = new Set<string>(VAULT_LIBRARY_ORDER);
 
 export function resolveOriginalLiveUrl(
   library: VaultLibraryKey,
@@ -69,9 +70,6 @@ export function resolveOriginalLiveUrl(
   if (explicitUrl) return explicitUrl;
   if (library === 'motionsites') {
     return `https://motionsites.ai/sections#${id.replace(/^ms-/, '')}`;
-  }
-  if (library === 'glacier') {
-    return `https://www.getlayers.ai/layer/${id.replace(/^glacier\//, '')}`;
   }
   if (library === 'pinui') {
     const bare = id.replace(/^(component|blocx|registry)\//, '');
@@ -93,10 +91,13 @@ export function resolveOriginalLiveUrl(
   return '';
 }
 
-export const VAULT_CACHE_VERSION = 'v9.7-free';
+export const VAULT_CACHE_VERSION = 'v10.0-free-purified';
 
 let vaultIndexCache: VaultIndexData | null = null;
 let vaultIndexPromise: Promise<VaultIndexData> | null = null;
+
+let motionRecipesCache: MotionRecipeItem[] | null = null;
+let motionRecipesPromise: Promise<MotionRecipeItem[]> | null = null;
 
 const shardCache = new Map<string, Record<string, VaultShardPayload>>();
 const shardInflight = new Map<string, Promise<Record<string, VaultShardPayload>>>();
@@ -114,11 +115,13 @@ export function fetchVaultIndex(): Promise<VaultIndexData> {
         return res.json() as Promise<VaultIndexData>;
       })
       .then((data) => {
+        const rawItems = Array.isArray(data?.items) ? data.items : [];
+        const items = rawItems.filter((item) => item && VALID_LIBRARIES.has(item.l));
         const normalized: VaultIndexData = {
-          total: typeof data?.total === 'number' ? data.total : (data?.items?.length ?? 0),
+          total: items.length,
           sharded: Boolean(data?.sharded),
           shardExt: typeof data?.shardExt === 'string' ? data.shardExt : 'jgz',
-          items: Array.isArray(data?.items) ? data.items : [],
+          items,
         };
         vaultIndexCache = normalized;
         return normalized;
@@ -129,6 +132,37 @@ export function fetchVaultIndex(): Promise<VaultIndexData> {
       });
   }
   return vaultIndexPromise;
+}
+
+export function getCachedMotionRecipes(): MotionRecipeItem[] | null {
+  return motionRecipesCache;
+}
+
+export function fetchMotionRecipes(): Promise<MotionRecipeItem[]> {
+  if (motionRecipesCache) return Promise.resolve(motionRecipesCache);
+  if (!motionRecipesPromise) {
+    motionRecipesPromise = fetch(`/data/motion-recipes.json?v=${VAULT_CACHE_VERSION}`)
+      .then((res) => {
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        return res.json() as Promise<{ recipes?: MotionRecipeItem[]; items?: MotionRecipeItem[] } | MotionRecipeItem[]>;
+      })
+      .then((data) => {
+        const list = Array.isArray(data)
+          ? data
+          : Array.isArray(data?.recipes)
+            ? data.recipes
+            : Array.isArray(data?.items)
+              ? data.items
+              : [];
+        motionRecipesCache = list;
+        return list;
+      })
+      .catch((err) => {
+        motionRecipesPromise = null;
+        throw err;
+      });
+  }
+  return motionRecipesPromise;
 }
 
 export function getCachedVaultShard(

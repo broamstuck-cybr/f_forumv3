@@ -27,7 +27,7 @@ import {
   SelectionList,
   type DroppedFilePayload,
 } from '../../components/pinui';
-import { Modal } from '../workspace/Modal';
+import { Modal } from '../../components/common/Modal';
 import {
   applyBackup,
   buildBackup,

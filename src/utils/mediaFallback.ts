@@ -32,9 +32,19 @@ export function handleImageError(
   fallbackSrc: string = DEFAULT_AVATAR
 ) {
   const target = e.currentTarget;
-  if (target.src !== fallbackSrc) {
-    target.onerror = null;
+  const step = target.dataset.fallbackStep || '0';
+  if (step === '0' && fallbackSrc && target.src !== fallbackSrc) {
+    target.dataset.fallbackStep = fallbackSrc.startsWith('data:') ? 'done' : '1';
+    if (fallbackSrc.startsWith('data:')) {
+      target.onerror = null;
+    }
     target.src = fallbackSrc;
+    return;
+  }
+  if (step !== 'done' && target.src !== DEFAULT_CLUB_COVER) {
+    target.dataset.fallbackStep = 'done';
+    target.onerror = null;
+    target.src = DEFAULT_CLUB_COVER;
   }
 }
 

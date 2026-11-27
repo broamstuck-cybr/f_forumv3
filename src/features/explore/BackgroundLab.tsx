@@ -66,7 +66,7 @@ export const BackgroundLab: React.FC<BackgroundLabProps> = ({
         <div className="ex-bg-lab-content">
           <span className="ex-bg-lab-kicker">
             <IconLayers size={13} aria-hidden="true" />
-            GetLayers · {title}
+            Nền chuyển động · {title}
           </span>
           <h2>{title}</h2>
         </div>

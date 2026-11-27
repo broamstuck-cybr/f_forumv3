@@ -19,6 +19,10 @@ data/
 .agents/
 .qa/e2e-*.json
 .qa/interaction_audit.json
+.qa/live_v4_audit.json
+.qa/verify_v4_fixes.json
+.qa/qa-*.png
+.qa/fix-*.png
 .qa/qa_honor/
 TEST_INFRA.md
 TEST_READY.md

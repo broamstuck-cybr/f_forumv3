@@ -12,6 +12,7 @@ import {
   type ShowcaseLibraryKind,
 } from '../../data/reelmarkCarouselData';
 import { VAULT_CACHE_VERSION } from '../../features/explore/vaultLoader';
+import { DEFAULT_CLUB_COVER, handleImageError } from '../../utils/mediaFallback';
 import { useInView, usePrefersReducedMotion } from './useLandingMotion';
 import './tidewell.css';
 
@@ -587,18 +588,13 @@ export const TidewellStage: React.FC<TidewellStageProps> = () => {
                   ) : (
                     <>
                       <img
-                        src={card.imageUrl || card.fallbackUrl}
+                        src={card.imageUrl || card.fallbackUrl || DEFAULT_CLUB_COVER}
                         alt={card.title}
                         className="rm-card-thumb"
                         loading="lazy"
                         decoding="async"
                         referrerPolicy="no-referrer"
-                        onError={(e) => {
-                          const target = e.currentTarget;
-                          if (target.src !== card.fallbackUrl) {
-                            target.src = card.fallbackUrl;
-                          }
-                        }}
+                        onError={(e) => handleImageError(e, card.fallbackUrl || DEFAULT_CLUB_COVER)}
                       />
 
                       {shouldPlayVideo && card.videoUrl && (
@@ -805,9 +801,11 @@ export const TidewellStage: React.FC<TidewellStageProps> = () => {
                           />
                         ) : (
                           <img
-                            src={selectedCard.imageUrl || selectedCard.fallbackUrl}
+                            src={selectedCard.imageUrl || selectedCard.fallbackUrl || DEFAULT_CLUB_COVER}
                             alt={selectedCard.title}
                             className="rm-modal-video"
+                            referrerPolicy="no-referrer"
+                            onError={(e) => handleImageError(e, selectedCard.fallbackUrl || DEFAULT_CLUB_COVER)}
                           />
                         )}
                       </div>

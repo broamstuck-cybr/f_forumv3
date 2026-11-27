@@ -51,11 +51,18 @@ type CodeTab = 'html' | 'css' | 'code' | 'spec';
 interface ReactionBarProps {
   id: string;
   title: string;
+  library?: string;
   showLabel?: boolean;
   className?: string;
 }
 
-export const ReactionBar: React.FC<ReactionBarProps> = ({ id, title, showLabel = false, className }) => {
+export const ReactionBar: React.FC<ReactionBarProps> = ({
+  id,
+  title,
+  library,
+  showLabel = false,
+  className,
+}) => {
   const { savedItemIds, toggleSavedItem, toggleLikedItem, isItemLiked, getHeartCount } = useAppStore();
   const liked = isItemLiked(id);
   const saved = savedItemIds.includes(id);
@@ -66,7 +73,7 @@ export const ReactionBar: React.FC<ReactionBarProps> = ({ id, title, showLabel =
         liked={liked}
         count={getHeartCount(id)}
         ariaLabel={`${liked ? 'Bỏ tim' : 'Thả tim'} ${title}`}
-        onToggle={() => toggleLikedItem(id)}
+        onToggle={() => toggleLikedItem(id, library)}
       />
       <button
         type="button"
@@ -175,7 +182,6 @@ export const SpecimenSheet: React.FC<SpecimenSheetProps> = ({
   const isPinUI = vaultLib === 'pinui';
   const isThreeUI = vaultLib === 'threeui';
   const isMotion = vaultLib === 'motionsites';
-  const isGlacier = vaultLib === 'glacier';
 
   const pinuiSource = useMemo(
     () => (item && isPinUI ? resolvePinUISource(pinuiMap, item.id) : null),
@@ -225,9 +231,9 @@ export const SpecimenSheet: React.FC<SpecimenSheetProps> = ({
     if (isMotion && motionEntry?.promptText) return motionEntry.promptText;
     return (
       sanitizeBrandText(item.promptSpec) ||
-      `${safeTitle}\nNhóm: ${LIBRARY_LABEL[item.sourceLibrary]}\nRuntime: ${item.runtime}\nPhong cách: ${item.style}\n\n${safeDesc}`
+      `${safeTitle}\nNhóm: ${libLabel}\nRuntime: ${item.runtime}\nPhong cách: ${item.style}\n\n${safeDesc}`
     );
-  }, [item, isPinUI, isMotion, pinuiSource, motionEntry, safeTitle, safeDesc]);
+  }, [item, isPinUI, isMotion, pinuiSource, motionEntry, safeTitle, safeDesc, libLabel]);
 
   const snippetCssWithTheme = useMemo(() => {
     if (!item || isPinUI) return '';
@@ -288,7 +294,7 @@ export const SpecimenSheet: React.FC<SpecimenSheetProps> = ({
               <button
                 type="button"
                 className="ex-stage-icon-btn"
-                aria-label={`Khung nhìn ${viewport}px — Bấm để đổi kích thước`}
+                aria-label={`Khung nhìn ${viewport}px`}
                 title={`Khung ${viewport}px`}
                 onClick={() =>
                   setViewport((prev) => (prev === 1440 ? 768 : prev === 768 ? 390 : 1440))
@@ -306,7 +312,7 @@ export const SpecimenSheet: React.FC<SpecimenSheetProps> = ({
                 type="button"
                 className="ex-stage-icon-btn"
                 aria-pressed={stageZoomed}
-                aria-label={stageZoomed ? 'Thu nhỏ sân khấu về 100%' : 'Phóng to sân khấu 115%'}
+                aria-label={stageZoomed ? 'Thu nhỏ sân khấu' : 'Phóng to sân khấu'}
                 title={stageZoomed ? 'Thu nhỏ' : 'Phóng to'}
                 onClick={() => setStageZoomed((z) => !z)}
               >
@@ -319,7 +325,7 @@ export const SpecimenSheet: React.FC<SpecimenSheetProps> = ({
               <button
                 type="button"
                 className="ex-stage-icon-btn"
-                aria-label={stageTheme === 'dark' ? 'Chuyển sân khấu sang nền sáng' : 'Chuyển sân khấu sang nền tối'}
+                aria-label={stageTheme === 'dark' ? 'Đổi sân khấu sáng' : 'Đổi sân khấu tối'}
                 title={stageTheme === 'dark' ? 'Nền sáng' : 'Nền tối'}
                 onClick={() => setStageTheme((prev) => (prev === 'dark' ? 'light' : 'dark'))}
               >
@@ -332,7 +338,7 @@ export const SpecimenSheet: React.FC<SpecimenSheetProps> = ({
               <button
                 type="button"
                 className="ex-stage-icon-btn"
-                aria-label="Đặt lại sân khấu"
+                aria-label="Tải lại sân khấu"
                 title="Đặt lại"
                 onClick={() => setNonce((n) => n + 1)}
               >
@@ -389,7 +395,7 @@ export const SpecimenSheet: React.FC<SpecimenSheetProps> = ({
                     kind: 'video',
                     src: originalVideo,
                     poster: originalImage || undefined,
-                    credit: isGlacier ? 'getlayers.ai' : 'motionsites.ai',
+                    credit: 'motionsites.ai',
                   }}
                   title={safeTitle}
                   fallbackLabel={libLabel}
@@ -402,7 +408,7 @@ export const SpecimenSheet: React.FC<SpecimenSheetProps> = ({
                   preview={{
                     kind: 'image',
                     src: originalImage,
-                    credit: isThreeUI ? '3D WebGL' : isGlacier ? 'Nền động' : 'Motion AI',
+                    credit: isThreeUI ? '3D WebGL' : 'MotionSites',
                   }}
                   title={safeTitle}
                   fallbackLabel={libLabel}
@@ -441,16 +447,16 @@ export const SpecimenSheet: React.FC<SpecimenSheetProps> = ({
               </div>
             </dl>
             <div className="ex-spec-actions">
-              <button type="button" className="btn btn-solid" onClick={() => onExperience(item)}>
-                Trải nghiệm
+              <button type="button" className="btn btn-solid" onClick={() => onUse(item)}>
+                Dùng mẫu này
               </button>
-              <button type="button" className="btn btn-line" onClick={() => onUse(item)}>
-                Dùng ngay
+              <button type="button" className="btn btn-line" onClick={() => onExperience(item)}>
+                Trải nghiệm
               </button>
               <button type="button" className="btn btn-line" onClick={() => onAttach(item)}>
                 Đính kèm
               </button>
-              <ReactionBar id={item.id} title={safeTitle} showLabel />
+              <ReactionBar id={item.id} title={safeTitle} library={vaultLib} showLabel />
               <button
                 type="button"
                 className="btn btn-ghost"

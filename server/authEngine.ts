@@ -44,6 +44,31 @@ let revokedLoaded = false;
 const fallbackEphemeralSecret = crypto.randomBytes(32).toString('hex');
 let warnedMissingSecret = false;
 
+const SYNTHETIC_EMAIL_DOMAIN = '@member.fforum.local';
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+
+function isSecureCookieContext(req?: IncomingMessage): boolean {
+  if (process.env.VERCEL === '1') return true;
+  if (req) {
+    const protoHeader = req.headers['x-forwarded-proto'];
+    const proto = (Array.isArray(protoHeader) ? protoHeader[0] : protoHeader || '')
+      .split(',')[0]
+      .trim()
+      .toLowerCase();
+    if (proto === 'https') return true;
+    if ((req.socket as { encrypted?: boolean } | undefined)?.encrypted === true) return true;
+    const hostHeader = (req.headers.host || '').toLowerCase();
+    if (
+      hostHeader.startsWith('localhost') ||
+      hostHeader.startsWith('127.0.0.1') ||
+      hostHeader.startsWith('[::1]')
+    ) {
+      return false;
+    }
+  }
+  return process.env.NODE_ENV === 'production';
+}
+
 function isProdCookie(): boolean {
   return process.env.NODE_ENV === 'production' || process.env.VERCEL === '1';
 }
@@ -76,12 +101,12 @@ function fromUserRow(row: Record<string, unknown>): StoredUserRecord | null {
   const username = typeof row.username === 'string' ? row.username.trim() : '';
   const email = typeof row.email === 'string' ? row.email.trim() : '';
   const passwordHash = typeof row.password_hash === 'string' ? row.password_hash : '';
-  if (!id || !username || !email || !passwordHash) return null;
+  if (!id || !username || !passwordHash) return null;
   return {
     id,
     username,
     name: typeof row.name === 'string' && row.name.trim() ? row.name.trim() : username,
-    email,
+    email: email || `${username}${SYNTHETIC_EMAIL_DOMAIN}`,
     passwordHash,
     role: row.role === 'admin' ? 'admin' : 'user',
     bio: typeof row.bio === 'string' ? row.bio : '',
@@ -272,7 +297,11 @@ function appendSetCookie(res: ServerResponse, cookieValue: string): void {
   res.setHeader('Set-Cookie', [String(existing), cookieValue]);
 }
 
-export function setAuthCookies(res: ServerResponse, user: User): string {
+export function setAuthCookies(
+  res: ServerResponse,
+  user: User,
+  req?: IncomingMessage
+): string {
   const users = getUsersMap();
   const stored = Object.hasOwn(users, user.id) ? users[user.id] : undefined;
   const token = signSessionToken({
@@ -283,7 +312,7 @@ export function setAuthCookies(res: ServerResponse, user: User): string {
     jti: crypto.randomBytes(8).toString('hex'),
     tokenVersion: stored?.tokenVersion ?? 0,
   });
-  const secureFlag = isProdCookie() ? '; Secure' : '';
+  const secureFlag = isSecureCookieContext(req) ? '; Secure' : '';
   const cookie = `${SESSION_COOKIE_NAME}=${encodeURIComponent(token)}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${SESSION_TTL_SECONDS}${secureFlag}`;
   appendSetCookie(res, cookie);
   return token;
@@ -310,8 +339,8 @@ export function revokeSessionFromRequest(req: IncomingMessage): void {
   saveRevokedTokens();
 }
 
-export function clearAuthCookies(res: ServerResponse): void {
-  const secureFlag = isProdCookie() ? '; Secure' : '';
+export function clearAuthCookies(res: ServerResponse, req?: IncomingMessage): void {
+  const secureFlag = isSecureCookieContext(req) ? '; Secure' : '';
   const cookie = `${SESSION_COOKIE_NAME}=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0${secureFlag}`;
   appendSetCookie(res, cookie);
 }
@@ -383,7 +412,7 @@ export function resolveGuestSessionId(req: IncomingMessage, res?: ServerResponse
   const gid = ipHash;
   const sig = signGuestId(gid, ipHash);
   if (res) {
-    const secureFlag = isProdCookie() ? '; Secure' : '';
+    const secureFlag = isSecureCookieContext(req) ? '; Secure' : '';
     const cookie = `${GUEST_COOKIE_NAME}=${encodeURIComponent(`${gid}.${sig}`)}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${SESSION_TTL_SECONDS}${secureFlag}`;
     appendSetCookie(res, cookie);
   }
@@ -469,12 +498,12 @@ export function getAuthenticatedUser(req: IncomingMessage): User | null {
 
 export function registerStandardUser(input: {
   username: string;
-  email: string;
+  email?: string;
   password: string;
   name?: string;
 }): { ok: true; user: User } | { ok: false; error: string } {
   const username = (input.username || '').trim().toLowerCase();
-  const email = (input.email || '').trim().toLowerCase();
+  const rawEmail = typeof input.email === 'string' ? input.email.trim().toLowerCase() : '';
   const password = input.password || '';
   const name = (input.name || input.username || '').trim();
 
@@ -487,8 +516,11 @@ export function registerStandardUser(input: {
   if (name.length > 80) {
     return { ok: false, error: 'Tên hiển thị tối đa 80 ký tự.' };
   }
-  if (!email.includes('@') || email.length < 5 || email.length > 160) {
-    return { ok: false, error: 'Email không hợp lệ.' };
+  if (rawEmail && (rawEmail.length > 160 || !EMAIL_PATTERN.test(rawEmail))) {
+    return {
+      ok: false,
+      error: 'Email không hợp lệ. Vui lòng nhập đúng định dạng hoặc bỏ trống.',
+    };
   }
   if (password.length < 6 || password.length > 128) {
     return { ok: false, error: 'Mật khẩu phải từ 6 đến 128 ký tự.' };
@@ -504,20 +536,22 @@ export function registerStandardUser(input: {
     if (existing.username.toLowerCase() === username) {
       return { ok: false, error: 'Username đã tồn tại.' };
     }
-    if (existing.email.toLowerCase() === email) {
+    if (rawEmail && existing.email.toLowerCase() === rawEmail) {
       return { ok: false, error: 'Email đã được đăng ký.' };
     }
   }
 
+  // WHY: Synthetic non-routable fallback satisfies NOT NULL/UNIQUE email constraints when email is omitted.
+  const storedEmail = rawEmail || `${username}${SYNTHETIC_EMAIL_DOMAIN}`;
   const id = `usr-${crypto.randomBytes(6).toString('hex')}`;
   const record: StoredUserRecord = {
     id,
     username,
     name: name || username,
-    email,
+    email: storedEmail,
     passwordHash: hashPassword(password),
     role: 'user',
-    bio: 'Developer trên F-FORUM v3',
+    bio: 'Thành viên trên F-FORUM',
     createdAt: new Date().toISOString(),
   };
   users[id] = record;
@@ -527,19 +561,23 @@ export function registerStandardUser(input: {
 }
 
 export function loginStandardUser(input: {
-  identifier: string;
+  identifier?: string;
+  username?: string;
+  email?: string;
   password: string;
 }): { ok: true; user: User } | { ok: false; error: string } {
-  const identifier = (input.identifier || '').trim().toLowerCase();
+  const identifier = (input.identifier || input.username || input.email || '').trim().toLowerCase();
   const password = input.password || '';
   if (!identifier || !password || identifier.length > 160 || password.length > 128) {
     return { ok: false, error: 'Vui lòng nhập đầy đủ tài khoản và mật khẩu hợp lệ.' };
   }
 
   const users = getUsersMap();
-  const matched = Object.values(users).find(
-    (u) => u.username.toLowerCase() === identifier || u.email.toLowerCase() === identifier
-  );
+  const matched = Object.values(users).find((u) => {
+    if (u.username.toLowerCase() === identifier) return true;
+    const storedEmail = u.email.toLowerCase();
+    return Boolean(storedEmail) && !storedEmail.endsWith(SYNTHETIC_EMAIL_DOMAIN) && storedEmail === identifier;
+  });
   if (!matched || matched.role === 'admin' || !verifyPasswordHash(password, matched.passwordHash)) {
     return { ok: false, error: 'Thông tin đăng nhập không chính xác.' };
   }
@@ -701,8 +739,13 @@ export function toggleUserRole(userId: string): User | null {
 }
 
 export function getGoogleClientId(): string {
-  ensureLocalEnvLoaded();
-  return (process.env.GOOGLE_CLIENT_ID || process.env.VITE_GOOGLE_CLIENT_ID || '').trim();
+  try {
+    ensureLocalEnvLoaded();
+    const raw = process.env.GOOGLE_CLIENT_ID || process.env.VITE_GOOGLE_CLIENT_ID || '';
+    return typeof raw === 'string' ? raw.trim() : '';
+  } catch {
+    return '';
+  }
 }
 
 export async function verifyGoogleIdToken(

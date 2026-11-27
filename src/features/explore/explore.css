@@ -670,7 +670,15 @@
 
   .ex-bench-stage[data-playground='true'] {
     aspect-ratio: auto;
-    min-height: 380px;
+    min-height: 400px;
+    align-items: center;
+    justify-content: center;
+    padding: var(--space-4);
+    overflow: auto;
+  }
+
+  .ex-bench-stage[data-playground='true'] .ex-bench-stage-frame {
+    place-items: center;
   }
 
   .ex-bench-stage-frame {

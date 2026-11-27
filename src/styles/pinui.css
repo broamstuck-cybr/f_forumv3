@@ -105,3 +105,40 @@
   padding: 28px 24px 24px;
   overflow: hidden;
 }
+
+.hsi-tray--modal {
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  padding: 0;
+  box-shadow: none;
+}
+
+.hsi-card--modal {
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  padding: 18px 22px 14px;
+}
+
+.hsi-tab {
+  border-radius: 9px;
+  min-height: 40px;
+  padding: 8px 12px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1px solid transparent;
+  background-color: transparent;
+  color: var(--fg-muted);
+}
+
+.hsi-tab:hover {
+  color: var(--fg);
+}
+
+.hsi-tab.is-active {
+  background-color: var(--accent-soft);
+  border-color: var(--accent);
+  color: var(--fg);
+}

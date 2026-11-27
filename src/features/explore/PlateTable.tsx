@@ -16,6 +16,7 @@ import { previewFor } from '../../ui/Media';
 import { Reveal } from '../../ui/Reveal';
 import {
   LIBRARY_LABEL,
+  buildVaultWorkspaceSeed,
   copyText,
   fetchMotionSitesFullMap,
   fetchPinUISourceMap,
@@ -52,17 +53,17 @@ import { useCalm } from './useCalm';
 
 export type LibraryFilter = 'all' | VaultLibraryKey;
 type BenchTab = 'html' | 'css' | 'code' | 'spec';
+type PlateSortMode = 'recommended' | 'popular' | 'default';
 
 const RIBBON_CAP = 24;
 const PREFETCH_SHARD_CAP = 36;
 
 function shardPrefetchRank(shard: string): number {
-  if (shard.startsWith('gl-')) return 0;
-  if (shard.startsWith('ms-')) return 1;
-  if (shard.startsWith('tu-')) return 2;
-  if (shard.startsWith('ll-')) return 3;
-  if (shard.startsWith('cf-')) return 4;
-  return 5;
+  if (shard.startsWith('ms-')) return 0;
+  if (shard.startsWith('tu-')) return 1;
+  if (shard.startsWith('ll-')) return 2;
+  if (shard.startsWith('cf-')) return 3;
+  return 4;
 }
 
 const TOPIC_LABEL: Record<string, string> = {
@@ -109,6 +110,9 @@ export const PlateTable: React.FC<PlateTableProps> = ({
     activeProject,
     addToast,
     theme,
+    behaviorScores,
+    recordSignal,
+    onboardingProfile,
   } = useAppStore();
   const calm = useCalm();
   const benchRef = useRef<HTMLElement>(null);
@@ -119,6 +123,7 @@ export const PlateTable: React.FC<PlateTableProps> = ({
   const library = controlledLibrary ?? internalLibrary;
   const setLibrary = onLibraryChange ?? setInternalLibrary;
 
+  const [sortMode, setSortMode] = useState<PlateSortMode>('recommended');
   const [driftOn, setDriftOn] = useState(true);
   const [activeId, setActiveId] = useState<string | null>(null);
   const [sheetOpen, setSheetOpen] = useState(false);
@@ -161,9 +166,6 @@ export const PlateTable: React.FC<PlateTableProps> = ({
       if (item.sourceLibrary === 'motionsites') {
         map.set(item.id.replace(/^ms-/, ''), item);
       }
-      if (item.id.startsWith('glacier/')) {
-        map.set(item.id.replace(/^glacier\//, ''), item);
-      }
     }
     return map;
   }, [sourceCatalog]);
@@ -171,8 +173,7 @@ export const PlateTable: React.FC<PlateTableProps> = ({
   const unifiedPool: ExplorePlateItem[] = useMemo(() => {
     if (vaultItems.length === 0) {
       return sourceCatalog.map((item) => {
-        const isGl = item.id.startsWith('glacier/');
-        const vaultLibrary: VaultLibraryKey = isGl ? 'glacier' : item.sourceLibrary;
+        const vaultLibrary: VaultLibraryKey = item.sourceLibrary;
         const motionEntry =
           vaultLibrary === 'motionsites' ? resolveMotionSiteEntry(motionMap, item.id) : null;
         return {
@@ -193,16 +194,12 @@ export const PlateTable: React.FC<PlateTableProps> = ({
     }
 
     return vaultItems.map((vi) => {
-      const cat =
-        catalogById.get(vi.i) ??
-        catalogById.get(`ms-${vi.i}`) ??
-        catalogById.get(`glacier/${vi.i}`);
+      const cat = catalogById.get(vi.i) ?? catalogById.get(`ms-${vi.i}`);
       const shard = vi.s && vi.s !== 'pinui' ? getCachedVaultShard(vi.s)?.[vi.i] : undefined;
       const motionEntry =
         vi.l === 'motionsites' ? resolveMotionSiteEntry(motionMap, vi.i) : null;
 
-      const sourceLibrary =
-        vi.l === 'glacier' ? 'threeui' : vi.l;
+      const sourceLibrary = vi.l;
       const previewHtml = shard?.h || cat?.previewHtml || motionEntry?.liveHtml;
       const previewCss = shard?.c || cat?.previewCss || motionEntry?.css;
       const previewVideo = shard?.vid || motionEntry?.previewVideo;
@@ -218,9 +215,9 @@ export const PlateTable: React.FC<PlateTableProps> = ({
         category: cat?.category ?? vi.c,
         subcategory: cat?.subcategory ?? '',
         tags: Array.from(new Set([...(cat?.tags ?? []), ...vi.tg])),
-        runtime: cat?.runtime ?? shard?.m?.runtime ?? (vi.l === 'glacier' ? 'Three.js / WebGL' : VAULT_LIBRARY_LABELS[vi.l]),
+        runtime: cat?.runtime ?? shard?.m?.runtime ?? VAULT_LIBRARY_LABELS[vi.l],
         style: cat?.style ?? shard?.m?.layout ?? vi.c,
-        license: cat?.license ?? 'Source Archive',
+        license: cat?.license ?? 'Mã nguồn mở',
         officialUrl,
         archivePath: cat?.archivePath ?? '',
         description:
@@ -244,7 +241,7 @@ export const PlateTable: React.FC<PlateTableProps> = ({
   const savedPlateCount = useMemo(
     () =>
       unifiedPool.filter(
-        (item) => savedSet.has(item.id) || savedSet.has(item.id.replace(/^(ms-|glacier\/)/, ''))
+        (item) => savedSet.has(item.id) || savedSet.has(item.id.replace(/^ms-/, ''))
       ).length,
     [unifiedPool, savedSet]
   );
@@ -252,11 +249,12 @@ export const PlateTable: React.FC<PlateTableProps> = ({
   const hasActiveFilter = Boolean(query || topicChip || savedOnly);
 
   const ribbons = useMemo(() => {
+    const profileDomain = onboardingProfile?.domain?.toLowerCase() ?? '';
     return VAULT_LIBRARY_ORDER.map((name) => {
       const all = unifiedPool.filter((item) => item.vaultLibrary === name);
       const matches = all.filter((item) => {
         const isSaved =
-          savedSet.has(item.id) || savedSet.has(item.id.replace(/^(ms-|glacier\/)/, ''));
+          savedSet.has(item.id) || savedSet.has(item.id.replace(/^ms-/, ''));
         if (savedOnly && !isSaved) return false;
         const fields = [
           item.title,
@@ -281,7 +279,22 @@ export const PlateTable: React.FC<PlateTableProps> = ({
         if (item.previewVideo) return 1;
         return item.hasRichMedia ? 1 : 0;
       };
-      const prioritized = [...matches].sort((a, b) => richnessScore(b) - richnessScore(a));
+      const rankScore = (item: ExplorePlateItem): number => {
+        const base = richnessScore(item);
+        const rec = behaviorScores[item.id];
+        if (sortMode === 'default') return base;
+        if (sortMode === 'popular') {
+          return (rec?.likes ?? 0) * 4 + (rec?.uses ?? 0) * 6 + base;
+        }
+        const profileBonus =
+          profileDomain &&
+          `${item.title} ${item.category} ${item.tags.join(' ')}`.toLowerCase().includes(profileDomain)
+            ? 8
+            : 0;
+        const savedBonus = savedSet.has(item.id) ? 5 : 0;
+        return (rec?.score ?? 0) * 5 + profileBonus + savedBonus + base;
+      };
+      const prioritized = [...matches].sort((a, b) => rankScore(b) - rankScore(a));
       return {
         name,
         allCount: all.length,
@@ -289,7 +302,7 @@ export const PlateTable: React.FC<PlateTableProps> = ({
         items: prioritized.slice(0, RIBBON_CAP),
       };
     });
-  }, [unifiedPool, query, topicChip, savedOnly, savedSet]);
+  }, [unifiedPool, query, topicChip, savedOnly, savedSet, behaviorScores, sortMode, onboardingProfile]);
 
   const shown = ribbons.filter(
     (ribbon) => (library === 'all' || ribbon.name === library) && ribbon.items.length > 0
@@ -365,6 +378,7 @@ export const PlateTable: React.FC<PlateTableProps> = ({
 
   const handleSelectPlate = (item: ExplorePlateItem) => {
     setActiveId(item.id);
+    recordSignal(item.id, 'view', item.vaultLibrary);
     const bench = benchRef.current;
     if (bench) {
       const rect = bench.getBoundingClientRect();
@@ -388,7 +402,7 @@ export const PlateTable: React.FC<PlateTableProps> = ({
     attachItemToWorkspace(templateContext(item));
   };
 
-  const activeVaultKey = activeItem?.id.replace(/^(ms-|glacier\/)/, '') ?? '';
+  const activeVaultKey = activeItem?.id.replace(/^ms-/, '') ?? '';
   const activeShard: VaultShardPayload | null =
     activeItem?.shard && activeItem.shard !== 'pinui'
       ? (getCachedVaultShard(activeItem.shard)?.[activeItem.id] ??
@@ -404,7 +418,6 @@ export const PlateTable: React.FC<PlateTableProps> = ({
   const isPinUI = vaultLib === 'pinui';
   const isThreeUI = vaultLib === 'threeui';
   const isMotion = vaultLib === 'motionsites';
-  const isGlacier = vaultLib === 'glacier';
 
   const pinuiSource = useMemo(
     () => (activeItem && isPinUI ? resolvePinUISource(pinuiMap, activeItem.id) : null),
@@ -466,12 +479,26 @@ export const PlateTable: React.FC<PlateTableProps> = ({
     );
   }, [activeItem, isPinUI, isMotion, pinuiSource, activeShard, motionEntry, activeTitle, activeLibLabel, activeDesc]);
 
+  const handleUseInWorkspace = (item: ExplorePlateItem, customPrompt?: string) => {
+    recordSignal(item.id, 'use', item.vaultLibrary);
+    const isSelected = activeItem?.id === item.id;
+    openInWorkspace(
+      buildVaultWorkspaceSeed({
+        id: item.id,
+        title: item.title,
+        library: item.vaultLibrary,
+        prompt: customPrompt ?? (isSelected ? activePrompt : item.promptSpec),
+        html: isSelected ? activeHtml : item.previewHtml,
+        css: isSelected ? activeCss : item.previewCss,
+        js: isSelected ? activeJs : undefined,
+      })
+    );
+  };
+
   const snippetCssWithTheme = useMemo(() => {
     if (!activeItem || isPinUI) return '';
-    const baseCss = activeShard?.c || (isMotion ? motionEntry?.css : '') || activeItem.previewCss || '';
-    if (isThreeUI || isMotion || isGlacier) return baseCss;
-    return baseCss;
-  }, [activeItem, isPinUI, isThreeUI, isMotion, isGlacier, activeShard, motionEntry]);
+    return activeShard?.c || (isMotion ? motionEntry?.css : '') || activeItem.previewCss || '';
+  }, [activeItem, isPinUI, isMotion, activeShard, motionEntry]);
 
   const hasCompleteDemoHtml = Boolean(
     activeHtml &&
@@ -497,7 +524,7 @@ export const PlateTable: React.FC<PlateTableProps> = ({
       list.push({
         id: 'css',
         label: 'CSS',
-        meta: 'Định dạng & Biến giao diện',
+        meta: 'Định dạng CSS',
       });
     }
     if (activeJs) {
@@ -510,7 +537,7 @@ export const PlateTable: React.FC<PlateTableProps> = ({
     list.push({
       id: 'spec',
       label: 'Prompt',
-      meta: 'Đặc tả kiến trúc & Prompt',
+      meta: 'Đặc tả & Prompt',
     });
     return list;
   }, [activeHtml, activeCss, activeJs, activeScriptLabel, isPinUI]);
@@ -546,7 +573,31 @@ export const PlateTable: React.FC<PlateTableProps> = ({
   return (
     <>
       <div className="wrap-wide ex-controls">
-        <div className="ex-filter" role="group" aria-label="Bộ lọc nhanh">
+        <div className="ex-filter" role="group" aria-label="Bộ lọc và sắp xếp">
+          <button
+            type="button"
+            className="ex-text"
+            aria-pressed={sortMode === 'recommended'}
+            onClick={() => setSortMode('recommended')}
+          >
+            Hợp gu bạn
+          </button>
+          <button
+            type="button"
+            className="ex-text"
+            aria-pressed={sortMode === 'popular'}
+            onClick={() => setSortMode('popular')}
+          >
+            Phổ biến
+          </button>
+          <button
+            type="button"
+            className="ex-text"
+            aria-pressed={sortMode === 'default'}
+            onClick={() => setSortMode('default')}
+          >
+            Mặc định
+          </button>
           {!onLibraryChange ? (
             <>
               <button
@@ -570,14 +621,6 @@ export const PlateTable: React.FC<PlateTableProps> = ({
               ))}
             </>
           ) : null}
-          <button
-            type="button"
-            className="ex-text"
-            aria-pressed={savedOnly}
-            onClick={onToggleSavedOnly}
-          >
-            Đã lưu ({savedPlateCount})
-          </button>
         </div>
         {canDrift ? (
           <button
@@ -611,7 +654,7 @@ export const PlateTable: React.FC<PlateTableProps> = ({
                 className="ex-text ex-text-strong"
                 onClick={() => onOpenVaultQuery(query || topicChip)}
               >
-                Mở {formatCount(totalMatchedAcrossAll)} kết quả trong Trải nghiệm →
+                Mở {formatCount(totalMatchedAcrossAll)} kết quả trong Trải nghiệm
               </button>
             ) : null}
             <button
@@ -630,7 +673,7 @@ export const PlateTable: React.FC<PlateTableProps> = ({
       ) : null}
 
       {activeItem ? (
-        <section ref={benchRef} className="wrap-wide ex-bench" aria-label="Sân khấu tương tác trực tiếp">
+        <section ref={benchRef} className="wrap-wide ex-bench" aria-label="Sân khấu chạy thử">
           <div className="ex-bench-stage-wrap">
             <div className="ex-bench-bar">
               <div className="ex-bench-id">
@@ -663,7 +706,7 @@ export const PlateTable: React.FC<PlateTableProps> = ({
                 <button
                   type="button"
                   className="ex-stage-icon-btn"
-                  aria-label={`Khung nhìn ${viewport}px — Bấm để đổi kích thước`}
+                  aria-label={`Khung nhìn ${viewport}px`}
                   title={`Khung ${viewport}px`}
                   onClick={cycleViewport}
                 >
@@ -679,7 +722,7 @@ export const PlateTable: React.FC<PlateTableProps> = ({
                   type="button"
                   className="ex-stage-icon-btn"
                   aria-pressed={stageZoomed}
-                  aria-label={stageZoomed ? 'Thu nhỏ sân khấu về 100%' : 'Phóng to sân khấu 115%'}
+                  aria-label={stageZoomed ? 'Thu nhỏ sân khấu' : 'Phóng to sân khấu'}
                   title={stageZoomed ? 'Thu nhỏ' : 'Phóng to'}
                   onClick={() => setStageZoomed((z) => !z)}
                 >
@@ -692,7 +735,7 @@ export const PlateTable: React.FC<PlateTableProps> = ({
                 <button
                   type="button"
                   className="ex-stage-icon-btn"
-                  aria-label={stageTheme === 'dark' ? 'Chuyển sân khấu sang nền sáng' : 'Chuyển sân khấu sang nền tối'}
+                  aria-label={stageTheme === 'dark' ? 'Đổi sân khấu sáng' : 'Đổi sân khấu tối'}
                   title={stageTheme === 'dark' ? 'Nền sáng' : 'Nền tối'}
                   onClick={() => setStageTheme((prev) => (prev === 'dark' ? 'light' : 'dark'))}
                 >
@@ -705,7 +748,7 @@ export const PlateTable: React.FC<PlateTableProps> = ({
                 <button
                   type="button"
                   className="ex-stage-icon-btn"
-                  aria-label="Đặt lại sân khấu"
+                  aria-label="Tải lại sân khấu"
                   title="Đặt lại"
                   onClick={() => setNonce((n) => n + 1)}
                 >
@@ -717,13 +760,6 @@ export const PlateTable: React.FC<PlateTableProps> = ({
                   onClick={() => setSheetOpen(true)}
                 >
                   Xem nhanh
-                </button>
-                <button
-                  type="button"
-                  className="ex-text ex-text-strong"
-                  onClick={() => openExperience(activeItem.id)}
-                >
-                  Trải nghiệm
                 </button>
               </div>
             </div>
@@ -761,7 +797,7 @@ export const PlateTable: React.FC<PlateTableProps> = ({
                       kind: 'video',
                       src: activeVideo,
                       poster: activeImage || undefined,
-                      credit: isGlacier ? 'getlayers.ai' : 'motionsites.ai',
+                      credit: 'motionsites.ai',
                     }}
                     title={activeTitle}
                     fallbackLabel={activeLibLabel}
@@ -774,7 +810,7 @@ export const PlateTable: React.FC<PlateTableProps> = ({
                     preview={{
                       kind: 'image',
                       src: activeImage,
-                      credit: isThreeUI ? '3D WebGL' : isGlacier ? 'Nền động' : 'Motion AI',
+                      credit: isThreeUI ? '3D WebGL' : 'MotionSites',
                     }}
                     title={activeTitle}
                     fallbackLabel={activeLibLabel}
@@ -821,16 +857,16 @@ export const PlateTable: React.FC<PlateTableProps> = ({
               <button
                 type="button"
                 className="btn btn-solid"
-                onClick={() => openExperience(activeItem.id)}
+                onClick={() => handleUseInWorkspace(activeItem, activePrompt || undefined)}
               >
-                Trải nghiệm
+                Dùng mẫu này
               </button>
               <button
                 type="button"
                 className="btn btn-line"
-                onClick={() => openInWorkspace(templateContext(activeItem, activePrompt || undefined))}
+                onClick={() => openExperience(activeItem.id)}
               >
-                Dùng ngay
+                Trải nghiệm
               </button>
               <button
                 type="button"
@@ -839,7 +875,7 @@ export const PlateTable: React.FC<PlateTableProps> = ({
               >
                 Đính kèm
               </button>
-              <ReactionBar id={activeItem.id} title={activeTitle} showLabel />
+              <ReactionBar id={activeItem.id} title={activeTitle} library={vaultLib} showLabel />
               <button
                 type="button"
                 className="btn btn-ghost"
@@ -925,7 +961,7 @@ export const PlateTable: React.FC<PlateTableProps> = ({
               </h2>
               <dl className="ex-meta">
                 <div>
-                  <dt>{hasActiveFilter ? 'khớp' : 'kho gốc'}</dt>
+                  <dt>{hasActiveFilter ? 'khớp' : 'kho mở'}</dt>
                   <dd>{formatCount(ribbon.totalMatches)}</dd>
                 </div>
                 {ribbon.totalMatches > ribbon.items.length ? (
@@ -958,8 +994,8 @@ export const PlateTable: React.FC<PlateTableProps> = ({
             {savedOnly
               ? 'Chưa có mẫu nào được lưu.'
               : query || topicChip
-                ? `Không có mẫu nào khớp bộ lọc hiện tại.`
-                : 'Danh mục này chưa có mẫu trên bàn.'}
+                ? 'Không có mẫu nào khớp bộ lọc hiện tại.'
+                : 'Danh mục này chưa có mẫu.'}
           </p>
           <button
             type="button"
@@ -983,7 +1019,7 @@ export const PlateTable: React.FC<PlateTableProps> = ({
         onClose={() => setSheetOpen(false)}
         onStep={handleStep}
         onExperience={(item) => openExperience(item.id)}
-        onUse={(item) => openInWorkspace(templateContext(item))}
+        onUse={(item) => handleUseInWorkspace(item)}
         onAttach={handleAttach}
       />
     </>
