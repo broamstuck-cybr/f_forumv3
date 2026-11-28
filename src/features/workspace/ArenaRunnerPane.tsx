@@ -448,9 +448,9 @@ export const ArenaRunnerPane: React.FC<ArenaRunnerPaneProps> = ({
               </svg>
             </div>
             <h3>Chưa có dự án nào được mở</h3>
-            <p>Nhập yêu cầu ở khung bên trái hoặc mở ngay một trong 15 mẫu Agent có sẵn.</p>
+            <p>Chọn mẫu gợi ý bên trái, nhắn yêu cầu hoặc mở nhanh 15 mẫu demo có sẵn.</p>
             <button type="button" className="ws-ctaBtn ws-ctaBtn--primary" onClick={onOpenShowcase}>
-              Mở 15 mẫu Agent
+              Mở 15 mẫu demo
             </button>
           </div>
         )}

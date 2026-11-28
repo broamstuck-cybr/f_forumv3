@@ -1,4 +1,8 @@
 import React, { useEffect, useRef, useState } from 'react';
+import {
+  pickRandomChatShowcase,
+  type ChatLandingShowcaseItem,
+} from '../../data/chatLandingShowcase';
 import { BRAND_PALETTES } from '../../engine/motionCraftPack';
 import { handleLiquidPointerLeave, handleLiquidPointerMove } from '../../utils/liquidGlassPointer';
 import type { AIProtocol, BYOKConfig, PublicAiRuntimeInfo, SuggestedVaultItem } from '../../types/index';
@@ -135,20 +139,8 @@ const QUICK_EDIT_CHIPS = [
   'Rút gọn chữ',
 ];
 
-const EMPTY_STARTERS: Array<{ tag: string; prompt: string }> = [
-  {
-    tag: 'Ghép kho mẫu',
-    prompt: 'Làm trang thuyết trình Dự án Năng lượng Xanh lắp ghép từ kho mẫu F-Forum có số liệu và 2 câu trắc nghiệm',
-  },
-  {
-    tag: 'Hỏi Trợ lý',
-    prompt: 'F-Forum có những mẫu kính lỏng hoặc 3D nào đẹp để ghép vào trang? Giải thích nhanh cấu trúc dự án f_forumv3',
-  },
-  {
-    tag: 'Hồ sơ IT',
-    prompt: 'Dựng hồ sơ sinh viên Công nghệ Thông tin nền tối gọn sạch lấy mẫu từ kho tài nguyên',
-  },
-];
+const QUICK_ASK_PROMPT =
+  'F-Forum có những mẫu kính lỏng hoặc 3D nào đẹp để ghép vào trang? Giải thích nhanh cấu trúc dự án f_forumv3';
 
 export const AgentChatPane: React.FC<AgentChatPaneProps> = ({
   profile,
@@ -174,6 +166,10 @@ export const AgentChatPane: React.FC<AgentChatPaneProps> = ({
 }) => {
   const [draft, setDraft] = useState('');
   const [openTraceIds, setOpenTraceIds] = useState<Record<string, boolean>>({});
+  const [visualStarters, setVisualStarters] = useState<ChatLandingShowcaseItem[]>(() =>
+    pickRandomChatShowcase(4)
+  );
+  const [shuffleSpin, setShuffleSpin] = useState(0);
   const [byokOpen, setByokOpen] = useState(false);
   const [presetId, setPresetId] = useState<string>(() => detectPresetId(byok));
   const [keyInput, setKeyInput] = useState<string>(() => byok?.apiKey || '');
@@ -260,6 +256,7 @@ export const AgentChatPane: React.FC<AgentChatPaneProps> = ({
   };
 
   useEffect(() => {
+    if (messages.length === 0 && !busy) return;
     feedEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
   }, [messages.length, busy]);
 
@@ -272,6 +269,16 @@ export const AgentChatPane: React.FC<AgentChatPaneProps> = ({
 
   const toggleTrace = (id: string) => {
     setOpenTraceIds((prev) => ({ ...prev, [id]: !prev[id] }));
+  };
+
+  const handleShuffleVisuals = () => {
+    setVisualStarters((prev) =>
+      pickRandomChatShowcase(
+        4,
+        prev.map((item) => item.id)
+      )
+    );
+    setShuffleSpin((n) => n + 1);
   };
 
   const lastAssistant = [...messages].reverse().find((m) => m.role === 'assistant');
@@ -303,24 +310,90 @@ export const AgentChatPane: React.FC<AgentChatPaneProps> = ({
       <div className="ws-chat__feed">
         {messages.length === 0 && !busy && (
           <div className="ws-chat__empty">
-            <h2>Hỏi Trợ lý F-Forum hoặc lắp ghép web</h2>
-            <p>
-              Hỏi bất kỳ điều gì về web, dự án GitHub và kho 5.909 mẫu miễn phí — hoặc mô tả ý tưởng để AI tự chọn và lắp ghép các khối thật thành trang hoàn chỉnh.
-            </p>
-            <div className="ws-chat__starters">
-              {EMPTY_STARTERS.map((starter, idx) => (
-                <button
-                  key={starter.prompt}
-                  type="button"
-                  className={`ws-starterBtn lg-glass lg-glass--matte${idx === 0 ? ' ws-starterBtn--featured' : ''}`}
-                  onPointerMove={handleLiquidPointerMove}
-                  onPointerLeave={handleLiquidPointerLeave}
-                  onClick={() => onSendPrompt(starter.prompt)}
+            <div className="ws-chat__emptyIntro">
+              <h2>Bắt đầu dựng trang</h2>
+              <p>Chọn một mẫu landing page hoặc nhắn ý tưởng bên dưới.</p>
+            </div>
+
+            <div className="ws-visualHead">
+              <span className="ws-visualHead__label">Gợi ý ngẫu nhiên</span>
+              <button
+                type="button"
+                className="ws-iconBtn ws-iconBtn--sm ws-visualShuffle lg-pill"
+                onClick={handleShuffleVisuals}
+                aria-label="Đổi mẫu ngẫu nhiên"
+                title="Đổi mẫu"
+              >
+                <svg
+                  width="15"
+                  height="15"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.9"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  aria-hidden="true"
                 >
-                  <span className="ws-starterTag">{starter.tag}</span>
-                  <span className="ws-starterCopy">{starter.prompt}</span>
+                  <path d="m18 14 4 4-4 4" />
+                  <path d="m18 2 4 4-4 4" />
+                  <path d="M2 18h1.973a4 4 0 0 0 3.3-1.7l5.454-8.6a4 4 0 0 1 3.3-1.7H22" />
+                  <path d="M2 6h1.972a4 4 0 0 1 3.6 2.2" />
+                  <path d="M22 18h-6.041a4 4 0 0 1-3.3-1.8l-.359-.45" />
+                </svg>
+              </button>
+            </div>
+
+            <div className="ws-visualGrid" key={shuffleSpin}>
+              {visualStarters.map((item) => (
+                <button
+                  key={item.id}
+                  type="button"
+                  className="ws-visualCard"
+                  data-card-trigger="true"
+                  onClick={() => onSendPrompt(item.prompt)}
+                  aria-label={`Dựng theo mẫu ${item.title}`}
+                >
+                  <img
+                    src={item.image}
+                    alt={`Mẫu landing page ${item.title}`}
+                    loading="eager"
+                    decoding="async"
+                  />
+                  <span className="ws-visualCard__tag">{item.category}</span>
+                  <div className="ws-visualCard__scrim">
+                    <span className="ws-visualCard__title">{item.title}</span>
+                    <span className="ws-visualCard__cta" aria-hidden="true">
+                      Dùng mẫu
+                    </span>
+                  </div>
                 </button>
               ))}
+            </div>
+
+            <div className="ws-quickAskRow">
+              <button
+                type="button"
+                className="ws-quickAskBtn lg-pill"
+                onClick={() => onSendPrompt(QUICK_ASK_PROMPT)}
+              >
+                <svg
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.9"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  aria-hidden="true"
+                >
+                  <circle cx="12" cy="12" r="10" />
+                  <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
+                  <path d="M12 17h.01" />
+                </svg>
+                <span>Hỏi kho mẫu</span>
+              </button>
             </div>
           </div>
         )}
@@ -694,8 +767,8 @@ export const AgentChatPane: React.FC<AgentChatPaneProps> = ({
             }}
             placeholder={
               hasGeneratedHtml
-                ? 'Hỏi Trợ lý hoặc nhắn yêu cầu chỉnh sửa...'
-                : 'Hỏi về F-Forum / GitHub hoặc mô tả trang web cần lắp ghép...'
+                ? 'Nhắn yêu cầu chỉnh sửa hoặc hỏi Trợ lý...'
+                : 'Nhắn ý tưởng dựng trang hoặc hỏi F-Forum...'
             }
             aria-label="Nhập yêu cầu cho AI"
           />
