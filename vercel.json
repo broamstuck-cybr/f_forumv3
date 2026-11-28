@@ -1,7 +1,7 @@
 {
   "functions": {
     "api/**/*.ts": {
-      "includeFiles": "src/data/**",
+      "includeFiles": "{src/data/**,public/data/studio-vault.json}",
       "maxDuration": 60
     }
   },

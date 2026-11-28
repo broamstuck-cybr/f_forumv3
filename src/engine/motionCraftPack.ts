@@ -662,10 +662,10 @@ ${signatureCss}
   align-items: center;
   gap: 10px;
   min-width: 0;
-  max-width: 58%;
+  max-width: 44%;
   font-family: var(--font-display);
   font-weight: 600;
-  font-size: 1.08rem;
+  font-size: 1.04rem;
   letter-spacing: -0.02em;
   color: var(--fg);
   text-decoration: none;
@@ -686,16 +686,19 @@ ${signatureCss}
 .nav-links {
   display: none;
   align-items: center;
-  gap: 24px;
+  gap: 18px;
+  flex-shrink: 0;
 }
-@media (min-width: 760px) {
+@media (min-width: 820px) {
   .nav-links { display: flex; }
 }
 .nav-links a {
   color: var(--muted);
   text-decoration: none;
-  font-size: 0.9rem;
+  font-size: 0.88rem;
   font-weight: 500;
+  white-space: nowrap;
+  flex-shrink: 0;
   transition: color 180ms ease;
 }
 .nav-links a:hover, .nav-links a:focus-visible { color: var(--fg); }

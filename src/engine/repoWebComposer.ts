@@ -2198,7 +2198,12 @@ export async function composeWithAgent(
             model: model && model !== 'auto' ? model : undefined,
             intent: 'assistant',
             files: [],
-            attachedItems: [],
+            attachedItems: recAssist.matched.slice(0, 4).map((m) => ({
+              id: m.id,
+              kind: 'resource' as const,
+              title: `${m.title} (${m.library})`,
+              summary: m.reason,
+            })),
             history: chatHistory.slice(-4),
           },
           hasByok ? byok : undefined
@@ -2213,7 +2218,11 @@ export async function composeWithAgent(
             suggestedResources = aiRes.suggestedResources;
           }
         }
-      } catch {
+      } catch (err) {
+        const status = (err as { status?: number })?.status;
+        if (status === 401 || status === 403 || status === 429) {
+          throw err;
+        }
         usedLiveAi = false;
       }
     }
@@ -2370,13 +2379,13 @@ export async function composeWithAgent(
         ? (previousFiles.length > 0 ? previousFiles : files)
             .filter((f) => f.path !== 'metadata.json' && f.path !== 'README.md' && f.path !== 'src/vault-modules.css')
             .slice(0, 3)
-            .map((f) => ({ path: f.path, content: f.content.slice(0, 2600) }))
+            .map((f) => ({ path: f.path, content: f.content.slice(0, 1800) }))
         : useCompactAssemblyPlan
           ? []
           : files
               .filter((f) => f.path !== 'metadata.json' && f.path !== 'README.md')
               .slice(0, 4)
-              .map((f) => ({ path: f.path, content: f.content.slice(0, 2800) }));
+              .map((f) => ({ path: f.path, content: f.content.slice(0, 2600) }));
 
       const aiRes = await apiClient.sendAiChat(
         {
@@ -2474,7 +2483,11 @@ export async function composeWithAgent(
           }
         }
       }
-    } catch {
+    } catch (err) {
+      const status = (err as { status?: number })?.status;
+      if (status === 401 || status === 403 || status === 429) {
+        throw err;
+      }
       usedLiveAi = false;
     }
   }

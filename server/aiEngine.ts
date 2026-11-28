@@ -365,8 +365,19 @@ function buildModeUserPrompt(
   intent: WorkspaceIntent,
   useAssemblyPlan: boolean
 ): { userContent: string; matchedSuggestions: SuggestedVaultItem[] } {
-  const matchedSuggestions =
+  const serverVaultHits =
     intent === 'assistant' ? searchVaultKnowledge(req.prompt, 6) : [];
+  const matchedSuggestions: SuggestedVaultItem[] =
+    serverVaultHits.length > 0
+      ? serverVaultHits
+      : intent === 'assistant' && Array.isArray(req.attachedItems)
+        ? req.attachedItems.slice(0, 5).map((item) => ({
+            id: item.id,
+            title: item.title,
+            library: 'vault',
+            reason: String(item.summary || '').slice(0, 120),
+          }))
+        : [];
 
   if (intent === 'assistant') {
     const candidateLines = matchedSuggestions

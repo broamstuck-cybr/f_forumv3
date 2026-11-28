@@ -209,6 +209,11 @@ export function buildStitchedVaultSlots(
     const hasUsefulStyle = rawCss.length >= 20 && rawCss.length <= 18_000;
     if (!hasUsefulMarkup || !hasUsefulStyle) continue;
 
+    const safeJs =
+      rawJs.length <= 6000 && !/^\s*(import|export)\s+/m.test(rawJs)
+        ? rawJs
+        : '';
+
     const slotIndex = slots.length + 1;
     const slotId = `slot-${slotIndex}`;
     slots.push({
@@ -219,7 +224,7 @@ export function buildStitchedVaultSlots(
       reason: item.match.reason,
       html: innerHtml,
       css: rawCss,
-      js: rawJs.length <= 6000 ? rawJs : '',
+      js: safeJs,
       summary: (p.p || item.match.reason || `${item.match.library} interactive component`).slice(0, 220),
     });
 
@@ -428,7 +433,7 @@ ${slotCardsHtml}
     .filter((slot) => slot.js.trim().length > 0)
     .map(
       (slot) =>
-        `/* Vault Module: ${slot.title} */\n(function() {\n  try {\n    const root = document.querySelector('.ff-vm-scope[data-slot="${slot.slotId}"]');\n    if (!root) return;\n${slot.js}\n  } catch (err) {\n    console.warn('Vault slot ${slot.slotId}:', err);\n  }\n})();`
+        `/* Vault Module: ${slot.title} */\n(function() {\n  try {\n    const root = document.querySelector('.ff-vm-scope[data-slot="${slot.slotId}"]');\n    if (!root) return;\n${slot.js}\n  } catch (_) {\n    /* Safe no-op for optional vault hook */\n  }\n})();`
     )
     .join('\n\n');
 
