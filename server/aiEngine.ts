@@ -1750,6 +1750,7 @@ export async function runAIGenerationStream(
     let structuredOut: AIGenerationOutput | null = null;
     let usedCandidate: PoolCandidate | null = null;
     let usedModelId = modelCandidates[0] || config.model;
+    let sawOpenRouterQuotaError = false;
 
     outer: for (let i = 0; i < candidates.length; i += 1) {
       if (controller.signal.aborted) {
@@ -1864,9 +1865,16 @@ export async function runAIGenerationStream(
 
           lastError = sanitizeErrorText(attempt.error);
           if (config.isOpenRouter && attempt.status === 402) {
+            sawOpenRouterQuotaError = true;
             // WHY: Account currently has $0 paid credits on OpenRouter -> cache free-tier window and seamlessly retry free models.
             openrouterCreditShortageUntil = Date.now() + 5 * 60_000;
             if (mIdx < modelCandidates.length - 1) continue;
+          }
+          if (
+            config.isOpenRouter &&
+            (attempt.status === 429 || /free-models-per-day|rate limit|insufficient credits/i.test(attempt.error))
+          ) {
+            sawOpenRouterQuotaError = true;
           }
           if (
             config.isOpenRouter &&
@@ -1904,6 +1912,135 @@ export async function runAIGenerationStream(
         } finally {
           if (stallTimer) clearTimeout(stallTimer);
           controller.signal.removeEventListener('abort', forwardAbort);
+        }
+      }
+    }
+
+    // WHY: When OpenRouter hits billing/daily-free limits (402/429), transparently fail over to configured Gemini keys so live builds stay available.
+    if (
+      (!parsedResult || !structuredOut) &&
+      config.isOpenRouter &&
+      !config.usingByok &&
+      sawOpenRouterQuotaError &&
+      !controller.signal.aborted
+    ) {
+      const adminOverride = getInternalGatewayOverride();
+      const profileGeminiKey = (adminOverride.profiles?.gemini?.apiKey || '').trim();
+      const geminiBaseUrl = (
+        adminOverride.profiles?.gemini?.baseUrl ||
+        'https://generativelanguage.googleapis.com/v1beta'
+      )
+        .trim()
+        .replace(/\/+$/, '');
+      const geminiCheck = validateUpstreamBaseUrl(geminiBaseUrl, { allowLocalTest });
+      const geminiDnsSafe = geminiCheck.ok
+        ? await verifyUpstreamHostDns(geminiCheck.hostname, allowLocalTest)
+        : false;
+
+      if (geminiCheck.ok && geminiDnsSafe) {
+        const poolBackupCands: Array<PoolCandidate & { isPool: boolean }> = [];
+        if (profileGeminiKey) {
+          poolBackupCands.push({
+            id: 'gemini-profile',
+            mask: maskApiKey(profileGeminiKey),
+            rawKey: profileGeminiKey,
+            isPool: false,
+          });
+        }
+        const envProto = normalizeProtocol(process.env.AI_PROTOCOL);
+        if (hasConfiguredPoolKeys()) {
+          for (const pc of selectPoolCandidates()) {
+            if (envProto === 'gemini' || pc.rawKey.startsWith('AIza')) {
+              poolBackupCands.push({ ...pc, isPool: true });
+            }
+          }
+        }
+
+        const geminiModels =
+          intent === 'assistant'
+            ? ['gemini-2.5-flash', 'gemini-3-flash-preview']
+            : ['gemini-3-flash-preview', 'gemini-2.5-flash'];
+        const geminiBaseConfig: EffectiveAIConfig = {
+          ...config,
+          protocol: 'gemini',
+          baseUrl: geminiBaseUrl,
+          model: geminiModels[0],
+          isOpenRouter: false,
+        };
+
+        geminiOuter: for (const gCand of poolBackupCands) {
+          if (controller.signal.aborted) break;
+          if (gCand.isPool) {
+            const capCheck = checkSharedPoolQuota();
+            if (!capCheck.allowed) break;
+            recordPoolAttempt(gCand.id);
+          }
+          for (const gModel of geminiModels) {
+            if (controller.signal.aborted) break geminiOuter;
+            hooks?.onStage?.({
+              stage: 'generating',
+              model: gModel,
+              protocol: 'gemini',
+              detail: 'gemini-failover',
+            });
+            try {
+              resetIdleTimer();
+              const gAttempt = await callUpstreamOnce({
+                config: { ...geminiBaseConfig, model: gModel },
+                apiKey: gCand.rawKey,
+                systemInstruction,
+                userContent,
+                temperature,
+                streamUpstream,
+                expectJson: intent === 'assistant',
+                signal: controller.signal,
+                maxOutputTokens,
+                onDelta: (chunk) => {
+                  if (chunk) resetIdleTimer();
+                  hooks?.onDelta?.(chunk);
+                },
+              });
+              if (gAttempt.ok && gAttempt.result.text.trim()) {
+                const parsedGemini = parseStructuredLLMResponse(
+                  gAttempt.result.text,
+                  { ...geminiBaseConfig, model: gModel },
+                  gAttempt.result.tokens,
+                  gCand.isPool ? gCand.mask : undefined,
+                  {
+                    intent,
+                    actualModel: gModel,
+                    fallbackSuggestions: matchedSuggestions,
+                  }
+                );
+                if (parsedGemini) {
+                  parsedResult = gAttempt.result;
+                  structuredOut = parsedGemini;
+                  usedCandidate = gCand;
+                  usedModelId = gModel;
+                  if (gCand.isPool) {
+                    recordPoolSuccess(gCand.id, gAttempt.result.tokens);
+                  }
+                  break geminiOuter;
+                }
+                lastError = 'Phản hồi từ model AI chưa có tệp khởi chạy hợp lệ (index.html / src/App.tsx)';
+                continue;
+              }
+              if (!gAttempt.ok) {
+                lastError = sanitizeErrorText(gAttempt.error);
+                if (gCand.isPool && isFailoverHttpStatus(gAttempt.status)) {
+                  recordPoolFailure(gCand.id, gAttempt.status, lastError);
+                  break;
+                }
+              }
+            } catch (err) {
+              const msg = err instanceof Error ? sanitizeErrorText(err.message) : 'Gemini failover error';
+              lastError = msg;
+              if (gCand.isPool) {
+                recordPoolFailure(gCand.id, 'network', msg);
+                break;
+              }
+            }
+          }
         }
       }
     }
