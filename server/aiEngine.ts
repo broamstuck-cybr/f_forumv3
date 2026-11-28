@@ -1950,7 +1950,7 @@ export async function runAIGenerationStream(
         const envProto = normalizeProtocol(process.env.AI_PROTOCOL);
         if (hasConfiguredPoolKeys()) {
           for (const pc of selectPoolCandidates()) {
-            if (envProto === 'gemini' || pc.rawKey.startsWith('AIza')) {
+            if (envProto === 'gemini' || pc.rawKey.startsWith('AIza') || pc.rawKey.startsWith('AQ.')) {
               poolBackupCands.push({ ...pc, isPool: true });
             }
           }
