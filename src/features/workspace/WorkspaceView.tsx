@@ -151,6 +151,7 @@ function buildFileTraceRows(projectFiles: WorkspaceFile[], action: 'create' | 'e
 export const WorkspaceView: React.FC = () => {
   const {
     currentUser,
+    aiRuntime,
     theme,
     navigate,
     addToast,
@@ -202,8 +203,18 @@ export const WorkspaceView: React.FC = () => {
   const [selectedModel, setSelectedModel] = useState<string>(() =>
     settings.byok?.enabled && settings.byok.model.trim()
       ? settings.byok.model.trim()
-      : 'gemini-3-flash-preview'
+      : aiRuntime?.defaultModel || 'openrouter/auto-smart'
   );
+
+  // Sync default server model when Admin switches OpenRouter <-> Gemini and BYOK is off
+  useEffect(() => {
+    if (settings.byok?.enabled && settings.byok.apiKey.trim()) return;
+    if (!aiRuntime?.defaultModel) return;
+    setSelectedModel((prev) => {
+      const stillValid = aiRuntime.availableModels.some((m) => m.id === prev);
+      return stillValid ? prev : aiRuntime.defaultModel;
+    });
+  }, [aiRuntime, settings.byok?.enabled, settings.byok?.apiKey]);
 
   const splitContainerRef = useRef<HTMLDivElement | null>(null);
   const urlSeedHandledRef = useRef(false);
@@ -355,6 +366,10 @@ export const WorkspaceView: React.FC = () => {
       }
 
       try {
+        const recentChatHistory = messages
+          .slice(-4)
+          .map((m) => ({ role: m.role, content: m.text }));
+
         const result = await composeWithAgent({
           prompt: cleanPrompt,
           profile: activeProfile,
@@ -368,7 +383,30 @@ export const WorkspaceView: React.FC = () => {
           isAuthenticated: Boolean(currentUser),
           byok: settings.byok,
           model: selectedModel,
+          chatHistory: recentChatHistory,
         });
+
+        if (result.mode === 'assistant') {
+          setMessages((prev) => [
+            ...prev,
+            {
+              id: `a-${Date.now()}`,
+              role: 'assistant',
+              mode: 'assistant',
+              text: result.summaryText,
+              createdAt: new Date().toISOString(),
+              modelUsed: result.modelUsed,
+              tokensTotal: result.tokensTotal,
+              estimatedCostUsd: result.estimatedCostUsd,
+              suggestedResources: result.suggestedResources,
+              trace: result.trace,
+              matchedResources: result.matchedResources,
+              durationMs: result.durationMs,
+            },
+          ]);
+          setMobileTab('chat');
+          return;
+        }
 
         const preferredFocus =
           result.changedFiles.find((d) => /\.(tsx|jsx|html|css|js)$/i.test(d.path))?.path ||
@@ -392,8 +430,12 @@ export const WorkspaceView: React.FC = () => {
           {
             id: `a-${Date.now()}`,
             role: 'assistant',
+            mode: 'build',
             text: result.summaryText,
             createdAt: new Date().toISOString(),
+            modelUsed: result.modelUsed,
+            tokensTotal: result.tokensTotal,
+            estimatedCostUsd: result.estimatedCostUsd,
             trace: result.trace,
             matchedResources: result.matchedResources,
             motionSignature: result.motionSignature,
@@ -423,6 +465,7 @@ export const WorkspaceView: React.FC = () => {
       commitProjectFilesImmediate,
       currentUser,
       files,
+      messages,
       onboardingProfile,
       recordSignal,
       setAuthModalOpen,
@@ -1079,6 +1122,7 @@ export const WorkspaceView: React.FC = () => {
             hasGeneratedHtml={files.length > 0}
             canUseAi={canUseAi}
             selectedModel={selectedModel}
+            aiRuntime={aiRuntime}
             byok={settings.byok}
             onChangeModel={setSelectedModel}
             onSaveByok={(nextByok) => {
@@ -1088,11 +1132,16 @@ export const WorkspaceView: React.FC = () => {
                 title: nextByok.enabled ? 'Đã lưu API Key riêng' : 'Đã chuyển về khóa mặc định',
                 message: nextByok.enabled
                   ? `Model: ${nextByok.model}`
-                  : 'Sử dụng khóa Gemini 3 Flash mặc định trên máy chủ.',
+                  : `Đang dùng máy chủ mặc định (${aiRuntime?.activeProfile === 'gemini' ? 'Gemini' : 'OpenRouter'}).`,
               });
             }}
             onRequireAuth={() => setAuthModalOpen(true)}
             onSendPrompt={(text) => void runCompose(text)}
+            onUseSuggestedResource={(item) =>
+              void runCompose(`Lắp ghép trang web sử dụng mẫu "${item.title}" từ thư viện ${item.library}`, {
+                seedItemId: item.id,
+              })
+            }
             onRetryLast={() => void runCompose(lastPrompt || 'Tạo lại dự án web')}
             onUndo={handleUndo}
             onFeedback={handleFeedback}

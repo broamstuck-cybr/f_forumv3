@@ -11,6 +11,7 @@ import type {
   CommunityChannelsData,
   CommunityPost,
   ModerationReport,
+  PublicAiRuntimeInfo,
   QuotaState,
   User,
   WorkspaceProject,
@@ -212,7 +213,7 @@ export const apiClient = {
     return requestJson('/api/health', { method: 'GET' });
   },
 
-  fetchQuota(): Promise<{ user: User | null; quota: QuotaState }> {
+  fetchQuota(): Promise<{ user: User | null; quota: QuotaState; aiRuntime?: PublicAiRuntimeInfo }> {
     return requestJson('/api/ai/quota', { method: 'GET' });
   },
 
@@ -317,7 +318,7 @@ export const apiClient = {
     return finalResult;
   },
 
-  fetchCurrentUser(): Promise<{ user: User | null; quota: QuotaState }> {
+  fetchCurrentUser(): Promise<{ user: User | null; quota: QuotaState; aiRuntime?: PublicAiRuntimeInfo }> {
     return requestJson('/api/auth/me', { method: 'GET' });
   },
 

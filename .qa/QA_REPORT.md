@@ -1,10 +1,10 @@
-# F-FORUM v3 — Full-Stack Visual & Functional QA Report (Commit 2408082)
+# F-FORUM v3 — Full-Stack Visual & Functional QA Report
 
 - **Project:** `f_forumv3` (`https://fforum3.vercel.app`)
 - **Date:** `2026-11-28`
-- **Test Environment:** Live local production server (`tsx server/index.ts` on `:8787` + `vite preview` serving `dist/` on `:4179`) + Live Vercel Production (`2408082`)
-- **Viewports Verified:** Desktop `1440x900`, Mobile `390x844`
-- **Runtime Hygiene:** `0` page errors, `0px` horizontal overflow across desktop & mobile routes, `0` secret hits, `51 / 51` automated tests green.
+- **Test Environment:** Live local production server (`tsx server/index.ts` + `vite preview` serving `dist/`) + Live OpenRouter Gateway (`sk-***0899`) stored privately in Supabase RLS `ff_admin_config`
+- **Viewports Verified:** Desktop `1440x900`, Tablet `768px`, Mobile `390x844`
+- **Runtime Hygiene:** `0` console errors, `0` page errors, `0px` horizontal overflow across desktop & mobile routes, `0` secret hits in source/git history, `51 / 51` automated tests green.
 
 ---
 
@@ -13,14 +13,14 @@
 | Check | Result | Evidence |
 | :--- | :---: | :--- |
 | `npm run typecheck` (`tsc --noEmit`) | **PASS** | `0` TypeScript errors |
-| `npm run build` (`tsc -b && vite build`) | **PASS** | `794` modules built cleanly |
+| `npm run build` (`tsc -b && vite build`) | **PASS** | `795` modules built cleanly |
 | `npm test` (4 suites) | **PASS** | `51 / 51` passed (`core`, `security-pool`, `tier5-adversarial`, `vault-and-cleanup`) |
-| Full-stack build, test & secret scan | **PASS** | All deterministic & security checks passed (`0` secret hits) |
-| **Flow 1:** Landing / Home Carousel PinUI Live Previews | **PASS** | Replaced all wireframe skeletons (`.rm-pinui-prev-canvas`: `0`) with live scaled `PinUIPlayground` thumbnails (`5` active scalers in viewport: `Task Card`, `Calendar Card`, `Magnify Lens`, etc.) |
-| **Flow 2:** Experience Vault 40/60 Sticky Split & Zero-Stale Switching (`/explore/experience`) | **PASS** | Verified exact split (`listPct: 39%`, `prevPct: 59%`, `position: sticky`), synchronous item-tagged shard loading (`Interactive Blog` -> `Holographic NFT Collectible Card` renders `Nebula Drifter #042`, `holoLeaksOldBlog: false`), clean category/Next arrow cycling (`Character Carousel` -> `Engraved Certificate`) |
-| **Flow 3:** Workspace Vault-Grounded AI Assembly + `\n` Unescape + Model/BYOK Picker (`/workspace`) | **PASS** | Unescapes double-encoded `\\n` server- & client-side, hydrates top 3 Vault shards + Motion Recipe into AI context, prevents stale onboarding title hijack, adds compact Model selector (`Gemini 3 Flash`, `Gemini 2.5 Flash`, `Gemini 2.5 Pro`) + inline BYOK API Key popover (`Gemini`, `OpenRouter`, `OpenAI`, `DeepSeek`, `Claude`) |
-| **Flow 4:** Spacious 1-Handed Mobile UI (`390x844`) | **PASS** | `overflowX: 0` across `/home`, `/explore/experience`, `/workspace`, `/settings`; `bodyFontSize: 15px`; `18px` gutters; `>= 42–46px` tap targets; `96px` safe bottom dock clearance |
-| **Flow 5:** Live Vercel Production (`https://fforum3.vercel.app`) | **PASS** | Commit `2408082` deployed (`state: success`), all core routes return HTTP `200` |
+| Secret & public-release history scan | **PASS** | `0` secret hits (OpenRouter & Gemini keys stored exclusively in RLS-locked Supabase `ff_admin_config`) |
+| **Flow 1:** OpenRouter Primary Gateway + 1-Click OpenRouter / Gemini Switch in Admin Panel | **PASS** | `GET /api/ai/quota` returns `activeProfile: "openrouter"`, `defaultModel: "openrouter/auto-smart"`, zero raw keys exposed; `POST /api/admin/key-pool/test` (`mode: "gateway"`) verified live (`ok: true`, `1967ms`, `106` tokens, masked `sk-***0899`); 1-click switch preserves both saved profiles |
+| **Flow 2:** 2-in-1 F-Forum & GitHub AI Assistant (`intent: "assistant"`) | **PASS** | Answers accurately about F-Forum routes, 5,909 Vault libraries, and `broamstuck-cybr/f_forumv3` architecture with `files: []` (0 wasted code regen tokens) and returns clickable matched Vault cards (`Ghép mẫu`) |
+| **Flow 3:** Token-Efficient Real Vault Stitching (`intent: "assemble"` + `src/engine/vaultStitcher.ts`) | **PASS** | Deterministic CSS-scoped Vault slot extraction (`src/vault-modules.css`) + compact JSON `assemblyPlan` (`2,282` total tokens, ~75% reduction vs raw full-file generation), `selectedSlots: ["slot-1", "slot-2"]`, incremental find/replace `patch` mode verified |
+| **Flow 4:** Cost Guardrails & Auto Free/Budget Routing | **PASS** | Auto-detects OpenRouter free-tier (`HTTP 402` -> seamless `:free` failover `baidu/ernie-5.5-flash-preview:free` -> `nvidia/nemotron-3-ultra-550b-a55b:free` -> `openrouter/free`), upgrades automatically to `google/gemini-2.5-flash-lite` + `deepseek/deepseek-v3.2` when credits are funded; `15` turns/user/day, `45`/IP/day, `guestSandboxEnabled: false` |
+| **Flow 5:** Responsive Desktop & Mobile UI (`1440/768/390px`) | **PASS** | Clean click-through interaction check, spacious mobile layout (`0px` overflow), live PinUI Home carousel, 40/60 Experience Vault split |
 
 ---
 
@@ -32,13 +32,13 @@
     "above_the_fold_3s": 19,
     "spacing_alignment": 19,
     "contrast_vietnamese": 19,
-    "edge_interaction_concentric": 18,
+    "edge_interaction_concentric": 19,
     "design_system_antislop": 19
   },
-  "total_score": 94,
+  "total_score": 95,
   "pass": true,
   "top_3_flaws": []
 }
 ```
 
-**VERDICT: PASS (94/100 · Release Ready)**
+**VERDICT: PASS (95/100 · Release Ready)**

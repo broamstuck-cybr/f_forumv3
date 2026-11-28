@@ -57,6 +57,17 @@ export interface AgentChatMessage {
   role: 'user' | 'assistant';
   text: string;
   createdAt: string;
+  mode?: 'assistant' | 'build';
+  modelUsed?: string;
+  tokensTotal?: number;
+  estimatedCostUsd?: number;
+  suggestedResources?: Array<{
+    id: string;
+    title: string;
+    library: string;
+    category?: string;
+    reason?: string;
+  }>;
   trace?: AgentTraceStep[];
   matchedResources?: MatchedVaultResource[];
   motionSignature?: string;

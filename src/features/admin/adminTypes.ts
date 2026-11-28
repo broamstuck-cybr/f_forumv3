@@ -8,7 +8,7 @@ import type {
 
 export type AdminQuotaSubjectKind = 'admin' | 'user' | 'ip' | 'guest';
 
-export type AdminKeyPoolMode = 'pool' | 'key1' | 'key2' | 'failover_sim';
+export type AdminKeyPoolMode = 'pool' | 'key1' | 'key2' | 'failover_sim' | 'gateway';
 
 export type AdminKeyStatus = AdminKeyPoolKeyStatus['status'];
 

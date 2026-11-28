@@ -590,6 +590,7 @@ export interface AppStoreContextValue {
   aiStreamingStage: AIStreamingStage;
   aiStreamingPreview: string;
   aiModelUsed: string | null;
+  aiRuntime: import('../types/index').PublicAiRuntimeInfo | null;
   currentUser: User | null;
   quota: QuotaState;
   refreshAuthAndQuota: () => Promise<void>;
@@ -987,6 +988,7 @@ function normalizeStoredProject(raw: unknown): WorkspaceProject | null {
   const [aiStreamingStage, setAiStreamingStage] = useState<AIStreamingStage>('idle');
   const [aiStreamingPreview, setAiStreamingPreview] = useState<string>('');
   const [aiModelUsed, setAiModelUsed] = useState<string | null>(null);
+  const [aiRuntime, setAiRuntime] = useState<import('../types/index').PublicAiRuntimeInfo | null>(null);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [quota, setQuota] = useState<QuotaState>(() => ({
     ...DEFAULT_QUOTA,
@@ -1227,6 +1229,9 @@ function normalizeStoredProject(raw: unknown): WorkspaceProject | null {
       }
       if (data?.quota && typeof data.quota.unlimited === 'boolean') {
         setQuota(data.quota);
+      }
+      if (data?.aiRuntime) {
+        setAiRuntime(data.aiRuntime);
       }
     } catch {
       return;
@@ -2528,6 +2533,7 @@ function normalizeStoredProject(raw: unknown): WorkspaceProject | null {
       aiStreamingStage,
       aiStreamingPreview,
       aiModelUsed,
+      aiRuntime,
       currentUser,
       quota,
       refreshAuthAndQuota,
@@ -2610,6 +2616,7 @@ function normalizeStoredProject(raw: unknown): WorkspaceProject | null {
       aiStreamingStage,
       aiStreamingPreview,
       aiModelUsed,
+      aiRuntime,
       currentUser,
       quota,
       refreshAuthAndQuota,

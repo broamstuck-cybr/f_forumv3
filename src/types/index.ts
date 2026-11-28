@@ -384,13 +384,35 @@ export interface ModerationReport {
   resolvedBy?: string;
 }
 
-export interface AdminGatewayOverride {
-  enabled: boolean;
+export type AdminGatewayProfileId = 'openrouter' | 'gemini' | 'custom';
+
+export interface AdminGatewayProfileConfig {
   protocol: AIProtocol;
   baseUrl: string;
   model: string;
+  chatModel?: string;
+  buildModel?: string;
+  apiKey?: string;
+  hasApiKey?: boolean;
+  maskedKey?: string;
+}
+
+export interface AdminGatewayOverride {
+  enabled: boolean;
+  activeProfile?: AdminGatewayProfileId;
+  protocol: AIProtocol;
+  baseUrl: string;
+  model: string;
+  chatModel?: string;
+  buildModel?: string;
+  maxOutputTokens?: number;
   apiKey?: string;
   hasCustomApiKey?: boolean;
+  maskedKey?: string;
+  profiles?: {
+    openrouter?: AdminGatewayProfileConfig;
+    gemini?: AdminGatewayProfileConfig;
+  };
   systemPromptSuffix?: string;
   standardTurnLimit?: number;
   dailyUserLimit?: number;
@@ -427,6 +449,8 @@ export interface AdminTelemetrySnapshot {
   pendingModerationCount: number;
   uptimeSeconds: number;
   lastRequestAt: string | null;
+  gatewayTokens?: AdminTokenTotals;
+  estimatedCostUsd?: number;
 }
 
 export interface AdminAuditLogEntry {
@@ -497,7 +521,7 @@ export interface AdminSecurityEvent {
 
 export interface AdminKeyPoolTestResult {
   ok: boolean;
-  mode: 'pool' | 'key1' | 'key2' | 'failover_sim';
+  mode: 'pool' | 'key1' | 'key2' | 'failover_sim' | 'gateway';
   keyId: string;
   keyMask: string;
   mask?: string | null;
@@ -583,32 +607,101 @@ export interface SecretScanResult {
   scannedFilesCount: number;
 }
 
+export interface PublicAiModelOption {
+  id: string;
+  label: string;
+  tier: 'auto' | 'free' | 'budget' | 'balanced';
+}
+
+export interface PublicAiRuntimeInfo {
+  activeProfile: AdminGatewayProfileId;
+  protocol: AIProtocol;
+  defaultModel: string;
+  availableModels: PublicAiModelOption[];
+}
+
+export interface VaultSlotBrief {
+  slotId: string;
+  id: string;
+  title: string;
+  library: string;
+  summary: string;
+}
+
+export interface FilePatchOp {
+  path: string;
+  find: string;
+  replace: string;
+}
+
+export interface SuggestedVaultItem {
+  id: string;
+  title: string;
+  library: string;
+  category?: string;
+  reason?: string;
+}
+
+export interface WorkspaceAssemblyPlan {
+  siteTitle?: string;
+  eyebrow?: string;
+  heroTitle?: string;
+  heroSubtitle?: string;
+  primaryCta?: string;
+  secondaryCta?: string;
+  themeMode?: 'dark' | 'light';
+  accentKey?: string;
+  vaultSectionTitle?: string;
+  vaultSectionLead?: string;
+  selectedSlotIds?: string[];
+  slotNotes?: Record<string, string>;
+  stats?: Array<{ value: string; label: string }>;
+  cards?: Array<{ tag: string; title: string; description: string }>;
+  timeline?: Array<{ time: string; title: string; detail: string }>;
+  flashcards?: Array<{ tag: string; front: string; back: string }>;
+  quiz?: Array<{ question: string; options: string[]; correctIndex: number; explanation: string }>;
+  registerHeading?: string;
+  registerLead?: string;
+  registerCta?: string;
+  footerNote?: string;
+  customCss?: string;
+  customJs?: string;
+}
+
 export interface AIChatRequest {
   projectId: string;
   prompt: string;
   model?: string;
   agentMode?: string;
+  intent?: 'auto' | 'assistant' | 'assemble' | 'patch';
   stream?: boolean;
   systemPrompt?: string;
   temperature?: number;
   files: Array<{ path: string; content: string }>;
   attachedItems?: AttachedContextItem[];
+  vaultSlots?: VaultSlotBrief[];
   history?: Array<{ role: 'user' | 'assistant'; content: string }>;
 }
 
 export interface AIChatResponse {
   message: string;
+  mode?: 'assistant' | 'assemble' | 'patch' | 'files';
   files: Array<{
     path: string;
     content: string;
     summary: string;
   }>;
+  assemblyPlan?: WorkspaceAssemblyPlan;
+  patches?: FilePatchOp[];
+  suggestedResources?: SuggestedVaultItem[];
   checksHint: string[];
   quota: QuotaState;
   fallback: boolean;
   upstreamError?: string;
   modelUsed: string;
   protocolUsed: AIProtocol;
+  tokens?: AdminTokenTotals;
+  estimatedCostUsd?: number;
 }
 
 export interface AIStreamStageEvent {

@@ -4,8 +4,28 @@ import type { IncomingHttpHeaders } from 'node:http';
 import net from 'node:net';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import type { AIChatRequest, AIProtocol, AttachedContextItem } from '../src/types/index';
+import type {
+  AIChatRequest,
+  AIProtocol,
+  AttachedContextItem,
+  FilePatchOp,
+  PublicAiRuntimeInfo,
+  SuggestedVaultItem,
+  WorkspaceAssemblyPlan,
+} from '../src/types/index';
 import { getInternalGatewayOverride } from './adminStore.js';
+import {
+  classifyWorkspaceIntent,
+  estimateTokensCostUsd,
+  FFORUM_COMPACT_KNOWLEDGE,
+  GEMINI_MODELS,
+  OPENROUTER_FREE_FALLBACK_CHAIN,
+  OPENROUTER_MODELS,
+  OPENROUTER_PAID_BUILD_CHAIN,
+  OPENROUTER_PAID_CHAT_CHAIN,
+  searchVaultKnowledge,
+  type WorkspaceIntent,
+} from './fforumKnowledge.js';
 import {
   beginFailoverSim,
   checkSharedPoolQuota,
@@ -13,6 +33,7 @@ import {
   getKeyPoolSnapshot,
   hasConfiguredPoolKeys,
   isFailoverHttpStatus,
+  maskApiKey,
   recordPoolAttempt,
   recordPoolFailure,
   recordPoolSuccess,
@@ -31,17 +52,22 @@ ensureLocalEnvLoaded();
 
 export interface AIGenerationOutput {
   message: string;
+  mode?: 'assistant' | 'assemble' | 'patch' | 'files';
   files: Array<{
     path: string;
     content: string;
     summary: string;
   }>;
+  assemblyPlan?: WorkspaceAssemblyPlan;
+  patches?: FilePatchOp[];
+  suggestedResources?: SuggestedVaultItem[];
   checksHint: string[];
   fallback: boolean;
   upstreamError?: string;
   modelUsed: string;
   protocolUsed: AIProtocol;
   tokens?: TokenCounter;
+  estimatedCostUsd?: number;
   usedKeyMask?: string;
 }
 
@@ -60,10 +86,14 @@ interface EffectiveAIConfig {
   protocol: AIProtocol;
   baseUrl: string;
   model: string;
+  chatModel?: string;
+  buildModel?: string;
+  maxOutputTokens?: number;
   apiKey: string;
   systemPromptSuffix: string;
   usingByok: boolean;
   usingAdminKey: boolean;
+  isOpenRouter: boolean;
 }
 
 function normalizeProtocol(val: string | undefined): AIProtocol {
@@ -74,9 +104,58 @@ function normalizeProtocol(val: string | undefined): AIProtocol {
 const SERVER_GEMINI_MODEL_ALLOWLIST = new Set([
   'gemini-3-flash-preview',
   'gemini-2.5-flash',
+  'gemini-2.5-flash-lite',
   'gemini-2.5-pro',
   'gemini-2.0-flash',
 ]);
+
+const SERVER_OPENROUTER_MODEL_ALLOWLIST = new Set(OPENROUTER_MODELS.map((m) => m.id));
+
+let openrouterCreditShortageUntil = 0;
+
+export function resetOpenRouterTierCache(): void {
+  openrouterCreditShortageUntil = 0;
+}
+
+export function getPublicAiRuntimeInfo(): PublicAiRuntimeInfo {
+  ensureLocalEnvLoaded();
+  const adminOverride = getInternalGatewayOverride();
+  const protocol = adminOverride.enabled
+    ? adminOverride.protocol
+    : normalizeProtocol(process.env.AI_PROTOCOL);
+  const baseUrl = (adminOverride.enabled ? adminOverride.baseUrl : process.env.AI_BASE_URL || '').toLowerCase();
+  const isOpenRouter = baseUrl.includes('openrouter.ai') || adminOverride.activeProfile === 'openrouter';
+  const activeProfile = isOpenRouter
+    ? 'openrouter'
+    : protocol === 'gemini' || baseUrl.includes('googleapis.com')
+      ? 'gemini'
+      : 'custom';
+  const defaultModel = adminOverride.enabled
+    ? adminOverride.model
+    : (process.env.AI_MODEL || (isOpenRouter ? 'openrouter/auto-smart' : 'gemini-3-flash-preview')).trim();
+
+  const models = isOpenRouter ? OPENROUTER_MODELS : GEMINI_MODELS;
+  const availableModels = models.map((m) => ({
+    id: m.id,
+    label: m.label,
+    tier: m.tier,
+  }));
+
+  if (defaultModel && !availableModels.some((m) => m.id === defaultModel)) {
+    availableModels.unshift({
+      id: defaultModel,
+      label: defaultModel,
+      tier: 'balanced',
+    });
+  }
+
+  return {
+    activeProfile,
+    protocol,
+    defaultModel,
+    availableModels,
+  };
+}
 
 export function resolveAIConfig(
   headers: IncomingHttpHeaders,
@@ -88,6 +167,9 @@ export function resolveAIConfig(
   let protocol: AIProtocol = normalizeProtocol(process.env.AI_PROTOCOL);
   let baseUrl = (process.env.AI_BASE_URL || 'https://api.openai.com/v1').trim();
   let model = (process.env.AI_MODEL || 'studio-smart-route').trim();
+  let chatModel: string | undefined;
+  let buildModel: string | undefined;
+  let maxOutputTokens: number | undefined;
   let apiKey = (process.env.AI_API_KEY || '').trim();
   let systemPromptSuffix = '';
   let usingByok = false;
@@ -97,6 +179,9 @@ export function resolveAIConfig(
     protocol = adminOverride.protocol;
     baseUrl = adminOverride.baseUrl || baseUrl;
     model = adminOverride.model || model;
+    chatModel = adminOverride.chatModel;
+    buildModel = adminOverride.buildModel;
+    maxOutputTokens = adminOverride.maxOutputTokens;
     if (adminOverride.apiKey) {
       apiKey = adminOverride.apiKey;
       usingAdminKey = true;
@@ -104,11 +189,14 @@ export function resolveAIConfig(
     systemPromptSuffix = adminOverride.systemPromptSuffix || '';
   }
 
+  const isOpenRouterUrl = baseUrl.toLowerCase().includes('openrouter.ai');
   const cleanRequested = (requestedModel || '').trim();
   if (cleanRequested && cleanRequested !== 'auto') {
     if (!adminOverride.enabled) {
       model = cleanRequested;
     } else if (protocol === 'gemini' && SERVER_GEMINI_MODEL_ALLOWLIST.has(cleanRequested)) {
+      model = cleanRequested;
+    } else if (isOpenRouterUrl && SERVER_OPENROUTER_MODEL_ALLOWLIST.has(cleanRequested)) {
       model = cleanRequested;
     }
   }
@@ -131,32 +219,138 @@ export function resolveAIConfig(
     }
   }
 
+  const cleanBaseUrl = baseUrl.replace(/\/+$/, '');
   return {
     protocol,
-    baseUrl: baseUrl.replace(/\/+$/, ''),
+    baseUrl: cleanBaseUrl,
     model,
+    chatModel,
+    buildModel,
+    maxOutputTokens,
     apiKey,
     systemPromptSuffix,
     usingByok,
     usingAdminKey,
+    isOpenRouter: cleanBaseUrl.toLowerCase().includes('openrouter.ai'),
   };
 }
 
-function buildSystemInstruction(suffix: string, sessionInstructions = ''): string {
-  const base = [
-    'You are the F-FORUM v3 Vault-Grounded Web Assembly Engine.',
-    'Respond ONLY with a valid JSON object matching this exact schema:',
-    '{"message":"Concise Vietnamese technical summary of assembled sections","files":[{"path":"index.html","content":"...","summary":"..."},{"path":"src/styles.css","content":"...","summary":"..."},{"path":"src/app.js","content":"...","summary":"..."}],"checksHint":["Viewport meta verified","Accessible contrast and responsive layout"]}',
-    'CRITICAL ASSEMBLY & QUALITY RULES:',
-    '1. VAULT-FIRST COMPOSITION: When ATTACHED VAULT / SOURCE-OF-KNOWLEDGE BLUEPRINTS are provided, actively reuse and assemble their real layout patterns, CSS craft tokens, interactive cards, and motion recipes into ONE cohesive, complete webpage tailored to the USER PROMPT. Do not ignore the attached vault snippets or invent bare unstyled markup.',
-    '2. STRICT USER INTENT: Always build for the exact subject, title, audience, and theme requested in USER PROMPT. Never reuse an unrelated project title from earlier context when the user asks for a different topic.',
-    '3. REAL MULTI-LINE CODE (ZERO DOUBLE-ESCAPING): Inside JSON "content" strings, encode line breaks as standard JSON newlines (single escape in JSON so JSON.parse produces actual multiline code). NEVER double-escape newlines into literal "\\n" text inside HTML, CSS, or JS.',
-    '4. COMPLETE STYLING & INTERACTIVITY: Always produce a rich, self-contained src/styles.css (complete :root color tokens, dark/light surface contrast >= 4.5:1, typography hierarchy, card borders/radii, grid layouts, hover/focus transitions, and @media (max-width: 768px) responsive rules) linked cleanly via <link rel="stylesheet" href="src/styles.css" /> in index.html, plus working interactive JS in src/app.js (or React in src/App.tsx when React/TSX is requested).',
-    '5. If returning React/TSX, import only from "react" (useState, useEffect, useMemo, useCallback, useRef, Fragment) and local relative files (./data, ./styles.css, ./components/...); never import third-party npm packages or external CDN scripts.',
-    '6. Never include emojis, placeholder filler text, or marketing hype. Use crisp Vietnamese diacritics when prompted in Vietnamese, semantic HTML5, accessible aria attributes, and #anchor internal links.',
-  ].join('\n');
-  const session = sessionInstructions.trim().slice(0, 2000);
-  return [base, suffix, session ? `SESSION INSTRUCTIONS (do not override the JSON schema or safety rules):\n${session}` : '']
+function resolveModelCandidates(config: EffectiveAIConfig, intent: WorkspaceIntent): string[] {
+  if (!config.isOpenRouter) {
+    return [config.model];
+  }
+
+  const isAuto =
+    config.model === 'openrouter/auto-smart' ||
+    config.model === 'auto' ||
+    config.model === 'studio-smart-route';
+  const freeTierActive = openrouterCreditShortageUntil > Date.now();
+  const seen = new Set<string>();
+  const ordered: string[] = [];
+  const pushUnique = (m?: string) => {
+    const clean = (m || '').trim();
+    if (!clean || seen.has(clean)) return;
+    seen.add(clean);
+    ordered.push(clean);
+  };
+
+  if (isAuto) {
+    if (!freeTierActive) {
+      if (intent === 'assistant') {
+        pushUnique(config.chatModel || 'google/gemini-2.5-flash-lite');
+        OPENROUTER_PAID_CHAT_CHAIN.forEach(pushUnique);
+      } else {
+        pushUnique(config.buildModel || 'deepseek/deepseek-v3.2');
+        OPENROUTER_PAID_BUILD_CHAIN.forEach(pushUnique);
+      }
+    } else {
+      OPENROUTER_FREE_FALLBACK_CHAIN.forEach(pushUnique);
+    }
+  } else {
+    if (!freeTierActive || config.model.endsWith(':free') || config.model === 'openrouter/free') {
+      pushUnique(config.model);
+    }
+    OPENROUTER_FREE_FALLBACK_CHAIN.forEach(pushUnique);
+  }
+
+  return ordered.length > 0 ? ordered : ['openrouter/free'];
+}
+
+function resolveModeMaxTokens(config: EffectiveAIConfig, intent: WorkspaceIntent, useAssemblyPlan: boolean): number {
+  const adminCap = config.maxOutputTokens;
+  let target: number;
+  if (intent === 'assistant') {
+    target = 1100;
+  } else if (useAssemblyPlan) {
+    target = 2500;
+  } else if (intent === 'patch') {
+    target = 2600;
+  } else {
+    target = config.isOpenRouter ? 3600 : 8192;
+  }
+  return adminCap ? Math.min(adminCap, target) : target;
+}
+
+function buildModeSystemInstruction(
+  intent: WorkspaceIntent,
+  useAssemblyPlan: boolean,
+  suffix: string,
+  sessionInstructions = ''
+): string {
+  let base: string;
+
+  if (intent === 'assistant') {
+    base = [
+      'You are the official F-Forum v3 AI Assistant inside Workspace.',
+      FFORUM_COMPACT_KNOWLEDGE,
+      'Respond ONLY with a compact valid JSON object:',
+      '{"mode":"assistant","message":"Câu trả lời tiếng Việt ngắn gọn, rõ ràng, thực tế (dùng gạch đầu dòng nếu cần)","suggestedResources":[{"id":"...","title":"...","library":"...","reason":"..."}],"files":[],"checksHint":["F-Forum assistant reply"]}',
+      'RULES:',
+      '1. Answer directly about F-Forum v3 web features, routes, Admin Panel, 5,909 free Vault resources, 58 motion recipes, or GitHub repo broamstuck-cybr/f_forumv3.',
+      '2. When the user asks to find components/templates/effects, pick the most relevant entries from MATCHED VAULT CANDIDATES and return them in suggestedResources so the user can click to stitch them directly.',
+      '3. NEVER generate HTML/CSS/JS files in assistant mode (keep "files":[]). Keep replies crisp, accurate, zero hype, zero emojis.',
+    ].join('\n');
+  } else if (useAssemblyPlan) {
+    base = [
+      'You are the F-Forum v3 Token-Efficient Vault Assembly Architect.',
+      FFORUM_COMPACT_KNOWLEDGE,
+      'The client ALREADY fetched real interactive HTML/CSS/JS modules from the F-Forum 5,909-item Vault (listed in VAULT SLOTS). Your job is NOT to rewrite huge boilerplate HTML/CSS from scratch — instead return a compact JSON Assembly Plan so the deterministic Stitcher embeds those real Vault modules directly with your tailored Vietnamese content and theme.',
+      'Respond ONLY with a valid JSON object matching this schema:',
+      '{"mode":"assemble","message":"Tóm tắt ngắn tiếng Việt những mẫu kho đã lắp ghép","assemblyPlan":{"siteTitle":"...","eyebrow":"...","heroTitle":"...","heroSubtitle":"...","primaryCta":"...","secondaryCta":"...","themeMode":"dark","accentKey":"emerald|amber|cyan|violet|rose","vaultSectionTitle":"...","vaultSectionLead":"...","selectedSlotIds":["slot-1","slot-2"],"slotNotes":{"slot-1":"Vai trò của mẫu này trong trang"},"stats":[{"value":"...","label":"..."}],"cards":[{"tag":"...","title":"...","description":"..."}],"timeline":[{"time":"...","title":"...","detail":"..."}],"flashcards":[{"tag":"...","front":"...","back":"..."}],"quiz":[{"question":"...","options":["...","...","..."],"correctIndex":0,"explanation":"..."}],"registerHeading":"...","registerLead":"...","registerCta":"...","footerNote":"...","customCss":"/* tùy chọn tối đa 20 dòng CSS tinh chỉnh */"},"files":[],"checksHint":["Vault modules stitched"]}',
+      'RULES:',
+      '1. Always tailor 100% of titles, stats, cards, timeline, quiz, and CTAs to the EXACT subject in USER PROMPT using natural Vietnamese diacritics.',
+      '2. Always select 1-3 slot IDs from VAULT SLOTS in selectedSlotIds so real Vault components are stitched live into the page.',
+      '3. Be concise to save tokens: 3-4 stats, 3 cards, 3 timeline steps, 2-3 flashcards, 2 quiz questions max. Never use emojis, placeholder filler text, or marketing hype.',
+    ].join('\n');
+  } else if (intent === 'patch') {
+    base = [
+      'You are the F-Forum v3 Incremental Patch & Web Builder.',
+      FFORUM_COMPACT_KNOWLEDGE,
+      'Respond ONLY with a valid JSON object using EITHER compact find/replace patches (preferred to save tokens!) OR only the changed files:',
+      'Option A (smallest token cost): {"mode":"patch","message":"Tóm tắt ngắn tiếng Việt","patches":[{"path":"src/styles.css","find":"exact snippet","replace":"new snippet"}],"files":[],"checksHint":["Patched cleanly"]}',
+      'Option B (when rewriting a section/file): {"mode":"files","message":"Tóm tắt ngắn tiếng Việt","files":[{"path":"index.html","content":"...","summary":"..."}],"checksHint":["Updated changed files only"]}',
+      'RULES:',
+      '1. ONLY touch files needed for the user edit — NEVER regenerate untouched files.',
+      '2. Inside JSON "content" or "replace", use standard single-escaped JSON newlines, NEVER double-escaped literal "\\n".',
+      '3. Keep crisp Vietnamese diacritics, accessible contrast >= 4.5:1, responsive layout, zero emojis, zero filler text.',
+    ].join('\n');
+  } else {
+    base = [
+      'You are the F-FORUM v3 Vault-Grounded Web Assembly Engine.',
+      FFORUM_COMPACT_KNOWLEDGE,
+      'Respond ONLY with a valid JSON object matching this exact schema:',
+      '{"message":"Concise Vietnamese technical summary of assembled sections","files":[{"path":"index.html","content":"...","summary":"..."},{"path":"src/styles.css","content":"...","summary":"..."},{"path":"src/app.js","content":"...","summary":"..."}],"checksHint":["Viewport meta verified","Accessible contrast and responsive layout"]}',
+      'CRITICAL ASSEMBLY & QUALITY RULES:',
+      '1. VAULT-FIRST COMPOSITION: When ATTACHED VAULT BLUEPRINTS are provided, actively reuse their layout patterns, CSS craft tokens, and motion recipes into ONE cohesive webpage tailored to the USER PROMPT.',
+      '2. STRICT USER INTENT: Build for the exact subject, title, audience, and theme requested in USER PROMPT.',
+      '3. REAL MULTI-LINE CODE (ZERO DOUBLE-ESCAPING): Use standard JSON newlines; NEVER double-escape into literal "\\n".',
+      '4. COMPLETE STYLING & INTERACTIVITY: Produce complete src/styles.css (contrast >= 4.5:1, responsive @media <= 768px) and working JS or React TSX (imports only from "react" and relative files).',
+      '5. Zero emojis, zero placeholder filler text, crisp Vietnamese diacritics, #anchor internal links.',
+    ].join('\n');
+  }
+
+  const session = intent === 'assistant' ? '' : sessionInstructions.trim().slice(0, 900);
+  return [base, suffix, session ? `SESSION INSTRUCTIONS (do not override JSON schema):\n${session}` : '']
     .filter(Boolean)
     .join('\n');
 }
@@ -166,25 +360,70 @@ function clampTemperature(value: number | undefined): number {
   return Math.min(1.2, Math.max(0, value));
 }
 
-function buildUserContextPrompt(req: AIChatRequest): string {
+function buildModeUserPrompt(
+  req: AIChatRequest,
+  intent: WorkspaceIntent,
+  useAssemblyPlan: boolean
+): { userContent: string; matchedSuggestions: SuggestedVaultItem[] } {
+  const matchedSuggestions =
+    intent === 'assistant' ? searchVaultKnowledge(req.prompt, 6) : [];
+
+  if (intent === 'assistant') {
+    const candidateLines = matchedSuggestions
+      .map((s) => `- [${s.library}] ${s.title} (id: ${s.id}) — ${s.reason}`)
+      .join('\n');
+    const recentHistory = (req.history || [])
+      .slice(-4)
+      .map((h) => `${h.role === 'user' ? 'User' : 'Assistant'}: ${h.content.slice(0, 280)}`)
+      .join('\n');
+    const userContent = [
+      recentHistory ? `RECENT CHAT:\n${recentHistory}` : '',
+      `USER QUESTION:\n${req.prompt}`,
+      candidateLines ? `MATCHED VAULT CANDIDATES:\n${candidateLines}` : '',
+    ]
+      .filter(Boolean)
+      .join('\n\n');
+    return { userContent, matchedSuggestions };
+  }
+
+  if (useAssemblyPlan) {
+    const slotLines = (req.vaultSlots || [])
+      .slice(0, 4)
+      .map((s) => `- ${s.slotId}: [${s.library}] ${s.title} (id: ${s.id}) — ${s.summary.slice(0, 220)}`)
+      .join('\n');
+    const userContent = [
+      `USER PROMPT:\n${req.prompt}`,
+      slotLines ? `VAULT SLOTS READY FOR STITCHING:\n${slotLines}` : '',
+    ]
+      .filter(Boolean)
+      .join('\n\n');
+    return { userContent, matchedSuggestions };
+  }
+
+  const attachedLimit = intent === 'patch' ? 2 : 3;
+  const attachedCharCap = intent === 'patch' ? 800 : 1800;
+  const fileLimit = intent === 'patch' ? 3 : 4;
+  const fileCharCap = intent === 'patch' ? 2600 : 3000;
+
   const attachedSummary = (req.attachedItems || [])
-    .slice(0, 5)
-    .map((item: AttachedContextItem) => `- [${item.kind}] ${item.title}:\n${String(item.summary || '').slice(0, 3600)}`)
+    .slice(0, attachedLimit)
+    .map((item: AttachedContextItem) => `- [${item.kind}] ${item.title}:\n${String(item.summary || '').slice(0, attachedCharCap)}`)
     .join('\n\n');
   const existingFiles = (req.files || [])
-    .slice(0, 6)
-    .map((f) => `FILE: ${f.path}\n${f.content.slice(0, 4200)}`)
+    .filter((f) => f.path !== 'metadata.json' && f.path !== 'README.md')
+    .slice(0, fileLimit)
+    .map((f) => `FILE: ${f.path}\n${f.content.slice(0, fileCharCap)}`)
     .join('\n\n');
 
-  return [
+  const userContent = [
     `USER PROMPT:\n${req.prompt}`,
-    attachedSummary
-      ? `ATTACHED VAULT / SOURCE-OF-KNOWLEDGE BLUEPRINTS (ASSEMBLE & ADAPT THESE REAL PATTERNS INTO THE PAGE):\n${attachedSummary}`
-      : '',
+    attachedSummary ? `ATTACHED VAULT BLUEPRINTS:\n${attachedSummary}` : '',
     existingFiles ? `CURRENT WORKSPACE FILES:\n${existingFiles}` : '',
   ]
     .filter(Boolean)
     .join('\n\n');
+
+  return { userContent, matchedSuggestions };
 }
 
 interface CatalogSampleEntry {
@@ -381,6 +620,7 @@ function buildFallbackResponse(
 interface StreamParseResult {
   text: string;
   tokens: TokenCounter;
+  actualModel?: string;
 }
 
 function emptyTokenCounter(): TokenCounter {
@@ -465,6 +705,7 @@ async function readOpenAICompatibleStream(
 ): Promise<StreamParseResult> {
   let assembled = '';
   let sawSseData = false;
+  let actualModel: string | undefined;
   const tokens = emptyTokenCounter();
 
   const raw = await consumeResponseLines(resp, (line) => {
@@ -475,9 +716,13 @@ async function readOpenAICompatibleStream(
     if (!payload || payload === '[DONE]') return;
     try {
       const chunk = JSON.parse(payload) as {
+        model?: string;
         choices?: Array<{ delta?: { content?: string }; message?: { content?: string } }>;
         usage?: { prompt_tokens?: number; completion_tokens?: number; total_tokens?: number };
       };
+      if (typeof chunk.model === 'string' && chunk.model.trim()) {
+        actualModel = chunk.model.trim();
+      }
       if (chunk.usage) {
         tokens.prompt = Math.max(tokens.prompt, chunk.usage.prompt_tokens || 0);
         tokens.completion = Math.max(tokens.completion, chunk.usage.completion_tokens || 0);
@@ -493,14 +738,18 @@ async function readOpenAICompatibleStream(
     }
   });
 
-  if (sawSseData) return { text: assembled, tokens: finalizeTokens(tokens) };
+  if (sawSseData) return { text: assembled, tokens: finalizeTokens(tokens), actualModel };
 
   const trimmed = raw.trim();
-  if (!trimmed) return { text: '', tokens: finalizeTokens(tokens) };
+  if (!trimmed) return { text: '', tokens: finalizeTokens(tokens), actualModel };
   const data = JSON.parse(trimmed) as {
+    model?: string;
     choices?: Array<{ message?: { content?: string }; text?: string }>;
     usage?: { prompt_tokens?: number; completion_tokens?: number; total_tokens?: number };
   };
+  if (typeof data.model === 'string' && data.model.trim()) {
+    actualModel = data.model.trim();
+  }
   if (data.usage) {
     tokens.prompt = Math.max(tokens.prompt, data.usage.prompt_tokens || 0);
     tokens.completion = Math.max(tokens.completion, data.usage.completion_tokens || 0);
@@ -508,7 +757,7 @@ async function readOpenAICompatibleStream(
   }
   const text = data.choices?.[0]?.message?.content || data.choices?.[0]?.text || '';
   if (text) onDelta?.(text);
-  return { text, tokens: finalizeTokens(tokens) };
+  return { text, tokens: finalizeTokens(tokens), actualModel };
 }
 
 async function readAnthropicStream(
@@ -648,46 +897,190 @@ function parseStructuredLLMResponse(
   rawText: string,
   config: EffectiveAIConfig,
   tokens?: TokenCounter,
-  usedKeyMask?: string
+  usedKeyMask?: string,
+  options?: {
+    intent?: WorkspaceIntent;
+    actualModel?: string;
+    fallbackSuggestions?: SuggestedVaultItem[];
+  }
 ): AIGenerationOutput | null {
+  const modelUsed = options?.actualModel || config.model;
+  const estimatedCostUsd = estimateTokensCostUsd(modelUsed, tokens);
   const unfenced = rawText
     .replace(/```json\s*/gi, '')
     .replace(/```\s*/g, '')
     .trim();
   const jsonStart = unfenced.indexOf('{');
   const jsonEnd = unfenced.lastIndexOf('}');
-  if (jsonStart < 0 || jsonEnd <= jsonStart) return null;
+
+  if (jsonStart < 0 || jsonEnd <= jsonStart) {
+    // WHY: In assistant Q&A mode, if a lightweight model replies directly in plain Vietnamese text, accept it cleanly instead of triggering fallback.
+    if (options?.intent === 'assistant' && unfenced.length >= 6) {
+      return {
+        message: unfenced.slice(0, 3200),
+        mode: 'assistant',
+        files: [],
+        suggestedResources: options.fallbackSuggestions?.slice(0, 4),
+        checksHint: ['F-Forum assistant reply'],
+        fallback: false,
+        modelUsed,
+        protocolUsed: config.protocol,
+        tokens,
+        estimatedCostUsd,
+        usedKeyMask,
+      };
+    }
+    return null;
+  }
+
   try {
     const parsed = JSON.parse(unfenced.slice(jsonStart, jsonEnd + 1)) as {
+      mode?: string;
       message?: string;
       files?: Array<{ path?: string; content?: string; summary?: string }>;
+      assemblyPlan?: WorkspaceAssemblyPlan;
+      patches?: Array<{ path?: string; find?: string; replace?: string }>;
+      suggestedResources?: Array<{ id?: string; title?: string; library?: string; category?: string; reason?: string }>;
       checksHint?: string[];
     };
-    if (!parsed || !Array.isArray(parsed.files) || parsed.files.length === 0) {
-      return null;
+    if (!parsed || typeof parsed !== 'object') return null;
+
+    const validFiles = Array.isArray(parsed.files)
+      ? parsed.files
+          .filter((f) => typeof f.path === 'string' && typeof f.content === 'string')
+          .map((f) => ({
+            path: String(f.path).trim().replace(/\\/g, '/').replace(/^\.\/+/, '').replace(/^\/+/, ''),
+            content: unescapeDoubleEncodedCode(String(f.content)),
+            summary: String(f.summary || 'Updated file'),
+          }))
+          .filter((f) => Boolean(f.path) && !f.path.includes('..'))
+      : [];
+
+    const validPatches: FilePatchOp[] = Array.isArray(parsed.patches)
+      ? parsed.patches
+          .filter(
+            (p) =>
+              typeof p.path === 'string' &&
+              typeof p.find === 'string' &&
+              p.find.length > 0 &&
+              typeof p.replace === 'string'
+          )
+          .map((p) => ({
+            path: String(p.path).trim().replace(/\\/g, '/').replace(/^\.\/+/, '').replace(/^\/+/, ''),
+            find: unescapeDoubleEncodedCode(String(p.find)),
+            replace: unescapeDoubleEncodedCode(String(p.replace)),
+          }))
+          .filter((p) => Boolean(p.path) && !p.path.includes('..'))
+      : [];
+
+    const validSuggestions: SuggestedVaultItem[] = Array.isArray(parsed.suggestedResources)
+      ? parsed.suggestedResources
+          .filter((s) => typeof s.id === 'string' && typeof s.title === 'string')
+          .slice(0, 6)
+          .map((s) => ({
+            id: String(s.id).trim(),
+            title: String(s.title).trim(),
+            library: String(s.library || 'codefronts').trim(),
+            category: s.category ? String(s.category).trim() : undefined,
+            reason: s.reason ? String(s.reason).trim() : undefined,
+          }))
+      : [];
+
+    if (
+      parsed.assemblyPlan &&
+      typeof parsed.assemblyPlan === 'object' &&
+      !Array.isArray(parsed.assemblyPlan)
+    ) {
+      return {
+        message: String(parsed.message || 'Đã lắp ghép trang web từ kho tài nguyên F-Forum.'),
+        mode: 'assemble',
+        files: validFiles,
+        assemblyPlan: parsed.assemblyPlan,
+        checksHint: Array.isArray(parsed.checksHint)
+          ? parsed.checksHint.map(String)
+          : ['Vault assembly plan verified'],
+        fallback: false,
+        modelUsed,
+        protocolUsed: config.protocol,
+        tokens,
+        estimatedCostUsd,
+        usedKeyMask,
+      };
     }
-    const validFiles = parsed.files
-      .filter((f) => typeof f.path === 'string' && typeof f.content === 'string')
-      .map((f) => ({
-        path: String(f.path).trim().replace(/\\/g, '/').replace(/^\.\/+/, '').replace(/^\/+/, ''),
-        content: unescapeDoubleEncodedCode(String(f.content)),
-        summary: String(f.summary || 'Updated file'),
-      }))
-      .filter((f) => Boolean(f.path) && !f.path.includes('..'));
-    if (validFiles.length === 0) return null;
-    return {
-      message: String(parsed.message || 'Đã cập nhật mã nguồn Workspace.'),
-      files: validFiles,
-      checksHint: Array.isArray(parsed.checksHint)
-        ? parsed.checksHint.map(String)
-        : ['Verified workspace files'],
-      fallback: false,
-      modelUsed: config.model,
-      protocolUsed: config.protocol,
-      tokens,
-      usedKeyMask,
-    };
+
+    if (validPatches.length > 0) {
+      return {
+        message: String(parsed.message || 'Đã cập nhật đúng phần cần chỉnh sửa.'),
+        mode: 'patch',
+        files: validFiles,
+        patches: validPatches,
+        checksHint: Array.isArray(parsed.checksHint)
+          ? parsed.checksHint.map(String)
+          : ['Incremental patch applied'],
+        fallback: false,
+        modelUsed,
+        protocolUsed: config.protocol,
+        tokens,
+        estimatedCostUsd,
+        usedKeyMask,
+      };
+    }
+
+    if (validFiles.length > 0) {
+      return {
+        message: String(parsed.message || 'Đã cập nhật mã nguồn Workspace.'),
+        mode: 'files',
+        files: validFiles,
+        checksHint: Array.isArray(parsed.checksHint)
+          ? parsed.checksHint.map(String)
+          : ['Verified workspace files'],
+        fallback: false,
+        modelUsed,
+        protocolUsed: config.protocol,
+        tokens,
+        estimatedCostUsd,
+        usedKeyMask,
+      };
+    }
+
+    if ((parsed.mode === 'assistant' || options?.intent === 'assistant') && typeof parsed.message === 'string' && parsed.message.trim()) {
+      return {
+        message: parsed.message.trim(),
+        mode: 'assistant',
+        files: [],
+        suggestedResources:
+          validSuggestions.length > 0
+            ? validSuggestions
+            : options?.fallbackSuggestions?.slice(0, 4),
+        checksHint: Array.isArray(parsed.checksHint)
+          ? parsed.checksHint.map(String)
+          : ['F-Forum assistant reply'],
+        fallback: false,
+        modelUsed,
+        protocolUsed: config.protocol,
+        tokens,
+        estimatedCostUsd,
+        usedKeyMask,
+      };
+    }
+
+    return null;
   } catch {
+    if (options?.intent === 'assistant' && unfenced.length >= 6) {
+      return {
+        message: unfenced.slice(0, 3200),
+        mode: 'assistant',
+        files: [],
+        suggestedResources: options.fallbackSuggestions?.slice(0, 4),
+        checksHint: ['F-Forum assistant reply'],
+        fallback: false,
+        modelUsed,
+        protocolUsed: config.protocol,
+        tokens,
+        estimatedCostUsd,
+        usedKeyMask,
+      };
+    }
     return null;
   }
 }
@@ -1013,25 +1406,30 @@ async function callUpstreamOnce(params: {
     'content-type': 'application/json',
     authorization: `Bearer ${apiKey}`,
   };
-  if (config.baseUrl.includes('openrouter.ai')) {
+  if (config.isOpenRouter) {
     openAiHeaders['HTTP-Referer'] = 'https://fforum3.vercel.app';
     openAiHeaders['X-Title'] = 'F-Forum v3';
+  }
+  const openAiPayload: Record<string, unknown> = {
+    model: config.model,
+    // WHY: Keep stream: true for OpenAI-compatible SSE endpoints expected by core tests
+    stream: true,
+    max_tokens: params.maxOutputTokens || 3200,
+    messages: [
+      { role: 'system', content: systemInstruction },
+      { role: 'user', content: userContent },
+    ],
+    temperature,
+  };
+  if (config.isOpenRouter) {
+    openAiPayload.stream_options = { include_usage: true };
+    openAiPayload.reasoning = { effort: 'low' };
   }
   const resp = await fetchWithRetry(url, {
     method: 'POST',
     redirect: 'manual',
     headers: openAiHeaders,
-    body: JSON.stringify({
-      model: config.model,
-      // WHY: Keep stream: true for OpenAI-compatible SSE endpoints expected by core tests
-      stream: true,
-      max_tokens: params.maxOutputTokens || 4096,
-      messages: [
-        { role: 'system', content: systemInstruction },
-        { role: 'user', content: userContent },
-      ],
-      temperature,
-    }),
+    body: JSON.stringify(openAiPayload),
     signal,
   });
   if (resp.status >= 300 && resp.status < 400) {
@@ -1054,6 +1452,17 @@ export async function runAIGenerationStream(
   hooks?: AIStreamHooks
 ): Promise<AIGenerationOutput> {
   const config = resolveAIConfig(headers, req.model);
+  const hasExistingFiles = Array.isArray(req.files)
+    && req.files.some((f) => f.path !== 'metadata.json' && f.path !== 'README.md');
+  const intent = classifyWorkspaceIntent(req.prompt || '', hasExistingFiles, req.intent || req.agentMode);
+  const useAssemblyPlan =
+    intent === 'assemble' &&
+    Array.isArray(req.vaultSlots) &&
+    req.vaultSlots.length > 0 &&
+    !/\b(react|tsx|jsx)\b/i.test(req.prompt || '');
+  const modelCandidates = resolveModelCandidates(config, intent);
+  const maxOutputTokens = resolveModeMaxTokens(config, intent, useAssemblyPlan);
+
   const runningOnCloud = Boolean(process.env.VERCEL);
   const unreachableLoopback = runningOnCloud && isLoopbackUrl(config.baseUrl);
   const allowLocalTest = isAllowLocalTestUpstream();
@@ -1064,7 +1473,7 @@ export async function runAIGenerationStream(
   const poolQuota = useDirectKey ? { allowed: true as const } : checkSharedPoolQuota();
   const candidates: PoolCandidate[] = useDirectKey
     ? config.apiKey
-      ? [{ id: config.usingByok ? 'byok' : 'admin', mask: config.usingByok ? 'BYOK' : 'ADMIN', rawKey: config.apiKey }]
+      ? [{ id: config.usingByok ? 'byok' : 'admin', mask: config.usingByok ? 'BYOK' : maskApiKey(config.apiKey), rawKey: config.apiKey }]
       : []
     : poolQuota.allowed
       ? selectPoolCandidates()
@@ -1073,9 +1482,9 @@ export async function runAIGenerationStream(
 
   hooks?.onStage?.({
     stage: 'routing',
-    model: config.model,
+    model: modelCandidates[0] || config.model,
     protocol: config.protocol,
-    detail: canCallUpstream ? `${config.protocol}:${config.model}` : 'unconfigured-fallback',
+    detail: canCallUpstream ? `${config.protocol}:${modelCandidates[0] || config.model}` : 'unconfigured-fallback',
   });
 
   if (!canCallUpstream) {
@@ -1104,9 +1513,14 @@ export async function runAIGenerationStream(
     return fallbackOut;
   }
 
-  const systemInstruction = buildSystemInstruction(config.systemPromptSuffix, req.systemPrompt);
+  const systemInstruction = buildModeSystemInstruction(
+    intent,
+    useAssemblyPlan,
+    config.systemPromptSuffix,
+    req.systemPrompt
+  );
   const temperature = clampTemperature(req.temperature);
-  const userContent = buildUserContextPrompt(req);
+  const { userContent, matchedSuggestions } = buildModeUserPrompt(req, intent, useAssemblyPlan);
   const controller = new AbortController();
   const onExternalAbort = () => controller.abort();
   if (hooks?.signal) {
@@ -1122,15 +1536,17 @@ export async function runAIGenerationStream(
   try {
     hooks?.onStage?.({
       stage: 'generating',
-      model: config.model,
+      model: modelCandidates[0] || config.model,
       protocol: config.protocol,
     });
 
     let lastError = 'Upstream request failed';
     let parsedResult: StreamParseResult | null = null;
+    let structuredOut: AIGenerationOutput | null = null;
     let usedCandidate: PoolCandidate | null = null;
+    let usedModelId = modelCandidates[0] || config.model;
 
-    for (let i = 0; i < candidates.length; i += 1) {
+    outer: for (let i = 0; i < candidates.length; i += 1) {
       if (controller.signal.aborted) {
         lastError = 'Client disconnected or request aborted';
         break;
@@ -1145,45 +1561,104 @@ export async function runAIGenerationStream(
         recordPoolAttempt(candidate.id);
       }
 
-      try {
-        const attempt = await callUpstreamOnce({
-          config,
-          apiKey: candidate.rawKey,
-          systemInstruction,
-          userContent,
-          temperature,
-          streamUpstream,
-          signal: controller.signal,
-          onDelta: hooks?.onDelta,
-        });
+      for (let mIdx = 0; mIdx < modelCandidates.length; mIdx += 1) {
+        if (controller.signal.aborted) {
+          lastError = 'Client disconnected or request aborted';
+          break outer;
+        }
+        const activeModelId = modelCandidates[mIdx];
+        const isFreeModel = activeModelId.endsWith(':free') || activeModelId === 'openrouter/free';
+        if (config.isOpenRouter && !isFreeModel && openrouterCreditShortageUntil > Date.now()) {
+          continue;
+        }
 
-        if (attempt.ok) {
-          parsedResult = attempt.result;
-          usedCandidate = candidate;
+        const attemptConfig: EffectiveAIConfig = { ...config, model: activeModelId };
+        try {
+          const attempt = await callUpstreamOnce({
+            config: attemptConfig,
+            apiKey: candidate.rawKey,
+            systemInstruction,
+            userContent,
+            temperature,
+            streamUpstream,
+            signal: controller.signal,
+            maxOutputTokens,
+            onDelta: hooks?.onDelta,
+          });
+
+          if (attempt.ok && attempt.result.text.trim()) {
+            const resolvedModel = attempt.result.actualModel || activeModelId;
+            const parsedCandidate = parseStructuredLLMResponse(
+              attempt.result.text,
+              { ...config, model: resolvedModel },
+              attempt.result.tokens,
+              useDirectKey ? undefined : candidate.mask,
+              {
+                intent,
+                actualModel: resolvedModel,
+                fallbackSuggestions: matchedSuggestions,
+              }
+            );
+            if (parsedCandidate) {
+              parsedResult = attempt.result;
+              structuredOut = parsedCandidate;
+              usedCandidate = candidate;
+              usedModelId = resolvedModel;
+              if (!useDirectKey) {
+                recordPoolSuccess(candidate.id, attempt.result.tokens);
+              }
+              break outer;
+            }
+            parsedResult = attempt.result;
+            usedCandidate = candidate;
+            usedModelId = resolvedModel;
+            lastError = 'Upstream response was not in expected multi-file JSON schema';
+            if (config.isOpenRouter && mIdx < modelCandidates.length - 1) {
+              continue;
+            }
+            break outer;
+          }
+
+          if (attempt.ok) {
+            lastError = `Empty response from ${activeModelId}`;
+            if (mIdx < modelCandidates.length - 1) continue;
+            break;
+          }
+
+          lastError = sanitizeErrorText(attempt.error);
+          if (config.isOpenRouter && attempt.status === 402) {
+            // WHY: Account currently has $0 paid credits on OpenRouter -> cache free-tier window and seamlessly retry free models.
+            openrouterCreditShortageUntil = Date.now() + 5 * 60_000;
+            if (mIdx < modelCandidates.length - 1) continue;
+          }
+          if (
+            config.isOpenRouter &&
+            (attempt.status === 429 || attempt.status === 404 || attempt.status >= 500) &&
+            mIdx < modelCandidates.length - 1
+          ) {
+            continue;
+          }
           if (!useDirectKey) {
-            recordPoolSuccess(candidate.id, attempt.result.tokens);
+            recordPoolFailure(candidate.id, attempt.status, lastError);
+            if (isFailoverHttpStatus(attempt.status) && i < candidates.length - 1) {
+              break;
+            }
           }
-          break;
-        }
-
-        lastError = sanitizeErrorText(attempt.error);
-        if (!useDirectKey) {
-          recordPoolFailure(candidate.id, attempt.status, lastError);
-          if (isFailoverHttpStatus(attempt.status) && i < candidates.length - 1) {
+          break outer;
+        } catch (err) {
+          const msg = err instanceof Error ? sanitizeErrorText(err.message) : 'Upstream network error';
+          lastError = msg;
+          if (config.isOpenRouter && !controller.signal.aborted && mIdx < modelCandidates.length - 1) {
             continue;
           }
-        }
-        break;
-      } catch (err) {
-        const msg = err instanceof Error ? sanitizeErrorText(err.message) : 'Upstream network error';
-        lastError = msg;
-        if (!useDirectKey) {
-          recordPoolFailure(candidate.id, 'network', msg);
-          if (!controller.signal.aborted && i < candidates.length - 1) {
-            continue;
+          if (!useDirectKey) {
+            recordPoolFailure(candidate.id, 'network', msg);
+            if (!controller.signal.aborted && i < candidates.length - 1) {
+              break;
+            }
           }
+          break outer;
         }
-        break;
       }
     }
 
@@ -1193,25 +1668,19 @@ export async function runAIGenerationStream(
 
     hooks?.onStage?.({
       stage: 'checking',
-      model: config.model,
+      model: usedModelId,
       protocol: config.protocol,
     });
 
-    const structured = parseStructuredLLMResponse(
-      parsedResult.text,
-      config,
-      parsedResult.tokens,
-      useDirectKey ? undefined : usedCandidate.mask
-    );
-    if (!structured) {
+    if (!structuredOut) {
       return buildFallbackResponse(
         req,
-        config,
-        'Upstream response was not in expected multi-file JSON schema',
+        { ...config, model: usedModelId },
+        lastError || 'Upstream response was not in expected multi-file JSON schema',
         parsedResult.tokens
       );
     }
-    return structured;
+    return structuredOut;
   } catch (err) {
     const msg = err instanceof Error ? sanitizeErrorText(err.message) : 'Upstream request failed';
     return buildFallbackResponse(req, config, msg);
@@ -1231,7 +1700,7 @@ export async function runAIGeneration(
 export interface LivePoolProbeResult {
   ok: boolean;
   statusCode?: number;
-  mode: 'pool' | 'key1' | 'key2' | 'failover_sim';
+  mode: 'pool' | 'key1' | 'key2' | 'failover_sim' | 'gateway';
   keyId: string;
   keyMask: string;
   mask: string | null;
@@ -1249,13 +1718,143 @@ export interface LivePoolProbeResult {
 }
 
 export async function runLiveKeyPoolProbe(input: {
-  mode?: 'pool' | 'key1' | 'key2' | 'failover_sim';
+  mode?: 'pool' | 'key1' | 'key2' | 'failover_sim' | 'gateway';
   prompt?: string;
 }): Promise<LivePoolProbeResult> {
   const mode = input.mode || 'pool';
   const config = resolveAIConfig({});
   const startedAt = Date.now();
   const attemptedKeys: string[] = [];
+
+  if (mode === 'gateway') {
+    resetOpenRouterTierCache();
+    const directCandidates: PoolCandidate[] = config.apiKey
+      ? [{ id: 'gateway', mask: maskApiKey(config.apiKey), rawKey: config.apiKey }]
+      : selectPoolCandidates();
+    if (directCandidates.length === 0) {
+      return {
+        ok: false,
+        statusCode: 502,
+        mode,
+        keyId: '',
+        keyMask: '',
+        mask: null,
+        attemptedKeys,
+        usedKeyMask: null,
+        model: config.model,
+        protocol: config.protocol,
+        failoverTriggered: false,
+        latencyMs: Date.now() - startedAt,
+        replyPreview: '',
+        preview: '',
+        tokens: emptyTokenCounter(),
+        error: 'Chưa cấu hình API key cho Gateway đang chọn.',
+      };
+    }
+
+    const activeCand = directCandidates[0];
+    attemptedKeys.push(activeCand.mask);
+    const probeModels = resolveModelCandidates(config, 'assistant');
+    const probePrompt = (input.prompt || 'Reply with valid JSON: {"status":"ok","service":"f-forum-gateway"}').trim().slice(0, 400);
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 30_000);
+    let lastError = 'Gateway probe failed';
+    let hitFreeFallback = false;
+
+    try {
+      for (let mIdx = 0; mIdx < probeModels.length; mIdx += 1) {
+        const modelId = probeModels[mIdx];
+        const isFreeModel = modelId.endsWith(':free') || modelId === 'openrouter/free';
+        if (config.isOpenRouter && !isFreeModel && openrouterCreditShortageUntil > Date.now()) {
+          continue;
+        }
+        const attempt = await callUpstreamOnce({
+          config: { ...config, model: modelId },
+          apiKey: activeCand.rawKey,
+          systemInstruction: 'Reply concisely in valid JSON.',
+          userContent: probePrompt,
+          temperature: 0,
+          streamUpstream: false,
+          signal: controller.signal,
+          maxOutputTokens: 160,
+        });
+        if (attempt.ok && attempt.result.text.trim()) {
+          const usedModel = attempt.result.actualModel || modelId;
+          const noteSuffix = hitFreeFallback ? ' (Tài khoản đang ở gói miễn phí, tự dùng model :free)' : '';
+          const replyPreview = sanitizeErrorText(`${attempt.result.text.trim()}${noteSuffix}`);
+          return {
+            ok: true,
+            statusCode: 200,
+            mode,
+            keyId: activeCand.id,
+            keyMask: activeCand.mask,
+            mask: activeCand.mask,
+            attemptedKeys,
+            usedKeyMask: activeCand.mask,
+            model: usedModel,
+            protocol: config.protocol,
+            failoverTriggered: hitFreeFallback,
+            latencyMs: Date.now() - startedAt,
+            replyPreview,
+            preview: replyPreview,
+            tokens: attempt.result.tokens,
+          };
+        }
+        if (!attempt.ok) {
+          lastError = sanitizeErrorText(attempt.error);
+          if (config.isOpenRouter && attempt.status === 402) {
+            openrouterCreditShortageUntil = Date.now() + 5 * 60_000;
+            hitFreeFallback = true;
+            continue;
+          }
+          if (config.isOpenRouter && (attempt.status === 429 || attempt.status === 404 || attempt.status >= 500)) {
+            hitFreeFallback = true;
+            continue;
+          }
+          break;
+        }
+      }
+      return {
+        ok: false,
+        statusCode: 502,
+        mode,
+        keyId: activeCand.id,
+        keyMask: activeCand.mask,
+        mask: activeCand.mask,
+        attemptedKeys,
+        usedKeyMask: null,
+        model: config.model,
+        protocol: config.protocol,
+        failoverTriggered: hitFreeFallback,
+        latencyMs: Date.now() - startedAt,
+        replyPreview: '',
+        preview: '',
+        tokens: emptyTokenCounter(),
+        error: lastError,
+      };
+    } catch (err) {
+      return {
+        ok: false,
+        statusCode: 502,
+        mode,
+        keyId: activeCand.id,
+        keyMask: activeCand.mask,
+        mask: activeCand.mask,
+        attemptedKeys,
+        usedKeyMask: null,
+        model: config.model,
+        protocol: config.protocol,
+        failoverTriggered: hitFreeFallback,
+        latencyMs: Date.now() - startedAt,
+        replyPreview: '',
+        preview: '',
+        tokens: emptyTokenCounter(),
+        error: err instanceof Error ? sanitizeErrorText(err.message) : 'Gateway network failure',
+      };
+    } finally {
+      clearTimeout(timeout);
+    }
+  }
 
   const initialQuota = checkSharedPoolQuota();
   if (!initialQuota.allowed) {

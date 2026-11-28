@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { BRAND_PALETTES } from '../../engine/motionCraftPack';
 import { handleLiquidPointerLeave, handleLiquidPointerMove } from '../../utils/liquidGlassPointer';
-import type { AIProtocol, BYOKConfig } from '../../types/index';
+import type { AIProtocol, BYOKConfig, PublicAiRuntimeInfo, SuggestedVaultItem } from '../../types/index';
 import type {
   AgentChatMessage,
   OnboardingProfile,
@@ -79,14 +79,17 @@ const PROVIDER_PRESETS: ProviderPreset[] = [
   },
 ];
 
-const SERVER_POOL_MODELS: Array<{ id: string; label: string }> = [
-  { id: 'gemini-3-flash-preview', label: 'Gemini 3 Flash' },
-  { id: 'gemini-2.5-flash', label: 'Gemini 2.5 Flash' },
-  { id: 'gemini-2.5-pro', label: 'Gemini 2.5 Pro' },
+const DEFAULT_SERVER_MODELS: Array<{ id: string; label: string }> = [
+  { id: 'openrouter/auto-smart', label: 'Tự động tiết kiệm' },
+  { id: 'google/gemini-2.5-flash-lite', label: 'Gemini 2.5 Flash Lite' },
+  { id: 'deepseek/deepseek-v3.2', label: 'DeepSeek V3.2' },
+  { id: 'qwen/qwen3-coder-next', label: 'Qwen3 Coder Next' },
+  { id: 'nvidia/nemotron-3-ultra-550b-a55b:free', label: 'Nemotron 3 Ultra (Free)' },
+  { id: 'openrouter/free', label: 'OpenRouter Free' },
 ];
 
 function detectPresetId(byok?: BYOKConfig): string {
-  if (!byok || (!byok.enabled && !byok.apiKey.trim())) return 'gemini';
+  if (!byok || (!byok.enabled && !byok.apiKey.trim())) return 'openrouter';
   if (byok.protocol === 'gemini' || byok.baseUrl.includes('googleapis.com')) return 'gemini';
   if (byok.protocol === 'anthropic' || byok.baseUrl.includes('anthropic.com')) return 'anthropic';
   if (byok.baseUrl.includes('openrouter.ai')) return 'openrouter';
@@ -103,11 +106,13 @@ export interface AgentChatPaneProps {
   hasGeneratedHtml: boolean;
   canUseAi: boolean;
   selectedModel: string;
+  aiRuntime?: PublicAiRuntimeInfo | null;
   byok?: BYOKConfig;
   onChangeModel: (model: string) => void;
   onSaveByok: (next: BYOKConfig) => void;
   onRequireAuth: () => void;
   onSendPrompt: (text: string) => void;
+  onUseSuggestedResource?: (item: SuggestedVaultItem) => void;
   onRetryLast: () => void;
   onUndo: () => void;
   onFeedback: (messageId: string, value: 'yes' | 'no' | 'keep_working') => void;
@@ -132,16 +137,16 @@ const QUICK_EDIT_CHIPS = [
 
 const EMPTY_STARTERS: Array<{ tag: string; prompt: string }> = [
   {
-    tag: 'Thuyết trình',
-    prompt: 'Làm trang thuyết trình Dự án Năng lượng Xanh có số liệu và 2 câu trắc nghiệm',
+    tag: 'Ghép kho mẫu',
+    prompt: 'Làm trang thuyết trình Dự án Năng lượng Xanh lắp ghép từ kho mẫu F-Forum có số liệu và 2 câu trắc nghiệm',
   },
   {
-    tag: 'React TSX',
-    prompt: 'Tạo ứng dụng dashboard React TSX cho CLB Robotics có lọc dự án trực tiếp và form đăng ký',
+    tag: 'Hỏi Trợ lý',
+    prompt: 'F-Forum có những mẫu kính lỏng hoặc 3D nào đẹp để ghép vào trang? Giải thích nhanh cấu trúc dự án f_forumv3',
   },
   {
     tag: 'Hồ sơ IT',
-    prompt: 'Dựng hồ sơ sinh viên Công nghệ Thông tin nền tối gọn sạch',
+    prompt: 'Dựng hồ sơ sinh viên Công nghệ Thông tin nền tối gọn sạch lấy mẫu từ kho tài nguyên',
   },
 ];
 
@@ -154,11 +159,13 @@ export const AgentChatPane: React.FC<AgentChatPaneProps> = ({
   hasGeneratedHtml,
   canUseAi,
   selectedModel,
+  aiRuntime,
   byok,
   onChangeModel,
   onSaveByok,
   onRequireAuth,
   onSendPrompt,
+  onUseSuggestedResource,
   onRetryLast,
   onUndo,
   onFeedback,
@@ -171,10 +178,10 @@ export const AgentChatPane: React.FC<AgentChatPaneProps> = ({
   const [presetId, setPresetId] = useState<string>(() => detectPresetId(byok));
   const [keyInput, setKeyInput] = useState<string>(() => byok?.apiKey || '');
   const [urlInput, setUrlInput] = useState<string>(
-    () => byok?.baseUrl || PROVIDER_PRESETS[0].baseUrl
+    () => byok?.baseUrl || PROVIDER_PRESETS[1].baseUrl
   );
   const [customModelInput, setCustomModelInput] = useState<string>(
-    () => byok?.model || PROVIDER_PRESETS[0].defaultModel
+    () => byok?.model || PROVIDER_PRESETS[1].defaultModel
   );
   const feedEndRef = useRef<HTMLDivElement | null>(null);
   const inputRef = useRef<HTMLTextAreaElement | null>(null);
@@ -182,10 +189,15 @@ export const AgentChatPane: React.FC<AgentChatPaneProps> = ({
   const hasActiveByok = Boolean(byok?.enabled && byok.apiKey.trim());
   const activePreset =
     PROVIDER_PRESETS.find((p) => p.id === (hasActiveByok ? detectPresetId(byok) : presetId)) ||
-    PROVIDER_PRESETS[0];
+    PROVIDER_PRESETS[1];
+
+  const serverModels =
+    aiRuntime && aiRuntime.availableModels.length > 0
+      ? aiRuntime.availableModels.map((m) => ({ id: m.id, label: m.label }))
+      : DEFAULT_SERVER_MODELS;
 
   const availableModels = (() => {
-    const base = hasActiveByok ? [...activePreset.models] : [...SERVER_POOL_MODELS];
+    const base = hasActiveByok ? [...activePreset.models] : [...serverModels];
     if (selectedModel && !base.some((m) => m.id === selectedModel)) {
       base.unshift({ id: selectedModel, label: selectedModel });
     }
@@ -234,15 +246,16 @@ export const AgentChatPane: React.FC<AgentChatPaneProps> = ({
   };
 
   const handleDisableByok = () => {
+    const defaultSrv = aiRuntime?.defaultModel || 'openrouter/auto-smart';
     onSaveByok({
       enabled: false,
-      protocol: byok?.protocol || 'gemini',
-      baseUrl: byok?.baseUrl || PROVIDER_PRESETS[0].baseUrl,
-      model: byok?.model || 'gemini-3-flash-preview',
+      protocol: byok?.protocol || 'openai-compatible',
+      baseUrl: byok?.baseUrl || PROVIDER_PRESETS[1].baseUrl,
+      model: byok?.model || defaultSrv,
       apiKey: '',
     });
     setKeyInput('');
-    onChangeModel('gemini-3-flash-preview');
+    onChangeModel(defaultSrv);
     setByokOpen(false);
   };
 
@@ -290,9 +303,9 @@ export const AgentChatPane: React.FC<AgentChatPaneProps> = ({
       <div className="ws-chat__feed">
         {messages.length === 0 && !busy && (
           <div className="ws-chat__empty">
-            <h2>Mô tả trang web bạn muốn dựng</h2>
+            <h2>Hỏi Trợ lý F-Forum hoặc lắp ghép web</h2>
             <p>
-              AI tra kho mẫu giao diện miễn phí, tổ chức thành dự án nhiều tệp (HTML, CSS, JS hoặc React TSX) và chạy trực tiếp ở khung bên phải.
+              Hỏi bất kỳ điều gì về web, dự án GitHub và kho 5.909 mẫu miễn phí — hoặc mô tả ý tưởng để AI tự chọn và lắp ghép các khối thật thành trang hoàn chỉnh.
             </p>
             <div className="ws-chat__starters">
               {EMPTY_STARTERS.map((starter, idx) => (
@@ -412,8 +425,36 @@ export const AgentChatPane: React.FC<AgentChatPaneProps> = ({
                 </div>
               )}
 
+              {msg.mode === 'assistant' && msg.suggestedResources && msg.suggestedResources.length > 0 && (
+                <div className="ws-suggestGrid" aria-label="Mẫu kho F-Forum gợi ý">
+                  {msg.suggestedResources.map((item) => (
+                    <div key={`${msg.id}-sug-${item.id}`} className="ws-suggestCard">
+                      <div className="ws-suggestCard__meta">
+                        <span className="ws-libTag">{item.library}</span>
+                        <strong className="ws-suggestCard__title">{item.title}</strong>
+                        {item.reason && <span className="ws-suggestCard__reason">{item.reason}</span>}
+                      </div>
+                      {onUseSuggestedResource && (
+                        <button
+                          type="button"
+                          className="ws-miniBtn ws-miniBtn--primary"
+                          disabled={busy}
+                          onClick={() => onUseSuggestedResource(item)}
+                        >
+                          Ghép mẫu
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+
               <div className="ws-aiFoot">
-                {msg.motionSignature && <span>{msg.motionSignature}</span>}
+                {msg.modelUsed && <span>{msg.modelUsed.replace(/^.*\//, '')}</span>}
+                {typeof msg.tokensTotal === 'number' && msg.tokensTotal > 0 && (
+                  <span>{msg.tokensTotal.toLocaleString('vi-VN')} token</span>
+                )}
+                {!msg.modelUsed && msg.motionSignature && <span>{msg.motionSignature}</span>}
                 {typeof msg.durationMs === 'number' && (
                   <span>{(msg.durationMs / 1000).toFixed(1)}s</span>
                 )}
@@ -653,8 +694,8 @@ export const AgentChatPane: React.FC<AgentChatPaneProps> = ({
             }}
             placeholder={
               hasGeneratedHtml
-                ? 'Nhắn yêu cầu chỉnh sửa...'
-                : 'Mô tả trang web bạn muốn tạo...'
+                ? 'Hỏi Trợ lý hoặc nhắn yêu cầu chỉnh sửa...'
+                : 'Hỏi về F-Forum / GitHub hoặc mô tả trang web cần lắp ghép...'
             }
             aria-label="Nhập yêu cầu cho AI"
           />

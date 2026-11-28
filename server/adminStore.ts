@@ -3,6 +3,8 @@ import type {
   AdminAuditLogEntry,
   AdminChangelogEntry,
   AdminGatewayOverride,
+  AdminGatewayProfileConfig,
+  AdminGatewayProfileId,
   AdminState,
   AdminTelemetrySnapshot,
   AdminUserQuotaRecord,
@@ -13,6 +15,7 @@ import { listAllUsers, toggleUserRole } from './authEngine.js';
 import { getCommunityState, resolveModerationReport } from './communityStore.js';
 import {
   getKeyPoolSnapshot,
+  maskApiKey,
   sanitizeErrorText,
   type AdminKeyPoolSnapshot,
   type TokenCounter,
@@ -91,10 +94,104 @@ interface PersistedAdminData {
     fallbackAiRequests: number;
     quotaBlockedRequests: number;
     lastRequestAt: string | null;
+    gatewayTokens?: TokenCounter;
+    estimatedCostUsd?: number;
   };
   auditLogs: AdminAuditLogEntry[];
   changelog: AdminChangelogEntry[];
   securityEvents: AdminSecurityEvent[];
+}
+
+const DEFAULT_OPENROUTER_PROFILE: AdminGatewayProfileConfig = {
+  protocol: 'openai-compatible',
+  baseUrl: 'https://openrouter.ai/api/v1',
+  model: 'openrouter/auto-smart',
+  chatModel: 'google/gemini-2.5-flash-lite',
+  buildModel: 'deepseek/deepseek-v3.2',
+  apiKey: '',
+};
+
+const DEFAULT_GEMINI_PROFILE: AdminGatewayProfileConfig = {
+  protocol: 'gemini',
+  baseUrl: 'https://generativelanguage.googleapis.com/v1beta',
+  model: 'gemini-3-flash-preview',
+  chatModel: 'gemini-2.5-flash',
+  buildModel: 'gemini-3-flash-preview',
+  apiKey: '',
+};
+
+function detectProfileId(gw: Pick<ServerAdminGatewayOverride, 'protocol' | 'baseUrl' | 'activeProfile'>): AdminGatewayProfileId {
+  if (gw.activeProfile === 'openrouter' || gw.activeProfile === 'gemini' || gw.activeProfile === 'custom') {
+    return gw.activeProfile;
+  }
+  if ((gw.baseUrl || '').toLowerCase().includes('openrouter.ai')) return 'openrouter';
+  if (gw.protocol === 'gemini' || (gw.baseUrl || '').toLowerCase().includes('googleapis.com')) return 'gemini';
+  return 'custom';
+}
+
+function ensureGatewayProfiles(gw: ServerAdminGatewayOverride): ServerAdminGatewayOverride {
+  const activeProfile = detectProfileId(gw);
+  const existingOr = gw.profiles?.openrouter;
+  const existingGm = gw.profiles?.gemini;
+  gw.activeProfile = activeProfile;
+  gw.profiles = {
+    openrouter: {
+      ...DEFAULT_OPENROUTER_PROFILE,
+      ...(existingOr || {}),
+      ...(activeProfile === 'openrouter'
+        ? {
+            baseUrl: gw.baseUrl || existingOr?.baseUrl || DEFAULT_OPENROUTER_PROFILE.baseUrl,
+            model: gw.model || existingOr?.model || DEFAULT_OPENROUTER_PROFILE.model,
+            chatModel: gw.chatModel || existingOr?.chatModel || DEFAULT_OPENROUTER_PROFILE.chatModel,
+            buildModel: gw.buildModel || existingOr?.buildModel || DEFAULT_OPENROUTER_PROFILE.buildModel,
+            apiKey: gw.apiKey || existingOr?.apiKey || '',
+          }
+        : {}),
+    },
+    gemini: {
+      ...DEFAULT_GEMINI_PROFILE,
+      ...(existingGm || {}),
+      ...(activeProfile === 'gemini'
+        ? {
+            baseUrl: gw.baseUrl || existingGm?.baseUrl || DEFAULT_GEMINI_PROFILE.baseUrl,
+            model: gw.model || existingGm?.model || DEFAULT_GEMINI_PROFILE.model,
+            chatModel: gw.chatModel || existingGm?.chatModel || DEFAULT_GEMINI_PROFILE.chatModel,
+            buildModel: gw.buildModel || existingGm?.buildModel || DEFAULT_GEMINI_PROFILE.buildModel,
+            apiKey: gw.apiKey || existingGm?.apiKey || '',
+          }
+        : {}),
+    },
+  };
+  return gw;
+}
+
+function sanitizeProfileForClient(profile?: AdminGatewayProfileConfig): AdminGatewayProfileConfig | undefined {
+  if (!profile) return undefined;
+  const rawKey = (profile.apiKey || '').trim();
+  return {
+    protocol: profile.protocol,
+    baseUrl: profile.baseUrl,
+    model: profile.model,
+    chatModel: profile.chatModel,
+    buildModel: profile.buildModel,
+    hasApiKey: Boolean(rawKey),
+    maskedKey: rawKey ? maskApiKey(rawKey) : undefined,
+  };
+}
+
+export function sanitizeGatewayForClient(gw: ServerAdminGatewayOverride): ServerAdminGatewayOverride {
+  const normalized = ensureGatewayProfiles({ ...gw });
+  const rawKey = (normalized.apiKey || '').trim();
+  return {
+    ...normalized,
+    apiKey: undefined,
+    hasCustomApiKey: Boolean(rawKey),
+    maskedKey: rawKey ? maskApiKey(rawKey) : undefined,
+    profiles: {
+      openrouter: sanitizeProfileForClient(normalized.profiles?.openrouter),
+      gemini: sanitizeProfileForClient(normalized.profiles?.gemini),
+    },
+  };
 }
 
 const serverStartTimeMs = Date.now();
@@ -409,7 +506,11 @@ export function getSecurityEvents(limit = 50): AdminSecurityEvent[] {
   return ensureAdminData().securityEvents.slice(0, safeLimit);
 }
 
-export function recordAiTelemetry(event: 'success' | 'fallback' | 'quota_blocked'): void {
+export function recordAiTelemetry(
+  event: 'success' | 'fallback' | 'quota_blocked',
+  tokens?: TokenCounter,
+  estimatedCostUsd?: number
+): void {
   const store = ensureAdminData();
   store.telemetryCounters.totalAiRequests += 1;
   store.telemetryCounters.lastRequestAt = new Date().toISOString();
@@ -419,6 +520,18 @@ export function recordAiTelemetry(event: 'success' | 'fallback' | 'quota_blocked
     store.telemetryCounters.fallbackAiRequests += 1;
   } else if (event === 'quota_blocked') {
     store.telemetryCounters.quotaBlockedRequests += 1;
+  }
+  if (tokens && tokens.total > 0) {
+    const prev = store.telemetryCounters.gatewayTokens || { prompt: 0, completion: 0, total: 0 };
+    store.telemetryCounters.gatewayTokens = {
+      prompt: prev.prompt + Math.max(0, tokens.prompt || 0),
+      completion: prev.completion + Math.max(0, tokens.completion || 0),
+      total: prev.total + Math.max(0, tokens.total || 0),
+    };
+  }
+  if (typeof estimatedCostUsd === 'number' && Number.isFinite(estimatedCostUsd) && estimatedCostUsd > 0) {
+    const prevCost = store.telemetryCounters.estimatedCostUsd || 0;
+    store.telemetryCounters.estimatedCostUsd = Math.round((prevCost + estimatedCostUsd) * 1_000_000) / 1_000_000;
   }
   if (isSupabaseEnabled()) {
     enqueueWrite(
@@ -440,15 +553,57 @@ export function recordAiTelemetry(event: 'success' | 'fallback' | 'quota_blocked
 }
 
 export function getInternalGatewayOverride(): ServerAdminGatewayOverride {
-  return ensureAdminData().gateway;
+  return ensureGatewayProfiles(ensureAdminData().gateway);
 }
 
 export function updateGatewayOverride(
-  input: Partial<ServerAdminGatewayOverride> & { clearApiKey?: boolean },
+  input: Partial<ServerAdminGatewayOverride> & {
+    clearApiKey?: boolean;
+    switchProfile?: 'openrouter' | 'gemini';
+  },
   actor: string
 ): ServerAdminGatewayOverride {
   const store = ensureAdminData();
-  const current = store.gateway;
+  const current = ensureGatewayProfiles(store.gateway);
+
+  // WHY: Save active profile credentials before switching so Admin can toggle OpenRouter <-> Gemini in 1 click without re-entering keys.
+  const prevProfileId = detectProfileId(current);
+  if (prevProfileId === 'openrouter' && current.profiles?.openrouter) {
+    current.profiles.openrouter = {
+      ...current.profiles.openrouter,
+      baseUrl: current.baseUrl,
+      model: current.model,
+      chatModel: current.chatModel || current.profiles.openrouter.chatModel,
+      buildModel: current.buildModel || current.profiles.openrouter.buildModel,
+      apiKey: current.apiKey || current.profiles.openrouter.apiKey || '',
+    };
+  } else if (prevProfileId === 'gemini' && current.profiles?.gemini) {
+    current.profiles.gemini = {
+      ...current.profiles.gemini,
+      baseUrl: current.baseUrl,
+      model: current.model,
+      chatModel: current.chatModel || current.profiles.gemini.chatModel,
+      buildModel: current.buildModel || current.profiles.gemini.buildModel,
+      apiKey: current.apiKey || current.profiles.gemini.apiKey || '',
+    };
+  }
+
+  if (input.switchProfile === 'openrouter' || input.switchProfile === 'gemini') {
+    const target =
+      input.switchProfile === 'openrouter'
+        ? current.profiles?.openrouter || DEFAULT_OPENROUTER_PROFILE
+        : current.profiles?.gemini || DEFAULT_GEMINI_PROFILE;
+    current.enabled = true;
+    current.activeProfile = input.switchProfile;
+    current.protocol = target.protocol;
+    current.baseUrl = target.baseUrl;
+    current.model = target.model;
+    current.chatModel = target.chatModel;
+    current.buildModel = target.buildModel;
+    current.apiKey = target.apiKey || '';
+    current.hasCustomApiKey = Boolean(current.apiKey);
+  }
+
   if (typeof input.enabled === 'boolean') current.enabled = input.enabled;
   if (
     input.protocol === 'openai-compatible' ||
@@ -463,6 +618,15 @@ export function updateGatewayOverride(
   if (typeof input.model === 'string' && input.model.trim()) {
     current.model = input.model.trim();
   }
+  if (typeof input.chatModel === 'string') {
+    current.chatModel = input.chatModel.trim() || undefined;
+  }
+  if (typeof input.buildModel === 'string') {
+    current.buildModel = input.buildModel.trim() || undefined;
+  }
+  if (typeof input.maxOutputTokens === 'number' && Number.isFinite(input.maxOutputTokens)) {
+    current.maxOutputTokens = Math.max(512, Math.min(8192, Math.round(input.maxOutputTokens)));
+  }
   if (input.clearApiKey === true) {
     current.apiKey = '';
     current.hasCustomApiKey = false;
@@ -471,7 +635,7 @@ export function updateGatewayOverride(
     if (trimmedKey) {
       current.apiKey = trimmedKey;
       current.hasCustomApiKey = true;
-    } else {
+    } else if (!input.switchProfile) {
       current.apiKey = '';
       current.hasCustomApiKey = false;
     }
@@ -499,6 +663,34 @@ export function updateGatewayOverride(
   if (typeof input.guestSandboxEnabled === 'boolean') {
     current.guestSandboxEnabled = input.guestSandboxEnabled;
   }
+
+  // Re-detect & sync updated values back into the active named profile
+  const nextProfileId: AdminGatewayProfileId = current.baseUrl.toLowerCase().includes('openrouter.ai')
+    ? 'openrouter'
+    : current.protocol === 'gemini' || current.baseUrl.toLowerCase().includes('googleapis.com')
+      ? 'gemini'
+      : 'custom';
+  current.activeProfile = nextProfileId;
+  if (nextProfileId === 'openrouter' && current.profiles?.openrouter) {
+    current.profiles.openrouter = {
+      protocol: 'openai-compatible',
+      baseUrl: current.baseUrl,
+      model: current.model,
+      chatModel: current.chatModel || DEFAULT_OPENROUTER_PROFILE.chatModel,
+      buildModel: current.buildModel || DEFAULT_OPENROUTER_PROFILE.buildModel,
+      apiKey: input.clearApiKey ? '' : current.apiKey || '',
+    };
+  } else if (nextProfileId === 'gemini' && current.profiles?.gemini) {
+    current.profiles.gemini = {
+      protocol: 'gemini',
+      baseUrl: current.baseUrl,
+      model: current.model,
+      chatModel: current.chatModel || DEFAULT_GEMINI_PROFILE.chatModel,
+      buildModel: current.buildModel || DEFAULT_GEMINI_PROFILE.buildModel,
+      apiKey: input.clearApiKey ? '' : current.apiKey || '',
+    };
+  }
+
   current.updatedAt = new Date().toISOString();
   if (isSupabaseEnabled()) {
     enqueueWrite(
@@ -520,16 +712,12 @@ export function updateGatewayOverride(
 
   appendAuditLog(
     actor,
-    'UPDATE_GATEWAY_OVERRIDE',
+    input.switchProfile ? 'SWITCH_GATEWAY_PROFILE' : 'UPDATE_GATEWAY_OVERRIDE',
     'aiGateway',
-    `Cap nhat gateway override: enabled=${current.enabled}, protocol=${current.protocol}, model=${current.model}`
+    `Cap nhat gateway (${current.activeProfile}): enabled=${current.enabled}, protocol=${current.protocol}, model=${current.model}`
   );
 
-  return {
-    ...current,
-    apiKey: undefined,
-    hasCustomApiKey: Boolean(current.apiKey),
-  };
+  return sanitizeGatewayForClient(current);
 }
 
 export function buildUsersAndQuotasRegistry(): ServerAdminUserQuotaRecord[] {
@@ -724,6 +912,13 @@ export function getAdminStateSnapshot(): ServerAdminState {
     : process.env.AI_PROTOCOL || store.gateway.protocol;
   const keyPool = getKeyPoolSnapshot(activeModel, activeProtocol);
 
+  const gwTok = store.telemetryCounters.gatewayTokens || { prompt: 0, completion: 0, total: 0 };
+  const combinedTokens: TokenCounter = {
+    prompt: Math.max(keyPool.totalTokens.prompt, gwTok.prompt),
+    completion: Math.max(keyPool.totalTokens.completion, gwTok.completion),
+    total: Math.max(keyPool.totalTokens.total, gwTok.total),
+  };
+
   const telemetry: AdminTelemetrySnapshot = {
     totalAiRequests: store.telemetryCounters.totalAiRequests,
     successfulAiRequests: store.telemetryCounters.successfulAiRequests,
@@ -735,21 +930,19 @@ export function getAdminStateSnapshot(): ServerAdminState {
     pendingModerationCount: pendingReports,
     uptimeSeconds: Math.max(1, Math.floor((Date.now() - serverStartTimeMs) / 1000)),
     lastRequestAt: store.telemetryCounters.lastRequestAt,
+    gatewayTokens: gwTok,
+    estimatedCostUsd: store.telemetryCounters.estimatedCostUsd || 0,
   };
 
   return {
-    gateway: {
-      ...store.gateway,
-      apiKey: undefined,
-      hasCustomApiKey: Boolean(store.gateway.apiKey),
-    },
+    gateway: sanitizeGatewayForClient(store.gateway),
     moderationQueue: community.reports,
     usersAndQuotas: buildUsersAndQuotasRegistry(),
     telemetry,
     auditLogs: store.auditLogs,
     changelog: store.changelog,
     keyPool,
-    totalTokens: keyPool.totalTokens,
+    totalTokens: combinedTokens,
     securityEvents: store.securityEvents,
   };
 }

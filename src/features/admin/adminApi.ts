@@ -71,7 +71,10 @@ export const adminApi = {
   },
 
   updateAdminGateway(
-    input: Partial<AdminGatewayOverride> & { clearApiKey?: boolean }
+    input: Partial<AdminGatewayOverride> & {
+      clearApiKey?: boolean;
+      switchProfile?: 'openrouter' | 'gemini';
+    }
   ): Promise<{ gateway: AdminGatewayOverride; state: AdminStateView }> {
     return requestJson('/api/admin/gateway', {
       method: 'POST',

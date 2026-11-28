@@ -58,13 +58,20 @@ const PROTOCOL_ITEMS = [
   { id: 'gemini', label: 'Google Gemini', swatch: 'var(--harbour)' },
 ];
 
-const MODEL_PRESETS = [
+const OPENROUTER_MODEL_PRESETS = [
+  { id: 'openrouter/auto-smart', label: 'Tự động tiết kiệm (Hỏi đáp + Lắp ghép)', swatch: 'var(--accent)' },
+  { id: 'google/gemini-2.5-flash-lite', label: 'Gemini 2.5 Flash Lite ($0.10/$0.40)', swatch: 'var(--green)' },
+  { id: 'deepseek/deepseek-v3.2', label: 'DeepSeek V3.2 ($0.26/$0.38)', swatch: 'var(--harbour)' },
+  { id: 'qwen/qwen3-coder-next', label: 'Qwen3 Coder Next ($0.12/$0.80)', swatch: 'var(--amber)' },
+  { id: 'nvidia/nemotron-3-ultra-550b-a55b:free', label: 'Nemotron 3 Ultra (Miễn phí)', swatch: 'var(--fg-muted)' },
+  { id: 'openrouter/free', label: 'OpenRouter Free (Miễn phí)', swatch: 'var(--fg)' },
+];
+
+const GEMINI_MODEL_PRESETS = [
   { id: 'gemini-3-flash-preview', label: 'Gemini 3 Flash Preview', swatch: 'var(--accent)' },
-  { id: 'gemini-3.5-flash-lite', label: 'Gemini 3.5 Flash Lite', swatch: 'var(--green)' },
-  { id: 'studio-smart-route', label: 'Studio Smart Route (Tự động)', swatch: 'var(--harbour)' },
+  { id: 'gemini-2.5-flash', label: 'Gemini 2.5 Flash', swatch: 'var(--green)' },
+  { id: 'gemini-2.5-flash-lite', label: 'Gemini 2.5 Flash Lite', swatch: 'var(--harbour)' },
   { id: 'gemini-2.5-pro', label: 'Gemini 2.5 Pro', swatch: 'var(--amber)' },
-  { id: 'claude-sonnet-4-5', label: 'Claude Sonnet 4.5', swatch: 'var(--fg-muted)' },
-  { id: 'gpt-4o', label: 'GPT-4o', swatch: 'var(--fg)' },
 ];
 
 function formatShortDay(isoDate: string): string {
@@ -123,8 +130,11 @@ export const AdminView: React.FC = () => {
   const [gwSystemPromptSuffix, setGwSystemPromptSuffix] = useState('');
   const [gwDailyUserLimit, setGwDailyUserLimit] = useState(15);
   const [gwDailyIpLimit, setGwDailyIpLimit] = useState(45);
+  const [gwMaxOutputTokens, setGwMaxOutputTokens] = useState(3200);
   const [gwGuestSandbox, setGwGuestSandbox] = useState(true);
   const [gwSaving, setGwSaving] = useState(false);
+  const [gwTesting, setGwTesting] = useState(false);
+  const [gwProbeNote, setGwProbeNote] = useState<{ ok: boolean; text: string } | null>(null);
 
   const [clVersion, setClVersion] = useState('3.0.1');
   const [clTitle, setClTitle] = useState('');
@@ -139,6 +149,7 @@ export const AdminView: React.FC = () => {
     setGwSystemPromptSuffix(state.gateway.systemPromptSuffix ?? '');
     setGwDailyUserLimit(state.gateway.dailyUserLimit ?? state.gateway.standardTurnLimit ?? 15);
     setGwDailyIpLimit(state.gateway.dailyIpLimit ?? 45);
+    setGwMaxOutputTokens(state.gateway.maxOutputTokens ?? 3200);
     setGwGuestSandbox(state.gateway.guestSandboxEnabled ?? true);
     setGwApiKey('');
     setSecurityEvents((state.securityEvents || []).map(normalizeSecurityEvent));
@@ -317,6 +328,7 @@ export const AdminView: React.FC = () => {
     setGwSaving(true);
     const safeUserLimit = clampInt(gwDailyUserLimit, 1, 500, 15);
     const safeIpLimit = clampInt(gwDailyIpLimit, 1, 2000, 45);
+    const safeMaxOut = clampInt(gwMaxOutputTokens, 512, 8192, 3200);
     try {
       const res = await adminApi.updateAdminGateway({
         enabled: gwEnabled,
@@ -324,6 +336,7 @@ export const AdminView: React.FC = () => {
         baseUrl: gwBaseUrl,
         model: gwModel,
         apiKey: gwApiKey.trim() || undefined,
+        maxOutputTokens: safeMaxOut,
         systemPromptSuffix: gwSystemPromptSuffix,
         standardTurnLimit: safeUserLimit,
         dailyUserLimit: safeUserLimit,
@@ -341,6 +354,51 @@ export const AdminView: React.FC = () => {
       handleAdminApiFailure(err, 'Lỗi cập nhật Gateway');
     } finally {
       setGwSaving(false);
+    }
+  };
+
+  const handleSwitchGatewayProfile = async (profile: 'openrouter' | 'gemini') => {
+    setGwSaving(true);
+    setGwProbeNote(null);
+    try {
+      const res = await adminApi.updateAdminGateway({ switchProfile: profile });
+      setAdminState(res.state);
+      syncGatewayForm(res.state);
+      void refreshAuthAndQuota();
+      addToast({
+        type: 'success',
+        title: profile === 'openrouter' ? 'Đã chuyển sang OpenRouter' : 'Đã chuyển sang Google Gemini',
+        message: 'Khóa đã lưu của cấu hình này đã được nạp tự động.',
+      });
+    } catch (err) {
+      handleAdminApiFailure(err, 'Không chuyển được cấu hình API');
+    } finally {
+      setGwSaving(false);
+    }
+  };
+
+  const handleTestActiveGateway = async () => {
+    setGwTesting(true);
+    setGwProbeNote(null);
+    try {
+      const outcome = await adminApi.testAdminKeyPool({ mode: 'gateway' });
+      if (outcome.state) {
+        setAdminState(outcome.state);
+      }
+      const noteText = outcome.ok
+        ? `Kết nối ổn (${outcome.model} · ${outcome.usedKeyMask || outcome.keyMask} · ${outcome.tokens.total} token · ${outcome.latencyMs}ms)`
+        : outcome.error || 'Không kết nối được Gateway';
+      setGwProbeNote({ ok: outcome.ok, text: noteText });
+      addToast({
+        type: outcome.ok ? 'success' : 'warning',
+        title: outcome.ok ? 'API Gateway hoạt động' : 'API Gateway gặp lỗi',
+        message: noteText,
+      });
+    } catch (err) {
+      const msg = handleAdminApiFailure(err, 'Kiểm tra Gateway thất bại');
+      setGwProbeNote({ ok: false, text: msg });
+    } finally {
+      setGwTesting(false);
     }
   };
 
@@ -1437,6 +1495,54 @@ export const AdminView: React.FC = () => {
                     </label>
                   </div>
 
+                  <div className="adm-profile-bar" role="group" aria-label="Chuyển nhanh nhà cung cấp AI">
+                    <button
+                      type="button"
+                      disabled={gwSaving}
+                      className={`adm-profile-btn${
+                        (adminState.gateway.activeProfile === 'openrouter' ||
+                          gwBaseUrl.toLowerCase().includes('openrouter.ai'))
+                          ? ' is-active'
+                          : ''
+                      }`}
+                      onClick={() => void handleSwitchGatewayProfile('openrouter')}
+                    >
+                      <strong>OpenRouter</strong>
+                      <span className="adm-field-hint">
+                        {adminState.gateway.profiles?.openrouter?.maskedKey
+                          ? `Khóa: ${adminState.gateway.profiles.openrouter.maskedKey}`
+                          : 'Chưa gắn khóa'}
+                      </span>
+                    </button>
+
+                    <button
+                      type="button"
+                      disabled={gwSaving}
+                      className={`adm-profile-btn${
+                        (adminState.gateway.activeProfile === 'gemini' ||
+                          gwProtocol === 'gemini')
+                          ? ' is-active'
+                          : ''
+                      }`}
+                      onClick={() => void handleSwitchGatewayProfile('gemini')}
+                    >
+                      <strong>Google Gemini</strong>
+                      <span className="adm-field-hint">
+                        {adminState.gateway.profiles?.gemini?.maskedKey
+                          ? `Khóa: ${adminState.gateway.profiles.gemini.maskedKey}`
+                          : `Pool ${adminState.keyPool?.keys.length || 0} khóa`}
+                      </span>
+                    </button>
+
+                    <div className="adm-cost-box">
+                      <span className="adm-field-hint">Token &amp; Ước tính chi phí</span>
+                      <strong className="font-mono">
+                        {(adminState.telemetry.gatewayTokens?.total || 0).toLocaleString('vi-VN')} tok · $
+                        {(adminState.telemetry.estimatedCostUsd || 0).toFixed(4)}
+                      </strong>
+                    </div>
+                  </div>
+
                   <form onSubmit={(e) => void handleSaveGateway(e)} className="adm-field-stack">
                     <div className="adm-limit-grid">
                       <div className="adm-field-group">
@@ -1471,20 +1577,34 @@ export const AdminView: React.FC = () => {
                         </label>
                       </div>
 
-                      <label className="adm-field-group">
-                        <span className="adm-field-label">Hạn mức ngày theo IP (1–2000)</span>
-                        <input
-                          type="number"
-                          min={1}
-                          max={2000}
-                          value={gwDailyIpLimit}
-                          onChange={(e) => setGwDailyIpLimit(Number(e.target.value))}
-                          className="field font-mono"
-                        />
-                        <span className="adm-field-hint">
-                          Áp dụng trần tổng hợp theo IP nhằm chống thu thập dữ liệu hoặc spam phiên khách.
-                        </span>
-                      </label>
+                      <div className="adm-field-group">
+                        <label className="adm-field-group">
+                          <span className="adm-field-label">Hạn mức ngày theo IP (1–2000)</span>
+                          <input
+                            type="number"
+                            min={1}
+                            max={2000}
+                            value={gwDailyIpLimit}
+                            onChange={(e) => setGwDailyIpLimit(Number(e.target.value))}
+                            className="field font-mono"
+                          />
+                        </label>
+                        <label className="adm-field-group">
+                          <span className="adm-field-label">Trần token đầu ra / lượt (512–8192)</span>
+                          <input
+                            type="number"
+                            min={512}
+                            max={8192}
+                            step={128}
+                            value={gwMaxOutputTokens}
+                            onChange={(e) => setGwMaxOutputTokens(Number(e.target.value))}
+                            className="field font-mono"
+                          />
+                          <span className="adm-field-hint">
+                            Khuyên dùng 2400–3200 để lắp ghép đủ mẫu mà không đốt tiền.
+                          </span>
+                        </label>
+                      </div>
                     </div>
 
                     <div className="adm-two-col">
@@ -1501,7 +1621,11 @@ export const AdminView: React.FC = () => {
                       <div className="adm-field-group">
                         <span className="adm-field-label">Mô hình AI mặc định</span>
                         <SelectionList
-                          items={MODEL_PRESETS}
+                          items={
+                            gwBaseUrl.toLowerCase().includes('openrouter.ai')
+                              ? OPENROUTER_MODEL_PRESETS
+                              : GEMINI_MODEL_PRESETS
+                          }
                           selectedId={gwModel}
                           onSelect={(id) => setGwModel(id)}
                           ariaLabel="Chọn mô hình AI mặc định"
@@ -1516,7 +1640,7 @@ export const AdminView: React.FC = () => {
                           type="text"
                           value={gwModel}
                           onChange={(e) => setGwModel(e.target.value)}
-                          placeholder="gemini-3-flash-preview"
+                          placeholder="openrouter/auto-smart"
                           className="field font-mono"
                         />
                       </label>
@@ -1527,7 +1651,7 @@ export const AdminView: React.FC = () => {
                           type="url"
                           value={gwBaseUrl}
                           onChange={(e) => setGwBaseUrl(e.target.value)}
-                          placeholder="https://generativelanguage.googleapis.com/v1beta"
+                          placeholder="https://openrouter.ai/api/v1"
                           className="field font-mono"
                         />
                       </label>
@@ -1535,7 +1659,7 @@ export const AdminView: React.FC = () => {
 
                     <div className="adm-field-group">
                       <label htmlFor="adm-gw-apikey" className="adm-field-label">
-                        Khóa API ghi đè (để trống để giữ khóa Pool máy chủ)
+                        Khóa API đang dùng (dán khóa mới để đổi ngay)
                       </label>
                       <div className="adm-secret-row">
                         <input
@@ -1544,9 +1668,11 @@ export const AdminView: React.FC = () => {
                           value={gwApiKey}
                           onChange={(e) => setGwApiKey(e.target.value)}
                           placeholder={
-                            adminState.gateway.hasCustomApiKey
-                              ? 'Đã lưu khóa tùy chỉnh trên máy chủ'
-                              : 'Dùng API Key Pool từ biến môi trường'
+                            adminState.gateway.maskedKey
+                              ? `Đã lưu: ${adminState.gateway.maskedKey} (để trống nếu giữ nguyên)`
+                              : adminState.gateway.hasCustomApiKey
+                                ? 'Đã lưu khóa tùy chỉnh trên máy chủ'
+                                : 'Đang dùng API Key Pool máy chủ'
                           }
                           className="field font-mono"
                         />
@@ -1584,13 +1710,32 @@ export const AdminView: React.FC = () => {
                       />
                     </label>
 
+                    {gwProbeNote && (
+                      <div
+                        className={`adm-probe-banner${gwProbeNote.ok ? ' is-ok' : ' is-err'}`}
+                        role="status"
+                      >
+                        {gwProbeNote.text}
+                      </div>
+                    )}
+
                     <div className="adm-form-foot">
                       <span className="adm-field-hint">
                         Cập nhật cuối: {formatAdminDateTime(adminState.gateway.updatedAt)}
                       </span>
-                      <button type="submit" disabled={gwSaving} className="btn btn-accent">
-                        {gwSaving ? 'Đang lưu' : 'Lưu cấu hình'}
-                      </button>
+                      <div className="adm-row-actions">
+                        <button
+                          type="button"
+                          disabled={gwTesting || gwSaving}
+                          className="btn btn-line"
+                          onClick={() => void handleTestActiveGateway()}
+                        >
+                          {gwTesting ? 'Đang thử' : 'Kiểm tra API'}
+                        </button>
+                        <button type="submit" disabled={gwSaving} className="btn btn-accent">
+                          {gwSaving ? 'Đang lưu' : 'Lưu cấu hình'}
+                        </button>
+                      </div>
                     </div>
                   </form>
                 </section>

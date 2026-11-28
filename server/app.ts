@@ -47,6 +47,8 @@ import {
   updateGatewayOverride,
 } from './adminStore.js';
 import {
+  getPublicAiRuntimeInfo,
+  resetOpenRouterTierCache,
   runAIGeneration,
   runAIGenerationStream,
   runLiveKeyPoolProbe,
@@ -369,6 +371,7 @@ export async function handleAiQuota(req: Request, res: Response): Promise<void> 
   res.status(200).json({
     user: user ? toSafeClientUser(user) : null,
     quota,
+    aiRuntime: getPublicAiRuntimeInfo(),
   });
 }
 
@@ -510,16 +513,45 @@ export async function handleAiChat(req: Request, res: Response): Promise<void> {
     ? `${clientSystemPrompt}\n\n${CRAFT_SYSTEM_GUIDANCE}`
     : CRAFT_SYSTEM_GUIDANCE;
 
+  const rawVaultSlots = Array.isArray(body.vaultSlots)
+    ? body.vaultSlots
+        .filter(
+          (s): s is { slotId: string; id: string; title: string; library: string; summary: string } =>
+            Boolean(s) &&
+            typeof s === 'object' &&
+            typeof (s as { slotId?: unknown }).slotId === 'string' &&
+            typeof (s as { title?: unknown }).title === 'string'
+        )
+        .slice(0, 6)
+        .map((s) => ({
+          slotId: s.slotId.trim().slice(0, 32),
+          id: String(s.id || s.slotId).trim().slice(0, 120),
+          title: s.title.trim().slice(0, 120),
+          library: String(s.library || 'codefronts').trim().slice(0, 40),
+          summary: String(s.summary || '').trim().slice(0, 260),
+        }))
+    : undefined;
+
+  const rawIntent =
+    body.intent === 'auto' ||
+    body.intent === 'assistant' ||
+    body.intent === 'assemble' ||
+    body.intent === 'patch'
+      ? body.intent
+      : undefined;
+
   const chatReq: AIChatRequest = {
     projectId: typeof body.projectId === 'string' ? body.projectId : 'default-project',
     prompt,
     model: typeof body.model === 'string' ? body.model.trim() : undefined,
     agentMode: typeof body.agentMode === 'string' ? body.agentMode.trim() : undefined,
+    intent: rawIntent,
     stream: body.stream === true,
     systemPrompt: enrichedSystemPrompt.slice(0, 2000),
     temperature: typeof body.temperature === 'number' ? body.temperature : undefined,
     files: Array.isArray(body.files) ? body.files : [],
     attachedItems: Array.isArray(body.attachedItems) ? body.attachedItems : [],
+    vaultSlots: rawVaultSlots,
     history: Array.isArray(body.history) ? body.history : [],
   };
 
@@ -528,7 +560,7 @@ export async function handleAiChat(req: Request, res: Response): Promise<void> {
 
   if (!wantsStream) {
     const generated = await runAIGeneration(chatReq, req.headers);
-    recordAiTelemetry(generated.fallback ? 'fallback' : 'success');
+    recordAiTelemetry(generated.fallback ? 'fallback' : 'success', generated.tokens, generated.estimatedCostUsd);
     recordQuotaTokens(turnResult.quota.subjectId, ipHash, generated.tokens);
     await flushSupabaseWrites();
 
@@ -571,7 +603,7 @@ export async function handleAiChat(req: Request, res: Response): Promise<void> {
       onDelta: (chunk) => writeSse('delta', { text: chunk }),
       signal: sseAbortController.signal,
     });
-    recordAiTelemetry(generated.fallback ? 'fallback' : 'success');
+    recordAiTelemetry(generated.fallback ? 'fallback' : 'success', generated.tokens, generated.estimatedCostUsd);
     recordQuotaTokens(turnResult.quota.subjectId, ipHash, generated.tokens);
     await flushSupabaseWrites();
 
@@ -614,7 +646,11 @@ export async function handleAuthAction(
     if (!enforceRateLimit(req, res, `auth:me:${ipHash}`, 120, 60_000)) return;
     const user = getAuthenticatedUser(req);
     const quota = getQuotaState(user, guestId, ipHash);
-    res.status(200).json({ user: user ? toSafeClientUser(user) : null, quota });
+    res.status(200).json({
+      user: user ? toSafeClientUser(user) : null,
+      quota,
+      aiRuntime: getPublicAiRuntimeInfo(),
+    });
     return;
   }
 
@@ -884,6 +920,10 @@ export async function handleAdminAction(
     const gateway = updateGatewayOverride(
       {
         enabled: typeof body.enabled === 'boolean' ? body.enabled : undefined,
+        switchProfile:
+          body.switchProfile === 'openrouter' || body.switchProfile === 'gemini'
+            ? body.switchProfile
+            : undefined,
         protocol:
           body.protocol === 'openai-compatible' ||
           body.protocol === 'anthropic' ||
@@ -892,6 +932,9 @@ export async function handleAdminAction(
             : undefined,
         baseUrl: typeof body.baseUrl === 'string' ? body.baseUrl : undefined,
         model: typeof body.model === 'string' ? body.model : undefined,
+        chatModel: typeof body.chatModel === 'string' ? body.chatModel : undefined,
+        buildModel: typeof body.buildModel === 'string' ? body.buildModel : undefined,
+        maxOutputTokens: typeof body.maxOutputTokens === 'number' ? body.maxOutputTokens : undefined,
         apiKey: typeof body.apiKey === 'string' ? body.apiKey : undefined,
         clearApiKey: body.clearApiKey === true,
         systemPromptSuffix:
@@ -907,6 +950,7 @@ export async function handleAdminAction(
       },
       user.username
     );
+    resetOpenRouterTierCache();
     await flushSupabaseWrites();
     res.status(200).json({ gateway, state: getAdminStateSnapshot() });
     return;
@@ -985,7 +1029,8 @@ export async function handleAdminAction(
       rawMode !== 'pool' &&
       rawMode !== 'key1' &&
       rawMode !== 'key2' &&
-      rawMode !== 'failover_sim'
+      rawMode !== 'failover_sim' &&
+      rawMode !== 'gateway'
     ) {
       res.status(400).json({ error: 'Chế độ kiểm tra key pool không hợp lệ.' });
       return;

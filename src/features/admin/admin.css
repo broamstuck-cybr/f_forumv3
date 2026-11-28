@@ -1196,6 +1196,67 @@
     white-space: nowrap;
   }
 
+  .adm-profile-bar {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+    gap: var(--space-3);
+    margin-bottom: var(--space-4);
+  }
+
+  .adm-profile-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+    padding: 12px 14px;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--line);
+    background: var(--bg-sunken);
+    color: var(--fg);
+    text-align: left;
+    cursor: pointer;
+    transition: border-color 140ms ease, background-color 140ms ease;
+  }
+
+  .adm-profile-btn:hover {
+    border-color: var(--line-strong);
+  }
+
+  .adm-profile-btn.is-active {
+    border-color: var(--accent);
+    background: color-mix(in srgb, var(--accent) 12%, var(--bg-sunken));
+  }
+
+  .adm-cost-box {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 4px;
+    padding: 12px 14px;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--line);
+    background: var(--bg-sunken);
+  }
+
+  .adm-probe-banner {
+    padding: 10px 12px;
+    border-radius: var(--radius-sm);
+    font-size: var(--text-xs);
+    border: 1px solid var(--line);
+    background: var(--bg-sunken);
+    color: var(--fg);
+  }
+
+  .adm-probe-banner.is-ok {
+    border-color: color-mix(in srgb, var(--green) 48%, var(--line));
+    color: var(--green);
+  }
+
+  .adm-probe-banner.is-err {
+    border-color: color-mix(in srgb, #e56b6f 52%, var(--line));
+    color: #e56b6f;
+  }
+
   /* Security Stream & Audit Log */
   .adm-stream-frame {
     border: 1px solid var(--line);
