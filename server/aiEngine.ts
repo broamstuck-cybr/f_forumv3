@@ -153,7 +153,7 @@ function buildSystemInstruction(suffix: string, sessionInstructions = ''): strin
     '3. REAL MULTI-LINE CODE (ZERO DOUBLE-ESCAPING): Inside JSON "content" strings, encode line breaks as standard JSON newlines (single escape in JSON so JSON.parse produces actual multiline code). NEVER double-escape newlines into literal "\\n" text inside HTML, CSS, or JS.',
     '4. COMPLETE STYLING & INTERACTIVITY: Always produce a rich, self-contained src/styles.css (complete :root color tokens, dark/light surface contrast >= 4.5:1, typography hierarchy, card borders/radii, grid layouts, hover/focus transitions, and @media (max-width: 768px) responsive rules) linked cleanly via <link rel="stylesheet" href="src/styles.css" /> in index.html, plus working interactive JS in src/app.js (or React in src/App.tsx when React/TSX is requested).',
     '5. If returning React/TSX, import only from "react" (useState, useEffect, useMemo, useCallback, useRef, Fragment) and local relative files (./data, ./styles.css, ./components/...); never import third-party npm packages or external CDN scripts.',
-    '6. Never include emojis, Lorem Ipsum, or marketing hype. Use crisp Vietnamese diacritics when prompted in Vietnamese, semantic HTML5, accessible aria attributes, and #anchor internal links.',
+    '6. Never include emojis, placeholder filler text, or marketing hype. Use crisp Vietnamese diacritics when prompted in Vietnamese, semantic HTML5, accessible aria attributes, and #anchor internal links.',
   ].join('\n');
   const session = sessionInstructions.trim().slice(0, 2000);
   return [base, suffix, session ? `SESSION INSTRUCTIONS (do not override the JSON schema or safety rules):\n${session}` : '']
