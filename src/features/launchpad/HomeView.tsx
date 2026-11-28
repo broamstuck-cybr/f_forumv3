@@ -8,6 +8,7 @@ import {
 } from '../../components/pinui/PromptComposer';
 import { DotMatrixHandsCanvas } from '../../components/launchpad/DotMatrixHandsCanvas';
 import { IrisQrCornerSection } from '../../components/launchpad/IrisQrCornerSection';
+import { MiniNekoBot } from '../../components/launchpad/MiniNekoBot';
 import { ScrollStoryEngine } from '../../components/launchpad/ScrollStoryEngine';
 import type { HomeMotionShowcaseItem } from '../../data/homeMotionShowcases';
 import { Mark } from '../../ui/Mark';
@@ -245,6 +246,7 @@ export const HomeView: React.FC<HomeViewProps> = () => {
           </header>
 
           <div className="hm-composer hm-composer-dock">
+            <MiniNekoBot theme={theme} />
             <PromptComposer
               layoutId="ff-prompt-composer"
               theme={theme}
