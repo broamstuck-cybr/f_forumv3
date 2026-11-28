@@ -1470,6 +1470,15 @@ async function fetchWithRetry(url: string, init: RequestInit): Promise<Response>
   }
 }
 
+function shouldDisableOpenRouterReasoning(modelId: string): boolean {
+  const m = (modelId || '').toLowerCase();
+  if (!m) return false;
+  if (/deepseek-v3\.2|deepseek-r1|gemini-2\.5-pro|claude-|\/o1\b|\/o3\b|\/o4\b|reasoner|thinking/.test(m)) {
+    return false;
+  }
+  return /nemotron|ernie|gemma-4|qwen3-coder|flash-lite|openrouter\/free/.test(m);
+}
+
 async function callUpstreamOnce(params: {
   config: EffectiveAIConfig;
   apiKey: string;
@@ -1478,6 +1487,7 @@ async function callUpstreamOnce(params: {
   temperature: number;
   streamUpstream: boolean;
   expectJson?: boolean;
+  disableReasoning?: boolean;
   signal: AbortSignal;
   maxOutputTokens?: number;
   onDelta?: (chunk: string) => void;
@@ -1580,10 +1590,12 @@ async function callUpstreamOnce(params: {
   };
   if (config.isOpenRouter) {
     openAiPayload.stream_options = { include_usage: true };
-    // WHY: Disabling hidden thinking tokens cuts OpenRouter TTFT from ~25s to <1s so SSE live file streaming starts immediately.
-    openAiPayload.reasoning = { enabled: false };
+    if (params.disableReasoning !== false && shouldDisableOpenRouterReasoning(config.model)) {
+      // WHY: Disabling optional thinking tokens on fast models cuts TTFT without breaking mandatory-reasoning endpoints.
+      openAiPayload.reasoning = { enabled: false };
+    }
   }
-  const resp = await fetchWithRetry(url, {
+  let resp = await fetchWithRetry(url, {
     method: 'POST',
     redirect: 'manual',
     headers: openAiHeaders,
@@ -1595,6 +1607,33 @@ async function callUpstreamOnce(params: {
   }
   if (!resp.ok) {
     const errBody = await resp.text();
+    if (
+      config.isOpenRouter &&
+      resp.status === 400 &&
+      openAiPayload.reasoning &&
+      /reasoning|cannot be disabled/i.test(errBody)
+    ) {
+      delete openAiPayload.reasoning;
+      resp = await fetchWithRetry(url, {
+        method: 'POST',
+        redirect: 'manual',
+        headers: openAiHeaders,
+        body: JSON.stringify(openAiPayload),
+        signal,
+      });
+      if (resp.status >= 300 && resp.status < 400) {
+        return { ok: false, status: resp.status, error: 'Upstream redirect blocked' };
+      }
+      if (!resp.ok) {
+        const retryErrBody = await resp.text();
+        return {
+          ok: false,
+          status: resp.status,
+          error: `OpenAI-Compatible HTTP ${resp.status}: ${formatUpstreamErrBody(retryErrBody)}`,
+        };
+      }
+      return { ok: true, result: await readOpenAICompatibleStream(resp, params.onDelta) };
+    }
     return {
       ok: false,
       status: resp.status,
@@ -1831,7 +1870,7 @@ export async function runAIGenerationStream(
           }
           if (
             config.isOpenRouter &&
-            (attempt.status === 429 || attempt.status === 404 || attempt.status >= 500) &&
+            (attempt.status === 400 || attempt.status === 429 || attempt.status === 404 || attempt.status >= 500) &&
             mIdx < modelCandidates.length - 1
           ) {
             continue;
@@ -2055,7 +2094,10 @@ export async function runLiveKeyPoolProbe(input: {
             hitFreeFallback = true;
             continue;
           }
-          if (config.isOpenRouter && (attempt.status === 429 || attempt.status === 404 || attempt.status >= 500)) {
+          if (
+            config.isOpenRouter &&
+            (attempt.status === 400 || attempt.status === 429 || attempt.status === 404 || attempt.status >= 500)
+          ) {
             hitFreeFallback = true;
             continue;
           }
