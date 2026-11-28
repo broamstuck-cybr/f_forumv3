@@ -980,7 +980,7 @@ export const WorkspaceView: React.FC = () => {
               <rect x="3" y="14" width="7" height="7" rx="1.5" />
               <rect x="14" y="14" width="7" height="7" rx="1.5" />
             </svg>
-            <span>15 mẫu<span className="ws-hideSm"> Agent</span></span>
+            <span>15 mẫu<span className="ws-hideSm"> demo</span></span>
           </button>
 
           <button

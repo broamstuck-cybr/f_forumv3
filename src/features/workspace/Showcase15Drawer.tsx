@@ -11,13 +11,21 @@ export interface Showcase15DrawerProps {
 }
 
 const CATEGORY_TABS: Array<{ id: 'all' | PublishedPageCategory; label: string }> = [
-  { id: 'all', label: 'Tất cả (15)' },
-  { id: 'presentation', label: 'Thuyết trình & Học tập' },
-  { id: 'event', label: 'CLB & Sự kiện' },
-  { id: 'portfolio', label: 'Hồ sơ cá nhân' },
-  { id: 'business', label: 'Kinh doanh & Sản phẩm' },
-  { id: 'tech', label: 'Công nghệ & 3D' },
+  { id: 'all', label: 'Tất cả' },
+  { id: 'presentation', label: 'Học tập' },
+  { id: 'event', label: 'Sự kiện' },
+  { id: 'portfolio', label: 'Hồ sơ' },
+  { id: 'business', label: 'Kinh doanh' },
+  { id: 'tech', label: '3D & Tech' },
 ];
+
+const SHORT_CATEGORY_LABEL: Record<PublishedPageCategory, string> = {
+  presentation: 'Học tập',
+  event: 'Sự kiện',
+  portfolio: 'Hồ sơ',
+  business: 'Kinh doanh',
+  tech: '3D & Tech',
+};
 
 export const Showcase15Drawer: React.FC<Showcase15DrawerProps> = ({
   open,
@@ -54,13 +62,13 @@ export const Showcase15Drawer: React.FC<Showcase15DrawerProps> = ({
         className="ws-drawer lg-chrome"
         role="dialog"
         aria-modal="true"
-        aria-label="15 sản phẩm mẫu Agent Mode"
+        aria-label="15 mẫu demo"
         onClick={(e) => e.stopPropagation()}
       >
         <header className="ws-drawer__head">
           <div>
-            <h2>15 mẫu Agent Mode</h2>
-            <p>Chọn bất kỳ sản phẩm nào để xem nhật ký AI tạo trang và chỉnh tiếp ngay bằng Chat.</p>
+            <h2>15 mẫu demo</h2>
+            <p>Chọn mẫu để mở chạy thử ngay.</p>
           </div>
           <button
             ref={closeBtnRef}
@@ -93,14 +101,14 @@ export const Showcase15Drawer: React.FC<Showcase15DrawerProps> = ({
         </div>
 
         <div className="ws-drawer__list">
-          {items.map((prod, idx) => {
+          {items.map((prod) => {
             const isActive = activeId === prod.id;
-            const isFeatured = idx === 0 && items.length >= 3;
+            const shortCat = SHORT_CATEGORY_LABEL[prod.category] || prod.categoryLabel;
             return (
               <button
                 key={prod.id}
                 type="button"
-                className={`ws-showcaseCard lg-glass lg-glass--matte${isActive ? ' is-active' : ''}${isFeatured ? ' ws-showcaseCard--featured' : ''}`}
+                className={`ws-showcaseCard lg-glass lg-glass--matte${isActive ? ' is-active' : ''}`}
                 onPointerMove={handleLiquidPointerMove}
                 onPointerLeave={handleLiquidPointerLeave}
                 onClick={() => {
@@ -108,15 +116,21 @@ export const Showcase15Drawer: React.FC<Showcase15DrawerProps> = ({
                   onClose();
                 }}
               >
-                <div className="ws-showcaseCard__top">
-                  <span className="ws-showcaseCard__cat">{prod.categoryLabel}</span>
-                  <span className="ws-showcaseCard__sig">{prod.motionSignature}</span>
+                <div className="ws-showcaseCard__media">
+                  <img
+                    src={`/assets/showcase-15/${prod.slug}.webp`}
+                    alt={`Xem trước ${prod.title}`}
+                    loading="lazy"
+                    decoding="async"
+                  />
+                  <span className="ws-showcaseCard__badge">{shortCat}</span>
+                  <span className="ws-showcaseCard__cta" aria-hidden="true">
+                    {isActive ? 'Đang mở' : 'Mở demo'}
+                  </span>
                 </div>
-                <h3>{prod.title}</h3>
-                <p>{prod.subtitle}</p>
-                <div className="ws-showcaseCard__foot">
-                  <span>{prod.authorLabel}</span>
-                  <span>{prod.sourceRefs.length} mẫu kho</span>
+                <div className="ws-showcaseCard__body">
+                  <h3>{prod.title}</h3>
+                  <p>{prod.subtitle}</p>
                 </div>
               </button>
             );
