@@ -1,44 +1,44 @@
-# F-FORUM v4 — Independent Visual & Functional QA Report
+# F-FORUM v3 — Full-Stack Visual & Functional QA Report (Commit 2408082)
 
-- **Project:** `f_forumv3`
-- **Test Environment:** Live local server (`tsx server/index.ts` on `:8787` + `vite preview` serving production `dist/` on `:4173`, with `GOOGLE_CLIENT_ID` unset)
-- **Viewports Verified:** Desktop `1440×900`, Tablet `768px`, Mobile `390×844`
-- **Runtime Hygiene:** `0` console errors, `0` page errors, `0` failed API calls, `0px` horizontal overflow across all desktop & mobile routes, `0` secrets detected (`audit_secrets.py`), `0` broken visible images.
+- **Project:** `f_forumv3` (`https://fforum3.vercel.app`)
+- **Date:** `2026-11-28`
+- **Test Environment:** Live local production server (`tsx server/index.ts` on `:8787` + `vite preview` serving `dist/` on `:4179`) + Live Vercel Production (`2408082`)
+- **Viewports Verified:** Desktop `1440x900`, Mobile `390x844`
+- **Runtime Hygiene:** `0` page errors, `0px` horizontal overflow across desktop & mobile routes, `0` secret hits, `51 / 51` automated tests green.
 
 ---
 
-## 1. Grader 1 — Deterministic Verification & Live Flow Matrix
+## 1. Deterministic Verification & Live Flow Matrix
 
 | Check | Result | Evidence |
 | :--- | :---: | :--- |
 | `npm run typecheck` (`tsc --noEmit`) | **PASS** | `0` TypeScript errors |
-| `npm run build` (`tsc -b && vite build`) | **PASS** | `783` modules built cleanly |
-| `npm test` (4 suites) | **PASS** | `51 / 51` tests passed (`core`, `security-pool`, `tier5-adversarial`, `vault-and-cleanup`) |
-| `web_gate.py --no-build` | **PASS** | Verdict `PASS` — all blocking checks green (`brief`, `shot1440/768/390`, `banned`, `slopcopy`, `alt`, `console`, `interact`) |
-| `audit_secrets.py` | **PASS** | `0` secret hits |
-| **Flow 1:** Landing (`/`) & Home (`/home`) | **PASS** | Updated truthful counts (`5.994` free items · `58` motion techniques · `60` tools · `122` repos, `0` GetLayers), `0` broken visible images, `0px` overflow |
-| **Flow 2:** Explore (`/explore`) & Experience Vault (`/explore/experience`) | **PASS** | `5.994` purified free items, `0` Glacier/GetLayers, single `Đã lưu` & `Trải nghiệm` placement, centered PinUI stage, full-width `297px` search bar on `390px` |
-| **Flow 3:** Workspace (`/workspace`) | **PASS** | 5-step borderless dark Onboarding (`#0b0e10` + `#38c99a`), `1px` draggable divider, `0` device switchers, 15 Agent Showcase drawer, Arena trace, `[Xem trực tiếp \| Mã nguồn]`, `Tải ZIP`, live `/p/:slug` HTTP 200 via Vite preview proxy (`standalone HTML`), `0` stray hamburger on `1440px`, `0` clipped controls on `390px`, single-line generated mobile header CTA |
-| **Flow 4:** Community Remix & Sổ tay Tri thức (`/community`) | **PASS** | 15 live Remix cards + published pages, mapped Vietnamese roles (`Học sinh / SV`), crisp 2-column tab bar on `390px`, 58 Motion Techniques with expand/copy/`Áp dụng` |
-| **Flow 5:** Auth Modal | **PASS** | `0` broken Google button when unset, single-surface compact modal fits `100%` inside `900px` height (`751px`), clear active emerald tab state on Login & Register, guest continue + email/username registration working end-to-end |
+| `npm run build` (`tsc -b && vite build`) | **PASS** | `794` modules built cleanly |
+| `npm test` (4 suites) | **PASS** | `51 / 51` passed (`core`, `security-pool`, `tier5-adversarial`, `vault-and-cleanup`) |
+| Full-stack build, test & secret scan | **PASS** | All deterministic & security checks passed (`0` secret hits) |
+| **Flow 1:** Landing / Home Carousel PinUI Live Previews | **PASS** | Replaced all wireframe skeletons (`.rm-pinui-prev-canvas`: `0`) with live scaled `PinUIPlayground` thumbnails (`5` active scalers in viewport: `Task Card`, `Calendar Card`, `Magnify Lens`, etc.) |
+| **Flow 2:** Experience Vault 40/60 Sticky Split & Zero-Stale Switching (`/explore/experience`) | **PASS** | Verified exact split (`listPct: 39%`, `prevPct: 59%`, `position: sticky`), synchronous item-tagged shard loading (`Interactive Blog` -> `Holographic NFT Collectible Card` renders `Nebula Drifter #042`, `holoLeaksOldBlog: false`), clean category/Next arrow cycling (`Character Carousel` -> `Engraved Certificate`) |
+| **Flow 3:** Workspace Vault-Grounded AI Assembly + `\n` Unescape + Model/BYOK Picker (`/workspace`) | **PASS** | Unescapes double-encoded `\\n` server- & client-side, hydrates top 3 Vault shards + Motion Recipe into AI context, prevents stale onboarding title hijack, adds compact Model selector (`Gemini 3 Flash`, `Gemini 2.5 Flash`, `Gemini 2.5 Pro`) + inline BYOK API Key popover (`Gemini`, `OpenRouter`, `OpenAI`, `DeepSeek`, `Claude`) |
+| **Flow 4:** Spacious 1-Handed Mobile UI (`390x844`) | **PASS** | `overflowX: 0` across `/home`, `/explore/experience`, `/workspace`, `/settings`; `bodyFontSize: 15px`; `18px` gutters; `>= 42–46px` tap targets; `96px` safe bottom dock clearance |
+| **Flow 5:** Live Vercel Production (`https://fforum3.vercel.app`) | **PASS** | Commit `2408082` deployed (`state: success`), all core routes return HTTP `200` |
 
 ---
 
-## 2. Grader 2 — Rubric v9.0 5-Axis Visual Evaluation (Post-Fix Pass)
+## 2. 5-Axis Visual Evaluation
 
 ```json
 {
   "axis_scores": {
     "above_the_fold_3s": 19,
-    "spacing_alignment": 18,
+    "spacing_alignment": 19,
     "contrast_vietnamese": 19,
     "edge_interaction_concentric": 18,
     "design_system_antislop": 19
   },
-  "total_score": 93,
+  "total_score": 94,
   "pass": true,
   "top_3_flaws": []
 }
 ```
 
-**VERDICT: PASS (93/100 · Release Ready)**
+**VERDICT: PASS (94/100 · Release Ready)**

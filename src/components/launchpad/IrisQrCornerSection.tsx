@@ -2147,7 +2147,7 @@ export const IrisQrCornerSection: React.FC<IrisQrCornerSectionProps> = ({
                 title="Gặp gỡ đội ngũ :3"
               >
                 <span className="iris-honor-btn-glow" aria-hidden="true" />
-                <span className="iris-honor-btn-label">Gặp gỡ đội ngũ :3</span>
+                <span className="iris-honor-btn-label">Gặp đội ngũ :3</span>
               </button>
 
               <button
