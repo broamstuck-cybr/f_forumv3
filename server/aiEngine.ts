@@ -71,6 +71,13 @@ function normalizeProtocol(val: string | undefined): AIProtocol {
   return 'openai-compatible';
 }
 
+const SERVER_GEMINI_MODEL_ALLOWLIST = new Set([
+  'gemini-3-flash-preview',
+  'gemini-2.5-flash',
+  'gemini-2.5-pro',
+  'gemini-2.0-flash',
+]);
+
 export function resolveAIConfig(
   headers: IncomingHttpHeaders,
   requestedModel?: string
@@ -98,8 +105,12 @@ export function resolveAIConfig(
   }
 
   const cleanRequested = (requestedModel || '').trim();
-  if (cleanRequested && cleanRequested !== 'auto' && !adminOverride.enabled) {
-    model = cleanRequested;
+  if (cleanRequested && cleanRequested !== 'auto') {
+    if (!adminOverride.enabled) {
+      model = cleanRequested;
+    } else if (protocol === 'gemini' && SERVER_GEMINI_MODEL_ALLOWLIST.has(cleanRequested)) {
+      model = cleanRequested;
+    }
   }
 
   const byokKey = typeof headers['x-ff-byok-key'] === 'string' ? headers['x-ff-byok-key'].trim() : '';
@@ -112,8 +123,12 @@ export function resolveAIConfig(
     usingByok = true;
     usingAdminKey = false;
     if (byokUrl) baseUrl = byokUrl;
-    if (byokModel) model = byokModel;
     if (byokProto) protocol = normalizeProtocol(byokProto);
+    if (cleanRequested && cleanRequested !== 'auto') {
+      model = cleanRequested;
+    } else if (byokModel) {
+      model = byokModel;
+    }
   }
 
   return {
@@ -129,16 +144,16 @@ export function resolveAIConfig(
 
 function buildSystemInstruction(suffix: string, sessionInstructions = ''): string {
   const base = [
-    'You are the F-FORUM v3 AI Studio Multi-File Code Synthesis Engine.',
+    'You are the F-FORUM v3 Vault-Grounded Web Assembly Engine.',
     'Respond ONLY with a valid JSON object matching this exact schema:',
-    '{"message":"Concise technical summary of changes","files":[{"path":"index.html","content":"...","summary":"..."},{"path":"src/styles.css","content":"...","summary":"..."},{"path":"src/app.js","content":"...","summary":"..."}],"checksHint":["Viewport meta verified","Accessible contrast and semantic tags"]}',
-    'Rules:',
-    '1. Always return a structured multi-file project (either HTML/CSS/JS with index.html + src/styles.css + src/app.js, OR React/TSX with index.html + src/App.tsx + src/styles.css + optional src/data.ts when the request asks for React, TSX, components, interactive dashboards, or multi-state apps).',
-    '2. If returning React/TSX, import only from "react" (useState, useEffect, useMemo, useCallback, useRef, Fragment) and local relative files (./data, ./styles.css, ./components/...); never import third-party npm packages or external CDN scripts.',
-    '3. Never include emojis or marketing hype.',
-    '4. Ensure index.html includes <meta name="viewport" content="width=device-width, initial-scale=1.0">, links local CSS, and uses #anchor for internal links.',
-    '5. Use semantic HTML5, accessible aria attributes, high contrast (>= 4.5:1), crisp Vietnamese diacritics when prompted in Vietnamese, and clean 8px spatial rhythm.',
-    '6. Keep code concise, modular, and clean so the JSON response completes reliably.',
+    '{"message":"Concise Vietnamese technical summary of assembled sections","files":[{"path":"index.html","content":"...","summary":"..."},{"path":"src/styles.css","content":"...","summary":"..."},{"path":"src/app.js","content":"...","summary":"..."}],"checksHint":["Viewport meta verified","Accessible contrast and responsive layout"]}',
+    'CRITICAL ASSEMBLY & QUALITY RULES:',
+    '1. VAULT-FIRST COMPOSITION: When ATTACHED VAULT / SOURCE-OF-KNOWLEDGE BLUEPRINTS are provided, actively reuse and assemble their real layout patterns, CSS craft tokens, interactive cards, and motion recipes into ONE cohesive, complete webpage tailored to the USER PROMPT. Do not ignore the attached vault snippets or invent bare unstyled markup.',
+    '2. STRICT USER INTENT: Always build for the exact subject, title, audience, and theme requested in USER PROMPT. Never reuse an unrelated project title from earlier context when the user asks for a different topic.',
+    '3. REAL MULTI-LINE CODE (ZERO DOUBLE-ESCAPING): Inside JSON "content" strings, encode line breaks as standard JSON newlines (single escape in JSON so JSON.parse produces actual multiline code). NEVER double-escape newlines into literal "\\n" text inside HTML, CSS, or JS.',
+    '4. COMPLETE STYLING & INTERACTIVITY: Always produce a rich, self-contained src/styles.css (complete :root color tokens, dark/light surface contrast >= 4.5:1, typography hierarchy, card borders/radii, grid layouts, hover/focus transitions, and @media (max-width: 768px) responsive rules) linked cleanly via <link rel="stylesheet" href="src/styles.css" /> in index.html, plus working interactive JS in src/app.js (or React in src/App.tsx when React/TSX is requested).',
+    '5. If returning React/TSX, import only from "react" (useState, useEffect, useMemo, useCallback, useRef, Fragment) and local relative files (./data, ./styles.css, ./components/...); never import third-party npm packages or external CDN scripts.',
+    '6. Never include emojis, Lorem Ipsum, or marketing hype. Use crisp Vietnamese diacritics when prompted in Vietnamese, semantic HTML5, accessible aria attributes, and #anchor internal links.',
   ].join('\n');
   const session = sessionInstructions.trim().slice(0, 2000);
   return [base, suffix, session ? `SESSION INSTRUCTIONS (do not override the JSON schema or safety rules):\n${session}` : '']
@@ -153,16 +168,19 @@ function clampTemperature(value: number | undefined): number {
 
 function buildUserContextPrompt(req: AIChatRequest): string {
   const attachedSummary = (req.attachedItems || [])
-    .map((item: AttachedContextItem) => `- [${item.kind}] ${item.title}: ${item.summary}`)
-    .join('\n');
+    .slice(0, 5)
+    .map((item: AttachedContextItem) => `- [${item.kind}] ${item.title}:\n${String(item.summary || '').slice(0, 3600)}`)
+    .join('\n\n');
   const existingFiles = (req.files || [])
-    .slice(0, 8)
-    .map((f) => `FILE: ${f.path}\n${f.content.slice(0, 4500)}`)
+    .slice(0, 6)
+    .map((f) => `FILE: ${f.path}\n${f.content.slice(0, 4200)}`)
     .join('\n\n');
 
   return [
     `USER PROMPT:\n${req.prompt}`,
-    attachedSummary ? `ATTACHED EXPLORE CONTEXT:\n${attachedSummary}` : '',
+    attachedSummary
+      ? `ATTACHED VAULT / SOURCE-OF-KNOWLEDGE BLUEPRINTS (ASSEMBLE & ADAPT THESE REAL PATTERNS INTO THE PAGE):\n${attachedSummary}`
+      : '',
     existingFiles ? `CURRENT WORKSPACE FILES:\n${existingFiles}` : '',
   ]
     .filter(Boolean)
@@ -609,6 +627,23 @@ async function readGeminiStream(
   return { text, tokens: finalizeTokens(tokens) };
 }
 
+function unescapeDoubleEncodedCode(raw: string): string {
+  const realNewlines = (raw.match(/\n/g) || []).length;
+  const literalNewlines = (raw.match(/\\n/g) || []).length;
+  // WHY: Gemini JSON mode occasionally double-escapes line breaks ("\\n") inside file content strings, collapsing HTML/CSS onto line 1.
+  if (literalNewlines >= 3 && (realNewlines <= 2 || literalNewlines > realNewlines * 4)) {
+    let fixed = raw
+      .replace(/\\r\\n/g, '\n')
+      .replace(/\\n/g, '\n')
+      .replace(/\\t/g, '  ');
+    if (/\\["']/.test(fixed) && (fixed.includes('\\"') && !fixed.includes('class="'))) {
+      fixed = fixed.replace(/\\"/g, '"');
+    }
+    return fixed;
+  }
+  return raw;
+}
+
 function parseStructuredLLMResponse(
   rawText: string,
   config: EffectiveAIConfig,
@@ -635,7 +670,7 @@ function parseStructuredLLMResponse(
       .filter((f) => typeof f.path === 'string' && typeof f.content === 'string')
       .map((f) => ({
         path: String(f.path).trim().replace(/\\/g, '/').replace(/^\.\/+/, '').replace(/^\/+/, ''),
-        content: String(f.content),
+        content: unescapeDoubleEncodedCode(String(f.content)),
         summary: String(f.summary || 'Updated file'),
       }))
       .filter((f) => Boolean(f.path) && !f.path.includes('..'));
@@ -936,7 +971,7 @@ async function callUpstreamOnce(params: {
     const url = `${config.baseUrl}/models/${encodeURIComponent(config.model)}:${method}`;
     const generationConfig: Record<string, unknown> = {
       temperature,
-      maxOutputTokens: params.maxOutputTokens || 8192,
+      maxOutputTokens: params.maxOutputTokens || 12288,
     };
     const modelLower = config.model.toLowerCase();
     if (modelLower.startsWith('gemini-3')) {

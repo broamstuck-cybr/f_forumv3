@@ -156,6 +156,7 @@ export const WorkspaceView: React.FC = () => {
     addToast,
     setAuthModalOpen,
     settings,
+    updateSettings,
     pendingWorkspaceSeed,
     clearWorkspaceSeed,
     onboardingProfile,
@@ -198,6 +199,11 @@ export const WorkspaceView: React.FC = () => {
   const [publishing, setPublishing] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [lastPrompt, setLastPrompt] = useState<string>('');
+  const [selectedModel, setSelectedModel] = useState<string>(() =>
+    settings.byok?.enabled && settings.byok.model.trim()
+      ? settings.byok.model.trim()
+      : 'gemini-3-flash-preview'
+  );
 
   const splitContainerRef = useRef<HTMLDivElement | null>(null);
   const urlSeedHandledRef = useRef(false);
@@ -361,6 +367,7 @@ export const WorkspaceView: React.FC = () => {
           forceVariation: opts?.forceVariation,
           isAuthenticated: Boolean(currentUser),
           byok: settings.byok,
+          model: selectedModel,
         });
 
         const preferredFocus =
@@ -420,6 +427,7 @@ export const WorkspaceView: React.FC = () => {
       recordSignal,
       setAuthModalOpen,
       settings.byok,
+      selectedModel,
     ]
   );
 
@@ -1070,8 +1078,20 @@ export const WorkspaceView: React.FC = () => {
             canUndo={history.length > 1}
             hasGeneratedHtml={files.length > 0}
             canUseAi={canUseAi}
+            selectedModel={selectedModel}
+            byok={settings.byok}
+            onChangeModel={setSelectedModel}
+            onSaveByok={(nextByok) => {
+              updateSettings({ byok: nextByok });
+              addToast({
+                type: 'success',
+                title: nextByok.enabled ? 'Đã lưu API Key riêng' : 'Đã chuyển về khóa mặc định',
+                message: nextByok.enabled
+                  ? `Model: ${nextByok.model}`
+                  : 'Sử dụng khóa Gemini 3 Flash mặc định trên máy chủ.',
+              });
+            }}
             onRequireAuth={() => setAuthModalOpen(true)}
-            onOpenShowcase={() => setDrawerOpen(true)}
             onSendPrompt={(text) => void runCompose(text)}
             onRetryLast={() => void runCompose(lastPrompt || 'Tạo lại dự án web')}
             onUndo={handleUndo}

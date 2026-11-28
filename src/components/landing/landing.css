@@ -1601,6 +1601,34 @@
     }
   }
 
+  @media (max-width: 640px) {
+    .lp-hero {
+      padding-top: 28px;
+      padding-bottom: 44px;
+    }
+
+    .lp-hero-actions {
+      gap: 12px;
+    }
+
+    .lp-hero-actions button,
+    .lp-hero-actions a {
+      min-height: 46px;
+      padding-inline: 20px;
+    }
+
+    .lp-proj-card,
+    .lp-faq-item {
+      padding: 18px;
+      border-radius: 18px;
+    }
+
+    .lp-faq-question {
+      min-height: 48px;
+      font-size: 15.5px;
+    }
+  }
+
   @media (min-width: 1320px) {
     .lp-chapter-rail {
       display: flex;

@@ -6,6 +6,7 @@ import {
 } from './catalog';
 
 interface SandboxPreviewProps {
+  itemKey?: string;
   title: string;
   html: string;
   css: string;
@@ -17,6 +18,7 @@ interface SandboxPreviewProps {
 }
 
 export const SandboxPreview: React.FC<SandboxPreviewProps> = ({
+  itemKey,
   title,
   html,
   css,
@@ -31,6 +33,9 @@ export const SandboxPreview: React.FC<SandboxPreviewProps> = ({
     [html, css, theme, js]
   );
 
+  // WHY: Include itemKey + content fingerprint so switching cards always mounts a fresh iframe with zero stale srcDoc.
+  const frameKey = `${itemKey || title}-${theme}-${viewport}-${nonce}-${srcDoc.length}`;
+
   return (
     <div
       className={`ex-sandbox ${className ?? ''}`}
@@ -42,7 +47,7 @@ export const SandboxPreview: React.FC<SandboxPreviewProps> = ({
         style={{ '--ex-vp': `${viewport}px` } as React.CSSProperties}
       >
         <iframe
-          key={`${title}-${theme}-${viewport}-${nonce}`}
+          key={frameKey}
           title={`Bản chạy thử ${title}`}
           className="ex-sandbox-frame"
           sandbox="allow-scripts"

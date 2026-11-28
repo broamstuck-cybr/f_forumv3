@@ -85,6 +85,79 @@ function circularIndexDistance(i: number, active: number, total: number): number
   return Math.min(diff, total - diff);
 }
 
+class PinUICardErrorBoundary extends React.Component<
+  { fallback: React.ReactNode; children: React.ReactNode },
+  { hasError: boolean }
+> {
+  constructor(props: { fallback: React.ReactNode; children: React.ReactNode }) {
+    super(props);
+    this.state = { hasError: false };
+  }
+
+  static getDerivedStateFromError(): { hasError: boolean } {
+    return { hasError: true };
+  }
+
+  render() {
+    if (this.state.hasError) return this.props.fallback;
+    return this.props.children;
+  }
+}
+
+const PinUICardLiveThumb: React.FC<{
+  sourceId: string;
+  title: string;
+  category: string;
+  theme: 'dark' | 'light';
+  active: boolean;
+}> = React.memo(({ sourceId, title, category, theme, active }) => {
+  const hostRef = useRef<HTMLDivElement>(null);
+  const [scale, setScale] = useState(0.56);
+
+  useEffect(() => {
+    const el = hostRef.current;
+    if (!el || typeof ResizeObserver === 'undefined') return undefined;
+    const update = () => {
+      const rect = el.getBoundingClientRect();
+      if (rect.width > 20 && rect.height > 20) {
+        const nextScale = Math.max(0.32, Math.min(0.86, Math.min(rect.width / 460, rect.height / 540)));
+        setScale((prev) => (Math.abs(prev - nextScale) > 0.015 ? nextScale : prev));
+      }
+    };
+    update();
+    const ro = new ResizeObserver(update);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [active]);
+
+  const fallbackPlate = (
+    <div className="rm-pinui-fallback">
+      <span className="rm-pinui-prev-badge">PIN UI</span>
+      <strong>{title}</strong>
+      <span>{category}</span>
+    </div>
+  );
+
+  return (
+    <div ref={hostRef} className="rm-card-pinui-stage" data-theme={theme} aria-hidden="true">
+      {active ? (
+        <PinUICardErrorBoundary fallback={fallbackPlate}>
+          <div
+            className="rm-pinui-live-scaler"
+            style={{ transform: `translate(-50%, -50%) scale(${scale})` }}
+          >
+            <React.Suspense fallback={fallbackPlate}>
+              <PinUIPlayground itemId={sourceId} theme={theme} compact />
+            </React.Suspense>
+          </div>
+        </PinUICardErrorBoundary>
+      ) : (
+        fallbackPlate
+      )}
+    </div>
+  );
+});
+
 interface CardStyleSnapshot {
   display: string;
   width: string;
@@ -562,29 +635,13 @@ export const TidewellStage: React.FC<TidewellStageProps> = () => {
                   onClick={() => handleCardClick(card)}
                 >
                   {isPinUI ? (
-                    <div className="rm-card-pinui-stage" aria-hidden="true">
-                      <div className="rm-card-pinui-preview">
-                        <div className="rm-pinui-prev-head">
-                          <span className="rm-pinui-prev-badge">PINUI</span>
-                          <span className="rm-pinui-prev-dots">
-                            <i />
-                            <i />
-                          </span>
-                        </div>
-                        <div className="rm-pinui-prev-canvas">
-                          <span className="rm-pinui-prev-line is-wide" />
-                          <span className="rm-pinui-prev-line is-mid" />
-                          <div className="rm-pinui-prev-row">
-                            <span className="rm-pinui-prev-pill" />
-                            <span className="rm-pinui-prev-chip" />
-                          </div>
-                        </div>
-                        <div className="rm-pinui-prev-foot">
-                          <strong>{card.title}</strong>
-                          <span>{card.category}</span>
-                        </div>
-                      </div>
-                    </div>
+                    <PinUICardLiveThumb
+                      sourceId={card.sourceId}
+                      title={card.title}
+                      category={card.category}
+                      theme={theme}
+                      active={stageInView && dist <= 4}
+                    />
                   ) : (
                     <>
                       <img

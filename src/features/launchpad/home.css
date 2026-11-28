@@ -328,40 +328,46 @@
   height: 38px;
 }
 
-@media (max-width: 620px) {
+@media (max-width: 640px) {
+  .hm-shell {
+    padding-inline: 16px;
+    gap: 28px;
+  }
+
   .hm-composer .pcmp__bar {
-    min-height: 92px;
+    min-height: 104px;
+    padding: 6px 4px;
   }
 
   .hm-composer-dock .pcmp__side {
-    bottom: 50px;
-    left: 10px;
+    bottom: 58px;
+    left: 12px;
   }
 
   .hm-composer .pcmp .pcmp__pill {
-    height: 32px;
-    padding: 0 9px;
-    font-size: 12.5px;
+    height: 38px;
+    padding: 0 13px;
+    font-size: 13.5px;
   }
 
   .hm-composer .pcmp__typer,
   .hm-composer .pcmp__recorder {
     align-items: flex-end;
-    padding: 0 10px 12px;
+    padding: 0 12px 14px;
   }
 
   .hm-composer .pcmp__inputWrap {
-    height: 32px;
+    height: 40px;
   }
 
   .hm-composer .pcmp .pcmp__tool {
-    width: 32px;
-    height: 32px;
+    width: 40px;
+    height: 40px;
   }
 
   .hm-composer .pcmp .pcmp__send,
   .hm-composer .pcmp .pcmp__stop {
-    width: 32px;
-    height: 32px;
+    width: 42px;
+    height: 42px;
   }
 }

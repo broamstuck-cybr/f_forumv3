@@ -227,9 +227,11 @@ export const ExperienceView: React.FC = () => {
   const [codeTab, setCodeTab] = useState<CodeTab>('prompt');
   const [copiedTarget, setCopiedTarget] = useState<'code' | 'prompt' | null>(null);
 
-  const [shardPayload, setShardPayload] = useState<VaultShardPayload | null>(null);
-  const [shardLoading, setShardLoading] = useState(false);
-  const [shardError, setShardError] = useState<string | null>(null);
+  const [shardFetchState, setShardFetchState] = useState<{
+    itemId: string;
+    payload: VaultShardPayload | null;
+    error: string | null;
+  }>({ itemId: '', payload: null, error: null });
   const [shardRetryTick, setShardRetryTick] = useState(0);
 
   const query = search.trim().toLowerCase();
@@ -433,9 +435,21 @@ export const ExperienceView: React.FC = () => {
     }
   }, [experienceItemId, allVaultItems, recipes]);
 
-  // WHY: Keep 1 live featured specimen running immediately at the top whenever entering or switching categories.
+  // WHY: Keep 1 live featured specimen running immediately and ensure selected always matches the active category/filter.
   const featuredTarget: SelectedTarget | null = useMemo(() => {
-    if (selected) return selected;
+    if (selected) {
+      if (category === 'showcase-15') {
+        if (selected.kind === 'showcase' && filteredShowcase.some((it) => it.id === selected.item.id)) {
+          return selected;
+        }
+      } else if (category === 'motion-recipes') {
+        if (selected.kind === 'recipe' && filteredRecipes.some((it) => it.id === selected.item.id)) {
+          return selected;
+        }
+      } else if (selected.kind === 'vault' && filteredVaultItems.some((it) => it.i === selected.item.i)) {
+        return selected;
+      }
+    }
     if (category === 'showcase-15' && filteredShowcase[0]) {
       return { kind: 'showcase', item: filteredShowcase[0] };
     }
@@ -466,40 +480,66 @@ export const ExperienceView: React.FC = () => {
 
   const activeVaultItem = featuredTarget?.kind === 'vault' ? featuredTarget.item : null;
 
+  const needsAsyncShard = Boolean(activeVaultItem && activeVaultItem.s && activeVaultItem.s !== 'pinui');
+
+  // WHY: Synchronously resolve cached shards on Render 1 and tag async results by itemId so previous card HTML never leaks into a newly clicked card.
+  const syncCachedPayload = useMemo(() => {
+    if (!activeVaultItem || !needsAsyncShard) return undefined;
+    const cached = getCachedVaultShard(activeVaultItem.s);
+    if (!cached) return undefined;
+    return cached[activeVaultItem.i] ?? null;
+  }, [activeVaultItem, needsAsyncShard]);
+
+  const shardPayload: VaultShardPayload | null = useMemo(() => {
+    if (!activeVaultItem || !needsAsyncShard) return null;
+    if (syncCachedPayload !== undefined) return syncCachedPayload;
+    return shardFetchState.itemId === activeVaultItem.i ? shardFetchState.payload : null;
+  }, [activeVaultItem, needsAsyncShard, syncCachedPayload, shardFetchState]);
+
+  const shardError: string | null = useMemo(() => {
+    if (!activeVaultItem || !needsAsyncShard || syncCachedPayload !== undefined) return null;
+    return shardFetchState.itemId === activeVaultItem.i ? shardFetchState.error : null;
+  }, [activeVaultItem, needsAsyncShard, syncCachedPayload, shardFetchState]);
+
+  const shardLoading = Boolean(
+    activeVaultItem &&
+      needsAsyncShard &&
+      syncCachedPayload === undefined &&
+      shardFetchState.itemId !== activeVaultItem.i
+  );
+
   useEffect(() => {
     let cancelled = false;
-    setShardError(null);
-    if (!activeVaultItem || !activeVaultItem.s || activeVaultItem.s === 'pinui') {
-      setShardPayload(null);
-      setShardLoading(false);
-      return;
+    if (!activeVaultItem || !needsAsyncShard) {
+      return undefined;
+    }
+    if (getCachedVaultShard(activeVaultItem.s)) {
+      return undefined;
     }
 
-    const cached = getCachedVaultShard(activeVaultItem.s);
-    if (cached) {
-      setShardPayload(cached[activeVaultItem.i] ?? null);
-      setShardLoading(false);
-      return;
-    }
-
-    setShardPayload(null);
-    setShardLoading(true);
+    const targetItemId = activeVaultItem.i;
     fetchVaultShard(activeVaultItem.s)
       .then((shard) => {
         if (cancelled) return;
-        setShardPayload(shard[activeVaultItem.i] ?? null);
-        setShardLoading(false);
+        setShardFetchState({
+          itemId: targetItemId,
+          payload: shard[targetItemId] ?? null,
+          error: null,
+        });
       })
       .catch(() => {
         if (cancelled) return;
-        setShardError('Không tải được mã nguồn của mẫu này.');
-        setShardLoading(false);
+        setShardFetchState({
+          itemId: targetItemId,
+          payload: null,
+          error: 'Không tải được mã nguồn của mẫu này.',
+        });
       });
 
     return () => {
       cancelled = true;
     };
-  }, [activeVaultItem, shardRetryTick]);
+  }, [activeVaultItem, needsAsyncShard, shardRetryTick]);
 
   const activeCatalogItem = useMemo(() => {
     if (!activeVaultItem) return null;
@@ -634,10 +674,11 @@ export const ExperienceView: React.FC = () => {
           : '';
 
   const scrollToStage = () => {
+    if (typeof window !== 'undefined' && window.innerWidth >= 1080) return;
     const el = stageRef.current;
     if (!el) return;
     const rect = el.getBoundingClientRect();
-    if (rect.top < 48) {
+    if (rect.top < 48 || rect.top > window.innerHeight * 0.45) {
       el.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
   };
@@ -732,18 +773,27 @@ export const ExperienceView: React.FC = () => {
 
   const stepFeatured = (delta: 1 | -1) => {
     if (!featuredTarget) return;
-    if (featuredTarget.kind === 'vault') {
+    if (featuredTarget.kind === 'vault' && filteredVaultItems.length > 0) {
       const idx = filteredVaultItems.findIndex((it) => it.i === featuredTarget.item.i);
-      const next = filteredVaultItems[idx + delta];
-      if (next) selectVaultItem(next);
-    } else if (featuredTarget.kind === 'recipe') {
+      const base = idx >= 0 ? idx : 0;
+      const nextIdx = (base + delta + filteredVaultItems.length) % filteredVaultItems.length;
+      if (nextIdx >= visibleCount) {
+        setVisibleCount((prev) => Math.max(prev, nextIdx + PAGE_SIZE));
+      }
+      selectVaultItem(filteredVaultItems[nextIdx]);
+    } else if (featuredTarget.kind === 'recipe' && filteredRecipes.length > 0) {
       const idx = filteredRecipes.findIndex((it) => it.id === featuredTarget.item.id);
-      const next = filteredRecipes[idx + delta];
-      if (next) selectRecipeItem(next);
-    } else if (featuredTarget.kind === 'showcase') {
+      const base = idx >= 0 ? idx : 0;
+      const nextIdx = (base + delta + filteredRecipes.length) % filteredRecipes.length;
+      if (nextIdx >= visibleCount) {
+        setVisibleCount((prev) => Math.max(prev, nextIdx + PAGE_SIZE));
+      }
+      selectRecipeItem(filteredRecipes[nextIdx]);
+    } else if (featuredTarget.kind === 'showcase' && filteredShowcase.length > 0) {
       const idx = filteredShowcase.findIndex((it) => it.id === featuredTarget.item.id);
-      const next = filteredShowcase[idx + delta];
-      if (next) selectShowcaseItem(next);
+      const base = idx >= 0 ? idx : 0;
+      const nextIdx = (base + delta + filteredShowcase.length) % filteredShowcase.length;
+      selectShowcaseItem(filteredShowcase[nextIdx]);
     }
   };
 
@@ -874,7 +924,10 @@ export const ExperienceView: React.FC = () => {
               aria-pressed={category === 'saved'}
               aria-label={`Đã lưu (${counts.saved})`}
               title={`Đã lưu (${counts.saved})`}
-              onClick={() => setCategory((prev) => (prev === 'saved' ? 'all' : 'saved'))}
+              onClick={() => {
+                setCategory((prev) => (prev === 'saved' ? 'all' : 'saved'));
+                setSelected(null);
+              }}
               className="inline-flex items-center gap-1.5 min-h-[44px] px-3.5 rounded-full border text-xs font-semibold cursor-pointer whitespace-nowrap"
               style={{
                 background: category === 'saved' ? 'var(--accent-soft)' : 'var(--bg-raised)',
@@ -928,8 +981,11 @@ export const ExperienceView: React.FC = () => {
             <button
               type="button"
               aria-pressed={activeTag === ''}
-              onClick={() => setActiveTag('')}
-              className="flex-none min-h-[30px] px-3 rounded-full border font-mono text-[11px] cursor-pointer"
+              onClick={() => {
+                setActiveTag('');
+                setSelected(null);
+              }}
+              className="flex-none min-h-[34px] px-3 rounded-full border font-mono text-[11px] cursor-pointer"
               style={{
                 background: activeTag === '' ? 'var(--accent-soft)' : 'var(--bg-sunken)',
                 borderColor: activeTag === '' ? 'var(--accent)' : 'var(--line)',
@@ -943,8 +999,11 @@ export const ExperienceView: React.FC = () => {
                 key={tag}
                 type="button"
                 aria-pressed={activeTag === tag}
-                onClick={() => setActiveTag((prev) => (prev === tag ? '' : tag))}
-                className="flex-none min-h-[30px] px-3 rounded-full border font-mono text-[11px] cursor-pointer"
+                onClick={() => {
+                  setActiveTag((prev) => (prev === tag ? '' : tag));
+                  setSelected(null);
+                }}
+                className="flex-none min-h-[34px] px-3 rounded-full border font-mono text-[11px] cursor-pointer"
                 style={{
                   background: activeTag === tag ? 'var(--accent-soft)' : 'var(--bg-sunken)',
                   borderColor: activeTag === tag ? 'var(--accent)' : 'var(--line)',
@@ -958,13 +1017,14 @@ export const ExperienceView: React.FC = () => {
         ) : null}
       </header>
 
-      {/* LIVE FEATURED STAGE: runs immediately on entry, click any card below to swap */}
-      {featuredTarget ? (
-        <section
-          ref={stageRef}
-          aria-label={`Trình xem trực tiếp ${selectedTitle}`}
-          className="ex-live-featured"
-        >
+      <div className="ex-split-workspace">
+        {/* RIGHT 60% ON DESKTOP (STICKY) / TOP ON MOBILE: wide live preview + Prompt/Code below */}
+        {featuredTarget ? (
+          <section
+            ref={stageRef}
+            aria-label={`Trình xem trực tiếp ${selectedTitle}`}
+            className="ex-live-featured ex-split-preview-col"
+          >
           <div className="ex-live-featured-top">
             <div className="flex items-center gap-2.5 min-w-0">
               <span
@@ -1054,6 +1114,7 @@ export const ExperienceView: React.FC = () => {
               >
                 {featuredTarget.kind === 'showcase' ? (
                   <SandboxPreview
+                    itemKey={selectedId}
                     title={featuredTarget.item.title}
                     html={featuredTarget.item.html}
                     css=""
@@ -1120,6 +1181,7 @@ export const ExperienceView: React.FC = () => {
                   />
                 ) : activeHtml ? (
                   <SandboxPreview
+                    itemKey={selectedId}
                     title={selectedTitle}
                     html={shardPayload?.h || activeCatalogItem?.previewHtml || activeHtml}
                     css={activeCss}
@@ -1304,33 +1366,34 @@ export const ExperienceView: React.FC = () => {
         </section>
       ) : null}
 
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <span className="t-label">
-          {formatCount(category === 'motion-recipes' ? visibleRecipes.length : category === 'showcase-15' ? filteredShowcase.length : visibleVaultItems.length)} / {formatCount(totalShownList)} {isEn ? 'items' : 'mẫu'}
-        </span>
-        {(search || activeTag || category !== 'all') ? (
-          <button
-            type="button"
-            className="ex-text"
-            onClick={() => {
-              setSearch('');
-              setActiveTag('');
-              setCategory('all');
-              setSelected(null);
-            }}
-          >
-            {isEn ? 'Reset' : 'Đặt lại'}
-          </button>
-        ) : null}
-      </div>
+        {/* LEFT 40% ON DESKTOP (2-COL SCROLLABLE CARDS) / BOTTOM ON MOBILE */}
+        <div className="ex-split-list-col">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <span className="t-label">
+              {formatCount(category === 'motion-recipes' ? visibleRecipes.length : category === 'showcase-15' ? filteredShowcase.length : visibleVaultItems.length)} / {formatCount(totalShownList)} {isEn ? 'items' : 'mẫu'}
+            </span>
+            {(search || activeTag || category !== 'all') ? (
+              <button
+                type="button"
+                className="ex-text"
+                onClick={() => {
+                  setSearch('');
+                  setActiveTag('');
+                  setCategory('all');
+                  setSelected(null);
+                }}
+              >
+                {isEn ? 'Reset' : 'Đặt lại'}
+              </button>
+            ) : null}
+          </div>
 
-      {vaultLoading ? (
-        <div
-          className="grid gap-3.5"
-          style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 260px), 1fr))' }}
-          aria-busy="true"
-          aria-label="Đang tải kho tài nguyên"
-        >
+          {vaultLoading ? (
+            <div
+              className="ex-split-cards-grid"
+              aria-busy="true"
+              aria-label="Đang tải kho tài nguyên"
+            >
           {Array.from({ length: 12 }, (_, idx) => (
             <div
               key={idx}
@@ -1376,10 +1439,7 @@ export const ExperienceView: React.FC = () => {
           </button>
         </div>
       ) : category === 'showcase-15' ? (
-        <div
-          className="grid gap-4"
-          style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 300px), 1fr))' }}
-        >
+        <div className="ex-split-cards-grid ex-split-cards-grid--showcase">
           {filteredShowcase.map((item) => {
             const liked = isItemLiked(item.id);
             const active = selectedId === item.id;
@@ -1431,10 +1491,7 @@ export const ExperienceView: React.FC = () => {
           })}
         </div>
       ) : category === 'motion-recipes' ? (
-        <div
-          className="grid gap-3.5"
-          style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 280px), 1fr))' }}
-        >
+        <div className="ex-split-cards-grid">
           {visibleRecipes.map((item) => {
             const liked = isItemLiked(item.id);
             const active = selectedId === item.id;
@@ -1488,10 +1545,7 @@ export const ExperienceView: React.FC = () => {
           })}
         </div>
       ) : (
-        <div
-          className="grid gap-3.5"
-          style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 260px), 1fr))' }}
-        >
+        <div className="ex-split-cards-grid">
           {visibleVaultItems.map((item) => {
             const title = sanitizeBrandText(item.t);
             const liked = isItemLiked(item.i);
@@ -1501,10 +1555,11 @@ export const ExperienceView: React.FC = () => {
               <article
                 key={`${item.l}:${item.i}`}
                 onClick={() => selectVaultItem(item)}
-                className="flex items-center justify-between gap-3 p-3.5 rounded-[14px] border min-w-0 cursor-pointer"
+                className="ex-split-card flex items-center justify-between gap-2.5 p-3.5 rounded-[14px] border min-w-0 cursor-pointer"
                 style={{
                   background: active ? 'var(--accent-soft)' : 'var(--bg-raised)',
                   borderColor: active ? 'var(--accent)' : 'var(--line)',
+                  boxShadow: active ? '0 0 0 1px var(--accent)' : 'none',
                   transition: 'border-color 140ms ease, background-color 140ms ease',
                 }}
               >
@@ -1538,7 +1593,7 @@ export const ExperienceView: React.FC = () => {
                     e.stopPropagation();
                     toggleLikedItem(item.i, item.l);
                   }}
-                  className="inline-flex items-center gap-1.5 min-h-[34px] px-2.5 rounded-full border font-mono text-xs shrink-0 cursor-pointer"
+                  className="inline-flex items-center gap-1.5 min-h-[38px] px-2.5 rounded-full border font-mono text-xs shrink-0 cursor-pointer"
                   style={{
                     background: liked ? 'var(--danger-soft)' : 'var(--bg-sunken)',
                     borderColor: liked ? 'var(--danger)' : 'var(--line)',
@@ -1558,7 +1613,7 @@ export const ExperienceView: React.FC = () => {
         <div className="flex justify-center pt-2">
           <button
             type="button"
-            className="btn btn-line"
+            className="btn btn-line min-h-[44px]"
             onClick={() => setVisibleCount((prev) => prev + PAGE_SIZE)}
           >
             {isEn
@@ -1567,6 +1622,8 @@ export const ExperienceView: React.FC = () => {
           </button>
         </div>
       ) : null}
+        </div>
+      </div>
     </div>
   );
 };

@@ -845,13 +845,30 @@
   }
 
   @media (max-width: 640px) {
+    .cm-shell {
+      gap: 20px;
+      padding-top: 20px;
+    }
+
+    .cm-card {
+      padding: 18px;
+      gap: 14px;
+      border-radius: 18px;
+    }
+
+    .cm-filter-pill,
+    .cm-heart-btn,
+    .cm-remix-btn {
+      min-height: 44px;
+    }
+
     .cm-modal-backdrop {
-      padding: 8px;
+      padding: 10px;
     }
 
     .cm-modal {
-      height: 94dvh;
-      border-radius: 14px;
+      height: 92dvh;
+      border-radius: 18px;
     }
   }
 

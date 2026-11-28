@@ -2256,44 +2256,267 @@ html[data-theme='light'] .ws-drawerOverlay {
   margin-top: 2px;
 }
 
+/* -------------------------------------------------------------------------- */
+/* Workspace Model Selector + Quick API Key (BYOK) Popover                    */
+/* -------------------------------------------------------------------------- */
+.ws-aiBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.ws-modelSelectWrap {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+}
+
+.ws-modelSelect {
+  width: 100%;
+  min-width: 0;
+  height: 36px;
+  padding: 0 28px 0 12px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: var(--bg-sunken);
+  color: var(--fg);
+  font-family: var(--font-ui);
+  font-size: 0.78rem;
+  font-weight: 500;
+  cursor: pointer;
+  outline: none;
+  text-overflow: ellipsis;
+}
+
+.ws-modelSelect:focus-visible {
+  border-color: var(--accent);
+}
+
+.ws-keyBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 36px;
+  padding: 0 12px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: var(--bg-sunken);
+  color: var(--fg-muted);
+  font-family: var(--font-mono);
+  font-size: 0.74rem;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: border-color 140ms ease, color 140ms ease, background-color 140ms ease;
+}
+
+.ws-keyBtn:hover {
+  border-color: var(--line-strong);
+  color: var(--fg);
+}
+
+.ws-keyBtn.is-active {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+.ws-byokPopover {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px;
+  border-radius: 14px;
+  border: 1px solid var(--line-strong);
+  background: var(--bg-raised);
+}
+
+.ws-byokPopover__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 0.84rem;
+  color: var(--fg);
+}
+
+.ws-byokPresets {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.ws-byokPresets .ws-chip.is-active {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+.ws-byokFields {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.ws-byokRow {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.ws-byokField {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.ws-byokField span {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--fg-muted);
+}
+
+.ws-byokField input {
+  width: 100%;
+  min-width: 0;
+  height: 38px;
+  padding: 0 10px;
+  border-radius: 10px;
+  border: 1px solid var(--line);
+  background: var(--bg-sunken);
+  color: var(--fg);
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  outline: none;
+}
+
+.ws-byokField input:focus {
+  border-color: var(--accent);
+}
+
+.ws-byokActions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
 @media (max-width: 767px) {
+  .ws-topbar {
+    min-height: 58px;
+    padding: 8px 14px;
+  }
+
+  .ws-mobileTabs {
+    padding: 8px 14px;
+    gap: 8px;
+  }
+
+  .ws-mobileTab {
+    min-height: 44px;
+    font-size: 0.9rem;
+  }
+
+  .ws-chat__ctx {
+    padding: 12px 16px;
+  }
+
+  .ws-chat__feed {
+    padding: 16px;
+    gap: 16px;
+  }
+
+  .ws-chat__empty {
+    padding: 12px 2px;
+    gap: 14px;
+  }
+
+  .ws-chat__starters {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 12px;
+  }
+
+  .ws-starterBtn {
+    padding: 16px;
+    min-height: 76px;
+  }
+
+  .ws-composerWrap {
+    padding: 10px 14px calc(16px + env(safe-area-inset-bottom, 0px));
+    gap: 10px;
+  }
+
+  .ws-modelSelect,
+  .ws-keyBtn {
+    height: 42px;
+    font-size: 0.84rem;
+  }
+
+  .ws-byokRow {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .ws-byokField input {
+    height: 44px;
+    font-size: 0.86rem;
+  }
+
   .ws-input {
-    min-height: 46px;
-    padding: 8px 4px;
+    min-height: 48px;
+    padding: 10px 6px;
+    font-size: 0.94rem;
+  }
+
+  .ws-sendBtn,
+  .ws-iconBtn,
+  .ws-iconBtn--sm {
+    min-width: 42px;
+    min-height: 42px;
+  }
+
+  .ws-chip {
+    min-height: 38px;
+    padding: 0 14px;
+    font-size: 0.82rem;
   }
 
   .ws-seg__btn {
-    width: 40px;
-    height: 36px;
+    width: 42px;
+    height: 40px;
   }
 
   .ws-seg__btn--labeled {
     width: auto;
-    padding: 0 10px;
-    height: 36px;
+    padding: 0 12px;
+    height: 40px;
+    font-size: 0.84rem;
   }
 
   .ws-ctaBtn {
-    min-height: 38px;
-    height: 38px;
-    padding: 0 11px;
+    min-height: 42px;
+    height: 42px;
+    padding: 0 14px;
+    font-size: 0.84rem;
   }
 
   .ws-explorer {
-    width: 136px;
-    min-width: 120px;
+    width: 148px;
+    min-width: 132px;
   }
 
   .ws-codeGutter {
-    width: 36px;
+    width: 38px;
     padding: 12px 6px 12px 4px;
-    font-size: 12px;
+    font-size: 12.5px;
   }
 
   .ws-codeHighlight,
   .ws-codeTextarea {
     padding: 12px 10px;
-    font-size: 12px;
+    font-size: 12.5px;
   }
 }
 

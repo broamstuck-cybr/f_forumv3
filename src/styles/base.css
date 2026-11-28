@@ -639,3 +639,40 @@ html.reduce-motion *::after {
   border: 0;
   background: transparent;
 }
+
+/* Global Mobile Comfort & 1-Handed Touch Spaciousness (<= 640px) */
+@media (max-width: 640px) {
+  body {
+    font-size: 15px;
+    line-height: 1.6;
+  }
+
+  .wrap,
+  .wrap-wide {
+    padding-inline: 18px;
+  }
+
+  .btn,
+  .btn-primary,
+  .btn-line,
+  .btn-ghost {
+    min-height: 44px;
+    padding-inline: 18px;
+    font-size: 14px;
+  }
+
+  .field input,
+  .field textarea,
+  .field select {
+    min-height: 46px;
+    font-size: 15px;
+  }
+
+  .modal-card,
+  .sheet-card {
+    width: calc(100vw - 24px);
+    max-width: 100%;
+    padding: 20px 18px;
+    border-radius: 22px;
+  }
+}

@@ -1,4 +1,4 @@
-import { fetchVaultShard } from '../features/explore/vaultLoader';
+import { fetchMotionRecipes, fetchVaultShard } from '../features/explore/vaultLoader';
 import { apiClient } from '../services/apiClient';
 import type { BYOKConfig, WorkspaceFile } from '../types/index';
 import type {
@@ -1576,6 +1576,7 @@ export interface ComposeAgentOptions {
   forceVariation?: boolean;
   isAuthenticated?: boolean;
   byok?: BYOKConfig;
+  model?: string;
 }
 
 function shouldUseReactTsxScaffold(
@@ -2001,6 +2002,34 @@ export function renderBlueprintToFiles(
   return { files, html, audit };
 }
 
+function unescapeDoubleEncodedText(raw: string): string {
+  const realNewlines = (raw.match(/\n/g) || []).length;
+  const literalNewlines = (raw.match(/\\n/g) || []).length;
+  if (literalNewlines >= 3 && (realNewlines <= 2 || literalNewlines > realNewlines * 4)) {
+    let fixed = raw
+      .replace(/\\r\\n/g, '\n')
+      .replace(/\\n/g, '\n')
+      .replace(/\\t/g, '  ');
+    if (fixed.includes('\\"') && !fixed.includes('class="')) {
+      fixed = fixed.replace(/\\"/g, '"');
+    }
+    return fixed;
+  }
+  return raw;
+}
+
+function isFreshTopicPrompt(prompt: string, previousTitle?: string): boolean {
+  const clean = foldVi(prompt).trim();
+  if (!clean) return false;
+  const startsFresh = /^(tao|dung|lam|thiet ke|xay dung|build|create|make|design)\b/.test(clean);
+  if (!startsFresh || !previousTitle) return false;
+  const prevWords = foldVi(previousTitle)
+    .split(/[^a-z0-9]+/)
+    .filter((w) => w.length >= 3);
+  if (prevWords.length === 0) return false;
+  return !prevWords.some((w) => clean.includes(w));
+}
+
 function mergeAiReturnedFiles(
   returnedFiles: Array<{ path: string; content: string; summary?: string }>,
   baseFiles: WorkspaceFile[],
@@ -2018,9 +2047,10 @@ function mergeAiReturnedFiles(
   for (const rf of returnedFiles) {
     const safePath = sanitizeVirtualPath(rf.path);
     if (!safePath || typeof rf.content !== 'string') continue;
+    const cleanContent = unescapeDoubleEncodedText(rf.content);
     normalized.push({
       path: safePath,
-      content: rf.content,
+      content: cleanContent,
       language: detectLanguageFromPath(safePath),
       summary: rf.summary || 'Cập nhật bởi AI',
       updatedAt: now,
@@ -2028,6 +2058,12 @@ function mergeAiReturnedFiles(
   }
 
   if (normalized.length === 0) return null;
+
+  // Reject broken AI output if HTML still leaks literal "\n\n" tokens after unescaping
+  const returnedHtml = normalized.find((f) => /\.html?$/i.test(f.path));
+  if (returnedHtml && (returnedHtml.content.match(/\\n/g) || []).length >= 5) {
+    return null;
+  }
 
   // If AI returned only a single monolithic index.html, organize it cleanly into multi-file layout
   if (normalized.length === 1 && /\.html?$/i.test(normalized[0].path)) {
@@ -2103,12 +2139,17 @@ export async function composeWithAgent(
     forceVariation = false,
     isAuthenticated = false,
     byok,
+    model,
   } = options;
 
-  const isEdit = Boolean((previousHtml || previousFiles.length > 0) && previousBlueprint);
+  const freshTopic = isFreshTopicPrompt(prompt, previousBlueprint?.heroTitle || profile.siteName);
+  const isEdit = Boolean((previousHtml || previousFiles.length > 0) && previousBlueprint && !freshTopic);
+  const effectiveProfile: OnboardingProfile = freshTopic
+    ? { ...profile, siteName: '' }
+    : profile;
 
   const rec = await recommendVaultResources({
-    profile,
+    profile: effectiveProfile,
     prompt,
     behaviorScores,
     excludeIds,
@@ -2116,18 +2157,65 @@ export async function composeWithAgent(
     seedItemId,
   });
 
-  // WHY: Opportunistically hydrate the top matched shard to honor repo references without blocking offline fallback.
-  const firstMatch = rec.matched[0];
-  const firstMeta = firstMatch ? rec.itemsById.get(firstMatch.id) : undefined;
-  let shardLoadedNote = '';
-  if (firstMeta?.s && firstMeta.s !== 'pinui') {
-    try {
-      const shard = await fetchVaultShard(firstMeta.s);
-      if (shard && shard[firstMeta.i]) {
-        shardLoadedNote = `Đã đọc cấu trúc mẫu "${firstMeta.t}" từ kho ${firstMeta.l}.`;
-      }
-    } catch {
-      shardLoadedNote = '';
+  // WHY: Hydrate top 3 matched Vault shards + 1 matching Motion Recipe so the AI actually assembles real F-Forum Source-of-Knowledge components instead of guessing from titles alone.
+  const hydratedSnippets: Array<{
+    id: string;
+    kind: 'resource';
+    title: string;
+    summary: string;
+  }> = [];
+
+  const shardTargets = rec.matched
+    .slice(0, 3)
+    .map((m) => ({ match: m, meta: rec.itemsById.get(m.id) }));
+
+  const [hydratedList, motionRecipes] = await Promise.all([
+    Promise.all(
+      shardTargets.map(async ({ match, meta }) => {
+        const parts: string[] = [
+          `Library: ${match.library} · Reason: ${match.reason}`,
+        ];
+        if (meta?.s && meta.s !== 'pinui') {
+          try {
+            const shard = await fetchVaultShard(meta.s);
+            const payload = shard?.[meta.i];
+            if (payload) {
+              if (payload.p) parts.push(`Spec: ${payload.p.slice(0, 420)}`);
+              if (payload.h) parts.push(`HTML Blueprint:\n${payload.h.slice(0, 1100)}`);
+              if (payload.c) parts.push(`CSS Craft:\n${payload.c.slice(0, 1100)}`);
+              if (payload.j) parts.push(`JS Behavior:\n${payload.j.slice(0, 500)}`);
+            }
+          } catch {
+            // Keep metadata-only fallback if shard is unreachable
+          }
+        }
+        return {
+          id: match.id,
+          kind: 'resource' as const,
+          title: match.title,
+          summary: parts.join('\n'),
+        };
+      })
+    ),
+    fetchMotionRecipes().catch(() => []),
+  ]);
+
+  hydratedSnippets.push(...hydratedList);
+  const loadedBlueprintCount = hydratedList.filter((h) => h.summary.includes('HTML Blueprint:') || h.summary.includes('CSS Craft:')).length;
+  const shardLoadedNote =
+    loadedBlueprintCount > 0
+      ? `Đã nạp mã gốc từ ${loadedBlueprintCount} mẫu trong kho 5.909 tài nguyên để lắp ghép.`
+      : '';
+
+  if (motionRecipes.length > 0) {
+    const pickedRecipe = motionRecipes[Math.abs(prompt.length) % motionRecipes.length];
+    if (pickedRecipe) {
+      hydratedSnippets.push({
+        id: pickedRecipe.id,
+        kind: 'resource',
+        title: `Motion Recipe: ${pickedRecipe.title}`,
+        summary: `Use when: ${pickedRecipe.useWhen}\nCode:\n${pickedRecipe.code.slice(0, 900)}`,
+      });
     }
   }
 
@@ -2145,15 +2233,15 @@ export async function composeWithAgent(
     summaryText = `Đã cập nhật dự án theo yêu cầu: ${changeSummary.join('; ')}.`;
   } else {
     blueprint = createInitialBlueprint(
-      profile,
+      effectiveProfile,
       prompt,
       rec.matched,
       forceVariation ? 1 : 0
     );
-    summaryText = `Đã dựng dự án "${blueprint.heroTitle}" với phong cách ${BRAND_PALETTES[profile.personality].label.toLowerCase()} và hiệu ứng ${SIGNATURE_MOTIONS[blueprint.signature].label}.`;
+    summaryText = `Đã dựng dự án "${blueprint.heroTitle}" với phong cách ${BRAND_PALETTES[effectiveProfile.personality].label.toLowerCase()} và hiệu ứng ${SIGNATURE_MOTIONS[blueprint.signature].label}.`;
   }
 
-  const preferReact = shouldUseReactTsxScaffold(prompt, previousFiles);
+  const preferReact = shouldUseReactTsxScaffold(prompt, isEdit ? previousFiles : []);
   let { files, html, audit } = renderBlueprintToFiles(blueprint, preferReact);
   let usedLiveAi = false;
   let aiModelLabel = '';
@@ -2163,24 +2251,20 @@ export async function composeWithAgent(
     try {
       const contextFiles = (isEdit && previousFiles.length > 0 ? previousFiles : files)
         .filter((f) => f.path !== 'metadata.json' && f.path !== 'README.md')
-        .slice(0, 6)
-        .map((f) => ({ path: f.path, content: f.content.slice(0, 4500) }));
+        .slice(0, 5)
+        .map((f) => ({ path: f.path, content: f.content.slice(0, 4200) }));
 
       const aiPrompt = isEdit
         ? `Chỉnh sửa dự án đa tệp hiện tại theo đúng yêu cầu người dùng: "${prompt}". Trả về mảng files đầy đủ cho các tệp bị thay đổi hoặc toàn bộ dự án (index.html, src/styles.css, src/app.js hoặc src/App.tsx). Giữ tiếng Việt có dấu tự nhiên, không emoji, không văn khoa trương, bố cục responsive, liên kết nội bộ dùng dạng #anchor.`
-        : `Tạo dự án web đa tệp hoàn chỉnh tiếng Việt có dấu cho "${blueprint.profile.siteName || blueprint.heroTitle}" theo yêu cầu: "${prompt}". Phong cách: ${BRAND_PALETTES[profile.personality].label}. Trả về đầy đủ các tệp gọn sạch (index.html, src/styles.css, src/app.js hoặc src/App.tsx + src/data.ts nếu phù hợp React), không emoji, tương phản rõ nét và chạy trực tiếp trên trình duyệt.`;
+        : `Lắp ghép và hoàn thiện một trang web đa tệp hoàn chỉnh bằng tiếng Việt có dấu theo đúng yêu cầu sau của người dùng: "${prompt}". Hãy tận dụng cấu trúc HTML, token CSS và hiệu ứng từ các mẫu kho F-Forum đính kèm (ATTACHED VAULT BLUEPRINTS) để tạo giao diện chỉn chu, hiện đại, có đủ CSS nền/thẻ/lưới trong src/styles.css và tương tác thật trong src/app.js (hoặc src/App.tsx nếu yêu cầu React). Không dùng tiêu đề lạc đề, không emoji, không trả về chuỗi \\n bị thoát kép.`;
 
       const aiRes = await apiClient.sendAiChat(
         {
           prompt: aiPrompt,
-          projectId: blueprint.profile.siteName || 'workspace-v4',
+          projectId: blueprint.heroTitle || 'workspace-v4',
+          model: model && model !== 'auto' ? model : undefined,
           files: contextFiles,
-          attachedItems: rec.matched.slice(0, 3).map((m) => ({
-            id: m.id,
-            kind: 'resource' as const,
-            title: m.title,
-            summary: `${m.library} — ${m.reason}`,
-          })),
+          attachedItems: hydratedSnippets,
         },
         hasByok ? byok : undefined
       );
@@ -2190,7 +2274,7 @@ export async function composeWithAgent(
           aiRes.files,
           isEdit && previousFiles.length > 0 ? previousFiles : files,
           {
-            title: blueprint.profile.siteName || blueprint.heroTitle,
+            title: blueprint.heroTitle || effectiveProfile.siteName || 'Dự án F-Forum',
             domain: blueprint.profile.domain,
             personality: blueprint.profile.personality,
             motionSignature: SIGNATURE_MOTIONS[blueprint.signature].label,
@@ -2198,20 +2282,27 @@ export async function composeWithAgent(
           }
         );
         if (merged && merged.length > 0) {
-          const bundled = bundleProjectFiles(merged, { enableConsoleBridge: false });
-          if (bundled.standaloneHtml) {
-            const pal = resolveCraftPalette(
-              blueprint.profile.personality,
-              blueprint.themeMode,
-              blueprint.accentKey
-            );
-            audit = auditGeneratedPage(bundled.standaloneHtml, pal);
-            files = merged;
-            html = bundled.standaloneHtml;
-            usedLiveAi = true;
-            aiModelLabel = aiRes.modelUsed || (hasByok ? 'BYOK' : 'Gemini');
-            if (typeof aiRes.message === 'string' && aiRes.message.trim().length >= 8) {
-              summaryText = aiRes.message.trim();
+          const cssFile = merged.find((f) => /\.css$/i.test(f.path));
+          const hasRealCss = Boolean(cssFile && cssFile.content.includes('{') && cssFile.content.split('\n').length >= 8);
+          const hasInlineStyle = merged.some(
+            (f) => /\.html?$/i.test(f.path) && /<style[\s>][\s\S]{120,}<\/style>/i.test(f.content)
+          );
+          if (hasRealCss || hasInlineStyle) {
+            const bundled = bundleProjectFiles(merged, { enableConsoleBridge: false });
+            if (bundled.standaloneHtml) {
+              const pal = resolveCraftPalette(
+                blueprint.profile.personality,
+                blueprint.themeMode,
+                blueprint.accentKey
+              );
+              audit = auditGeneratedPage(bundled.standaloneHtml, pal);
+              files = merged;
+              html = bundled.standaloneHtml;
+              usedLiveAi = true;
+              aiModelLabel = aiRes.modelUsed || (hasByok ? 'BYOK' : 'Gemini');
+              if (typeof aiRes.message === 'string' && aiRes.message.trim().length >= 8) {
+                summaryText = aiRes.message.trim();
+              }
             }
           }
         }
