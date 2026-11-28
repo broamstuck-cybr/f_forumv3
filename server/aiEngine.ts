@@ -1,3 +1,4 @@
+import { execFile } from 'node:child_process';
 import dns from 'node:dns/promises';
 import type { IncomingHttpHeaders } from 'node:http';
 import net from 'node:net';
@@ -126,6 +127,79 @@ const ADMIN_OPENROUTER_MODELS = [
   { id: 'google/gemma-4-31b-it:free', label: 'Gemma 4 31B (Miễn phí)', tier: 'free' as const },
 ];
 
+const ADMIN_OPENCODE_MODELS = [
+  { id: 'opencode/deepseek-v4.1-flash-free', label: 'OpenCode · DeepSeek V4.1 Flash', tier: 'free' as const },
+  { id: 'opencode/hy4-flash-free', label: 'OpenCode · HY4 Flash', tier: 'free' as const },
+  { id: 'opencode/mimo-v2.6-flash-free', label: 'OpenCode · MiMo V2.6 Flash', tier: 'free' as const },
+  { id: 'opencode/nemotron-3.5-lightning-free', label: 'OpenCode · Nemotron 3.5', tier: 'free' as const },
+];
+
+const ADMIN_FREEBUFF_MODELS = [
+  { id: 'freebuff', label: 'Freebuff (Admin)', tier: 'free' as const },
+];
+
+const ADMIN_CUSTOM_MODELS = [
+  { id: 'gemini-4-hydrogen-high', label: 'Gemini 4 Hydrogen (High)', tier: 'balanced' as const },
+  { id: 'gemini-4-neon-high', label: 'Gemini 4 Neon (High)', tier: 'balanced' as const },
+  { id: 'claude-sonnet-4-6', label: 'Claude Sonnet 4.6', tier: 'balanced' as const },
+];
+
+function isLocalBridgePreset(preset: string | undefined): preset is 'opencode' | 'freebuff' {
+  return preset === 'opencode' || preset === 'freebuff';
+}
+
+async function runLocalStudioBridgeCli(
+  preset: 'opencode' | 'freebuff',
+  modelId: string,
+  systemInstruction: string,
+  userContent: string,
+  timeoutMs = 75_000
+): Promise<{ ok: boolean; text: string; error?: string }> {
+  if (process.env.VERCEL) {
+    return {
+      ok: false,
+      text: '',
+      error:
+        'OpenCode / Freebuff chạy cục bộ trên máy; để gọi từ web Vercel hãy dán URL HTTPS (9Router / Cloudflare Tunnel) vào Cài đặt Admin AI hoặc chọn OpenRouter / Gemini.',
+    };
+  }
+  const combinedPrompt = `${systemInstruction}\n\n${userContent}`;
+  const args =
+    preset === 'freebuff'
+      ? ['--timeout', String(Math.round(timeoutMs / 1000)), 'freebuff', combinedPrompt]
+      : [
+          '-m',
+          modelId || 'opencode/deepseek-v4.1-flash-free',
+          '--timeout',
+          String(Math.round(timeoutMs / 1000)),
+          'opencode',
+          combinedPrompt,
+        ];
+  return new Promise((resolve) => {
+    execFile(
+      'studio-bridge',
+      args,
+      { timeout: timeoutMs + 5000, maxBuffer: 4 * 1024 * 1024 },
+      (err, stdout, stderr) => {
+        if (err) {
+          resolve({
+            ok: false,
+            text: '',
+            error: sanitizeErrorText(stderr || err.message || 'Không gọi được studio-bridge cục bộ'),
+          });
+          return;
+        }
+        const out = String(stdout || '').trim();
+        if (!out) {
+          resolve({ ok: false, text: '', error: 'Cầu nối cục bộ trả về nội dung rỗng.' });
+          return;
+        }
+        resolve({ ok: true, text: out });
+      }
+    );
+  });
+}
+
 let openrouterCreditShortageUntil = 0;
 
 export function resetOpenRouterTierCache(): void {
@@ -139,9 +213,16 @@ export function getPublicAiRuntimeInfo(options?: { isAdmin?: boolean }): PublicA
     if (adminGw.enabled) {
       const baseUrlLower = (adminGw.baseUrl || '').toLowerCase();
       const isOr = adminGw.preset === 'openrouter' || baseUrlLower.includes('openrouter.ai');
+      const isGm = adminGw.preset === 'gemini' || baseUrlLower.includes('googleapis.com');
       const availableModels = isOr
         ? ADMIN_OPENROUTER_MODELS.map((m) => ({ ...m }))
-        : [{ id: adminGw.model, label: adminGw.model, tier: 'balanced' as const }];
+        : isGm
+          ? GEMINI_MODELS.map((m) => ({ id: m.id, label: `${m.label} (Admin)`, tier: m.tier }))
+          : adminGw.preset === 'opencode'
+            ? ADMIN_OPENCODE_MODELS.map((m) => ({ ...m }))
+            : adminGw.preset === 'freebuff'
+              ? ADMIN_FREEBUFF_MODELS.map((m) => ({ ...m }))
+              : ADMIN_CUSTOM_MODELS.map((m) => ({ ...m }));
       for (const extra of [adminGw.model, adminGw.buildModel, adminGw.chatModel]) {
         const clean = (extra || '').trim();
         if (clean && !availableModels.some((m) => m.id === clean)) {
@@ -149,7 +230,7 @@ export function getPublicAiRuntimeInfo(options?: { isAdmin?: boolean }): PublicA
         }
       }
       return {
-        activeProfile: isOr ? 'openrouter' : 'custom',
+        activeProfile: isOr ? 'openrouter' : isGm ? 'gemini' : 'custom',
         protocol: adminGw.protocol,
         defaultModel: adminGw.model || availableModels[0]?.id || 'deepseek/deepseek-v3.2',
         availableModels,
@@ -365,14 +446,14 @@ function buildModeSystemInstruction(
 
   if (intent === 'assistant') {
     base = [
-      'You are the official F-Forum v3 AI Assistant inside Workspace.',
+      'You are the official F-Forum v3 AI Assistant inside Workspace — a helpful, natural, intelligent Vietnamese AI partner.',
       FFORUM_COMPACT_KNOWLEDGE,
       'Respond ONLY with a compact valid JSON object:',
-      '{"mode":"assistant","message":"Câu trả lời tiếng Việt ngắn gọn, rõ ràng, thực tế (dùng gạch đầu dòng nếu cần)","suggestedResources":[{"id":"...","title":"...","library":"...","reason":"..."}],"files":[],"checksHint":["F-Forum assistant reply"]}',
+      '{"mode":"assistant","message":"Câu trả lời tiếng Việt tự nhiên, thông minh, đúng trọng tâm như trò chuyện trực tiếp với trợ lý AI (có thể xuống dòng hoặc gạch đầu dòng gọn gàng)","suggestedResources":[{"id":"...","title":"...","library":"...","reason":"..."}],"files":[],"checksHint":["F-Forum assistant reply"]}',
       'RULES:',
-      '1. Answer directly about F-Forum v3 web features, routes, Admin Panel, 5,909 free Vault resources, 58 motion recipes, or GitHub repo broamstuck-cybr/f_forumv3.',
-      '2. When the user asks to find components/templates/effects, pick the most relevant entries from MATCHED VAULT CANDIDATES and return them in suggestedResources so the user can click to build with them.',
-      '3. NEVER generate HTML/CSS/JS files in assistant mode (keep "files":[]). Keep replies crisp, accurate, zero hype, zero emojis.',
+      '1. Converse naturally like a real AI assistant: answer design/coding/brainstorming questions, explain F-Forum v3 features, Admin Panel, 5,909 free Vault resources, 58 motion recipes, or GitHub repo broamstuck-cybr/f_forumv3.',
+      '2. When the user asks to find components/templates/effects or brainstorm a site, pick the most relevant entries from MATCHED VAULT CANDIDATES and return them in suggestedResources so the user can click to assemble with them.',
+      '3. NEVER generate HTML/CSS/JS files in assistant mode (keep "files":[]). Keep replies natural, clear, accurate, zero hype, zero emojis.',
     ].join('\n');
   } else if (intent === 'patch') {
     base = [
@@ -386,9 +467,9 @@ function buildModeSystemInstruction(
       '</patch>',
       'OR for broader rewrites of a specific file, emit ONLY the changed <file path="...">...</file> blocks.',
       'RULES:',
-      '1. ONLY touch files needed for the user edit or error fix — preserve existing brand identity, layout, and working code in untouched files.',
+      '1. OBEY THE USER REQUEST EXACTLY: implement every specific change the user asked for without dropping details or altering unrelated sections.',
       '2. Inside <find>, match the EXACT text from CURRENT WORKSPACE FILES. If unsure of exact whitespace, output the complete updated <file path="...">...</file> instead.',
-      '3. Maintain contrast >= 4.5:1, responsive 390px / 768px / 1440px, full Vietnamese diacritics, zero emojis, zero console errors, zero dead href="#" links.',
+      '3. Maintain contrast >= 4.5:1, responsive 390px / 768px / 1440px, horizontal nav (list-style: none; color: inherit), readable non-overlapping chart labels, full Vietnamese diacritics, zero emojis, zero console errors, zero dead href="#" links.',
     ].join('\n');
   } else {
     base = [
@@ -397,10 +478,10 @@ function buildModeSystemInstruction(
       'OUTPUT FORMAT (STRICT — DO NOT wrap XML tags inside markdown ``` code fences! Always emit ALL 3 files: index.html, src/styles.css, and src/app.js):',
       '<summary>1-2 câu tiếng Việt súc tích mô tả phong cách thiết kế, bảng màu, bố cục, mẫu Vault và công thức chuyển động vừa lắp ghép.</summary>',
       '<file path="index.html">',
-      'Complete, concise standalone HTML5 document (~110-200 lines) linking src/styles.css and src/app.js (plus Google Fonts fitting the brand with full Vietnamese diacritics, e.g. Be Vietnam Pro + Fraunces, Manrope + Newsreader, or Plus Jakarta Sans + IBM Plex Mono). Build 4-6 real sections (Header/Nav, Bespoke Hero with compact SVG/Canvas visual, Interactive Cards/Bento, Interactive Domain Widget/Calculator/Filter/Tabs, Showcase/Timeline, Contact/Quote/Booking Form, Footer). Tag adapted Vault sections with data-vault-id="<id>" and the applied Knowledge motion recipe with data-knowledge-recipe="<recipe-id>". Keep inline SVGs crisp & compact (<= 14 geometric primitives with explicit width/height/viewBox — NEVER dump multi-kilobyte SVG path walls).',
+      'Complete, concise standalone HTML5 document (~110-200 lines) linking src/styles.css and src/app.js (plus Google Fonts fitting the brand with full Vietnamese diacritics, e.g. Be Vietnam Pro + Fraunces, Manrope + Newsreader, or Plus Jakarta Sans + IBM Plex Mono). Build 4-6 real sections (Header/Nav, Bespoke Hero with compact SVG/Canvas visual, Interactive Cards/Bento, Interactive Domain Widget/Calculator/Filter/Tabs, Showcase/Timeline, Contact/Quote/Booking Form, Footer). Tag adapted Vault sections with data-vault-id="<id>" and the applied Knowledge motion recipe with data-knowledge-recipe="<recipe-id>". Keep inline SVGs crisp & compact (<= 14 geometric primitives with explicit width/height/viewBox and clean 11-12px non-overlapping labels — NEVER dump multi-kilobyte SVG path walls or oversized clipped chart text).',
       '</file>',
       '<file path="src/styles.css">',
-      'Complete unified CSS (~110-220 lines): ALWAYS include *, *::before, *::after { box-sizing: border-box; } and a { color: inherit; text-decoration: none; }, :root tokens, expressive typography scale, contrast >= 4.5:1, harmonized styles adapted from the provided Vault modules and Knowledge motion recipe, explicit SVG sizing limits, responsive @media for 390px / 768px / 1440px, focus-visible outlines, and @media (prefers-reduced-motion: reduce). NEVER wrap CSS in <style> tags.',
+      'Complete unified CSS (~110-220 lines): ALWAYS include *, *::before, *::after { box-sizing: border-box; }, header ul, nav ul { list-style: none; margin: 0; padding: 0; display: flex; gap: 20px; align-items: center; }, and header a, nav a { color: inherit; text-decoration: none; }, :root tokens, expressive typography scale, contrast >= 4.5:1, harmonized styles adapted from the provided Vault modules and Knowledge motion recipe, explicit SVG/chart sizing limits so labels never clip or overlap, responsive @media for 390px / 768px / 1440px, focus-visible outlines, and @media (prefers-reduced-motion: reduce). NEVER wrap CSS in <style> tags.',
       '</file>',
       '<file path="src/app.js">',
       'REQUIRED working interactive JavaScript (~50-130 lines) implementing genuine product logic (tabs, filters, sliders, calculators, day/night toggles, interactive Canvas/SVG updates, drawers, validated forms, and fail-safe motion recipe behavior) with ZERO runtime errors. Output pure JS ONLY — NEVER include <script> or </script> tags inside src/app.js.',
@@ -1670,6 +1751,59 @@ export async function runAIGenerationStream(
     : poolQuota.allowed
       ? selectPoolCandidates()
       : [];
+  const adminDedicated = hooks?.isAdmin ? getInternalAdminDedicatedGateway() : null;
+  if (
+    adminDedicated &&
+    adminDedicated.enabled &&
+    !config.usingByok &&
+    isLocalBridgePreset(adminDedicated.preset) &&
+    !adminDedicated.baseUrl.trim() &&
+    !runningOnCloud
+  ) {
+    const cliModel = req.model?.trim() || adminDedicated.model;
+    hooks?.onStage?.({
+      stage: 'routing',
+      model: cliModel,
+      protocol: 'openai-compatible',
+      detail: `local-bridge:${adminDedicated.preset}`,
+    });
+    const sys = buildModeSystemInstruction(
+      intent,
+      config.systemPromptSuffix,
+      req.systemPrompt
+    );
+    const { userContent, matchedSuggestions } = buildModeUserPrompt(req, intent);
+    hooks?.onStage?.({
+      stage: 'generating',
+      model: cliModel,
+      protocol: 'openai-compatible',
+      detail: `local-bridge:${cliModel}`,
+    });
+    const cliRes = await runLocalStudioBridgeCli(adminDedicated.preset, cliModel, sys, userContent);
+    if (cliRes.ok) {
+      hooks?.onDelta?.(cliRes.text);
+      const parsed = parseStructuredLLMResponse(
+        cliRes.text,
+        { ...config, model: cliModel, protocol: 'openai-compatible' },
+        undefined,
+        `local:${adminDedicated.preset}`,
+        {
+          intent,
+          actualModel: cliModel,
+          fallbackSuggestions: matchedSuggestions,
+        }
+      );
+      if (parsed) {
+        hooks?.onStage?.({
+          stage: 'checking',
+          model: cliModel,
+          protocol: 'openai-compatible',
+        });
+        return parsed;
+      }
+    }
+  }
+
   const canCallUpstream = candidates.length > 0 && !blockedUpstream && poolQuota.allowed;
 
   hooks?.onStage?.({
@@ -2120,6 +2254,35 @@ export async function runLiveKeyPoolProbe(input: {
 
   if (mode === 'gateway') {
     resetOpenRouterTierCache();
+    const adminGw = target === 'admin' ? getInternalAdminDedicatedGateway() : null;
+    if (target === 'admin' && adminGw && isLocalBridgePreset(adminGw.preset) && !adminGw.baseUrl.trim()) {
+      const cliProbe = await runLocalStudioBridgeCli(
+        adminGw.preset,
+        adminGw.model,
+        'Trả lời ngắn gọn 1 câu tiếng Việt xác nhận kết nối thành công.',
+        input.prompt || 'Xin chào, xác nhận kết nối.',
+        30_000
+      );
+      return {
+        ok: cliProbe.ok,
+        statusCode: cliProbe.ok ? 200 : 502,
+        mode,
+        target,
+        keyId: `local-${adminGw.preset}`,
+        keyMask: `local:${adminGw.preset}`,
+        mask: `local:${adminGw.preset}`,
+        attemptedKeys: [`local:${adminGw.preset}`],
+        usedKeyMask: cliProbe.ok ? `local:${adminGw.preset}` : null,
+        model: adminGw.model,
+        protocol: 'openai-compatible',
+        failoverTriggered: false,
+        latencyMs: Date.now() - startedAt,
+        replyPreview: cliProbe.text.slice(0, 180),
+        preview: cliProbe.text.slice(0, 180),
+        tokens: emptyTokenCounter(),
+        error: cliProbe.error,
+      };
+    }
     const allowLocalTest = isAllowLocalTestUpstream();
     const urlCheck = validateUpstreamBaseUrl(config.baseUrl, { allowLocalTest });
     const dnsSafe = urlCheck.ok ? await verifyUpstreamHostDns(urlCheck.hostname, allowLocalTest) : false;

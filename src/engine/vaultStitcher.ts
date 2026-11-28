@@ -992,13 +992,29 @@ export function verifyAndEnhanceVaultAssembly(
     }
   }
 
-  // Guarantee clean base resets on src/styles.css if AI omitted box-sizing or nav link reset
-  if (stylesFile && !/box-sizing\s*:\s*border-box/i.test(stylesFile.content)) {
-    stylesFile.content = `*, *::before, *::after { box-sizing: border-box; }\nheader a, nav a { color: inherit; text-decoration: none; }\n${stylesFile.content}`;
-    stylesFile.updatedAt = now;
-  } else if (stylesFile && !/text-decoration\s*:\s*none/i.test(stylesFile.content)) {
-    stylesFile.content = `header a, nav a { color: inherit; text-decoration: none; }\n${stylesFile.content}`;
-    stylesFile.updatedAt = now;
+  if (stylesFile) {
+    const resetLines: string[] = [];
+    if (!/box-sizing\s*:\s*border-box/i.test(stylesFile.content)) {
+      resetLines.push('*, *::before, *::after { box-sizing: border-box; }');
+    }
+    if (!/list-style\s*:\s*none/i.test(stylesFile.content)) {
+      resetLines.push(
+        'header ul, nav ul { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; align-items: center; gap: 18px; }'
+      );
+    }
+    if (!/header\s+a,\s*nav\s+a/i.test(stylesFile.content)) {
+      resetLines.push('header a, nav a { color: inherit; text-decoration: none; }');
+    }
+    if (!/max-width\s*:\s*100%/i.test(stylesFile.content)) {
+      resetLines.push('img, svg, canvas { max-width: 100%; }');
+    }
+    if (!/svg\s+text\s*\{/i.test(stylesFile.content)) {
+      resetLines.push('svg text { font-size: clamp(10px, 1.15vw, 13px); }');
+    }
+    if (resetLines.length > 0) {
+      stylesFile.content = `${resetLines.join('\n')}\n${stylesFile.content}`;
+      stylesFile.updatedAt = now;
+    }
   }
 
   let nextHtml = htmlFile.content;

@@ -6,7 +6,27 @@ export interface MiniNekoBotProps {
   theme: 'dark' | 'light';
 }
 
-type NekoMoodId = 'idle' | 'happy' | 'heart' | 'starry' | 'wink' | 'shy' | 'curious';
+type NekoMoodId =
+  | 'idle'
+  | 'happy'
+  | 'heart'
+  | 'starry'
+  | 'wink'
+  | 'shy'
+  | 'curious'
+  | 'flower'
+  | 'crown'
+  | 'idea'
+  | 'music'
+  | 'tea'
+  | 'gift'
+  | 'sleepy'
+  | 'clover'
+  | 'confetti'
+  | 'rainbow'
+  | 'butterfly'
+  | 'cheer'
+  | 'love_kiss';
 
 interface NekoMoodSpec {
   id: NekoMoodId;
@@ -20,101 +40,125 @@ interface NekoMoodSpec {
   rightScaleY: number;
   heartOpacity: number;
   starOpacity: number;
+  prop?: 'flower' | 'crown';
 }
 
 const NEKO_MOODS: NekoMoodSpec[] = [
-  {
-    id: 'idle',
-    eyeHex: 0x4ce0b0,
-    earGlowHex: 0x52d6aa,
-    blushHex: 0xf29b88,
-    blushOpacity: 0.42,
-    arcLeft: 0,
-    arcRight: 0,
-    leftScaleY: 1,
-    rightScaleY: 1,
-    heartOpacity: 0,
-    starOpacity: 0,
-  },
-  {
-    id: 'happy',
-    eyeHex: 0x57e8b9,
-    earGlowHex: 0x62ebbd,
-    blushHex: 0xf49888,
-    blushOpacity: 0.68,
-    arcLeft: 1,
-    arcRight: 1,
-    leftScaleY: 0.06,
-    rightScaleY: 0.06,
-    heartOpacity: 0,
-    starOpacity: 0,
-  },
-  {
-    id: 'heart',
-    eyeHex: 0xff8ea8,
-    earGlowHex: 0xff9eb5,
-    blushHex: 0xff7b9c,
-    blushOpacity: 0.85,
-    arcLeft: 0,
-    arcRight: 0,
-    leftScaleY: 0.04,
-    rightScaleY: 0.04,
-    heartOpacity: 1,
-    starOpacity: 0,
-  },
-  {
-    id: 'starry',
-    eyeHex: 0xf7cf76,
-    earGlowHex: 0xf5c469,
-    blushHex: 0xf29f7e,
-    blushOpacity: 0.5,
-    arcLeft: 0,
-    arcRight: 0,
-    leftScaleY: 0.04,
-    rightScaleY: 0.04,
-    heartOpacity: 0,
-    starOpacity: 1,
-  },
-  {
-    id: 'wink',
-    eyeHex: 0x4ce0b0,
-    earGlowHex: 0x76e8c2,
-    blushHex: 0xf49b88,
-    blushOpacity: 0.56,
-    arcLeft: 0,
-    arcRight: 1,
-    leftScaleY: 1.06,
-    rightScaleY: 0.06,
-    heartOpacity: 0,
-    starOpacity: 0,
-  },
-  {
-    id: 'shy',
-    eyeHex: 0xf0b284,
-    earGlowHex: 0xf2a58c,
-    blushHex: 0xf47f86,
-    blushOpacity: 0.9,
-    arcLeft: 1,
-    arcRight: 1,
-    leftScaleY: 0.06,
-    rightScaleY: 0.06,
-    heartOpacity: 0,
-    starOpacity: 0,
-  },
-  {
-    id: 'curious',
-    eyeHex: 0x7ad7e4,
-    earGlowHex: 0x7ad7e4,
-    blushHex: 0xf09b8a,
-    blushOpacity: 0.3,
-    arcLeft: 0,
-    arcRight: 0,
-    leftScaleY: 1.14,
-    rightScaleY: 0.72,
-    heartOpacity: 0,
-    starOpacity: 0,
-  },
+  { id: 'idle', eyeHex: 0x4ce0b0, earGlowHex: 0x52d6aa, blushHex: 0xf29b88, blushOpacity: 0.42, arcLeft: 0, arcRight: 0, leftScaleY: 1, rightScaleY: 1, heartOpacity: 0, starOpacity: 0 },
+  { id: 'happy', eyeHex: 0x57e8b9, earGlowHex: 0x62ebbd, blushHex: 0xf49888, blushOpacity: 0.68, arcLeft: 1, arcRight: 1, leftScaleY: 0.06, rightScaleY: 0.06, heartOpacity: 0, starOpacity: 0 },
+  { id: 'flower', eyeHex: 0xff9bb5, earGlowHex: 0xff9eb5, blushHex: 0xff8ea8, blushOpacity: 0.85, arcLeft: 1, arcRight: 1, leftScaleY: 0.06, rightScaleY: 0.06, heartOpacity: 0, starOpacity: 0, prop: 'flower' },
+  { id: 'heart', eyeHex: 0xff8ea8, earGlowHex: 0xff9eb5, blushHex: 0xff7b9c, blushOpacity: 0.85, arcLeft: 0, arcRight: 0, leftScaleY: 0.04, rightScaleY: 0.04, heartOpacity: 1, starOpacity: 0 },
+  { id: 'starry', eyeHex: 0xf7cf76, earGlowHex: 0xf5c469, blushHex: 0xf29f7e, blushOpacity: 0.5, arcLeft: 0, arcRight: 0, leftScaleY: 0.04, rightScaleY: 0.04, heartOpacity: 0, starOpacity: 1 },
+  { id: 'crown', eyeHex: 0xf7cf76, earGlowHex: 0xffe08a, blushHex: 0xf2a788, blushOpacity: 0.62, arcLeft: 1, arcRight: 1, leftScaleY: 0.06, rightScaleY: 0.06, heartOpacity: 0, starOpacity: 0, prop: 'crown' },
+  { id: 'wink', eyeHex: 0x4ce0b0, earGlowHex: 0x76e8c2, blushHex: 0xf49b88, blushOpacity: 0.56, arcLeft: 0, arcRight: 1, leftScaleY: 1.06, rightScaleY: 0.06, heartOpacity: 0, starOpacity: 0 },
+  { id: 'shy', eyeHex: 0xf0b284, earGlowHex: 0xf2a58c, blushHex: 0xf47f86, blushOpacity: 0.92, arcLeft: 1, arcRight: 1, leftScaleY: 0.06, rightScaleY: 0.06, heartOpacity: 0, starOpacity: 0 },
+  { id: 'curious', eyeHex: 0x7ad7e4, earGlowHex: 0x7ad7e4, blushHex: 0xf09b8a, blushOpacity: 0.3, arcLeft: 0, arcRight: 0, leftScaleY: 1.14, rightScaleY: 0.72, heartOpacity: 0, starOpacity: 0 },
+  { id: 'idea', eyeHex: 0xffe08a, earGlowHex: 0xf7cf76, blushHex: 0xf4a588, blushOpacity: 0.44, arcLeft: 0, arcRight: 0, leftScaleY: 0.04, rightScaleY: 0.04, heartOpacity: 0, starOpacity: 1 },
+  { id: 'music', eyeHex: 0x5be8cb, earGlowHex: 0x4ce0b0, blushHex: 0xf29b88, blushOpacity: 0.54, arcLeft: 1, arcRight: 0, leftScaleY: 0.06, rightScaleY: 1.04, heartOpacity: 0, starOpacity: 0 },
+  { id: 'tea', eyeHex: 0x62ebbd, earGlowHex: 0x52d6aa, blushHex: 0xf49b88, blushOpacity: 0.6, arcLeft: 1, arcRight: 1, leftScaleY: 0.06, rightScaleY: 0.06, heartOpacity: 0, starOpacity: 0 },
+  { id: 'gift', eyeHex: 0xf5c874, earGlowHex: 0x52d6aa, blushHex: 0xff8ea8, blushOpacity: 0.68, arcLeft: 0, arcRight: 0, leftScaleY: 0.04, rightScaleY: 0.04, heartOpacity: 0, starOpacity: 1 },
+  { id: 'sleepy', eyeHex: 0x8cc9d4, earGlowHex: 0x76b8c4, blushHex: 0xf09b8a, blushOpacity: 0.36, arcLeft: 0, arcRight: 0, leftScaleY: 0.28, rightScaleY: 0.28, heartOpacity: 0, starOpacity: 0 },
+  { id: 'clover', eyeHex: 0x48d99a, earGlowHex: 0x62ebbd, blushHex: 0xf29b88, blushOpacity: 0.5, arcLeft: 0, arcRight: 1, leftScaleY: 1.06, rightScaleY: 0.06, heartOpacity: 0, starOpacity: 0 },
+  { id: 'confetti', eyeHex: 0x57e8b9, earGlowHex: 0xf7cf76, blushHex: 0xff8ea8, blushOpacity: 0.72, arcLeft: 1, arcRight: 1, leftScaleY: 0.06, rightScaleY: 0.06, heartOpacity: 0, starOpacity: 0 },
+  { id: 'rainbow', eyeHex: 0xf5c874, earGlowHex: 0x7ad7e4, blushHex: 0xff9bb5, blushOpacity: 0.64, arcLeft: 1, arcRight: 1, leftScaleY: 0.06, rightScaleY: 0.06, heartOpacity: 0, starOpacity: 0 },
+  { id: 'butterfly', eyeHex: 0x7ad7e4, earGlowHex: 0x9ce6f0, blushHex: 0xf29b88, blushOpacity: 0.45, arcLeft: 0, arcRight: 0, leftScaleY: 1.12, rightScaleY: 1.04, heartOpacity: 0, starOpacity: 0 },
+  { id: 'cheer', eyeHex: 0x57e8b9, earGlowHex: 0x76f0c8, blushHex: 0xf49888, blushOpacity: 0.7, arcLeft: 0, arcRight: 0, leftScaleY: 0.04, rightScaleY: 0.04, heartOpacity: 0, starOpacity: 1 },
+  { id: 'love_kiss', eyeHex: 0xff8ea8, earGlowHex: 0xff9eb5, blushHex: 0xff7b9c, blushOpacity: 0.94, arcLeft: 0, arcRight: 0, leftScaleY: 0.04, rightScaleY: 0.04, heartOpacity: 1, starOpacity: 0 },
 ];
+
+const NekoMoodEmblem: React.FC<{ mood: NekoMoodId }> = ({ mood }) => {
+  switch (mood) {
+    case 'flower':
+      return (
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <circle cx="12" cy="7.5" r="2.6" fill="#ff8ea8" />
+          <circle cx="16.2" cy="10.5" r="2.6" fill="#ff8ea8" />
+          <circle cx="14.6" cy="15.2" r="2.6" fill="#ff8ea8" />
+          <circle cx="9.4" cy="15.2" r="2.6" fill="#ff8ea8" />
+          <circle cx="7.8" cy="10.5" r="2.6" fill="#ff8ea8" />
+          <circle cx="12" cy="11.6" r="2.2" fill="#f7cf76" />
+          <path d="M12 16v5" stroke="#38c99a" strokeWidth="2.2" strokeLinecap="round" />
+        </svg>
+      );
+    case 'heart':
+    case 'love_kiss':
+      return (
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <path d="M12 19.5 5.4 13a4.2 4.2 0 0 1 6-6l.6.6.6-.6a4.2 4.2 0 0 1 6 6L12 19.5Z" fill="#ff8ea8" />
+        </svg>
+      );
+    case 'crown':
+      return (
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <path d="M4 17 6.2 8.5 12 12.5 17.8 8.5 20 17H4Z" fill="#f7cf76" stroke="#d99b26" strokeWidth="1.5" strokeLinejoin="round" />
+        </svg>
+      );
+    case 'idea':
+      return (
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-3.5 10.8c.7.5 1 1.3 1 2.2h5c0-.9.3-1.7 1-2.2A6 6 0 0 0 12 3Z" stroke="#f7cf76" strokeWidth="2.1" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      );
+    case 'music':
+      return (
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <path d="M9 17.5V7l9-2v10.5" stroke="#4ce0b0" strokeWidth="2.1" strokeLinecap="round" strokeLinejoin="round" />
+          <circle cx="6.8" cy="17.5" r="2.3" fill="#4ce0b0" />
+          <circle cx="15.8" cy="15.5" r="2.3" fill="#4ce0b0" />
+        </svg>
+      );
+    case 'tea':
+      return (
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <path d="M5 10h11v5a4.5 4.5 0 0 1-4.5 4.5h-2A4.5 4.5 0 0 1 5 15v-5Z" stroke="#4ce0b0" strokeWidth="2" />
+          <path d="M16 11.5h2a2 2 0 0 1 0 4h-2" stroke="#4ce0b0" strokeWidth="2" strokeLinecap="round" />
+        </svg>
+      );
+    case 'gift':
+      return (
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <rect x="4" y="9" width="16" height="11" rx="2" stroke="#f5c874" strokeWidth="2" />
+          <path d="M12 9v11M4 13h16" stroke="#4ce0b0" strokeWidth="2" />
+        </svg>
+      );
+    case 'sleepy':
+      return (
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <path d="M5 13h5l-5 5.5h5M13 5.5h6.5L13 13h6.5" stroke="#8cc9d4" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      );
+    case 'clover':
+      return (
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <circle cx="9.2" cy="9" r="3" fill="#4ce0b0" />
+          <circle cx="14.8" cy="9" r="3" fill="#4ce0b0" />
+          <circle cx="9.2" cy="14.4" r="3" fill="#4ce0b0" />
+          <circle cx="14.8" cy="14.4" r="3" fill="#4ce0b0" />
+        </svg>
+      );
+    case 'confetti':
+    case 'rainbow':
+    case 'cheer':
+    case 'starry':
+      return (
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <path d="M12 3.5 14 9l5.5 2-5.5 2-2 5.5-2-5.5-5.5-2L10 9l2-5.5Z" fill="#f7cf76" />
+        </svg>
+      );
+    case 'butterfly':
+      return (
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <path d="M12 12C9.5 6.8 4.4 6.4 4.6 10.6c.2 2.2 2.3 2.8 4.4 2.3-2 .8-3.3 2.5-2.1 4.4 1.3 2 4.3.4 5.1-3.3Zm0 0c2.5-5.2 7.6-5.6 7.4-1.4-.2 2.2-2.3 2.8-4.4 2.3 2 .8 3.3 2.5 2.1 4.4-1.3 2-4.3.4-5.1-3.3Z" stroke="#7ad7e4" strokeWidth="1.9" strokeLinejoin="round" />
+        </svg>
+      );
+    default:
+      return (
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <path d="M12 4.5 13.7 9.3 18.5 11 13.7 12.7 12 17.5 10.3 12.7 5.5 11 10.3 9.3 12 4.5Z" fill="#4ce0b0" />
+        </svg>
+      );
+  }
+};
 
 function createHeartGeometry(THREEMod: typeof THREE, size: number): THREE.ShapeGeometry {
   const s = new THREEMod.Shape();
@@ -469,6 +513,50 @@ export const MiniNekoBot: React.FC<MiniNekoBotProps> = ({ theme }) => {
         tailTip.position.set(0.38, 0.49, -0.18);
         tailPivot.add(tailTip);
 
+        // WHY: Add lightweight 3D flower & crown interactive props without altering the cat-bot silhouette.
+        const nekoFlowerProp = new THREEMod.Group();
+        const stemMat = track(new THREEMod.MeshStandardMaterial({ color: 0x2ea87e, roughness: 0.45 }));
+        const petalMat = track(
+          new THREEMod.MeshStandardMaterial({ color: 0xff8ea8, emissive: 0xe66586, emissiveIntensity: 0.38 })
+        );
+        const flowerStem = new THREEMod.Mesh(track(new THREEMod.CylinderGeometry(0.022, 0.025, 0.42, 8)), stemMat);
+        flowerStem.position.set(0, 0.16, 0);
+        nekoFlowerProp.add(flowerStem);
+        const nekoPetalGeo = track(new THREEMod.SphereGeometry(0.088, 10, 8));
+        for (let i = 0; i < 5; i += 1) {
+          const ang = (i * Math.PI * 2) / 5;
+          const p = new THREEMod.Mesh(nekoPetalGeo, petalMat);
+          p.position.set(Math.cos(ang) * 0.105, 0.4 + Math.sin(ang) * 0.105, 0.02);
+          p.scale.set(1, 1, 0.55);
+          nekoFlowerProp.add(p);
+        }
+        const flowerCenter = new THREEMod.Mesh(track(new THREEMod.SphereGeometry(0.068, 10, 8)), bellMat);
+        flowerCenter.position.set(0, 0.4, 0.055);
+        nekoFlowerProp.add(flowerCenter);
+        nekoFlowerProp.position.set(0.56, -0.34, 0.32);
+        nekoFlowerProp.rotation.set(0.18, -0.2, -0.25);
+        nekoFlowerProp.scale.setScalar(0.0001);
+        nekoFlowerProp.visible = false;
+        rootGroup.add(nekoFlowerProp);
+
+        const nekoCrownProp = new THREEMod.Group();
+        const crownRing = new THREEMod.Mesh(track(new THREEMod.TorusGeometry(0.22, 0.036, 10, 22)), bellMat);
+        crownRing.rotation.x = Math.PI / 2;
+        nekoCrownProp.add(crownRing);
+        const crownSpikeGeo = track(new THREEMod.ConeGeometry(0.052, 0.14, 6));
+        for (let i = 0; i < 5; i += 1) {
+          const ang = (i * Math.PI * 2) / 5;
+          const sp = new THREEMod.Mesh(crownSpikeGeo, bellMat);
+          sp.position.set(Math.cos(ang) * 0.19, 0.08, Math.sin(ang) * 0.19);
+          nekoCrownProp.add(sp);
+        }
+        nekoCrownProp.position.set(0, 0.94, 0.02);
+        nekoCrownProp.scale.setScalar(0.0001);
+        nekoCrownProp.visible = false;
+        headGroup.add(nekoCrownProp);
+        let nekoFlowerScale = 0;
+        let nekoCrownScale = 0;
+
         const shadowGeo = track(new THREEMod.CircleGeometry(0.42, 24));
         const shadowMat = track(
           new THREEMod.MeshBasicMaterial({
@@ -625,6 +713,26 @@ export const MiniNekoBot: React.FC<MiniNekoBotProps> = ({ theme }) => {
             rightEye.star.rotation.z = -t * 1.8;
           }
 
+          const targetFlower = spec.prop === 'flower' ? 1 : 0;
+          nekoFlowerScale += (targetFlower - nekoFlowerScale) * lerpRate;
+          nekoFlowerProp.visible = nekoFlowerScale > 0.02;
+          if (nekoFlowerProp.visible) {
+            nekoFlowerProp.scale.setScalar(nekoFlowerScale);
+            nekoFlowerProp.rotation.z = -0.25 + (reduced ? 0 : Math.sin(t * 3.6) * 0.14);
+            rightPaw.position.z = 0.28;
+          } else {
+            rightPaw.position.z = 0.14;
+          }
+
+          const targetCrown = spec.prop === 'crown' ? 1 : 0;
+          nekoCrownScale += (targetCrown - nekoCrownScale) * lerpRate;
+          nekoCrownProp.visible = nekoCrownScale > 0.02;
+          if (nekoCrownProp.visible) {
+            nekoCrownProp.scale.setScalar(nekoCrownScale);
+            nekoCrownProp.position.y = 0.94 + (reduced ? 0 : Math.sin(t * 2.8) * 0.035);
+            nekoCrownProp.rotation.y = reduced ? 0 : t * 0.75;
+          }
+
           shadowMesh.scale.setScalar(1 - (idleBob + hopY) * 0.38);
 
           renderer.render(scene, camera);
@@ -729,6 +837,11 @@ export const MiniNekoBot: React.FC<MiniNekoBotProps> = ({ theme }) => {
           </svg>
         )}
       </span>
+      {activeMood.id !== 'idle' && (
+        <span key={`${activeMood.id}-${moodIdx}`} className="hm-neko-emblem" aria-hidden="true">
+          <NekoMoodEmblem mood={activeMood.id} />
+        </span>
+      )}
     </button>
   );
 };

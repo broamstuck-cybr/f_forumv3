@@ -417,10 +417,7 @@ function formatMasterpiecePrompt(
   item: ChatLandingShowcaseItem,
   raw: MotionSiteFullRecord
 ): string {
-  const rawTitle = (raw.title || item.title).trim();
   const header = `[Mẫu gốc: ${item.title} · motionsites/${item.id}]`;
-  const guidance = `Thiết kế website tiếng Việt hoàn chỉnh lấy cảm hứng trực tiếp từ "${item.title}" (${item.category}, bản gốc "${rawTitle}"). Giữ trọn tinh thần thị giác, bảng màu, kiểu chữ, nhịp chuyển động/ánh sáng và cơ chế tương tác đặc trưng bên dưới; mở rộng thành trang web nhiều phần hoàn chỉnh (Hero, khu trình diễn/tương tác chính, tính năng chi tiết, CTA), responsive 390px/768px/1440px, kèm JS tương tác chạy thật trong src/app.js và thay media CDN ngoài bằng SVG/Canvas/CSS nội tuyến cùng mô-đun Vault phù hợp.`;
-
   const cleaned = cleanRawSpec(raw.promptText || '');
   if (!cleaned) return item.prompt;
 
@@ -430,13 +427,13 @@ function formatMasterpiecePrompt(
   if (sections.length === 0) return item.prompt;
 
   const priorityRx =
-    /(token|color|palette|font|typography|css variable|layout|structure|scene|hero|stage|layer|switch|motion|scroll|shader|interaction|control|responsive|ribbon|depth|tour|panel)/i;
+    /(token|color|palette|font|typography|css variable|layout|structure|scene|hero|stage|layer|switch|motion|scroll|shader|interaction|control|responsive|ribbon|depth|tour|panel|section|card|grid)/i;
 
   const picked: string[] = [];
-  let usedLen = header.length + guidance.length + 46;
-  const maxTotal = 2500;
+  const maxTotal = 4200;
+  let usedLen = header.length + 140;
 
-  const lead = clipCleanly(sections[0].text, 960);
+  const lead = clipCleanly(sections[0].text, 1450);
   if (lead) {
     picked.push(lead);
     usedLen += lead.length + 2;
@@ -444,13 +441,13 @@ function formatMasterpiecePrompt(
 
   const rest = sections.slice(1);
   const prioritized = rest.filter(
-    (s) => priorityRx.test(s.heading) || priorityRx.test(s.text.slice(0, 140))
+    (s) => priorityRx.test(s.heading) || priorityRx.test(s.text.slice(0, 160))
   );
   const remaining = rest.filter((s) => !prioritized.includes(s));
 
   for (const sec of [...prioritized, ...remaining]) {
-    if (usedLen >= maxTotal - 160) break;
-    const budget = Math.min(440, maxTotal - usedLen - sec.heading.length - 10);
+    if (usedLen >= maxTotal - 180) break;
+    const budget = Math.min(620, maxTotal - usedLen - sec.heading.length - 10);
     if (budget < 120) break;
     const excerpt = clipCleanly(sec.text, budget);
     if (excerpt.length < 40) continue;
@@ -458,8 +455,10 @@ function formatMasterpiecePrompt(
     usedLen += sec.heading.length + excerpt.length + 4;
   }
 
-  const full = `${header}\n${guidance}\n\nĐặc tả thẩm mỹ & tương tác từ mẫu gốc:\n${picked.join('\n\n')}`;
-  const finalized = clipCleanly(full, 2580);
+  const tailNote =
+    'Yêu cầu bản Việt hóa: giữ trung thành tinh thần thẩm mỹ, bảng màu, nhịp chuyển động và tương tác của đặc tả mẫu gốc ở trên; nội dung hiển thị bằng tiếng Việt tự nhiên, responsive 390px/768px/1440px và lắp ghép thêm mô-đun thật từ kho F-Forum Vault.';
+  const full = `${header}\n${picked.join('\n\n')}\n\n${tailNote}`;
+  const finalized = clipCleanly(full, 4300);
   return finalized.length >= 600 ? finalized : item.prompt;
 }
 

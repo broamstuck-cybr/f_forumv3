@@ -40,18 +40,92 @@ import './workspace.css';
 
 const WS_SPLIT_RATIO_KEY = 'fforum_ws_split_ratio_v1';
 const WS_SESSION_STORAGE_KEY = 'fforum_ws_session_v1';
+const WS_CHAT_HISTORY_KEY = 'fforum_ws_chat_history_v1';
+const MAX_SAVED_CHAT_SESSIONS = 18;
 const DEFAULT_SPLIT_RATIO = 0.39;
 const MIN_SPLIT_RATIO = 0.24;
 const MAX_SPLIT_RATIO = 0.66;
 
+export interface WorkspaceChatSession {
+  id: string;
+  title: string;
+  files: WorkspaceFile[];
+  messages: AgentChatMessage[];
+  activeFilePath: string;
+  openTabs: string[];
+  savedAt: string;
+}
+
 interface PersistedWorkspaceSession {
   v: 1;
+  sessionId?: string;
   files: WorkspaceFile[];
   messages: AgentChatMessage[];
   activeFilePath: string;
   openTabs: string[];
   pageTitle: string;
   savedAt: string;
+}
+
+function makeChatSessionId(): string {
+  return `ws-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 7)}`;
+}
+
+function deriveChatSessionTitle(
+  messages: AgentChatMessage[],
+  fallbackTitle: string
+): string {
+  const cleanFallback = fallbackTitle.trim();
+  if (cleanFallback && cleanFallback !== 'Trang Web Mới' && cleanFallback !== 'Dự án mới') {
+    return cleanFallback.slice(0, 64);
+  }
+  const firstUser = messages.find((m) => m.role === 'user' && m.text.trim());
+  if (firstUser) {
+    const line = firstUser.text
+      .replace(/^\[Mẫu gốc:\s*([^·\]]+)(?:·[^\]]*)?\]\s*/i, '$1 — ')
+      .replace(/\s+/g, ' ')
+      .trim();
+    return line.slice(0, 64) || 'Cuộc trò chuyện mới';
+  }
+  return cleanFallback || 'Cuộc trò chuyện mới';
+}
+
+function readSavedChatHistory(): WorkspaceChatSession[] {
+  if (typeof window === 'undefined') return [];
+  try {
+    const raw = window.localStorage.getItem(WS_CHAT_HISTORY_KEY);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed)) return [];
+    return parsed
+      .filter(
+        (s): s is WorkspaceChatSession =>
+          Boolean(s) &&
+          typeof s.id === 'string' &&
+          typeof s.title === 'string' &&
+          Array.isArray(s.messages) &&
+          Array.isArray(s.files)
+      )
+      .slice(0, MAX_SAVED_CHAT_SESSIONS);
+  } catch {
+    return [];
+  }
+}
+
+function writeSavedChatHistory(list: WorkspaceChatSession[]): void {
+  if (typeof window === 'undefined') return;
+  const trimmed = list.slice(0, MAX_SAVED_CHAT_SESSIONS);
+  for (let limit = trimmed.length; limit >= 1; limit -= 1) {
+    try {
+      const serialized = JSON.stringify(trimmed.slice(0, limit));
+      if (serialized.length <= 1_800_000) {
+        window.localStorage.setItem(WS_CHAT_HISTORY_KEY, serialized);
+        return;
+      }
+    } catch {
+      // Fall through to smaller slice on storage quota pressure
+    }
+  }
 }
 
 function readSavedSplitRatio(): number {
@@ -287,6 +361,12 @@ export const WorkspaceView: React.FC = () => {
       },
     ];
   });
+  const [activeSessionId, setActiveSessionId] = useState<string>(
+    () => initialSessionRef.current?.sessionId || makeChatSessionId()
+  );
+  const [chatSessions, setChatSessions] = useState<WorkspaceChatSession[]>(() =>
+    readSavedChatHistory()
+  );
   const [matchedResources, setMatchedResources] = useState<MatchedVaultResource[]>([]);
   const [activeShowcaseId, setActiveShowcaseId] = useState<string | null>(null);
   const [publishedSlug, setPublishedSlug] = useState<string | null>(null);
@@ -307,16 +387,14 @@ export const WorkspaceView: React.FC = () => {
   const debounceTimerRef = useRef<number | null>(null);
   const abortRef = useRef<AbortController | null>(null);
 
-  // Persist user's dragged split pane ratio across reloads
   useEffect(() => {
     try {
       window.localStorage.setItem(WS_SPLIT_RATIO_KEY, String(splitRatio));
     } catch {
-      // Ignore storage quota / private mode restrictions
+      void 0;
     }
   }, [splitRatio]);
 
-  // Persist active AI workspace session across reloads
   useEffect(() => {
     if (busy) return;
     try {
@@ -324,23 +402,46 @@ export const WorkspaceView: React.FC = () => {
         window.localStorage.removeItem(WS_SESSION_STORAGE_KEY);
         return;
       }
+      const nowIso = new Date().toISOString();
+      const pageTitle = deriveChatSessionTitle(
+        messages,
+        blueprint?.heroTitle || savedProjectTitle || ''
+      );
       const payload: PersistedWorkspaceSession = {
         v: 1,
+        sessionId: activeSessionId,
         files,
         messages: messages.slice(-18),
         activeFilePath,
         openTabs,
-        pageTitle: blueprint?.heroTitle || savedProjectTitle || onboardingProfile?.siteName || '',
-        savedAt: new Date().toISOString(),
+        pageTitle,
+        savedAt: nowIso,
       };
       const serialized = JSON.stringify(payload);
       if (serialized.length <= 380_000) {
         window.localStorage.setItem(WS_SESSION_STORAGE_KEY, serialized);
       }
+      const sessionEntry: WorkspaceChatSession = {
+        id: activeSessionId,
+        title: pageTitle,
+        files,
+        messages: messages.slice(-18),
+        activeFilePath,
+        openTabs,
+        savedAt: nowIso,
+      };
+      setChatSessions((prev) => {
+        const next = [sessionEntry, ...prev.filter((s) => s.id !== activeSessionId)].slice(
+          0,
+          MAX_SAVED_CHAT_SESSIONS
+        );
+        writeSavedChatHistory(next);
+        return next;
+      });
     } catch {
-      // Ignore quota errors cleanly
+      void 0;
     }
-  }, [activeFilePath, blueprint?.heroTitle, busy, files, messages, onboardingProfile?.siteName, openTabs, savedProjectTitle]);
+  }, [activeFilePath, activeSessionId, blueprint?.heroTitle, busy, files, messages, openTabs, savedProjectTitle]);
 
   // Abort active stream on unmount
   useEffect(() => {
@@ -502,18 +603,75 @@ export const WorkspaceView: React.FC = () => {
     setSavedProjectTitle('');
     setErrorMessage(null);
     setLastPrompt('');
+    setActiveSessionId(makeChatSessionId());
     setViewMode('preview');
     setMobileTab('chat');
     try {
       window.localStorage.removeItem(WS_SESSION_STORAGE_KEY);
     } catch {
-      // Ignore storage restrictions
+      void 0;
     }
     addToast({
       type: 'info',
-      title: 'Đã tạo không gian dự án mới',
+      title: 'Đã tạo cuộc trò chuyện mới',
     });
   }, [addToast]);
+
+  const handleSelectChatSession = useCallback(
+    (sessionId: string) => {
+      const target = chatSessions.find((s) => s.id === sessionId);
+      if (!target) return;
+      if (abortRef.current) {
+        abortRef.current.abort();
+        abortRef.current = null;
+      }
+      setBusy(false);
+      setStreamProgress(null);
+      setShowOnboarding(false);
+      setActiveSessionId(target.id);
+      setMessages(target.messages);
+      commitProjectFilesImmediate(target.files, target.activeFilePath || target.files[0]?.path);
+      setOpenTabs(
+        target.openTabs.length > 0
+          ? target.openTabs.filter((t) => target.files.some((f) => f.path === t))
+          : pickInitialOpenTabs(target.files).tabs
+      );
+      setHistory(
+        target.files.length > 0
+          ? [
+              {
+                files: target.files,
+                blueprint: null,
+                activeFilePath: target.activeFilePath || target.files[0]?.path || 'index.html',
+              },
+            ]
+          : []
+      );
+      setBlueprint(null);
+      setSavedProjectTitle(target.title);
+      setActiveShowcaseId(null);
+      setPublishedSlug(null);
+      setErrorMessage(null);
+      const lastUserMsg = [...target.messages].reverse().find((m) => m.role === 'user');
+      setLastPrompt(lastUserMsg?.text || '');
+      setMobileTab('chat');
+    },
+    [chatSessions, commitProjectFilesImmediate]
+  );
+
+  const handleDeleteChatSession = useCallback(
+    (sessionId: string) => {
+      setChatSessions((prev) => {
+        const next = prev.filter((s) => s.id !== sessionId);
+        writeSavedChatHistory(next);
+        return next;
+      });
+      if (sessionId === activeSessionId) {
+        handleNewProject();
+      }
+    },
+    [activeSessionId, handleNewProject]
+  );
 
   const runCompose = useCallback(
     async (
@@ -933,10 +1091,11 @@ export const WorkspaceView: React.FC = () => {
     setOnboardingProfile(profile);
     setShowOnboarding(false);
     setActiveShowcaseId(null);
-    void runCompose(buildAutoPromptFromProfile(profile), {
-      profileOverride: profile,
-      resetCurrent: true,
-      allowGuestPreview: true,
+    // WHY: Never auto-send a canned prompt after onboarding; let the user choose a showcase masterpiece or type their own request.
+    addToast({
+      type: 'success',
+      title: 'Đã lưu tùy chọn không gian làm việc',
+      message: 'Chọn một mẫu gợi ý bên khung Chat hoặc tự mô tả ý tưởng để bắt đầu.',
     });
   };
 
@@ -1347,6 +1506,17 @@ export const WorkspaceView: React.FC = () => {
           <AgentChatPane
             profile={blueprint?.profile ?? onboardingProfile}
             messages={messages}
+            chatSessions={chatSessions.map((s) => ({
+              id: s.id,
+              title: s.title,
+              savedAt: s.savedAt,
+              messageCount: s.messages.length,
+              fileCount: s.files.length,
+            }))}
+            activeSessionId={activeSessionId}
+            onNewChat={handleNewProject}
+            onSelectSession={handleSelectChatSession}
+            onDeleteSession={handleDeleteChatSession}
             busy={busy}
             streamProgress={streamProgress}
             errorMessage={errorMessage}

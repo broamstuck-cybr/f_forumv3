@@ -103,9 +103,22 @@ function detectPresetId(byok?: BYOKConfig): string {
   return 'openai';
 }
 
+export interface ChatSessionSummary {
+  id: string;
+  title: string;
+  savedAt: string;
+  messageCount: number;
+  fileCount: number;
+}
+
 export interface AgentChatPaneProps {
   profile: OnboardingProfile | null;
   messages: AgentChatMessage[];
+  chatSessions?: ChatSessionSummary[];
+  activeSessionId?: string;
+  onNewChat?: () => void;
+  onSelectSession?: (sessionId: string) => void;
+  onDeleteSession?: (sessionId: string) => void;
   busy: boolean;
   streamProgress?: ComposeStreamProgress | null;
   errorMessage: string | null;
@@ -157,6 +170,11 @@ const QUICK_ASK_PROMPT =
 export const AgentChatPane: React.FC<AgentChatPaneProps> = ({
   profile,
   messages,
+  chatSessions = [],
+  activeSessionId = '',
+  onNewChat,
+  onSelectSession,
+  onDeleteSession,
   busy,
   streamProgress = null,
   errorMessage,
@@ -353,6 +371,19 @@ export const AgentChatPane: React.FC<AgentChatPaneProps> = ({
 
   const lastAssistant = [...messages].reverse().find((m) => m.role === 'assistant');
 
+  const [historyOpen, setHistoryOpen] = useState(false);
+
+  const formatSessionTime = (iso: string): string => {
+    const ms = Date.now() - Date.parse(iso);
+    if (!Number.isFinite(ms) || ms < 60_000) return 'Vừa xong';
+    const mins = Math.floor(ms / 60_000);
+    if (mins < 60) return `${mins} phút trước`;
+    const hours = Math.floor(mins / 60);
+    if (hours < 24) return `${hours} giờ trước`;
+    const days = Math.floor(hours / 24);
+    return `${days} ngày trước`;
+  };
+
   const contextSummary = profile?.siteName
     ? `${ROLE_LABELS[profile.role]} · ${profile.siteName} · ${BRAND_PALETTES[profile.personality].label}`
     : 'Workspace AI · Tự thiết kế & lập trình đa tệp';
@@ -363,19 +394,122 @@ export const AgentChatPane: React.FC<AgentChatPaneProps> = ({
         <span className="ws-chat__ctxText" title={contextSummary}>
           {contextSummary}
         </span>
-        <button
-          type="button"
-          className="ws-iconBtn ws-iconBtn--sm lg-pill"
-          onClick={onEditOnboarding}
-          aria-label="Sửa thiết lập 5 bước"
-          title="Sửa 5 bước"
-        >
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.85" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-            <path d="M12 20h9" />
-            <path d="M16.5 3.5a2.12 2.12 0 1 1 3 3L7 19l-4 1 1-4Z" />
-          </svg>
-        </button>
+        <div className="ws-chat__ctxActions">
+          <button
+            type="button"
+            className={`ws-iconBtn ws-iconBtn--sm lg-pill${historyOpen ? ' is-active' : ''}`}
+            onClick={() => setHistoryOpen((v) => !v)}
+            aria-expanded={historyOpen}
+            aria-label={`Lịch sử chat (${chatSessions.length})`}
+            title="Lịch sử chat"
+          >
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
+              <path d="M3 3v5h5" />
+              <path d="M12 7v5l4 2" />
+            </svg>
+            {chatSessions.length > 0 && (
+              <span className="ws-historyCount" aria-hidden="true">
+                {chatSessions.length}
+              </span>
+            )}
+          </button>
+
+          {onNewChat && (
+            <button
+              type="button"
+              className="ws-iconBtn ws-iconBtn--sm lg-pill"
+              onClick={() => {
+                setHistoryOpen(false);
+                onNewChat();
+              }}
+              aria-label="Tạo chat mới"
+              title="Tạo chat mới"
+            >
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <path d="M12 5v14" />
+                <path d="M5 12h14" />
+              </svg>
+            </button>
+          )}
+
+          <button
+            type="button"
+            className="ws-iconBtn ws-iconBtn--sm lg-pill"
+            onClick={onEditOnboarding}
+            aria-label="Sửa thiết lập 5 bước"
+            title="Sửa 5 bước"
+          >
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.85" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <path d="M12 20h9" />
+              <path d="M16.5 3.5a2.12 2.12 0 1 1 3 3L7 19l-4 1 1-4Z" />
+            </svg>
+          </button>
+        </div>
       </div>
+
+      {historyOpen && (
+        <div className="ws-historyDrawer" role="region" aria-label="Danh sách lịch sử chat">
+          <div className="ws-historyDrawer__head">
+            <span>Lịch sử chat ({chatSessions.length})</span>
+            {onNewChat && (
+              <button
+                type="button"
+                className="ws-historyNewBtn"
+                onClick={() => {
+                  setHistoryOpen(false);
+                  onNewChat();
+                }}
+              >
+                + Chat mới
+              </button>
+            )}
+          </div>
+          {chatSessions.length === 0 ? (
+            <p className="ws-historyDrawer__empty">
+              Chưa có cuộc trò chuyện nào được lưu. Bắt đầu nhắn tin để tự động lưu lại.
+            </p>
+          ) : (
+            <ul className="ws-historyList">
+              {chatSessions.map((item) => {
+                const isCurrent = item.id === activeSessionId;
+                return (
+                  <li key={item.id} className={`ws-historyItem${isCurrent ? ' is-active' : ''}`}>
+                    <button
+                      type="button"
+                      className="ws-historyItem__btn"
+                      onClick={() => {
+                        onSelectSession?.(item.id);
+                        setHistoryOpen(false);
+                      }}
+                    >
+                      <span className="ws-historyItem__title">{item.title}</span>
+                      <span className="ws-historyItem__meta">
+                        {formatSessionTime(item.savedAt)} · {item.messageCount} tin · {item.fileCount} tệp
+                      </span>
+                    </button>
+                    {onDeleteSession && (
+                      <button
+                        type="button"
+                        className="ws-historyItem__del"
+                        onClick={() => onDeleteSession(item.id)}
+                        aria-label={`Xóa lịch sử ${item.title}`}
+                        title="Xóa"
+                      >
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                          <path d="M3 6h18" />
+                          <path d="M8 6V4h8v2" />
+                          <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6" />
+                        </svg>
+                      </button>
+                    )}
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+        </div>
+      )}
 
       <div className="ws-chat__feed">
         {messages.length === 0 && !busy && (

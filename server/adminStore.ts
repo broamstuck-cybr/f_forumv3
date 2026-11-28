@@ -138,16 +138,44 @@ const DEFAULT_ADMIN_DEDICATED_GATEWAY: AdminDedicatedGatewayConfig = {
   updatedAt: '2026-11-28T00:00:00.000Z',
 };
 
+function isValidAdminPreset(val: unknown): val is AdminDedicatedGatewayPreset {
+  return (
+    val === 'openrouter' ||
+    val === 'gemini' ||
+    val === 'opencode' ||
+    val === 'freebuff' ||
+    val === 'custom'
+  );
+}
+
+function defaultBaseUrlForAdminPreset(preset: AdminDedicatedGatewayPreset): string {
+  if (preset === 'openrouter') return 'https://openrouter.ai/api/v1';
+  if (preset === 'gemini') return 'https://generativelanguage.googleapis.com/v1beta';
+  return '';
+}
+
+function defaultModelForAdminPreset(preset: AdminDedicatedGatewayPreset): string {
+  if (preset === 'openrouter') return 'deepseek/deepseek-v3.2';
+  if (preset === 'gemini') return 'gemini-3-flash-preview';
+  if (preset === 'opencode') return 'opencode/deepseek-v4.1-flash-free';
+  if (preset === 'freebuff') return 'freebuff';
+  return 'gemini-4-hydrogen-high';
+}
+
 function normalizeAdminDedicatedGateway(
   raw?: Partial<AdminDedicatedGatewayConfig>
 ): AdminDedicatedGatewayConfig {
-  const preset: AdminDedicatedGatewayPreset = raw?.preset === 'custom' ? 'custom' : 'openrouter';
+  const preset: AdminDedicatedGatewayPreset = isValidAdminPreset(raw?.preset) ? raw.preset : 'openrouter';
   const protocol: AIProtocol =
-    raw?.protocol === 'anthropic' || raw?.protocol === 'gemini' ? raw.protocol : 'openai-compatible';
+    preset === 'gemini'
+      ? 'gemini'
+      : raw?.protocol === 'anthropic' || raw?.protocol === 'gemini'
+        ? raw.protocol
+        : 'openai-compatible';
   const rawBaseUrl = typeof raw?.baseUrl === 'string' ? raw.baseUrl.trim().replace(/\/+$/, '') : '';
-  const baseUrl = rawBaseUrl || (preset === 'openrouter' ? DEFAULT_ADMIN_DEDICATED_GATEWAY.baseUrl : '');
+  const baseUrl = rawBaseUrl || defaultBaseUrlForAdminPreset(preset);
   const rawModel = typeof raw?.model === 'string' ? raw.model.trim() : '';
-  const model = rawModel || (preset === 'openrouter' ? DEFAULT_ADMIN_DEDICATED_GATEWAY.model : '');
+  const model = rawModel || defaultModelForAdminPreset(preset);
   const chatModel = typeof raw?.chatModel === 'string' && raw.chatModel.trim() ? raw.chatModel.trim() : undefined;
   const buildModel = typeof raw?.buildModel === 'string' && raw.buildModel.trim() ? raw.buildModel.trim() : undefined;
   const maxOutputTokens =
@@ -637,6 +665,14 @@ export function getInternalAdminDedicatedGateway(): AdminDedicatedGatewayConfig 
     if (savedOrKey) {
       effectiveKey = savedOrKey;
     }
+  } else if (!effectiveKey && ag.preset === 'gemini') {
+    const savedGeminiKey =
+      (gw.profiles?.gemini?.apiKey || '').trim() ||
+      (process.env.AI_API_KEY_1 || '').trim() ||
+      (process.env.AI_API_KEY_2 || '').trim();
+    if (savedGeminiKey) {
+      effectiveKey = savedGeminiKey;
+    }
   }
   return {
     ...ag,
@@ -759,24 +795,29 @@ export function updateGatewayOverride(
   if (input.adminGateway || input.clearAdminApiKey === true) {
     const prevAg = normalizeAdminDedicatedGateway(current.adminGateway);
     const agIn = input.adminGateway || {};
-    const nextPreset: AdminDedicatedGatewayPreset =
-      agIn.preset === 'custom' ? 'custom' : agIn.preset === 'openrouter' ? 'openrouter' : prevAg.preset;
+    const nextPreset: AdminDedicatedGatewayPreset = isValidAdminPreset(agIn.preset)
+      ? agIn.preset
+      : prevAg.preset;
     const nextProtocol: AIProtocol =
-      agIn.protocol === 'openai-compatible' || agIn.protocol === 'anthropic' || agIn.protocol === 'gemini'
-        ? agIn.protocol
-        : nextPreset === 'openrouter' && agIn.preset === 'openrouter'
-          ? 'openai-compatible'
-          : prevAg.protocol;
+      nextPreset === 'gemini'
+        ? 'gemini'
+        : agIn.protocol === 'openai-compatible' || agIn.protocol === 'anthropic' || agIn.protocol === 'gemini'
+          ? agIn.protocol
+          : nextPreset !== prevAg.preset
+            ? 'openai-compatible'
+            : prevAg.protocol;
     const nextBaseUrl =
-      typeof agIn.baseUrl === 'string' && agIn.baseUrl.trim()
-        ? agIn.baseUrl.trim().replace(/\/+$/, '')
-        : nextPreset === 'openrouter' && !prevAg.baseUrl
-          ? DEFAULT_ADMIN_DEDICATED_GATEWAY.baseUrl
+      typeof agIn.baseUrl === 'string'
+        ? agIn.baseUrl.trim().replace(/\/+$/, '') || defaultBaseUrlForAdminPreset(nextPreset)
+        : nextPreset !== prevAg.preset
+          ? defaultBaseUrlForAdminPreset(nextPreset)
           : prevAg.baseUrl;
     const nextModel =
       typeof agIn.model === 'string' && agIn.model.trim()
         ? agIn.model.trim()
-        : prevAg.model;
+        : nextPreset !== prevAg.preset
+          ? defaultModelForAdminPreset(nextPreset)
+          : prevAg.model;
     const nextChatModel =
       typeof agIn.chatModel === 'string'
         ? agIn.chatModel.trim() || undefined

@@ -89,6 +89,24 @@ const ADMIN_OPENROUTER_PRESETS = [
   { id: 'openrouter/auto-smart', label: 'Tự động chọn model', swatch: 'var(--fg-muted)' },
 ];
 
+const ADMIN_OPENCODE_PRESETS = [
+  { id: 'opencode/deepseek-v4.1-flash-free', label: 'OpenCode · DeepSeek V4.1 Flash (Free)', swatch: 'var(--accent)' },
+  { id: 'opencode/hy4-flash-free', label: 'OpenCode · HY4 Flash (Free)', swatch: 'var(--green)' },
+  { id: 'opencode/mimo-v2.6-flash-free', label: 'OpenCode · MiMo V2.6 Flash (Free)', swatch: 'var(--harbour)' },
+  { id: 'opencode/nemotron-3.5-lightning-free', label: 'OpenCode · Nemotron 3.5 Lightning (Free)', swatch: 'var(--amber)' },
+];
+
+const ADMIN_FREEBUFF_PRESETS = [
+  { id: 'freebuff', label: 'Freebuff API / Bridge (Mặc định)', swatch: 'var(--accent)' },
+];
+
+const ADMIN_CUSTOM_PRESETS = [
+  { id: 'gemini-4-hydrogen-high', label: 'Gemini 4 Hydrogen (High) — qua cổng riêng', swatch: 'var(--accent)' },
+  { id: 'gemini-4-neon-high', label: 'Gemini 4 Neon (High) — qua cổng riêng', swatch: 'var(--green)' },
+  { id: 'claude-sonnet-4-6', label: 'Claude Sonnet 4.6 — qua cổng riêng', swatch: 'var(--amber)' },
+  { id: 'deepseek/deepseek-v3.2', label: 'DeepSeek V3.2 — qua 9Router / Tunnel', swatch: 'var(--harbour)' },
+];
+
 function formatShortDay(isoDate: string): string {
   const parts = isoDate.split('-');
   if (parts.length !== 3) return isoDate;
@@ -466,18 +484,37 @@ export const AdminView: React.FC = () => {
     setAdminGwProbeNote(null);
     if (preset === 'openrouter') {
       setAdminGwProtocol('openai-compatible');
-      if (!adminGwBaseUrl.trim() || !adminGwBaseUrl.toLowerCase().includes('openrouter.ai')) {
-        setAdminGwBaseUrl('https://openrouter.ai/api/v1');
-      }
-      if (!adminGwModel.trim() || !ADMIN_OPENROUTER_PRESETS.some((m) => m.id === adminGwModel)) {
+      setAdminGwBaseUrl('https://openrouter.ai/api/v1');
+      if (!ADMIN_OPENROUTER_PRESETS.some((m) => m.id === adminGwModel)) {
         setAdminGwModel('deepseek/deepseek-v3.2');
       }
-    } else {
-      if (adminGwBaseUrl.trim() === 'https://openrouter.ai/api/v1') {
+    } else if (preset === 'gemini') {
+      setAdminGwProtocol('gemini');
+      setAdminGwBaseUrl('https://generativelanguage.googleapis.com/v1beta');
+      if (!GEMINI_MODEL_PRESETS.some((m) => m.id === adminGwModel)) {
+        setAdminGwModel('gemini-3-flash-preview');
+      }
+    } else if (preset === 'opencode') {
+      setAdminGwProtocol('openai-compatible');
+      if (adminGwBaseUrl.includes('openrouter.ai') || adminGwBaseUrl.includes('googleapis.com')) {
         setAdminGwBaseUrl('');
       }
-      if (ADMIN_OPENROUTER_PRESETS.some((m) => m.id === adminGwModel)) {
-        setAdminGwModel('');
+      if (!ADMIN_OPENCODE_PRESETS.some((m) => m.id === adminGwModel)) {
+        setAdminGwModel('opencode/deepseek-v4.1-flash-free');
+      }
+    } else if (preset === 'freebuff') {
+      setAdminGwProtocol('openai-compatible');
+      if (adminGwBaseUrl.includes('openrouter.ai') || adminGwBaseUrl.includes('googleapis.com')) {
+        setAdminGwBaseUrl('');
+      }
+      setAdminGwModel('freebuff');
+    } else {
+      setAdminGwProtocol('openai-compatible');
+      if (adminGwBaseUrl.includes('openrouter.ai') || adminGwBaseUrl.includes('googleapis.com')) {
+        setAdminGwBaseUrl('');
+      }
+      if (!adminGwModel.trim() || ADMIN_OPENROUTER_PRESETS.some((m) => m.id === adminGwModel)) {
+        setAdminGwModel('gemini-4-hydrogen-high');
       }
     }
   };
@@ -487,18 +524,32 @@ export const AdminView: React.FC = () => {
     const cleanUrl =
       adminGwPreset === 'openrouter' && !adminGwBaseUrl.trim()
         ? 'https://openrouter.ai/api/v1'
-        : adminGwBaseUrl.trim();
+        : adminGwPreset === 'gemini' && !adminGwBaseUrl.trim()
+          ? 'https://generativelanguage.googleapis.com/v1beta'
+          : adminGwBaseUrl.trim();
     const cleanModel =
-      adminGwPreset === 'openrouter' && !adminGwModel.trim()
+      adminGwModel.trim() ||
+      (adminGwPreset === 'openrouter'
         ? 'deepseek/deepseek-v3.2'
-        : adminGwModel.trim();
+        : adminGwPreset === 'gemini'
+          ? 'gemini-3-flash-preview'
+          : adminGwPreset === 'opencode'
+            ? 'opencode/deepseek-v4.1-flash-free'
+            : adminGwPreset === 'freebuff'
+              ? 'freebuff'
+              : 'gemini-4-hydrogen-high');
     if ((adminGwEnabled || requireConfigured) && adminGwPreset === 'custom' && (!cleanUrl || !cleanModel)) {
       return null;
     }
     return {
       enabled: adminGwEnabled,
       preset: adminGwPreset,
-      protocol: adminGwPreset === 'openrouter' ? ('openai-compatible' as AIProtocol) : adminGwProtocol,
+      protocol:
+        adminGwPreset === 'gemini'
+          ? ('gemini' as AIProtocol)
+          : adminGwPreset === 'custom'
+            ? adminGwProtocol
+            : ('openai-compatible' as AIProtocol),
       baseUrl: cleanUrl,
       model: cleanModel,
       chatModel: cleanModel || undefined,
@@ -1725,21 +1776,51 @@ export const AdminView: React.FC = () => {
                       </label>
                     </div>
 
-                    <div className="adm-profile-bar" role="group" aria-label="Chọn loại cổng AI riêng cho Admin">
+                    <div className="adm-profile-bar" role="group" aria-label="Chọn nhà cung cấp AI riêng cho Admin">
                       <button
                         type="button"
                         disabled={adminGwSaving || adminGwTesting}
                         className={`adm-profile-btn${adminGwPreset === 'openrouter' ? ' is-active' : ''}`}
                         onClick={() => handleSelectAdminPreset('openrouter')}
                       >
-                        <strong>OpenRouter Cao cấp (Admin)</strong>
+                        <strong>OpenRouter Cao cấp</strong>
                         <span className="adm-field-hint">
-                          {adminGwState?.maskedKey
+                          {adminGwState?.maskedKey && adminGwPreset === 'openrouter'
                             ? `Khóa riêng: ${adminGwState.maskedKey}`
                             : sharedOpenRouterMask && adminGwReuseOrKey
                               ? `Dùng chung: ${sharedOpenRouterMask}`
-                              : 'Chưa gắn khóa'}
+                              : 'DeepSeek / Claude / Pro'}
                         </span>
+                      </button>
+
+                      <button
+                        type="button"
+                        disabled={adminGwSaving || adminGwTesting}
+                        className={`adm-profile-btn${adminGwPreset === 'gemini' ? ' is-active' : ''}`}
+                        onClick={() => handleSelectAdminPreset('gemini')}
+                      >
+                        <strong>Google Gemini</strong>
+                        <span className="adm-field-hint">Tự dùng khóa Pool sẵn có</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        disabled={adminGwSaving || adminGwTesting}
+                        className={`adm-profile-btn${adminGwPreset === 'opencode' ? ' is-active' : ''}`}
+                        onClick={() => handleSelectAdminPreset('opencode')}
+                      >
+                        <strong>OpenCode (DeepSeek)</strong>
+                        <span className="adm-field-hint">DeepSeek V4.1 · Local hoặc Tunnel</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        disabled={adminGwSaving || adminGwTesting}
+                        className={`adm-profile-btn${adminGwPreset === 'freebuff' ? ' is-active' : ''}`}
+                        onClick={() => handleSelectAdminPreset('freebuff')}
+                      >
+                        <strong>Freebuff API</strong>
+                        <span className="adm-field-hint">Local CLI hoặc HTTPS Tunnel</span>
                       </button>
 
                       <button
@@ -1748,8 +1829,8 @@ export const AdminView: React.FC = () => {
                         className={`adm-profile-btn${adminGwPreset === 'custom' ? ' is-active' : ''}`}
                         onClick={() => handleSelectAdminPreset('custom')}
                       >
-                        <strong>Cổng riêng OpenAI-Compatible</strong>
-                        <span className="adm-field-hint">9Router / Tunnel / Proxy tự mở</span>
+                        <strong>Cổng riêng / Tunnel</strong>
+                        <span className="adm-field-hint">9Router / Bridge / Hydro High</span>
                       </button>
                     </div>
 
@@ -1804,8 +1885,110 @@ export const AdminView: React.FC = () => {
                             </span>
                           </label>
                         </>
+                      ) : adminGwPreset === 'gemini' ? (
+                        <>
+                          <div className="adm-field-group">
+                            <span className="adm-field-label">Chọn nhanh mô hình Google Gemini (Admin)</span>
+                            <SelectionList
+                              items={GEMINI_MODEL_PRESETS}
+                              selectedId={adminGwModel}
+                              onSelect={(id) => setAdminGwModel(id)}
+                              ariaLabel="Chọn mô hình Gemini cho Admin"
+                            />
+                          </div>
+
+                          <div className="adm-two-col">
+                            <label className="adm-field-group">
+                              <span className="adm-field-label">Mã mô hình Gemini</span>
+                              <input
+                                type="text"
+                                value={adminGwModel}
+                                onChange={(e) => setAdminGwModel(e.target.value)}
+                                placeholder="gemini-3-flash-preview"
+                                className="field font-mono"
+                              />
+                            </label>
+
+                            <label className="adm-field-group">
+                              <span className="adm-field-label">Giới hạn token đầu ra (1024–32768)</span>
+                              <input
+                                type="number"
+                                min={1024}
+                                max={32768}
+                                step={256}
+                                value={adminGwMaxTokens}
+                                onChange={(e) => setAdminGwMaxTokens(Number(e.target.value))}
+                                className="field font-mono"
+                              />
+                            </label>
+                          </div>
+                          <p className="adm-field-hint">
+                            Bỏ trống ô khóa riêng sẽ tự dùng bộ khóa Gemini sẵn có trong hệ thống.
+                          </p>
+                        </>
+                      ) : adminGwPreset === 'opencode' || adminGwPreset === 'freebuff' ? (
+                        <>
+                          <div className="adm-field-group">
+                            <span className="adm-field-label">
+                              {adminGwPreset === 'opencode'
+                                ? 'Chọn model OpenCode (DeepSeek / Flash)'
+                                : 'Chọn model Freebuff'}
+                            </span>
+                            <SelectionList
+                              items={
+                                adminGwPreset === 'opencode'
+                                  ? ADMIN_OPENCODE_PRESETS
+                                  : ADMIN_FREEBUFF_PRESETS
+                              }
+                              selectedId={adminGwModel}
+                              onSelect={(id) => setAdminGwModel(id)}
+                              ariaLabel="Chọn mô hình OpenCode hoặc Freebuff cho Admin"
+                            />
+                          </div>
+
+                          <div className="adm-two-col">
+                            <label className="adm-field-group">
+                              <span className="adm-field-label">Đường dẫn HTTPS / Tunnel (nếu dùng trên Vercel)</span>
+                              <input
+                                type="url"
+                                value={adminGwBaseUrl}
+                                onChange={(e) => setAdminGwBaseUrl(e.target.value)}
+                                placeholder="https://your-9router-or-tunnel.example.com/v1"
+                                className="field font-mono"
+                              />
+                            </label>
+
+                            <label className="adm-field-group">
+                              <span className="adm-field-label">Mã mô hình</span>
+                              <input
+                                type="text"
+                                value={adminGwModel}
+                                onChange={(e) => setAdminGwModel(e.target.value)}
+                                placeholder={
+                                  adminGwPreset === 'opencode'
+                                    ? 'opencode/deepseek-v4.1-flash-free'
+                                    : 'freebuff'
+                                }
+                                className="field font-mono"
+                              />
+                            </label>
+                          </div>
+                          <p className="adm-field-hint">
+                            Khi chạy máy cục bộ có thể để trống đường dẫn để gọi trực tiếp cầu nối cục bộ; khi chạy trên web Vercel cần dán URL HTTPS công khai (9Router / Cloudflare Tunnel) nối về máy bạn.
+                          </p>
+                        </>
                       ) : (
                         <>
+                          <div className="adm-field-group">
+                            <span className="adm-field-label">Gợi ý mã mô hình (Cổng riêng / 9Router / Bridge)</span>
+                            <SelectionList
+                              items={ADMIN_CUSTOM_PRESETS}
+                              selectedId={adminGwModel}
+                              onSelect={(id) => setAdminGwModel(id)}
+                              ariaLabel="Chọn nhanh mô hình cổng riêng cho Admin"
+                            />
+                          </div>
+
                           <div className="adm-two-col">
                             <div className="adm-field-group">
                               <span className="adm-field-label">Giao thức cổng riêng</span>

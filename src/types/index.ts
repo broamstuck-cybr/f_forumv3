@@ -386,7 +386,7 @@ export interface ModerationReport {
 
 export type AdminGatewayProfileId = 'openrouter' | 'gemini' | 'custom';
 
-export type AdminDedicatedGatewayPreset = 'openrouter' | 'custom';
+export type AdminDedicatedGatewayPreset = 'openrouter' | 'gemini' | 'opencode' | 'freebuff' | 'custom';
 
 export interface AdminDedicatedGatewayConfig {
   enabled: boolean;

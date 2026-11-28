@@ -26,7 +26,17 @@ type RobotExpressionId =
   | 'proud'
   | 'shy'
   | 'music'
-  | 'greeting';
+  | 'greeting'
+  | 'flower'
+  | 'idea'
+  | 'tea'
+  | 'gift'
+  | 'confetti'
+  | 'clover'
+  | 'butterfly'
+  | 'rainbow'
+  | 'love_kiss'
+  | 'cheer';
 
 type RobotActionId =
   | 'double_hop'
@@ -225,6 +235,176 @@ const ROBOT_EXPRESSIONS: ExpressionSpec[] = [
     leftEyeScaleX: 1.06,
     rightEyeScaleX: 1.06,
     starOpacity: 0,
+    heartOpacity: 0,
+    happyArcLeft: 0,
+    happyArcRight: 0,
+  },
+  {
+    id: 'flower',
+    tone: 'rose',
+    ringColor: [1.56, 0.9, 1.05],
+    haloHex: 0xf698b0,
+    haloOpacity: 0.38,
+    antennaHex: 0xffa6bd,
+    blushOpacity: 0.85,
+    leftEyeScaleY: 0.18,
+    rightEyeScaleY: 0.18,
+    leftEyeScaleX: 1.1,
+    rightEyeScaleX: 1.1,
+    starOpacity: 0,
+    heartOpacity: 0,
+    happyArcLeft: 0.96,
+    happyArcRight: 0.96,
+  },
+  {
+    id: 'idea',
+    tone: 'amber',
+    ringColor: [1.52, 1.44, 0.72],
+    haloHex: 0xf7cf76,
+    haloOpacity: 0.4,
+    antennaHex: 0xffe08a,
+    blushOpacity: 0.28,
+    leftEyeScaleY: 1.18,
+    rightEyeScaleY: 1.18,
+    leftEyeScaleX: 1.14,
+    rightEyeScaleX: 1.14,
+    starOpacity: 0.65,
+    heartOpacity: 0,
+    happyArcLeft: 0,
+    happyArcRight: 0,
+  },
+  {
+    id: 'tea',
+    tone: 'mint',
+    ringColor: [0.72, 1.5, 1.18],
+    haloHex: 0x52d6aa,
+    haloOpacity: 0.28,
+    antennaHex: 0x74e5be,
+    blushOpacity: 0.44,
+    leftEyeScaleY: 0.24,
+    rightEyeScaleY: 0.24,
+    leftEyeScaleX: 1.06,
+    rightEyeScaleX: 1.06,
+    starOpacity: 0,
+    heartOpacity: 0,
+    happyArcLeft: 0.88,
+    happyArcRight: 0.88,
+  },
+  {
+    id: 'gift',
+    tone: 'amber',
+    ringColor: [1.46, 1.24, 0.78],
+    haloHex: 0xf4c77b,
+    haloOpacity: 0.38,
+    antennaHex: 0xf5c874,
+    blushOpacity: 0.56,
+    leftEyeScaleY: 1.12,
+    rightEyeScaleY: 1.12,
+    leftEyeScaleX: 1.1,
+    rightEyeScaleX: 1.1,
+    starOpacity: 0.75,
+    heartOpacity: 0,
+    happyArcLeft: 0,
+    happyArcRight: 0,
+  },
+  {
+    id: 'confetti',
+    tone: 'mint',
+    ringColor: [0.85, 1.7, 1.38],
+    haloHex: 0x4ce0b0,
+    haloOpacity: 0.44,
+    antennaHex: 0xf7cf76,
+    blushOpacity: 0.5,
+    leftEyeScaleY: 0.16,
+    rightEyeScaleY: 0.16,
+    leftEyeScaleX: 1.12,
+    rightEyeScaleX: 1.12,
+    starOpacity: 0.5,
+    heartOpacity: 0,
+    happyArcLeft: 0.98,
+    happyArcRight: 0.98,
+  },
+  {
+    id: 'clover',
+    tone: 'mint',
+    ringColor: [0.58, 1.66, 1.1],
+    haloHex: 0x48d99a,
+    haloOpacity: 0.34,
+    antennaHex: 0x62ebbd,
+    blushOpacity: 0.38,
+    leftEyeScaleY: 1.06,
+    rightEyeScaleY: 0.18,
+    leftEyeScaleX: 1.05,
+    rightEyeScaleX: 1.08,
+    starOpacity: 0,
+    heartOpacity: 0,
+    happyArcLeft: 0,
+    happyArcRight: 0.94,
+  },
+  {
+    id: 'butterfly',
+    tone: 'steel',
+    ringColor: [0.76, 1.48, 1.64],
+    haloHex: 0x7ad7e4,
+    haloOpacity: 0.34,
+    antennaHex: 0x9ce6f0,
+    blushOpacity: 0.32,
+    leftEyeScaleY: 1.12,
+    rightEyeScaleY: 1.02,
+    leftEyeScaleX: 1.08,
+    rightEyeScaleX: 1.04,
+    starOpacity: 0.35,
+    heartOpacity: 0,
+    happyArcLeft: 0,
+    happyArcRight: 0,
+  },
+  {
+    id: 'rainbow',
+    tone: 'amber',
+    ringColor: [1.38, 1.46, 0.96],
+    haloHex: 0xf5c874,
+    haloOpacity: 0.4,
+    antennaHex: 0x57e8b9,
+    blushOpacity: 0.52,
+    leftEyeScaleY: 0.2,
+    rightEyeScaleY: 0.2,
+    leftEyeScaleX: 1.1,
+    rightEyeScaleX: 1.1,
+    starOpacity: 0.4,
+    heartOpacity: 0,
+    happyArcLeft: 0.92,
+    happyArcRight: 0.92,
+  },
+  {
+    id: 'love_kiss',
+    tone: 'rose',
+    ringColor: [1.62, 0.74, 1.06],
+    haloHex: 0xff8ea8,
+    haloOpacity: 0.4,
+    antennaHex: 0xff9eb5,
+    blushOpacity: 0.96,
+    leftEyeScaleY: 1.04,
+    rightEyeScaleY: 0.16,
+    leftEyeScaleX: 1.06,
+    rightEyeScaleX: 1.1,
+    starOpacity: 0,
+    heartOpacity: 0.92,
+    happyArcLeft: 0,
+    happyArcRight: 0.95,
+  },
+  {
+    id: 'cheer',
+    tone: 'mint',
+    ringColor: [0.78, 1.74, 1.32],
+    haloHex: 0x57e8b9,
+    haloOpacity: 0.42,
+    antennaHex: 0x76f0c8,
+    blushOpacity: 0.54,
+    leftEyeScaleY: 1.16,
+    rightEyeScaleY: 1.16,
+    leftEyeScaleX: 1.14,
+    rightEyeScaleX: 1.14,
+    starOpacity: 0.8,
     heartOpacity: 0,
     happyArcLeft: 0,
     happyArcRight: 0,
@@ -710,6 +890,87 @@ const MoodEmblemSvg: React.FC<{ expression: RobotExpressionId }> = ({ expression
           />
           <circle cx="6.8" cy="17.5" r="2.3" fill="currentColor" />
           <circle cx="15.8" cy="15.5" r="2.3" fill="currentColor" />
+        </svg>
+      );
+    case 'flower':
+      return (
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <circle cx="12" cy="7.2" r="2.6" fill="currentColor" opacity="0.88" />
+          <circle cx="16.4" cy="10.4" r="2.6" fill="currentColor" opacity="0.88" />
+          <circle cx="14.7" cy="15.4" r="2.6" fill="currentColor" opacity="0.88" />
+          <circle cx="9.3" cy="15.4" r="2.6" fill="currentColor" opacity="0.88" />
+          <circle cx="7.6" cy="10.4" r="2.6" fill="currentColor" opacity="0.88" />
+          <circle cx="12" cy="11.6" r="2.2" fill="#f7cf76" />
+          <path d="M12 16v5.2" stroke="#38c99a" strokeWidth="2" strokeLinecap="round" />
+        </svg>
+      );
+    case 'idea':
+      return (
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-3.6 10.8c.7.5 1.1 1.3 1.1 2.2h5c0-.9.4-1.7 1.1-2.2A6 6 0 0 0 12 3Z" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      );
+    case 'tea':
+      return (
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <path d="M5 10h11v5.5a4.5 4.5 0 0 1-4.5 4.5h-2A4.5 4.5 0 0 1 5 15.5V10Z" stroke="currentColor" strokeWidth="1.9" strokeLinejoin="round" />
+          <path d="M16 11.5h2a2 2 0 0 1 0 4h-2M8.5 5.5c0 1.4 1 1.4 1 2.8M12 5c0 1.4 1 1.4 1 2.8" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+        </svg>
+      );
+    case 'gift':
+      return (
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <rect x="4" y="9" width="16" height="11" rx="2" stroke="currentColor" strokeWidth="1.9" />
+          <path d="M12 9v11M4 13h16M12 9c-1.8 0-3.5-1.2-3.5-2.7 0-1 .8-1.8 1.8-1.8 1.3 0 1.7 1.4 1.7 4.5Zm0 0c1.8 0 3.5-1.2 3.5-2.7 0-1-.8-1.8-1.8-1.8-1.3 0-1.7 1.4-1.7 4.5Z" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      );
+    case 'confetti':
+      return (
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <path d="M4.5 19.5 9 8.5l6.5 6.5-11 4.5Z" stroke="currentColor" strokeWidth="1.9" strokeLinejoin="round" />
+          <circle cx="15.5" cy="6" r="1.4" fill="currentColor" />
+          <circle cx="19.5" cy="10" r="1.4" fill="currentColor" />
+          <path d="M12.5 5.5 14 4M18 14.5l2 .5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+        </svg>
+      );
+    case 'clover':
+      return (
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <circle cx="9.2" cy="8.8" r="3" fill="currentColor" opacity="0.86" />
+          <circle cx="14.8" cy="8.8" r="3" fill="currentColor" opacity="0.86" />
+          <circle cx="9.2" cy="14.2" r="3" fill="currentColor" opacity="0.86" />
+          <circle cx="14.8" cy="14.2" r="3" fill="currentColor" opacity="0.86" />
+          <path d="M12 14.5c0 2.6.6 4.4 2 5.8" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" />
+        </svg>
+      );
+    case 'butterfly':
+      return (
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <path d="M12 12C9.5 6.5 4.2 6.2 4.5 10.5c.2 2.4 2.4 3 4.5 2.5-2 .8-3.4 2.6-2.2 4.6 1.4 2.1 4.5.4 5.2-3.6Zm0 0c2.5-5.5 7.8-5.8 7.5-1.5-.2 2.4-2.4 3-4.5 2.5 2 .8 3.4 2.6 2.2 4.6-1.4 2.1-4.5.4-5.2-3.6Z" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" />
+          <path d="M12 7v11" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+        </svg>
+      );
+    case 'rainbow':
+      return (
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <path d="M4 17a8 8 0 0 1 16 0" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+          <path d="M7.2 17a4.8 4.8 0 0 1 9.6 0" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" opacity="0.72" />
+          <path d="M10.2 17a1.8 1.8 0 0 1 3.6 0" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" opacity="0.48" />
+        </svg>
+      );
+    case 'love_kiss':
+      return (
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <path d="M12.5 16.5 7.4 11.6a3.1 3.1 0 0 1 4.4-4.4l.7.7.7-.7a3.1 3.1 0 0 1 4.4 4.4l-5.1 4.9Z" fill="currentColor" />
+          <circle cx="18.8" cy="17.2" r="1.4" fill="currentColor" opacity="0.8" />
+          <circle cx="5.2" cy="17.2" r="1.1" fill="currentColor" opacity="0.65" />
+        </svg>
+      );
+    case 'cheer':
+      return (
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <path d="M12 3.5 14 9l5.5 2-5.5 2-2 5.5-2-5.5-5.5-2L10 9l2-5.5Z" fill="currentColor" />
+          <path d="M5 5l1.6 1.6M19 5l-1.6 1.6M5 19l1.6-1.6M19 19l-1.6-1.6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
         </svg>
       );
     case 'greeting':
@@ -1374,6 +1635,69 @@ export const IrisQrCornerSection: React.FC<IrisQrCornerSectionProps> = ({
       };
 
       populateRobot(buildFallbackHead(THREE, mergeVertices), buildFallbackArm(THREE, mergeVertices));
+
+      // WHY: Attach lightweight 3D interactive flower & gift props beside Iris's right hand without modifying the original robot mesh.
+      const irisFlowerProp = new THREE.Group();
+      const flowerStem = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.032, 0.036, 0.62, 10),
+        new THREE.MeshStandardMaterial({ color: 0x2ea87e, roughness: 0.45 })
+      );
+      flowerStem.position.set(0, 0.24, 0);
+      irisFlowerProp.add(flowerStem);
+      const flowerLeaf = new THREE.Mesh(
+        new THREE.SphereGeometry(0.11, 10, 8),
+        new THREE.MeshStandardMaterial({ color: 0x38c99a, roughness: 0.4 })
+      );
+      flowerLeaf.scale.set(1.4, 0.55, 0.45);
+      flowerLeaf.position.set(0.11, 0.24, 0);
+      flowerLeaf.rotation.z = 0.55;
+      irisFlowerProp.add(flowerLeaf);
+      const petalMat = new THREE.MeshStandardMaterial({
+        color: 0xff8ea8,
+        emissive: 0xe66586,
+        emissiveIntensity: 0.35,
+        roughness: 0.32,
+      });
+      const petalGeo = new THREE.SphereGeometry(0.125, 12, 10);
+      for (let i = 0; i < 5; i += 1) {
+        const ang = (i * Math.PI * 2) / 5;
+        const petal = new THREE.Mesh(petalGeo, petalMat);
+        petal.position.set(Math.cos(ang) * 0.145, 0.58 + Math.sin(ang) * 0.145, 0.03);
+        petal.scale.set(1, 1, 0.55);
+        irisFlowerProp.add(petal);
+      }
+      const flowerCore = new THREE.Mesh(
+        new THREE.SphereGeometry(0.095, 12, 10),
+        new THREE.MeshStandardMaterial({ color: 0xf7cf76, emissive: 0xd99b26, emissiveIntensity: 0.45 })
+      );
+      flowerCore.position.set(0, 0.58, 0.08);
+      irisFlowerProp.add(flowerCore);
+      irisFlowerProp.position.set(0.95, -0.25, 0.72);
+      irisFlowerProp.rotation.set(0.22, -0.3, -0.24);
+      irisFlowerProp.scale.setScalar(0.0001);
+      irisFlowerProp.visible = false;
+      body.add(irisFlowerProp);
+
+      const irisGiftProp = new THREE.Group();
+      const giftBox = new THREE.Mesh(
+        new THREE.BoxGeometry(0.38, 0.34, 0.38),
+        new THREE.MeshStandardMaterial({ color: 0x169b72, roughness: 0.35 })
+      );
+      irisGiftProp.add(giftBox);
+      const ribbonMat = new THREE.MeshStandardMaterial({
+        color: 0xf7cf76,
+        emissive: 0xd99b26,
+        emissiveIntensity: 0.4,
+      });
+      irisGiftProp.add(new THREE.Mesh(new THREE.BoxGeometry(0.41, 0.36, 0.08), ribbonMat));
+      irisGiftProp.add(new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.36, 0.41), ribbonMat));
+      irisGiftProp.position.set(0.92, -0.18, 0.72);
+      irisGiftProp.scale.setScalar(0.0001);
+      irisGiftProp.visible = false;
+      body.add(irisGiftProp);
+      let flowerScale = 0;
+      let giftScale = 0;
+
       robot.scale.setScalar(1);
       setLoaderHidden(true);
 
@@ -1832,13 +2156,34 @@ export const IrisQrCornerSection: React.FC<IrisQrCornerSectionProps> = ({
           }
         }
 
-        // Subtle rhythmic music groove when expression === 'music'
-        const musicBeat = currentExprSpec.id === 'music' ? Math.sin(t * 7.2) : 0;
-        if (currentExprSpec.id === 'music') {
-          actHeadRotZ += musicBeat * 0.055;
-          actRobotY += Math.abs(musicBeat) * 0.04;
-        } else if (currentExprSpec.id === 'curious') {
+        if (currentExprSpec.id === 'music' || currentExprSpec.id === 'confetti' || currentExprSpec.id === 'cheer') {
+          actHeadRotZ += Math.sin(t * 7.2) * 0.055;
+          actRobotY += Math.abs(Math.sin(t * 7.2)) * 0.04;
+        } else if (currentExprSpec.id === 'curious' || currentExprSpec.id === 'butterfly') {
           actHeadRotZ += 0.12;
+        } else if (currentExprSpec.id === 'flower' || currentExprSpec.id === 'gift') {
+          armRdy += 0.24;
+          armRdz += 0.36;
+          armRdrz += 0.35;
+          actHeadRotZ -= 0.07;
+        }
+
+        const targetFlowerScale = currentExprSpec.id === 'flower' ? 1 : 0;
+        flowerScale += (targetFlowerScale - flowerScale) * (1 - Math.pow(0.001, dt));
+        irisFlowerProp.visible = flowerScale > 0.015;
+        if (irisFlowerProp.visible) {
+          irisFlowerProp.scale.setScalar(flowerScale);
+          irisFlowerProp.position.y = -0.18 + Math.sin(t * 3.4) * 0.05;
+          irisFlowerProp.rotation.z = -0.24 + Math.sin(t * 2.8) * 0.12;
+        }
+
+        const targetGiftScale = currentExprSpec.id === 'gift' ? 1 : 0;
+        giftScale += (targetGiftScale - giftScale) * (1 - Math.pow(0.001, dt));
+        irisGiftProp.visible = giftScale > 0.015;
+        if (irisGiftProp.visible) {
+          irisGiftProp.scale.setScalar(giftScale);
+          irisGiftProp.position.y = -0.16 + Math.sin(t * 3.8) * 0.05;
+          irisGiftProp.rotation.y = t * 1.4;
         }
 
         const bob = Math.sin(t * 1.6) * 0.09;
