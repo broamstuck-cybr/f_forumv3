@@ -805,6 +805,51 @@ describe('F-FORUM v3 Core Verification Suite', () => {
         mockServer.close();
       }
     });
+
+    test('parses Bolt/Studio XML multi-file artifacts, surgical patches, and unclosed trailing files', async () => {
+      const script = [
+        "import { parseXmlArtifactBlocks } from './server/aiEngine.ts';",
+        "import { extractLiveStreamProgress } from './src/engine/repoWebComposer.ts';",
+        'const buildXml = [',
+        "  '<summary>Thiết kế trang đồng hồ Pomodoro tối giản kèm danh sách việc cần làm.</summary>',",
+        "  '<file path=\"index.html\">',",
+        "  '<!DOCTYPE html><html lang=\"vi\"><head><title>Pomodoro</title></head><body><main id=\"app\">25:00</main></body></html>',",
+        "  '</file>',",
+        "  '<file path=\"src/styles.css\">',",
+        "  '```css\\n:root { --bg: #0c0f12; } body { background: var(--bg); color: #f5f5f5; }\\n```',",
+        "  '</file>',",
+        "  '<file path=\"src/app.js\">',",
+        "  'const timerEl = document.getElementById(\"app\"); console.log(\"ready\", Boolean(timerEl)); // trailing unclosed file with enough content to recover cleanly',",
+        "].join('\\n');",
+        'const parsedBuild = parseXmlArtifactBlocks(buildXml);',
+        'const liveProgress = extractLiveStreamProgress(buildXml, "generating", "deepseek/deepseek-v3.2");',
+        'const patchXml = [',
+        "  '<summary>Đổi nền sang màu sáng ấm.</summary>',",
+        "  '<patch path=\"src/styles.css\">',",
+        "  '<find>--bg: #0c0f12;</find>',",
+        "  '<replace>--bg: #f6f4ef;</replace>',",
+        "  '</patch>',",
+        "].join('\\n');",
+        'const parsedPatch = parseXmlArtifactBlocks(patchXml);',
+        'console.log(JSON.stringify({ parsedBuild, liveProgress, parsedPatch }));',
+      ].join('\n');
+
+      const { stdout } = await execFileAsync('npx', ['tsx', '-e', script], {
+        cwd: projectRoot,
+        encoding: 'utf8',
+      });
+      const out = JSON.parse(stdout.trim());
+      assert.ok(out.parsedBuild, 'Expected XML build artifact to parse');
+      assert.equal(out.parsedBuild.files.length, 3, 'Expected 2 closed files + 1 recovered unclosed trailing file');
+      assert.equal(out.parsedBuild.files[0].path, 'index.html');
+      assert.ok(!out.parsedBuild.files[1].content.includes('```'), 'Accidental inner code fences must be stripped');
+      assert.equal(out.liveProgress.activeFiles.length, 3);
+      assert.equal(out.liveProgress.activeFiles[0].done, true);
+      assert.equal(out.liveProgress.activeFiles[2].done, false);
+      assert.ok(out.parsedPatch && out.parsedPatch.patches.length === 1);
+      assert.equal(out.parsedPatch.patches[0].path, 'src/styles.css');
+      assert.equal(out.parsedPatch.patches[0].replace, '--bg: #f6f4ef;');
+    });
   });
 
   describe('(f) Honest Real Visitor & Active Time Metrics (0 Fake Baselines)', () => {

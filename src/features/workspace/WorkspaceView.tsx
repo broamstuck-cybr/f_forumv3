@@ -10,6 +10,7 @@ import {
   composeWithAgent,
   createInitialBlueprint,
   type ComposerBlueprint,
+  type ComposeStreamProgress,
 } from '../../engine/repoWebComposer';
 import {
   bundleProjectFiles,
@@ -34,9 +35,71 @@ import type {
 import { AgentChatPane } from './AgentChatPane';
 import { ArenaRunnerPane } from './ArenaRunnerPane';
 import { OnboardingWizard } from './OnboardingWizard';
-import { Showcase15Drawer } from './Showcase15Drawer';
 import { SplitDivider } from './SplitDivider';
 import './workspace.css';
+
+const WS_SPLIT_RATIO_KEY = 'fforum_ws_split_ratio_v1';
+const WS_SESSION_STORAGE_KEY = 'fforum_ws_session_v1';
+const DEFAULT_SPLIT_RATIO = 0.39;
+const MIN_SPLIT_RATIO = 0.24;
+const MAX_SPLIT_RATIO = 0.66;
+
+interface PersistedWorkspaceSession {
+  v: 1;
+  files: WorkspaceFile[];
+  messages: AgentChatMessage[];
+  activeFilePath: string;
+  openTabs: string[];
+  pageTitle: string;
+  savedAt: string;
+}
+
+function readSavedSplitRatio(): number {
+  if (typeof window === 'undefined') return DEFAULT_SPLIT_RATIO;
+  try {
+    const raw = window.localStorage.getItem(WS_SPLIT_RATIO_KEY);
+    if (!raw) return DEFAULT_SPLIT_RATIO;
+    const parsed = Number.parseFloat(raw);
+    if (Number.isFinite(parsed) && parsed >= MIN_SPLIT_RATIO && parsed <= MAX_SPLIT_RATIO) {
+      return Math.round(parsed * 1000) / 1000;
+    }
+  } catch {
+    return DEFAULT_SPLIT_RATIO;
+  }
+  return DEFAULT_SPLIT_RATIO;
+}
+
+function readSavedWorkspaceSession(): PersistedWorkspaceSession | null {
+  if (typeof window === 'undefined') return null;
+  try {
+    const raw = window.localStorage.getItem(WS_SESSION_STORAGE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as Partial<PersistedWorkspaceSession>;
+    if (!parsed || parsed.v !== 1 || !Array.isArray(parsed.files) || !Array.isArray(parsed.messages)) {
+      return null;
+    }
+    const validFiles = parsed.files.filter(
+      (f): f is WorkspaceFile =>
+        Boolean(f) && typeof f.path === 'string' && typeof f.content === 'string'
+    );
+    const validMessages = parsed.messages.filter(
+      (m): m is AgentChatMessage =>
+        Boolean(m) && typeof m.id === 'string' && typeof m.text === 'string'
+    );
+    if (validFiles.length === 0 && validMessages.length === 0) return null;
+    return {
+      v: 1,
+      files: sortProjectFiles(validFiles),
+      messages: validMessages.slice(-20),
+      activeFilePath: typeof parsed.activeFilePath === 'string' ? parsed.activeFilePath : '',
+      openTabs: Array.isArray(parsed.openTabs) ? parsed.openTabs.filter((t) => typeof t === 'string') : [],
+      pageTitle: typeof parsed.pageTitle === 'string' ? parsed.pageTitle : '',
+      savedAt: typeof parsed.savedAt === 'string' ? parsed.savedAt : new Date().toISOString(),
+    };
+  } catch {
+    return null;
+  }
+}
 
 const NAV_ITEMS: Array<{ id: AppRoute; label: string }> = [
   { id: 'home', label: 'Trang chủ' },
@@ -172,31 +235,64 @@ export const WorkspaceView: React.FC = () => {
       initialUrlSeed.current.remixSlug ||
       initialUrlSeed.current.showcaseId
   );
-
-  const [showOnboarding, setShowOnboarding] = useState<boolean>(
-    () => !onboardingProfile && !hasAnySeedOnMount
+  const initialSessionRef = useRef<PersistedWorkspaceSession | null>(
+    hasAnySeedOnMount ? null : readSavedWorkspaceSession()
   );
-  const [drawerOpen, setDrawerOpen] = useState(false);
+
+  // WHY: Land directly in the real AI Workspace instead of gating users behind a 5-step modal.
+  const [showOnboarding, setShowOnboarding] = useState<boolean>(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [mobileTab, setMobileTab] = useState<'chat' | 'preview'>('chat');
-  const [splitRatio, setSplitRatio] = useState(0.39);
+  const [splitRatio, setSplitRatio] = useState<number>(() => readSavedSplitRatio());
   const [draggingSplit, setDraggingSplit] = useState(false);
   const [viewMode, setViewMode] = useState<'preview' | 'code'>('preview');
 
-  const [messages, setMessages] = useState<AgentChatMessage[]>([]);
-  const [files, setFiles] = useState<WorkspaceFile[]>([]);
-  const [debouncedFiles, setDebouncedFiles] = useState<WorkspaceFile[]>([]);
-  const [activeFilePath, setActiveFilePath] = useState<string>('');
-  const [openTabs, setOpenTabs] = useState<string[]>([]);
+  const [messages, setMessages] = useState<AgentChatMessage[]>(
+    () => initialSessionRef.current?.messages ?? []
+  );
+  const [files, setFiles] = useState<WorkspaceFile[]>(
+    () => initialSessionRef.current?.files ?? []
+  );
+  const [debouncedFiles, setDebouncedFiles] = useState<WorkspaceFile[]>(
+    () => initialSessionRef.current?.files ?? []
+  );
+  const [activeFilePath, setActiveFilePath] = useState<string>(() => {
+    const saved = initialSessionRef.current;
+    if (!saved || saved.files.length === 0) return '';
+    if (saved.activeFilePath && saved.files.some((f) => f.path === saved.activeFilePath)) {
+      return saved.activeFilePath;
+    }
+    return pickInitialOpenTabs(saved.files).activePath;
+  });
+  const [openTabs, setOpenTabs] = useState<string[]>(() => {
+    const saved = initialSessionRef.current;
+    if (!saved || saved.files.length === 0) return [];
+    const valid = saved.openTabs.filter((t) => saved.files.some((f) => f.path === t));
+    return valid.length > 0 ? valid : pickInitialOpenTabs(saved.files).tabs;
+  });
   const [modifiedPaths, setModifiedPaths] = useState<Set<string>>(() => new Set());
+  const [savedProjectTitle, setSavedProjectTitle] = useState<string>(
+    () => initialSessionRef.current?.pageTitle ?? ''
+  );
 
   const [blueprint, setBlueprint] = useState<ComposerBlueprint | null>(null);
-  const [history, setHistory] = useState<HistorySnapshot[]>([]);
+  const [history, setHistory] = useState<HistorySnapshot[]>(() => {
+    const saved = initialSessionRef.current;
+    if (!saved || saved.files.length === 0) return [];
+    return [
+      {
+        files: saved.files,
+        blueprint: null,
+        activeFilePath: saved.activeFilePath || saved.files[0]?.path || 'index.html',
+      },
+    ];
+  });
   const [matchedResources, setMatchedResources] = useState<MatchedVaultResource[]>([]);
   const [activeShowcaseId, setActiveShowcaseId] = useState<string | null>(null);
   const [publishedSlug, setPublishedSlug] = useState<string | null>(null);
 
   const [busy, setBusy] = useState(false);
+  const [streamProgress, setStreamProgress] = useState<ComposeStreamProgress | null>(null);
   const [publishing, setPublishing] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [lastPrompt, setLastPrompt] = useState<string>('');
@@ -205,6 +301,53 @@ export const WorkspaceView: React.FC = () => {
       ? settings.byok.model.trim()
       : aiRuntime?.defaultModel || 'openrouter/auto-smart'
   );
+
+  const splitContainerRef = useRef<HTMLDivElement | null>(null);
+  const urlSeedHandledRef = useRef(false);
+  const debounceTimerRef = useRef<number | null>(null);
+  const abortRef = useRef<AbortController | null>(null);
+
+  // Persist user's dragged split pane ratio across reloads
+  useEffect(() => {
+    try {
+      window.localStorage.setItem(WS_SPLIT_RATIO_KEY, String(splitRatio));
+    } catch {
+      // Ignore storage quota / private mode restrictions
+    }
+  }, [splitRatio]);
+
+  // Persist active AI workspace session across reloads
+  useEffect(() => {
+    if (busy) return;
+    try {
+      if (files.length === 0 && messages.length === 0) {
+        window.localStorage.removeItem(WS_SESSION_STORAGE_KEY);
+        return;
+      }
+      const payload: PersistedWorkspaceSession = {
+        v: 1,
+        files,
+        messages: messages.slice(-18),
+        activeFilePath,
+        openTabs,
+        pageTitle: blueprint?.heroTitle || savedProjectTitle || onboardingProfile?.siteName || '',
+        savedAt: new Date().toISOString(),
+      };
+      const serialized = JSON.stringify(payload);
+      if (serialized.length <= 380_000) {
+        window.localStorage.setItem(WS_SESSION_STORAGE_KEY, serialized);
+      }
+    } catch {
+      // Ignore quota errors cleanly
+    }
+  }, [activeFilePath, blueprint?.heroTitle, busy, files, messages, onboardingProfile?.siteName, openTabs, savedProjectTitle]);
+
+  // Abort active stream on unmount
+  useEffect(() => {
+    return () => {
+      abortRef.current?.abort();
+    };
+  }, []);
 
   // Sync default server model when Admin switches OpenRouter <-> Gemini and BYOK is off
   useEffect(() => {
@@ -215,10 +358,6 @@ export const WorkspaceView: React.FC = () => {
       return stillValid ? prev : aiRuntime.defaultModel;
     });
   }, [aiRuntime, settings.byok?.enabled, settings.byok?.apiKey]);
-
-  const splitContainerRef = useRef<HTMLDivElement | null>(null);
-  const urlSeedHandledRef = useRef(false);
-  const debounceTimerRef = useRef<number | null>(null);
 
   const commitProjectFilesImmediate = useCallback((nextFiles: WorkspaceFile[], focusPath?: string) => {
     if (debounceTimerRef.current !== null) {
@@ -320,6 +459,57 @@ export const WorkspaceView: React.FC = () => {
 
   const canUseAi = Boolean(currentUser) || Boolean(settings.byok?.enabled && settings.byok.apiKey.trim());
 
+  const handleStopGeneration = useCallback(() => {
+    if (!abortRef.current) return;
+    abortRef.current.abort();
+    abortRef.current = null;
+    setBusy(false);
+    setStreamProgress(null);
+    addToast({
+      type: 'info',
+      title: 'Đã dừng tạo mã',
+    });
+  }, [addToast]);
+
+  const handleNewProject = useCallback(() => {
+    if (abortRef.current) {
+      abortRef.current.abort();
+      abortRef.current = null;
+    }
+    if (debounceTimerRef.current !== null) {
+      window.clearTimeout(debounceTimerRef.current);
+      debounceTimerRef.current = null;
+    }
+    setBusy(false);
+    setStreamProgress(null);
+    setShowOnboarding(false);
+    setFiles([]);
+    setDebouncedFiles([]);
+    setActiveFilePath('');
+    setOpenTabs([]);
+    setModifiedPaths(new Set());
+    setMessages([]);
+    setHistory([]);
+    setBlueprint(null);
+    setMatchedResources([]);
+    setActiveShowcaseId(null);
+    setPublishedSlug(null);
+    setSavedProjectTitle('');
+    setErrorMessage(null);
+    setLastPrompt('');
+    setViewMode('preview');
+    setMobileTab('chat');
+    try {
+      window.localStorage.removeItem(WS_SESSION_STORAGE_KEY);
+    } catch {
+      // Ignore storage restrictions
+    }
+    addToast({
+      type: 'info',
+      title: 'Đã tạo không gian dự án mới',
+    });
+  }, [addToast]);
+
   const runCompose = useCallback(
     async (
       promptText: string,
@@ -329,28 +519,42 @@ export const WorkspaceView: React.FC = () => {
         forceVariation?: boolean;
         excludeIds?: string[];
         seedItemId?: string;
+        intent?: 'auto' | 'assistant' | 'assemble' | 'patch';
         allowGuestPreview?: boolean;
       }
     ) => {
       const cleanPrompt = promptText.trim();
       if (!cleanPrompt) return;
 
-      if (!canUseAi && !opts?.allowGuestPreview) {
+      if (!canUseAi) {
         addToast({
           type: 'info',
-          title: 'Cần đăng nhập để dùng AI',
+          title: 'Cần đăng nhập hoặc API Key để dùng AI',
           message:
-            'Tính năng AI tạo và chỉnh sửa dự án chỉ mở cho tài khoản đã đăng nhập. Bạn vẫn có thể xem trước 15 mẫu và sửa mã trong mục Code.',
+            'Đăng nhập hoặc bấm nút API Key ngay trong khung Chat để AI trực tiếp viết mã cho bạn.',
         });
         setAuthModalOpen(true);
         return;
       }
+
+      if (abortRef.current) {
+        abortRef.current.abort();
+      }
+      const controller = new AbortController();
+      abortRef.current = controller;
 
       const activeProfile = opts?.profileOverride ?? onboardingProfile ?? buildDefaultProfile();
       const now = new Date().toISOString();
 
       setShowOnboarding(false);
       setBusy(true);
+      setStreamProgress({
+        stage: 'routing',
+        model: selectedModel,
+        summaryPreview: '',
+        activeFiles: [],
+        charCount: 0,
+      });
       setErrorMessage(null);
       setLastPrompt(cleanPrompt);
       if (!opts?.forceVariation) {
@@ -383,8 +587,17 @@ export const WorkspaceView: React.FC = () => {
           isAuthenticated: Boolean(currentUser),
           byok: settings.byok,
           model: selectedModel,
+          intent: opts?.intent,
           chatHistory: recentChatHistory,
+          onProgress: (prog) => {
+            if (!controller.signal.aborted) {
+              setStreamProgress(prog);
+            }
+          },
+          signal: controller.signal,
         });
+
+        if (controller.signal.aborted) return;
 
         if (result.mode === 'assistant') {
           setMessages((prev) => [
@@ -414,6 +627,7 @@ export const WorkspaceView: React.FC = () => {
 
         commitProjectFilesImmediate(result.files, preferredFocus);
         setBlueprint(result.blueprint);
+        setSavedProjectTitle(result.blueprint.heroTitle);
         setMatchedResources(result.matchedResources);
         setPublishedSlug(null);
         setHistory((prev) => [
@@ -447,13 +661,24 @@ export const WorkspaceView: React.FC = () => {
         result.matchedResources.forEach((m) => recordSignal(m.id, 'use', m.library));
         setMobileTab('preview');
       } catch (err) {
+        if (
+          controller.signal.aborted ||
+          (err instanceof DOMException && err.name === 'AbortError') ||
+          (err instanceof Error && err.name === 'AbortError')
+        ) {
+          return;
+        }
         const msg =
           err instanceof Error && err.message
             ? err.message
             : 'Không dựng được dự án. Vui lòng thử lại.';
         setErrorMessage(msg);
       } finally {
-        setBusy(false);
+        if (abortRef.current === controller) {
+          abortRef.current = null;
+          setBusy(false);
+          setStreamProgress(null);
+        }
       }
     },
     [
@@ -472,6 +697,16 @@ export const WorkspaceView: React.FC = () => {
       settings.byok,
       selectedModel,
     ]
+  );
+
+  const handleFixConsoleErrors = useCallback(
+    (errorSummary: string) => {
+      void runCompose(
+        `Hãy sửa các lỗi runtime / biên dịch sau trong mã nguồn hiện tại mà vẫn giữ nguyên thiết kế:\n${errorSummary}`,
+        { intent: 'patch' }
+      );
+    },
+    [runCompose]
   );
 
   // Consume pendingWorkspaceSeed pushed by Explore / Community / Showcase cards
@@ -916,22 +1151,14 @@ export const WorkspaceView: React.FC = () => {
 
   if (showOnboarding) {
     return (
-      <>
-        <OnboardingWizard
-          initialProfile={onboardingProfile}
-          theme={theme}
-          onComplete={handleCompleteOnboarding}
-          onSkip={handleSkipOnboarding}
-          onNavigateHome={() => navigate('home')}
-          onOpenShowcase={() => setDrawerOpen(true)}
-        />
-        <Showcase15Drawer
-          open={drawerOpen}
-          activeId={activeShowcaseId}
-          onClose={() => setDrawerOpen(false)}
-          onSelect={loadShowcaseProduct}
-        />
-      </>
+      <OnboardingWizard
+        initialProfile={onboardingProfile}
+        theme={theme}
+        onComplete={handleCompleteOnboarding}
+        onSkip={handleSkipOnboarding}
+        onNavigateHome={() => navigate('home')}
+        onOpenShowcase={() => navigate('explore')}
+      />
     );
   }
 
@@ -972,15 +1199,14 @@ export const WorkspaceView: React.FC = () => {
           <button
             type="button"
             className="ws-pillBtn"
-            onClick={() => setDrawerOpen(true)}
+            onClick={handleNewProject}
+            title="Bắt đầu một dự án mới"
           >
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.85" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-              <rect x="3" y="3" width="7" height="7" rx="1.5" />
-              <rect x="14" y="3" width="7" height="7" rx="1.5" />
-              <rect x="3" y="14" width="7" height="7" rx="1.5" />
-              <rect x="14" y="14" width="7" height="7" rx="1.5" />
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.1" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <line x1="12" y1="5" x2="12" y2="19" />
+              <line x1="5" y1="12" x2="19" y2="12" />
             </svg>
-            <span>15 mẫu<span className="ws-hideSm"> demo</span></span>
+            <span>Dự án mới</span>
           </button>
 
           <button
@@ -1117,6 +1343,7 @@ export const WorkspaceView: React.FC = () => {
             profile={blueprint?.profile ?? onboardingProfile}
             messages={messages}
             busy={busy}
+            streamProgress={streamProgress}
             errorMessage={errorMessage}
             canUndo={history.length > 1}
             hasGeneratedHtml={files.length > 0}
@@ -1137,8 +1364,9 @@ export const WorkspaceView: React.FC = () => {
             }}
             onRequireAuth={() => setAuthModalOpen(true)}
             onSendPrompt={(text) => void runCompose(text)}
+            onStopGeneration={handleStopGeneration}
             onUseSuggestedResource={(item) =>
-              void runCompose(`Lắp ghép trang web sử dụng mẫu "${item.title}" từ thư viện ${item.library}`, {
+              void runCompose(`Thiết kế trang web lấy cảm hứng kỹ thuật từ "${item.title}" (${item.library})`, {
                 seedItemId: item.id,
               })
             }
@@ -1152,8 +1380,11 @@ export const WorkspaceView: React.FC = () => {
 
         <SplitDivider
           ratio={splitRatio}
+          minRatio={MIN_SPLIT_RATIO}
+          maxRatio={MAX_SPLIT_RATIO}
           containerRef={splitContainerRef}
           onChangeRatio={setSplitRatio}
+          onResetRatio={() => setSplitRatio(DEFAULT_SPLIT_RATIO)}
           onDraggingChange={setDraggingSplit}
         />
 
@@ -1169,10 +1400,11 @@ export const WorkspaceView: React.FC = () => {
             standaloneHtml={bundleResult.standaloneHtml}
             projectMode={bundleResult.mode}
             bundleDiagnostics={bundleResult.diagnostics}
-            pageTitle={blueprint?.heroTitle || onboardingProfile?.siteName || 'Dự án mới'}
+            pageTitle={blueprint?.heroTitle || savedProjectTitle || onboardingProfile?.siteName || 'Dự án mới'}
             publishedSlug={publishedSlug}
             publishing={publishing}
             busy={busy}
+            streamProgress={streamProgress}
             viewMode={viewMode}
             pointerShield={draggingSplit}
             onChangeViewMode={setViewMode}
@@ -1182,18 +1414,11 @@ export const WorkspaceView: React.FC = () => {
             onDeleteFile={handleDeleteFile}
             onChangeFileContent={handleChangeFileContent}
             onPublish={() => void handlePublish()}
-            onOpenShowcase={() => setDrawerOpen(true)}
+            onFixConsoleErrors={handleFixConsoleErrors}
             onNotify={(title, message) => addToast({ type: 'info', title, message })}
           />
         </div>
       </div>
-
-      <Showcase15Drawer
-        open={drawerOpen}
-        activeId={activeShowcaseId}
-        onClose={() => setDrawerOpen(false)}
-        onSelect={loadShowcaseProduct}
-      />
     </div>
   );
 };

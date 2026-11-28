@@ -1,9 +1,40 @@
 const LOOP_GUARD_MARKER = 'data-ff-preview-guard';
 const CONSOLE_BRIDGE_MARKER = 'data-ff-console-bridge';
+const STORAGE_SHIM_MARKER = 'data-ff-storage-shim';
 
 export interface HardenPreviewOptions {
   enableConsoleBridge?: boolean;
   previewId?: string;
+}
+
+// WHY: Sandboxed iframes omit allow-same-origin for XSS isolation, so native localStorage/sessionStorage throw SecurityError; an in-memory shim lets generated task/timer/theme apps run cleanly.
+function buildStorageShimScript(): string {
+  return `<script ${STORAGE_SHIM_MARKER}="1">
+(function(){
+  var makeMem = function(){
+    var s = Object.create(null);
+    return {
+      getItem: function(k){ return Object.prototype.hasOwnProperty.call(s, String(k)) ? s[String(k)] : null; },
+      setItem: function(k, v){ s[String(k)] = String(v); },
+      removeItem: function(k){ delete s[String(k)]; },
+      clear: function(){ s = Object.create(null); },
+      key: function(i){ return Object.keys(s)[i] || null; },
+      get length(){ return Object.keys(s).length; }
+    };
+  };
+  ['localStorage', 'sessionStorage'].forEach(function(prop){
+    try {
+      var st = window[prop];
+      st.setItem('__ff_p__', '1');
+      st.removeItem('__ff_p__');
+    } catch (_) {
+      try {
+        Object.defineProperty(window, prop, { value: makeMem(), configurable: true, writable: false });
+      } catch (__) {}
+    }
+  });
+})();
+</script>`;
 }
 
 function buildConsoleBridgeScript(previewId: string): string {
@@ -149,7 +180,8 @@ function buildPreviewGuardScript(previewId: string): string {
 export function stripPreviewGuardScripts(rawHtml: string): string {
   return (rawHtml || '')
     .replace(/<script\b[^>]*data-ff-preview-guard[^>]*>[\s\S]*?<\/script>\s*/gi, '')
-    .replace(/<script\b[^>]*data-ff-console-bridge[^>]*>[\s\S]*?<\/script>\s*/gi, '');
+    .replace(/<script\b[^>]*data-ff-console-bridge[^>]*>[\s\S]*?<\/script>\s*/gi, '')
+    .replace(/<script\b[^>]*data-ff-storage-shim[^>]*>[\s\S]*?<\/script>\s*/gi, '');
 }
 
 export function hardenPreviewHtml(rawHtml: string, options?: HardenPreviewOptions): string {
@@ -160,15 +192,21 @@ export function hardenPreviewHtml(rawHtml: string, options?: HardenPreviewOption
     .replace(/<meta\b[^>]*http-equiv\s*=\s*["']?\s*refresh\b[^>]*>/gi, '');
 
   const previewId = options?.previewId || 'default';
-
+  const headInjections: string[] = [];
+  if (!cleaned.includes(STORAGE_SHIM_MARKER)) {
+    headInjections.push(buildStorageShimScript());
+  }
   if (options?.enableConsoleBridge && !cleaned.includes(CONSOLE_BRIDGE_MARKER)) {
-    const bridgeTag = buildConsoleBridgeScript(previewId);
+    headInjections.push(buildConsoleBridgeScript(previewId));
+  }
+  if (headInjections.length > 0) {
+    const injected = headInjections.join('\n');
     if (/<head\b[^>]*>/i.test(cleaned)) {
-      cleaned = cleaned.replace(/<head\b[^>]*>/i, (m) => `${m}\n${bridgeTag}`);
+      cleaned = cleaned.replace(/<head\b[^>]*>/i, (m) => `${m}\n${injected}`);
     } else if (/<html\b[^>]*>/i.test(cleaned)) {
-      cleaned = cleaned.replace(/<html\b[^>]*>/i, (m) => `${m}\n<head>${bridgeTag}</head>`);
+      cleaned = cleaned.replace(/<html\b[^>]*>/i, (m) => `${m}\n<head>${injected}</head>`);
     } else {
-      cleaned = `${bridgeTag}\n${cleaned}`;
+      cleaned = `${injected}\n${cleaned}`;
     }
   }
 

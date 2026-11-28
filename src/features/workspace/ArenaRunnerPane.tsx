@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import JSZip from 'jszip';
 import type { WorkspaceFile } from '../../types/index';
+import type { ComposeStreamProgress } from '../../engine/repoWebComposer';
 import type { BundleDiagnostic } from '../../engine/workspaceBundler';
 import { sanitizeFilesForZipExport } from '../../services/secretScanner';
 import { handleLiquidPointerLeave, handleLiquidPointerMove } from '../../utils/liquidGlassPointer';
@@ -23,6 +24,7 @@ export interface ArenaRunnerPaneProps {
   publishedSlug: string | null;
   publishing: boolean;
   busy: boolean;
+  streamProgress?: ComposeStreamProgress | null;
   viewMode: 'preview' | 'code';
   pointerShield?: boolean;
   onChangeViewMode: (mode: 'preview' | 'code') => void;
@@ -32,7 +34,7 @@ export interface ArenaRunnerPaneProps {
   onDeleteFile: (filePath: string) => void;
   onChangeFileContent: (filePath: string, nextContent: string) => void;
   onPublish: () => void;
-  onOpenShowcase: () => void;
+  onFixConsoleErrors?: (errorSummary: string) => void;
   onNotify: (title: string, message?: string) => void;
 }
 
@@ -49,6 +51,7 @@ export const ArenaRunnerPane: React.FC<ArenaRunnerPaneProps> = ({
   publishedSlug,
   publishing,
   busy,
+  streamProgress = null,
   viewMode,
   pointerShield = false,
   onChangeViewMode,
@@ -58,7 +61,7 @@ export const ArenaRunnerPane: React.FC<ArenaRunnerPaneProps> = ({
   onDeleteFile,
   onChangeFileContent,
   onPublish,
-  onOpenShowcase,
+  onFixConsoleErrors,
   onNotify,
 }) => {
   const [reloadNonce, setReloadNonce] = useState(0);
@@ -447,11 +450,10 @@ export const ArenaRunnerPane: React.FC<ArenaRunnerPaneProps> = ({
                 <path d="M8 14h4" />
               </svg>
             </div>
-            <h3>Chưa có dự án nào được mở</h3>
-            <p>Chọn mẫu gợi ý bên trái, nhắn yêu cầu hoặc mở nhanh 15 mẫu demo có sẵn.</p>
-            <button type="button" className="ws-ctaBtn ws-ctaBtn--primary" onClick={onOpenShowcase}>
-              Mở 15 mẫu demo
-            </button>
+            <h3>Khung xem trước trực tiếp</h3>
+            <p>
+              Chọn một ý tưởng gợi ý hoặc mô tả sản phẩm bên khung Chat. AI sẽ tự thiết kế, viết mã đa tệp và chạy bản xem trước tại đây.
+            </p>
           </div>
         )}
 
@@ -464,7 +466,13 @@ export const ArenaRunnerPane: React.FC<ArenaRunnerPaneProps> = ({
               <div className="ws-skel ws-skel--card" />
               <div className="ws-skel ws-skel--card" />
             </div>
-            <span className="ws-skelLabel">Đang lắp ghép dự án đa tệp và bản xem trước...</span>
+            <span className="ws-skelLabel">
+              {streamProgress?.activeFiles.length
+                ? `AI đang viết ${streamProgress.activeFiles.map((f) => f.path).join(' · ')}`
+                : streamProgress?.model && streamProgress.model !== 'auto'
+                  ? `Đang nhận mã nguồn trực tiếp từ ${streamProgress.model.replace(/^.*\//, '')}...`
+                  : 'AI đang thiết kế giao diện và viết mã đa tệp...'}
+            </span>
           </div>
         )}
 
@@ -518,9 +526,11 @@ export const ArenaRunnerPane: React.FC<ArenaRunnerPaneProps> = ({
             open={consoleOpen}
             projectMode={projectMode}
             fileCount={files.length}
+            busy={busy}
             onToggle={() => setConsoleOpen((v) => !v)}
             onClear={() => setRuntimeLogs([])}
             onJumpToFile={handleJumpToFile}
+            onFixErrors={onFixConsoleErrors}
           />
         )}
       </div>

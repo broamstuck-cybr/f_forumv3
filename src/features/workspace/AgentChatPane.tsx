@@ -4,6 +4,7 @@ import {
   type ChatLandingShowcaseItem,
 } from '../../data/chatLandingShowcase';
 import { BRAND_PALETTES } from '../../engine/motionCraftPack';
+import type { ComposeStreamProgress } from '../../engine/repoWebComposer';
 import { handleLiquidPointerLeave, handleLiquidPointerMove } from '../../utils/liquidGlassPointer';
 import type { AIProtocol, BYOKConfig, PublicAiRuntimeInfo, SuggestedVaultItem } from '../../types/index';
 import type {
@@ -105,6 +106,7 @@ export interface AgentChatPaneProps {
   profile: OnboardingProfile | null;
   messages: AgentChatMessage[];
   busy: boolean;
+  streamProgress?: ComposeStreamProgress | null;
   errorMessage: string | null;
   canUndo: boolean;
   hasGeneratedHtml: boolean;
@@ -116,6 +118,7 @@ export interface AgentChatPaneProps {
   onSaveByok: (next: BYOKConfig) => void;
   onRequireAuth: () => void;
   onSendPrompt: (text: string) => void;
+  onStopGeneration?: () => void;
   onUseSuggestedResource?: (item: SuggestedVaultItem) => void;
   onRetryLast: () => void;
   onUndo: () => void;
@@ -132,20 +135,21 @@ const ROLE_LABELS: Record<OnboardingRole, string> = {
 };
 
 const QUICK_EDIT_CHIPS = [
-  'Nền sáng',
-  'Thêm câu hỏi',
-  'Đếm ngược',
-  'Màu cam đào',
-  'Rút gọn chữ',
+  'Đổi nền sáng/tối',
+  'Tối ưu di động',
+  'Thêm hiệu ứng',
+  'Làm gọn bố cục',
+  'Thêm tương tác',
 ];
 
 const QUICK_ASK_PROMPT =
-  'F-Forum có những mẫu kính lỏng hoặc 3D nào đẹp để ghép vào trang? Giải thích nhanh cấu trúc dự án f_forumv3';
+  'F-Forum có những mẫu kính lỏng hoặc 3D nào đẹp để tham khảo? Giải thích nhanh cấu trúc dự án f_forumv3';
 
 export const AgentChatPane: React.FC<AgentChatPaneProps> = ({
   profile,
   messages,
   busy,
+  streamProgress = null,
   errorMessage,
   canUndo,
   hasGeneratedHtml,
@@ -157,6 +161,7 @@ export const AgentChatPane: React.FC<AgentChatPaneProps> = ({
   onSaveByok,
   onRequireAuth,
   onSendPrompt,
+  onStopGeneration,
   onUseSuggestedResource,
   onRetryLast,
   onUndo,
@@ -165,6 +170,7 @@ export const AgentChatPane: React.FC<AgentChatPaneProps> = ({
   onInspectFile,
 }) => {
   const [draft, setDraft] = useState('');
+  const [prefilledFlash, setPrefilledFlash] = useState(false);
   const [openTraceIds, setOpenTraceIds] = useState<Record<string, boolean>>({});
   const [visualStarters, setVisualStarters] = useState<ChatLandingShowcaseItem[]>(() =>
     pickRandomChatShowcase(4)
@@ -181,6 +187,7 @@ export const AgentChatPane: React.FC<AgentChatPaneProps> = ({
   );
   const feedEndRef = useRef<HTMLDivElement | null>(null);
   const inputRef = useRef<HTMLTextAreaElement | null>(null);
+  const flashTimerRef = useRef<number | null>(null);
 
   const hasActiveByok = Boolean(byok?.enabled && byok.apiKey.trim());
   const activePreset =
@@ -258,7 +265,42 @@ export const AgentChatPane: React.FC<AgentChatPaneProps> = ({
   useEffect(() => {
     if (messages.length === 0 && !busy) return;
     feedEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
-  }, [messages.length, busy]);
+  }, [messages.length, busy, streamProgress?.activeFiles.length]);
+
+  useEffect(() => {
+    const el = inputRef.current;
+    if (!el) return;
+    el.style.height = 'auto';
+    el.style.height = `${Math.min(136, Math.max(40, el.scrollHeight))}px`;
+  }, [draft]);
+
+  useEffect(() => {
+    return () => {
+      if (flashTimerRef.current !== null) {
+        window.clearTimeout(flashTimerRef.current);
+      }
+    };
+  }, []);
+
+  const fillComposer = (text: string) => {
+    setDraft(text);
+    setPrefilledFlash(true);
+    if (flashTimerRef.current !== null) {
+      window.clearTimeout(flashTimerRef.current);
+    }
+    flashTimerRef.current = window.setTimeout(() => {
+      setPrefilledFlash(false);
+      flashTimerRef.current = null;
+    }, 950);
+    window.requestAnimationFrame(() => {
+      const el = inputRef.current;
+      if (!el) return;
+      el.focus();
+      const len = text.length;
+      el.setSelectionRange(len, len);
+      el.scrollTop = el.scrollHeight;
+    });
+  };
 
   const submit = () => {
     const clean = draft.trim();
@@ -283,9 +325,9 @@ export const AgentChatPane: React.FC<AgentChatPaneProps> = ({
 
   const lastAssistant = [...messages].reverse().find((m) => m.role === 'assistant');
 
-  const contextSummary = profile
-    ? `${ROLE_LABELS[profile.role]} · ${profile.siteName || 'Trang mới'} · ${BRAND_PALETTES[profile.personality].label}`
-    : 'Chế độ Chat nhanh · Chưa đặt hồ sơ 5 bước';
+  const contextSummary = profile?.siteName
+    ? `${ROLE_LABELS[profile.role]} · ${profile.siteName} · ${BRAND_PALETTES[profile.personality].label}`
+    : 'Workspace AI · Tự thiết kế & lập trình đa tệp';
 
   return (
     <section className="ws-chat lg-glass lg-glass--matte" aria-label="Hội thoại với AI dựng trang">
@@ -312,17 +354,17 @@ export const AgentChatPane: React.FC<AgentChatPaneProps> = ({
           <div className="ws-chat__empty">
             <div className="ws-chat__emptyIntro">
               <h2>Bắt đầu dựng trang</h2>
-              <p>Chọn một mẫu landing page hoặc nhắn ý tưởng bên dưới.</p>
+              <p>Bấm thẻ gợi ý để điền nhanh prompt, hoặc tự mô tả ý tưởng để AI lập trình từ đầu.</p>
             </div>
 
             <div className="ws-visualHead">
-              <span className="ws-visualHead__label">Gợi ý ngẫu nhiên</span>
+              <span className="ws-visualHead__label">Ý tưởng tham khảo</span>
               <button
                 type="button"
                 className="ws-iconBtn ws-iconBtn--sm ws-visualShuffle lg-pill"
                 onClick={handleShuffleVisuals}
-                aria-label="Đổi mẫu ngẫu nhiên"
-                title="Đổi mẫu"
+                aria-label="Đổi ý tưởng ngẫu nhiên"
+                title="Đổi gợi ý"
               >
                 <svg
                   width="15"
@@ -351,12 +393,12 @@ export const AgentChatPane: React.FC<AgentChatPaneProps> = ({
                   type="button"
                   className="ws-visualCard"
                   data-card-trigger="true"
-                  onClick={() => onSendPrompt(item.prompt)}
-                  aria-label={`Dựng theo mẫu ${item.title}`}
+                  onClick={() => fillComposer(item.prompt)}
+                  aria-label={`Điền prompt mẫu ${item.title}`}
                 >
                   <img
                     src={item.image}
-                    alt={`Mẫu landing page ${item.title}`}
+                    alt={`Ý tưởng giao diện ${item.title}`}
                     loading="eager"
                     decoding="async"
                   />
@@ -364,7 +406,7 @@ export const AgentChatPane: React.FC<AgentChatPaneProps> = ({
                   <div className="ws-visualCard__scrim">
                     <span className="ws-visualCard__title">{item.title}</span>
                     <span className="ws-visualCard__cta" aria-hidden="true">
-                      Dùng mẫu
+                      Điền prompt
                     </span>
                   </div>
                 </button>
@@ -537,9 +579,51 @@ export const AgentChatPane: React.FC<AgentChatPaneProps> = ({
         })}
 
         {busy && (
-          <div className="ws-thinking" role="status" aria-live="polite">
-            <span className="ws-thinking__dot" aria-hidden="true" />
-            <span>Đang tra kho tài nguyên và dựng dự án đa tệp...</span>
+          <div className="ws-streamCard" role="status" aria-live="polite">
+            <div className="ws-streamCard__head">
+              <span className="ws-thinking__dot" aria-hidden="true" />
+              <span className="ws-streamCard__stage">
+                {streamProgress?.stage === 'checking'
+                  ? 'Đang kiểm tra và biên dịch bản xem trước...'
+                  : streamProgress?.stage === 'generating'
+                    ? 'AI đang tự thiết kế và viết mã...'
+                    : 'Đang kết nối tới model AI...'}
+              </span>
+              {streamProgress?.model && streamProgress.model !== 'auto' && (
+                <span className="ws-streamCard__model">
+                  {streamProgress.model.replace(/^.*\//, '')}
+                </span>
+              )}
+            </div>
+
+            {streamProgress?.summaryPreview && (
+              <p className="ws-streamCard__summary">{streamProgress.summaryPreview}</p>
+            )}
+
+            {streamProgress && streamProgress.activeFiles.length > 0 && (
+              <div className="ws-streamFiles">
+                {streamProgress.activeFiles.map((sf) => (
+                  <div
+                    key={sf.path}
+                    className={`ws-streamFileRow${sf.done ? ' is-done' : ' is-writing'}`}
+                  >
+                    <span className="ws-streamFileRow__left">
+                      {sf.done ? (
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                          <polyline points="20 6 9 17 4 12" />
+                        </svg>
+                      ) : (
+                        <span className="ws-streamFileRow__pulse" aria-hidden="true" />
+                      )}
+                      <span>
+                        {sf.action === 'patch' ? 'Patching' : sf.done ? 'Wrote' : 'Writing'} {sf.path}
+                      </span>
+                    </span>
+                    <span className="ws-streamFileRow__lines">{sf.lines} dòng</span>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         )}
 
@@ -591,7 +675,7 @@ export const AgentChatPane: React.FC<AgentChatPaneProps> = ({
         {!canUseAi && (
           <div className="ws-authGate" role="status">
             <span className="ws-authGate__text">
-              Đăng nhập hoặc gắn API Key riêng để dùng AI. Khách vẫn xem được 15 mẫu có sẵn.
+              Đăng nhập hoặc gắn API Key riêng để AI trực tiếp thiết kế và lập trình theo yêu cầu.
             </span>
             <div className="ws-authGate__actions">
               <button type="button" className="ws-miniBtn ws-miniBtn--primary" onClick={onRequireAuth}>
@@ -735,7 +819,7 @@ export const AgentChatPane: React.FC<AgentChatPaneProps> = ({
         )}
 
         <div
-          className="ws-composer lg-glass lg-glass--matte"
+          className={`ws-composer lg-glass lg-glass--matte${prefilledFlash ? ' is-prefilled' : ''}`}
           onPointerMove={handleLiquidPointerMove}
           onPointerLeave={handleLiquidPointerLeave}
         >
@@ -768,24 +852,38 @@ export const AgentChatPane: React.FC<AgentChatPaneProps> = ({
             placeholder={
               hasGeneratedHtml
                 ? 'Nhắn yêu cầu chỉnh sửa hoặc hỏi Trợ lý...'
-                : 'Nhắn ý tưởng dựng trang hoặc hỏi F-Forum...'
+                : 'Mô tả trang web hoặc ứng dụng bạn muốn AI lập trình...'
             }
             aria-label="Nhập yêu cầu cho AI"
           />
 
-          <button
-            type="button"
-            className="ws-sendBtn"
-            disabled={!draft.trim() || busy}
-            onClick={submit}
-            aria-label="Gửi yêu cầu"
-            title="Gửi"
-          >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.1" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-              <path d="M12 19V5" />
-              <path d="m5 12 7-7 7 7" />
-            </svg>
-          </button>
+          {busy && onStopGeneration ? (
+            <button
+              type="button"
+              className="ws-stopBtn"
+              onClick={onStopGeneration}
+              aria-label="Dừng AI đang tạo"
+              title="Dừng"
+            >
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                <rect x="5" y="5" width="14" height="14" rx="2.5" />
+              </svg>
+            </button>
+          ) : (
+            <button
+              type="button"
+              className="ws-sendBtn"
+              disabled={!draft.trim() || busy}
+              onClick={submit}
+              aria-label="Gửi yêu cầu"
+              title="Gửi"
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.1" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <path d="M12 19V5" />
+                <path d="m5 12 7-7 7 7" />
+              </svg>
+            </button>
+          )}
         </div>
       </div>
     </section>

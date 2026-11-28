@@ -127,16 +127,49 @@ export async function sbSelect<T = Record<string, unknown>>(
   const { url } = getSupabaseConfig();
   const cleanQuery = query.replace(/^\?/, '') || 'select=*';
   const endpoint = `${url}/rest/v1/${encodeURIComponent(table)}?${cleanQuery}`;
+  for (let attempt = 0; attempt < 2; attempt += 1) {
+    try {
+      const resp = await fetch(endpoint, {
+        method: 'GET',
+        headers: buildSupabaseHeaders(),
+      });
+      if (!resp.ok) {
+        if (attempt === 0 && resp.status >= 500) continue;
+        return [];
+      }
+      const data = (await resp.json()) as unknown;
+      return Array.isArray(data) ? (data as T[]) : [];
+    } catch {
+      if (attempt === 0) continue;
+      return [];
+    }
+  }
+  return [];
+}
+
+// WHY: Hydration seeders must NEVER overwrite existing Supabase rows if a transient read returns empty.
+export async function sbInsertIfMissing(
+  table: string,
+  rows: unknown,
+  onConflict?: string
+): Promise<boolean> {
+  if (!isSupabaseEnabled()) return false;
+  const { url } = getSupabaseConfig();
+  const payload = Array.isArray(rows) ? rows : [rows];
+  if (payload.length === 0) return true;
+  const conflictParam = onConflict ? `?on_conflict=${encodeURIComponent(onConflict)}` : '';
+  const endpoint = `${url}/rest/v1/${encodeURIComponent(table)}${conflictParam}`;
   try {
     const resp = await fetch(endpoint, {
-      method: 'GET',
-      headers: buildSupabaseHeaders(),
+      method: 'POST',
+      headers: buildSupabaseHeaders({
+        Prefer: 'resolution=ignore-duplicates,return=minimal',
+      }),
+      body: JSON.stringify(payload),
     });
-    if (!resp.ok) return [];
-    const data = (await resp.json()) as unknown;
-    return Array.isArray(data) ? (data as T[]) : [];
+    return resp.ok;
   } catch {
-    return [];
+    return false;
   }
 }
 

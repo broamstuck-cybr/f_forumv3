@@ -23,12 +23,8 @@ import {
 } from './motionCraftPack';
 import { recommendVaultResources } from './mitRecommender';
 import {
-  applyAssemblyPlanToBlueprint,
   applyIncrementalPatches,
-  buildStitchedVaultSlots,
   detectClientWorkspaceIntent,
-  stitchVaultModulesIntoFiles,
-  toVaultSlotBriefs,
 } from './vaultStitcher';
 import {
   bundleProjectFiles,
@@ -1577,6 +1573,21 @@ export function applyFollowUpMutation(
   return { next, changeSummary: changes };
 }
 
+export interface ComposeStreamFileStatus {
+  path: string;
+  lines: number;
+  done: boolean;
+  action: 'write' | 'patch';
+}
+
+export interface ComposeStreamProgress {
+  stage: 'routing' | 'generating' | 'checking';
+  model: string;
+  summaryPreview: string;
+  activeFiles: ComposeStreamFileStatus[];
+  charCount: number;
+}
+
 export interface ComposeAgentOptions {
   prompt: string;
   profile: OnboardingProfile;
@@ -1592,19 +1603,81 @@ export interface ComposeAgentOptions {
   model?: string;
   intent?: 'auto' | 'assistant' | 'assemble' | 'patch';
   chatHistory?: Array<{ role: 'user' | 'assistant'; content: string }>;
+  onProgress?: (progress: ComposeStreamProgress) => void;
+  signal?: AbortSignal;
 }
 
-function shouldUseReactTsxScaffold(
-  prompt: string,
-  previousFiles?: WorkspaceFile[]
-): boolean {
-  if (previousFiles && previousFiles.some((f) => /\.(tsx|jsx)$/i.test(f.path))) {
-    return true;
+export function extractLiveStreamProgress(
+  raw: string,
+  stage: 'routing' | 'generating' | 'checking',
+  model: string
+): ComposeStreamProgress {
+  let summaryPreview = '';
+  const closedSummary = raw.match(/<summary>([\s\S]*?)<\/summary>/i);
+  if (closedSummary) {
+    summaryPreview = closedSummary[1].replace(/\s+/g, ' ').trim();
+  } else {
+    const openSummary = raw.match(/<summary>([\s\S]*)$/i);
+    if (openSummary) {
+      summaryPreview = openSummary[1].replace(/\s+/g, ' ').trim();
+    } else if (!raw.includes('<file') && !raw.includes('<patch') && !raw.trim().startsWith('{')) {
+      summaryPreview = raw.replace(/\s+/g, ' ').trim().slice(0, 220);
+    }
   }
-  const folded = foldVi(prompt);
-  return /\b(react|tsx|jsx|component|components|dashboard|bang dieu khien|ung dung tuong tac|kanban|tracker)\b/.test(
-    folded
-  );
+
+  const fileMap = new Map<string, ComposeStreamFileStatus>();
+  const orderedPaths: string[] = [];
+  const upsert = (entry: ComposeStreamFileStatus) => {
+    if (!fileMap.has(entry.path)) orderedPaths.push(entry.path);
+    fileMap.set(entry.path, entry);
+  };
+
+  let lastEnd = 0;
+  const closedFileRe = /<file\s+[^>]*path=["']([^"']+)["'][^>]*>([\s\S]*?)<\/file>/gi;
+  let m: RegExpExecArray | null;
+  while ((m = closedFileRe.exec(raw)) !== null) {
+    lastEnd = Math.max(lastEnd, m.index + m[0].length);
+    const p = sanitizeVirtualPath(m[1]);
+    if (!p) continue;
+    const lines = Math.max(1, m[2].trim().split('\n').length);
+    upsert({ path: p, lines, done: true, action: 'write' });
+  }
+
+  const closedPatchRe = /<patch\s+[^>]*path=["']([^"']+)["'][^>]*>([\s\S]*?)<\/patch>/gi;
+  while ((m = closedPatchRe.exec(raw)) !== null) {
+    lastEnd = Math.max(lastEnd, m.index + m[0].length);
+    const p = sanitizeVirtualPath(m[1]);
+    if (!p) continue;
+    const lines = Math.max(1, m[2].trim().split('\n').length);
+    upsert({ path: p, lines, done: true, action: 'patch' });
+  }
+
+  const tail = raw.slice(lastEnd);
+  const openFile = tail.match(/<file\s+[^>]*path=["']([^"']+)["'][^>]*>([\s\S]*)$/i);
+  if (openFile) {
+    const p = sanitizeVirtualPath(openFile[1]);
+    if (p) {
+      const lines = Math.max(1, openFile[2].split('\n').length);
+      upsert({ path: p, lines, done: false, action: 'write' });
+    }
+  } else {
+    const openPatch = tail.match(/<patch\s+[^>]*path=["']([^"']+)["'][^>]*>([\s\S]*)$/i);
+    if (openPatch) {
+      const p = sanitizeVirtualPath(openPatch[1]);
+      if (p) {
+        const lines = Math.max(1, openPatch[2].split('\n').length);
+        upsert({ path: p, lines, done: false, action: 'patch' });
+      }
+    }
+  }
+
+  return {
+    stage,
+    model,
+    summaryPreview: summaryPreview.slice(0, 260),
+    activeFiles: orderedPaths.map((p) => fileMap.get(p)!),
+    charCount: raw.length,
+  };
 }
 
 export function renderBlueprintToReactFiles(bp: ComposerBlueprint): {
@@ -2136,6 +2209,24 @@ function mergeAiReturnedFiles(
   return sortProjectFiles(Array.from(fileMap.values()));
 }
 
+function extractTitleFromProjectFiles(files: WorkspaceFile[], fallbackPrompt: string): string {
+  const htmlFile = files.find((f) => /\.html?$/i.test(f.path));
+  if (htmlFile) {
+    const titleMatch = htmlFile.content.match(/<title[^>]*>([^<]{2,80})<\/title>/i);
+    if (titleMatch?.[1]?.trim()) {
+      const cleanTitle = titleMatch[1].replace(/\s+/g, ' ').trim();
+      if (!/^f-forum studio/i.test(cleanTitle)) return cleanTitle;
+    }
+    const h1Match = htmlFile.content.match(/<h1[^>]*>([\s\S]*?)<\/h1>/i);
+    if (h1Match?.[1]) {
+      const plainH1 = h1Match[1].replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+      if (plainH1.length >= 2 && plainH1.length <= 80) return plainH1;
+    }
+  }
+  const cleanPrompt = fallbackPrompt.replace(/\s+/g, ' ').trim();
+  return cleanPrompt.slice(0, 52) || 'Dự án F-Forum';
+}
+
 export async function composeWithAgent(
   options: ComposeAgentOptions
 ): Promise<ComposeResult> {
@@ -2155,7 +2246,14 @@ export async function composeWithAgent(
     model,
     intent: requestedIntent = 'auto',
     chatHistory = [],
+    onProgress,
+    signal,
   } = options;
+
+  const hasByok = Boolean(byok?.enabled && byok.apiKey.trim());
+  if (!isAuthenticated && !hasByok) {
+    throw new Error('Vui lòng đăng nhập hoặc gắn API Key riêng để AI trực tiếp thiết kế và viết mã.');
+  }
 
   const hasExistingProject = Boolean(previousHtml || previousFiles.length > 0);
   const freshTopic = isFreshTopicPrompt(prompt, previousBlueprint?.heroTitle || profile.siteName);
@@ -2164,10 +2262,17 @@ export async function composeWithAgent(
     hasExistingProject && !freshTopic && !seedItemId,
     seedItemId ? 'assemble' : requestedIntent
   );
-  const hasByok = Boolean(byok?.enabled && byok.apiKey.trim());
 
-  // 1. ULTRA-LOW-TOKEN F-FORUM ASSISTANT MODE (Q&A about web, GitHub repo, or Vault discovery — zero HTML regeneration!)
+  // 1. F-FORUM ASSISTANT MODE (Real AI Q&A about web, repo & Vault — never overwrites files)
   if (detectedIntent === 'assistant' && !forceVariation && !seedItemId) {
+    onProgress?.({
+      stage: 'routing',
+      model: model || 'auto',
+      summaryPreview: 'Đang tra kho tài nguyên và kết nối Trợ lý AI...',
+      activeFiles: [],
+      charCount: 0,
+    });
+
     const recAssist = await recommendVaultResources({
       profile,
       prompt,
@@ -2176,335 +2281,321 @@ export async function composeWithAgent(
       limit: 4,
     });
 
-    let assistantReply =
-      'F-Forum v3 cung cấp kho 5.909 mẫu giao diện miễn phí (Pin UI, ThreeUI 3D, lucianLabs, MotionSites Free, CodeFronts), 58 kỹ thuật chuyển động, 60 công cụ và Xưởng lắp ghép đa tệp. Bạn có thể bấm "Ghép mẫu" ở thẻ gợi ý bên dưới hoặc mô tả trang web cần dựng.';
-    let modelUsed = '';
-    let tokensTotal: number | undefined;
-    let estimatedCostUsd: number | undefined;
-    let usedLiveAi = false;
-    let suggestedResources: SuggestedVaultItem[] = recAssist.matched.slice(0, 4).map((m) => ({
-      id: m.id,
-      title: m.title,
-      library: m.library,
-      reason: m.reason,
-    }));
+    let rawStream = '';
+    let activeStage: 'routing' | 'generating' | 'checking' = 'routing';
+    let activeModel = model || 'auto';
 
-    if (isAuthenticated || hasByok) {
-      try {
-        const aiRes = await apiClient.sendAiChat(
-          {
-            prompt,
-            projectId: previousBlueprint?.heroTitle || 'f-forum-assistant',
-            model: model && model !== 'auto' ? model : undefined,
-            intent: 'assistant',
-            files: [],
-            attachedItems: recAssist.matched.slice(0, 4).map((m) => ({
-              id: m.id,
-              kind: 'resource' as const,
-              title: `${m.title} (${m.library})`,
-              summary: m.reason,
-            })),
-            history: chatHistory.slice(-4),
-          },
-          hasByok ? byok : undefined
-        );
-        if (aiRes && !aiRes.fallback && aiRes.message?.trim()) {
-          assistantReply = aiRes.message.trim();
-          modelUsed = aiRes.modelUsed || '';
-          tokensTotal = aiRes.tokens?.total;
-          estimatedCostUsd = aiRes.estimatedCostUsd;
-          usedLiveAi = true;
-          if (Array.isArray(aiRes.suggestedResources) && aiRes.suggestedResources.length > 0) {
-            suggestedResources = aiRes.suggestedResources;
-          }
-        }
-      } catch (err) {
-        const status = (err as { status?: number })?.status;
-        if (status === 401 || status === 403 || status === 429) {
-          throw err;
-        }
-        usedLiveAi = false;
+    const aiRes = await apiClient.streamAiChat(
+      {
+        prompt,
+        projectId: previousBlueprint?.heroTitle || 'f-forum-assistant',
+        model: model && model !== 'auto' ? model : undefined,
+        intent: 'assistant',
+        files: [],
+        attachedItems: recAssist.matched.slice(0, 4).map((m) => ({
+          id: m.id,
+          kind: 'resource' as const,
+          title: `${m.title} (${m.library})`,
+          summary: m.reason,
+        })),
+        history: chatHistory.slice(-4),
+      },
+      hasByok ? byok : undefined,
+      {
+        signal,
+        onStage: (ev) => {
+          activeStage = ev.stage;
+          if (ev.model) activeModel = ev.model;
+          if (ev.stage === 'generating') rawStream = '';
+          onProgress?.(extractLiveStreamProgress(rawStream, activeStage, activeModel));
+        },
+        onDelta: (ev) => {
+          rawStream += ev.text;
+          onProgress?.(extractLiveStreamProgress(rawStream, activeStage, activeModel));
+        },
       }
+    );
+
+    if (!aiRes || aiRes.fallback || !aiRes.message?.trim()) {
+      throw new Error(
+        aiRes?.message || aiRes?.upstreamError || 'Trợ lý AI tạm gián đoạn. Hãy bấm Thử lại hoặc đổi model.'
+      );
     }
 
-    const fallbackBp =
+    const suggestedResources: SuggestedVaultItem[] =
+      Array.isArray(aiRes.suggestedResources) && aiRes.suggestedResources.length > 0
+        ? aiRes.suggestedResources
+        : recAssist.matched.slice(0, 4).map((m) => ({
+            id: m.id,
+            title: m.title,
+            library: m.library,
+            reason: m.reason,
+          }));
+
+    const metaBp =
       previousBlueprint ||
       createInitialBlueprint(profile, prompt, recAssist.matched, 0);
-    const keepPal = resolveCraftPalette(fallbackBp.profile.personality, fallbackBp.themeMode, fallbackBp.accentKey);
+    const keepPal = resolveCraftPalette(metaBp.profile.personality, metaBp.themeMode, metaBp.accentKey);
     const durationMs = Math.max(180, Math.round(performance.now() - startedAt));
     return {
       html: previousHtml || '',
       files: previousFiles,
       changedFiles: [],
-      blueprint: fallbackBp,
+      blueprint: metaBp,
       matchedResources: recAssist.matched,
-      motionSignature: SIGNATURE_MOTIONS[fallbackBp.signature].label,
+      motionSignature: SIGNATURE_MOTIONS[metaBp.signature].label,
       trace: [
         {
           id: `tr-assist-${Date.now()}`,
           kind: 'vault_search',
-          label: `Trợ lý F-Forum · Tra ${recAssist.totalScanned.toLocaleString('vi-VN')} mẫu (không dựng lại tệp)`,
+          label: `Trợ lý AI · Tra ${recAssist.totalScanned.toLocaleString('vi-VN')} mẫu kho tài nguyên`,
           detail: suggestedResources.map((s) => `${s.title} (${s.library})`).join(' · '),
           status: 'done',
         },
       ],
       audit: auditGeneratedPage(previousHtml || '<html><body></body></html>', keepPal),
-      summaryText: assistantReply,
+      summaryText: aiRes.message.trim(),
       diff: { added: 0, removed: 0 },
       durationMs,
-      usedLiveAi,
+      usedLiveAi: true,
       mode: 'assistant',
-      modelUsed,
-      tokensTotal,
-      estimatedCostUsd,
+      modelUsed: aiRes.modelUsed || activeModel,
+      tokensTotal: aiRes.tokens?.total,
+      estimatedCostUsd: aiRes.estimatedCostUsd,
       suggestedResources,
     };
   }
 
-  const isEdit = Boolean(hasExistingProject && previousBlueprint && !freshTopic && detectedIntent === 'patch');
+  // 2. REAL BESPOKE AI BUILD / SURGICAL PATCH MODE (Zero pre-made template fallback!)
+  const isEdit = Boolean(hasExistingProject && !freshTopic && detectedIntent === 'patch' && !seedItemId);
   const effectiveProfile: OnboardingProfile = freshTopic
     ? { ...profile, siteName: '' }
     : profile;
 
-  const rec = await recommendVaultResources({
-    profile: effectiveProfile,
-    prompt,
-    behaviorScores,
-    excludeIds,
-    limit: 6,
-    seedItemId,
+  onProgress?.({
+    stage: 'routing',
+    model: model || 'auto',
+    summaryPreview: isEdit
+      ? 'Đang gửi mã nguồn hiện tại để AI chỉnh sửa trực tiếp...'
+      : 'Đang kết nối AI và tra cứu tài liệu tham khảo...',
+    activeFiles: [],
+    charCount: 0,
   });
 
-  // 2. FETCH REAL VAULT SHARDS FOR DETERMINISTIC ZERO-TOKEN STITCHING (HTML + Scoped CSS + JS)
-  const shardTargets = rec.matched
-    .slice(0, 5)
-    .map((m) => ({ match: m, meta: rec.itemsById.get(m.id) }));
-
-  const [fetchedShardEntries, motionRecipes] = await Promise.all([
-    Promise.all(
-      shardTargets.map(async ({ match, meta }) => {
-        let payload: VaultShardPayload | undefined;
-        if (meta?.s && meta.s !== 'pinui') {
-          try {
-            const shard = await fetchVaultShard(meta.s);
-            payload = shard?.[meta.i];
-          } catch {
-            payload = undefined;
-          }
-        }
-        return { match, payload };
-      })
-    ),
-    fetchMotionRecipes().catch(() => []),
-  ]);
-
-  const stitchedSlots = buildStitchedVaultSlots(fetchedShardEntries);
-  const vaultSlotBriefs = toVaultSlotBriefs(stitchedSlots);
-
+  // Fetch compact Vault craft references only on fresh builds or explicit seed remix
+  let matchedResources: MatchedVaultResource[] = [];
+  let totalScanned = 5909;
   const hydratedSnippets: Array<{
     id: string;
     kind: 'resource';
     title: string;
     summary: string;
-  }> = fetchedShardEntries.slice(0, 3).map(({ match, payload }) => {
-    const parts: string[] = [`Library: ${match.library} · Reason: ${match.reason}`];
-    if (payload?.p) parts.push(`Spec: ${payload.p.slice(0, 260)}`);
-    if (payload?.h) parts.push(`HTML:\n${payload.h.slice(0, 700)}`);
-    if (payload?.c) parts.push(`CSS:\n${payload.c.slice(0, 700)}`);
-    return {
-      id: match.id,
-      kind: 'resource' as const,
-      title: match.title,
-      summary: parts.join('\n'),
-    };
-  });
+  }> = [];
 
-  if (motionRecipes.length > 0) {
-    const pickedRecipe = motionRecipes[Math.abs(prompt.length) % motionRecipes.length];
-    if (pickedRecipe) {
+  if (!isEdit) {
+    const rec = await recommendVaultResources({
+      profile: effectiveProfile,
+      prompt,
+      behaviorScores,
+      excludeIds,
+      limit: 4,
+      seedItemId,
+    });
+    matchedResources = rec.matched;
+    totalScanned = rec.totalScanned;
+
+    const shardTargets = rec.matched
+      .slice(0, 2)
+      .map((m) => ({ match: m, meta: rec.itemsById.get(m.id) }));
+
+    const [fetchedShardEntries, motionRecipes] = await Promise.all([
+      Promise.all(
+        shardTargets.map(async ({ match, meta }) => {
+          let payload: VaultShardPayload | undefined;
+          if (meta?.s && meta.s !== 'pinui') {
+            try {
+              const shard = await fetchVaultShard(meta.s);
+              payload = shard?.[meta.i];
+            } catch {
+              payload = undefined;
+            }
+          }
+          return { match, payload };
+        })
+      ),
+      fetchMotionRecipes().catch(() => []),
+    ]);
+
+    for (const { match, payload } of fetchedShardEntries) {
+      const parts: string[] = [`Library: ${match.library} · Inspiration: ${match.reason}`];
+      if (payload?.p) parts.push(`Spec: ${payload.p.slice(0, 240)}`);
+      if (payload?.c) parts.push(`CSS Craft Reference:\n${payload.c.slice(0, 720)}`);
       hydratedSnippets.push({
-        id: pickedRecipe.id,
+        id: match.id,
         kind: 'resource',
-        title: `Motion Recipe: ${pickedRecipe.title}`,
-        summary: `Use when: ${pickedRecipe.useWhen}\nCode:\n${pickedRecipe.code.slice(0, 600)}`,
+        title: match.title,
+        summary: parts.join('\n'),
       });
     }
-  }
 
-  let blueprint: ComposerBlueprint;
-  let summaryText: string;
-
-  if (isEdit && previousBlueprint) {
-    const { next, changeSummary } = applyFollowUpMutation(
-      previousBlueprint,
-      prompt,
-      rec.matched,
-      forceVariation
-    );
-    blueprint = next;
-    summaryText = `Đã cập nhật dự án theo yêu cầu: ${changeSummary.join('; ')}.`;
-  } else {
-    blueprint = createInitialBlueprint(
-      effectiveProfile,
-      prompt,
-      rec.matched,
-      forceVariation ? 1 : 0
-    );
-    summaryText = `Đã lắp ghép dự án "${blueprint.heroTitle}" từ kho mẫu F-Forum (${stitchedSlots.length} khối thật) và hiệu ứng ${SIGNATURE_MOTIONS[blueprint.signature].label}.`;
-  }
-
-  const preferReact = shouldUseReactTsxScaffold(prompt, isEdit ? previousFiles : []);
-  let { files, html, audit } = renderBlueprintToFiles(blueprint, preferReact);
-
-  // Deterministically stitch real Vault modules on new HTML builds even before/without AI response
-  if (!isEdit && !preferReact && stitchedSlots.length > 0) {
-    files = stitchVaultModulesIntoFiles(files, stitchedSlots);
-    const stitchedBundled = bundleProjectFiles(files, { enableConsoleBridge: false });
-    if (stitchedBundled.standaloneHtml) {
-      html = stitchedBundled.standaloneHtml;
-      const pal = resolveCraftPalette(blueprint.profile.personality, blueprint.themeMode, blueprint.accentKey);
-      audit = auditGeneratedPage(html, pal);
+    if (motionRecipes.length > 0) {
+      const pickedRecipe = motionRecipes[Math.abs(prompt.length) % motionRecipes.length];
+      if (pickedRecipe) {
+        hydratedSnippets.push({
+          id: pickedRecipe.id,
+          kind: 'resource',
+          title: `Motion Reference: ${pickedRecipe.title}`,
+          summary: `Use when: ${pickedRecipe.useWhen}\nCSS/JS Snippet:\n${pickedRecipe.code.slice(0, 540)}`,
+        });
+      }
     }
   }
 
-  let usedLiveAi = false;
-  let aiModelLabel = '';
-  let tokensTotal: number | undefined;
-  let estimatedCostUsd: number | undefined;
-  const useCompactAssemblyPlan = !isEdit && !preferReact && vaultSlotBriefs.length > 0;
+  const contextFiles = isEdit
+    ? previousFiles
+        .filter((f) => f.path !== 'metadata.json' && f.path !== 'README.md')
+        .slice(0, 5)
+        .map((f) => ({ path: f.path, content: f.content.slice(0, 7500) }))
+    : [];
 
-  if (isAuthenticated || hasByok) {
-    try {
-      const contextFiles = isEdit
-        ? (previousFiles.length > 0 ? previousFiles : files)
-            .filter((f) => f.path !== 'metadata.json' && f.path !== 'README.md' && f.path !== 'src/vault-modules.css')
-            .slice(0, 3)
-            .map((f) => ({ path: f.path, content: f.content.slice(0, 1800) }))
-        : useCompactAssemblyPlan
-          ? []
-          : files
-              .filter((f) => f.path !== 'metadata.json' && f.path !== 'README.md')
-              .slice(0, 4)
-              .map((f) => ({ path: f.path, content: f.content.slice(0, 2600) }));
+  const effectivePrompt = forceVariation
+    ? `${prompt}\n\n(Hãy tự thiết kế lại một phiên bản hoàn toàn mới với bố cục, bảng màu và phong cách chữ khác hẳn phiên bản trước.)`
+    : prompt;
 
-      const aiRes = await apiClient.sendAiChat(
-        {
-          prompt,
-          projectId: blueprint.heroTitle || 'workspace-v4',
-          model: model && model !== 'auto' ? model : undefined,
-          intent: isEdit ? 'patch' : 'assemble',
-          files: contextFiles,
-          vaultSlots: useCompactAssemblyPlan ? vaultSlotBriefs : undefined,
-          attachedItems: useCompactAssemblyPlan ? [] : hydratedSnippets,
-        },
-        hasByok ? byok : undefined
-      );
+  let rawStream = '';
+  let activeStage: 'routing' | 'generating' | 'checking' = 'routing';
+  let activeModel = model || 'auto';
+  let lastEmitTs = 0;
 
-      if (aiRes && !aiRes.fallback) {
-        tokensTotal = aiRes.tokens?.total;
-        estimatedCostUsd = aiRes.estimatedCostUsd;
-        aiModelLabel = aiRes.modelUsed || (hasByok ? 'BYOK' : 'OpenRouter');
-
-        // Path A: Ultra-low-token Assembly Plan + Real Vault Stitching (~75% fewer tokens!)
-        if (aiRes.assemblyPlan && !preferReact) {
-          const adaptedBlueprint = applyAssemblyPlanToBlueprint(blueprint, aiRes.assemblyPlan);
-          const rendered = renderBlueprintToFiles(adaptedBlueprint, false);
-          const stitched = stitchVaultModulesIntoFiles(rendered.files, stitchedSlots, aiRes.assemblyPlan);
-          const bundled = bundleProjectFiles(stitched, { enableConsoleBridge: false });
-          if (bundled.standaloneHtml) {
-            const pal = resolveCraftPalette(
-              adaptedBlueprint.profile.personality,
-              adaptedBlueprint.themeMode,
-              adaptedBlueprint.accentKey
-            );
-            blueprint = adaptedBlueprint;
-            files = stitched;
-            html = bundled.standaloneHtml;
-            audit = auditGeneratedPage(html, pal);
-            usedLiveAi = true;
-            if (typeof aiRes.message === 'string' && aiRes.message.trim().length >= 8) {
-              summaryText = aiRes.message.trim();
-            }
-          }
+  const aiRes = await apiClient.streamAiChat(
+    {
+      prompt: effectivePrompt,
+      projectId: previousBlueprint?.heroTitle || effectiveProfile.siteName || 'workspace-live',
+      model: model && model !== 'auto' ? model : undefined,
+      intent: isEdit ? 'patch' : 'assemble',
+      files: contextFiles,
+      attachedItems: isEdit ? [] : hydratedSnippets,
+      history: chatHistory.slice(-4),
+    },
+    hasByok ? byok : undefined,
+    {
+      signal,
+      onStage: (ev) => {
+        activeStage = ev.stage;
+        if (ev.model) activeModel = ev.model;
+        if (ev.stage === 'generating') {
+          rawStream = '';
         }
-        // Path B: Incremental find/replace patches on existing files (~70% fewer tokens!)
-        else if (isEdit && Array.isArray(aiRes.patches) && aiRes.patches.length > 0 && previousFiles.length > 0) {
-          const patched = applyIncrementalPatches(previousFiles, aiRes.patches);
-          if (patched.appliedCount > 0) {
-            const bundled = bundleProjectFiles(patched.files, { enableConsoleBridge: false });
-            if (bundled.standaloneHtml) {
-              const pal = resolveCraftPalette(blueprint.profile.personality, blueprint.themeMode, blueprint.accentKey);
-              files = patched.files;
-              html = bundled.standaloneHtml;
-              audit = auditGeneratedPage(html, pal);
-              usedLiveAi = true;
-              if (typeof aiRes.message === 'string' && aiRes.message.trim().length >= 8) {
-                summaryText = aiRes.message.trim();
-              }
-            }
-          }
+        onProgress?.(extractLiveStreamProgress(rawStream, activeStage, activeModel));
+      },
+      onDelta: (ev) => {
+        rawStream += ev.text;
+        const nowTs = performance.now();
+        if (nowTs - lastEmitTs >= 65 || ev.text.includes('</file>') || ev.text.includes('</summary>')) {
+          lastEmitTs = nowTs;
+          onProgress?.(extractLiveStreamProgress(rawStream, activeStage, activeModel));
         }
-        // Path C: Partial or full multi-file AI response (React TSX or custom edits)
-        else if (Array.isArray(aiRes.files) && aiRes.files.length > 0) {
-          const merged = mergeAiReturnedFiles(
-            aiRes.files,
-            isEdit && previousFiles.length > 0 ? previousFiles : files,
-            {
-              title: blueprint.heroTitle || effectiveProfile.siteName || 'Dự án F-Forum',
-              domain: blueprint.profile.domain,
-              personality: blueprint.profile.personality,
-              motionSignature: SIGNATURE_MOTIONS[blueprint.signature].label,
-              sources: rec.matched,
-            }
-          );
-          if (merged && merged.length > 0) {
-            const cssFile = merged.find((f) => /\.css$/i.test(f.path));
-            const hasRealCss = Boolean(cssFile && cssFile.content.includes('{') && cssFile.content.split('\n').length >= 8);
-            const hasInlineStyle = merged.some(
-              (f) => /\.html?$/i.test(f.path) && /<style[\s>][\s\S]{120,}<\/style>/i.test(f.content)
-            );
-            if (hasRealCss || hasInlineStyle) {
-              const bundled = bundleProjectFiles(merged, { enableConsoleBridge: false });
-              if (bundled.standaloneHtml) {
-                const pal = resolveCraftPalette(
-                  blueprint.profile.personality,
-                  blueprint.themeMode,
-                  blueprint.accentKey
-                );
-                audit = auditGeneratedPage(bundled.standaloneHtml, pal);
-                files = merged;
-                html = bundled.standaloneHtml;
-                usedLiveAi = true;
-                if (typeof aiRes.message === 'string' && aiRes.message.trim().length >= 8) {
-                  summaryText = aiRes.message.trim();
-                }
-              }
-            }
-          }
-        }
-      }
-    } catch (err) {
-      const status = (err as { status?: number })?.status;
-      if (status === 401 || status === 403 || status === 429) {
-        throw err;
-      }
-      usedLiveAi = false;
+      },
+    }
+  );
+
+  if (!aiRes || aiRes.fallback) {
+    throw new Error(
+      aiRes?.message ||
+        aiRes?.upstreamError ||
+        'AI chưa trả về mã nguồn. Hãy bấm Thử lại hoặc chọn model khác.'
+    );
+  }
+
+  const aiModelLabel = aiRes.modelUsed || activeModel || (hasByok ? 'BYOK' : 'OpenRouter');
+  const tokensTotal = aiRes.tokens?.total;
+  const estimatedCostUsd = aiRes.estimatedCostUsd;
+
+  // Build lightweight metadata shell (NEVER rendered to HTML — only used for title/publish metadata)
+  const metaBp =
+    isEdit && previousBlueprint
+      ? previousBlueprint
+      : createInitialBlueprint(effectiveProfile, prompt, matchedResources, forceVariation ? 1 : 0);
+
+  let nextFiles: WorkspaceFile[] | null = null;
+  let workingBaseFiles = isEdit ? previousFiles : [];
+
+  // Apply surgical <patch> edits if returned on an existing project
+  if (isEdit && Array.isArray(aiRes.patches) && aiRes.patches.length > 0 && previousFiles.length > 0) {
+    const patched = applyIncrementalPatches(previousFiles, aiRes.patches);
+    if (patched.appliedCount > 0) {
+      workingBaseFiles = patched.files;
+      nextFiles = patched.files;
     }
   }
 
-  const changedFiles = computeProjectFileDiffs(previousFiles, files);
-  const diff = computeHtmlLineDiff(previousHtml, html);
+  // Merge returned bespoke <file> blocks (either full fresh project or updated files)
+  if (Array.isArray(aiRes.files) && aiRes.files.length > 0) {
+    const extractedTitle = extractTitleFromProjectFiles(
+      aiRes.files.map((f) => ({
+        path: f.path,
+        content: f.content,
+        language: detectLanguageFromPath(f.path),
+        updatedAt: '',
+      })),
+      prompt
+    );
+    const merged = mergeAiReturnedFiles(aiRes.files, workingBaseFiles, {
+      title: extractedTitle,
+      domain: metaBp.profile.domain,
+      personality: metaBp.profile.personality,
+      motionSignature: `AI · ${aiModelLabel.replace(/^.*\//, '')}`,
+      sources: matchedResources,
+    });
+    if (merged && merged.length > 0) {
+      nextFiles = merged;
+    }
+  }
+
+  if (!nextFiles || nextFiles.length === 0) {
+    throw new Error(
+      `Model ${aiModelLabel.replace(/^.*\//, '')} phản hồi chưa tạo được tệp mã nguồn hợp lệ. Hãy bấm Thử lại hoặc chọn model khác.`
+    );
+  }
+
+  const bundled = bundleProjectFiles(nextFiles, { enableConsoleBridge: false });
+  if (!bundled.standaloneHtml) {
+    throw new Error('Không biên dịch được bản xem trước từ mã nguồn AI vừa viết. Hãy bấm Thử lại.');
+  }
+
+  const extractedTitle = extractTitleFromProjectFiles(nextFiles, prompt);
+  const finalBlueprint: ComposerBlueprint = {
+    ...metaBp,
+    profile: {
+      ...metaBp.profile,
+      siteName: extractedTitle,
+    },
+    heroTitle: extractedTitle,
+    heroSubtitle: aiRes.message?.trim() || metaBp.heroSubtitle,
+  };
+
+  const html = bundled.standaloneHtml;
+  const pal = resolveCraftPalette(
+    finalBlueprint.profile.personality,
+    finalBlueprint.themeMode,
+    finalBlueprint.accentKey
+  );
+  const audit = auditGeneratedPage(html, pal);
+  const summaryText =
+    typeof aiRes.message === 'string' && aiRes.message.trim().length >= 6
+      ? aiRes.message.trim()
+      : isEdit
+        ? `AI (${aiModelLabel.replace(/^.*\//, '')}) đã cập nhật mã nguồn theo yêu cầu.`
+        : `AI (${aiModelLabel.replace(/^.*\//, '')}) đã tự thiết kế và lập trình dự án "${extractedTitle}".`;
+
+  const changedFiles = computeProjectFileDiffs(isEdit ? previousFiles : [], nextFiles);
+  const diff = computeHtmlLineDiff(isEdit ? previousHtml : null, html);
   const durationMs = Math.max(240, Math.round(performance.now() - startedAt));
-  const motionSpec = SIGNATURE_MOTIONS[blueprint.signature];
-  const shardLoadedNote =
-    stitchedSlots.length > 0
-      ? `Đã ghép trực tiếp ${stitchedSlots.length} khối thật từ kho 5.909 mẫu (${stitchedSlots.map((s) => s.title).join(', ')}).`
-      : '';
 
   const fileTraceSteps: AgentTraceStep[] = (
     changedFiles.length > 0
       ? changedFiles.filter((d) => d.path !== 'metadata.json')
-      : files
+      : nextFiles
           .filter((f) => f.path !== 'metadata.json')
           .map((f) => ({
             path: f.path,
@@ -2526,49 +2617,51 @@ export async function composeWithAgent(
     {
       id: `tr-thought-${Date.now()}`,
       kind: 'thought',
-      label: usedLiveAi
-        ? `AI (${aiModelLabel || 'OpenRouter'}) lắp ghép ${files.length} tệp${tokensTotal ? ` · ${tokensTotal.toLocaleString('vi-VN')} token` : ''}`
-        : isEdit
-          ? 'Cập nhật nhanh trên cấu trúc tệp hiện tại'
-          : `Lắp ghép "${blueprint.heroTitle}" từ kho tài nguyên (${stitchedSlots.length} khối thật)`,
-      detail: shardLoadedNote || `Mục tiêu: ${blueprint.profile.goal} · ${files.length} tệp nguồn.`,
+      label: isEdit
+        ? `AI (${aiModelLabel.replace(/^.*\//, '')}) chỉnh sửa trực tiếp${tokensTotal ? ` · ${tokensTotal.toLocaleString('vi-VN')} token` : ''}`
+        : `AI (${aiModelLabel.replace(/^.*\//, '')}) tự viết ${nextFiles.filter((f) => f.path !== 'metadata.json').length} tệp${tokensTotal ? ` · ${tokensTotal.toLocaleString('vi-VN')} token` : ''}`,
+      detail: `Model thực thi: ${aiModelLabel}`,
       status: 'done',
     },
-    {
-      id: `tr-vault-${Date.now()}`,
-      kind: 'vault_search',
-      label: `Đã tra ${rec.totalScanned.toLocaleString('vi-VN')} mẫu kho tài nguyên (ghép ${Math.max(stitchedSlots.length, rec.matched.length)} khối)`,
-      detail: rec.matched.map((m) => `${m.title} (${m.library})`).join(' · '),
-      status: 'done',
-    },
+    ...(matchedResources.length > 0
+      ? [
+          {
+            id: `tr-vault-${Date.now()}`,
+            kind: 'vault_search' as const,
+            label: `Tham khảo ${matchedResources.length} ý tưởng kỹ thuật từ ${totalScanned.toLocaleString('vi-VN')} mẫu kho`,
+            detail: matchedResources.map((m) => `${m.title} (${m.library})`).join(' · '),
+            status: 'done' as const,
+          },
+        ]
+      : []),
     ...fileTraceSteps,
     {
       id: `tr-check-${Date.now()}`,
       kind: 'check',
-      label: `Kiểm tra tương phản ${audit.contrastBody}:1 · ${motionSpec.label}`,
+      label: `Đã biên dịch ${bundled.mode === 'react-tsx' ? 'React TSX' : 'HTML/CSS/JS'} (${nextFiles.length} tệp)`,
       detail:
-        audit.fixesApplied.length > 0
-          ? audit.fixesApplied.join(' · ')
-          : 'Tương phản chữ rõ, không tràn ngang 390px và hỗ trợ giảm chuyển động.',
+        bundled.diagnostics.length > 0
+          ? bundled.diagnostics.map((d) => d.message).slice(0, 2).join(' · ')
+          : 'Không có lỗi biên dịch.',
       status: 'done',
     },
   ];
 
   return {
     html,
-    files,
+    files: nextFiles,
     changedFiles,
-    blueprint,
-    matchedResources: rec.matched,
-    motionSignature: motionSpec.label,
+    blueprint: finalBlueprint,
+    matchedResources,
+    motionSignature: aiModelLabel.replace(/^.*\//, ''),
     trace,
     audit,
     summaryText,
     diff,
     durationMs,
-    usedLiveAi,
+    usedLiveAi: true,
     mode: 'build',
-    modelUsed: aiModelLabel || undefined,
+    modelUsed: aiModelLabel,
     tokensTotal,
     estimatedCostUsd,
   };

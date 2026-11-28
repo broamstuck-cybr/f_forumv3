@@ -396,6 +396,25 @@
   display: flex;
   flex-direction: column;
   gap: 16px;
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in srgb, var(--fg-muted) 28%, transparent) transparent;
+}
+
+.ws-chat__feed::-webkit-scrollbar {
+  width: 5px;
+}
+
+.ws-chat__feed::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.ws-chat__feed::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--fg-muted) 26%, transparent);
+}
+
+.ws-chat__feed::-webkit-scrollbar-thumb:hover {
+  background: color-mix(in srgb, var(--fg-muted) 45%, transparent);
 }
 
 .ws-chat__empty {
@@ -977,6 +996,13 @@
   box-shadow: var(--lg-inset-bevel), 0 0 0 1.5px var(--accent), var(--lg-panel-shadow);
 }
 
+.ws-composer.is-prefilled {
+  box-shadow:
+    var(--lg-inset-bevel),
+    0 0 0 2px var(--accent),
+    0 0 0 6px color-mix(in srgb, var(--accent) 18%, transparent);
+}
+
 .ws-input {
   flex: 1;
   min-width: 0;
@@ -1017,6 +1043,167 @@
 
 .ws-sendBtn:disabled {
   opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.ws-stopBtn {
+  width: 36px;
+  height: 36px;
+  flex-shrink: 0;
+  border-radius: var(--radius-pill);
+  border: 1px solid color-mix(in srgb, var(--danger, #e05a5a) 55%, transparent);
+  background: color-mix(in srgb, var(--danger, #e05a5a) 16%, var(--bg-raised));
+  color: var(--danger, #e05a5a);
+  display: inline-grid;
+  place-items: center;
+  cursor: pointer;
+  transition: transform 140ms var(--ease-ux), background-color 140ms ease;
+}
+
+.ws-stopBtn:hover {
+  background: var(--danger, #e05a5a);
+  color: #ffffff;
+  transform: scale(1.04);
+}
+
+.ws-stopBtn:active {
+  transform: scale(0.95);
+}
+
+/* Live SSE Streaming Artifact Card (Bolt / AI Studio style) */
+.ws-streamCard {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  border: 1px solid color-mix(in srgb, var(--accent) 34%, var(--lg-pill-border));
+  background: var(--lg-panel-bg-sunken);
+  box-shadow: var(--lg-pill-bevel);
+}
+
+.ws-streamCard__head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.ws-streamCard__stage {
+  font-size: 0.83rem;
+  font-weight: 600;
+  color: var(--fg);
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ws-streamCard__model {
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  font-weight: 600;
+  color: var(--accent);
+  background: var(--accent-soft);
+  padding: 2px 7px;
+  border-radius: 999px;
+  flex-shrink: 0;
+  max-width: 150px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ws-streamCard__summary {
+  margin: 0;
+  font-size: 0.82rem;
+  line-height: 1.5;
+  color: var(--fg-muted);
+}
+
+.ws-streamFiles {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.ws-streamFileRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 6px 10px;
+  border-radius: 10px;
+  border: 1px solid var(--lg-pill-border);
+  background: var(--lg-pill-bg);
+  font-family: var(--font-mono);
+  font-size: 0.76rem;
+  color: var(--fg);
+}
+
+.ws-streamFileRow.is-writing {
+  border-color: color-mix(in srgb, var(--accent) 46%, var(--lg-pill-border));
+}
+
+.ws-streamFileRow__left {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ws-streamFileRow__left svg {
+  color: var(--accent);
+  flex-shrink: 0;
+}
+
+.ws-streamFileRow__pulse {
+  width: 7px;
+  height: 7px;
+  border-radius: 999px;
+  background: var(--accent);
+  flex-shrink: 0;
+  animation: wsPulse 1s ease-in-out infinite;
+}
+
+.ws-streamFileRow__lines {
+  font-variant-numeric: tabular-nums;
+  font-size: 0.71rem;
+  color: var(--fg-muted);
+  flex-shrink: 0;
+}
+
+/* 1-Click Console Auto-Fix button (always sits on dark IDE Console bar -> use crisp light mint ink) */
+.ws-console__fixBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 24px;
+  padding: 0 9px;
+  border-radius: 999px;
+  border: 1px solid rgba(76, 224, 176, 0.52);
+  background: rgba(56, 201, 154, 0.16);
+  color: #5ee9bc;
+  font-family: var(--font-ui);
+  font-size: 0.72rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background-color 140ms ease, color 140ms ease, transform 120ms var(--ease-ux);
+}
+
+.ws-console__fixBtn:hover:not(:disabled) {
+  background: #0d825f;
+  border-color: #38c99a;
+  color: #ffffff;
+}
+
+.ws-console__fixBtn:disabled {
+  opacity: 0.45;
   cursor: not-allowed;
 }
 
@@ -2695,6 +2882,7 @@ html[data-theme='light'] .ws-drawerOverlay {
   }
 
   .ws-sendBtn,
+  .ws-stopBtn,
   .ws-iconBtn,
   .ws-iconBtn--sm {
     min-width: 42px;
@@ -2796,6 +2984,7 @@ html[data-theme='light'] .ws-drawerOverlay {
 
 @media (prefers-reduced-motion: reduce) {
   .ws-thinking__dot,
+  .ws-streamFileRow__pulse,
   .ws-visualGrid {
     animation: none;
     opacity: 1;

@@ -27,6 +27,7 @@ import {
   isSupabaseEnabled,
   readLocalSection,
   registerHydrator,
+  sbInsertIfMissing,
   sbSelect,
   sbUpsert,
   writeLocalSection,
@@ -296,9 +297,10 @@ registerHydrator('admin', async () => {
   ]);
 
   const defaults = buildDefaultAdminData();
-  let gateway = defaults.gateway;
-  let telemetryCounters = defaults.telemetryCounters;
-  let securityEvents = defaults.securityEvents;
+  const prevMemory = memoryAdmin;
+  let gateway = prevMemory?.gateway ?? defaults.gateway;
+  let telemetryCounters = prevMemory?.telemetryCounters ?? defaults.telemetryCounters;
+  let securityEvents = prevMemory?.securityEvents ?? defaults.securityEvents;
   let hasGateway = false;
   let hasTelemetry = false;
 
@@ -318,14 +320,14 @@ registerHydrator('admin', async () => {
   }
 
   const configSeedRows: Array<Record<string, unknown>> = [];
-  if (!hasGateway) {
+  if (!hasGateway && !prevMemory?.gateway) {
     configSeedRows.push({
       key: 'gateway',
       value: gateway,
       updated_at: new Date().toISOString(),
     });
   }
-  if (!hasTelemetry) {
+  if (!hasTelemetry && !prevMemory?.telemetryCounters) {
     configSeedRows.push({
       key: 'telemetryCounters',
       value: telemetryCounters,
@@ -333,13 +335,13 @@ registerHydrator('admin', async () => {
     });
   }
   if (configSeedRows.length > 0) {
-    await sbUpsert('ff_admin_config', configSeedRows, 'key');
+    await sbInsertIfMissing('ff_admin_config', configSeedRows, 'key');
   }
 
   let auditLogs: AdminAuditLogEntry[];
   if (auditRows.length === 0) {
     auditLogs = defaults.auditLogs;
-    await sbUpsert('ff_audit_logs', auditLogs, 'id');
+    await sbInsertIfMissing('ff_audit_logs', auditLogs, 'id');
   } else {
     auditLogs = auditRows.map(fromAuditRow);
   }
@@ -347,7 +349,7 @@ registerHydrator('admin', async () => {
   let changelog: AdminChangelogEntry[];
   if (changelogRows.length === 0) {
     changelog = defaults.changelog;
-    await sbUpsert('ff_changelog', changelog.map(toChangelogRow), 'id');
+    await sbInsertIfMissing('ff_changelog', changelog.map(toChangelogRow), 'id');
   } else {
     changelog = changelogRows.map(fromChangelogRow);
   }
@@ -625,7 +627,7 @@ export function updateGatewayOverride(
     current.buildModel = input.buildModel.trim() || undefined;
   }
   if (typeof input.maxOutputTokens === 'number' && Number.isFinite(input.maxOutputTokens)) {
-    current.maxOutputTokens = Math.max(512, Math.min(8192, Math.round(input.maxOutputTokens)));
+    current.maxOutputTokens = Math.max(1024, Math.min(16384, Math.round(input.maxOutputTokens)));
   }
   if (input.clearApiKey === true) {
     current.apiKey = '';

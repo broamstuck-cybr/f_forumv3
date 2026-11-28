@@ -6,15 +6,17 @@ export interface SplitDividerProps {
   maxRatio?: number;
   containerRef: React.RefObject<HTMLDivElement | null>;
   onChangeRatio: (nextRatio: number) => void;
+  onResetRatio?: () => void;
   onDraggingChange?: (dragging: boolean) => void;
 }
 
 export const SplitDivider: React.FC<SplitDividerProps> = ({
   ratio,
-  minRatio = 0.28,
-  maxRatio = 0.56,
+  minRatio = 0.24,
+  maxRatio = 0.66,
   containerRef,
   onChangeRatio,
+  onResetRatio,
   onDraggingChange,
 }) => {
   const [dragging, setDragging] = useState(false);
@@ -81,7 +83,9 @@ export const SplitDivider: React.FC<SplitDividerProps> = ({
       aria-valuenow={Math.round(ratio * 100)}
       tabIndex={0}
       className={`ws-divider${dragging ? ' is-dragging' : ''}`}
+      title="Kéo để chỉnh độ rộng · Nháy đúp để đặt lại"
       onPointerDown={handlePointerDown}
+      onDoubleClick={onResetRatio}
       onKeyDown={handleKeyDown}
     />
   );

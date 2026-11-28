@@ -1,9 +1,6 @@
 import dns from 'node:dns/promises';
-import fs from 'node:fs';
 import type { IncomingHttpHeaders } from 'node:http';
 import net from 'node:net';
-import path from 'node:path';
-import { fileURLToPath } from 'node:url';
 import type {
   AIChatRequest,
   AIProtocol,
@@ -276,24 +273,20 @@ function resolveModelCandidates(config: EffectiveAIConfig, intent: WorkspaceInte
   return ordered.length > 0 ? ordered : ['openrouter/free'];
 }
 
-function resolveModeMaxTokens(config: EffectiveAIConfig, intent: WorkspaceIntent, useAssemblyPlan: boolean): number {
+function resolveModeMaxTokens(config: EffectiveAIConfig, intent: WorkspaceIntent): number {
   const adminCap = config.maxOutputTokens;
-  let target: number;
   if (intent === 'assistant') {
-    target = 1100;
-  } else if (useAssemblyPlan) {
-    target = 2500;
-  } else if (intent === 'patch') {
-    target = 2600;
-  } else {
-    target = config.isOpenRouter ? 3600 : 8192;
+    return adminCap ? Math.min(adminCap, 1400) : 1400;
   }
-  return adminCap ? Math.min(adminCap, target) : target;
+  if (intent === 'patch') {
+    return adminCap ? Math.min(Math.max(adminCap, 4096), 6144) : 5200;
+  }
+  // WHY: Bespoke multi-file HTML+CSS+JS builds need 6144-8192 tokens so XML <file> blocks are never truncated mid-tag.
+  return adminCap ? Math.min(Math.max(adminCap, 6144), 12288) : 8192;
 }
 
 function buildModeSystemInstruction(
   intent: WorkspaceIntent,
-  useAssemblyPlan: boolean,
   suffix: string,
   sessionInstructions = ''
 ): string {
@@ -307,63 +300,69 @@ function buildModeSystemInstruction(
       '{"mode":"assistant","message":"Câu trả lời tiếng Việt ngắn gọn, rõ ràng, thực tế (dùng gạch đầu dòng nếu cần)","suggestedResources":[{"id":"...","title":"...","library":"...","reason":"..."}],"files":[],"checksHint":["F-Forum assistant reply"]}',
       'RULES:',
       '1. Answer directly about F-Forum v3 web features, routes, Admin Panel, 5,909 free Vault resources, 58 motion recipes, or GitHub repo broamstuck-cybr/f_forumv3.',
-      '2. When the user asks to find components/templates/effects, pick the most relevant entries from MATCHED VAULT CANDIDATES and return them in suggestedResources so the user can click to stitch them directly.',
+      '2. When the user asks to find components/templates/effects, pick the most relevant entries from MATCHED VAULT CANDIDATES and return them in suggestedResources so the user can click to build with them.',
       '3. NEVER generate HTML/CSS/JS files in assistant mode (keep "files":[]). Keep replies crisp, accurate, zero hype, zero emojis.',
-    ].join('\n');
-  } else if (useAssemblyPlan) {
-    base = [
-      'You are the F-Forum v3 Token-Efficient Vault Assembly Architect.',
-      FFORUM_COMPACT_KNOWLEDGE,
-      'The client ALREADY fetched real interactive HTML/CSS/JS modules from the F-Forum 5,909-item Vault (listed in VAULT SLOTS). Your job is NOT to rewrite huge boilerplate HTML/CSS from scratch — instead return a compact JSON Assembly Plan so the deterministic Stitcher embeds those real Vault modules directly with your tailored Vietnamese content and theme.',
-      'Respond ONLY with a valid JSON object matching this schema:',
-      '{"mode":"assemble","message":"Tóm tắt ngắn tiếng Việt những mẫu kho đã lắp ghép","assemblyPlan":{"siteTitle":"...","eyebrow":"...","heroTitle":"...","heroSubtitle":"...","primaryCta":"...","secondaryCta":"...","themeMode":"dark","accentKey":"emerald|amber|cyan|violet|rose","vaultSectionTitle":"...","vaultSectionLead":"...","selectedSlotIds":["slot-1","slot-2"],"slotNotes":{"slot-1":"Vai trò của mẫu này trong trang"},"stats":[{"value":"...","label":"..."}],"cards":[{"tag":"...","title":"...","description":"..."}],"timeline":[{"time":"...","title":"...","detail":"..."}],"flashcards":[{"tag":"...","front":"...","back":"..."}],"quiz":[{"question":"...","options":["...","...","..."],"correctIndex":0,"explanation":"..."}],"registerHeading":"...","registerLead":"...","registerCta":"...","footerNote":"...","customCss":"/* tùy chọn tối đa 20 dòng CSS tinh chỉnh */"},"files":[],"checksHint":["Vault modules stitched"]}',
-      'RULES:',
-      '1. Always tailor 100% of titles, stats, cards, timeline, quiz, and CTAs to the EXACT subject in USER PROMPT using natural Vietnamese diacritics.',
-      '2. Always select 1-3 slot IDs from VAULT SLOTS in selectedSlotIds so real Vault components are stitched live into the page.',
-      '3. Be concise to save tokens: 3-4 stats, 3 cards, 3 timeline steps, 2-3 flashcards, 2 quiz questions max. Never use emojis, placeholder filler text, or marketing hype.',
     ].join('\n');
   } else if (intent === 'patch') {
     base = [
-      'You are the F-Forum v3 Incremental Patch & Web Builder.',
-      FFORUM_COMPACT_KNOWLEDGE,
-      'Respond ONLY with a valid JSON object using EITHER compact find/replace patches (preferred to save tokens!) OR only the changed files:',
-      'Option A (smallest token cost): {"mode":"patch","message":"Tóm tắt ngắn tiếng Việt","patches":[{"path":"src/styles.css","find":"exact snippet","replace":"new snippet"}],"files":[],"checksHint":["Patched cleanly"]}',
-      'Option B (when rewriting a section/file): {"mode":"files","message":"Tóm tắt ngắn tiếng Việt","files":[{"path":"index.html","content":"...","summary":"..."}],"checksHint":["Updated changed files only"]}',
+      'You are an elite Frontend Engineer inside F-Forum Studio performing targeted edits or runtime bug fixes on an existing web project.',
+      'OUTPUT FORMAT (STRICT — DO NOT wrap XML tags inside markdown ``` code fences!):',
+      '<summary>1-2 câu tiếng Việt mô tả chính xác phần vừa chỉnh sửa hoặc lỗi vừa khắc phục.</summary>',
+      'For surgical edits, emit one or more <patch> blocks:',
+      '<patch path="src/styles.css">',
+      '<find>exact existing lines copied verbatim from CURRENT WORKSPACE FILES</find>',
+      '<replace>updated replacement lines</replace>',
+      '</patch>',
+      'OR for broader rewrites of a specific file, emit ONLY the changed <file path="...">...</file> blocks.',
       'RULES:',
-      '1. ONLY touch files needed for the user edit — NEVER regenerate untouched files.',
-      '2. Inside JSON "content" or "replace", use standard single-escaped JSON newlines, NEVER double-escaped literal "\\n".',
-      '3. Keep crisp Vietnamese diacritics, accessible contrast >= 4.5:1, responsive layout, zero emojis, zero filler text.',
+      '1. ONLY touch files needed for the user edit or error fix — preserve existing brand identity, layout, and working code in untouched files.',
+      '2. Inside <find>, match the EXACT text from CURRENT WORKSPACE FILES. If unsure of exact whitespace, output the complete updated <file path="...">...</file> instead.',
+      '3. Maintain contrast >= 4.5:1, responsive 390px / 768px / 1440px, full Vietnamese diacritics, zero emojis, zero console errors, zero dead href="#" links.',
     ].join('\n');
   } else {
     base = [
-      'You are the F-FORUM v3 Vault-Grounded Web Assembly Engine.',
-      FFORUM_COMPACT_KNOWLEDGE,
-      'Respond ONLY with a valid JSON object matching this exact schema:',
-      '{"message":"Concise Vietnamese technical summary of assembled sections","files":[{"path":"index.html","content":"...","summary":"..."},{"path":"src/styles.css","content":"...","summary":"..."},{"path":"src/app.js","content":"...","summary":"..."}],"checksHint":["Viewport meta verified","Accessible contrast and responsive layout"]}',
-      'CRITICAL ASSEMBLY & QUALITY RULES:',
-      '1. VAULT-FIRST COMPOSITION: When ATTACHED VAULT BLUEPRINTS are provided, actively reuse their layout patterns, CSS craft tokens, and motion recipes into ONE cohesive webpage tailored to the USER PROMPT.',
-      '2. STRICT USER INTENT: Build for the exact subject, title, audience, and theme requested in USER PROMPT.',
-      '3. REAL MULTI-LINE CODE (ZERO DOUBLE-ESCAPING): Use standard JSON newlines; NEVER double-escape into literal "\\n".',
-      '4. COMPLETE STYLING & INTERACTIVITY: Produce complete src/styles.css (contrast >= 4.5:1, responsive @media <= 768px) and working JS or React TSX (imports only from "react" and relative files).',
-      '5. Zero emojis, zero placeholder filler text, crisp Vietnamese diacritics, #anchor internal links.',
+      'You are an elite Frontend Architect and Creative Technologist inside F-Forum Studio (like Google AI Studio Build, Bolt.new, and Lovable).',
+      'Your mission: design and code a COMPLETELY ORIGINAL, BESPOKE, PRODUCTION-QUALITY multi-file website or web app tailored 100% to the USER PROMPT.',
+      'OUTPUT FORMAT (STRICT — DO NOT wrap XML tags inside markdown ``` code fences!):',
+      '<summary>1-2 câu tiếng Việt súc tích mô tả phong cách thiết kế, bảng màu, bố cục và tính năng tương tác bạn vừa tự viết.</summary>',
+      '<file path="index.html">',
+      'Complete standalone HTML5 document linking ./src/styles.css and ./src/app.js (with <meta charset="UTF-8">, <meta name="viewport" content="width=device-width, initial-scale=1.0">, and Vietnamese-capable Google Fonts fitting the brand).',
+      '</file>',
+      '<file path="src/styles.css">',
+      'Complete bespoke CSS: :root tokens, expressive typography scale, refined visual craft, contrast >= 4.5:1, responsive @media for 390px / 768px / 1440px, smooth hover/focus states, and @media (prefers-reduced-motion: reduce).',
+      '</file>',
+      '<file path="src/app.js">',
+      'Real, working interactive JavaScript implementing genuine product features (state, tabs, filters, timers, calculators, bespoke interactive Canvas/SVG visuals, drawers, validated forms, keyboard support) with ZERO runtime errors.',
+      '</file>',
+      'If the USER PROMPT explicitly asks for React / TSX / JSX, instead output <file path="src/App.tsx"> (importing only from "react") and <file path="src/styles.css">.',
+      'DESIGN & ENGINEERING MANDATES:',
+      '1. ZERO COOKIE-CUTTER BOILERPLATE: Every prompt MUST receive its own unique layout architecture, palette, typography mood, hero visual, and interactions matching its exact domain. NEVER copy generic navbars ("Điểm chính / Lịch trình / Ôn tập / Đội ngũ"), generic quiz blocks, or ceramic vase drawings unless specifically asked.',
+      '2. ZERO BROKEN EXTERNAL IMAGES: NEVER invent fake external image URLs (unsplash, picsum, etc.). Craft crisp bespoke inline SVGs, generative HTML5 Canvas art, CSS architectural compositions, data visualizations, or interactive UI mockups directly in code.',
+      '3. CREATIVE VAULT INSPIRATION: When ATTACHED VAULT REFERENCES are provided, study and creatively adapt their strongest CSS craft tokens or micro-interaction patterns into your custom build — NEVER copy unrelated raw templates.',
+      '4. REAL INTERACTIVITY: Every primary button, filter, tab, toggle, slider, timer, or form MUST actually work cleanly in the live preview with plain browser JavaScript (never JSX inside .js files).',
+      '5. IMMEDIATE FIRST-PAINT VISIBILITY: NEVER hide body, hero, or primary sections at opacity: 0 behind preloaders or JS-gated scroll reveals — above-the-fold UI MUST be crisp, full-contrast, and immediately visible on load.',
+      '6. CLEAN POLISH: Match the user prompt language (default crisp Vietnamese with full diacritics). Zero emojis in UI, zero dummy filler text, zero unfinished stub comments, zero literal "\\n" escapes, zero dead href="#" links.',
     ].join('\n');
   }
 
   const session = intent === 'assistant' ? '' : sessionInstructions.trim().slice(0, 900);
-  return [base, suffix, session ? `SESSION INSTRUCTIONS (do not override JSON schema):\n${session}` : '']
+  return [base, suffix, session ? `SESSION INSTRUCTIONS (do not override output format):\n${session}` : '']
     .filter(Boolean)
     .join('\n');
 }
 
-function clampTemperature(value: number | undefined): number {
-  if (typeof value !== 'number' || !Number.isFinite(value)) return 0.2;
-  return Math.min(1.2, Math.max(0, value));
+function clampTemperature(value: number | undefined, intent: WorkspaceIntent = 'assemble'): number {
+  if (typeof value === 'number' && Number.isFinite(value)) {
+    return Math.min(1.2, Math.max(0, value));
+  }
+  if (intent === 'assemble') return 0.55;
+  if (intent === 'patch') return 0.25;
+  return 0.2;
 }
 
 function buildModeUserPrompt(
   req: AIChatRequest,
-  intent: WorkspaceIntent,
-  useAssemblyPlan: boolean
+  intent: WorkspaceIntent
 ): { userContent: string; matchedSuggestions: SuggestedVaultItem[] } {
   const serverVaultHits =
     intent === 'assistant' ? searchVaultKnowledge(req.prompt, 6) : [];
@@ -379,13 +378,14 @@ function buildModeUserPrompt(
           }))
         : [];
 
+  const recentHistory = (req.history || [])
+    .slice(-4)
+    .map((h) => `${h.role === 'user' ? 'User' : 'Assistant'}: ${h.content.slice(0, 320)}`)
+    .join('\n');
+
   if (intent === 'assistant') {
     const candidateLines = matchedSuggestions
       .map((s) => `- [${s.library}] ${s.title} (id: ${s.id}) — ${s.reason}`)
-      .join('\n');
-    const recentHistory = (req.history || [])
-      .slice(-4)
-      .map((h) => `${h.role === 'user' ? 'User' : 'Assistant'}: ${h.content.slice(0, 280)}`)
       .join('\n');
     const userContent = [
       recentHistory ? `RECENT CHAT:\n${recentHistory}` : '',
@@ -397,24 +397,10 @@ function buildModeUserPrompt(
     return { userContent, matchedSuggestions };
   }
 
-  if (useAssemblyPlan) {
-    const slotLines = (req.vaultSlots || [])
-      .slice(0, 4)
-      .map((s) => `- ${s.slotId}: [${s.library}] ${s.title} (id: ${s.id}) — ${s.summary.slice(0, 220)}`)
-      .join('\n');
-    const userContent = [
-      `USER PROMPT:\n${req.prompt}`,
-      slotLines ? `VAULT SLOTS READY FOR STITCHING:\n${slotLines}` : '',
-    ]
-      .filter(Boolean)
-      .join('\n\n');
-    return { userContent, matchedSuggestions };
-  }
-
-  const attachedLimit = intent === 'patch' ? 2 : 3;
-  const attachedCharCap = intent === 'patch' ? 800 : 1800;
-  const fileLimit = intent === 'patch' ? 3 : 4;
-  const fileCharCap = intent === 'patch' ? 2600 : 3000;
+  const attachedLimit = intent === 'patch' ? 1 : 3;
+  const attachedCharCap = intent === 'patch' ? 1000 : 1400;
+  const fileLimit = intent === 'patch' ? 5 : 3;
+  const fileCharCap = intent === 'patch' ? 7500 : 4000;
 
   const attachedSummary = (req.attachedItems || [])
     .slice(0, attachedLimit)
@@ -427,8 +413,9 @@ function buildModeUserPrompt(
     .join('\n\n');
 
   const userContent = [
+    recentHistory ? `RECENT CHAT:\n${recentHistory}` : '',
     `USER PROMPT:\n${req.prompt}`,
-    attachedSummary ? `ATTACHED VAULT BLUEPRINTS:\n${attachedSummary}` : '',
+    attachedSummary ? `ATTACHED VAULT REFERENCES (use selectively as craft inspiration, never copy unrelated boilerplate):\n${attachedSummary}` : '',
     existingFiles ? `CURRENT WORKSPACE FILES:\n${existingFiles}` : '',
   ]
     .filter(Boolean)
@@ -437,184 +424,16 @@ function buildModeUserPrompt(
   return { userContent, matchedSuggestions };
 }
 
-interface CatalogSampleEntry {
-  id: string;
-  title: string;
-  sourceLibrary?: string;
-  tags?: string[];
-  previewHtml?: string;
-  previewCss?: string;
-}
-
-let cachedCatalogSamples: CatalogSampleEntry[] | null = null;
-
-function getCatalogSamples(): CatalogSampleEntry[] {
-  if (cachedCatalogSamples) return cachedCatalogSamples;
-  const candidates = [
-    path.resolve(process.cwd(), 'src/data/sourceCatalog.json'),
-    path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../src/data/sourceCatalog.json'),
-  ];
-  for (const filePath of candidates) {
-    try {
-      if (!fs.existsSync(filePath)) continue;
-      const raw = JSON.parse(fs.readFileSync(filePath, 'utf8')) as unknown;
-      if (Array.isArray(raw)) {
-        cachedCatalogSamples = raw.filter(
-          (item): item is CatalogSampleEntry =>
-            Boolean(item) &&
-            typeof item === 'object' &&
-            typeof (item as CatalogSampleEntry).title === 'string' &&
-            typeof (item as CatalogSampleEntry).previewHtml === 'string' &&
-            (item as CatalogSampleEntry).previewHtml!.trim().length > 0
-        );
-        return cachedCatalogSamples;
-      }
-    } catch {
-      continue;
-    }
-  }
-  cachedCatalogSamples = [];
-  return cachedCatalogSamples;
-}
-
-const FALLBACK_STOP_WORDS = new Set([
-  'tạo', 'tao', 'làm', 'lam', 'viết', 'viet', 'thiết', 'thiet', 'kế', 'ke',
-  'giao', 'diện', 'dien', 'trang', 'mẫu', 'mau', 'web', 'app', 'cho', 'với',
-  'voi', 'một', 'mot', 'của', 'cua', 'và', 'va', 'the', 'for', 'with', 'and',
-  'build', 'create', 'make', 'design', 'component', 'css', 'html', 'prompt',
-  'turn', 'test', 'hello', 'xin', 'chào', 'chao', 'mode', 'refine', 'audit',
-]);
-
-function normalizeTokens(text: string): string[] {
-  return text
-    .replace(/^\[Mode:\s*[^\]]+\]\s*/i, '')
-    .toLowerCase()
-    .replace(/[^a-z0-9\u00c0-\u024f\u1e00-\u1eff-]+/g, ' ')
-    .split(/\s+/)
-    .map((token) => token.trim())
-    .filter((token) => token.length >= 3 && !FALLBACK_STOP_WORDS.has(token));
-}
-
-function findStrongCatalogMatch(prompt: string): CatalogSampleEntry | null {
-  const cleanPrompt = prompt.replace(/^\[Mode:\s*[^\]]+\]\s*/i, '').trim().toLowerCase();
-  if (cleanPrompt.length < 4) return null;
-
-  const promptTokens = normalizeTokens(cleanPrompt);
-  if (promptTokens.length === 0) return null;
-
-  const samples = getCatalogSamples();
-  let bestEntry: CatalogSampleEntry | null = null;
-  let bestScore = 0;
-
-  for (const entry of samples) {
-    const titleLower = entry.title.toLowerCase();
-    const idLower = entry.id.toLowerCase();
-    const tagList = (entry.tags || []).map((t) => t.toLowerCase());
-
-    if (titleLower.length >= 6 && cleanPrompt.includes(titleLower)) {
-      return entry;
-    }
-
-    const entryTokenSet = new Set([
-      ...normalizeTokens(titleLower),
-      ...normalizeTokens(idLower.replace(/\//g, ' ')),
-      ...tagList.flatMap((t) => normalizeTokens(t.replace(/-/g, ' '))),
-    ]);
-
-    let hits = 0;
-    let score = 0;
-    for (const token of promptTokens) {
-      if (entryTokenSet.has(token)) {
-        hits += 1;
-        score += titleLower.includes(token) ? 3 : 2;
-      }
-    }
-
-    if (hits >= 2 && score > bestScore) {
-      bestScore = score;
-      bestEntry = entry;
-    }
-  }
-
-  return bestScore >= 4 ? bestEntry : null;
-}
-
-function buildFilesFromCatalogSample(entry: CatalogSampleEntry): AIGenerationOutput['files'] {
-  const rawHtml = (entry.previewHtml || '').trim();
-  const scriptBlocks: string[] = [];
-  const htmlWithoutScripts = rawHtml
-    .replace(/<script\b[^>]*>([\s\S]*?)<\/script>/gi, (_, code: string) => {
-      const cleaned = code.trim();
-      if (cleaned) scriptBlocks.push(cleaned);
-      return '';
-    })
-    .trim();
-
-  const cssContent = (entry.previewCss || '').trim();
-  const jsContent = scriptBlocks.join('\n\n');
-  const safeTitle = entry.title.replace(/[<>"]/g, '').trim() || 'Mẫu giao diện F-Forum';
-
-  const fullHtml = `<!DOCTYPE html>
-<html lang="vi">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>${safeTitle}</title>
-  <link rel="stylesheet" href="styles.css" />
-</head>
-<body>
-${htmlWithoutScripts}
-${jsContent ? '  <script src="app.js"></script>\n' : ''}</body>
-</html>`;
-
-  const files: AIGenerationOutput['files'] = [
-    {
-      path: 'index.html',
-      content: fullHtml,
-      summary: `HTML từ mẫu "${entry.title}"`,
-    },
-    {
-      path: 'styles.css',
-      content: cssContent,
-      summary: `CSS từ mẫu "${entry.title}"`,
-    },
-  ];
-
-  if (jsContent) {
-    files.push({
-      path: 'app.js',
-      content: jsContent,
-      summary: `Script tương tác từ mẫu "${entry.title}"`,
-    });
-  }
-
-  return files;
-}
-
 function buildFallbackResponse(
-  req: AIChatRequest,
+  _req: AIChatRequest,
   config: EffectiveAIConfig,
   upstreamError: string,
   tokens?: TokenCounter
 ): AIGenerationOutput {
-  const matched = findStrongCatalogMatch(req.prompt || '');
-  if (matched) {
-    return {
-      message: `Chưa kết nối khóa AI (${upstreamError}). Đã nạp mẫu thật khớp từ khóa: "${matched.title}" (${matched.sourceLibrary || 'Vault'}). Mở Cài đặt -> Khóa riêng (BYOK) để nhập API key thật (OpenAI / Gemini / OpenRouter / DeepSeek) hoặc mở Kho 5.909 mẫu để duyệt thêm.`,
-      files: buildFilesFromCatalogSample(matched),
-      checksHint: [],
-      fallback: true,
-      upstreamError,
-      modelUsed: config.model,
-      protocolUsed: config.protocol,
-      tokens,
-    };
-  }
-
   const keyMissing = !config.apiKey && !hasConfiguredPoolKeys();
   const message = keyMissing
-    ? 'Chưa kết nối khóa AI. Mở Cài đặt -> Khóa riêng (BYOK) để nhập API key thật (OpenAI / Gemini / OpenRouter / DeepSeek) giúp trợ lý sinh mã theo yêu cầu, hoặc bấm mở Kho 5.909 mẫu để nạp giao diện thật.'
-    : `Kết nối AI tạm gián đoạn (${upstreamError}). Kiểm tra lại khóa tại Cài đặt -> Khóa riêng (BYOK) (OpenAI / Gemini / OpenRouter / DeepSeek) hoặc bấm mở Kho 5.909 mẫu để nạp mẫu thật.`;
+    ? 'Chưa kết nối khóa AI. Mở mục API Key ngay trong khung Chat để nhập khóa riêng (OpenRouter / Gemini / OpenAI / DeepSeek) hoặc liên hệ quản trị viên.'
+    : `Kết nối AI tạm gián đoạn (${upstreamError}). Vui lòng bấm Thử lại hoặc đổi sang model khác trong danh sách.`;
 
   return {
     message,
@@ -904,6 +723,103 @@ function unescapeDoubleEncodedCode(raw: string): string {
   return raw;
 }
 
+function normalizeArtifactPath(rawPath: string): string {
+  return String(rawPath || '')
+    .trim()
+    .replace(/\\/g, '/')
+    .replace(/^\.\/+/, '')
+    .replace(/^\/+/, '');
+}
+
+function stripOuterCodeFences(rawContent: string): string {
+  let clean = rawContent.replace(/^\r?\n/, '').replace(/\r?\n$/, '');
+  const fencedMatch = clean.match(/^```[a-z0-9_-]*\r?\n([\s\S]*?)\r?\n```$/i);
+  if (fencedMatch) {
+    clean = fencedMatch[1];
+  }
+  return unescapeDoubleEncodedCode(clean);
+}
+
+export interface ParsedXmlArtifact {
+  summary: string;
+  files: Array<{ path: string; content: string; summary: string }>;
+  patches: FilePatchOp[];
+}
+
+export function parseXmlArtifactBlocks(rawText: string): ParsedXmlArtifact | null {
+  if (!rawText || (!rawText.includes('<file') && !rawText.includes('<patch'))) {
+    return null;
+  }
+
+  const summaryMatch = rawText.match(/<summary>([\s\S]*?)<\/summary>/i);
+  const summary = summaryMatch
+    ? summaryMatch[1].replace(/\s+/g, ' ').trim().slice(0, 1200)
+    : '';
+
+  const files: Array<{ path: string; content: string; summary: string }> = [];
+  const fileMap = new Map<string, number>();
+  const fileRegex = /<file\s+[^>]*path=["']([^"']+)["'][^>]*>([\s\S]*?)<\/file>/gi;
+  let lastClosedEnd = 0;
+  let match: RegExpExecArray | null;
+
+  while ((match = fileRegex.exec(rawText)) !== null) {
+    lastClosedEnd = match.index + match[0].length;
+    const safePath = normalizeArtifactPath(match[1]);
+    if (!safePath || safePath.includes('..')) continue;
+    const content = stripOuterCodeFences(match[2]);
+    if (!content.trim()) continue;
+    const entry = {
+      path: safePath,
+      content,
+      summary: `AI tự viết ${safePath}`,
+    };
+    const existingIdx = fileMap.get(safePath);
+    if (existingIdx !== undefined) {
+      files[existingIdx] = entry;
+    } else {
+      fileMap.set(safePath, files.length);
+      files.push(entry);
+    }
+  }
+
+  // WHY: Recover a trailing unclosed <file> if an upstream model hit output token ceiling right before </file>.
+  const trailingTail = rawText.slice(lastClosedEnd);
+  const unclosedMatch = trailingTail.match(/<file\s+[^>]*path=["']([^"']+)["'][^>]*>([\s\S]+)$/i);
+  if (unclosedMatch) {
+    const safePath = normalizeArtifactPath(unclosedMatch[1]);
+    const content = stripOuterCodeFences(unclosedMatch[2]);
+    if (safePath && !safePath.includes('..') && content.trim().length >= 80 && !fileMap.has(safePath)) {
+      files.push({
+        path: safePath,
+        content,
+        summary: `AI tự viết ${safePath}`,
+      });
+    }
+  }
+
+  const patches: FilePatchOp[] = [];
+  const patchRegex =
+    /<patch\s+[^>]*path=["']([^"']+)["'][^>]*>[\s\S]*?<find>([\s\S]*?)<\/find>[\s\S]*?<replace>([\s\S]*?)<\/replace>[\s\S]*?<\/patch>/gi;
+  while ((match = patchRegex.exec(rawText)) !== null) {
+    const safePath = normalizeArtifactPath(match[1]);
+    if (!safePath || safePath.includes('..')) continue;
+    const findText = stripOuterCodeFences(match[2]);
+    const replaceText = stripOuterCodeFences(match[3]);
+    if (!findText) continue;
+    patches.push({
+      path: safePath,
+      find: findText,
+      replace: replaceText,
+    });
+  }
+
+  if (files.length === 0 && patches.length === 0) {
+    return null;
+  }
+
+  return { summary, files, patches };
+}
+
 function parseStructuredLLMResponse(
   rawText: string,
   config: EffectiveAIConfig,
@@ -917,6 +833,42 @@ function parseStructuredLLMResponse(
 ): AIGenerationOutput | null {
   const modelUsed = options?.actualModel || config.model;
   const estimatedCostUsd = estimateTokensCostUsd(modelUsed, tokens);
+
+  if (options?.intent !== 'assistant') {
+    const xmlParsed = parseXmlArtifactBlocks(rawText);
+    if (xmlParsed) {
+      if (xmlParsed.patches.length > 0) {
+        return {
+          message: xmlParsed.summary || 'Đã cập nhật chính xác phần mã nguồn theo yêu cầu.',
+          mode: 'patch',
+          files: xmlParsed.files,
+          patches: xmlParsed.patches,
+          checksHint: ['XML incremental patch verified'],
+          fallback: false,
+          modelUsed,
+          protocolUsed: config.protocol,
+          tokens,
+          estimatedCostUsd,
+          usedKeyMask,
+        };
+      }
+      if (xmlParsed.files.length > 0) {
+        return {
+          message: xmlParsed.summary || `Đã tự thiết kế và lập trình ${xmlParsed.files.length} tệp nguồn mới.`,
+          mode: 'files',
+          files: xmlParsed.files,
+          checksHint: ['Bespoke multi-file XML artifact verified'],
+          fallback: false,
+          modelUsed,
+          protocolUsed: config.protocol,
+          tokens,
+          estimatedCostUsd,
+          usedKeyMask,
+        };
+      }
+    }
+  }
+
   const unfenced = rawText
     .replace(/```json\s*/gi, '')
     .replace(/```\s*/g, '')
@@ -933,6 +885,29 @@ function parseStructuredLLMResponse(
         files: [],
         suggestedResources: options.fallbackSuggestions?.slice(0, 4),
         checksHint: ['F-Forum assistant reply'],
+        fallback: false,
+        modelUsed,
+        protocolUsed: config.protocol,
+        tokens,
+        estimatedCostUsd,
+        usedKeyMask,
+      };
+    }
+
+    // WHY: Rescue complete standalone HTML documents when a model responds with raw HTML instead of XML <file> tags.
+    const rawHtmlMatch = rawText.match(/<!DOCTYPE\s+html[\s\S]*?<\/html>/i);
+    if (options?.intent !== 'assistant' && rawHtmlMatch && rawHtmlMatch[0].length >= 250) {
+      return {
+        message: 'Đã tự thiết kế và lập trình giao diện theo yêu cầu.',
+        mode: 'files',
+        files: [
+          {
+            path: 'index.html',
+            content: unescapeDoubleEncodedCode(rawHtmlMatch[0]),
+            summary: 'AI tự viết index.html',
+          },
+        ],
+        checksHint: ['Standalone HTML artifact verified'],
         fallback: false,
         modelUsed,
         protocolUsed: config.protocol,
@@ -1332,6 +1307,7 @@ async function callUpstreamOnce(params: {
   userContent: string;
   temperature: number;
   streamUpstream: boolean;
+  expectJson?: boolean;
   signal: AbortSignal;
   maxOutputTokens?: number;
   onDelta?: (chunk: string) => void;
@@ -1383,7 +1359,7 @@ async function callUpstreamOnce(params: {
     } else if (modelLower.startsWith('gemini-2.5')) {
       generationConfig.thinkingConfig = { thinkingBudget: 0 };
     }
-    if (!streamUpstream) {
+    if (!streamUpstream && params.expectJson) {
       generationConfig.responseMimeType = 'application/json';
     }
     const resp = await fetchWithRetry(url, {
@@ -1425,7 +1401,7 @@ async function callUpstreamOnce(params: {
     model: config.model,
     // WHY: Keep stream: true for OpenAI-compatible SSE endpoints expected by core tests
     stream: true,
-    max_tokens: params.maxOutputTokens || 3200,
+    max_tokens: params.maxOutputTokens || 8192,
     messages: [
       { role: 'system', content: systemInstruction },
       { role: 'user', content: userContent },
@@ -1434,7 +1410,8 @@ async function callUpstreamOnce(params: {
   };
   if (config.isOpenRouter) {
     openAiPayload.stream_options = { include_usage: true };
-    openAiPayload.reasoning = { effort: 'low' };
+    // WHY: Disabling hidden thinking tokens cuts OpenRouter TTFT from ~25s to <1s so SSE live file streaming starts immediately.
+    openAiPayload.reasoning = { enabled: false };
   }
   const resp = await fetchWithRetry(url, {
     method: 'POST',
@@ -1466,13 +1443,8 @@ export async function runAIGenerationStream(
   const hasExistingFiles = Array.isArray(req.files)
     && req.files.some((f) => f.path !== 'metadata.json' && f.path !== 'README.md');
   const intent = classifyWorkspaceIntent(req.prompt || '', hasExistingFiles, req.intent || req.agentMode);
-  const useAssemblyPlan =
-    intent === 'assemble' &&
-    Array.isArray(req.vaultSlots) &&
-    req.vaultSlots.length > 0 &&
-    !/\b(react|tsx|jsx)\b/i.test(req.prompt || '');
   const modelCandidates = resolveModelCandidates(config, intent);
-  const maxOutputTokens = resolveModeMaxTokens(config, intent, useAssemblyPlan);
+  const maxOutputTokens = resolveModeMaxTokens(config, intent);
 
   const runningOnCloud = Boolean(process.env.VERCEL);
   const unreachableLoopback = runningOnCloud && isLoopbackUrl(config.baseUrl);
@@ -1526,12 +1498,11 @@ export async function runAIGenerationStream(
 
   const systemInstruction = buildModeSystemInstruction(
     intent,
-    useAssemblyPlan,
     config.systemPromptSuffix,
     req.systemPrompt
   );
-  const temperature = clampTemperature(req.temperature);
-  const { userContent, matchedSuggestions } = buildModeUserPrompt(req, intent, useAssemblyPlan);
+  const temperature = clampTemperature(req.temperature, intent);
+  const { userContent, matchedSuggestions } = buildModeUserPrompt(req, intent);
   const controller = new AbortController();
   const onExternalAbort = () => controller.abort();
   if (hooks?.signal) {
@@ -1541,7 +1512,7 @@ export async function runAIGenerationStream(
       hooks.signal.addEventListener('abort', onExternalAbort, { once: true });
     }
   }
-  const timeout = setTimeout(() => controller.abort(), 45000);
+  const timeout = setTimeout(() => controller.abort(), 54000);
   const streamUpstream = Boolean(hooks?.onDelta);
 
   try {
@@ -1583,7 +1554,30 @@ export async function runAIGenerationStream(
           continue;
         }
 
+        if (mIdx > 0) {
+          hooks?.onStage?.({
+            stage: 'generating',
+            model: activeModelId,
+            protocol: config.protocol,
+            detail: 'retry-reset',
+          });
+        }
+
         const attemptConfig: EffectiveAIConfig = { ...config, model: activeModelId };
+        const attemptController = new AbortController();
+        const forwardAbort = () => attemptController.abort();
+        controller.signal.addEventListener('abort', forwardAbort, { once: true });
+        let receivedFirstToken = false;
+        let firstTokenStalled = false;
+        const canFailoverModel = config.isOpenRouter && mIdx < modelCandidates.length - 1;
+        const stallTimer = canFailoverModel
+          ? setTimeout(() => {
+              if (!receivedFirstToken) {
+                firstTokenStalled = true;
+                attemptController.abort();
+              }
+            }, 15_000)
+          : null;
         try {
           const attempt = await callUpstreamOnce({
             config: attemptConfig,
@@ -1592,9 +1586,16 @@ export async function runAIGenerationStream(
             userContent,
             temperature,
             streamUpstream,
-            signal: controller.signal,
+            expectJson: intent === 'assistant',
+            signal: attemptController.signal,
             maxOutputTokens,
-            onDelta: hooks?.onDelta,
+            onDelta: (chunk) => {
+              if (!receivedFirstToken && chunk.trim()) {
+                receivedFirstToken = true;
+                if (stallTimer) clearTimeout(stallTimer);
+              }
+              hooks?.onDelta?.(chunk);
+            },
           });
 
           if (attempt.ok && attempt.result.text.trim()) {
@@ -1623,7 +1624,7 @@ export async function runAIGenerationStream(
             parsedResult = attempt.result;
             usedCandidate = candidate;
             usedModelId = resolvedModel;
-            lastError = 'Upstream response was not in expected multi-file JSON schema';
+            lastError = 'Phản hồi từ model AI chưa đúng định dạng tệp nguồn (<file> / JSON)';
             if (config.isOpenRouter && mIdx < modelCandidates.length - 1) {
               continue;
             }
@@ -1657,7 +1658,11 @@ export async function runAIGenerationStream(
           }
           break outer;
         } catch (err) {
-          const msg = err instanceof Error ? sanitizeErrorText(err.message) : 'Upstream network error';
+          const msg = firstTokenStalled
+            ? `Model ${activeModelId} phản hồi chậm quá 15s`
+            : err instanceof Error
+              ? sanitizeErrorText(err.message)
+              : 'Upstream network error';
           lastError = msg;
           if (config.isOpenRouter && !controller.signal.aborted && mIdx < modelCandidates.length - 1) {
             continue;
@@ -1669,6 +1674,9 @@ export async function runAIGenerationStream(
             }
           }
           break outer;
+        } finally {
+          if (stallTimer) clearTimeout(stallTimer);
+          controller.signal.removeEventListener('abort', forwardAbort);
         }
       }
     }

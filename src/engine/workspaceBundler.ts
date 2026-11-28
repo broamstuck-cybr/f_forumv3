@@ -1831,7 +1831,7 @@ ${baseHtml}
 
   // Strip local <script src="..."> tags so sandbox doesn't request parent /workspace/...
   baseHtml = baseHtml.replace(
-    /<script\b[^>]*src\s*=\s*["'](?!https?:\/\/)[^"']+["'][^>]*>\s*<\/script>\s*/gi,
+    /<script\b[^>]*\bsrc\s*=\s*["'](?!https?:\/\/)[^"']+["'][^>]*>[\s\S]*?<\/script>\s*/gi,
     ''
   );
 

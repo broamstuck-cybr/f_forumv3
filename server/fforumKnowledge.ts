@@ -81,8 +81,32 @@ export const OPENROUTER_MODELS: ModelPricingEntry[] = [
     provider: 'openrouter',
   },
   {
+    id: 'baidu/ernie-5.5-flash-preview:free',
+    label: 'ERNIE 5.5 Flash (Miễn phí)',
+    tier: 'free',
+    inputPerMillionUsd: 0,
+    outputPerMillionUsd: 0,
+    provider: 'openrouter',
+  },
+  {
+    id: 'nvidia/nemotron-3.5-lightning:free',
+    label: 'Nemotron 3.5 Lightning (Miễn phí)',
+    tier: 'free',
+    inputPerMillionUsd: 0,
+    outputPerMillionUsd: 0,
+    provider: 'openrouter',
+  },
+  {
     id: 'nvidia/nemotron-3-ultra-550b-a55b:free',
-    label: 'Nemotron 3 Ultra (Miễn phí)',
+    label: 'Nemotron 3 Ultra 550B (Miễn phí)',
+    tier: 'free',
+    inputPerMillionUsd: 0,
+    outputPerMillionUsd: 0,
+    provider: 'openrouter',
+  },
+  {
+    id: 'google/gemma-4-31b-it:free',
+    label: 'Gemma 4 31B (Miễn phí)',
     tier: 'free',
     inputPerMillionUsd: 0,
     outputPerMillionUsd: 0,
@@ -134,9 +158,11 @@ export const GEMINI_MODELS: ModelPricingEntry[] = [
 ];
 
 export const OPENROUTER_FREE_FALLBACK_CHAIN = [
+  'nvidia/nemotron-3.5-lightning:free',
   'baidu/ernie-5.5-flash-preview:free',
-  'nvidia/nemotron-3-ultra-550b-a55b:free',
   'openrouter/free',
+  'nvidia/nemotron-3-ultra-550b-a55b:free',
+  'google/gemma-4-31b-it:free',
 ] as const;
 
 export const OPENROUTER_PAID_CHAT_CHAIN = [
@@ -206,7 +232,7 @@ export function classifyWorkspaceIntent(
 
   const explicitEdit =
     hasExistingFiles &&
-    /\b(doi nen|nen sang|nen toi|them cau hoi|them muc|them form|dem nguoc|doi mau|mau cam|rut gon chu|sua tieu de|chinh sua|cap nhat|doi font|bo muc|xoa muc|them phan|sua nut|thay doi)\b/.test(
+    /\b(doi nen|nen sang|nen toi|them cau hoi|them muc|them form|dem nguoc|doi mau|mau cam|rut gon chu|sua tieu de|chinh sua|cap nhat|doi font|bo muc|xoa muc|them phan|sua nut|thay doi|sua loi|fix loi|fix error|runtime error|toi uu di dong|them hieu ung|lam gon)\b/.test(
       clean
     );
 

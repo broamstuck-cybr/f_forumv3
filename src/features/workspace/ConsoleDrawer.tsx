@@ -15,9 +15,11 @@ export interface ConsoleDrawerProps {
   open: boolean;
   projectMode: 'html' | 'react-tsx';
   fileCount: number;
+  busy?: boolean;
   onToggle: () => void;
   onClear: () => void;
   onJumpToFile?: (filePath: string) => void;
+  onFixErrors?: (errorSummary: string) => void;
 }
 
 function formatTime(ts: number): string {
@@ -33,13 +35,28 @@ export const ConsoleDrawer: React.FC<ConsoleDrawerProps> = ({
   open,
   projectMode,
   fileCount,
+  busy = false,
   onToggle,
   onClear,
   onJumpToFile,
+  onFixErrors,
 }) => {
-  const errorCount = entries.filter((e) => e.level === 'error').length;
+  const errorEntries = entries.filter((e) => e.level === 'error');
+  const errorCount = errorEntries.length;
   const warnCount = entries.filter((e) => e.level === 'warn').length;
   const infoCount = entries.filter((e) => e.level === 'info').length;
+
+  const handleTriggerFix = () => {
+    if (!onFixErrors || errorEntries.length === 0 || busy) return;
+    const summary = errorEntries
+      .slice(0, 6)
+      .map((e) => {
+        const loc = e.file ? `[${e.file}${e.line ? `:${e.line}` : ''}] ` : '';
+        return `- ${loc}${e.message}`;
+      })
+      .join('\n');
+    onFixErrors(summary);
+  };
 
   return (
     <div className={`ws-console${open ? ' is-open' : ''}`} aria-label="Bảng điều khiển và chẩn đoán">
@@ -71,6 +88,21 @@ export const ConsoleDrawer: React.FC<ConsoleDrawerProps> = ({
         </button>
 
         <div className="ws-console__badges">
+          {errorCount > 0 && onFixErrors && (
+            <button
+              type="button"
+              className="ws-console__fixBtn"
+              disabled={busy}
+              onClick={handleTriggerFix}
+              title="Gửi lỗi này cho AI tự sửa trực tiếp"
+            >
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.1" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z" />
+              </svg>
+              <span>AI sửa lỗi</span>
+            </button>
+          )}
+
           <button
             type="button"
             className={`ws-console__stat${errorCount > 0 ? ' is-error' : ''}`}

@@ -43,13 +43,13 @@ export function detectClientWorkspaceIntent(
   if (!clean) return 'assistant';
 
   const explicitBuild =
-    /\b(tao trang|dung trang|dung web|lam trang|lam web|thiet ke trang|xay dung trang|tao website|dung ho so|lam landing|tao app|tao dashboard|ghep mau|lap ghep|build a|create a|make a|design a|scaffold|generate html|viet react tsx)\b/.test(
+    /\b(tao trang|dung trang|dung web|lam trang|lam web|thiet ke trang|thiet ke web|xay dung trang|tao website|dung ho so|lam landing|tao landing|tao app|tao ung dung|dung ung dung|tao dashboard|ghep mau|lap ghep|build a|create a|make a|design a|scaffold|generate html|viet react tsx)\b/.test(
       clean
     );
 
   const explicitEdit =
     hasExistingFiles &&
-    /\b(doi nen|nen sang|nen toi|them cau hoi|them muc|them form|dem nguoc|doi mau|mau cam|rut gon chu|sua tieu de|chinh sua|cap nhat|doi font|bo muc|xoa muc|them phan|sua nut|thay doi)\b/.test(
+    /\b(doi nen|nen sang|nen toi|them cau hoi|them muc|them form|dem nguoc|doi mau|mau cam|rut gon chu|sua tieu de|chinh sua|cap nhat|doi font|bo muc|xoa muc|them phan|sua nut|thay doi|sua loi|fix loi|fix error|runtime error|toi uu di dong|them hieu ung|lam gon)\b/.test(
       clean
     );
 
