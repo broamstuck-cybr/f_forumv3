@@ -11,7 +11,7 @@
 }
 
 html[data-theme='light'] .ambient-backdrop {
-  background: #fdfbf7;
+  background: #f6f4ef;
 }
 
 .ambient-mesh-layer,
@@ -33,98 +33,98 @@ html[data-theme='light'] .ambient-backdrop {
    light (Nắng Sớm), sage (Pha Lê Ngọc), harbour (Mây Sáng), lilac (Lụa Kem)
    ========================================================================== */
 
-/* 1. Nắng Sớm — sunlit ivory & warm peach halo */
+/* 1. Nắng Sớm — sunlit warm alabaster ivory & delicate champagne halo */
 .ambient-backdrop[data-mode='light'][data-preset='light'] {
-  background: #fffcf6;
+  background: #f6f4ef;
 }
 
 .ambient-backdrop[data-mode='light'][data-preset='light'] .ambient-mesh-layer {
   background:
-    radial-gradient(62% 54% at 14% 8%, rgba(255, 192, 134, 0.42) 0%, transparent 62%),
-    radial-gradient(54% 48% at 86% 14%, rgba(255, 224, 166, 0.38) 0%, transparent 60%),
-    radial-gradient(58% 52% at 78% 88%, rgba(196, 232, 236, 0.3) 0%, transparent 64%),
-    linear-gradient(155deg, #fffefb 0%, #fcf6ec 52%, #f8f2e6 100%);
+    radial-gradient(62% 54% at 14% 8%, rgba(236, 196, 148, 0.22) 0%, transparent 62%),
+    radial-gradient(54% 48% at 86% 14%, rgba(232, 212, 174, 0.2) 0%, transparent 60%),
+    radial-gradient(58% 52% at 78% 88%, rgba(164, 214, 196, 0.14) 0%, transparent 64%),
+    linear-gradient(155deg, #fbfaf6 0%, #f6f3ec 54%, #f2eee4 100%);
 }
 
 .ambient-backdrop[data-mode='light'][data-preset='light'] .ambient-godray-layer {
-  opacity: 0.72;
+  opacity: 0.48;
   background:
-    conic-gradient(from 200deg at 18% 4%, rgba(255, 210, 152, 0.32) 0deg, transparent 58deg, rgba(255, 238, 206, 0.24) 118deg, transparent 210deg);
+    conic-gradient(from 200deg at 18% 4%, rgba(242, 210, 168, 0.22) 0deg, transparent 58deg, rgba(255, 246, 228, 0.24) 118deg, transparent 210deg);
 }
 
 .ambient-backdrop[data-mode='light'][data-preset='light'] .ambient-horizon-layer {
   opacity: 0.55;
   background:
-    radial-gradient(74% 38% at 50% 0%, rgba(255, 255, 255, 0.72) 0%, transparent 72%);
+    radial-gradient(74% 38% at 50% 0%, rgba(255, 255, 255, 0.76) 0%, transparent 72%);
 }
 
-/* 2. Pha Lê Ngọc — luminous crystal jade & mint glass */
+/* 2. Pha Lê Ngọc — breathable botanical alabaster & soft jade mist */
 .ambient-backdrop[data-mode='light'][data-preset='sage'] {
-  background: #f3fbf7;
+  background: #f3f6f2;
 }
 
 .ambient-backdrop[data-mode='light'][data-preset='sage'] .ambient-mesh-layer {
   background:
-    radial-gradient(60% 52% at 16% 10%, rgba(56, 201, 154, 0.28) 0%, transparent 62%),
-    radial-gradient(54% 48% at 84% 16%, rgba(126, 231, 204, 0.34) 0%, transparent 60%),
-    radial-gradient(62% 50% at 50% 94%, rgba(186, 240, 220, 0.42) 0%, transparent 66%),
-    linear-gradient(152deg, #f9fefb 0%, #eef9f4 54%, #e8f6f0 100%);
+    radial-gradient(60% 52% at 16% 10%, rgba(112, 196, 162, 0.18) 0%, transparent 62%),
+    radial-gradient(54% 48% at 84% 16%, rgba(176, 222, 202, 0.22) 0%, transparent 60%),
+    radial-gradient(62% 50% at 50% 94%, rgba(214, 232, 220, 0.26) 0%, transparent 66%),
+    linear-gradient(152deg, #f9fbf8 0%, #f1f5f0 54%, #ebf1ec 100%);
 }
 
 .ambient-backdrop[data-mode='light'][data-preset='sage'] .ambient-godray-layer {
-  opacity: 0.68;
+  opacity: 0.46;
   background:
-    conic-gradient(from 220deg at 80% 6%, rgba(92, 224, 184, 0.26) 0deg, transparent 66deg, rgba(210, 252, 238, 0.38) 136deg, transparent 235deg);
+    conic-gradient(from 220deg at 80% 6%, rgba(138, 212, 184, 0.2) 0deg, transparent 66deg, rgba(226, 246, 236, 0.3) 136deg, transparent 235deg);
 }
 
 .ambient-backdrop[data-mode='light'][data-preset='sage'] .ambient-horizon-layer {
-  opacity: 0.6;
+  opacity: 0.58;
   background:
     radial-gradient(70% 36% at 50% 0%, rgba(255, 255, 255, 0.78) 0%, transparent 70%);
 }
 
-/* 3. Mây Sáng — crisp daylight sky blue & soft horizon */
+/* 3. Mây Sáng — crisp porcelain daylight & calm horizon blue */
 .ambient-backdrop[data-mode='light'][data-preset='harbour'] {
-  background: #f3f9fe;
+  background: #f4f7f9;
 }
 
 .ambient-backdrop[data-mode='light'][data-preset='harbour'] .ambient-mesh-layer {
   background:
-    radial-gradient(62% 52% at 18% 8%, rgba(102, 192, 246, 0.34) 0%, transparent 62%),
-    radial-gradient(56% 48% at 84% 14%, rgba(176, 224, 252, 0.4) 0%, transparent 60%),
-    radial-gradient(60% 50% at 76% 90%, rgba(142, 228, 218, 0.28) 0%, transparent 66%),
-    linear-gradient(156deg, #fafdff 0%, #eef6fc 52%, #e8f2fa 100%);
+    radial-gradient(62% 52% at 18% 8%, rgba(142, 196, 228, 0.22) 0%, transparent 62%),
+    radial-gradient(56% 48% at 84% 14%, rgba(188, 222, 242, 0.24) 0%, transparent 60%),
+    radial-gradient(60% 50% at 76% 90%, rgba(176, 224, 218, 0.18) 0%, transparent 66%),
+    linear-gradient(156deg, #fafcfd 0%, #f1f6f9 52%, #ebf1f5 100%);
 }
 
 .ambient-backdrop[data-mode='light'][data-preset='harbour'] .ambient-godray-layer {
-  opacity: 0.7;
+  opacity: 0.46;
   background:
-    conic-gradient(from 212deg at 26% 4%, rgba(148, 214, 252, 0.3) 0deg, transparent 62deg, rgba(224, 244, 255, 0.42) 130deg, transparent 225deg);
+    conic-gradient(from 212deg at 26% 4%, rgba(170, 216, 244, 0.22) 0deg, transparent 62deg, rgba(232, 245, 252, 0.34) 130deg, transparent 225deg);
 }
 
 .ambient-backdrop[data-mode='light'][data-preset='harbour'] .ambient-horizon-layer {
-  opacity: 0.62;
+  opacity: 0.6;
   background:
     radial-gradient(76% 36% at 50% 0%, rgba(255, 255, 255, 0.82) 0%, transparent 72%);
 }
 
-/* 4. Lụa Kem — clean editorial warm paper & champagne sheen */
+/* 4. Lụa Kem — warm editorial champagne linen & soft sand sheen */
 .ambient-backdrop[data-mode='light'][data-preset='lilac'] {
-  background: #fcf9f4;
+  background: #f9f5ee;
 }
 
 .ambient-backdrop[data-mode='light'][data-preset='lilac'] .ambient-mesh-layer {
   background:
-    radial-gradient(60% 50% at 14% 12%, rgba(242, 212, 174, 0.42) 0%, transparent 62%),
-    radial-gradient(54% 48% at 86% 10%, rgba(245, 198, 210, 0.34) 0%, transparent 62%),
-    radial-gradient(60% 52% at 24% 92%, rgba(226, 212, 244, 0.3) 0%, transparent 66%),
-    linear-gradient(154deg, #fffdfa 0%, #f9f3eb 54%, #f5eee6 100%);
+    radial-gradient(60% 50% at 14% 12%, rgba(232, 200, 162, 0.24) 0%, transparent 62%),
+    radial-gradient(54% 48% at 86% 10%, rgba(232, 196, 188, 0.2) 0%, transparent 62%),
+    radial-gradient(60% 52% at 24% 92%, rgba(226, 212, 194, 0.22) 0%, transparent 66%),
+    linear-gradient(154deg, #fdfbf7 0%, #f7f1e7 54%, #f2ebe0 100%);
 }
 
 .ambient-backdrop[data-mode='light'][data-preset='lilac'] .ambient-godray-layer {
-  opacity: 0.66;
+  opacity: 0.45;
   background:
-    conic-gradient(from 198deg at 78% 8%, rgba(248, 218, 186, 0.34) 0deg, transparent 64deg, rgba(248, 212, 224, 0.26) 132deg, transparent 230deg);
+    conic-gradient(from 198deg at 78% 8%, rgba(242, 214, 182, 0.24) 0deg, transparent 64deg, rgba(244, 224, 216, 0.2) 132deg, transparent 230deg);
 }
 
 .ambient-backdrop[data-mode='light'][data-preset='lilac'] .ambient-horizon-layer {

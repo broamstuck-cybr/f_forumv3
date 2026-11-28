@@ -60,11 +60,11 @@ const LIGHT_PRESETS: PresetDefinition[] = [
     nameEn: 'Morning Sun',
     tone: 'light',
     targetTheme: 'light',
-    swatches: ['#fffcf6', '#ffc086', '#0a6e50'],
+    swatches: ['#f6f4ef', '#e6c297', '#0d6b4e'],
     previewBg:
-      'radial-gradient(circle at 18% 12%, rgba(255,192,134,0.68), transparent 58%), radial-gradient(circle at 86% 20%, rgba(255,224,166,0.62), transparent 56%), radial-gradient(circle at 78% 88%, rgba(196,232,236,0.52), transparent 62%), linear-gradient(155deg, #fffefb 0%, #f8f2e6 100%)',
-    previewCard: 'rgba(255, 255, 255, 0.88)',
-    previewAccent: '#0a6e50',
+      'radial-gradient(circle at 18% 12%, rgba(236,196,148,0.44), transparent 58%), radial-gradient(circle at 86% 20%, rgba(232,212,174,0.42), transparent 56%), radial-gradient(circle at 78% 88%, rgba(164,214,196,0.3), transparent 62%), linear-gradient(155deg, #fbfaf6 0%, #f2eee4 100%)',
+    previewCard: 'rgba(255, 254, 251, 0.92)',
+    previewAccent: '#0d6b4e',
     ambient: true,
   },
   {
@@ -73,11 +73,11 @@ const LIGHT_PRESETS: PresetDefinition[] = [
     nameEn: 'Crystal Jade',
     tone: 'light',
     targetTheme: 'light',
-    swatches: ['#f3fbf7', '#38c99a', '#0a6e50'],
+    swatches: ['#f3f6f2', '#94ccb2', '#0d6b4e'],
     previewBg:
-      'radial-gradient(circle at 18% 14%, rgba(56,201,154,0.44), transparent 58%), radial-gradient(circle at 84% 18%, rgba(126,231,204,0.56), transparent 56%), radial-gradient(circle at 50% 92%, rgba(186,240,220,0.68), transparent 64%), linear-gradient(152deg, #f9fefb 0%, #e8f6f0 100%)',
-    previewCard: 'rgba(255, 255, 255, 0.86)',
-    previewAccent: '#0d825f',
+      'radial-gradient(circle at 18% 14%, rgba(112,196,162,0.36), transparent 58%), radial-gradient(circle at 84% 18%, rgba(176,222,202,0.42), transparent 56%), radial-gradient(circle at 50% 92%, rgba(214,232,220,0.52), transparent 64%), linear-gradient(152deg, #f9fbf8 0%, #ebf1ec 100%)',
+    previewCard: 'rgba(252, 253, 251, 0.92)',
+    previewAccent: '#0d6b4e',
     ambient: true,
   },
   {
@@ -86,11 +86,11 @@ const LIGHT_PRESETS: PresetDefinition[] = [
     nameEn: 'Daylight Sky',
     tone: 'light',
     targetTheme: 'light',
-    swatches: ['#f3f9fe', '#66c0f6', '#0f6870'],
+    swatches: ['#f4f7f9', '#9ccae4', '#1b596e'],
     previewBg:
-      'radial-gradient(circle at 18% 12%, rgba(102,192,246,0.56), transparent 58%), radial-gradient(circle at 84% 16%, rgba(176,224,252,0.66), transparent 56%), radial-gradient(circle at 76% 90%, rgba(142,228,218,0.48), transparent 64%), linear-gradient(156deg, #fafdff 0%, #e8f2fa 100%)',
-    previewCard: 'rgba(255, 255, 255, 0.88)',
-    previewAccent: '#0f6870',
+      'radial-gradient(circle at 18% 12%, rgba(142,196,228,0.42), transparent 58%), radial-gradient(circle at 84% 16%, rgba(188,222,242,0.46), transparent 56%), radial-gradient(circle at 76% 90%, rgba(176,224,218,0.34), transparent 64%), linear-gradient(156deg, #fafcfd 0%, #ebf1f5 100%)',
+    previewCard: 'rgba(253, 254, 254, 0.92)',
+    previewAccent: '#1b596e',
     ambient: true,
   },
   {
@@ -99,11 +99,11 @@ const LIGHT_PRESETS: PresetDefinition[] = [
     nameEn: 'Champagne Silk',
     tone: 'light',
     targetTheme: 'light',
-    swatches: ['#fcf9f4', '#f2d4ae', '#9c5c46'],
+    swatches: ['#f9f5ee', '#e4c49e', '#7c4b27'],
     previewBg:
-      'radial-gradient(circle at 16% 14%, rgba(242,212,174,0.64), transparent 58%), radial-gradient(circle at 84% 14%, rgba(245,198,210,0.58), transparent 58%), radial-gradient(circle at 24% 92%, rgba(226,212,244,0.5), transparent 64%), linear-gradient(154deg, #fffdfa 0%, #f5eee6 100%)',
-    previewCard: 'rgba(255, 253, 250, 0.9)',
-    previewAccent: '#9c5c46',
+      'radial-gradient(circle at 16% 14%, rgba(232,200,162,0.48), transparent 58%), radial-gradient(circle at 84% 14%, rgba(232,196,188,0.42), transparent 58%), radial-gradient(circle at 24% 92%, rgba(226,212,194,0.44), transparent 64%), linear-gradient(154deg, #fdfbf7 0%, #f2ebe0 100%)',
+    previewCard: 'rgba(255, 253, 249, 0.92)',
+    previewAccent: '#7c4b27',
     ambient: true,
   },
 ];

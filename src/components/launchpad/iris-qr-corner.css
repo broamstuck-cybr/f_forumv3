@@ -22,60 +22,60 @@
 }
 
 html[data-theme='light'] .iris-qr-section {
-  --iris-bg: #eef4f1;
-  --iris-surface: #ffffff;
-  --iris-surface-2: #f5f9f7;
-  --iris-line: rgba(16, 21, 20, 0.12);
-  --iris-text: #101514;
-  --iris-muted: #3a4542;
-  --iris-accent: #0a6e50;
-  --iris-rose: #c94c72;
+  --iris-bg: var(--bg, #f6f4ef);
+  --iris-surface: #fffefb;
+  --iris-surface-2: #f1ede4;
+  --iris-line: rgba(28, 26, 20, 0.1);
+  --iris-text: #181c1a;
+  --iris-muted: #4a534e;
+  --iris-accent: #0d6b4e;
+  --iris-rose: #b84266;
 }
 
 html[data-theme='light'] .iris-hero::after {
   background:
-    radial-gradient(120% 80% at 50% 0%, transparent 55%, rgba(16, 21, 20, 0.05) 100%);
+    radial-gradient(120% 80% at 50% 0%, transparent 60%, rgba(36, 30, 18, 0.035) 100%);
 }
 
 html[data-theme='light'] .iris-qr-plate {
-  border-color: rgba(16, 21, 20, 0.12);
+  border-color: rgba(28, 26, 20, 0.11);
   box-shadow:
-    0 20px 46px -16px rgba(16, 21, 20, 0.16),
-    0 0 0 1px rgba(16, 21, 20, 0.06);
+    0 18px 42px -18px rgba(36, 30, 18, 0.14),
+    0 0 0 1px rgba(28, 26, 20, 0.05);
 }
 
 html[data-theme='light'] .iris-honor-btn,
 html[data-theme='light'] .iris-feedback-btn {
-  background: #ffffff;
-  color: #101514;
-  border-color: rgba(16, 21, 20, 0.14);
-  box-shadow: 0 12px 28px -14px rgba(16, 21, 20, 0.16);
+  background: #fffefb;
+  color: #181c1a;
+  border-color: rgba(28, 26, 20, 0.12);
+  box-shadow: 0 10px 24px -14px rgba(36, 30, 18, 0.14);
 }
 
 html[data-theme='light'] .iris-feedback-btn {
-  background: linear-gradient(180deg, #ffffff 0%, #f1f8f4 100%);
-  border-color: rgba(10, 110, 80, 0.24);
-  color: #0a6e50;
+  background: linear-gradient(180deg, #ffffff 0%, #f5f2ea 100%);
+  border-color: rgba(13, 107, 78, 0.24);
+  color: #0d6b4e;
 }
 
 html[data-theme='light'] .iris-honor-btn-icon {
-  background: rgba(10, 110, 80, 0.1);
-  border-color: rgba(10, 110, 80, 0.2);
-  color: #0a6e50;
+  background: rgba(13, 107, 78, 0.095);
+  border-color: rgba(13, 107, 78, 0.2);
+  color: #0d6b4e;
 }
 
 html[data-theme='light'] .iris-honor-btn:hover,
 html[data-theme='light'] .iris-feedback-btn:hover {
-  border-color: rgba(10, 110, 80, 0.48);
-  box-shadow: 0 16px 34px -16px rgba(10, 110, 80, 0.24);
+  border-color: rgba(13, 107, 78, 0.45);
+  box-shadow: 0 14px 30px -16px rgba(13, 107, 78, 0.2);
 }
 
 html[data-theme='light'] .iris-mood-emblem {
-  background: rgba(255, 255, 255, 0.88);
-  border-color: rgba(10, 110, 80, 0.22);
-  color: #0a6e50;
+  background: rgba(255, 254, 251, 0.92);
+  border-color: rgba(13, 107, 78, 0.22);
+  color: #0d6b4e;
   box-shadow:
-    0 12px 28px -10px rgba(16, 21, 20, 0.18),
+    0 10px 24px -10px rgba(36, 30, 18, 0.14),
     inset 0 1px 0 rgba(255, 255, 255, 0.96);
 }
 
@@ -480,14 +480,14 @@ html[data-theme='light'] .iris-mood-emblem[data-tone='amber'] {
 }
 
 html[data-theme='light'] .iris-qr-btn--ghost {
-  background: #ffffff;
-  border-color: rgba(16, 21, 20, 0.16);
-  color: #101514;
+  background: #fffefb;
+  border-color: rgba(28, 26, 20, 0.14);
+  color: #181c1a;
 }
 
 html[data-theme='light'] .iris-qr-btn--ghost:hover {
-  background: #eef4f1;
-  color: #0a6e50;
+  background: #f1ede4;
+  color: #0d6b4e;
 }
 
 @media (max-width: 860px) {

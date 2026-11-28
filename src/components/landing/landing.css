@@ -36,25 +36,25 @@
 
   html[data-theme='light'] .lp-closing.scene-red,
   html[data-theme='light'] .lp-closing.scene-accent {
-    background: linear-gradient(145deg, #ffffff 0%, #edf6f1 100%) !important;
-    color: #101514 !important;
-    border-color: rgba(16, 21, 20, 0.12);
-    box-shadow: 0 20px 52px -24px rgba(16, 21, 20, 0.14);
+    background: linear-gradient(145deg, #ffffff 0%, #f5f1e7 100%) !important;
+    color: var(--fg) !important;
+    border-color: var(--line);
+    box-shadow: 0 20px 48px -24px rgba(32, 28, 20, 0.12);
   }
 
   html[data-theme='light'] .lp-closing.scene-red .lp-closing-title,
   html[data-theme='light'] .lp-closing.scene-accent .lp-closing-title {
-    color: #101514 !important;
+    color: var(--fg) !important;
   }
 
   html[data-theme='light'] .lp-closing.scene-red .t-italic,
   html[data-theme='light'] .lp-closing.scene-accent .t-italic {
-    color: #0a6e50 !important;
+    color: var(--accent) !important;
   }
 
   html[data-theme='light'] .lp-closing.scene-accent .btn-solid {
-    background: #0a6e50;
-    color: #ffffff;
+    background: var(--accent-fill);
+    color: var(--on-accent);
   }
 
   .lp-nav {
@@ -1233,89 +1233,89 @@
   }
 
   html[data-theme='light'] .lp-starter {
-    color: #101514;
+    color: var(--fg);
   }
 
   html[data-theme='light'] .lp-starter-sv {
-    background: radial-gradient(circle at 80% 20%, rgba(16, 152, 112, 0.14), transparent 60%), #f4f8f6;
+    background: radial-gradient(circle at 80% 20%, rgba(13, 107, 78, 0.08), transparent 60%), var(--bg-sunken);
   }
 
   html[data-theme='light'] .lp-starter-kicker {
-    color: #0a6e50;
+    color: var(--accent);
   }
 
   html[data-theme='light'] .lp-starter-heading {
-    color: #101514;
+    color: var(--fg);
   }
 
   html[data-theme='light'] .lp-starter-pill-btn {
-    border-color: rgba(10, 110, 80, 0.36);
-    background: rgba(255, 255, 255, 0.9);
-    color: #101514;
+    border-color: rgba(13, 107, 78, 0.3);
+    background: var(--bg-raised);
+    color: var(--fg);
   }
 
   html[data-theme='light'] .lp-starter-pill-btn[data-active='true'] {
-    background: #0a6e50;
-    color: #ffffff;
+    background: var(--accent-fill);
+    color: var(--on-accent);
   }
 
   html[data-theme='light'] .lp-starter-cn {
-    background: #f5f9f7;
+    background: var(--bg);
   }
 
   html[data-theme='light'] .lp-starter-tag {
-    color: #1f5568;
+    color: var(--harbour);
   }
 
   html[data-theme='light'] .lp-starter-run-btn {
-    border-color: rgba(10, 110, 80, 0.38);
-    background: rgba(10, 110, 80, 0.12);
-    color: #0a6e50;
+    border-color: rgba(13, 107, 78, 0.32);
+    background: var(--accent-soft);
+    color: var(--accent);
   }
 
   html[data-theme='light'] .lp-starter-run-btn[data-active='true'] {
-    background: #0a6e50;
-    color: #ffffff;
+    background: var(--accent-fill);
+    color: var(--on-accent);
   }
 
   html[data-theme='light'] .lp-starter-tab {
-    border-color: rgba(16, 21, 20, 0.14);
-    color: #42504b;
+    border-color: var(--line-strong);
+    color: var(--fg-muted);
   }
 
   html[data-theme='light'] .lp-starter-tab[data-active='true'] {
-    background: #101514;
-    color: #ffffff;
-    border-color: #101514;
+    background: var(--bg-inverse);
+    color: var(--fg-inverse);
+    border-color: var(--bg-inverse);
   }
 
   html[data-theme='light'] .lp-starter-st {
-    background: #f4f8f6;
+    background: var(--bg);
   }
 
   html[data-theme='light'] .lp-starter-st-title {
-    color: #101514;
+    color: var(--fg);
   }
 
   html[data-theme='light'] .lp-starter-step {
-    border-color: rgba(16, 21, 20, 0.12);
-    background: #ffffff;
-    color: #42504b;
+    border-color: var(--line);
+    background: var(--bg-raised);
+    color: var(--fg-muted);
   }
 
   html[data-theme='light'] .lp-starter-step[data-done='true'] {
-    border-color: #0a6e50;
-    color: #101514;
+    border-color: var(--accent);
+    color: var(--fg);
   }
 
   html[data-theme='light'] .lp-starter-step-dot {
-    color: #0a6e50;
+    color: var(--accent);
   }
 
   html[data-theme='light'] .lp-proj-index {
-    background: rgba(255, 255, 255, 0.9);
-    color: #101514;
-    border: 1px solid rgba(16, 21, 20, 0.12);
+    background: rgba(255, 254, 251, 0.92);
+    color: var(--fg);
+    border: 1px solid var(--line);
   }
 
   .lp-proj-img[data-failed='true'] {

@@ -129,47 +129,66 @@ html[data-theme='light'] .scene-ink,
 html[data-theme='light'] .scene-paper,
 .scene-paper {
   color-scheme: light;
-  --bg: #f8faf8;
-  --bg-raised: #ffffff;
-  --bg-sunken: #eef2ef;
+  --bg: #f6f4ef;
+  --bg-raised: #fffefb;
+  --bg-sunken: #ece8de;
   --bg-high: #ffffff;
-  --bg-veil: rgba(255, 255, 255, 0.94);
-  --fg: #101514;
-  --fg-muted: #3a4542;
-  --fg-faint: #586662;
-  --fg-inverse: #f8faf8;
-  --bg-inverse: #101514;
-  --line: rgba(16, 21, 20, 0.1);
-  --line-strong: rgba(16, 21, 20, 0.2);
-  --accent: #0a6e50;
-  --accent-fill: #0a6e50;
+  --bg-veil: rgba(252, 250, 246, 0.9);
+  --fg: #181c1a;
+  --fg-muted: #4a534e;
+  --fg-faint: #67716c;
+  --fg-inverse: #faf8f4;
+  --bg-inverse: #181c1a;
+  --line: rgba(28, 26, 20, 0.095);
+  --line-strong: rgba(28, 26, 20, 0.18);
+  --accent: #0d6b4e;
+  --accent-fill: #0d6b4e;
   --on-accent: #ffffff;
-  --accent-soft: rgba(10, 110, 80, 0.1);
-  --accent-secondary: #824d1e;
-  --accent-secondary-soft: rgba(130, 77, 30, 0.1);
+  --accent-soft: rgba(13, 107, 78, 0.095);
+  --accent-secondary: #9c5722;
+  --accent-secondary-soft: rgba(156, 87, 34, 0.1);
   --red: var(--accent);
   --red-fill: var(--accent-fill);
   --on-red: var(--on-accent);
   --red-soft: var(--accent-soft);
-  --danger: #b42318;
-  --danger-soft: rgba(180, 35, 24, 0.1);
-  --harbour: #1f5568;
-  --harbour-soft: rgba(31, 85, 104, 0.11);
-  --green: #0a6e50;
-  --green-soft: rgba(10, 110, 80, 0.1);
-  --amber: #824d1e;
-  --amber-soft: rgba(130, 77, 30, 0.1);
-  --shadow-1: 0 1px 2px rgba(16, 21, 20, 0.06);
-  --shadow-2: 0 12px 30px -12px rgba(16, 21, 20, 0.12);
-  --shadow-3: 0 28px 60px -24px rgba(16, 21, 20, 0.16);
+  --danger: #b42c24;
+  --danger-soft: rgba(180, 44, 36, 0.095);
+  --harbour: #1e5768;
+  --harbour-soft: rgba(30, 87, 104, 0.1);
+  --green: #0d6b4e;
+  --green-soft: rgba(13, 107, 78, 0.095);
+  --amber: #9c5722;
+  --amber-soft: rgba(156, 87, 34, 0.1);
+  --shadow-1: 0 1px 2px rgba(32, 28, 20, 0.05);
+  --shadow-2: 0 12px 28px -12px rgba(32, 28, 20, 0.095);
+  --shadow-3: 0 26px 56px -22px rgba(32, 28, 20, 0.13);
   --bg-glass-surface: var(--bg-raised);
   --bg-card-surface: var(--bg-high);
-  --ux-shadow: rgba(16, 21, 20, 0.08);
-  --ux-shadow-strong: rgba(16, 21, 20, 0.15);
-  --grain-opacity: 0.03;
+  --ux-shadow: rgba(32, 28, 20, 0.065);
+  --ux-shadow-strong: rgba(32, 28, 20, 0.12);
+  --grain-opacity: 0.024;
   --ff-mesh-bg:
-    radial-gradient(56% 46% at 14% 8%, rgba(10, 110, 80, 0.05), transparent 64%),
-    radial-gradient(50% 44% at 88% 82%, rgba(31, 85, 104, 0.05), transparent 68%);
+    radial-gradient(56% 46% at 14% 8%, rgba(214, 174, 126, 0.07), transparent 64%),
+    radial-gradient(50% 44% at 88% 82%, rgba(13, 107, 78, 0.04), transparent 68%);
+}
+
+html[data-theme='light'][data-wallpaper='light'],
+html[data-theme='light'][data-wallpaper='light'] .scene-ink,
+html[data-theme='light'][data-wallpaper='light'] .scene-paper {
+  --bg: #f6f4ef;
+  --bg-raised: #fffefb;
+  --bg-sunken: #ece8de;
+  --bg-high: #ffffff;
+  --bg-veil: rgba(252, 250, 246, 0.9);
+  --bg-glass-surface: rgba(255, 254, 251, 0.88);
+  --bg-card-surface: rgba(255, 255, 255, 0.95);
+  --accent: #0d6b4e;
+  --accent-fill: #0d6b4e;
+  --accent-soft: rgba(13, 107, 78, 0.095);
+  --on-accent: #ffffff;
+  --ff-mesh-bg:
+    radial-gradient(56% 46% at 14% 8%, rgba(214, 174, 126, 0.09), transparent 64%),
+    radial-gradient(50% 44% at 88% 82%, rgba(13, 107, 78, 0.045), transparent 68%);
 }
 
 .scene-red,
@@ -265,20 +284,20 @@ html[data-theme='dark'][data-wallpaper='harbour'] .scene-paper {
 html[data-theme='light'][data-wallpaper='harbour'],
 html[data-theme='light'][data-wallpaper='harbour'] .scene-ink,
 html[data-theme='light'][data-wallpaper='harbour'] .scene-paper {
-  --bg: #eff5f6;
-  --bg-raised: #f8fcfc;
-  --bg-sunken: #e1ecee;
+  --bg: #f4f7f9;
+  --bg-raised: #fdfefe;
+  --bg-sunken: #e6edf1;
   --bg-high: #ffffff;
-  --bg-veil: rgba(239, 245, 246, 0.88);
-  --bg-glass-surface: rgba(248, 252, 252, 0.84);
-  --bg-card-surface: rgba(255, 255, 255, 0.92);
-  --accent: #0f6870;
-  --accent-fill: #0f6870;
-  --accent-soft: rgba(15, 104, 112, 0.12);
+  --bg-veil: rgba(244, 247, 249, 0.9);
+  --bg-glass-surface: rgba(253, 254, 254, 0.88);
+  --bg-card-surface: rgba(255, 255, 255, 0.95);
+  --accent: #1b596e;
+  --accent-fill: #1b596e;
+  --accent-soft: rgba(27, 89, 110, 0.1);
   --on-accent: #ffffff;
   --ff-mesh-bg:
-    conic-gradient(from 220deg at 78% 8%, rgba(94, 199, 204, 0.24) 0deg, transparent 74deg, rgba(218, 240, 244, 0.42) 140deg, transparent 245deg),
-    radial-gradient(62% 52% at 16% 85%, rgba(15, 104, 112, 0.14), transparent 68%);
+    radial-gradient(56% 46% at 18% 8%, rgba(132, 186, 214, 0.12), transparent 64%),
+    radial-gradient(52% 46% at 84% 86%, rgba(27, 89, 110, 0.06), transparent 68%);
 }
 
 html[data-theme='dark'][data-wallpaper='aurora'],
@@ -422,21 +441,20 @@ html[data-theme='dark'][data-wallpaper='lilac'] .scene-paper {
 html[data-theme='light'][data-wallpaper='lilac'],
 html[data-theme='light'][data-wallpaper='lilac'] .scene-ink,
 html[data-theme='light'][data-wallpaper='lilac'] .scene-paper {
-  --bg: #fbf7ff;
-  --bg-raised: #fffcff;
-  --bg-sunken: #f1eafd;
+  --bg: #f9f5ee;
+  --bg-raised: #fffdf9;
+  --bg-sunken: #efe8dc;
   --bg-high: #ffffff;
-  --bg-veil: rgba(251, 247, 255, 0.88);
-  --bg-glass-surface: rgba(255, 252, 255, 0.84);
-  --bg-card-surface: rgba(255, 255, 255, 0.94);
-  --accent: #5b3fd6;
-  --accent-fill: #5b3fd6;
-  --accent-soft: rgba(91, 63, 214, 0.12);
+  --bg-veil: rgba(249, 245, 238, 0.9);
+  --bg-glass-surface: rgba(255, 253, 249, 0.88);
+  --bg-card-surface: rgba(255, 255, 255, 0.95);
+  --accent: #7c4b27;
+  --accent-fill: #7c4b27;
+  --accent-soft: rgba(124, 75, 39, 0.1);
   --on-accent: #ffffff;
   --ff-mesh-bg:
-    radial-gradient(58% 50% at 16% 14%, rgba(196, 181, 253, 0.28), transparent 64%),
-    radial-gradient(54% 48% at 86% 12%, rgba(253, 230, 138, 0.24), transparent 66%),
-    radial-gradient(60% 48% at 20% 88%, rgba(251, 207, 232, 0.22), transparent 70%);
+    radial-gradient(58% 50% at 16% 12%, rgba(226, 194, 154, 0.16), transparent 64%),
+    radial-gradient(54% 48% at 86% 14%, rgba(214, 174, 160, 0.12), transparent 66%);
 }
 
 html[data-theme='dark'][data-wallpaper='lagoon'],
@@ -541,21 +559,20 @@ html[data-theme='dark'][data-wallpaper='sage'] .scene-paper {
 html[data-theme='light'][data-wallpaper='sage'],
 html[data-theme='light'][data-wallpaper='sage'] .scene-ink,
 html[data-theme='light'][data-wallpaper='sage'] .scene-paper {
-  --bg: #f2f5ec;
-  --bg-raised: #fafcf5;
-  --bg-sunken: #e5ecdc;
+  --bg: #f3f6f2;
+  --bg-raised: #fcfdfb;
+  --bg-sunken: #e6ede6;
   --bg-high: #ffffff;
-  --bg-veil: rgba(242, 245, 236, 0.88);
-  --bg-glass-surface: rgba(250, 252, 245, 0.84);
-  --bg-card-surface: rgba(255, 255, 255, 0.94);
-  --accent: #335941;
-  --accent-fill: #335941;
-  --accent-soft: rgba(51, 89, 65, 0.11);
+  --bg-veil: rgba(243, 246, 242, 0.9);
+  --bg-glass-surface: rgba(252, 253, 251, 0.88);
+  --bg-card-surface: rgba(255, 255, 255, 0.95);
+  --accent: #0d6b4e;
+  --accent-fill: #0d6b4e;
+  --accent-soft: rgba(13, 107, 78, 0.1);
   --on-accent: #ffffff;
   --ff-mesh-bg:
-    radial-gradient(58% 50% at 16% 14%, rgba(183, 201, 168, 0.34), transparent 64%),
-    radial-gradient(54% 48% at 86% 12%, rgba(240, 226, 192, 0.3), transparent 66%),
-    radial-gradient(60% 48% at 50% 92%, rgba(207, 232, 216, 0.26), transparent 70%);
+    radial-gradient(58% 50% at 16% 14%, rgba(138, 194, 164, 0.15), transparent 64%),
+    radial-gradient(54% 48% at 86% 12%, rgba(220, 212, 188, 0.14), transparent 66%);
 }
 
 :root,

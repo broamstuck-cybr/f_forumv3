@@ -5,7 +5,7 @@
   }
 
   :root[data-theme='light'] {
-    --ex-accent: #0f7a64;
+    --ex-accent: var(--accent, #0d6b4e);
   }
 
   .ex {

@@ -861,7 +861,11 @@ export const IrisQrCornerSection: React.FC<IrisQrCornerSectionProps> = ({
       renderer.outputColorSpace = THREE.SRGBColorSpace;
 
       const scene = new THREE.Scene();
-      scene.background = new THREE.Color(themeRef.current === 'light' ? '#eef4f1' : '#0c1212');
+      const createStageBg = (mode: 'dark' | 'light') =>
+        mode === 'light'
+          ? new THREE.Color().setRGB(2.705, 2.3, 1.587)
+          : new THREE.Color('#0c1212');
+      scene.background = createStageBg(themeRef.current);
 
       const camera = new THREE.PerspectiveCamera(28, 1, 0.1, 100);
 
@@ -924,17 +928,17 @@ export const IrisQrCornerSection: React.FC<IrisQrCornerSectionProps> = ({
       composer.addPass(new RenderPass(scene, camera));
       const bloomPass = new UnrealBloomPass(
         new THREE.Vector2(1, 1),
-        themeRef.current === 'light' ? 0.14 : 0.55,
+        themeRef.current === 'light' ? 0 : 0.55,
         0.4,
-        themeRef.current === 'light' ? 0.96 : 0.92
+        themeRef.current === 'light' ? 2.8 : 0.92
       );
       composer.addPass(bloomPass);
       composer.addPass(new OutputPass());
 
       applySceneThemeRef.current = (mode) => {
-        scene.background = new THREE.Color(mode === 'light' ? '#eef4f1' : '#0c1212');
-        bloomPass.strength = mode === 'light' ? 0.14 : 0.55;
-        bloomPass.threshold = mode === 'light' ? 0.96 : 0.92;
+        scene.background = createStageBg(mode);
+        bloomPass.strength = mode === 'light' ? 0 : 0.55;
+        bloomPass.threshold = mode === 'light' ? 2.8 : 0.92;
       };
 
       const robot = new THREE.Group();
