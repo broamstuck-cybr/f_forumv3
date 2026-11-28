@@ -386,6 +386,24 @@ export interface ModerationReport {
 
 export type AdminGatewayProfileId = 'openrouter' | 'gemini' | 'custom';
 
+export type AdminDedicatedGatewayPreset = 'openrouter' | 'custom';
+
+export interface AdminDedicatedGatewayConfig {
+  enabled: boolean;
+  preset: AdminDedicatedGatewayPreset;
+  protocol: AIProtocol;
+  baseUrl: string;
+  model: string;
+  chatModel?: string;
+  buildModel?: string;
+  maxOutputTokens?: number;
+  apiKey?: string;
+  hasApiKey?: boolean;
+  maskedKey?: string;
+  reuseOpenRouterKey?: boolean;
+  updatedAt?: string;
+}
+
 export interface AdminGatewayProfileConfig {
   protocol: AIProtocol;
   baseUrl: string;
@@ -413,6 +431,7 @@ export interface AdminGatewayOverride {
     openrouter?: AdminGatewayProfileConfig;
     gemini?: AdminGatewayProfileConfig;
   };
+  adminGateway?: AdminDedicatedGatewayConfig;
   systemPromptSuffix?: string;
   standardTurnLimit?: number;
   dailyUserLimit?: number;
@@ -522,6 +541,7 @@ export interface AdminSecurityEvent {
 export interface AdminKeyPoolTestResult {
   ok: boolean;
   mode: 'pool' | 'key1' | 'key2' | 'failover_sim' | 'gateway';
+  target?: 'public' | 'admin';
   keyId: string;
   keyMask: string;
   mask?: string | null;
@@ -618,6 +638,7 @@ export interface PublicAiRuntimeInfo {
   protocol: AIProtocol;
   defaultModel: string;
   availableModels: PublicAiModelOption[];
+  isAdminDedicated?: boolean;
 }
 
 export interface VaultSlotBrief {

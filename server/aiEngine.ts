@@ -10,9 +10,13 @@ import type {
   SuggestedVaultItem,
   WorkspaceAssemblyPlan,
 } from '../src/types/index';
-import { getInternalGatewayOverride } from './adminStore.js';
+import {
+  getInternalAdminDedicatedGateway,
+  getInternalGatewayOverride,
+} from './adminStore.js';
 import {
   classifyWorkspaceIntent,
+  detectMasterpieceAnchor,
   estimateTokensCostUsd,
   FFORUM_COMPACT_KNOWLEDGE,
   GEMINI_MODELS,
@@ -21,6 +25,8 @@ import {
   OPENROUTER_PAID_BUILD_CHAIN,
   OPENROUTER_PAID_CHAT_CHAIN,
   searchVaultKnowledge,
+  selectMotionRecipesForPrompt,
+  selectVaultBlueprintsForBuild,
   type WorkspaceIntent,
 } from './fforumKnowledge.js';
 import {
@@ -77,6 +83,7 @@ export interface AIStreamHooks {
   }) => void;
   onDelta?: (chunk: string) => void;
   signal?: AbortSignal;
+  isAdmin?: boolean;
 }
 
 interface EffectiveAIConfig {
@@ -91,6 +98,8 @@ interface EffectiveAIConfig {
   usingByok: boolean;
   usingAdminKey: boolean;
   isOpenRouter: boolean;
+  isAdminDedicated?: boolean;
+  allowCustomModels?: boolean;
 }
 
 function normalizeProtocol(val: string | undefined): AIProtocol {
@@ -108,14 +117,47 @@ const SERVER_GEMINI_MODEL_ALLOWLIST = new Set([
 
 const SERVER_OPENROUTER_MODEL_ALLOWLIST = new Set(OPENROUTER_MODELS.map((m) => m.id));
 
+const ADMIN_OPENROUTER_MODELS = [
+  { id: 'deepseek/deepseek-v3.2', label: 'DeepSeek V3.2 (Admin)', tier: 'balanced' as const },
+  { id: 'qwen/qwen3-coder-next', label: 'Qwen3 Coder Next (Admin)', tier: 'balanced' as const },
+  { id: 'google/gemini-2.5-pro', label: 'Gemini 2.5 Pro (Admin)', tier: 'balanced' as const },
+  { id: 'anthropic/claude-sonnet-4', label: 'Claude Sonnet 4 (Admin)', tier: 'balanced' as const },
+  { id: 'openrouter/auto-smart', label: 'Tự động thông minh', tier: 'auto' as const },
+  { id: 'google/gemma-4-31b-it:free', label: 'Gemma 4 31B (Miễn phí)', tier: 'free' as const },
+];
+
 let openrouterCreditShortageUntil = 0;
 
 export function resetOpenRouterTierCache(): void {
   openrouterCreditShortageUntil = 0;
 }
 
-export function getPublicAiRuntimeInfo(): PublicAiRuntimeInfo {
+export function getPublicAiRuntimeInfo(options?: { isAdmin?: boolean }): PublicAiRuntimeInfo {
   ensureLocalEnvLoaded();
+  if (options?.isAdmin === true) {
+    const adminGw = getInternalAdminDedicatedGateway();
+    if (adminGw.enabled) {
+      const baseUrlLower = (adminGw.baseUrl || '').toLowerCase();
+      const isOr = adminGw.preset === 'openrouter' || baseUrlLower.includes('openrouter.ai');
+      const availableModels = isOr
+        ? ADMIN_OPENROUTER_MODELS.map((m) => ({ ...m }))
+        : [{ id: adminGw.model, label: adminGw.model, tier: 'balanced' as const }];
+      for (const extra of [adminGw.model, adminGw.buildModel, adminGw.chatModel]) {
+        const clean = (extra || '').trim();
+        if (clean && !availableModels.some((m) => m.id === clean)) {
+          availableModels.unshift({ id: clean, label: clean, tier: 'balanced' });
+        }
+      }
+      return {
+        activeProfile: isOr ? 'openrouter' : 'custom',
+        protocol: adminGw.protocol,
+        defaultModel: adminGw.model || availableModels[0]?.id || 'deepseek/deepseek-v3.2',
+        availableModels,
+        isAdminDedicated: true,
+      };
+    }
+  }
+
   const adminOverride = getInternalGatewayOverride();
   const protocol = adminOverride.enabled
     ? adminOverride.protocol
@@ -156,10 +198,15 @@ export function getPublicAiRuntimeInfo(): PublicAiRuntimeInfo {
 
 export function resolveAIConfig(
   headers: IncomingHttpHeaders,
-  requestedModel?: string
+  requestedModel?: string,
+  options?: { isAdmin?: boolean; forceAdminGateway?: boolean }
 ): EffectiveAIConfig {
   ensureLocalEnvLoaded();
   const adminOverride = getInternalGatewayOverride();
+  const adminDedicated = getInternalAdminDedicatedGateway();
+  const useAdminDedicated = Boolean(
+    options?.forceAdminGateway || (options?.isAdmin && adminDedicated.enabled)
+  );
 
   let protocol: AIProtocol = normalizeProtocol(process.env.AI_PROTOCOL);
   let baseUrl = (process.env.AI_BASE_URL || 'https://api.openai.com/v1').trim();
@@ -171,8 +218,22 @@ export function resolveAIConfig(
   let systemPromptSuffix = '';
   let usingByok = false;
   let usingAdminKey = false;
+  let allowCustomModels = false;
 
-  if (adminOverride.enabled) {
+  if (useAdminDedicated) {
+    protocol = adminDedicated.protocol;
+    baseUrl = adminDedicated.baseUrl || baseUrl;
+    model = adminDedicated.model || model;
+    chatModel = adminDedicated.chatModel;
+    buildModel = adminDedicated.buildModel;
+    maxOutputTokens = adminDedicated.maxOutputTokens ?? adminOverride.maxOutputTokens;
+    if (adminDedicated.apiKey) {
+      apiKey = adminDedicated.apiKey;
+      usingAdminKey = true;
+    }
+    systemPromptSuffix = adminOverride.systemPromptSuffix || '';
+    allowCustomModels = true;
+  } else if (adminOverride.enabled) {
     protocol = adminOverride.protocol;
     baseUrl = adminOverride.baseUrl || baseUrl;
     model = adminOverride.model || model;
@@ -189,7 +250,7 @@ export function resolveAIConfig(
   const isOpenRouterUrl = baseUrl.toLowerCase().includes('openrouter.ai');
   const cleanRequested = (requestedModel || '').trim();
   if (cleanRequested && cleanRequested !== 'auto') {
-    if (!adminOverride.enabled) {
+    if (allowCustomModels || !adminOverride.enabled) {
       model = cleanRequested;
     } else if (protocol === 'gemini' && SERVER_GEMINI_MODEL_ALLOWLIST.has(cleanRequested)) {
       model = cleanRequested;
@@ -207,6 +268,7 @@ export function resolveAIConfig(
     apiKey = byokKey;
     usingByok = true;
     usingAdminKey = false;
+    allowCustomModels = true;
     if (byokUrl) baseUrl = byokUrl;
     if (byokProto) protocol = normalizeProtocol(byokProto);
     if (cleanRequested && cleanRequested !== 'auto') {
@@ -229,11 +291,20 @@ export function resolveAIConfig(
     usingByok,
     usingAdminKey,
     isOpenRouter: cleanBaseUrl.toLowerCase().includes('openrouter.ai'),
+    isAdminDedicated: useAdminDedicated && !usingByok,
+    allowCustomModels,
   };
 }
 
 function resolveModelCandidates(config: EffectiveAIConfig, intent: WorkspaceIntent): string[] {
   if (!config.isOpenRouter) {
+    if (
+      config.protocol === 'gemini' &&
+      config.baseUrl.toLowerCase().includes('googleapis.com') &&
+      intent === 'assemble'
+    ) {
+      return Array.from(new Set([config.model, 'gemini-2.5-flash', 'gemini-2.5-flash-lite'].filter(Boolean)));
+    }
     return [config.model];
   }
 
@@ -281,8 +352,8 @@ function resolveModeMaxTokens(config: EffectiveAIConfig, intent: WorkspaceIntent
   if (intent === 'patch') {
     return adminCap ? Math.min(Math.max(adminCap, 4096), 6144) : 5200;
   }
-  // WHY: Bespoke multi-file HTML+CSS+JS builds need 6144-8192 tokens so XML <file> blocks are never truncated mid-tag.
-  return adminCap ? Math.min(Math.max(adminCap, 6144), 12288) : 8192;
+  // WHY: Bespoke multi-file CSS+HTML+JS builds need 12288-16384 tokens so all XML <file> blocks finish without mid-file truncation.
+  return adminCap ? Math.min(Math.max(adminCap, 8192), 16384) : 16384;
 }
 
 function buildModeSystemInstruction(
@@ -321,27 +392,27 @@ function buildModeSystemInstruction(
     ].join('\n');
   } else {
     base = [
-      'You are an elite Frontend Architect and Creative Technologist inside F-Forum Studio (like Google AI Studio Build, Bolt.new, and Lovable).',
-      'Your mission: design and code a COMPLETELY ORIGINAL, BESPOKE, PRODUCTION-QUALITY multi-file website or web app tailored 100% to the USER PROMPT.',
-      'OUTPUT FORMAT (STRICT — DO NOT wrap XML tags inside markdown ``` code fences!):',
-      '<summary>1-2 câu tiếng Việt súc tích mô tả phong cách thiết kế, bảng màu, bố cục và tính năng tương tác bạn vừa tự viết.</summary>',
+      'You are an elite Frontend Architect and Creative Technologist inside F-Forum Studio.',
+      'Your mission: design and assemble a COMPLETE, COHESIVE, PRODUCTION-QUALITY multi-file website tailored 100% to the USER PROMPT by genuinely adapting and harmonizing the provided F-Forum Vault modules and Source of Knowledge motion recipes.',
+      'OUTPUT FORMAT (STRICT — DO NOT wrap XML tags inside markdown ``` code fences! Always emit ALL 3 files: index.html, src/styles.css, and src/app.js):',
+      '<summary>1-2 câu tiếng Việt súc tích mô tả phong cách thiết kế, bảng màu, bố cục, mẫu Vault và công thức chuyển động vừa lắp ghép.</summary>',
       '<file path="index.html">',
-      'Complete standalone HTML5 document linking ./src/styles.css and ./src/app.js (with <meta charset="UTF-8">, <meta name="viewport" content="width=device-width, initial-scale=1.0">, and Vietnamese-capable Google Fonts fitting the brand).',
+      'Complete, concise standalone HTML5 document (~110-200 lines) linking src/styles.css and src/app.js (plus Google Fonts fitting the brand with full Vietnamese diacritics, e.g. Be Vietnam Pro + Fraunces, Manrope + Newsreader, or Plus Jakarta Sans + IBM Plex Mono). Build 4-6 real sections (Header/Nav, Bespoke Hero with compact SVG/Canvas visual, Interactive Cards/Bento, Interactive Domain Widget/Calculator/Filter/Tabs, Showcase/Timeline, Contact/Quote/Booking Form, Footer). Tag adapted Vault sections with data-vault-id="<id>" and the applied Knowledge motion recipe with data-knowledge-recipe="<recipe-id>". Keep inline SVGs crisp & compact (<= 14 geometric primitives with explicit width/height/viewBox — NEVER dump multi-kilobyte SVG path walls).',
       '</file>',
       '<file path="src/styles.css">',
-      'Complete bespoke CSS: :root tokens, expressive typography scale, refined visual craft, contrast >= 4.5:1, responsive @media for 390px / 768px / 1440px, smooth hover/focus states, and @media (prefers-reduced-motion: reduce).',
+      'Complete unified CSS (~110-220 lines): ALWAYS include *, *::before, *::after { box-sizing: border-box; } and a { color: inherit; text-decoration: none; }, :root tokens, expressive typography scale, contrast >= 4.5:1, harmonized styles adapted from the provided Vault modules and Knowledge motion recipe, explicit SVG sizing limits, responsive @media for 390px / 768px / 1440px, focus-visible outlines, and @media (prefers-reduced-motion: reduce). NEVER wrap CSS in <style> tags.',
       '</file>',
       '<file path="src/app.js">',
-      'Real, working interactive JavaScript implementing genuine product features (state, tabs, filters, timers, calculators, bespoke interactive Canvas/SVG visuals, drawers, validated forms, keyboard support) with ZERO runtime errors.',
+      'REQUIRED working interactive JavaScript (~50-130 lines) implementing genuine product logic (tabs, filters, sliders, calculators, day/night toggles, interactive Canvas/SVG updates, drawers, validated forms, and fail-safe motion recipe behavior) with ZERO runtime errors. Output pure JS ONLY — NEVER include <script> or </script> tags inside src/app.js.',
       '</file>',
       'If the USER PROMPT explicitly asks for React / TSX / JSX, instead output <file path="src/App.tsx"> (importing only from "react") and <file path="src/styles.css">.',
-      'DESIGN & ENGINEERING MANDATES:',
-      '1. ZERO COOKIE-CUTTER BOILERPLATE: Every prompt MUST receive its own unique layout architecture, palette, typography mood, hero visual, and interactions matching its exact domain. NEVER copy generic navbars ("Điểm chính / Lịch trình / Ôn tập / Đội ngũ"), generic quiz blocks, or ceramic vase drawings unless specifically asked.',
-      '2. ZERO BROKEN EXTERNAL IMAGES: NEVER invent fake external image URLs (unsplash, picsum, etc.). Craft crisp bespoke inline SVGs, generative HTML5 Canvas art, CSS architectural compositions, data visualizations, or interactive UI mockups directly in code.',
-      '3. CREATIVE VAULT INSPIRATION: When ATTACHED VAULT REFERENCES are provided, study and creatively adapt their strongest CSS craft tokens or micro-interaction patterns into your custom build — NEVER copy unrelated raw templates.',
-      '4. REAL INTERACTIVITY: Every primary button, filter, tab, toggle, slider, timer, or form MUST actually work cleanly in the live preview with plain browser JavaScript (never JSX inside .js files).',
-      '5. IMMEDIATE FIRST-PAINT VISIBILITY: NEVER hide body, hero, or primary sections at opacity: 0 behind preloaders or JS-gated scroll reveals — above-the-fold UI MUST be crisp, full-contrast, and immediately visible on load.',
-      '6. CLEAN POLISH: Match the user prompt language (default crisp Vietnamese with full diacritics). Zero emojis in UI, zero dummy filler text, zero unfinished stub comments, zero literal "\\n" escapes, zero dead href="#" links.',
+      'CRAFT & ANTI-SLOP MANDATES:',
+      '1. GENUINE VAULT + KNOWLEDGE INTEGRATION: Study ATTACHED VAULT BLUEPRINTS and KNOWLEDGE MOTION RECIPES. Adapt at least 2-3 Vault modules (CSS structure + interactive HTML/JS behavior, marked with data-vault-id="...") and 1-2 Knowledge motion recipes (marked with data-knowledge-recipe="...") directly into the page, translating 100% of labels and data into natural Vietnamese matching the prompt.',
+      '2. FORBIDDEN AI SLOP DEFAULTS: NEVER use #0a0a0f + #00d4aa + Inter generic dark boilerplate, NEVER output a 1-section stub, NEVER omit src/app.js, and NEVER emit generic quiz/clay-vase sections unless requested.',
+      '3. THEME INTENT RESPECT: If the prompt asks for light/minimal/paper/ceramic/lookbook/clean, build a refined warm-ivory/porcelain Light Mode (#f6f3ec-#faf9f6). If dark/solar/space/3D/runtime, build a deep mineral obsidian/basalt Dark Mode with intentional domain accent.',
+      '4. ZERO BROKEN EXTERNAL IMAGES OR EMPTY BOXES: Never invent fake external image URLs (unsplash, picsum). Craft crisp inline SVGs, CSS architectural compositions, or interactive UI widgets that render visibly in HTML/CSS immediately (never leave an empty white box waiting on JS).',
+      '5. IMMEDIATE FIRST-PAINT VISIBILITY: Never hide body, hero, or primary sections at opacity: 0 behind preloaders or JS-gated scroll reveals — above-the-fold UI must be immediately visible on load.',
+      '6. CLEAN POLISH: Full Vietnamese diacritics, zero emojis in UI, zero dummy filler, zero literal "\\n" escapes, zero dead href="#" links.',
     ].join('\n');
   }
 
@@ -397,14 +468,74 @@ function buildModeUserPrompt(
     return { userContent, matchedSuggestions };
   }
 
-  const attachedLimit = intent === 'patch' ? 1 : 3;
-  const attachedCharCap = intent === 'patch' ? 1000 : 1400;
+  const attachedLimit = intent === 'patch' ? 1 : 9;
+  const attachedCharCap = intent === 'patch' ? 1000 : 2400;
   const fileLimit = intent === 'patch' ? 5 : 3;
   const fileCharCap = intent === 'patch' ? 7500 : 4000;
 
-  const attachedSummary = (req.attachedItems || [])
-    .slice(0, attachedLimit)
-    .map((item: AttachedContextItem) => `- [${item.kind}] ${item.title}:\n${String(item.summary || '').slice(0, attachedCharCap)}`)
+  let effectiveAttached: AttachedContextItem[] = Array.isArray(req.attachedItems)
+    ? req.attachedItems.slice(0, attachedLimit)
+    : [];
+
+  // WHY: If a direct API caller omits attached Vault blueprints during assemble, hydrate real Vault + Knowledge blueprints on the server.
+  if (intent === 'assemble' && effectiveAttached.length === 0) {
+    const serverBuild = selectVaultBlueprintsForBuild(req.prompt, { limit: 4 });
+    const serverRecipes = selectMotionRecipesForPrompt(req.prompt, { count: 2 });
+    const generatedAttached: AttachedContextItem[] = [];
+    if (serverBuild.anchor) {
+      generatedAttached.push({
+        id: serverBuild.anchor.id,
+        kind: 'blueprint',
+        title: `MASTERPIECE ANCHOR: ${serverBuild.anchor.title} (${serverBuild.anchor.slug})`,
+        sourceLibrary: 'motionsites',
+        summary: serverBuild.anchor.promptText.slice(0, 1400),
+        payload: serverBuild.anchor.css ? serverBuild.anchor.css.slice(0, 700) : undefined,
+      });
+    } else {
+      const anchorHint = detectMasterpieceAnchor(req.prompt);
+      if (anchorHint) {
+        generatedAttached.push({
+          id: anchorHint.id,
+          kind: 'blueprint',
+          title: `MASTERPIECE ANCHOR: ${anchorHint.title} (${anchorHint.slug})`,
+          sourceLibrary: 'motionsites',
+          summary: anchorHint.promptText.slice(0, 1400),
+          payload: anchorHint.css ? anchorHint.css.slice(0, 700) : undefined,
+        });
+      }
+    }
+    for (const bp of serverBuild.blueprints) {
+      const codeParts = [
+        `Library: ${bp.library} · Role: ${bp.role} · Reason: ${bp.reason}`,
+        bp.html ? `HTML:\n${bp.html.slice(0, 700)}` : '',
+        bp.css ? `CSS:\n${bp.css.slice(0, 800)}` : '',
+        bp.js ? `JS:\n${bp.js.slice(0, 500)}` : '',
+      ].filter(Boolean);
+      generatedAttached.push({
+        id: bp.id,
+        kind: 'resource',
+        title: `${bp.title} [${bp.library}] (data-vault-id="${bp.id}")`,
+        sourceLibrary: bp.library,
+        summary: codeParts.join('\n'),
+      });
+    }
+    for (const rec of serverRecipes) {
+      generatedAttached.push({
+        id: rec.id,
+        kind: 'template',
+        title: `KNOWLEDGE MOTION RECIPE: ${rec.title} (data-knowledge-recipe="${rec.id}")`,
+        summary: `Category: ${rec.category} · Use when: ${rec.useWhen}\nCode (${rec.lang}):\n${rec.code.slice(0, 800)}`,
+      });
+    }
+    effectiveAttached = generatedAttached.slice(0, attachedLimit);
+  }
+
+  const attachedSummary = effectiveAttached
+    .map((item: AttachedContextItem) => {
+      const baseText = String(item.summary || '').slice(0, attachedCharCap);
+      const extraPayload = item.payload ? `\nCSS/Spec:\n${String(item.payload).slice(0, 700)}` : '';
+      return `- [${item.kind}] ${item.title} (id: ${item.id}):\n${baseText}${extraPayload}`;
+    })
     .join('\n\n');
   const existingFiles = (req.files || [])
     .filter((f) => f.path !== 'metadata.json' && f.path !== 'README.md')
@@ -415,7 +546,9 @@ function buildModeUserPrompt(
   const userContent = [
     recentHistory ? `RECENT CHAT:\n${recentHistory}` : '',
     `USER PROMPT:\n${req.prompt}`,
-    attachedSummary ? `ATTACHED VAULT REFERENCES (use selectively as craft inspiration, never copy unrelated boilerplate):\n${attachedSummary}` : '',
+    attachedSummary
+      ? `ATTACHED VAULT BLUEPRINTS & KNOWLEDGE MOTION RECIPES (MUST adapt into data-vault-id / data-knowledge-recipe sections & src/styles.css + src/app.js):\n${attachedSummary}`
+      : '',
     existingFiles ? `CURRENT WORKSPACE FILES:\n${existingFiles}` : '',
   ]
     .filter(Boolean)
@@ -740,6 +873,23 @@ function stripOuterCodeFences(rawContent: string): string {
   return unescapeDoubleEncodedCode(clean);
 }
 
+function sanitizeExtractedFileContent(filePath: string, rawContent: string): string {
+  const lower = filePath.toLowerCase();
+  let clean = stripOuterCodeFences(rawContent);
+  if (/\.(js|mjs|ts|tsx|jsx)$/i.test(lower)) {
+    clean = clean
+      .replace(/^\s*<script\b[^>]*>\s*/i, '')
+      .replace(/\s*<\/script>\s*$/i, '')
+      .replace(/^\s*<\/?script\b[^>]*>\s*$/gim, '');
+  } else if (/\.css$/i.test(lower)) {
+    clean = clean
+      .replace(/^\s*<style\b[^>]*>\s*/i, '')
+      .replace(/\s*<\/style>\s*$/i, '')
+      .replace(/^\s*<\/?style\b[^>]*>\s*$/gim, '');
+  }
+  return clean;
+}
+
 export interface ParsedXmlArtifact {
   summary: string;
   files: Array<{ path: string; content: string; summary: string }>;
@@ -766,7 +916,7 @@ export function parseXmlArtifactBlocks(rawText: string): ParsedXmlArtifact | nul
     lastClosedEnd = match.index + match[0].length;
     const safePath = normalizeArtifactPath(match[1]);
     if (!safePath || safePath.includes('..')) continue;
-    const content = stripOuterCodeFences(match[2]);
+    const content = sanitizeExtractedFileContent(safePath, match[2]);
     if (!content.trim()) continue;
     const entry = {
       path: safePath,
@@ -787,7 +937,7 @@ export function parseXmlArtifactBlocks(rawText: string): ParsedXmlArtifact | nul
   const unclosedMatch = trailingTail.match(/<file\s+[^>]*path=["']([^"']+)["'][^>]*>([\s\S]+)$/i);
   if (unclosedMatch) {
     const safePath = normalizeArtifactPath(unclosedMatch[1]);
-    const content = stripOuterCodeFences(unclosedMatch[2]);
+    const content = sanitizeExtractedFileContent(safePath, unclosedMatch[2]);
     if (safePath && !safePath.includes('..') && content.trim().length >= 80 && !fileMap.has(safePath)) {
       files.push({
         path: safePath,
@@ -818,6 +968,20 @@ export function parseXmlArtifactBlocks(rawText: string): ParsedXmlArtifact | nul
   }
 
   return { summary, files, patches };
+}
+
+function hasValidAssembleEntry(files: Array<{ path: string; content: string }>): boolean {
+  return files.some((f) => {
+    const p = f.path.toLowerCase();
+    const c = f.content.trim();
+    if (p === 'index.html' || p === 'index.htm') {
+      return c.length >= 30 && /<[a-z]/i.test(c);
+    }
+    if (/(?:^|\/)app\.(tsx|jsx)$/i.test(p)) {
+      return c.length >= 40;
+    }
+    return false;
+  });
 }
 
 function parseStructuredLLMResponse(
@@ -852,7 +1016,10 @@ function parseStructuredLLMResponse(
           usedKeyMask,
         };
       }
-      if (xmlParsed.files.length > 0) {
+      if (
+        xmlParsed.files.length > 0 &&
+        (options?.intent !== 'assemble' || hasValidAssembleEntry(xmlParsed.files))
+      ) {
         return {
           message: xmlParsed.summary || `Đã tự thiết kế và lập trình ${xmlParsed.files.length} tệp nguồn mới.`,
           mode: 'files',
@@ -1012,7 +1179,10 @@ function parseStructuredLLMResponse(
       };
     }
 
-    if (validFiles.length > 0) {
+    if (
+      validFiles.length > 0 &&
+      (options?.intent !== 'assemble' || hasValidAssembleEntry(validFiles))
+    ) {
       return {
         message: String(parsed.message || 'Đã cập nhật mã nguồn Workspace.'),
         mode: 'files',
@@ -1439,7 +1609,7 @@ export async function runAIGenerationStream(
   headers: IncomingHttpHeaders,
   hooks?: AIStreamHooks
 ): Promise<AIGenerationOutput> {
-  const config = resolveAIConfig(headers, req.model);
+  const config = resolveAIConfig(headers, req.model, { isAdmin: hooks?.isAdmin });
   const hasExistingFiles = Array.isArray(req.files)
     && req.files.some((f) => f.path !== 'metadata.json' && f.path !== 'README.md');
   const intent = classifyWorkspaceIntent(req.prompt || '', hasExistingFiles, req.intent || req.agentMode);
@@ -1512,7 +1682,21 @@ export async function runAIGenerationStream(
       hooks.signal.addEventListener('abort', onExternalAbort, { once: true });
     }
   }
-  const timeout = setTimeout(() => controller.abort(), 54000);
+  const hardTimeoutMs = intent === 'assistant' ? 45_000 : runningOnCloud ? 115_000 : 150_000;
+  const idleTimeoutMs = intent === 'assistant' ? 28_000 : 38_000;
+  let timedOutReason = '';
+  const timeout = setTimeout(() => {
+    timedOutReason = `Quá thời gian chờ phản hồi AI (${Math.round(hardTimeoutMs / 1000)}s)`;
+    controller.abort();
+  }, hardTimeoutMs);
+  let idleTimer: ReturnType<typeof setTimeout> | null = null;
+  const resetIdleTimer = () => {
+    if (idleTimer) clearTimeout(idleTimer);
+    idleTimer = setTimeout(() => {
+      timedOutReason = 'Luồng AI ngừng truyền dữ liệu giữa chừng';
+      controller.abort();
+    }, idleTimeoutMs);
+  };
   const streamUpstream = Boolean(hooks?.onDelta);
 
   try {
@@ -1530,7 +1714,7 @@ export async function runAIGenerationStream(
 
     outer: for (let i = 0; i < candidates.length; i += 1) {
       if (controller.signal.aborted) {
-        lastError = 'Client disconnected or request aborted';
+        lastError = timedOutReason || 'Client disconnected or request aborted';
         break;
       }
       const candidate = candidates[i];
@@ -1545,7 +1729,7 @@ export async function runAIGenerationStream(
 
       for (let mIdx = 0; mIdx < modelCandidates.length; mIdx += 1) {
         if (controller.signal.aborted) {
-          lastError = 'Client disconnected or request aborted';
+          lastError = timedOutReason || 'Client disconnected or request aborted';
           break outer;
         }
         const activeModelId = modelCandidates[mIdx];
@@ -1576,9 +1760,10 @@ export async function runAIGenerationStream(
                 firstTokenStalled = true;
                 attemptController.abort();
               }
-            }, 15_000)
+            }, 18_000)
           : null;
         try {
+          resetIdleTimer();
           const attempt = await callUpstreamOnce({
             config: attemptConfig,
             apiKey: candidate.rawKey,
@@ -1590,6 +1775,7 @@ export async function runAIGenerationStream(
             signal: attemptController.signal,
             maxOutputTokens,
             onDelta: (chunk) => {
+              if (chunk) resetIdleTimer();
               if (!receivedFirstToken && chunk.trim()) {
                 receivedFirstToken = true;
                 if (stallTimer) clearTimeout(stallTimer);
@@ -1624,8 +1810,8 @@ export async function runAIGenerationStream(
             parsedResult = attempt.result;
             usedCandidate = candidate;
             usedModelId = resolvedModel;
-            lastError = 'Phản hồi từ model AI chưa đúng định dạng tệp nguồn (<file> / JSON)';
-            if (config.isOpenRouter && mIdx < modelCandidates.length - 1) {
+            lastError = 'Phản hồi từ model AI chưa có tệp khởi chạy hợp lệ (index.html / src/App.tsx)';
+            if (mIdx < modelCandidates.length - 1) {
               continue;
             }
             break outer;
@@ -1659,10 +1845,12 @@ export async function runAIGenerationStream(
           break outer;
         } catch (err) {
           const msg = firstTokenStalled
-            ? `Model ${activeModelId} phản hồi chậm quá 15s`
-            : err instanceof Error
-              ? sanitizeErrorText(err.message)
-              : 'Upstream network error';
+            ? `Model ${activeModelId} phản hồi chậm quá 18s`
+            : timedOutReason
+              ? timedOutReason
+              : err instanceof Error
+                ? sanitizeErrorText(err.message)
+                : 'Upstream network error';
           lastError = msg;
           if (config.isOpenRouter && !controller.signal.aborted && mIdx < modelCandidates.length - 1) {
             continue;
@@ -1701,25 +1889,28 @@ export async function runAIGenerationStream(
     }
     return structuredOut;
   } catch (err) {
-    const msg = err instanceof Error ? sanitizeErrorText(err.message) : 'Upstream request failed';
+    const msg = timedOutReason || (err instanceof Error ? sanitizeErrorText(err.message) : 'Upstream request failed');
     return buildFallbackResponse(req, config, msg);
   } finally {
     clearTimeout(timeout);
+    if (idleTimer) clearTimeout(idleTimer);
     hooks?.signal?.removeEventListener('abort', onExternalAbort);
   }
 }
 
 export async function runAIGeneration(
   req: AIChatRequest,
-  headers: IncomingHttpHeaders
+  headers: IncomingHttpHeaders,
+  options?: { isAdmin?: boolean }
 ): Promise<AIGenerationOutput> {
-  return runAIGenerationStream(req, headers);
+  return runAIGenerationStream(req, headers, { isAdmin: options?.isAdmin });
 }
 
 export interface LivePoolProbeResult {
   ok: boolean;
   statusCode?: number;
   mode: 'pool' | 'key1' | 'key2' | 'failover_sim' | 'gateway';
+  target?: 'public' | 'admin';
   keyId: string;
   keyMask: string;
   mask: string | null;
@@ -1738,23 +1929,30 @@ export interface LivePoolProbeResult {
 
 export async function runLiveKeyPoolProbe(input: {
   mode?: 'pool' | 'key1' | 'key2' | 'failover_sim' | 'gateway';
+  target?: 'public' | 'admin';
   prompt?: string;
 }): Promise<LivePoolProbeResult> {
   const mode = input.mode || 'pool';
-  const config = resolveAIConfig({});
+  const target = input.target === 'admin' ? 'admin' : 'public';
+  const config = resolveAIConfig(
+    {},
+    undefined,
+    mode === 'gateway' && target === 'admin' ? { forceAdminGateway: true } : undefined
+  );
   const startedAt = Date.now();
   const attemptedKeys: string[] = [];
 
   if (mode === 'gateway') {
     resetOpenRouterTierCache();
-    const directCandidates: PoolCandidate[] = config.apiKey
-      ? [{ id: 'gateway', mask: maskApiKey(config.apiKey), rawKey: config.apiKey }]
-      : selectPoolCandidates();
-    if (directCandidates.length === 0) {
+    const allowLocalTest = isAllowLocalTestUpstream();
+    const urlCheck = validateUpstreamBaseUrl(config.baseUrl, { allowLocalTest });
+    const dnsSafe = urlCheck.ok ? await verifyUpstreamHostDns(urlCheck.hostname, allowLocalTest) : false;
+    if (!urlCheck.ok || !dnsSafe) {
       return {
         ok: false,
-        statusCode: 502,
+        statusCode: 400,
         mode,
+        target,
         keyId: '',
         keyMask: '',
         mask: null,
@@ -1767,7 +1965,37 @@ export async function runLiveKeyPoolProbe(input: {
         replyPreview: '',
         preview: '',
         tokens: emptyTokenCounter(),
-        error: 'Chưa cấu hình API key cho Gateway đang chọn.',
+        error: !urlCheck.ok ? urlCheck.error : 'Hostname máy chủ AI phân giải về dải địa chỉ nội bộ bị chặn.',
+      };
+    }
+
+    const directCandidates: PoolCandidate[] = config.apiKey
+      ? [{ id: target === 'admin' ? 'admin-gateway' : 'gateway', mask: maskApiKey(config.apiKey), rawKey: config.apiKey }]
+      : target === 'admin'
+        ? []
+        : selectPoolCandidates();
+    if (directCandidates.length === 0) {
+      return {
+        ok: false,
+        statusCode: 502,
+        mode,
+        target,
+        keyId: '',
+        keyMask: '',
+        mask: null,
+        attemptedKeys,
+        usedKeyMask: null,
+        model: config.model,
+        protocol: config.protocol,
+        failoverTriggered: false,
+        latencyMs: Date.now() - startedAt,
+        replyPreview: '',
+        preview: '',
+        tokens: emptyTokenCounter(),
+        error:
+          target === 'admin'
+            ? 'Chưa cấu hình API key cho Cổng AI riêng của Admin.'
+            : 'Chưa cấu hình API key cho Gateway đang chọn.',
       };
     }
 
@@ -1805,6 +2033,7 @@ export async function runLiveKeyPoolProbe(input: {
             ok: true,
             statusCode: 200,
             mode,
+            target,
             keyId: activeCand.id,
             keyMask: activeCand.mask,
             mask: activeCand.mask,
@@ -1837,6 +2066,7 @@ export async function runLiveKeyPoolProbe(input: {
         ok: false,
         statusCode: 502,
         mode,
+        target,
         keyId: activeCand.id,
         keyMask: activeCand.mask,
         mask: activeCand.mask,
@@ -1856,6 +2086,7 @@ export async function runLiveKeyPoolProbe(input: {
         ok: false,
         statusCode: 502,
         mode,
+        target,
         keyId: activeCand.id,
         keyMask: activeCand.mask,
         mask: activeCand.mask,

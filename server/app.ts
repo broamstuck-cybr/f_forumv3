@@ -371,11 +371,25 @@ export async function handleAiQuota(req: Request, res: Response): Promise<void> 
   res.status(200).json({
     user: user ? toSafeClientUser(user) : null,
     quota,
-    aiRuntime: getPublicAiRuntimeInfo(),
+    aiRuntime: getPublicAiRuntimeInfo({ isAdmin: user?.role === 'admin' }),
   });
 }
 
-export async function handleAiChat(req: Request, res: Response): Promise<void> {
+export async function handleAiRuntime(req: Request, res: Response): Promise<void> {
+  const ipHash = getClientIpHash(req);
+  if (!enforceRateLimit(req, res, `ai:runtime:${ipHash}`, 120, 60_000)) return;
+  await ensureHydrated();
+  const user = getAuthenticatedUser(req);
+  res.status(200).json({
+    aiRuntime: getPublicAiRuntimeInfo({ isAdmin: user?.role === 'admin' }),
+  });
+}
+
+export async function handleAiChat(
+  req: Request,
+  res: Response,
+  options?: { forceStream?: boolean }
+): Promise<void> {
   await ensureHydrated();
   const user = getAuthenticatedUser(req);
   const guestId = resolveGuestSessionId(req, res);
@@ -556,10 +570,12 @@ export async function handleAiChat(req: Request, res: Response): Promise<void> {
   };
 
   const acceptHeader = typeof req.headers.accept === 'string' ? req.headers.accept : '';
-  const wantsStream = body.stream === true || acceptHeader.includes('text/event-stream');
+  const wantsStream =
+    options?.forceStream === true || body.stream === true || acceptHeader.includes('text/event-stream');
+  const isAdmin = user?.role === 'admin';
 
   if (!wantsStream) {
-    const generated = await runAIGeneration(chatReq, req.headers);
+    const generated = await runAIGeneration(chatReq, req.headers, { isAdmin });
     recordAiTelemetry(generated.fallback ? 'fallback' : 'success', generated.tokens, generated.estimatedCostUsd);
     recordQuotaTokens(turnResult.quota.subjectId, ipHash, generated.tokens);
     await flushSupabaseWrites();
@@ -602,6 +618,7 @@ export async function handleAiChat(req: Request, res: Response): Promise<void> {
       onStage: (stageInfo) => writeSse('stage', stageInfo),
       onDelta: (chunk) => writeSse('delta', { text: chunk }),
       signal: sseAbortController.signal,
+      isAdmin,
     });
     recordAiTelemetry(generated.fallback ? 'fallback' : 'success', generated.tokens, generated.estimatedCostUsd);
     recordQuotaTokens(turnResult.quota.subjectId, ipHash, generated.tokens);
@@ -649,7 +666,7 @@ export async function handleAuthAction(
     res.status(200).json({
       user: user ? toSafeClientUser(user) : null,
       quota,
-      aiRuntime: getPublicAiRuntimeInfo(),
+      aiRuntime: getPublicAiRuntimeInfo({ isAdmin: user?.role === 'admin' }),
     });
     return;
   }
@@ -917,6 +934,17 @@ export async function handleAdminAction(
         return;
       }
     }
+    const rawAdminGw =
+      body.adminGateway && typeof body.adminGateway === 'object' && !Array.isArray(body.adminGateway)
+        ? (body.adminGateway as Record<string, unknown>)
+        : null;
+    if (rawAdminGw && typeof rawAdminGw.baseUrl === 'string' && rawAdminGw.baseUrl.trim()) {
+      const adminGwUrlCheck = validateUpstreamBaseUrl(rawAdminGw.baseUrl);
+      if (!adminGwUrlCheck.ok) {
+        res.status(400).json({ error: adminGwUrlCheck.error });
+        return;
+      }
+    }
     const gateway = updateGatewayOverride(
       {
         enabled: typeof body.enabled === 'boolean' ? body.enabled : undefined,
@@ -937,6 +965,34 @@ export async function handleAdminAction(
         maxOutputTokens: typeof body.maxOutputTokens === 'number' ? body.maxOutputTokens : undefined,
         apiKey: typeof body.apiKey === 'string' ? body.apiKey : undefined,
         clearApiKey: body.clearApiKey === true,
+        clearAdminApiKey: body.clearAdminApiKey === true,
+        adminGateway: rawAdminGw
+          ? {
+              enabled: typeof rawAdminGw.enabled === 'boolean' ? rawAdminGw.enabled : undefined,
+              preset:
+                rawAdminGw.preset === 'openrouter' || rawAdminGw.preset === 'custom'
+                  ? rawAdminGw.preset
+                  : undefined,
+              protocol:
+                rawAdminGw.protocol === 'openai-compatible' ||
+                rawAdminGw.protocol === 'anthropic' ||
+                rawAdminGw.protocol === 'gemini'
+                  ? rawAdminGw.protocol
+                  : undefined,
+              baseUrl: typeof rawAdminGw.baseUrl === 'string' ? rawAdminGw.baseUrl : undefined,
+              model: typeof rawAdminGw.model === 'string' ? rawAdminGw.model : undefined,
+              chatModel: typeof rawAdminGw.chatModel === 'string' ? rawAdminGw.chatModel : undefined,
+              buildModel: typeof rawAdminGw.buildModel === 'string' ? rawAdminGw.buildModel : undefined,
+              maxOutputTokens:
+                typeof rawAdminGw.maxOutputTokens === 'number' ? rawAdminGw.maxOutputTokens : undefined,
+              apiKey: typeof rawAdminGw.apiKey === 'string' ? rawAdminGw.apiKey : undefined,
+              clearApiKey: rawAdminGw.clearApiKey === true,
+              reuseOpenRouterKey:
+                typeof rawAdminGw.reuseOpenRouterKey === 'boolean'
+                  ? rawAdminGw.reuseOpenRouterKey
+                  : undefined,
+            }
+          : undefined,
         systemPromptSuffix:
           typeof body.systemPromptSuffix === 'string' ? body.systemPromptSuffix : undefined,
         standardTurnLimit:
@@ -953,6 +1009,27 @@ export async function handleAdminAction(
     resetOpenRouterTierCache();
     await flushSupabaseWrites();
     res.status(200).json({ gateway, state: getAdminStateSnapshot() });
+    return;
+  }
+
+  if (resolvedAction === 'gateway/test') {
+    const target: 'public' | 'admin' = body.target === 'public' ? 'public' : 'admin';
+    const prompt = typeof body.prompt === 'string' ? body.prompt : undefined;
+    const probe = await runLiveKeyPoolProbe({ mode: 'gateway', target, prompt });
+    const { simulatedPoolSnapshot: _sim, ...publicProbe } = probe;
+    appendAuditLog(
+      user.username,
+      'GATEWAY_TEST',
+      target === 'admin' ? 'adminGateway' : 'aiGateway',
+      `Test=${target} ok=${probe.ok} model=${probe.model} key=${probe.usedKeyMask || 'none'} latency=${probe.latencyMs}ms`
+    );
+    await flushSupabaseWrites();
+    const httpStatus = probe.statusCode === 429 ? 429 : probe.ok ? 200 : 502;
+    res.status(httpStatus).json({
+      ...publicProbe,
+      target,
+      state: getAdminStateSnapshot(),
+    });
     return;
   }
 
@@ -1036,8 +1113,10 @@ export async function handleAdminAction(
       return;
     }
     const mode = rawMode;
+    const target: 'public' | 'admin' | undefined =
+      mode === 'gateway' ? (body.target === 'admin' ? 'admin' : 'public') : undefined;
     const prompt = typeof body.prompt === 'string' ? body.prompt : undefined;
-    const probe = await runLiveKeyPoolProbe({ mode, prompt });
+    const probe = await runLiveKeyPoolProbe({ mode, target, prompt });
     const { simulatedPoolSnapshot, ...publicProbe } = probe;
     appendAuditLog(
       user.username,
@@ -1871,7 +1950,9 @@ app.get('/api/changelog', asyncRoute((req, res) => handlePublicChangelog(req, re
 app.get('/api/metrics', asyncRoute((req, res) => handleMetricsAction(req, res)));
 app.all('/api/metrics/:action', asyncRoute((req, res) => handleMetricsAction(req, res)));
 app.get('/api/ai/quota', asyncRoute((req, res) => handleAiQuota(req, res)));
+app.get('/api/ai/runtime', asyncRoute((req, res) => handleAiRuntime(req, res)));
 app.post('/api/ai/chat', asyncRoute((req, res) => handleAiChat(req, res)));
+app.post('/api/ai/chat/stream', asyncRoute((req, res) => handleAiChat(req, res, { forceStream: true })));
 app.all('/api/auth/:action', asyncRoute((req, res) => handleAuthAction(req, res)));
 app.post('/api/feedback', asyncRoute((req, res) => handleSubmitFeedback(req, res)));
 app.get('/api/admin/feedback', asyncRoute((req, res) => handleAdminListFeedback(req, res)));

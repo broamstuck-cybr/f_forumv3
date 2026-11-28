@@ -2,6 +2,8 @@ import crypto from 'node:crypto';
 import type {
   AdminAuditLogEntry,
   AdminChangelogEntry,
+  AdminDedicatedGatewayConfig,
+  AdminDedicatedGatewayPreset,
   AdminGatewayOverride,
   AdminGatewayProfileConfig,
   AdminGatewayProfileId,
@@ -121,6 +123,58 @@ const DEFAULT_GEMINI_PROFILE: AdminGatewayProfileConfig = {
   apiKey: '',
 };
 
+const DEFAULT_ADMIN_DEDICATED_GATEWAY: AdminDedicatedGatewayConfig = {
+  enabled: false,
+  preset: 'openrouter',
+  protocol: 'openai-compatible',
+  baseUrl: 'https://openrouter.ai/api/v1',
+  model: 'deepseek/deepseek-v3.2',
+  chatModel: 'deepseek/deepseek-v3.2',
+  buildModel: 'deepseek/deepseek-v3.2',
+  maxOutputTokens: 8192,
+  apiKey: '',
+  hasApiKey: false,
+  reuseOpenRouterKey: true,
+  updatedAt: '2026-11-28T00:00:00.000Z',
+};
+
+function normalizeAdminDedicatedGateway(
+  raw?: Partial<AdminDedicatedGatewayConfig>
+): AdminDedicatedGatewayConfig {
+  const preset: AdminDedicatedGatewayPreset = raw?.preset === 'custom' ? 'custom' : 'openrouter';
+  const protocol: AIProtocol =
+    raw?.protocol === 'anthropic' || raw?.protocol === 'gemini' ? raw.protocol : 'openai-compatible';
+  const rawBaseUrl = typeof raw?.baseUrl === 'string' ? raw.baseUrl.trim().replace(/\/+$/, '') : '';
+  const baseUrl = rawBaseUrl || (preset === 'openrouter' ? DEFAULT_ADMIN_DEDICATED_GATEWAY.baseUrl : '');
+  const rawModel = typeof raw?.model === 'string' ? raw.model.trim() : '';
+  const model = rawModel || (preset === 'openrouter' ? DEFAULT_ADMIN_DEDICATED_GATEWAY.model : '');
+  const chatModel = typeof raw?.chatModel === 'string' && raw.chatModel.trim() ? raw.chatModel.trim() : undefined;
+  const buildModel = typeof raw?.buildModel === 'string' && raw.buildModel.trim() ? raw.buildModel.trim() : undefined;
+  const maxOutputTokens =
+    typeof raw?.maxOutputTokens === 'number' && Number.isFinite(raw.maxOutputTokens)
+      ? Math.max(1024, Math.min(32768, Math.round(raw.maxOutputTokens)))
+      : 8192;
+  const apiKey = typeof raw?.apiKey === 'string' ? raw.apiKey.trim() : '';
+  const reuseOpenRouterKey = raw?.reuseOpenRouterKey !== false;
+  const updatedAt =
+    typeof raw?.updatedAt === 'string' && raw.updatedAt ? raw.updatedAt : DEFAULT_ADMIN_DEDICATED_GATEWAY.updatedAt;
+
+  return {
+    enabled: raw?.enabled === true,
+    preset,
+    protocol,
+    baseUrl,
+    model,
+    chatModel,
+    buildModel,
+    maxOutputTokens,
+    apiKey,
+    hasApiKey: Boolean(apiKey),
+    reuseOpenRouterKey,
+    updatedAt,
+  };
+}
+
 function detectProfileId(gw: Pick<ServerAdminGatewayOverride, 'protocol' | 'baseUrl' | 'activeProfile'>): AdminGatewayProfileId {
   if (gw.activeProfile === 'openrouter' || gw.activeProfile === 'gemini' || gw.activeProfile === 'custom') {
     return gw.activeProfile;
@@ -163,6 +217,7 @@ function ensureGatewayProfiles(gw: ServerAdminGatewayOverride): ServerAdminGatew
         : {}),
     },
   };
+  gw.adminGateway = normalizeAdminDedicatedGateway(gw.adminGateway);
   return gw;
 }
 
@@ -183,6 +238,8 @@ function sanitizeProfileForClient(profile?: AdminGatewayProfileConfig): AdminGat
 export function sanitizeGatewayForClient(gw: ServerAdminGatewayOverride): ServerAdminGatewayOverride {
   const normalized = ensureGatewayProfiles({ ...gw });
   const rawKey = (normalized.apiKey || '').trim();
+  const adminGw = normalized.adminGateway || normalizeAdminDedicatedGateway();
+  const adminRawKey = (adminGw.apiKey || '').trim();
   return {
     ...normalized,
     apiKey: undefined,
@@ -191,6 +248,12 @@ export function sanitizeGatewayForClient(gw: ServerAdminGatewayOverride): Server
     profiles: {
       openrouter: sanitizeProfileForClient(normalized.profiles?.openrouter),
       gemini: sanitizeProfileForClient(normalized.profiles?.gemini),
+    },
+    adminGateway: {
+      ...adminGw,
+      apiKey: undefined,
+      hasApiKey: Boolean(adminRawKey),
+      maskedKey: adminRawKey ? maskApiKey(adminRawKey) : undefined,
     },
   };
 }
@@ -212,6 +275,7 @@ function getDefaultGateway(): ServerAdminGatewayOverride {
     model: (process.env.AI_MODEL || 'studio-smart-route').trim(),
     apiKey: '',
     hasCustomApiKey: false,
+    adminGateway: normalizeAdminDedicatedGateway(),
     systemPromptSuffix: '',
     standardTurnLimit: MAX_STANDARD_TURNS,
     dailyUserLimit: MAX_STANDARD_TURNS,
@@ -558,10 +622,36 @@ export function getInternalGatewayOverride(): ServerAdminGatewayOverride {
   return ensureGatewayProfiles(ensureAdminData().gateway);
 }
 
+export function getInternalAdminDedicatedGateway(): AdminDedicatedGatewayConfig {
+  const gw = ensureGatewayProfiles(ensureAdminData().gateway);
+  const ag = normalizeAdminDedicatedGateway(gw.adminGateway);
+  let effectiveKey = (ag.apiKey || '').trim();
+  if (
+    !effectiveKey &&
+    ag.reuseOpenRouterKey !== false &&
+    (ag.preset === 'openrouter' || ag.baseUrl.toLowerCase().includes('openrouter.ai'))
+  ) {
+    const savedOrKey =
+      (gw.profiles?.openrouter?.apiKey || '').trim() ||
+      (gw.baseUrl.toLowerCase().includes('openrouter.ai') ? (gw.apiKey || '').trim() : '');
+    if (savedOrKey) {
+      effectiveKey = savedOrKey;
+    }
+  }
+  return {
+    ...ag,
+    apiKey: effectiveKey,
+    hasApiKey: Boolean(effectiveKey),
+    maskedKey: effectiveKey ? maskApiKey(effectiveKey) : undefined,
+  };
+}
+
 export function updateGatewayOverride(
-  input: Partial<ServerAdminGatewayOverride> & {
+  input: Omit<Partial<ServerAdminGatewayOverride>, 'adminGateway'> & {
     clearApiKey?: boolean;
+    clearAdminApiKey?: boolean;
     switchProfile?: 'openrouter' | 'gemini';
+    adminGateway?: Partial<AdminDedicatedGatewayConfig> & { clearApiKey?: boolean };
   },
   actor: string
 ): ServerAdminGatewayOverride {
@@ -666,6 +756,64 @@ export function updateGatewayOverride(
     current.guestSandboxEnabled = input.guestSandboxEnabled;
   }
 
+  if (input.adminGateway || input.clearAdminApiKey === true) {
+    const prevAg = normalizeAdminDedicatedGateway(current.adminGateway);
+    const agIn = input.adminGateway || {};
+    const nextPreset: AdminDedicatedGatewayPreset =
+      agIn.preset === 'custom' ? 'custom' : agIn.preset === 'openrouter' ? 'openrouter' : prevAg.preset;
+    const nextProtocol: AIProtocol =
+      agIn.protocol === 'openai-compatible' || agIn.protocol === 'anthropic' || agIn.protocol === 'gemini'
+        ? agIn.protocol
+        : nextPreset === 'openrouter' && agIn.preset === 'openrouter'
+          ? 'openai-compatible'
+          : prevAg.protocol;
+    const nextBaseUrl =
+      typeof agIn.baseUrl === 'string' && agIn.baseUrl.trim()
+        ? agIn.baseUrl.trim().replace(/\/+$/, '')
+        : nextPreset === 'openrouter' && !prevAg.baseUrl
+          ? DEFAULT_ADMIN_DEDICATED_GATEWAY.baseUrl
+          : prevAg.baseUrl;
+    const nextModel =
+      typeof agIn.model === 'string' && agIn.model.trim()
+        ? agIn.model.trim()
+        : prevAg.model;
+    const nextChatModel =
+      typeof agIn.chatModel === 'string'
+        ? agIn.chatModel.trim() || undefined
+        : prevAg.chatModel;
+    const nextBuildModel =
+      typeof agIn.buildModel === 'string'
+        ? agIn.buildModel.trim() || undefined
+        : prevAg.buildModel;
+    const nextMaxOutputTokens =
+      typeof agIn.maxOutputTokens === 'number' && Number.isFinite(agIn.maxOutputTokens)
+        ? Math.max(1024, Math.min(32768, Math.round(agIn.maxOutputTokens)))
+        : prevAg.maxOutputTokens ?? 8192;
+    const shouldClearAdminKey = agIn.clearApiKey === true || input.clearAdminApiKey === true;
+    const incomingAdminKey = typeof agIn.apiKey === 'string' ? agIn.apiKey.trim() : '';
+    const nextApiKey = shouldClearAdminKey
+      ? ''
+      : incomingAdminKey
+        ? incomingAdminKey
+        : prevAg.apiKey || '';
+
+    current.adminGateway = {
+      enabled: typeof agIn.enabled === 'boolean' ? agIn.enabled : prevAg.enabled,
+      preset: nextPreset,
+      protocol: nextProtocol,
+      baseUrl: nextBaseUrl,
+      model: nextModel,
+      chatModel: nextChatModel,
+      buildModel: nextBuildModel,
+      maxOutputTokens: nextMaxOutputTokens,
+      apiKey: nextApiKey,
+      hasApiKey: Boolean(nextApiKey),
+      reuseOpenRouterKey:
+        typeof agIn.reuseOpenRouterKey === 'boolean' ? agIn.reuseOpenRouterKey : prevAg.reuseOpenRouterKey,
+      updatedAt: new Date().toISOString(),
+    };
+  }
+
   // Re-detect & sync updated values back into the active named profile
   const nextProfileId: AdminGatewayProfileId = current.baseUrl.toLowerCase().includes('openrouter.ai')
     ? 'openrouter'
@@ -714,9 +862,15 @@ export function updateGatewayOverride(
 
   appendAuditLog(
     actor,
-    input.switchProfile ? 'SWITCH_GATEWAY_PROFILE' : 'UPDATE_GATEWAY_OVERRIDE',
-    'aiGateway',
-    `Cap nhat gateway (${current.activeProfile}): enabled=${current.enabled}, protocol=${current.protocol}, model=${current.model}`
+    input.adminGateway || input.clearAdminApiKey
+      ? 'UPDATE_ADMIN_GATEWAY'
+      : input.switchProfile
+        ? 'SWITCH_GATEWAY_PROFILE'
+        : 'UPDATE_GATEWAY_OVERRIDE',
+    input.adminGateway || input.clearAdminApiKey ? 'adminGateway' : 'aiGateway',
+    input.adminGateway || input.clearAdminApiKey
+      ? `Cap nhat Admin AI rieng (${current.adminGateway?.preset || 'openrouter'}): enabled=${Boolean(current.adminGateway?.enabled)}, protocol=${current.adminGateway?.protocol || 'openai-compatible'}, model=${current.adminGateway?.model || ''}`
+      : `Cap nhat gateway (${current.activeProfile}): enabled=${current.enabled}, protocol=${current.protocol}, model=${current.model}`
   );
 
   return sanitizeGatewayForClient(current);

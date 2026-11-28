@@ -1,12 +1,19 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import type { AIProtocol, ModerationReportStatus } from '../../types/index';
+import type {
+  AdminDedicatedGatewayPreset,
+  AdminKeyPoolTestResult,
+  AIProtocol,
+  ModerationReportStatus,
+} from '../../types/index';
 import {
   IconAlertTriangle,
+  IconCpu,
   IconEye,
   IconEyeOff,
   IconLock,
   IconRefreshCw,
 } from '../../ui/icons';
+import { requestJson } from '../../services/apiClient';
 import { adminApi, extractAdminError } from './adminApi';
 import { useAppStore } from '../../store/appStore';
 import { LampSwitch, LiquidTabs, SelectionList, SlingSlider } from '../../components/pinui';
@@ -74,6 +81,14 @@ const GEMINI_MODEL_PRESETS = [
   { id: 'gemini-2.5-pro', label: 'Gemini 2.5 Pro', swatch: 'var(--amber)' },
 ];
 
+const ADMIN_OPENROUTER_PRESETS = [
+  { id: 'deepseek/deepseek-v3.2', label: 'DeepSeek V3.2 (Code & thiết kế)', swatch: 'var(--accent)' },
+  { id: 'qwen/qwen3-coder-next', label: 'Qwen3 Coder Next', swatch: 'var(--harbour)' },
+  { id: 'google/gemini-2.5-pro', label: 'Gemini 2.5 Pro', swatch: 'var(--green)' },
+  { id: 'anthropic/claude-sonnet-4', label: 'Claude Sonnet 4', swatch: 'var(--amber)' },
+  { id: 'openrouter/auto-smart', label: 'Tự động chọn model', swatch: 'var(--fg-muted)' },
+];
+
 function formatShortDay(isoDate: string): string {
   const parts = isoDate.split('-');
   if (parts.length !== 3) return isoDate;
@@ -136,6 +151,19 @@ export const AdminView: React.FC = () => {
   const [gwTesting, setGwTesting] = useState(false);
   const [gwProbeNote, setGwProbeNote] = useState<{ ok: boolean; text: string } | null>(null);
 
+  const [adminGwEnabled, setAdminGwEnabled] = useState(false);
+  const [adminGwPreset, setAdminGwPreset] = useState<AdminDedicatedGatewayPreset>('openrouter');
+  const [adminGwProtocol, setAdminGwProtocol] = useState<AIProtocol>('openai-compatible');
+  const [adminGwBaseUrl, setAdminGwBaseUrl] = useState('https://openrouter.ai/api/v1');
+  const [adminGwModel, setAdminGwModel] = useState('deepseek/deepseek-v3.2');
+  const [adminGwMaxTokens, setAdminGwMaxTokens] = useState(8192);
+  const [adminGwApiKey, setAdminGwApiKey] = useState('');
+  const [showAdminGwApiKey, setShowAdminGwApiKey] = useState(false);
+  const [adminGwReuseOrKey, setAdminGwReuseOrKey] = useState(true);
+  const [adminGwSaving, setAdminGwSaving] = useState(false);
+  const [adminGwTesting, setAdminGwTesting] = useState(false);
+  const [adminGwProbeNote, setAdminGwProbeNote] = useState<{ ok: boolean; text: string } | null>(null);
+
   const [clVersion, setClVersion] = useState('3.0.1');
   const [clTitle, setClTitle] = useState('');
   const [clNotes, setClNotes] = useState('');
@@ -152,6 +180,17 @@ export const AdminView: React.FC = () => {
     setGwMaxOutputTokens(state.gateway.maxOutputTokens ?? 3200);
     setGwGuestSandbox(state.gateway.guestSandboxEnabled ?? true);
     setGwApiKey('');
+    const ag = state.gateway.adminGateway;
+    if (ag) {
+      setAdminGwEnabled(Boolean(ag.enabled));
+      setAdminGwPreset(ag.preset === 'custom' ? 'custom' : 'openrouter');
+      setAdminGwProtocol(ag.protocol || 'openai-compatible');
+      setAdminGwBaseUrl(ag.baseUrl || (ag.preset === 'custom' ? '' : 'https://openrouter.ai/api/v1'));
+      setAdminGwModel(ag.model || (ag.preset === 'custom' ? '' : 'deepseek/deepseek-v3.2'));
+      setAdminGwMaxTokens(ag.maxOutputTokens ?? 8192);
+      setAdminGwReuseOrKey(ag.reuseOpenRouterKey !== false);
+    }
+    setAdminGwApiKey('');
     setSecurityEvents((state.securityEvents || []).map(normalizeSecurityEvent));
   }, []);
 
@@ -273,6 +312,8 @@ export const AdminView: React.FC = () => {
     setProbeResult(null);
     setSecurityEvents([]);
     setGwApiKey('');
+    setAdminGwApiKey('');
+    setAdminGwProbeNote(null);
     setClTitle('');
     setClNotes('');
     try {
@@ -417,6 +458,173 @@ export const AdminView: React.FC = () => {
       handleAdminApiFailure(err, 'Không thể xóa khóa ghi đè');
     } finally {
       setGwSaving(false);
+    }
+  };
+
+  const handleSelectAdminPreset = (preset: AdminDedicatedGatewayPreset) => {
+    setAdminGwPreset(preset);
+    setAdminGwProbeNote(null);
+    if (preset === 'openrouter') {
+      setAdminGwProtocol('openai-compatible');
+      if (!adminGwBaseUrl.trim() || !adminGwBaseUrl.toLowerCase().includes('openrouter.ai')) {
+        setAdminGwBaseUrl('https://openrouter.ai/api/v1');
+      }
+      if (!adminGwModel.trim() || !ADMIN_OPENROUTER_PRESETS.some((m) => m.id === adminGwModel)) {
+        setAdminGwModel('deepseek/deepseek-v3.2');
+      }
+    } else {
+      if (adminGwBaseUrl.trim() === 'https://openrouter.ai/api/v1') {
+        setAdminGwBaseUrl('');
+      }
+      if (ADMIN_OPENROUTER_PRESETS.some((m) => m.id === adminGwModel)) {
+        setAdminGwModel('');
+      }
+    }
+  };
+
+  const buildAdminGatewayPayload = (requireConfigured = false) => {
+    const safeMaxOut = clampInt(adminGwMaxTokens, 1024, 32768, 8192);
+    const cleanUrl =
+      adminGwPreset === 'openrouter' && !adminGwBaseUrl.trim()
+        ? 'https://openrouter.ai/api/v1'
+        : adminGwBaseUrl.trim();
+    const cleanModel =
+      adminGwPreset === 'openrouter' && !adminGwModel.trim()
+        ? 'deepseek/deepseek-v3.2'
+        : adminGwModel.trim();
+    if ((adminGwEnabled || requireConfigured) && adminGwPreset === 'custom' && (!cleanUrl || !cleanModel)) {
+      return null;
+    }
+    return {
+      enabled: adminGwEnabled,
+      preset: adminGwPreset,
+      protocol: adminGwPreset === 'openrouter' ? ('openai-compatible' as AIProtocol) : adminGwProtocol,
+      baseUrl: cleanUrl,
+      model: cleanModel,
+      chatModel: cleanModel || undefined,
+      buildModel: cleanModel || undefined,
+      maxOutputTokens: safeMaxOut,
+      reuseOpenRouterKey: adminGwReuseOrKey,
+      ...(adminGwApiKey.trim() ? { apiKey: adminGwApiKey.trim() } : {}),
+    };
+  };
+
+  const handleSaveAdminGateway = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const payload = buildAdminGatewayPayload(false);
+    if (!payload) {
+      const msg = 'Vui lòng nhập đường dẫn HTTPS và mã mô hình cho cổng riêng.';
+      setAdminGwProbeNote({ ok: false, text: msg });
+      addToast({ type: 'warning', title: 'Thiếu thông tin cổng riêng', message: msg });
+      return;
+    }
+    setAdminGwSaving(true);
+    try {
+      const res = await adminApi.updateAdminGateway({ adminGateway: payload });
+      setAdminState(res.state);
+      syncGatewayForm(res.state);
+      void refreshAuthAndQuota();
+      addToast({
+        type: 'success',
+        title: 'Đã lưu cấu hình AI riêng cho Admin',
+      });
+    } catch (err) {
+      handleAdminApiFailure(err, 'Không lưu được AI riêng cho Admin');
+    } finally {
+      setAdminGwSaving(false);
+    }
+  };
+
+  const handleTestAdminGateway = async () => {
+    const payload = buildAdminGatewayPayload(true);
+    if (!payload) {
+      const msg = 'Vui lòng nhập đường dẫn HTTPS và mã mô hình trước khi kiểm tra.';
+      setAdminGwProbeNote({ ok: false, text: msg });
+      addToast({ type: 'warning', title: 'Thiếu thông tin kết nối', message: msg });
+      return;
+    }
+    setAdminGwTesting(true);
+    setAdminGwProbeNote(null);
+    try {
+      const saved = await adminApi.updateAdminGateway({ adminGateway: payload });
+      setAdminState(saved.state);
+      syncGatewayForm(saved.state);
+
+      let outcome: AdminKeyPoolTestResult & { state?: AdminStateView };
+      try {
+        outcome = await requestJson<AdminKeyPoolTestResult & { state?: AdminStateView }>(
+          '/api/admin/gateway/test',
+          {
+            method: 'POST',
+            body: JSON.stringify({ target: 'admin' }),
+          }
+        );
+      } catch (probeErr) {
+        const parsed = extractAdminError(probeErr);
+        const rawPayload =
+          parsed.payload && typeof parsed.payload === 'object'
+            ? (parsed.payload as Partial<AdminKeyPoolTestResult> & { state?: AdminStateView })
+            : null;
+        if (parsed.status === 502 && rawPayload && typeof rawPayload.ok === 'boolean') {
+          outcome = {
+            ok: Boolean(rawPayload.ok),
+            mode: 'gateway',
+            target: 'admin',
+            keyId: rawPayload.keyId ?? 'admin',
+            keyMask: rawPayload.keyMask ?? '—',
+            usedKeyMask: rawPayload.usedKeyMask ?? null,
+            model: rawPayload.model ?? payload.model,
+            protocol: rawPayload.protocol,
+            latencyMs: rawPayload.latencyMs ?? 0,
+            tokens: rawPayload.tokens ?? { prompt: 0, completion: 0, total: 0 },
+            replyPreview: rawPayload.replyPreview,
+            preview: rawPayload.preview,
+            error: rawPayload.error ?? parsed.message,
+            state: rawPayload.state,
+          };
+        } else {
+          throw probeErr;
+        }
+      }
+
+      if (outcome.state) {
+        setAdminState(outcome.state);
+      }
+      const preview = (outcome.replyPreview || outcome.preview || '').trim();
+      const noteText = outcome.ok
+        ? `Kết nối ổn (${outcome.model} · ${outcome.usedKeyMask || outcome.keyMask} · ${outcome.latencyMs}ms)${preview ? ` · ${preview.slice(0, 110)}` : ''}`
+        : `${outcome.error || 'Không kết nối được cổng Admin AI'} (${outcome.latencyMs}ms)`;
+      setAdminGwProbeNote({ ok: outcome.ok, text: noteText });
+      addToast({
+        type: outcome.ok ? 'success' : 'warning',
+        title: outcome.ok ? 'Admin AI kết nối tốt' : 'Admin AI gặp lỗi',
+        message: noteText,
+      });
+    } catch (err) {
+      const msg = handleAdminApiFailure(err, 'Kiểm tra kết nối Admin AI thất bại');
+      setAdminGwProbeNote({ ok: false, text: msg });
+    } finally {
+      setAdminGwTesting(false);
+    }
+  };
+
+  const handleClearAdminGatewayApiKey = async () => {
+    setAdminGwSaving(true);
+    try {
+      const res = await adminApi.updateAdminGateway({
+        clearAdminApiKey: true,
+      } as Parameters<typeof adminApi.updateAdminGateway>[0]);
+      setAdminState(res.state);
+      syncGatewayForm(res.state);
+      void refreshAuthAndQuota();
+      addToast({
+        type: 'success',
+        title: 'Đã xóa khóa AI riêng của Admin',
+      });
+    } catch (err) {
+      handleAdminApiFailure(err, 'Không thể xóa khóa Admin AI');
+    } finally {
+      setAdminGwSaving(false);
     }
   };
 
@@ -1475,9 +1683,259 @@ export const AdminView: React.FC = () => {
               />
             )}
 
-            {activeTab === 'system' && (
+            {activeTab === 'system' && (() => {
+              const adminGwState = adminState.gateway.adminGateway;
+              const sharedOpenRouterMask =
+                adminState.gateway.profiles?.openrouter?.maskedKey ||
+                (adminState.gateway.baseUrl.toLowerCase().includes('openrouter.ai')
+                  ? adminState.gateway.maskedKey
+                  : undefined);
+
+              return (
               <div className="adm-sys-grid">
-                <section aria-label="Cấu hình AI Gateway và hạn mức mặc định" className="adm-card">
+                <div className="adm-field-stack">
+                  <section
+                    aria-label="Cổng AI riêng cho tài khoản Admin"
+                    className="adm-card adm-card-dedicated"
+                  >
+                    <div className="adm-card-head">
+                      <div className="adm-inline-icon">
+                        <span className="adm-icon-badge" aria-hidden="true">
+                          <IconCpu size={18} />
+                        </span>
+                        <div>
+                          <div className="adm-banner-meta">
+                            <h2 className="adm-card-title">AI riêng cho tài khoản Admin</h2>
+                            <span className={`tag ${adminGwEnabled ? 'tag-green' : ''}`}>
+                              {adminGwEnabled ? 'Đang bật' : 'Đang tắt'}
+                            </span>
+                          </div>
+                          <p className="adm-card-sub">
+                            Chỉ dùng cho tài khoản Admin khi dựng web. Thành viên và khách vẫn chạy cổng công khai.
+                          </p>
+                        </div>
+                      </div>
+                      <label className="adm-check-label">
+                        <input
+                          type="checkbox"
+                          checked={adminGwEnabled}
+                          onChange={(e) => setAdminGwEnabled(e.target.checked)}
+                        />
+                        <span>Bật AI riêng</span>
+                      </label>
+                    </div>
+
+                    <div className="adm-profile-bar" role="group" aria-label="Chọn loại cổng AI riêng cho Admin">
+                      <button
+                        type="button"
+                        disabled={adminGwSaving || adminGwTesting}
+                        className={`adm-profile-btn${adminGwPreset === 'openrouter' ? ' is-active' : ''}`}
+                        onClick={() => handleSelectAdminPreset('openrouter')}
+                      >
+                        <strong>OpenRouter Cao cấp (Admin)</strong>
+                        <span className="adm-field-hint">
+                          {adminGwState?.maskedKey
+                            ? `Khóa riêng: ${adminGwState.maskedKey}`
+                            : sharedOpenRouterMask && adminGwReuseOrKey
+                              ? `Dùng chung: ${sharedOpenRouterMask}`
+                              : 'Chưa gắn khóa'}
+                        </span>
+                      </button>
+
+                      <button
+                        type="button"
+                        disabled={adminGwSaving || adminGwTesting}
+                        className={`adm-profile-btn${adminGwPreset === 'custom' ? ' is-active' : ''}`}
+                        onClick={() => handleSelectAdminPreset('custom')}
+                      >
+                        <strong>Cổng riêng OpenAI-Compatible</strong>
+                        <span className="adm-field-hint">9Router / Tunnel / Proxy tự mở</span>
+                      </button>
+                    </div>
+
+                    <form onSubmit={(e) => void handleSaveAdminGateway(e)} className="adm-field-stack">
+                      {adminGwPreset === 'openrouter' ? (
+                        <>
+                          <div className="adm-field-group">
+                            <span className="adm-field-label">Chọn nhanh mô hình cao cấp (Admin)</span>
+                            <SelectionList
+                              items={ADMIN_OPENROUTER_PRESETS}
+                              selectedId={adminGwModel}
+                              onSelect={(id) => setAdminGwModel(id)}
+                              ariaLabel="Chọn mô hình OpenRouter cho Admin"
+                            />
+                          </div>
+
+                          <div className="adm-two-col">
+                            <label className="adm-field-group">
+                              <span className="adm-field-label">Mã mô hình Admin</span>
+                              <input
+                                type="text"
+                                value={adminGwModel}
+                                onChange={(e) => setAdminGwModel(e.target.value)}
+                                placeholder="deepseek/deepseek-v3.2"
+                                className="field font-mono"
+                              />
+                            </label>
+
+                            <label className="adm-field-group">
+                              <span className="adm-field-label">Giới hạn token đầu ra (1024–32768)</span>
+                              <input
+                                type="number"
+                                min={1024}
+                                max={32768}
+                                step={256}
+                                value={adminGwMaxTokens}
+                                onChange={(e) => setAdminGwMaxTokens(Number(e.target.value))}
+                                className="field font-mono"
+                              />
+                            </label>
+                          </div>
+
+                          <label className="adm-check-label">
+                            <input
+                              type="checkbox"
+                              checked={adminGwReuseOrKey}
+                              onChange={(e) => setAdminGwReuseOrKey(e.target.checked)}
+                            />
+                            <span>
+                              Tự dùng khóa OpenRouter công khai nếu bỏ trống ô khóa riêng
+                              {sharedOpenRouterMask ? ` (${sharedOpenRouterMask})` : ''}
+                            </span>
+                          </label>
+                        </>
+                      ) : (
+                        <>
+                          <div className="adm-two-col">
+                            <div className="adm-field-group">
+                              <span className="adm-field-label">Giao thức cổng riêng</span>
+                              <SelectionList
+                                items={PROTOCOL_ITEMS}
+                                selectedId={adminGwProtocol}
+                                onSelect={(id) => setAdminGwProtocol(id as AIProtocol)}
+                                ariaLabel="Chọn giao thức cổng riêng Admin"
+                              />
+                            </div>
+
+                            <div className="adm-field-stack">
+                              <label className="adm-field-group">
+                                <span className="adm-field-label">Đường dẫn HTTPS cổng riêng</span>
+                                <input
+                                  type="url"
+                                  value={adminGwBaseUrl}
+                                  onChange={(e) => setAdminGwBaseUrl(e.target.value)}
+                                  placeholder="https://gateway.example.com/v1"
+                                  className="field font-mono"
+                                />
+                              </label>
+
+                              <label className="adm-field-group">
+                                <span className="adm-field-label">Mã mô hình tùy chỉnh</span>
+                                <input
+                                  type="text"
+                                  value={adminGwModel}
+                                  onChange={(e) => setAdminGwModel(e.target.value)}
+                                  placeholder="gemini-4-hydrogen-high"
+                                  className="field font-mono"
+                                />
+                              </label>
+                            </div>
+                          </div>
+
+                          <label className="adm-field-group">
+                            <span className="adm-field-label">Giới hạn token đầu ra (1024–32768)</span>
+                            <input
+                              type="number"
+                              min={1024}
+                              max={32768}
+                              step={256}
+                              value={adminGwMaxTokens}
+                              onChange={(e) => setAdminGwMaxTokens(Number(e.target.value))}
+                              className="field font-mono"
+                            />
+                          </label>
+                        </>
+                      )}
+
+                      <div className="adm-field-group">
+                        <label htmlFor="adm-dedicated-apikey" className="adm-field-label">
+                          Khóa API riêng của Admin
+                        </label>
+                        <div className="adm-secret-row">
+                          <input
+                            id="adm-dedicated-apikey"
+                            type={showAdminGwApiKey ? 'text' : 'password'}
+                            value={adminGwApiKey}
+                            onChange={(e) => setAdminGwApiKey(e.target.value)}
+                            placeholder={
+                              adminGwState?.maskedKey
+                                ? `Đã lưu: ${adminGwState.maskedKey} (để trống nếu giữ nguyên)`
+                                : adminGwPreset === 'openrouter' && sharedOpenRouterMask && adminGwReuseOrKey
+                                  ? `Đang dùng chung: ${sharedOpenRouterMask} (dán nếu muốn tách khóa)`
+                                  : 'Dán khóa API riêng cho Admin'
+                            }
+                            className="field font-mono"
+                          />
+                          <button
+                            type="button"
+                            className="icon-btn"
+                            aria-label={showAdminGwApiKey ? 'Ẩn khóa Admin AI' : 'Hiện khóa Admin AI'}
+                            title={showAdminGwApiKey ? 'Ẩn khóa' : 'Hiện khóa'}
+                            aria-pressed={showAdminGwApiKey}
+                            onClick={() => setShowAdminGwApiKey((v) => !v)}
+                          >
+                            {showAdminGwApiKey ? <IconEyeOff size={18} /> : <IconEye size={18} />}
+                          </button>
+                          {adminGwState?.hasApiKey && (
+                            <button
+                              type="button"
+                              disabled={adminGwSaving || adminGwTesting}
+                              className="btn btn-line btn-sm adm-secret-clear"
+                              onClick={() => void handleClearAdminGatewayApiKey()}
+                            >
+                              Xóa khóa
+                            </button>
+                          )}
+                        </div>
+                      </div>
+
+                      {adminGwProbeNote && (
+                        <div
+                          className={`adm-probe-banner${adminGwProbeNote.ok ? ' is-ok' : ' is-err'}`}
+                          role="status"
+                        >
+                          {adminGwProbeNote.text}
+                        </div>
+                      )}
+
+                      <div className="adm-form-foot">
+                        <span className="adm-field-hint">
+                          {adminGwState?.updatedAt
+                            ? `Cập nhật cuối: ${formatAdminDateTime(adminGwState.updatedAt)}`
+                            : 'Chưa lưu thay đổi riêng'}
+                        </span>
+                        <div className="adm-row-actions">
+                          <button
+                            type="button"
+                            disabled={adminGwTesting || adminGwSaving}
+                            className="btn btn-line"
+                            onClick={() => void handleTestAdminGateway()}
+                          >
+                            {adminGwTesting ? 'Đang kiểm tra' : 'Kiểm tra kết nối Admin AI'}
+                          </button>
+                          <button
+                            type="submit"
+                            disabled={adminGwSaving || adminGwTesting}
+                            className="btn btn-accent"
+                          >
+                            {adminGwSaving ? 'Đang lưu' : 'Lưu AI riêng'}
+                          </button>
+                        </div>
+                      </div>
+                    </form>
+                  </section>
+
+                  <section aria-label="Cấu hình AI Gateway và hạn mức mặc định" className="adm-card">
                   <div className="adm-card-head">
                     <div>
                       <h2 className="adm-card-title">Cài đặt hệ thống &amp; AI Gateway</h2>
@@ -1739,6 +2197,7 @@ export const AdminView: React.FC = () => {
                     </div>
                   </form>
                 </section>
+                </div>
 
                 <div className="adm-field-stack">
                   <section aria-label="Công tắc bảo trì chỉ đọc" className="adm-card">
@@ -1893,7 +2352,8 @@ export const AdminView: React.FC = () => {
                   </section>
                 </div>
               </div>
-            )}
+              );
+            })()}
 
             {activeTab === 'logs' && (
               <AdminSecurityLogsPanel

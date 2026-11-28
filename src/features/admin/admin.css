@@ -221,6 +221,11 @@
     overflow: hidden;
   }
 
+  .adm-card-dedicated {
+    border-color: color-mix(in srgb, var(--accent) 34%, var(--line));
+    box-shadow: inset 0 1px 0 color-mix(in srgb, var(--accent) 16%, transparent);
+  }
+
   .adm-error-card {
     border-color: var(--danger);
     background: color-mix(in srgb, var(--danger-soft) 45%, var(--bg-raised));

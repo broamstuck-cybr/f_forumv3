@@ -1,11 +1,18 @@
-import { fetchMotionRecipes, fetchVaultShard, type VaultShardPayload } from '../features/explore/vaultLoader';
+import {
+  fetchMotionRecipes,
+  fetchVaultIndex,
+  fetchVaultShard,
+  type VaultIndexItem,
+  type VaultShardPayload,
+} from '../features/explore/vaultLoader';
 import { apiClient } from '../services/apiClient';
-import type { BYOKConfig, SuggestedVaultItem, WorkspaceFile } from '../types/index';
+import type { AttachedContextItem, BYOKConfig, SuggestedVaultItem, WorkspaceFile } from '../types/index';
 import type {
   AgentTraceStep,
   BehaviorItemScore,
   BrandPersonality,
   MatchedVaultResource,
+  MotionRecipeItem,
   OnboardingDomain,
   OnboardingProfile,
   PageSectionKey,
@@ -24,7 +31,11 @@ import {
 import { recommendVaultResources } from './mitRecommender';
 import {
   applyIncrementalPatches,
+  buildStitchedVaultSlots,
   detectClientWorkspaceIntent,
+  toVaultSlotBriefs,
+  verifyAndEnhanceVaultAssembly,
+  type StitchedVaultSlot,
 } from './vaultStitcher';
 import {
   bundleProjectFiles,
@@ -2118,6 +2129,366 @@ function isFreshTopicPrompt(prompt: string, previousTitle?: string): boolean {
   return !prevWords.some((w) => clean.includes(w));
 }
 
+interface MotionSiteFullRecord {
+  id: string;
+  slug: string;
+  title: string;
+  category: string;
+  promptText: string;
+  css?: string;
+  tags?: string[];
+}
+
+let motionSitesCache: Map<string, MotionSiteFullRecord> | null = null;
+
+async function fetchMotionSitesLookup(): Promise<Map<string, MotionSiteFullRecord>> {
+  if (motionSitesCache) return motionSitesCache;
+  try {
+    const res = await fetch('/data/motionsites-full.json?v=v10.0-free-purified');
+    if (!res.ok) return new Map();
+    const data = (await res.json()) as {
+      items?: Record<string, MotionSiteFullRecord> | MotionSiteFullRecord[];
+    };
+    const entries = Array.isArray(data?.items)
+      ? data.items
+      : data?.items && typeof data.items === 'object'
+        ? Object.values(data.items)
+        : [];
+    const map = new Map<string, MotionSiteFullRecord>();
+    for (const item of entries) {
+      if (!item || typeof item !== 'object') continue;
+      if (item.slug) map.set(item.slug.toLowerCase(), item);
+      if (item.id) map.set(item.id.toLowerCase(), item);
+    }
+    motionSitesCache = map;
+    return map;
+  } catch {
+    return new Map();
+  }
+}
+
+async function detectClientMasterpieceAnchor(prompt: string): Promise<MotionSiteFullRecord | null> {
+  const map = await fetchMotionSitesLookup();
+  if (map.size === 0) return null;
+  const tagMatch = prompt.match(/\[(?:M[aẫ]u\s*g[oố]c|Masterpiece)[^\]]*motionsites\/([a-z0-9-]+)\]/i);
+  if (tagMatch?.[1]) {
+    const found = map.get(tagMatch[1].toLowerCase()) || map.get(`ms-${tagMatch[1].toLowerCase()}`);
+    if (found) return found;
+  }
+  const slugRef = prompt.match(/\bmotionsites\/([a-z0-9-]+)\b/i);
+  if (slugRef?.[1]) {
+    const found = map.get(slugRef[1].toLowerCase());
+    if (found) return found;
+  }
+  const folded = foldVi(prompt);
+  for (const item of map.values()) {
+    if (!item.title || item.title.length < 5) continue;
+    const tFold = foldVi(item.title);
+    if (tFold.length >= 6 && folded.includes(tFold)) return item;
+  }
+  return null;
+}
+
+const CLIENT_SEARCH_STOP = new Set([
+  'cho', 'toi', 'minh', 'giup', 'tim', 'mau', 'cua', 'voi', 'mot', 'cac', 'nhung',
+  'trang', 'web', 'website', 'dep', 'hay', 'nao', 'the', 'and', 'for', 'with', 'from', 'that',
+  'goi', 'duoc', 'trong', 'kho', 'tai', 'nguyen', 'ghep', 'vao', 'thiet', 'lam',
+  'xay', 'dung', 'gioi', 'thieu', 'phong', 'cach', 'giay', 'sang', 'gian', 'san',
+  'pham', 'tham', 'quan', 'dien', 'mat', 'troi', 'nang', 'luong', 'theo', 'ngay',
+  'tieng', 'viet', 'chuan', 'cong', 'nhat', 'trien', 'bo', 'loc', 'dat',
+]);
+
+const CLIENT_SHORT_WHITELIST = new Set([
+  '3d', 'ai', 'ui', 'ux', 'qr', 'js', 'css', 'svg', 'api', 'cli', 'kpi', 'faq',
+]);
+
+const CLIENT_VAULT_BRIDGES: Array<[RegExp, string[]]> = [
+  [/kinh\s*long|glass|trong\s*suot|liquid/, ['glass', 'glassmorphism', 'blur', 'liquid', 'card']],
+  [/\b3d\b|khong\s*gian|webgl|robot|robotics/, ['threeui', '3d', 'tilt', 'parallax', 'carousel']],
+  [/lich\s*trinh|calendar|timeline|\bmoc\b|su\s*kien|\bclb\b/, ['calendar', 'timeline', 'schedule', 'event']],
+  [/\b(bang\s*gia|pricing|goi\s*cuoc|bao\s*gia|thanh\s*toan)\b/, ['pricing', 'tier', 'toggle', 'calculator']],
+  [/\b(dang\s*nhap|dang\s*ky|auth|login|otp|mat\s*khau)\b/, ['login', 'auth', 'form', 'input']],
+  [/\b(lien\s*he|dat\s*ve|dat\s*lich|tu\s*van|form|bieu\s*mau)\b/, ['form', 'rsvp', 'booking', 'contact', 'card']],
+  [/\b(nut|button|cta|tuong\s*tac)\b/, ['button', 'hover', 'magnetic', 'toggle']],
+  [/\b(am\s*nhac|nhac|audio|music|player)\b/, ['audio', 'player', 'music', 'waveform']],
+  [/\b(thoi\s*tiet|weather|dashboard|bieu\s*do|kpi|so\s*lieu|tinh\s*toan|dien\s*mat\s*troi|nang\s*luong|solar|kwh|ap\s*mai)\b/, ['dashboard', 'chart', 'kpi', 'slider', 'gauge', 'stats', 'solar', 'grid', 'calculator']],
+  [/\b(bento|grid|the)\b/, ['card', 'bento', 'grid', 'flip']],
+  [/\b(gom|trien\s*lam|thu\s*cong|nghe\s*thuat|bo\s*suu\s*tap|lookbook|thoi\s*trang|nhiep\s*anh|photo|bao\s*tang)\b/, ['gallery', 'filter', 'editorial', 'minimal', 'card', 'showcase', 'carousel', 'tab', 'tilt']],
+  [/\b(bo\s*loc|loc|tim\s*kiem|tab|chuyen)\b/, ['filter', 'tab', 'tabs', 'search', 'modal', 'drawer']],
+  [/\b(kien\s*truc|noi\s*that|studio)\b/, ['minimal', 'editorial', 'grid', 'drawer', 'gallery']],
+  [/\b(ai|code|lap\s*trinh|terminal|saas|ung\s*dung)\b/, ['terminal', 'code', 'bento', 'card', 'toggle']],
+  [/\b(hoc|on\s*tap|trac\s*nghiem|the\s*lat|quiz)\b/, ['quiz', 'flashcard', 'flip', 'reader', 'timeline']],
+];
+
+function matchClientWord(haystack: string, term: string): boolean {
+  if (!term) return false;
+  const escaped = term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  return new RegExp(`(?:^|[^a-z0-9])${escaped}(?:$|[^a-z0-9])`, 'i').test(haystack);
+}
+
+function isClientUnrelatedUtility(haystack: string, promptFolded: string): boolean {
+  const wantsAuth = /\b(dang\s*nhap|login|auth|otp|password|mat\s*khau|signup)\b/.test(promptFolded);
+  if (!wantsAuth && /\b(login|oauth|otp|password|signup|sign-in|2fa)\b/i.test(haystack)) {
+    return true;
+  }
+  const wantsDevUtil = /\b(contrast|wcag|delete|trash|404)\b/.test(promptFolded);
+  if (!wantsDevUtil && /\b(contrast\s+checker|hold\s+to\s+delete|404\s+page)\b/i.test(haystack)) {
+    return true;
+  }
+  if (/\b(mega\s*menu|navbar|navigation\s*menus|site\s*header|sticky\s*header|site\s*footer|responsive\s*header)\b/i.test(haystack)) {
+    return true;
+  }
+  return false;
+}
+
+function createClientRng(seedInput: number): () => number {
+  let s = (Math.abs(Math.floor(seedInput)) || 4242) % 2147483647;
+  if (s <= 0) s = 4242;
+  return () => {
+    s = (s * 48271) % 2147483647;
+    return (s - 1) / 2147483646;
+  };
+}
+
+function sampleWeighted<C extends { score: number }>(list: C[], rng: () => number): C | null {
+  if (list.length === 0) return null;
+  const weights = list.map((c) => Math.pow(Math.max(0.5, c.score + 0.5), 1.8));
+  const sum = weights.reduce((a, b) => a + b, 0);
+  if (sum <= 0) return list[0];
+  let r = rng() * sum;
+  for (let i = 0; i < list.length; i += 1) {
+    r -= weights[i];
+    if (r <= 0) return list[i];
+  }
+  return list[list.length - 1];
+}
+
+function classifyClientRole(item: VaultIndexItem): 'hero' | 'cards' | 'widget' | 'micro' {
+  const hay = `${item.t} ${item.c} ${(item.tg || []).join(' ')}`.toLowerCase();
+  if (item.l === 'motionsites' || item.l === 'threeui' || /\b(hero|landing|3d|webgl|aurora|shader|globe|banner)\b/.test(hay)) {
+    return 'hero';
+  }
+  if (/\b(pricing|calculator|slider|tab|tabs|filter|calendar|timeline|quiz|form|input|toggle|accordion|dropdown|search|carousel|widget|dashboard|chart|gauge)\b/.test(hay)) {
+    return 'widget';
+  }
+  if (item.l === 'lucianlabs' || /\b(button|badge|pill|tooltip|loader|progress|copy|magnetic|ripple|chip)\b/.test(hay)) {
+    return 'micro';
+  }
+  return 'cards';
+}
+
+async function selectVariedVaultAndKnowledge(options: {
+  prompt: string;
+  profile: OnboardingProfile;
+  behaviorScores?: Record<string, BehaviorItemScore>;
+  excludeIds?: string[];
+  seedItemId?: string;
+  forceVariation?: boolean;
+}): Promise<{
+  totalScanned: number;
+  anchor: MotionSiteFullRecord | null;
+  candidateResources: MatchedVaultResource[];
+  stitchedSlots: StitchedVaultSlot[];
+  recipes: MotionRecipeItem[];
+}> {
+  const [vaultIndex, allRecipes, anchor] = await Promise.all([
+    fetchVaultIndex().catch(() => null),
+    fetchMotionRecipes().catch(() => []),
+    detectClientMasterpieceAnchor(options.prompt),
+  ]);
+
+  const items = vaultIndex?.items ?? [];
+  const totalScanned = items.length > 0 ? items.length : 5909;
+  const excludeSet = new Set(options.excludeIds || []);
+  const seedBase =
+    Date.now() ^
+    Math.floor(Math.random() * 1_000_000) ^
+    (options.forceVariation ? 0x5bd1e995 : 0);
+  const rng = createClientRng(seedBase);
+
+  const foldedPrompt = foldVi(`${options.prompt} ${anchor?.category || ''} ${(anchor?.tags || []).join(' ')}`);
+  const terms = new Set(
+    foldedPrompt
+      .replace(/[^a-z0-9-]+/g, ' ')
+      .split(/\s+/)
+      .filter((t) => !CLIENT_SEARCH_STOP.has(t) && (CLIENT_SHORT_WHITELIST.has(t) || t.length >= 4))
+  );
+  for (const [rx, words] of CLIENT_VAULT_BRIDGES) {
+    if (rx.test(foldedPrompt)) words.forEach((w) => terms.add(w));
+  }
+  const termList = Array.from(terms);
+
+  type ScoredItem = { item: VaultIndexItem; score: number; reason: string; role: 'hero' | 'cards' | 'widget' | 'micro' };
+  const buckets: Record<'hero' | 'cards' | 'widget' | 'micro', ScoredItem[]> = {
+    hero: [],
+    cards: [],
+    widget: [],
+    micro: [],
+  };
+
+  for (const item of items) {
+    if (excludeSet.has(item.i) && item.i !== options.seedItemId) continue;
+    const titleLow = foldVi(item.t);
+    const metaLow = foldVi(`${item.c || ''} ${(item.tg || []).join(' ')}`);
+    const hay = `${titleLow} ${metaLow}`;
+    if (item.i !== options.seedItemId && isClientUnrelatedUtility(hay, foldedPrompt)) continue;
+    let score = item.i === options.seedItemId ? 12 : 0;
+    let bestTerm = '';
+    for (const term of termList) {
+      if (matchClientWord(titleLow, term)) {
+        score += 4.2;
+        if (!bestTerm) bestTerm = term;
+      } else if (matchClientWord(metaLow, term)) {
+        score += 2.3;
+        if (!bestTerm) bestTerm = term;
+      }
+    }
+    const sig = options.behaviorScores?.[item.i];
+    if (sig) score += Math.min(1.8, (sig.likes + sig.uses * 1.5) * 0.15);
+    if (item.l === 'codefronts' || item.l === 'lucianlabs') score += 0.65;
+    if (score <= 0.65 && item.i !== options.seedItemId) continue;
+    const role = classifyClientRole(item);
+    buckets[role].push({
+      item,
+      score,
+      reason: bestTerm ? `Khớp "${bestTerm}" · ${item.c || item.l}` : `${item.c || item.l}`,
+      role,
+    });
+  }
+
+  // Fallback candidates from codefronts/lucianlabs if any bucket is sparse
+  for (const item of items) {
+    if (excludeSet.has(item.i)) continue;
+    if (item.l !== 'codefronts' && item.l !== 'lucianlabs') continue;
+    const hay = foldVi(`${item.t} ${item.c || ''} ${(item.tg || []).join(' ')}`);
+    if (isClientUnrelatedUtility(hay, foldedPrompt)) continue;
+    const role = classifyClientRole(item);
+    if (buckets[role].length < 24) {
+      buckets[role].push({ item, score: 1.0, reason: `${item.c || item.l}`, role });
+    }
+  }
+
+  const pickedMeta: Array<{ match: MatchedVaultResource; meta: VaultIndexItem }> = [];
+  const usedIds = new Set<string>();
+  const libCounts: Record<string, number> = {};
+
+  if (options.seedItemId) {
+    const seeded = items.find((it) => it.i === options.seedItemId);
+    if (seeded) {
+      usedIds.add(seeded.i);
+      pickedMeta.push({
+        meta: seeded,
+        match: {
+          id: seeded.i,
+          title: seeded.t,
+          library: seeded.l,
+          reason: `Mẫu gốc được chọn (${seeded.c || seeded.l})`,
+          score: 0.99,
+        },
+      });
+    }
+  }
+
+  const roleOrder: Array<'widget' | 'cards' | 'micro' | 'cards' | 'widget' | 'hero'> = [
+    'widget',
+    'cards',
+    'micro',
+    'cards',
+    'widget',
+    'hero',
+  ];
+
+  for (const role of roleOrder) {
+    if (pickedMeta.length >= 10) break;
+    const candidates = buckets[role]
+      .filter((c) => !usedIds.has(c.item.i))
+      .sort((a, b) => b.score - a.score)
+      .slice(0, 28);
+    const pool = [...candidates];
+    for (let tries = 0; tries < 3 && pool.length > 0; tries += 1) {
+      const chosen = sampleWeighted(pool, rng);
+      if (!chosen) break;
+      const idx = pool.indexOf(chosen);
+      if (idx >= 0) pool.splice(idx, 1);
+      const lc = libCounts[chosen.item.l] || 0;
+      if (lc >= 4 && pool.length > 2) continue;
+      usedIds.add(chosen.item.i);
+      libCounts[chosen.item.l] = lc + 1;
+      pickedMeta.push({
+        meta: chosen.item,
+        match: {
+          id: chosen.item.i,
+          title: chosen.item.t,
+          library: chosen.item.l,
+          reason: chosen.reason,
+          score: Math.round(Math.min(0.99, Math.max(0.62, chosen.score / 10)) * 100) / 100,
+        },
+      });
+      break;
+    }
+  }
+
+  // Decompress .jgz shards for all selected candidates in parallel so we have real HTML/CSS/JS
+  const uniqueShards = Array.from(
+    new Set(pickedMeta.map((p) => p.meta.s).filter((s) => Boolean(s) && s !== 'pinui'))
+  );
+  const shardMap = new Map<string, Record<string, VaultShardPayload>>();
+  await Promise.all(
+    uniqueShards.map(async (shardName) => {
+      try {
+        const data = await fetchVaultShard(shardName);
+        shardMap.set(shardName, data);
+      } catch {
+        // Ignore single shard failure
+      }
+    })
+  );
+
+  const hydratedCandidates = pickedMeta.map(({ match, meta }) => {
+    const shard = meta.s && meta.s !== 'pinui' ? shardMap.get(meta.s) : undefined;
+    return { match, payload: shard?.[meta.i] };
+  });
+
+  const stitchedSlots = buildStitchedVaultSlots(hydratedCandidates, 5);
+  const slotIdSet = new Set(stitchedSlots.map((s) => s.id));
+  const candidateResources = pickedMeta
+    .map((p) => p.match)
+    .filter((m) => slotIdSet.has(m.id));
+
+  // Select 1-2 real Source of Knowledge motion recipes via weighted seeded random
+  const wantsVideo = /\b(video|mp4|phim|clip)\b/.test(foldedPrompt);
+  const scoredRecipes = allRecipes
+    .filter((r) => wantsVideo || !(/<video\b/i.test(r.code) && r.category.includes('Video')))
+    .map((r) => {
+      const hay = foldVi(`${r.title} ${r.category} ${r.useWhen} ${r.summary}`);
+      let score = r.lang === 'css' || r.lang === 'js' ? 1.6 : 1.0;
+      for (const term of termList) {
+        if (hay.includes(term)) score += 2.2;
+      }
+      return { item: r, score };
+    })
+    .sort((a, b) => b.score - a.score)
+    .slice(0, 12);
+
+  const pickedRecipes: MotionRecipeItem[] = [];
+  const recipeRng = createClientRng(seedBase ^ 0x9e3779b9);
+  while (pickedRecipes.length < 2 && scoredRecipes.length > 0) {
+    const choice = sampleWeighted(scoredRecipes, recipeRng);
+    if (!choice) break;
+    pickedRecipes.push(choice.item);
+    const idx = scoredRecipes.indexOf(choice);
+    if (idx >= 0) scoredRecipes.splice(idx, 1);
+  }
+
+  return {
+    totalScanned,
+    anchor,
+    candidateResources,
+    stitchedSlots,
+    recipes: pickedRecipes,
+  };
+}
+
 function mergeAiReturnedFiles(
   returnedFiles: Array<{ path: string; content: string; summary?: string }>,
   baseFiles: WorkspaceFile[],
@@ -2127,6 +2498,7 @@ function mergeAiReturnedFiles(
     personality: string;
     motionSignature: string;
     sources: MatchedVaultResource[];
+    knowledgeRecipes?: Array<{ id: string; title: string; category: string }>;
   }
 ): WorkspaceFile[] | null {
   const now = new Date().toISOString();
@@ -2183,6 +2555,9 @@ function mergeAiReturnedFiles(
       ? Array.from(fileMap.keys()).find((p) => /app\.(tsx|jsx)$/i.test(p)) || 'src/App.tsx'
       : 'index.html',
     sources: meta.sources.map((s) => ({ id: s.id, title: s.title, library: s.library })),
+    ...(meta.knowledgeRecipes && meta.knowledgeRecipes.length > 0
+      ? { knowledgeRecipes: meta.knowledgeRecipes }
+      : {}),
     updatedAt: now,
   };
   fileMap.set('metadata.json', {
@@ -2382,72 +2757,61 @@ export async function composeWithAgent(
     charCount: 0,
   });
 
-  // Fetch compact Vault craft references only on fresh builds or explicit seed remix
-  let matchedResources: MatchedVaultResource[] = [];
+  // Fetch real hydrated Vault modules + Source of Knowledge motion recipes on fresh builds
+  let candidateResources: MatchedVaultResource[] = [];
+  let stitchedSlots: StitchedVaultSlot[] = [];
+  let selectedRecipes: MotionRecipeItem[] = [];
   let totalScanned = 5909;
-  const hydratedSnippets: Array<{
-    id: string;
-    kind: 'resource';
-    title: string;
-    summary: string;
-  }> = [];
+  const hydratedSnippets: AttachedContextItem[] = [];
 
   if (!isEdit) {
-    const rec = await recommendVaultResources({
-      profile: effectiveProfile,
+    const varied = await selectVariedVaultAndKnowledge({
       prompt,
+      profile: effectiveProfile,
       behaviorScores,
       excludeIds,
-      limit: 4,
       seedItemId,
+      forceVariation,
     });
-    matchedResources = rec.matched;
-    totalScanned = rec.totalScanned;
+    totalScanned = varied.totalScanned;
+    candidateResources = varied.candidateResources;
+    stitchedSlots = varied.stitchedSlots;
+    selectedRecipes = varied.recipes;
 
-    const shardTargets = rec.matched
-      .slice(0, 2)
-      .map((m) => ({ match: m, meta: rec.itemsById.get(m.id) }));
-
-    const [fetchedShardEntries, motionRecipes] = await Promise.all([
-      Promise.all(
-        shardTargets.map(async ({ match, meta }) => {
-          let payload: VaultShardPayload | undefined;
-          if (meta?.s && meta.s !== 'pinui') {
-            try {
-              const shard = await fetchVaultShard(meta.s);
-              payload = shard?.[meta.i];
-            } catch {
-              payload = undefined;
-            }
-          }
-          return { match, payload };
-        })
-      ),
-      fetchMotionRecipes().catch(() => []),
-    ]);
-
-    for (const { match, payload } of fetchedShardEntries) {
-      const parts: string[] = [`Library: ${match.library} · Inspiration: ${match.reason}`];
-      if (payload?.p) parts.push(`Spec: ${payload.p.slice(0, 240)}`);
-      if (payload?.c) parts.push(`CSS Craft Reference:\n${payload.c.slice(0, 720)}`);
+    if (varied.anchor) {
       hydratedSnippets.push({
-        id: match.id,
+        id: varied.anchor.id,
+        kind: 'blueprint',
+        title: `MASTERPIECE ANCHOR: ${varied.anchor.title} (${varied.anchor.slug})`,
+        sourceLibrary: 'motionsites',
+        summary: varied.anchor.promptText.slice(0, 1400),
+        payload: varied.anchor.css ? varied.anchor.css.slice(0, 700) : undefined,
+      });
+    }
+
+    for (const slot of stitchedSlots.slice(0, 5)) {
+      const parts = [
+        `Library: ${slot.library} · Reason: ${slot.reason}`,
+        slot.html ? `HTML Blueprint:\n${slot.html.slice(0, 700)}` : '',
+        slot.css ? `CSS Craft:\n${slot.css.slice(0, 800)}` : '',
+        slot.js ? `JS Hook:\n${slot.js.slice(0, 500)}` : '',
+      ].filter(Boolean);
+      hydratedSnippets.push({
+        id: slot.id,
         kind: 'resource',
-        title: match.title,
+        title: `${slot.title} [${slot.library}] (data-vault-id="${slot.id}")`,
+        sourceLibrary: slot.library,
         summary: parts.join('\n'),
       });
     }
 
-    if (motionRecipes.length > 0) {
-      const pickedRecipe = motionRecipes[Math.abs(prompt.length) % motionRecipes.length];
-      if (pickedRecipe) {
-        hydratedSnippets.push({
-          id: pickedRecipe.id,
-          kind: 'resource',
-          title: `Motion Reference: ${pickedRecipe.title}`,
-          summary: `Use when: ${pickedRecipe.useWhen}\nCSS/JS Snippet:\n${pickedRecipe.code.slice(0, 540)}`,
-        });
-      }
+    for (const recipe of selectedRecipes) {
+      hydratedSnippets.push({
+        id: recipe.id,
+        kind: 'template',
+        title: `KNOWLEDGE MOTION RECIPE: ${recipe.title} (data-knowledge-recipe="${recipe.id}")`,
+        summary: `Category: ${recipe.category} · Use when: ${recipe.useWhen}\nCode (${recipe.lang}):\n${recipe.code.slice(0, 800)}`,
+      });
     }
   }
 
@@ -2475,6 +2839,7 @@ export async function composeWithAgent(
       intent: isEdit ? 'patch' : 'assemble',
       files: contextFiles,
       attachedItems: isEdit ? [] : hydratedSnippets,
+      vaultSlots: isEdit ? undefined : toVaultSlotBriefs(stitchedSlots),
       history: chatHistory.slice(-4),
     },
     hasByok ? byok : undefined,
@@ -2515,7 +2880,7 @@ export async function composeWithAgent(
   const metaBp =
     isEdit && previousBlueprint
       ? previousBlueprint
-      : createInitialBlueprint(effectiveProfile, prompt, matchedResources, forceVariation ? 1 : 0);
+      : createInitialBlueprint(effectiveProfile, prompt, candidateResources, forceVariation ? 1 : 0);
 
   let nextFiles: WorkspaceFile[] | null = null;
   let workingBaseFiles = isEdit ? previousFiles : [];
@@ -2544,8 +2909,9 @@ export async function composeWithAgent(
       title: extractedTitle,
       domain: metaBp.profile.domain,
       personality: metaBp.profile.personality,
-      motionSignature: `AI · ${aiModelLabel.replace(/^.*\//, '')}`,
-      sources: matchedResources,
+      motionSignature: selectedRecipes[0]?.title || `AI · ${aiModelLabel.replace(/^.*\//, '')}`,
+      sources: candidateResources,
+      knowledgeRecipes: selectedRecipes.map((r) => ({ id: r.id, title: r.title, category: r.category })),
     });
     if (merged && merged.length > 0) {
       nextFiles = merged;
@@ -2556,6 +2922,58 @@ export async function composeWithAgent(
     throw new Error(
       `Model ${aiModelLabel.replace(/^.*\//, '')} phản hồi chưa tạo được tệp mã nguồn hợp lệ. Hãy bấm Thử lại hoặc chọn model khác.`
     );
+  }
+
+  // Verify and harmonize Vault modules + Source of Knowledge motion recipe + src/app.js on fresh builds
+  let matchedResources: MatchedVaultResource[] = candidateResources;
+  let verifiedRecipes: MotionRecipeItem[] = selectedRecipes;
+
+  if (!isEdit && (stitchedSlots.length > 0 || selectedRecipes.length > 0)) {
+    const verified = verifyAndEnhanceVaultAssembly(nextFiles, stitchedSlots, selectedRecipes, {
+      prompt,
+    });
+    nextFiles = verified.files;
+    const embeddedVaultSet = new Set(verified.embeddedVaultIds);
+    const embeddedRecipeSet = new Set(verified.embeddedRecipeIds);
+    matchedResources = candidateResources.filter((m) => embeddedVaultSet.has(m.id));
+    verifiedRecipes = selectedRecipes.filter((r) => embeddedRecipeSet.has(r.id));
+
+    // Rewrite metadata.json truthfully with ONLY genuinely embedded Vault + Knowledge items
+    const extractedTitleForMeta = extractTitleFromProjectFiles(nextFiles, prompt);
+    const hasReactMeta = nextFiles.some((f) => /\.(tsx|jsx)$/i.test(f.path));
+    const motionLabel =
+      verifiedRecipes.length > 0
+        ? `Motion Craft: ${verifiedRecipes.map((r) => r.title).join(' · ')}`
+        : `AI · ${aiModelLabel.replace(/^.*\//, '')}`;
+    const metaPayload = {
+      name: extractedTitleForMeta,
+      mode: hasReactMeta ? 'react-tsx' : 'multi-file-web',
+      domain: metaBp.profile.domain,
+      personality: metaBp.profile.personality,
+      motionSignature: motionLabel,
+      entry: hasReactMeta
+        ? nextFiles.find((f) => /app\.(tsx|jsx)$/i.test(f.path))?.path || 'src/App.tsx'
+        : 'index.html',
+      sources: matchedResources.map((s) => ({ id: s.id, title: s.title, library: s.library })),
+      knowledgeRecipes: verifiedRecipes.map((r) => ({ id: r.id, title: r.title, category: r.category })),
+      updatedAt: new Date().toISOString(),
+    };
+    const metaIdx = nextFiles.findIndex((f) => f.path === 'metadata.json');
+    const metaFile: WorkspaceFile = {
+      path: 'metadata.json',
+      content: `${JSON.stringify(metaPayload, null, 2)}\n`,
+      language: 'json',
+      summary: 'Thông tin dự án',
+      updatedAt: metaPayload.updatedAt,
+    };
+    if (metaIdx >= 0) {
+      nextFiles[metaIdx] = metaFile;
+    } else {
+      nextFiles = sortProjectFiles([...nextFiles, metaFile]);
+    }
+  } else if (isEdit) {
+    matchedResources = [];
+    verifiedRecipes = [];
   }
 
   const bundled = bundleProjectFiles(nextFiles, { enableConsoleBridge: false });
@@ -2586,11 +3004,17 @@ export async function composeWithAgent(
       ? aiRes.message.trim()
       : isEdit
         ? `AI (${aiModelLabel.replace(/^.*\//, '')}) đã cập nhật mã nguồn theo yêu cầu.`
-        : `AI (${aiModelLabel.replace(/^.*\//, '')}) đã tự thiết kế và lập trình dự án "${extractedTitle}".`;
+        : `AI (${aiModelLabel.replace(/^.*\//, '')}) đã lắp ghép và lập trình dự án "${extractedTitle}".`;
 
   const changedFiles = computeProjectFileDiffs(isEdit ? previousFiles : [], nextFiles);
   const diff = computeHtmlLineDiff(isEdit ? previousHtml : null, html);
   const durationMs = Math.max(240, Math.round(performance.now() - startedAt));
+  const motionSignatureOut =
+    verifiedRecipes.length > 0
+      ? `Motion Craft: ${verifiedRecipes.map((r) => r.title).join(' · ')}`
+      : isEdit
+        ? ''
+        : SIGNATURE_MOTIONS[metaBp.signature].label;
 
   const fileTraceSteps: AgentTraceStep[] = (
     changedFiles.length > 0
@@ -2619,17 +3043,20 @@ export async function composeWithAgent(
       kind: 'thought',
       label: isEdit
         ? `AI (${aiModelLabel.replace(/^.*\//, '')}) chỉnh sửa trực tiếp${tokensTotal ? ` · ${tokensTotal.toLocaleString('vi-VN')} token` : ''}`
-        : `AI (${aiModelLabel.replace(/^.*\//, '')}) tự viết ${nextFiles.filter((f) => f.path !== 'metadata.json').length} tệp${tokensTotal ? ` · ${tokensTotal.toLocaleString('vi-VN')} token` : ''}`,
+        : `AI (${aiModelLabel.replace(/^.*\//, '')}) lắp ghép ${nextFiles.filter((f) => f.path !== 'metadata.json').length} tệp${tokensTotal ? ` · ${tokensTotal.toLocaleString('vi-VN')} token` : ''}`,
       detail: `Model thực thi: ${aiModelLabel}`,
       status: 'done',
     },
-    ...(matchedResources.length > 0
+    ...(matchedResources.length > 0 || verifiedRecipes.length > 0
       ? [
           {
             id: `tr-vault-${Date.now()}`,
             kind: 'vault_search' as const,
-            label: `Tham khảo ${matchedResources.length} ý tưởng kỹ thuật từ ${totalScanned.toLocaleString('vi-VN')} mẫu kho`,
-            detail: matchedResources.map((m) => `${m.title} (${m.library})`).join(' · '),
+            label: `Lắp ghép ${matchedResources.length} khối từ ${totalScanned.toLocaleString('vi-VN')} mẫu Vault${verifiedRecipes.length > 0 ? ` + ${verifiedRecipes.length} công thức chuyển động` : ''}`,
+            detail: [
+              ...matchedResources.map((m) => `${m.title} (${m.library})`),
+              ...verifiedRecipes.map((r) => `Motion: ${r.title}`),
+            ].join(' · '),
             status: 'done' as const,
           },
         ]
@@ -2653,7 +3080,7 @@ export async function composeWithAgent(
     changedFiles,
     blueprint: finalBlueprint,
     matchedResources,
-    motionSignature: aiModelLabel.replace(/^.*\//, ''),
+    motionSignature: motionSignatureOut,
     trace,
     audit,
     summaryText,

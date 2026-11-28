@@ -349,11 +349,16 @@ export const WorkspaceView: React.FC = () => {
     };
   }, []);
 
-  // Sync default server model when Admin switches OpenRouter <-> Gemini and BYOK is off
+  const prevAdminDedicatedRef = useRef<boolean>(Boolean(aiRuntime?.isAdminDedicated));
+
+  // Sync default server model when Admin switches gateway profiles or logs into Dedicated Admin AI
   useEffect(() => {
     if (settings.byok?.enabled && settings.byok.apiKey.trim()) return;
     if (!aiRuntime?.defaultModel) return;
+    const becameDedicated = Boolean(aiRuntime.isAdminDedicated) && !prevAdminDedicatedRef.current;
+    prevAdminDedicatedRef.current = Boolean(aiRuntime.isAdminDedicated);
     setSelectedModel((prev) => {
+      if (becameDedicated) return aiRuntime.defaultModel;
       const stillValid = aiRuntime.availableModels.some((m) => m.id === prev);
       return stillValid ? prev : aiRuntime.defaultModel;
     });
@@ -1359,7 +1364,7 @@ export const WorkspaceView: React.FC = () => {
                 title: nextByok.enabled ? 'Đã lưu API Key riêng' : 'Đã chuyển về khóa mặc định',
                 message: nextByok.enabled
                   ? `Model: ${nextByok.model}`
-                  : `Đang dùng máy chủ mặc định (${aiRuntime?.activeProfile === 'gemini' ? 'Gemini' : 'OpenRouter'}).`,
+                  : `Đang dùng máy chủ mặc định (${aiRuntime?.activeProfile === 'gemini' ? 'Gemini' : aiRuntime?.activeProfile === 'custom' ? 'Gateway riêng' : 'OpenRouter'}).`,
               });
             }}
             onRequireAuth={() => setAuthModalOpen(true)}

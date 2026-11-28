@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import {
+  loadShowcaseFullPrompt,
   pickRandomChatShowcase,
   type ChatLandingShowcaseItem,
 } from '../../data/chatLandingShowcase';
@@ -134,6 +135,14 @@ const ROLE_LABELS: Record<OnboardingRole, string> = {
   tech: 'Công nghệ',
 };
 
+const VAULT_LIBRARY_LABELS: Record<string, string> = {
+  pinui: 'Pin UI',
+  threeui: 'ThreeUI 3D',
+  lucianlabs: 'lucianLabs',
+  motionsites: 'MotionSites',
+  codefronts: 'CodeFronts',
+};
+
 const QUICK_EDIT_CHIPS = [
   'Đổi nền sáng/tối',
   'Tối ưu di động',
@@ -176,6 +185,7 @@ export const AgentChatPane: React.FC<AgentChatPaneProps> = ({
     pickRandomChatShowcase(4)
   );
   const [shuffleSpin, setShuffleSpin] = useState(0);
+  const [loadingCardId, setLoadingCardId] = useState<string | null>(null);
   const [byokOpen, setByokOpen] = useState(false);
   const [presetId, setPresetId] = useState<string>(() => detectPresetId(byok));
   const [keyInput, setKeyInput] = useState<string>(() => byok?.apiKey || '');
@@ -188,6 +198,7 @@ export const AgentChatPane: React.FC<AgentChatPaneProps> = ({
   const feedEndRef = useRef<HTMLDivElement | null>(null);
   const inputRef = useRef<HTMLTextAreaElement | null>(null);
   const flashTimerRef = useRef<number | null>(null);
+  const pickRequestRef = useRef(0);
 
   const hasActiveByok = Boolean(byok?.enabled && byok.apiKey.trim());
   const activePreset =
@@ -271,7 +282,7 @@ export const AgentChatPane: React.FC<AgentChatPaneProps> = ({
     const el = inputRef.current;
     if (!el) return;
     el.style.height = 'auto';
-    el.style.height = `${Math.min(136, Math.max(40, el.scrollHeight))}px`;
+    el.style.height = `${Math.min(160, Math.max(40, el.scrollHeight))}px`;
   }, [draft]);
 
   useEffect(() => {
@@ -298,8 +309,25 @@ export const AgentChatPane: React.FC<AgentChatPaneProps> = ({
       el.focus();
       const len = text.length;
       el.setSelectionRange(len, len);
-      el.scrollTop = el.scrollHeight;
+      el.scrollTop = 0;
     });
+  };
+
+  const handlePickShowcaseCard = async (item: ChatLandingShowcaseItem) => {
+    const reqId = ++pickRequestRef.current;
+    setLoadingCardId(item.id);
+    try {
+      const promptText = await loadShowcaseFullPrompt(item);
+      if (pickRequestRef.current !== reqId) return;
+      fillComposer(promptText);
+    } catch {
+      if (pickRequestRef.current !== reqId) return;
+      fillComposer(item.prompt);
+    } finally {
+      if (pickRequestRef.current === reqId) {
+        setLoadingCardId(null);
+      }
+    }
   };
 
   const submit = () => {
@@ -354,63 +382,69 @@ export const AgentChatPane: React.FC<AgentChatPaneProps> = ({
           <div className="ws-chat__empty">
             <div className="ws-chat__emptyIntro">
               <h2>Bắt đầu dựng trang</h2>
-              <p>Bấm thẻ gợi ý để điền nhanh prompt, hoặc tự mô tả ý tưởng để AI lập trình từ đầu.</p>
+              <p>Chọn mẫu gợi ý để điền prompt chi tiết hoặc tự mô tả ý tưởng.</p>
             </div>
 
-            <div className="ws-visualHead">
-              <span className="ws-visualHead__label">Ý tưởng tham khảo</span>
-              <button
-                type="button"
-                className="ws-iconBtn ws-iconBtn--sm ws-visualShuffle lg-pill"
-                onClick={handleShuffleVisuals}
-                aria-label="Đổi ý tưởng ngẫu nhiên"
-                title="Đổi gợi ý"
-              >
-                <svg
-                  width="15"
-                  height="15"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="1.9"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  aria-hidden="true"
-                >
-                  <path d="m18 14 4 4-4 4" />
-                  <path d="m18 2 4 4-4 4" />
-                  <path d="M2 18h1.973a4 4 0 0 0 3.3-1.7l5.454-8.6a4 4 0 0 1 3.3-1.7H22" />
-                  <path d="M2 6h1.972a4 4 0 0 1 3.6 2.2" />
-                  <path d="M22 18h-6.041a4 4 0 0 1-3.3-1.8l-.359-.45" />
-                </svg>
-              </button>
-            </div>
-
-            <div className="ws-visualGrid" key={shuffleSpin}>
-              {visualStarters.map((item) => (
+            <div className="ws-visualBlock">
+              <div className="ws-visualHead">
+                <span className="ws-visualHead__label">Ý tưởng tham khảo</span>
                 <button
-                  key={item.id}
                   type="button"
-                  className="ws-visualCard"
-                  data-card-trigger="true"
-                  onClick={() => fillComposer(item.prompt)}
-                  aria-label={`Điền prompt mẫu ${item.title}`}
+                  className="ws-iconBtn ws-iconBtn--sm ws-visualShuffle lg-pill"
+                  onClick={handleShuffleVisuals}
+                  aria-label="Đổi ý tưởng ngẫu nhiên"
+                  title="Đổi gợi ý"
                 >
-                  <img
-                    src={item.image}
-                    alt={`Ý tưởng giao diện ${item.title}`}
-                    loading="eager"
-                    decoding="async"
-                  />
-                  <span className="ws-visualCard__tag">{item.category}</span>
-                  <div className="ws-visualCard__scrim">
-                    <span className="ws-visualCard__title">{item.title}</span>
-                    <span className="ws-visualCard__cta" aria-hidden="true">
-                      Điền prompt
-                    </span>
-                  </div>
+                  <svg
+                    width="15"
+                    height="15"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="1.9"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    aria-hidden="true"
+                  >
+                    <path d="m18 14 4 4-4 4" />
+                    <path d="m18 2 4 4-4 4" />
+                    <path d="M2 18h1.973a4 4 0 0 0 3.3-1.7l5.454-8.6a4 4 0 0 1 3.3-1.7H22" />
+                    <path d="M2 6h1.972a4 4 0 0 1 3.6 2.2" />
+                    <path d="M22 18h-6.041a4 4 0 0 1-3.3-1.8l-.359-.45" />
+                  </svg>
                 </button>
-              ))}
+              </div>
+
+              <div className="ws-visualGrid" key={shuffleSpin}>
+                {visualStarters.map((item) => {
+                  const isCardLoading = loadingCardId === item.id;
+                  return (
+                    <button
+                      key={item.id}
+                      type="button"
+                      className={`ws-visualCard${isCardLoading ? ' is-loading' : ''}`}
+                      data-card-trigger="true"
+                      aria-busy={isCardLoading}
+                      onClick={() => void handlePickShowcaseCard(item)}
+                      aria-label={`Điền prompt mẫu ${item.title}`}
+                    >
+                      <img
+                        src={item.image}
+                        alt={`Ý tưởng giao diện ${item.title}`}
+                        loading="eager"
+                        decoding="async"
+                      />
+                      <span className="ws-visualCard__tag">{item.category}</span>
+                      <div className="ws-visualCard__scrim">
+                        <span className="ws-visualCard__title">{item.title}</span>
+                        <span className="ws-visualCard__cta" aria-hidden="true">
+                          {isCardLoading ? 'Đang nạp...' : 'Điền prompt'}
+                        </span>
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
             </div>
 
             <div className="ws-quickAskRow">
@@ -452,49 +486,103 @@ export const AgentChatPane: React.FC<AgentChatPaneProps> = ({
           const vaultStep = msg.trace?.find((s) => s.kind === 'vault_search');
           const fileSteps = msg.trace?.filter((s) => s.kind === 'file_create' || s.kind === 'file_edit') ?? [];
           const checkStep = msg.trace?.find((s) => s.kind === 'check');
+          const matchedList = msg.matchedResources ?? [];
+          const rawRecipe = msg.motionSignature?.trim() || '';
+          const recipeLabel =
+            rawRecipe && !rawRecipe.startsWith('AI ·')
+              ? rawRecipe.replace(/^Motion Craft:\s*/i, '').trim()
+              : '';
+          const hasTraceBlock = Boolean(
+            vaultStep || matchedList.length > 0 || recipeLabel || checkStep
+          );
+          const hasTraceDetail = Boolean(
+            matchedList.length > 0 || checkStep || vaultStep?.detail
+          );
           const isOpen = Boolean(openTraceIds[msg.id]);
 
           return (
             <article key={msg.id} className="ws-msg ws-msg--ai">
               <p className="ws-aiText">{msg.text}</p>
 
-              {vaultStep && (
+              {hasTraceBlock && (
                 <div className="ws-traceBlock">
-                  <button
-                    type="button"
-                    className="ws-traceToggle"
-                    aria-expanded={isOpen}
-                    onClick={() => toggleTrace(msg.id)}
-                  >
-                    <svg
-                      width="14"
-                      height="14"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      className={isOpen ? 'is-rotated' : undefined}
-                      aria-hidden="true"
+                  {hasTraceDetail ? (
+                    <button
+                      type="button"
+                      className="ws-traceToggle"
+                      aria-expanded={isOpen}
+                      onClick={() => toggleTrace(msg.id)}
                     >
-                      <path d="m9 18 6-6-6-6" />
-                    </svg>
-                    <span>{vaultStep.label}</span>
-                  </button>
+                      <svg
+                        width="14"
+                        height="14"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        className={isOpen ? 'is-rotated' : undefined}
+                        aria-hidden="true"
+                      >
+                        <path d="m9 18 6-6-6-6" />
+                      </svg>
+                      <span>
+                        {vaultStep?.label ||
+                          (matchedList.length > 0
+                            ? `Đã ghép ${matchedList.length} mô-đun Vault`
+                            : 'Nguồn lắp ghép đã dùng')}
+                      </span>
+                    </button>
+                  ) : (
+                    <div className="ws-traceHeadLabel">
+                      {vaultStep?.label || 'Nguồn lắp ghép đã dùng'}
+                    </div>
+                  )}
 
-                  {isOpen && (
+                  {(matchedList.length > 0 || recipeLabel) && (
+                    <div className="ws-tracePills" aria-label="Mô-đun Vault và công thức đã ghép">
+                      {matchedList.map((res) => (
+                        <span
+                          key={`${msg.id}-pill-${res.id}`}
+                          className="ws-tracePill"
+                          title={res.reason ? `${res.title}: ${res.reason}` : res.title}
+                        >
+                          <span className="ws-libTag">
+                            {VAULT_LIBRARY_LABELS[res.library] || res.library}
+                          </span>
+                          <span className="ws-tracePill__title">{res.title}</span>
+                        </span>
+                      ))}
+                      {recipeLabel && (
+                        <span
+                          className="ws-tracePill ws-tracePill--recipe"
+                          title="Công thức chuyển động từ Source of Knowledge"
+                        >
+                          <span className="ws-libTag ws-libTag--recipe">Knowledge</span>
+                          <span className="ws-tracePill__title">{recipeLabel}</span>
+                        </span>
+                      )}
+                    </div>
+                  )}
+
+                  {isOpen && hasTraceDetail && (
                     <div className="ws-traceDetail">
-                      {msg.matchedResources && msg.matchedResources.length > 0 && (
+                      {matchedList.length > 0 && (
                         <ul className="ws-matchedList">
-                          {msg.matchedResources.map((res) => (
+                          {matchedList.map((res) => (
                             <li key={`${msg.id}-${res.id}`}>
-                              <span className="ws-libTag">{res.library}</span>
+                              <span className="ws-libTag">
+                                {VAULT_LIBRARY_LABELS[res.library] || res.library}
+                              </span>
                               <span className="ws-resTitle">{res.title}</span>
-                              <span className="ws-resReason">{res.reason}</span>
+                              {res.reason && <span className="ws-resReason">{res.reason}</span>}
                             </li>
                           ))}
                         </ul>
+                      )}
+                      {vaultStep?.detail && matchedList.length === 0 && (
+                        <div className="ws-resReason">{vaultStep.detail}</div>
                       )}
                       {checkStep && (
                         <div className="ws-checkNote">
@@ -545,7 +633,7 @@ export const AgentChatPane: React.FC<AgentChatPaneProps> = ({
                   {msg.suggestedResources.map((item) => (
                     <div key={`${msg.id}-sug-${item.id}`} className="ws-suggestCard">
                       <div className="ws-suggestCard__meta">
-                        <span className="ws-libTag">{item.library}</span>
+                        <span className="ws-libTag">{VAULT_LIBRARY_LABELS[item.library] || item.library}</span>
                         <strong className="ws-suggestCard__title">{item.title}</strong>
                         {item.reason && <span className="ws-suggestCard__reason">{item.reason}</span>}
                       </div>
@@ -569,7 +657,6 @@ export const AgentChatPane: React.FC<AgentChatPaneProps> = ({
                 {typeof msg.tokensTotal === 'number' && msg.tokensTotal > 0 && (
                   <span>{msg.tokensTotal.toLocaleString('vi-VN')} token</span>
                 )}
-                {!msg.modelUsed && msg.motionSignature && <span>{msg.motionSignature}</span>}
                 {typeof msg.durationMs === 'number' && (
                   <span>{(msg.durationMs / 1000).toFixed(1)}s</span>
                 )}
